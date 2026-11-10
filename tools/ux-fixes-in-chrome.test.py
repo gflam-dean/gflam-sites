@@ -176,10 +176,10 @@ def musical(r):
     tid, m = r.open('/app/musical/play?demo=1', width=390, height=690)
     ok('CONTROL: the musical demo card is dealt, 25 squares', r.until(m, 'document.querySelectorAll("#cardGrid .cc").length===25', 40) is True)
     time.sleep(1.0)
-    w = words(r, m, '#cardGrid .cc', True)
-    # 4 Nov 2026 (the new look, Dean's round 4 on 3 Nov): "one hyphen break is allowed for a single long word (Wonder-wall),
-    # never more than one per title". So: no word breaks anywhere but at its one soft hyphen.
-    ok('390 x 690: every word of every title on the card sits on one line, or breaks once at its own hyphen (Wonder-wall), never mid-word',
+    w = words(r, m, '#cardGrid .cc', False)
+    # 10 Nov 2026 (Dean's live sign-off): NO hyphen ever (the 4 Nov one-hyphen rule is gone): every word on one line,
+    # the tile says hyphens:none.
+    ok('390 x 690: every word of every title on the card sits whole on one line, no hyphen, never mid-word',
        w.get('n', 0) >= 40 and not w.get('split') and not w.get('rules'), w)
     ok('and every title fits its square', not w.get('over') and not w.get('small'), w)
     # 3 Nov 2026, Dean: "the small writing", "the size of the buttons", "that 5 played line doesn't need to be there".
@@ -209,10 +209,10 @@ def musical(r):
     r.ask(m, ('(function(){var c=document.querySelectorAll("#cardGrid .cc:not(.free)"),t=%s;for(var i=0;i<t.length;i++){var sp=c[i].querySelector(".ct");(sp||c[i]).textContent=t[i];}'
               'document.getElementById("zoomIn").click();document.getElementById("zoomOut").click();return true;})()') % json.dumps(LONG))
     time.sleep(0.6)
-    w = words(r, m, '#cardGrid .cc', True)
+    w = words(r, m, '#cardGrid .cc', False)
     got = r.ask(m, 'Array.prototype.slice.call(document.querySelectorAll("#cardGrid .cc:not(.free)"),0,4).map(function(c){return c.textContent;}).join("|")')
     ok('CONTROL: four long titles are on the card ("Supercalifragilisticexpialidocious", "Californication", "Misunderstanding", "Wonderwall")', got == '|'.join(LONG), got)
-    ok('a word wider than its square is never split mid-word: on one line, or once at its own hyphen', not w.get('split') and not w.get('rules'), w)
+    ok('a word wider than its square is never split and never hyphenated: whole, on one line', not w.get('split') and not w.get('rules'), w)
     ok('it is fitted whole instead: inside its square, the type no smaller than 10px', not w.get('over') and not w.get('small'), w)
     shot(r, m, 'musical-card-longtitles-390x690')
     r.ask(m, 'window.scrollTo(0,0); true'); time.sleep(0.3)

@@ -327,7 +327,7 @@ def join_loading():
 
 # ======================================================================================
 def musical_toast():
-    print('\nThe musical TV\'s "No sound on this screen" toast: top centre, off the JOIN NOW QR, gone in eight seconds')
+    print('\nThe musical TV\'s "No sound on this screen" toast: a bar along the bottom edge, off the MUSICAL BINGO title (Dean, 10 Nov 2026), gone in eight seconds')
     src = io.open(os.path.join(RIG.ROOT, 'venueplay/app/musical/screen.html'), encoding='utf-8').read()
     a = src.find('  var _audioWarned=false'); b = src.find('  function audioOk(){', a)
     ok('CONTROL: audioBlocked() is where this test lifts it from', a > 0 and b > a)
@@ -337,15 +337,15 @@ def musical_toast():
     try:
         tid, sid = r.open('/__blank', width=1280, height=720)
         r.until(sid, 'document.readyState==="complete"')
-        # the JOIN NOW panel sits bottom left on the musical screen (audit design-01)
-        r.ask(sid, 'var q=document.createElement("div");q.id="qr";q.style.cssText="position:fixed;left:24px;bottom:24px;width:260px;height:120px;background:#fff";document.body.appendChild(q);'
+        # the MUSICAL BINGO title sits top centre (Dean's 10 Nov 2026 sign-off: the toast covered it); the played strip ends 5cqw above the bottom
+        r.ask(sid, 'var q=document.createElement("div");q.id="qr";q.style.cssText="position:fixed;left:440px;top:12px;width:400px;height:60px;background:#fff";document.body.appendChild(q);'
                    'window.tvSend=function(){}; (0,eval)(%s + "\\nwindow.__ab=audioBlocked;"); window.__ab(); true' % json.dumps(code))
         rect = r.ask(sid, '(function(){var w=document.getElementById("audioWarn"),q=document.getElementById("qr");if(!w)return null;var a=w.getBoundingClientRect(),b=q.getBoundingClientRect();'
-                          'return {top:a.top,mid:a.left+a.width/2,overlap:!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)};})()')
+                          'return {top:a.top,bottom:a.bottom,mid:a.left+a.width/2,h:a.height,overlap:!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)};})()')
         ok('the toast is up', rect is not None)
         shot(r, sid, 'tv-3-no-sound-toast')
-        ok('at the top centre of the screen', rect and rect['top'] < 80 and abs(rect['mid'] - 640) < 20, rect)
-        ok('and not over the JOIN NOW QR', rect and not rect['overlap'], rect)
+        ok('along the bottom edge, centred, one slim bar (under 6.5% of the screen tall, so clear of the played strip)', rect and abs(rect['bottom'] - 720) < 1 and abs(rect['mid'] - 640) < 20 and rect['h'] < 720 * 0.065, rect)
+        ok('and not over the MUSICAL BINGO title', rect and not rect['overlap'], rect)
         time.sleep(8.6)
         ok('gone after eight seconds', r.ask(sid, '!document.getElementById("audioWarn")') is True)
     finally:

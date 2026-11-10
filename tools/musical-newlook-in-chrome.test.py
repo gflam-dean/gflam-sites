@@ -380,7 +380,7 @@ PHONE_PROBE = r'''(function(){
   if(view && view.id==="vCard"){
     var cs=[].slice.call(document.querySelectorAll("#cardGrid .cc"));
     o.cells=cs.map(function(c){ var t=c.querySelector(".ct")||c, tb=t.getBoundingClientRect(), cb=c.getBoundingClientRect(), s=getComputedStyle(c), a=getComputedStyle(c,"::after");
-      return { r:[cb.left,cb.top,cb.right,cb.bottom], t:[tb.left,tb.top,tb.right,tb.bottom], txt:t.textContent, fs:parseFloat(s.fontSize), daub:c.classList.contains("daub"), free:c.classList.contains("free"), bc:s.borderTopColor, bg:s.backgroundColor, col:s.color, bs:s.borderTopStyle, tick:a.content!=="none"&&a.content!=="" ? [cb.right-parseFloat(a.right)-parseFloat(c.clientLeft||0)-parseFloat(a.width), cb.top+parseFloat(a.top)+c.clientTop, cb.right-parseFloat(a.right)-c.clientLeft, cb.top+parseFloat(a.top)+c.clientTop+parseFloat(a.height)] : null, sw:t.scrollWidth, cw:t.clientWidth, lines:Math.round(tb.height/(parseFloat(s.fontSize)*1.08)) }; });
+      return { r:[cb.left,cb.top,cb.right,cb.bottom], t:[tb.left,tb.top,tb.right,tb.bottom], txt:t.textContent, fs:parseFloat(s.fontSize), daub:c.classList.contains("daub"), free:c.classList.contains("free"), bc:s.borderTopColor, bg:s.backgroundColor, col:s.color, bs:s.borderTopStyle, tick:a.content!=="none"&&a.content!==""&&a.display!=="none" ? [cb.right-parseFloat(a.right)-parseFloat(c.clientLeft||0)-parseFloat(a.width), cb.top+parseFloat(a.top)+c.clientTop, cb.right-parseFloat(a.right)-c.clientLeft, cb.top+parseFloat(a.top)+c.clientTop+parseFloat(a.height)] : null, sw:t.scrollWidth, cw:t.clientWidth, lines:Math.round(tb.height/(parseFloat(s.fontSize)*1.08)) }; });
     var b=document.getElementById("bingoBtn"); o.btn={ r:R(b), text:b.textContent, faint:b.classList.contains("faint"), dis:b.disabled, bg:getComputedStyle(b).backgroundColor, rad:getComputedStyle(b).borderTopLeftRadius };
     o.note=vis(document.getElementById("bingoNote"))?document.getElementById("bingoNote").textContent:"";
     o.hl=[].map.call(document.querySelectorAll("#cardWrap .hl"),function(e){ return { r:R(e), need:e.classList.contains("need"), bs:getComputedStyle(e).borderTopStyle }; });
@@ -492,13 +492,15 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         if len(C) == 25:
             gx = [C[i + 1]['r'][0] - C[i]['r'][2] for i in range(4)]; gy = [C[(i + 1) * 5]['r'][1] - C[i * 5]['r'][3] for i in range(4)]
             ok('%s card: even 8px gaps across and down' % tag, all(abs(g - 8) <= 1 for g in gx + gy), [gx, gy])
-            ok('%s card: 16px sides' % tag, abs(C[0]['r'][0] - 16) <= 1 and abs(375 - C[4]['r'][2] - 16) <= 1, [C[0]['r'][0], C[4]['r'][2]])
+            aw = float(P.js('parseFloat(document.getElementById("cardGrid").style.getPropertyValue("--aw")||"1")') or 1)
+            # 10 Nov 2026: a card that cannot hold 15px on the screen's width is made wider (aw) and swiped; its right edge is then off screen
+            ok('%s card: 16px sides (the card %sx the screen\'s width)' % (tag, aw), abs(C[0]['r'][0] - 16) <= 1 and abs((C[4]['r'][2] - 16) - (375 - 32) * aw) <= 2, [C[0]['r'][0], C[4]['r'][2], aw])
             hs = [c['r'][3] - c['r'][1] for c in C]
             ok('%s card: every tile at least 64px tall, all the same' % tag, min(hs) >= 64 and max(hs) - min(hs) <= 1, [min(hs), max(hs)])
             ok('%s card: every title inside its tile, never cut' % tag, all(c['free'] or (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1) for c in C), [c['txt'] for c in C if not c['free'] and not (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1)])
-            ww = [c for c in C if c['txt'].replace('­', '') == 'Wonderwall'][0]
-            ok('%s card: a long word breaks once, with a hyphen, where it cannot fit whole (Wonder-wall)' % tag, ww['txt'].count('­') == 1 and ww['txt'].index('­') == 6, repr(ww['txt']))
-            ok('%s card: titles from 20px down, and no song under 11px' % tag, max(c['fs'] for c in C if not c['free']) <= 20 and min(c['fs'] for c in C if not c['free']) >= 11, sorted(c['fs'] for c in C if not c['free'])[:4])
+            ww = [c for c in C if c['txt'] == 'Wonderwall'][0]
+            ok('%s card: no hyphen anywhere, ever (Dean, 10 Nov 2026): Wonderwall whole' % tag, not any('­' in c['txt'] for c in C) and ww['txt'] == 'Wonderwall', repr(ww['txt']))
+            ok('%s card: one size for every title and Free, 15px to 20px' % tag, len(set(c['fs'] for c in C)) == 1 and 15 <= C[0]['fs'] <= 20, sorted(set(c['fs'] for c in C)))
             ok('%s card: Free in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
         bt = cd.get('btn') or {}
         ok('%s card: the claim is a pink pill saying the pattern, "I\'ve got a line", faint before the marks make a line' % tag, bt.get('text') == "I've got a line" and bt.get('faint') is True and float((bt.get('rad') or '0px').replace('px', '')) >= 28, bt)
@@ -524,15 +526,15 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         ok('%s card: a marked song: pink edge, a tick in its own corner, the title clear of the tick' % tag,
            len(mk) == 8 and all(c['bc'] == 'rgb(255, 31, 142)' and c['tick'] and apart(c['t'], c['tick']) for c in mk), [(c['txt'], c['bc'], c['tick'], c['t']) for c in mk if not (c['bc'] == 'rgb(255, 31, 142)' and c['tick'] and apart(c['t'], c['tick']))])
         fr = C[12] if len(C) == 25 else {}
-        ok('%s card: the FREE square looks exactly like a marked one: the same fill, solid pink border, the same text colour and the pink tick (Dean, 4 Nov 2026)' % tag,
-           bool(mk) and fr.get('free') and fr.get('bg') == mk[0]['bg'] == 'rgb(43, 13, 29)' and fr.get('bc') == 'rgb(255, 31, 142)' and fr.get('bs') == 'solid' and fr.get('col') == mk[0]['col'] == 'rgb(255, 255, 255)' and bool(fr.get('tick')),
+        ok('%s card: the FREE square has its own look, never a marked one\'s: solid gold, near-black words, no tick (Dean, 4 Nov and 10 Nov 2026)' % tag,
+           bool(mk) and fr.get('free') and fr.get('bg') == 'rgb(255, 194, 75)' and fr.get('bg') != mk[0]['bg'] and fr.get('col') == 'rgb(10, 10, 11)' and not fr.get('tick') and mk[0]['bg'] == 'rgb(43, 13, 29)',
            [{k: fr.get(k) for k in ('bg', 'bc', 'bs', 'col', 'tick')}, {k: (mk[0] if mk else {}).get(k) for k in ('bg', 'col')}])
         P.js('document.body.classList.add("light")'); time.sleep(0.3)
         kl = pp(P) or {}
         P.js('document.body.classList.remove("light")'); time.sleep(0.3)
         CL = kl.get('cells') or []; mkl = [c for c in CL if c['daub'] and not c['free']]; frl = CL[12] if len(CL) == 25 else {}
-        ok('%s card: on the light screen the FREE square matches a marked one too (fill, border, text, tick)' % tag,
-           bool(mkl) and frl.get('bg') == mkl[0]['bg'] == 'rgb(255, 227, 240)' and frl.get('bc') == mkl[0]['bc'] and frl.get('col') == mkl[0]['col'] and bool(frl.get('tick')),
+        ok('%s card: on the light screen the FREE square is gold too, never a marked square\'s pink' % tag,
+           bool(mkl) and frl.get('bg') == 'rgb(255, 194, 75)' and mkl[0]['bg'] == 'rgb(255, 227, 240)' and not frl.get('tick'),
            [{k: frl.get(k) for k in ('bg', 'bc', 'col', 'tick')}, {k: (mkl[0] if mkl else {}).get(k) for k in ('bg', 'bc', 'col')}])
         ok('%s card: still faint with the middle row one short' % tag, (k.get('btn') or {}).get('faint') is True, k.get('btn'))
         P.js('(function(){ var c=[].filter.call(document.querySelectorAll("#cardGrid .cc"),function(x){ return (x.textContent||"").replace(/\\u00AD/g,"")==="The Horses"; })[0]; c.click(); return 1; })()'); time.sleep(0.4)

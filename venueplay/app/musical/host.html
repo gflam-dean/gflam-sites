@@ -119,7 +119,7 @@
   /* Every live control is at least 44px tall so a thumb finds it without looking. */
   #liveBlock .btn{min-height:44px}
   /* Claims: the one moment the host must not miss. The newest card pulses three times and the
-     header says how many are waiting, so two people shouting BINGO at once both get seen. */
+     header says how many are waiting, so two people claiming at once both get seen. */
   .claimnote{font-size:13px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:10px;padding:10px 12px;margin-top:8px;line-height:1.45}
   .claimcard .resolve .btn{min-height:52px;font-size:15px}
   .claimcard.fresh{animation:claimpulse 1.1s ease-in-out 3}
@@ -243,6 +243,9 @@
   .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
   .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
   .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+  /* THE CARRY-ON CHOICE (Dean, 10 Nov 2026: "jump straight to full house"): this console only, outside the shared block */
+  .carrypats{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+  .carrypats .btn,.carryend.carryend{min-height:48px;font-size:15px;width:100%}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
@@ -430,7 +433,7 @@
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
 
           <div id="paperCheck" class="hidden" style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px">
-            <label for="paperNo" style="display:block;font-size:13px;margin-bottom:8px">Someone calling BINGO on a paper card? Type its card number.</label>
+            <label for="paperNo" style="display:block;font-size:13px;margin-bottom:8px">Someone claiming on a paper card? Type its card number.</label>
             <div style="display:flex;gap:8px">
               <input type="text" id="paperNo" inputmode="numeric" placeholder="Card number" style="flex:1;min-height:44px">
               <button type="button" class="btn ghost" id="paperCheckBtn" style="flex:0 0 auto">Check card</button>
@@ -461,7 +464,7 @@
         </div>
         <div class="panel">
           <div class="lbl">How it runs</div>
-          <p class="note" style="line-height:1.6">Tap <b style="color:var(--pink)">Play</b>. The clip plays through the TV and players mark the matching square by ear. If a song has no clip, play it yourself through your sound system and tap <b style="color:var(--pink)">Call it</b>. First to complete the pattern hits BINGO and lands in your claims list; you confirm it, and the winner shows their card to you.</p>
+          <p class="note" style="line-height:1.6">Tap <b style="color:var(--pink)">Play</b>. The clip plays through the TV and players mark the matching square by ear. If a song has no clip, play it yourself through your sound system and tap <b style="color:var(--pink)">Call it</b>. First to complete the pattern makes a claim and lands in your claims list; you confirm it, and the winner shows their card to you.</p>
         </div>
       </div>
 
@@ -503,10 +506,8 @@
     <div class="vp-copy" id="carryBody" style="color:var(--muted);margin-bottom:14px"></div>
     <label style="font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px">Prize for the next round</label>
     <input type="text" id="carryPrize" placeholder="e.g. $50 bar tab" style="width:100%;margin-bottom:16px">
-    <div class="vp-row">
-      <button type="button" id="carryGo" class="btn pink big vp-grow">Carry on</button>
-      <button type="button" id="carryEnd" class="btn ghost big vp-auto">End game</button>
-    </div>
+    <div id="carryPats" class="carrypats"></div>
+    <button type="button" id="carryEnd" class="btn ghost big carryend">End game</button>
   </div>
 </div>
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
@@ -1010,7 +1011,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         G.nowSong=_last ? (G.byId[_last.song_id]||G.byTitle[normTitle(_last.title)]||findSong(_last.title)) : null;
         G.hostNow=G.nowSong;
         G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
-        G.won=false; clearClaims(); G.status="running"; endBtnHold(false);
+        G.won=false; clearClaims(); G.status="running"; G._nextPat=""; G._nextPats=[]; endBtnHold(false);
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel
         VP_HOLD.release($("playNextBtn")); $("playNextBtn").disabled=false; syncPlayBtn();
         $("statusText").textContent="Recovered your live game";
@@ -1354,6 +1355,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   function renderConsole(){
+    try{ syncCarry(); }catch(e){}
     try{ renderPaper(); }catch(e){}
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
@@ -1492,12 +1494,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var n=G.claims.length;
     if(!n){
       if(head) head.textContent="Claims";
-      q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out against the songs played, it lands here for you to confirm.</div>';
+      q.innerHTML='<div class="claimempty">No claims yet. When a player claims and the pattern checks out against the songs played, it lands here for you to confirm.</div>';
       return;
     }
     if(head) head.textContent = (n===1) ? "1 claim on this song" : (n+" claims on this song");
     var html="";
-    if(n>1) html+='<div class="claimnote">'+n+' players hit BINGO on the same song. They are listed in the order they got in. Confirm one of them, or confirm all '+n+' and split the prize.</div>';
+    if(n>1) html+='<div class="claimnote">'+n+' players claimed on the same song. They are listed in the order they got in. Confirm one of them, or confirm all '+n+' and split the prize.</div>';
     for(var i=0;i<n;i++){
       var c=G.claims[i];
       html+='<div class="claimcard'+((fresh && i===n-1)?' fresh':'')+'"><div class="top"><span class="cn">'+(n>1?((i+1)+'. '):'')+esc(c.name)+'</span>'+
@@ -1712,6 +1714,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var gid=G.gameId;
     postMusicReport(gid);
     G.status="setup"; clearClaims(); G.won=false; G.nowSong=null; G.hostNow=null; G.gameId="";
+    G._nextPat=""; G._nextPats=[]; $("carryModal").classList.add("hidden");
     stopAudio();
     bcast({ t:"idle" });   // screen returns to the join/lobby state
     sendState();
@@ -1757,6 +1760,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
   // prize (one line -> two lines -> full house). A full house is the end, so no carry-on from there.
   function nextPat(cur){ return cur==="one"?"two":cur==="two"?"full":""; }
+  /* What the host may play for next (Dean, 10 Nov 2026: "jump straight to full house"): after one line,
+     two lines or a full house; after two lines, a full house. Four corners and a full house end the game. */
+  function nextPatOptions(cur){ return cur==="one"?["two","full"]:cur==="two"?["full"]:[]; }
+  var CARRY_LABELS={two:"Two lines",full:"Full house"};
+  /* THE CARRY-ON BOX ONLY EXISTS WHILE A WIN IS WAITING FOR A DECISION (10 Nov 2026, Test Charlie: "Audit
+     Two won!" stayed over the setup page after End game). Only endGameNow() ever hid it; the two-tap End
+     game (endGameAsked), a restore/pick-up and a new game left it, and G._nextPat, standing. So this is
+     called from renderConsole() as well: not running, or nothing pending, and the box is down. */
+  function syncCarry(){
+    var m=$("carryModal"); if(!m) return;
+    if(G.status!=="running" || !G._nextPat){ G._nextPat=""; G._nextPats=[]; m.classList.add("hidden"); }
+  }
   function joinNames(list){
     if(list.length<=1) return list[0]||"Player";
     return list.slice(0,-1).join(", ")+" and "+list[list.length-1];
@@ -1767,14 +1782,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var names=winners.map(function(w){ return w.name||"Player"; });
     var pids=winners.map(function(w){ return w.pid; });
     var cards=winners.map(function(w){ return String(w.cardNo||"000"); });
-    var np=nextPat(G.pattern);
+    var np=nextPat(G.pattern), opts=nextPatOptions(G.pattern);
     G.prizesWon.push({ pattern:PATTERN_NAMES[G.pattern]||G.pattern, prize:G.prize, winner_name:joinNames(names), card_no:cards.join(", "), shared:winners.length>1, songs:G.playedOrder.length });
     // celebrate on the TV + phones. pid/name/cardNo stay for older phones; pids/names carry a split.
     bcast({ t:"winner", pid:pids[0], name:joinNames(names), cardNo:cards.join(", "), pids:pids, names:names, cardNos:cards, split:(winners.length>1) });
-    if(np){
-      G._nextPat=np;
+    if(np && G.status==="running"){
+      G._nextPat=np; G._nextPats=opts;
+      var _pb=""; for(var oi=0;oi<opts.length;oi++) _pb+='<button type="button" class="btn pink big" data-carrypat="'+opts[oi]+'">'+esc(CARRY_LABELS[opts[oi]]||PATTERN_NAMES[opts[oi]]||opts[oi])+'</button>';
+      $("carryPats").innerHTML=_pb;
       $("carryTitle").innerHTML="&#127881; "+esc(joinNames(names))+" won!";
-      $("carryBody").innerHTML=(winners.length>1?"They split <b>":"They took <b>")+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going for <b>"+esc(PATTERN_NAMES[np]||np)+"</b> with a new prize, or end the game.";
+      $("carryBody").innerHTML=(winners.length>1?"They split <b>":"They took <b>")+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going: pick what to play for next and set its prize, or end the game.";
       $("carryPrize").value="";
       if(window.VPSetupUse && G.setupPrefs){   // the next round's prize from the setup wizard, if they saved one
         var _rr=VPSetupUse.round(localStorage, G.venueId, "musical"); _rr.next();
@@ -1783,7 +1800,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       }
       $("carryModal").classList.remove("hidden");
       stopAudio();   // pause the music between rounds
-    } else {
+    } else if(!np){
       /* The game is over, but DO NOT end it in this tick: endGameNow() broadcasts idle, which
          the screen handles by clearing the winner and returning to the lobby. Called here it
          wiped the winner card milliseconds after it appeared. Wait for the screen's own
@@ -1856,7 +1873,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     endBtnHold(true);
     endBtnReset();   // a game ended another way (full house, the carry-on modal) leaves no armed End game behind
     postMusicReport(G.gameId);
-    G.won=true; G.status="setup"; clearMusic(); stopAudio();
+    G.won=true; G.status="setup"; clearMusic(); stopAudio(); G._nextPat=""; G._nextPats=[];
     $("carryModal").classList.add("hidden");
     /* Tell the room. endGame() broadcasts idle and resends state; this path did neither, so on a
        full-house win (or "End game" from the carry-on modal) the console went back to setup while
@@ -1869,12 +1886,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     renderConsole();   // back to setup for the next game
     fillRoundPrize();  // and the next round's prize, from the setup wizard
   }
-  function carryOn(){
-    if(!G._nextPat || G.busy) return;
+  function carryOn(pat){
+    if(!G._nextPat || G.busy || G.status!=="running") return;
+    var np=(G._nextPats||[]).indexOf(pat)>=0 ? pat : "";
+    if(!np) return;
     clearErrForAction();
-    var np=G._nextPat, newPrize=($("carryPrize").value||"").trim()||G.prize; G.busy=true;
+    var newPrize=($("carryPrize").value||"").trim()||G.prize; G.busy=true;
     apiPost("/host/game/pattern",{ game_id:G.gameId, pattern:np, prize:newPrize }).then(function(){
       G.pattern=np; G.prize=newPrize; G.status="running"; G.won=false; clearClaims();
+      G._nextPat=""; G._nextPats=[];
       $("carryModal").classList.add("hidden");
       bcast({ t:"carryon", pattern:G.pattern, prize:G.prize, played:playedArray() });   // phones + TV resume on the new pattern/prize
       saveMusic();
@@ -2469,7 +2489,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     else if(act==="confirmall") hostConfirmAll();
     else hostReject(idx);
   });
-  $("carryGo").addEventListener("click", carryOn);
+  $("carryPats").addEventListener("click", function(e){
+    var b=e.target && e.target.closest && e.target.closest("[data-carrypat]");
+    if(b) carryOn(b.getAttribute("data-carrypat"));
+  });
   $("carryEnd").addEventListener("click", endGameNow);
 
   // ---- boot: resolve the host login, load the library, then pair + run ----
