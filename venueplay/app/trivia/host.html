@@ -1672,14 +1672,6 @@
     return Promise.resolve();
   }
 
-  // ---- incoming (screen presence on the pairing channel; player join + answer on the
-  //      game channel; both flow through onMsg) ----
-  function onMsg(m){
-    if(!m||!m.t) return;
-    /* Another console's heartbeat. Never acted on by itself (anybody can send one): it only makes
-       this console ask the Worker whether its quiz was picked up elsewhere (/app/vp-pickup.js). */
-    if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
-
   /* WHAT IS ON RIGHT NOW, SENT TO SOMEBODY WHO MISSED IT.
      The big screen has had this since the day it sat on a join QR through a live question.
      A PHONE never did, and a phone misses far more often: iOS throws away a backgrounded
@@ -1728,6 +1720,15 @@
       else if(G.finale.phones) to({ t:"podium", top:G.board.slice(0,3), rows:G.board });   // a phone hears how it placed only once the TV has said
     }
   }
+
+  // ---- incoming (screen presence on the pairing channel; player join + answer on the
+  //      game channel; both flow through onMsg) ----
+  function onMsg(m){
+    if(!m||!m.t) return;
+    /* Another console's heartbeat. Never acted on by itself (anybody can send one): it only makes
+       this console ask the Worker whether its quiz was picked up elsewhere (/app/vp-pickup.js). */
+    if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
+
     if(m.t==="tv_here"){
       $("statusDot").classList.add("on"); $("statusText").textContent="TV connected"; tvHint(false);
       /* The TV says whether its sound could play (the time's-up buzzer). Blocked: one line under the switch. */

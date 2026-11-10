@@ -183,7 +183,7 @@ print('\n== 3. only trivia phones are trivia teams, and two of one name are told
 (function () {
   var G = { players: {}, order: [], status: 'lobby', roundType: 'trivia' }, gs = [], bc = [];
   var f = new Function('G', 'gsend', 'send', 'bcast', 'renderJoinCounts', 'playerCount', '$',
-    liftAll(HOSTP, ['onMsg', 'uniqueTeamName'], 'trivia/host.html') + '; return onMsg;');
+    liftAll(HOSTP, ['onMsg', 'replayState', 'uniqueTeamName'], 'trivia/host.html') + '; return onMsg;');
   var onMsg = f(G, function (o) { gs.push(o); }, function () {}, function (o) { bc.push(o); }, function () {}, function () { return G.order.length; },
     function () { return { classList: { add: function () {} }, textContent: '' }; });
   onMsg({ t: 'join', pid: 'bingo1', name: 'Bingo Betty', cards: 1 });
