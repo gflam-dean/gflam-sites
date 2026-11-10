@@ -53,9 +53,10 @@ show('the draw looks never call the fanfare', !/fanfare/i.test(MOD));
 
 print('\n== 5. the winner is the server\'s ==');
 show('the stage holds on the last near miss until a pick arrives', /freezeT/.test(MOD) && /!st\.picked && raw > freeze/.test(MOD));
-show('the winner item shows no number until picked', /i === N && !st\.picked/.test(MOD));
-show('the raffle host sends t:"pick" with the server ticket as soon as the API answers', /function sendPick\(r\)/.test(RH) && /sendPick\(r\); return wait/.test(RH));
+show('the winner item shows no number until picked', /var show = \(i === N && !st\.picked\) \? "" : items\[i\]\.no;/.test(MOD) && /if \(i === N && !st\.picked\) return " ";/.test(MOD));
+show('the raffle host sends t:"pick" with the server ticket as soon as the API answers', /function sendPick\(r\)/.test(RH) && (RH.match(/sendPick\(r\); return wait/g) || []).length === 2);
 show('the members host sends t:"pick" the same way', /t:"pick", number:r\.member_number, name:r\.winner_name/.test(MH));
+show('the raffle TV shows the look when the draw names one, and the members TV too', /if\(styleOn\(\)\)\{ stopSpin\(\); showLayer\("tvStyle"\); makeStage\(\)\.start\(\)/.test(RS) && /if\(styleOn\(\) && state\.kind!=="entries"\) showStyleDrawing\(\)/.test(MS));
 show('the raffle TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(RS) && /setPick\(\{ number:S\.pick \}\)/.test(RS));
 show('the members TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(MS) && /styleStage\.setPick\(state\.pick\)/.test(MS));
 
@@ -66,12 +67,17 @@ show('"As now" is the first chip on both consoles', /data-style="">As now/.test(
 show('raffle offers ticket roll and race plate; members flip board and race plate', /data-style="ticket">Ticket roll/.test(RH) && /data-style="race">Race plate/.test(RH) && /data-style="flip">Flip board/.test(MH) && /data-style="race">Race plate/.test(MH));
 show('several winning tickets keep the old draw', /!\(G\.winnersCount>1\)/.test(RH));
 show('a look is only sent with the draw when one is chosen', /if\(styleKey\(\)\)\{ m\.style=styleKey\(\)/.test(RH) && /if\(styled\)\{ dm\.style=G\.drawStyle/.test(MH));
-show('the TVs only take the known looks', /m\.style==="ticket"\|\|m\.style==="race"/.test(RS) && /m\.style==="flip"\|\|m\.style==="race"/.test(MS));
+show('the TVs only take the known looks', /m\.style==="ticket"\|\|m\.style==="race"\) \? m\.style : ""/.test(RS) && /m\.style==="flip"\|\|m\.style==="race"\) \? m\.style : ""/.test(MS));
 show('the draw time is 6 / 9 / 12 on the chips', /Short, 6 seconds/.test(RH) && /Normal, 9 seconds/.test(RH) && /Long, 12 seconds/.test(RH) && /Long, 12 seconds/.test(MH));
-show('the Worker accepts only the known raffle looks and times', /draw_style:\s+\(v\) => \(\['', 'ticket', 'race'\]/.test(WK) && /draw_time:\s+\(v\) => \(\['short', 'normal', 'long'\]/.test(WK));
+show('the Worker accepts only the known raffle looks and times', /draw_style:\s+\(v\) => \(\['', 'ticket', 'race'\]/.test(WK) && (WK.match(/draw_time:\s+\(v\) => \(\['short', 'normal', 'long'\]\.indexOf\(v\) >= 0 \? v : undefined\)/g) || []).length === 2);
 show('the Worker accepts only the known members looks', /draw_style:\s+\(v\) => \(\['', 'flip', 'race'\]/.test(WK));
 show('the members console saves a look only once one has been chosen or loaded', /if\(G\.lookSet\)\{ p\.draw_style/.test(MH));
 show('the win ends the stage on the claim clock, and a claim or idle takes it down', /destroyStyle\(\)/.test(RS) && /if\(which!=="tvStyle"\) destroyStyle\(\)/.test(RS) && /function hideAll\(\)\{ stopClaimCd\(\); destroyStyle\(\)/.test(MS));
+
+print('\n== 6b. start and end show on a new-look draw ==');
+show('a screen that hears a draw look switches its own end show on (?endshow=0 still wins)', /enable:function\(\)\{ if\(!\/\[\?&\]endshow=0[^}]*ON=true; window\.VPEndShow\.on=true;/.test(readFile('venueplay/app/vp-endshow.js')));
+show('the raffle and members TVs call it only when a look was chosen', /if\(S\.styleKey && window\.VPEndShow && VPEndShow\.enable\) VPEndShow\.enable\(\)/.test(RS) && /if\(state\.styleKey && window\.VPEndShow && VPEndShow\.enable\) VPEndShow\.enable\(\)/.test(MS));
+show('the start show stays on by default for every game (on unless ?sting=0)', /var ON = !\/\[\?&\]sting=0/.test(readFile('venueplay/app/vp-sting.js')));
 
 print('\n== 7. older TVs and the house words ==');
 show('the draw looks file is ES5 (no arrow, const, let, template string)', !/=>|\bconst |\blet |`/.test(MOD.replace(/\/\*[\s\S]*?\*\//g, '')));

@@ -753,7 +753,8 @@
       // Arriving during the redraw notice is the NORMAL path: renderDrawing cancels the notice's
       // own fallback timer, so the spin starts once, here.
       S.phase="drawing";
-      S.styleKey=(m.style==="ticket"||m.style==="race") ? m.style : ""; S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
+      S.styleKey=(m.style==="ticket"||m.style==="race") ? m.style : "";
+      if(S.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026) S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
       renderDrawing();
     }
     else if(m.t==="pick"){ if(styleOn() && Array.isArray(m.numbers) && m.numbers.length===1){ S.pick=m.numbers[0]; if(S.stage) S.stage.setPick({ number:S.pick }); } }

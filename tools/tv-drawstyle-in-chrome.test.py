@@ -76,6 +76,7 @@ def ticket():
         says(r, s, [{'t': 'state', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 150}])
         says(r, s, [{'t': 'drawing', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 150, 'spinSecs': 7.2, 'style': 'ticket', 'drawSecs': 6}])
         ok('the new look is up and the old drawing card is not', r.until(s, vis('tvStyle'), 5) is True and r.ask(s, vis('tvDraw')) is False, r.ask(s, vis('tvDraw')))
+        ok('the end show is on for a new-look draw', r.ask(s, 'VPEndShow.on') is True, r.ask(s, 'VPEndShow.on'))
         ok('the roll is paper tickets', (r.ask(s, 'document.querySelectorAll("#tvStyleHost .vpds-tk").length') or 0) >= 5)
         ok('the prize is named', 'Meat tray' in (r.ask(s, STAGE_TEXT) or ''), r.ask(s, STAGE_TEXT))
         time.sleep(8.5)
@@ -159,6 +160,7 @@ def old_look():
             says(r, s, [drawing])
             ok(path + ': the old drawing card shows and the new stage was never made', r.until(s, vis('tvDraw'), 4) is True and r.ask(s, vis('tvStyle')) is False and r.ask(s, 'window.__vpdsLast') is None)
             says(r, s, [winner])
+            ok(path + ': the end show stays as it was (off) for a venue with no look', r.ask(s, 'VPEndShow.on') is False, r.ask(s, 'VPEndShow.on'))
             ok(path + ': the old winner card shows', r.until(s, vis('tvWin'), 4) is True and r.ask(s, vis('tvStyle')) is False)
             ok(path + ': an unknown look is the old look too', True if says(r, s, [dict(drawing, style='bogus')]) is not None and r.until(s, vis('tvDraw'), 4) is True and r.ask(s, 'window.__vpdsLast') is None else False)
     finally:
