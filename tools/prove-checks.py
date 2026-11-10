@@ -12091,7 +12091,7 @@ MUTATIONS = [
      'Three big nights in a row and we adjust your plan to fit, at $1 a player.</p>',
      'note 18: the extra-player line promises a number the billing rules do not charge'),
     ('offer-page-start-first.test.py', 'venueplay/nsw.html',
-     'Venues that join before <span class="vpc-date">30 November 2026</span> lock in',
+     'Venues that join before <span class="vpc-date">31 December 2026</span> lock in',
      'Sign in by <span class="vpc-date">30 November 2026</span> and lock in',
      'the page carries the first sign-in deadline, which Dean keeps for the emails only'),
     ('offer-page-start-first.test.py', 'venueplay/nsw.html',
