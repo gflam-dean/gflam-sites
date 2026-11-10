@@ -320,7 +320,26 @@
                  them draws exactly as it always has (prizes in the order on the list, no prize card before a draw). -->
             <label class="check"><input type="checkbox" id="rfPickOrder"> Let me choose which prize to draw next</label>
             <label class="check"><input type="checkbox" id="rfAnnounce"> Show each prize on the TV before its draw</label>
-            <div class="field">
+            <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026): the TV's draw as a ticket roll or a race plate, and how long it
+                 builds (short 6, normal 9, long 12 seconds). "As now" is what every venue has today and stays lit until the venue
+                 picks another. Silent for now. -->
+            <div class="field2" id="styleField">
+              <span class="flab">How the draw looks on the TV<small>Ticket roll is a paper raffle roll. Race plate suits racing and footy rooms. As now is the draw you have today.</small></span>
+              <div class="chips" id="styleChips">
+                <button type="button" data-style="">As now</button>
+                <button type="button" data-style="ticket">Ticket roll</button>
+                <button type="button" data-style="race">Race plate</button>
+              </div>
+            </div>
+            <div class="field2" id="timeField">
+              <span class="flab">How long the draw takes</span>
+              <div class="chips" id="timeChips">
+                <button type="button" data-dt="short">Short, 6 seconds</button>
+                <button type="button" data-dt="normal">Normal, 9 seconds</button>
+                <button type="button" data-dt="long">Long, 12 seconds</button>
+              </div>
+            </div>
+            <div class="field" id="drawLenField">
               <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
                 <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
               </button>
@@ -386,6 +405,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-drawrecord.js"></script>
+<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: ticket roll, race plate; only its draw times are read here -->
 <script>
 (function(){
   "use strict";
@@ -445,7 +465,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null, ticketsFrom:"" };   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"", drawStyle:"", drawTime:"normal" };   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -737,6 +757,8 @@
     parts.push(G.jackOn ? ("cash jackpot "+(isNaN(G.jackAmt)?"not set":money(G.jackAmt))) : "no cash jackpot");
     if(pickOrder()) parts.push("you choose the next prize");
     if(announcing()) parts.push("each prize shown first");
+    if(G.drawStyle==="ticket") parts.push("ticket roll draw"); else if(G.drawStyle==="race") parts.push("race plate draw");
+    if(G.drawStyle && G.drawTime!=="normal") parts.push(G.drawTime+" draw");
     var t=parts.join(", "); el.textContent=t.charAt(0).toUpperCase()+t.slice(1);
   }
   function renderSkipLine(){
@@ -1026,7 +1048,13 @@
     send(m);
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
-  function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:G.drawLength }); }
+  /* THE DRAW LOOK (10 Nov 2026). A draw of more than one winning ticket keeps the draw every venue has always had; so does "As now".
+     A new look builds for INTRO + the draw time, and the TV is told the winner (t:"pick") the moment the server has it. */
+  function styleKey(){ return (G.drawStyle==="ticket" || G.drawStyle==="race") && !(G.winnersCount>1) ? G.drawStyle : ""; }
+  function drawSecsNow(){ return window.VPDrawStyle ? VPDrawStyle.secs(G.drawTime) : 9; }
+  function drawMs(){ return styleKey() ? Math.round((drawSecsNow()+(window.VPDrawStyle ? VPDrawStyle.INTRO : 1.2))*1000) : Math.max(1200, G.drawLength*1000); }
+  function sendPick(r){ if(styleKey() && r && r.tickets && r.tickets.length===1) send({ t:"pick", numbers:[r.tickets[0]], pad:padWidth(), min:G.min, max:G.max }); }
+  function sendDrawing(){ var m={ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:(styleKey() ? drawMs()/1000 : G.drawLength) }; if(styleKey()){ m.style=styleKey(); m.drawSecs=drawSecsNow(); } send(m); }
   /* HOW LONG THE WALL CELEBRATES A CLAIM, and how long it announces a redraw before the next spin.
      Both MUST match screen.html (renderClaimed celebrates for CLAIM_CELEBRATE_MS; the redraw card
      shows for REDRAW_NOTICE_MS). The console used to send idle 9 seconds after a claim while the
@@ -1223,10 +1251,10 @@
     if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); }, ann); } else { sendDrawing(); }
     startLocalSpin();
 
-    var wait=new Promise(function(res){ setTimeout(res, ann + Math.max(1200, G.drawLength*1000)); });
+    var wait=new Promise(function(res){ setTimeout(res, ann + drawMs()); });
     ensureRaffleGame()
       .then(function(){ return apiPost("/host/draw", drawBody()); })
-      .then(function(r){ return wait.then(function(){ return r; }); })
+      .then(function(r){ sendPick(r); return wait.then(function(){ return r; }); })
       .then(function(r){ revealServer(r); })
       .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
@@ -1367,10 +1395,10 @@
 
     G.busy=true; drawBtnBusy(); startLocalSpin();
     setTimeout(function(){ if(G.busy) sendDrawing(); }, REDRAW_NOTICE_MS);
-    var wait=new Promise(function(res){ setTimeout(res, REDRAW_NOTICE_MS + Math.max(1200, G.drawLength*1000)); });
+    var wait=new Promise(function(res){ setTimeout(res, REDRAW_NOTICE_MS + drawMs()); });
     var body=drawBody(); body.redraw_of_seq=seq;
     apiPost("/host/draw", body)
-      .then(function(r){ return wait.then(function(){ return r; }); })
+      .then(function(r){ sendPick(r); return wait.then(function(){ return r; }); })
       .then(function(r){ revealServer(r); })
       .catch(function(e){ stopSpin(); G.busy=false; drawBtnNext(); hostError(e.message||"Redraw failed"); sendIdle(); });
   }
@@ -1562,6 +1590,16 @@
     else if(b.hasAttribute("data-down")) moveP(parseInt(b.getAttribute("data-down"),10), 1);
     else if(b.hasAttribute("data-rm")) removePrize(parseInt(b.getAttribute("data-rm"),10));
   });
+  function renderLook(){
+    var b=document.querySelectorAll("#styleChips button"), i;
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-style")===G.drawStyle);
+    b=document.querySelectorAll("#timeChips button");
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-dt")===G.drawTime);
+    show("timeField", !!G.drawStyle); show("drawLenField", !G.drawStyle); renderAdvSum();
+  }
+  $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); renderLook(); queueRafflePrefs(); });
+  $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); renderLook(); queueRafflePrefs(); });
+  renderLook();
   $("fromPick").addEventListener("click", function(e){
     var b=e.target.closest("button[data-from]"); if(!b) return;
     var v=b.getAttribute("data-from"); G.ticketsFrom=(G.ticketsFrom===v) ? "" : v;   // tapping the lit one again says nothing, as today
@@ -1610,6 +1648,7 @@
     if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
     if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
     p.pick_order=pickOrder(); p.announce_prize=announcing(); p.tickets_from=G.ticketsFrom||"";
+    p.draw_style=G.drawStyle||""; p.draw_time=G.drawTime||"normal";
     return p;
   }
   function applyRafflePrefs(p){
@@ -1625,6 +1664,9 @@
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
     var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
+    if(typeof p.draw_style==="string" && /^(|ticket|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style;
+    if(typeof p.draw_time==="string" && /^(short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
+    renderLook();
     if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
     if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();

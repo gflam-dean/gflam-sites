@@ -297,6 +297,24 @@
               <div class="note" id="setMaxHint" style="margin-top:4px">Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.</div>
               <div class="note hidden" id="capWarn" style="margin-top:4px;color:var(--roll)"></div>
             </div>
+            <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026), saved for the venue like the rest of the console's choices. "As now" is
+                 the draw every venue has today. Silent for now. -->
+            <div class="field2" id="styleField">
+              <span class="flab">How the draw looks on the TV<small>Flip board is a split-flap board with the winner's name on its own flap. Race plate suits racing and footy rooms. As now is the draw you have today.</small></span>
+              <div class="chips" id="styleChips">
+                <button type="button" data-style="">As now</button>
+                <button type="button" data-style="flip">Flip board</button>
+                <button type="button" data-style="race">Race plate</button>
+              </div>
+            </div>
+            <div class="field2" id="timeField">
+              <span class="flab">How long the draw takes</span>
+              <div class="chips" id="timeChips">
+                <button type="button" data-dt="short">Short, 6 seconds</button>
+                <button type="button" data-dt="normal">Normal, 9 seconds</button>
+                <button type="button" data-dt="long">Long, 12 seconds</button>
+              </div>
+            </div>
             <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
             <div class="lockline hidden" id="settingsLock">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
@@ -358,6 +376,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-drawrecord.js"></script>
+<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: flip board, race plate; only its draw times are read here -->
 <script>
 (function(){
   "use strict";
@@ -436,6 +455,7 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
+    drawStyle:"", drawTime:"normal",   // the TV draw look ("", "flip", "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
     round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null,
     lastResult:null   // the draw just paid or rolled over ({ won, name, amountCents, nextCents, capped }): step 3 until the host moves on
   };
@@ -829,15 +849,19 @@
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
-    var len=Math.max(2000, ((d.draw_length_seconds||4))*1000);
+    var styled=(G.drawStyle==="flip" || G.drawStyle==="race");
+    /* A new look builds for the intro plus the draw time (short 6, normal 9, long 12); "As now" keeps the draw's own length. */
+    var len=styled ? Math.round((VPDrawStyle.secs(G.drawTime)+VPDrawStyle.INTRO)*1000) : Math.max(2000, ((d.draw_length_seconds||4))*1000);
     var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
     var lo=nums.length?Math.min.apply(null,nums):0, hi=nums.length?Math.max.apply(null,nums):0;
     // minNumber/maxNumber let the TV spin through numbers that exist in this draw instead of 101 to 500 every week
-    send({ t:"drawing", drawName:d.name, minNumber:lo, maxNumber:hi, spinSecs:Math.round(len/1000) }); sendState();
+    var dm={ t:"drawing", drawName:d.name, minNumber:lo, maxNumber:hi, spinSecs:Math.round(len/1000) };
+    if(styled){ dm.style=G.drawStyle; dm.drawSecs=VPDrawStyle.secs(G.drawTime); }
+    send(dm); sendState();
 
     var wait=new Promise(function(res){ setTimeout(res, len); });
     apiPost("/host/members/draw", { draw_id:d.id, road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "members") : "supabase") })
-      .then(function(r){ return wait.then(function(){ return r; }); })
+      .then(function(r){ if(styled && r) send({ t:"pick", number:r.member_number, name:r.winner_name }); return wait.then(function(){ return r; }); })
       .then(function(r){ revealWinner(r); })
       .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
@@ -1211,9 +1235,24 @@
      comes first; the venue's last draw is next; then the first one. VP.gamePrefs in /app/vp-session.js. */
   function membersPrefs(){
     var id=G.currentDrawId;
-    return (id && id!=="__new" && /^[0-9a-f-]{36}$/i.test(id)) ? { draw_id:id } : {};
+    var p=(id && id!=="__new" && /^[0-9a-f-]{36}$/i.test(id)) ? { draw_id:id } : {};
+    if(G.lookSet){ p.draw_style=G.drawStyle||""; p.draw_time=G.drawTime||"normal"; }   // only once the venue has chosen (or loaded) a look: a console that never touched it saves nothing for it
+    return p;
   }
+  function renderLook(){
+    var b=document.querySelectorAll("#styleChips button"), i;
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-style")===G.drawStyle);
+    b=document.querySelectorAll("#timeChips button");
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-dt")===G.drawTime);
+    $("timeField").classList.toggle("hidden", !G.drawStyle);
+  }
+  $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
+  $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
+  renderLook();
   function applyMembersPrefs(p){
+    if(p && typeof p.draw_style==="string" && /^(|flip|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style, G.lookSet=true;
+    if(p && typeof p.draw_time==="string" && /^(short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
+    renderLook();
     if(!p || !p.draw_id || G.round || G.busy) return;
     var wd=todayWeekday().toLowerCase(), tonight=false, found=false;
     for(var i=0;i<G.draws.length;i++){

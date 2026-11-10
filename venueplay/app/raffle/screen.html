@@ -198,6 +198,13 @@
     <div class="strip"><div class="sl"><div class="lab">Prize</div><div class="sv" id="tvDrawPrize">Meat Tray</div></div><div class="sr"><div class="sm">Good luck. Check your ticket.</div></div></div>
   </div>
 
+  <!-- THE NEW DRAW LOOKS (10 Nov 2026): ticket roll / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look
+       with the draw; every venue that has not chosen one keeps the drawing and winner cards above and below. -->
+  <div class="layer hidden vpds-layer" id="tvStyle" style="padding:0">
+    <div class="toplbl"><span class="tl-night">Raffle</span></div>
+    <div class="vpds-host" id="tvStyleHost" style="position:absolute;inset:0"></div>
+  </div>
+
   <!-- redraw notice (between a no-show and the next spin) -->
   <div class="layer hasstrip hidden" id="tvRedraw">
     <div class="toplbl"><span class="tl-night">Raffle</span></div>
@@ -248,6 +255,7 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
+<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (ticket roll, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -352,9 +360,10 @@
   setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes, as on the musical bingo wall */
 
   // ---- layers ----
-  var LAYERS=["tvIdle","tvDraw","tvRedraw","tvWin","tvResult"];
+  var LAYERS=["tvIdle","tvDraw","tvRedraw","tvWin","tvResult","tvStyle"];
   function showLayer(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
+    if(which!=="tvStyle") destroyStyle();
     alignTitle(); setTimeout(alignTitle, 0);   // RAFFLE pinned on the corner logos' line, every screen
     // The host link + code line is only for a screen paired by hand. A venue-linked screen
     // auto-pairs, so never show it there (it was popping up after a claim).
@@ -382,6 +391,7 @@
   // ---- countdown ----
   function stopCountdown(){ if(S.countdownTimer){ clearInterval(S.countdownTimer); S.countdownTimer=null; } }
   function updateCd(){ var cd=$("tvCd"); if(cd) cd.textContent=secsToClock(Math.max(0,S.remaining));
+    if(S.stage) S.stage.setClock(S.remaining>0 ? "Claim within "+secsToClock(Math.max(0,S.remaining)) : "Time is up. The host is deciding.");
     var bar=$("tvClaimBar"); if(bar && S.claimTotal>0) bar.style.width=Math.max(0,Math.min(100,100*S.remaining/S.claimTotal))+"%"; }
 
   // ---- confetti ----
@@ -464,9 +474,22 @@
       var t=document.createElement("span"); t.className="pt"; t.textContent=String(ps[i]);
       d.appendChild(n); d.appendChild(t); box.appendChild(d); }
   }
+  /* THE NEW DRAW LOOKS. S.styleKey is what the host said with t:"drawing" ("ticket" or "race"; nothing, or a draw of
+     several tickets, is the old look). The stage holds on its last near miss until the host's t:"pick" gives the server's
+     winner, so the room never sees a number the server did not draw. */
+  function destroyStyle(){ if(S.stage){ try{ S.stage.destroy(); }catch(e){} S.stage=null; } }
+  function makeStage(){
+    destroyStyle();
+    var nt=$("venueNameTag");
+    S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", digits:S.padW, min:S.min, max:S.max,
+      drawSecs:S.styleSecs||9, prize:S.prizeLabel, venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
+    return S.stage;
+  }
+  function styleOn(){ return !!(S.styleKey && window.VPDrawStyle && VPDrawStyle.STYLES[S.styleKey]); }
   function renderDrawing(){
     cancelAdsReturn(); clearRedraw(); clearHold();
     stopCountdown(); stopCelebrate();
+    if(styleOn()){ stopSpin(); showLayer("tvStyle"); makeStage().start(); if(S.pick) S.stage.setPick({ number:S.pick }); return; }
     $("tvDrawPrize").textContent=S.prizeLabel;
     showLayer("tvDraw");
     startSpin();
@@ -531,7 +554,11 @@
       var wn=$("tvWinNum"); wn.classList.remove("hidden");
       paintTiles(wn, pad(nums[0]), "win"); sizeTiles(wn, 0.44);   // the tiles land one after another, left to right
     }
-    spawnBurst(36);
+    if(styleOn() && !multi){
+      /* the stage takes the win: its own number, prize and claim line; the claim clock goes under it */
+      if(!S.stage || S.stage.style!==S.styleKey){ showLayer("tvStyle"); makeStage().showWin({ number:nums[0] }); }
+      else { showLayer("tvStyle"); if(!S.stage.isPicked()) S.stage.setPick({ number:nums[0] }); }
+    } else spawnBurst(36);
     if(allowRedraw && time>0){
       S.remaining=time; S.claimTotal=time;
       $("tvPresent").textContent="Bring your ticket to the host."; $("tvPresent").classList.remove("hidden");
@@ -549,7 +576,7 @@
     } else {
       $("tvClaim").classList.add("hidden"); $("tvWinStrip").classList.remove("timed"); $("tvPresent").classList.remove("hidden"); $("tvPresent").innerHTML='<b>Bring your winning ticket to the host.</b>';
     }
-    showLayer("tvWin");
+    if(!(styleOn() && !multi)) showLayer("tvWin");
     /* Outlast the CLAIM WINDOW. This was a flat 60 seconds while the default claim time is 180,
        so on every single draw the winning ticket came off the wall two minutes early and the
        screen went back to the venue's ads. It did not come back either: the parent /tv blanks the
@@ -676,7 +703,7 @@
 
   // Host message types the screen reacts to. On any of them it marks the host seen and
   // replies tv_here so a freshly (re)loaded console re-syncs, same handshake as the trivia TV.
-  var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,winner:1,claimed:1,redraw:1};
+  var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,pick:1,winner:1,claimed:1,redraw:1};
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
@@ -725,8 +752,11 @@
       if(typeof m.spinSecs==="number" && m.spinSecs>0) S.spinSecs=Math.min(12, m.spinSecs);
       // Arriving during the redraw notice is the NORMAL path: renderDrawing cancels the notice's
       // own fallback timer, so the spin starts once, here.
-      S.phase="drawing"; renderDrawing();
+      S.phase="drawing";
+      S.styleKey=(m.style==="ticket"||m.style==="race") ? m.style : ""; S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
+      renderDrawing();
     }
+    else if(m.t==="pick"){ if(styleOn() && Array.isArray(m.numbers) && m.numbers.length===1){ S.pick=m.numbers[0]; if(S.stage) S.stage.setPick({ number:S.pick }); } }
     else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); S.endPend={ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }; }
     else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); S.endPend=null; S.endDrawn.push({ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }); }
     else if(m.t==="redraw"){ S.endPend=null; S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }

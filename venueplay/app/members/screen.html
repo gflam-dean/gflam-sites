@@ -227,6 +227,13 @@
     <div class="strip"><div class="sm" id="drawJack"></div><div class="sm">Good luck</div></div>
   </div>
 
+  <!-- THE NEW DRAW LOOKS (10 Nov 2026): flip board / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look with
+       the draw; a venue that has not chosen one keeps the drawing and winner cards. -->
+  <div id="tvStyle" class="layer hidden" style="padding:0">
+    <div class="toplbl"><span class="tl-night" id="styleTitle">Members draw</span></div>
+    <div id="tvStyleHost" style="position:absolute;inset:0"></div>
+  </div>
+
   <!-- winner reveal -->
   <div id="tvWin" class="layer hasstrip hidden">
     <div class="toplbl"><span class="tl-night" id="winTitle">Members Draw</span></div>
@@ -273,6 +280,7 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (members draw, 9 Nov 2026) -->
+<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (flip board, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -373,7 +381,7 @@
   function claimBar(left, total){ var b=$("tvClaimBar"); if(b && total>0) b.style.width=Math.max(0,Math.min(100,100*left/total))+"%"; }
 
   // ---- layers ----
-  function hideAll(){ stopClaimCd(); ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); setTimeout(alignTitle,0); }
+  function hideAll(){ stopClaimCd(); destroyStyle(); ["tvIdle","tvDraw","tvWin","tvResult","tvStyle"].forEach(function(k){ $(k).classList.add("hidden"); }); setTimeout(alignTitle,0); }
 
   // ---- idle / ads ----
   function fillIdle(){
@@ -428,6 +436,38 @@
       adIdx=(adIdx+1)%slides.length; if(adIdx===0) fillIdle();
       slides[adIdx].classList.add("show");
     }, 5200);
+  }
+
+  /* THE NEW DRAW LOOKS. state.styleKey is what the host said with t:"drawing" ("flip" or "race"). The stage holds on its last
+     near miss until the host's t:"pick" gives the server's winner, so the wall never shows a number the server did not draw. */
+  var styleStage=null, styleClockTimer=null;
+  function styleOn(){ return !!(state.styleKey && window.VPDrawStyle && VPDrawStyle.STYLES[state.styleKey]); }
+  function destroyStyle(){ if(styleClockTimer){ clearInterval(styleClockTimer); styleClockTimer=null; } if(styleStage){ try{ styleStage.destroy(); }catch(e){} styleStage=null; } }
+  function makeStage(){
+    destroyStyle(); var nt=$("venueNameTag");
+    $("styleTitle").textContent=state.drawName;
+    styleStage=VPDrawStyle.create($("tvStyleHost"), { style:state.styleKey, mode:"members", digits:Math.max(1, String(state.spinMax||999).length), min:state.spinMin, max:state.spinMax,
+      drawSecs:state.styleSecs||9, prize:state.jackpotCents>0 ? "Playing for "+money(state.jackpotCents) : "Members jackpot", venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
+    return styleStage;
+  }
+  function showStyleDrawing(){
+    stopAds(); stopSpin(); stopCelebrate(); clearHold(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
+    hideAll(); $("tvStyle").classList.remove("hidden"); makeStage().start();
+    if(state.pick) styleStage.setPick(state.pick);
+    setTimeout(alignTitle,0);
+  }
+  function showStyleWinner(number, name, claimSecs){
+    stopAds(); stopSpin(); clearHold(); $("hostLine").classList.add("hidden");
+    var had=(styleStage && styleStage.style===state.styleKey);
+    if(!had){ hideAll(); $("tvStyle").classList.remove("hidden"); makeStage().showWin({ number:number, name:name }); }
+    else if(!styleStage.isPicked()) styleStage.setPick({ number:number, name:name });
+    var secs=claimSecs|0, st=styleStage;
+    if(styleClockTimer){ clearInterval(styleClockTimer); styleClockTimer=null; }
+    if(secs>0){
+      (function paint(){ st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); })();
+      styleClockTimer=setInterval(function(){ secs--; st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); if(secs<=0){ clearInterval(styleClockTimer); styleClockTimer=null; } }, 1000);
+    }
+    setTimeout(alignTitle,0);
   }
 
   // ---- drawing ----
@@ -806,10 +846,12 @@
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       state.kind=(m.kind==="entries") ? "entries" : ""; state.entriesTotal=(m.entriesTotal|0);
       state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0); state.spinSecs=(m.spinSecs|0)||4;
-      state.phase="drawing"; showDrawing();
+      state.styleKey=(m.style==="flip"||m.style==="race") ? m.style : ""; state.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; state.pick=null;
+      state.phase="drawing"; if(styleOn() && state.kind!=="entries") showStyleDrawing(); else showDrawing();
     }
+    else if(m.t==="pick"){ if(styleOn() && m.number!=null){ state.pick={ number:m.number, name:(typeof m.name==="string" ? m.name : "") }; if(styleStage) styleStage.setPick(state.pick); } }
     else if(m.t==="winner" && m.kind==="entries"){ state.phase="winner"; state.kind="entries"; showEntriesWinner(m); }
-    else if(m.t==="winner"){ state.phase="winner"; state.kind=""; showWinner(m.number, m.name, m.claimSecs); }
+    else if(m.t==="winner"){ state.phase="winner"; state.kind=""; if(styleOn()) showStyleWinner(m.number, m.name, m.claimSecs); else showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName, !!m.capped); }
   }
