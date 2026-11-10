@@ -153,6 +153,7 @@
   "feedback-followup-in-chrome.test.py",
   "founding-gate.test.js",
   "founding-month-expiry.test.js",
+  "games-night.test.js",
   "gate-record.test.py",
   "gate-reliability.test.py",
   "gflam-unsub.test.py",
