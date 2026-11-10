@@ -156,14 +156,17 @@ async function sameMoney(name, kind, invoice, venues, expectRows) {
   check(name + ': the subject is identical', mb.subject === ma.subject, [mb.subject, ma.subject]);
   check(name + ': subtotal, GST and total are identical', mb.subtotal === ma.subtotal && mb.gst === ma.gst && mb.total === ma.total,
         [mb.subtotal, mb.gst, mb.total, ma.subtotal, ma.gst, ma.total]);
-  check(name + ': the lines add up to the same cents (' + mb.rowsSum + ')', mb.rowsSum === ma.rowsSum && mb.rowsSum > 0, [mb.rowsSum, ma.rowsSum]);
+  // An unsplit single plan line prints no amount (Dean, 5 Nov 2026 round 8: the amount is already above), so its cents are the invoice's own line.
+  var lineSum = ((invoice.lines && invoice.lines.data) || []).reduce(function (n, l) { return n + Number(l.amount || 0); }, 0);
+  var cents = function (x) { return x.rowsSum > 0 ? x.rowsSum : lineSum; };
+  check(name + ': the lines add up to the same cents (' + cents(mb) + ')', cents(mb) === cents(ma) && cents(mb) > 0, [cents(mb), cents(ma)]);
   if (expectRows) {
     var missing = expectRows.filter(function (w) { return ma.text.indexOf(w) === -1; });
     check(name + ': it shows the per-venue lines (' + expectRows.length + ')', missing.length === 0, missing);
     var due = Number(invoice.amount_paid) > 0 ? Number(invoice.amount_paid) : Number(invoice.amount_due || 0);
     var sb = sumsHold(ma, due);
     check(name + ': every venue total, the account total and what came off add up to what Stripe charged (' + due + ')', sb.length === 0, sb);
-    check(name + ': and no longer the single group line', /\b\d+ Players × venueplay plan/.test(mb.text) && !/\b\d+ Players × venueplay plan/.test(ma.text), ma.text.slice(0, 300));
+    check(name + ': and no longer the single group line', /\b\d+ players at \$[0-9.]+ each/.test(mb.text) && ma.all.length >= expectRows.length && ma.all.some(function (x) { return x.kind === 'total'; }), ma.text.slice(0, 300));
   } else {
     check(name + ': nothing new is said, the email is byte for byte what it was', b.html === a.html, ma.text.slice(0, 300));
     check(name + ': and it carries none of the split table\'s markers, so it is the same bytes main sends', a.html.indexOf('data-vp=') === -1);
@@ -245,6 +248,7 @@ async function main() {
          planLine(5, 2760, 'Remaining time on 5 × Founding Membership (Annual) after 10 Nov 2026', { id: 'il_pr', proration: true, amount: 11040, price: { unit_amount: 2760, recurring: { interval: 'year' } } })]),
     [ROYAL, GRAND, TUGUN], ['The Royal Hotel: 20 players at $27.60 each a year', 'Remaining time on 5 × venueplay plan (annual) after 10 Nov 2026']);
   await sameMoney('drift (our table 44, Stripe 45)', 'receipt', inv([planLine(45, 250, PLAN_M)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)], null);
+  await sameMoney('drift with a big-night line beside the plan line (two lines, not split)', 'receipt', inv([planLine(45, 250, PLAN_M), itemLine('The Royal Hotel - Extra Player - 01/11/2026', 400, 2)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)], null);
   await sameMoney('a single venue', 'receipt', inv([planLine(20, 250, '20 Players × Founding Membership (Monthly) (at $2.50 / month)')]), [ROYAL], null);
   await sameMoney('the payment reminder, 3-venue group', 'reminder', inv([planLine(45, 250, PLAN_M)], { amount_paid: 0, status: 'draft' }), [ROYAL, GRAND, TUGUN], ROWS3);
   await sameMoney('the payment reminder, with a discount and a big night', 'reminder',

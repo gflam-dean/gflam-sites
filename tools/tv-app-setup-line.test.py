@@ -9,9 +9,11 @@ venue how to set up its TV carries one line, word for word:
     Got a TV with Google Play? Download the venueplay TV app and put in your screen code.
     Otherwise open venueplay.com.au/tv in the TV's web browser.
 
-  - the four emails a new venue gets (welcome, welcome-group, welcome-hq, venue-onboarding): in the
-    "Set up your screen" step, with "VenuePlay TV app" linked to the app's Google Play page, and the
-    step's existing words (any TV works, the RECONNECTING line) still there
+  - NOT the four emails a new venue gets (welcome, welcome-group, welcome-hq, venue-onboarding) any more.
+    Dean, 5 Nov 2026 evening: "Keep it simple: NO Google Play / app detail in the setup steps, and no
+    differing button instructions per screen." Their steps are sign in, add hosts, then "Go to
+    venueplay.com.au/tv on each venue's screen and enter that venue's six-character screen code", and this
+    suite holds them to that and to no Google Play anywhere in them
   - the venue Help FAQ "Setting up the TV" (venueplay/data/help-faq.json, what /help and the console
     Help panel fall back on), as its first line, with every word migration 120 wrote after it
   - migration 131, which wrote the line live with "VenuePlay TV app" (run 31 Oct): one update of
@@ -51,23 +53,32 @@ def text(html):
     """What a reader sees: no comments, no tags, entities for the apostrophe undone, one space."""
     t = re.sub(r'<!--.*?-->', ' ', html, flags=re.S)
     t = re.sub(r'<[^>]+>', '', t)
-    t = t.replace('&#39;', "'").replace('&rsquo;', "'").replace('&amp;', '&').replace('&nbsp;', ' ')
+    t = t.replace('&#39;', "'").replace('&rsquo;', "'").replace('&gt;', '>').replace('&amp;', '&').replace('&nbsp;', ' ')
     return re.sub(r'\s+', ' ', t).strip()
 
 
 # ---------------------------------------------------------------- the four emails
+# Dean, 5 Nov 2026 evening: three steps in this order, sign in (the TV step needs the screen code the host console
+# shows), add hosts, then the TV at venueplay.com.au/tv with the screen code. No Google Play, no app, no per-screen
+# buttons. The words of each step are pinned in tools/test-welcome-email-renders.js, which runs the Worker.
+TV_STEP = re.compile(r"Put venueplay on (?:your|each|the) TV\. Go to venueplay\.com\.au/tv on (?:your TV's|each venue's|the venue's) screen and enter (?:your|that venue's|its) six-character screen code\.")
 for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     s = re.sub(r'<!--.*?-->', ' ', read('venueplay/emails/%s.html' % t), flags=re.S)
-    cell = re.search(r'<strong>Set up (?:your|the|each) screen\.</strong>(.*?)</td>', s, re.S)
-    body = cell.group(1) if cell else ''
-    words = text(body)
-    check('email %s: the "Set up your screen" step carries the app line, word for word' % t,
-          LINE in words, words[:260])
-    link = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*venueplay TV app\s*</a>', body)
-    check('email %s: "VenuePlay TV app" links to the app\'s Google Play page' % t,
-          bool(link) and link.group(1) == PLAY, link and link.group(1))
-    check('email %s: the step keeps its own words (any TV works, and the RECONNECTING line), no long dash' % t,
-          words.startswith('Any TV works') and 'RECONNECTING' in words and not EM_DASH.search(words), words[:120])
+    words = text(s)
+    if t == 'venue-onboarding':   # Dean, 5 Nov 2026 round 8: an added venue does its hosts first, then signs in, then the TV
+        i1, i2, i3 = words.find('1 Add your hosts.'), words.find('2 Sign in on your phone.'), words.find('{{tv_step}} Put venueplay on ')
+    else:
+        i1, i2, i3 = words.find('1 Sign in on your phone.'), words.find('2 Add '), words.find('3 Put venueplay on ')
+    check('email %s: the steps are in Dean\'s order (onboarding: hosts, sign in, TV; the welcomes: sign in, hosts, TV)' % t,
+          -1 < i1 < i2 < i3, [i1, i2, i3])
+    check('email %s: the TV step is venueplay.com.au/tv and the six-character screen code, linked to the bare /tv' % t,
+          bool(TV_STEP.search(words)) and re.search(r'<a href="(?:\{\{tv_url\}\}|https://venueplay\.com\.au/tv)"[^>]*>venueplay\.com\.au/tv</a>', s) is not None, words[i3:i3 + 260])
+    check('email %s: no Google Play, no TV app and no per-screen instructions anywhere in it' % t,
+          PLAY not in s and not re.search(r'Google Play|Google TV|Android TV|Fire Stick|TV app|laptop on HDMI', words), (re.search(r'.{0,60}(Google|Fire Stick|TV app).{0,60}', words) or [None])[0] if re.search(r'Google|Fire Stick|TV app', words) else None)
+    check('email %s: no long dash, and never says a join code appears as a TV step' % t,
+          not EM_DASH.search(words) and 'join code appears' not in words and 'Any TV works' not in words, words[:120])
+    check('email %s: it points at the in-app guide in one line' % t,
+          "When you first sign in, we'll walk you through it." in words or (t == 'venue-onboarding' and "When you first open {{venue_name}}, we'll walk you through it." in words), None)
 
 # ---------------------------------------------------------------- the Help FAQ
 # The Help answer is a database row: migration 131 (run 31 Oct) wrote the line with "VenuePlay TV app",
@@ -180,17 +191,26 @@ ll = read('venueplay/llms.txt')
 check('llms.txt (what AI search reads about VenuePlay) names the VenuePlay TV app and its Google Play page',
       re.search(r'^- Got a TV with Google Play\? Get the venueplay TV app \(' + re.escape(PLAY) + r'\), then put in your screen code\.$', ll, re.M) is not None)
 
-# ---------------------------------------------------------------- the onboarding email's screen box (Dean, 5 Nov 2026)
-# /tv no longer asks anyone to bookmark a venue link: the screen code is quicker. So the venue
-# onboarding email has a "Your screen code" box and no /tv?slug link or "home page" instruction.
+# ---------------------------------------------------------------- the onboarding email, to the OWNER (Dean, 5 Nov 2026)
+# Not a forward-on guide any more ("who's sending it? hosts get a text message"): the venue is set up, add
+# hosts in Account > People, the TV steps, the help line. No screen-link box, no home page, no /tv?slug.
 ob_raw = read('venueplay/emails/venue-onboarding.html')
 ob = re.sub(r'<!--.*?-->', ' ', ob_raw, flags=re.S)
 obt = text(ob)
-check('the venue onboarding email has a "Your screen code" box with the screen-code words, word for word',
-      'Your screen code' in obt and "Open venueplay.com.au/tv on the TV (or the venueplay TV app), then type the six-character screen code from your host console. The TV remembers your venue after that." in obt, obt[-500:])
-check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), and no "home page" instruction',
-      '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt, obt[-500:])
-check('step 1 points at the screen code, not a link below', 'Open the TV link below' not in obt and 'see the box below' in obt, obt[:900])
+# The hosts step says what really happens (Dean, 5 Nov 2026: "is not true anymore"): vpbAddHost texts the host the
+# sign-in ADDRESS, venueplay.com.au/app, and they sign in with their own mobile. There is no personal link.
+check('the venue onboarding email says "Your new venue is set up" and tells the owner to add hosts in Account > People, ticked per venue, texted where to sign in, signing in with their own mobile',
+      'Your new venue is set up' in obt and "Add your hosts. In Account > People, add each host's name and mobile and tick the venues they run, {{venue_name}} included. We text them where to sign in, and they sign in with their own mobile." in obt
+      and 'own sign-in link' not in obt and 'sign up for' not in obt, obt[:700])
+sms = re.search(r"const message =\s*venue \+ ' has set you up on venueplay\. To sign in visit ' \+ site \+ '/app\.' \+ tv;", read('venueplay-backend/worker/venueplay-api-FULL.js'))
+check('...which is what the host\'s text really says: "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app."', sms is not None)
+check('the venue onboarding email has no "Ready to forward" banner and no "send it straight on" words',
+      not re.search(r'Ready to forward|straight on to whoever|forward this on', obt, re.I) and 'forwardable' not in ob.lower(), obt[:300])
+check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), no "home page" and no /tv?slug',
+      '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt and '/tv?' not in ob_raw, obt[-500:])
+# Dean, 5 Nov 2026 round 4: the TV step ends on the full-screen line; nothing about the join code there at all.
+check('the venue onboarding email\'s TV step ends on the full-screen line and says nothing about a join code',
+      "enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. Open the host console" in obt and 'join code' not in obt, obt[-700:])
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))

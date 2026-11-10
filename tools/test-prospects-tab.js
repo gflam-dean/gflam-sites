@@ -151,10 +151,11 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   r = await setUp({ name: 'Mobile Login Hotel', email: 'ml@ml.example', mobile: '0400 222 333' });
   var ml = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Login Hotel'; })[0] || {};
   var lastMail = sent[sent.length - 1] || {};
-  check('the welcome says the account is set up for 10 players to start with, and that they can change it any time (Dean, 29 Oct 2026)',
-    /Your account is set up for 10 players to start with, and you can change that any time\./.test(lastMail.text || ''), (lastMail.text || '').slice(0, 900));
+  check('the welcome says clearly the account is set up for 10 players, and that they can change it any time (Dean, 29 Oct 2026; 5 Nov 2026: "say clearly")',
+    /Your plan is set to 10 players, so that's \$25\.00 a month\. You can change it any time\./.test(lastMail.text || '') && /<strong>10 players<\/strong>/.test(lastMail.html || ''), (lastMail.text || '').slice(0, 900));
   check('the welcome says plainly it is not a sign-up that starts billing, in words that match the code (phase 2), and the 7 Nov review (short: no card, a reminder, cancel; the start of the free month is in the offer line), no card, a reminder, cancel',
     (lastMail.text || '').indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your free month ends. Not for you? Just hit cancel") !== -1 &&
+    (lastMail.text || '').indexOf('simply pauses') === -1 && (lastMail.text || '').indexOf('5 days') === -1 &&
     /<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&amp;t=[0-9a-f]{32}"|<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&t=[0-9a-f]{32}"/.test(lastMail.html || '') && (lastMail.html || '').indexOf('workers.dev') === -1, (lastMail.text || '').slice(0, 1400));
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',
     r.status === 200 && r.body.login && r.body.login.mobile && DB.vp_signin_links.filter(function (x) { return x.venue_id === ml.id; }).length === 0 &&

@@ -1,9 +1,15 @@
 <!--
-  VenuePlay transactional email: VENUE ONBOARDING (FORWARDABLE)
-  Sent to the account owner when they add a new venue from their account, so
-  they can forward one tidy email straight to that venue's team. Deliberately
-  carries NO billing detail: the owner's account handles the money, and the
-  venue reading this only needs to know how to get a game on the screen.
+  venueplay transactional email: VENUE ONBOARDING (to the OWNER)
+  Sent to the account owner when they add a new venue from their account. It is
+  written TO the owner, not to be forwarded (Dean, 5 Nov 2026: "who's sending it?
+  hosts get a text message"): the venue is set up, then three steps in Dean's order
+  (5 Nov 2026 evening): sign in, add hosts in Account > People (vpbAddHost texts each
+  host "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app."
+  and they sign in with their own mobile: it is not a personal link), then the TV.
+  Carries NO billing detail: the owner's account handles the money.
+  Section kept or stripped by vpaTplSections: multivenue, the "Pick <venue> ... or tap Switch venue" words, kept only
+  when the owner's login has 2 or more venues, which is when the console asks which venue (index.html: staff.length > 1;
+  Dean, 5 Nov 2026 round 5).
   Merge fields:
     {{venue_name}}        the new venue, e.g. "The Grand Hotel"
     {{host_console_url}}  link to the app host console sign-in
@@ -14,74 +20,57 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <tr><td align="center" style="padding:24px 12px">
     <!-- preheader (hidden) -->
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0">{{venue_name}} is on venueplay. Forward this to whoever runs the night.</div>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">{{venue_name}} is set up. Add its hosts, sign in, then put it on the TV.</div>
 
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">
       <!-- header -->
-      <tr><td style="background:#0A0A0B;padding:20px 32px">
-        <img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
-      </td></tr>
-
-      <!-- forward bar -->
-      <tr><td style="background:#fff6fb;border-bottom:1px solid #ffd9ec;padding:12px 32px">
-        <p style="margin:0;font-size:13.5px;line-height:1.55;color:#C70F69"><strong>Ready to forward.</strong> This is the setup guide for {{venue_name}}. Send it straight on to whoever runs the night there.</p>
+      <tr><td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
       </td></tr>
 
       <!-- hero -->
       <tr><td style="padding:34px 32px 8px">
-        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#0A0A0B;font-weight:800">{{venue_name}} is on venueplay.</h1>
-        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venue is set up and ready to run trivia, musical bingo, bingo, raffles and members draws. Billing is handled on the head office account, so there is nothing to pay or sign up for here. Everything below is the setup.</p>
+        <h1 style="margin:0;font-size:19px;line-height:1.25;color:#0A0A0B;font-weight:800;white-space:nowrap">Your new venue is set up</h1>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>{{venue_name}}</strong> is on your account now, billed with your other venues. Here&#39;s how to get its first game on the screen.</p>
       </td></tr>
 
-      <!-- login box -->
-      <tr><td style="padding:24px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
-          <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">How you sign in</p>
-            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">With your <strong>mobile number</strong>. No password to remember. Enter your mobile at <a href="{{host_console_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and we text you a code. Head office adds each host's mobile from their account, so if the code does not come, ask them to add you.</p>
-          </td></tr>
-        </table>
-      </td></tr>
-
-      <!-- 3 steps -->
+      <!-- the steps, Dean's order for an added venue (5 Nov 2026 round 8): hosts first (ticked per venue), sign in,
+           switch to the venue (only when the login has 2 or more), then the TV. -->
       <tr><td style="padding:26px 32px 0">
-        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#0A0A0B">Three steps to your first night</p>
+        <p style="margin:0 0 14px;font-size:14px;font-weight:700;color:#0A0A0B">Your first night, step by step</p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Set up the screen.</strong> Any TV works, a Fire Stick, a smart TV, or an HDMI cable from a laptop. Got a TV with Google Play? Download the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" style="color:#0A0A0B;font-weight:700;text-decoration:underline">venueplay TV app</a> and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser. Type your screen code (see the box below) and a join code appears for players. Keep that browser window full screen with nothing over it: a TV page hidden behind another window slows down and shows RECONNECTING.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Add your hosts.</strong> In Account &gt; People, add each host&#39;s name and mobile and tick the venues they run, {{venue_name}} included. We text them where to sign in, and they sign in with their own mobile.</td>
           </tr></table></td></tr>
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone or the bar laptop.</strong> That is the host console: you start the game, call it and see who is winning from there.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone.</strong> Go to <a href="{{host_console_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and sign in with your mobile as usual.<!--IF:singlevenue--> Your host console shows {{venue_name}}&#39;s six-character screen code.<!--ENDIF:singlevenue--></td>
           </tr></table></td></tr>
-          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<!--IF:multivenue-->
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Run a test game.</strong> Play a quick round yourself, phone in hand, so it all feels familiar before a room full of people is watching.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Switch to {{venue_name}}.</strong> In the host console, tap <strong>Switch venue</strong> and pick {{venue_name}}. Its host console shows its six-character screen code.</td>
+          </tr></table></td></tr>
+<!--ENDIF:multivenue-->
+          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">{{tv_step}}</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Put venueplay on the TV.</strong> Go to <a href="https://venueplay.com.au/tv" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/tv</a> on the venue&#39;s screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.</td>
           </tr></table></td></tr>
         </table>
       </td></tr>
 
       <!-- CTA -->
-      <tr><td align="center" style="padding:30px 32px 4px">
-        <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open the host console</a>
+      <tr><td align="center" style="padding:12px 32px 0">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open the host console</a></td></tr></table>
       </td></tr>
-
-      <!-- screens -->
-      <tr><td style="padding:16px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
-          <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your screen code</p>
-            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Open venueplay.com.au/tv on the TV (or the venueplay TV app), then type the six-character screen code from your host console. The TV remembers your venue after that.</p>
-          </td></tr>
-        </table>
-      </td></tr>
+      <tr><td align="center" style="padding:14px 20px 4px"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first open {{venue_name}}, we'll walk you through it.</p></td></tr>
 
       <!-- footer: the one ask, then the support line -->
       <tr><td style="padding:28px 32px 34px">
-        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2. Have a great first night.</p>
-        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
-        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">venueplay &middot; ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none;font-size:14px;white-space:nowrap">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2. Have a great first night.</p>
+        <p style="margin:16px 0 0;font-size:13px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+        <p style="margin:14px 0 0;font-size:13px;line-height:1.7;color:#b3b3bb">venueplay &middot; ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>
   </td></tr>

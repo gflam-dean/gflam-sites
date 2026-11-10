@@ -3872,7 +3872,7 @@ def local_checks(which):
             # D92: a prospect's free month, its card reminders and the pause (Dean, 29 Oct 2026; migration 127).
             ('D92. A prospect\'s free month starts at first sign-in, reminds them on its days, and pauses with the offer gone if no card',
              'test-prospect-free-month.js',
-             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
+             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 (a week out) and 30 (the last day) only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
             # D145: the no-card start (Dean, 5 Nov 2026; INBOX 80B, 81, 84, as changed by 97), branch fix/signup-core-10nov.
@@ -3933,11 +3933,13 @@ def local_checks(which):
             # never Gflam Group, never founding; 31 Oct: the paid-invoice email delivers Stripe's tax invoice and
             # says "Tax invoice"), branch
             # fix/receipts-and-host-titles-31oct. The billing page's words: tools/billing-words-in-chrome.test.py.
-            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email says Tax invoice',
+            # 5 Nov 2026 (fix/email-copy-8nov): the paid-invoice email is the RECEIPT and links Stripe's tax invoice
+            # (Dean: "don't call the email itself a tax invoice unless it is one").
+            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email is a receipt that links the tax invoice',
              'test-receipts-plain-words.js',
-             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
-             'A venue reading "Founding Membership" or Gflam Group on its tax invoice email, or that email no longer '
-             'saying it is the tax invoice it delivers'),
+             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan, monthly" over "N players at $x each" with Stripe\'s quantity, rate and dates; the paid-invoice email is the receipt ("Your venueplay receipt: $x paid", "Prices include GST. venueplay, ABN 35 679 383 049.", never "Tax invoice." in its small print), "View your tax invoice" opening Stripe\'s hosted invoice and the PDF beside it, ending "Thank you for being with us."; the receipt, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
+             'A venue reading "Founding Membership" or Gflam Group on a billing email, a receipt calling itself a tax '
+             'invoice, or the tax invoice no longer one tap away'),
             # D100: the lobby poll answered from the Worker's memory (31 Oct 2026, after the 30 Oct live ramp bent the
             # database gateway at about 43 calls a second), branch fix/lobby-poll-31oct.
             ('D100. A lobby full of phones costs the database one read per few seconds, and still moves with the host',
@@ -4072,6 +4074,12 @@ def local_checks(which):
              'runs the billing Worker: ticks a phone sends are ignored and nothing for the venue is stored; the email only on Good or Not for me, only with its tick, only into a help desk ticket and never in vp_feedback_notes; one HQ alert at two Not for me at one venue on one night, once; a venue reads counts of Loved it and Good only (account panel, monthly report and email), never another venue; Only bad player feedback alerts on a device, kept on every ticket before migration 137; HQ sees every note, never an email', 48,
              'A venue shown a player\'s words or a Not for me count, an email kept where it should not be, or HQ '
              'never told when a room did not enjoy the night'),
+            # D115: Dean's 5 Nov 2026 evening email notes, branch fix/email-copy-8nov.
+            ('D115. The receipt asks how we are going with signed faces, Manage your plan opens Account > Billing, the reminders carry real numbers, one button style, and the grace and kept-days words stay OFF',
+             'test-receipt-survey.js',
+             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 54,
+             'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
+             'console, or the emails promising a grace the billing does not give'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

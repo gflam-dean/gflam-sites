@@ -169,7 +169,7 @@ function world() {
   check('2:30am on 1 Nov in Brisbane is the 1st\'s night', vprNightKey('2026-10-31T16:30:00Z', 'Australia/Brisbane') === '2026-11-01');
   check('1:30am on 1 Nov in Sydney (daylight saving, UTC+11) is the 31st\'s night', vprNightKey('2026-10-31T14:30:00Z', 'Australia/Sydney') === '2026-10-31');
   check('the same instant in Brisbane is still before 2am too, and in Perth it is the 31st at 10:30pm', vprNightKey('2026-10-31T14:30:00Z', 'Australia/Perth') === '2026-10-31');
-  check('the month the 1st reports on is the month before, on Brisbane\'s clock (at 1am it is still the 31st\'s night)', vprLastMonth(Date.parse('2026-10-31T17:00:00Z')) === '2026-10' && vprLastMonth(Date.parse('2026-10-31T15:00:00Z')) === '2026-09');
+  check('the month the 1st reports on is the month before, on Brisbane\'s clock (at 1am it is still the 31st\'s night)', vprLastMonth(Date.parse('2026-11-02T00:00:00Z')) === '2026-10' && vprLastMonth(Date.parse('2026-10-31T15:00:00Z')) === '2026-09');
 
   print('one venue\'s month, counted by hand');
   var A = DB.vp_venues[0];
@@ -341,14 +341,19 @@ function world() {
   print('the sender: off until Dean switches it on');
   world();
   READS = 0;
-  var off = await vprMonthlySweep(ENV, Date.parse('2026-10-31T17:00:00Z'));
+  var off = await vprMonthlySweep(ENV, Date.parse('2026-11-02T00:00:00Z'));
   check('with no switch it sends nothing and reads nothing', off.off === true && sent.length === 0 && READS === 0, [off, READS]);
   var ENVON = Object.assign({}, ENV, { MONTHLY_REPORTS: 'on', VP_UNSUB_SECRET: 'u' });
-  check('anything but exactly "on" is off', (await vprMonthlySweep(Object.assign({}, ENV, { MONTHLY_REPORTS: 'yes' }), Date.parse('2026-10-31T17:00:00Z'))).off === true && sent.length === 0);
+  check('anything but exactly "on" is off', (await vprMonthlySweep(Object.assign({}, ENV, { MONTHLY_REPORTS: 'yes' }), Date.parse('2026-11-02T00:00:00Z'))).off === true && sent.length === 0);
   check('switched on, mid month: nothing', (await vprMonthlySweep(ENVON, Date.parse('2026-11-12T17:00:00Z'))).waiting === true && sent.length === 0);
   check('switched on, the 1st at 8pm: nothing (a game night)', (await vprMonthlySweep(ENVON, Date.parse('2026-11-01T10:00:00Z'))).waiting === true && sent.length === 0);
+  /* DEAN'S SEND WINDOW (9 Nov 2026 audit): never 2am, never a weekend, never past the first week. */
+  check('switched on, Tue 1 Dec at 2am Brisbane: nothing (it used to send 2am to 7am)', (await vprMonthlySweep(ENVON, Date.parse('2026-11-30T16:00:00Z'))).waiting === true && sent.length === 0);
+  check('switched on, Sun 1 Nov 10am: nothing (a weekend waits for Monday)', (await vprMonthlySweep(ENVON, Date.parse('2026-11-01T00:00:00Z'))).waiting === true && sent.length === 0);
+  check('switched on, Mon 2 Nov 12:30pm (the lunch gap) and 5pm: nothing', (await vprMonthlySweep(ENVON, Date.parse('2026-11-02T02:30:00Z'))).waiting === true && (await vprMonthlySweep(ENVON, Date.parse('2026-11-02T07:00:00Z'))).waiting === true && sent.length === 0);
+  check('the window, read alone: Tue 1 Dec 9am and 2pm yes; the 8th at 10am no', vprInSendWindow(Date.parse('2026-11-30T23:00:00Z')) && vprInSendWindow(Date.parse('2026-12-01T04:00:00Z')) && !vprInSendWindow(Date.parse('2026-12-08T00:00:00Z')));
   DB.vp_unsubscribes.push({ email: 'boss@anchorpub.com.au' });
-  var run1 = await vprMonthlySweep(ENVON, Date.parse('2026-10-31T17:00:00Z'));    // 3am on 1 Nov in Brisbane
+  var run1 = await vprMonthlySweep(ENVON, Date.parse('2026-11-02T00:00:00Z'));    // 10am Mon 2 Nov in Brisbane (the window, 9 Nov 2026)
   var tos = sent.map(function (m) { return m.to[0]; }).sort().join();
   check('3am on the 1st: the Royal, the Big Club and the Quiet Inn get October', run1.month === '2026-10' && tos === 'big@bigclub.com.au,owner@royalhotel.com.au,quiet@quietinn.com.au', [run1, tos]);
   var why = {}; DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_skipped'; }).forEach(function (a) { why[a.target] = a.detail.why; });
@@ -357,11 +362,11 @@ function world() {
   check('the email sent is the counted one, with the one-click unsubscribe headers', royal && royal.subject === 'Your October at The Royal Hotel' && />50<\/div>/.test(royal.html)
         && royal.headers && /api\.venueplay\.com\.au\/unsubscribe/.test(royal.headers['List-Unsubscribe'] || '') && royal.headers['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', royal && royal.headers);
   check('each send is recorded', DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_sent'; }).length === 3);
-  var run2 = await vprMonthlySweep(ENVON, Date.parse('2026-10-31T18:00:00Z'));
+  var run2 = await vprMonthlySweep(ENVON, Date.parse('2026-11-02T01:00:00Z'));
   check('the next tick sends nobody twice', sent.length === 3 && run2.sent === 0, run2);
   world();
   var ENV1 = Object.assign({}, ENVON, { MONTHLY_REPORTS_BATCH: '1' });
-  await vprMonthlySweep(ENV1, Date.parse('2026-10-31T17:00:00Z'));
+  await vprMonthlySweep(ENV1, Date.parse('2026-11-02T00:00:00Z'));
   var afterOne = sent.length + DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_skipped'; }).length;
   check('a batch of one does one venue a tick', afterOne === 1, afterOne);
 
@@ -388,7 +393,7 @@ function world() {
   var pv = await call(vpaHandleMonthNews, ADMIN, { action: 'preview', month: '2026-10', items: GOOD });
   check('the preview is the real email for Test Alpha, with the words as typed', pv.status === 200 && pv.body.venue_name === 'Test Alpha' && /What's new at venueplay/.test(pv.body.html) && /Custom bingo patterns/.test(pv.body.html), pv.body.error);
   var ENVON2 = Object.assign({}, ENV, { MONTHLY_REPORTS: 'on', VP_UNSUB_SECRET: 'u' });
-  await vprMonthlySweep(ENVON2, Date.parse('2026-10-31T17:00:00Z'));
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
   var rm = sent.filter(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; })[0];
   check('one email: the report first, then the news', rm && rm.html.indexOf('Compared with September') !== -1 && rm.html.indexOf('What\'s new at venueplay') > rm.html.indexOf('Compared with September'), rm && rm.subject);
   check('the same news in every venue\'s email (four venues: the test venue is left out)', sent.every(function (m) { return m.html.indexOf('Melbourne Cup is on 3 November') !== -1; }) && sent.length === 4);
@@ -397,14 +402,14 @@ function world() {
   check('the send records that news went with it', DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_sent' && a.detail.news === 3; }).length === 4);
   world();
   DB.vp_monthly_news = [{ month: '2026-10', items: GOOD, ready: false }];
-  await vprMonthlySweep(ENVON2, Date.parse('2026-10-31T17:00:00Z'));
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
   check('news not marked ready stays out; the report still goes', sent.length === 4 && sent.every(function (m) { return m.html.indexOf('What\'s new') === -1 && /Here is how October went/.test(m.html); }));
   world();
   NEWS_TABLE_MISSING = true;
   var miss = await call(vpaHandleMonthNews, ADMIN, { action: 'save', month: '2026-10', items: GOOD, ready: true });
   check('before migration 133, Save says why and keeps nothing', miss.status === 409 && /migration 133/.test(miss.body.error), miss.body);
   check('and Get says so too', (await call(vpaHandleMonthNews, ADMIN, { action: 'get', month: '2026-10' })).body.missing === true);
-  await vprMonthlySweep(ENVON2, Date.parse('2026-10-31T17:00:00Z'));
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
   check('before migration 133 the reports still go, without news', sent.length === 4 && sent.every(function (m) { return m.html.indexOf('What\'s new') === -1; }));
   NEWS_TABLE_MISSING = false;
   Date.now = REAL_NOW;

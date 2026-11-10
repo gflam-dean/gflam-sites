@@ -1,5 +1,9 @@
 <!--
   VenuePlay transactional email: A PROSPECT'S CARD REMINDER (Dean, 29 Oct 2026; migration 127).
+  SCHEDULE (Dean, 5 Nov 2026 ~7pm, replacing 3/23/29): day 3 (early), one week before the free month ends (last:
+  day 23, "One week left", with their stats) and the last day itself (final: day 30, "Today is the last day", stats,
+  the pause tonight, what they keep for 90 days). No day-29 email. Mon-Fri 9-12 and 2-5 venue time only; a last day on a weekend goes the
+  Friday before as a "last" one, so it never says "today" on the wrong day. Earlier notes below are history.
   Sent by the billing Worker's hourly sweep (vpaProspectReminderSweep) while a prospect has no card: day 3 and
   day 23 of their free month (early), then the day before it ends (last: day 29), and no more (Dean, 30 Oct 2026),
   only in Dean's send window (7 Nov 2026): Monday to Friday, 9am to 12 noon and 2pm to 5pm, the venue's own local time (vpaSendAllowedAt). The "final" section (the last day itself) is no longer sent. Their free month started the first time they signed in.
@@ -11,8 +15,13 @@
   Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
   Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (did their first
   sign-in come by their offer's date, Dean 7 Nov 2026: offer_rate is decided then). Anything a paused prospect keeps
-  after the pause is never written here (Dean: never mentioned publicly).
-  Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
+  after the pause is never written here (Dean: never mentioned publicly). keepdays ("We keep your paused account
+  for N days") is OFF until Dean decides N (VPA_PAUSED_KEEP_DAYS in the Worker, 0 = not decided).
+  stats / nostats (the last reminder only, Dean 5 Nov 2026 round 7): their free month in numbers ({{stats_line}}, made
+  by the Worker from vpaVenueStats), or, read and empty, "you haven't had your first night yet" and the sign-in
+  button ({{host_console_url}}). Stats that could not be read keep neither.
+  Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{ends_when}} ("on Thu 26 Nov", or "this Sunday, 13 Dec" when a
+    weekend last day is told on the Friday before: Dean, 9 Nov 2026) {{days_left}} {{offer_rate}} {{standard_rate}}
     {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
   House rules: no em dashes, ACT not "the ACT", never "roster".
@@ -21,8 +30,8 @@
   <tr><td align="center" style="padding:24px 12px">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your free month of venueplay at {{venue_name}} runs until {{ends_on}}.</div>
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">
-      <tr><td style="background:#0A0A0B;padding:20px 28px">
-        <img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
+      <tr><td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 28px">
+        <img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
       </td></tr>
       <tr><td style="padding:30px 28px 4px">
 <!--IF:early-->
@@ -39,36 +48,58 @@
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from venueplay. Your free month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your free month ends.</p>
 <!--ENDIF:early-->
 <!--IF:last-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends on {{ends_on}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends {{ends_when}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
 <!--ENDIF:last-->
 <!--IF:final-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends tonight. If you'd like to keep going, add your card today.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">We&#39;d be sad to see you go.</p>
 <!--ENDIF:final-->
+<!--IF:stats-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">In your free month, {{venue_name}} ran:</p>
+        {{stats_tiles}}
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{stats_line}}</p>
+<!--ENDIF:stats-->
+<!--IF:nostats-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">You haven&#39;t had your first night yet, and there&#39;s still time. Sign in and it walks you through it in about 5 minutes.</p>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open your venueplay</a></td></tr></table>
+<!--ENDIF:nostats-->
+<!--IF:last-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44"><strong>Would you like to keep it going?</strong> Add your card.</p>
+<!--ENDIF:last-->
       </td></tr>
       <tr><td style="padding:20px 28px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
-          <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">If there's no card by the end</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#faf7fb" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td align="center" style="padding:20px 22px;text-align:center">
+            <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">If there's no card by {{nocard_when}}</p>
 <!--IF:offer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You started your free month in time for {{offer_rate}} a player. That price ends with the pause, so a card added after that is at our price on the day.</p>
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}}: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You started your free month in time for {{offer_rate}} a player. That price ends with the pause, so a card added after that is at our price on the day.</p>
 <!--ENDIF:offer-->
 <!--IF:nooffer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on.</p>
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}}. Nothing is lost, and adding a card switches it all back on.</p>
 <!--ENDIF:nooffer-->
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
-              <td><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Add my card</a></td>
-            </tr></table>
+<!--IF:final-->
+            <p style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44"><strong>Here&#39;s what you still have for the next 90 days:</strong></p>
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:6px auto 0;text-align:left">
+              <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your members list</td></tr>
+              <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your ad slides</td></tr>
+              <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your raffle and members draw history</td></tr>
+              <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your billing page, ready for your card</td></tr>
+            </table>
+<!--ENDIF:final-->
+<!--IF:keepdays-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">We keep your paused account for {{keep_days}} days.</p>
+<!--ENDIF:keepdays-->
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Add my card</a></td></tr></table>
           </td></tr>
         </table>
       </td></tr>
       <tr><td style="padding:20px 28px 0">
         <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">If it's not for you, no problem at all. Tap below and we'll switch it off and stop these emails. Nothing has been charged.</p>
-        <p style="margin:12px 0 0"><a href="{{cancel_url}}" style="display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;border:1px solid #d8d8e0">Cancel, it's not for us</a></p>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{cancel_url}}" style="display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:15px 33px;border-radius:10px;border:1px solid #d8d8e0">Cancel, it's not for us</a></td></tr></table>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">
-        <p style="margin:0 0 10px;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:#8a8a95">You are getting this because we set up venueplay for {{venue_name}} at your request. venueplay &middot; ABN 35 679 383 049. <a href="{{terms_url}}" style="color:#8a8a95">Terms</a> &middot; <a href="{{privacy_url}}" style="color:#8a8a95">Privacy</a> &middot; <a href="{{unsubscribe_url}}" style="color:#8a8a95">Unsubscribe from product emails</a></p>
+        <p style="margin:0 0 10px;font-size:13px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#8a8a95">You are getting this because we set up venueplay for {{venue_name}} at your request. venueplay. <a href="{{terms_url}}" style="color:#8a8a95">Terms</a> &middot; <a href="{{privacy_url}}" style="color:#8a8a95">Privacy</a> &middot; <a href="{{unsubscribe_url}}" style="color:#8a8a95">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>
   </td></tr>

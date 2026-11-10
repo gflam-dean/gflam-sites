@@ -180,7 +180,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 39,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/feedback-followup-in-chrome.test.py": {
@@ -592,7 +592,7 @@
   "counted_by": "lines"
  },
  "tools/test-email-rebrand.js": {
-  "checks": 39,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
@@ -636,11 +636,11 @@
   "counted_by": "lines"
  },
  "tools/test-group-invoice-lines.js": {
-  "checks": 141,
+  "checks": 147,
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 429,
+  "checks": 446,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
@@ -716,7 +716,7 @@
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
-  "checks": 125,
+  "checks": 129,
   "counted_by": "lines"
  },
  "tools/test-multi-raffle.js": {
@@ -919,8 +919,12 @@
   "checks": 5,
   "counted_by": "lines"
  },
+ "tools/test-receipt-survey.js": {
+  "checks": 51,
+  "counted_by": "lines"
+ },
  "tools/test-receipts-plain-words.js": {
-  "checks": 42,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/test-reconnect-fast.js": {
@@ -1232,7 +1236,7 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-email-renders.js": {
-  "checks": 22,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-welcome-is-sent-once.js": {
@@ -1304,7 +1308,7 @@
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
-  "checks": 36,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/tv-bare-setup-in-chrome.test.py": {
@@ -1516,7 +1520,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 92,
+  "checks": 93,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {
@@ -1569,6 +1573,10 @@
  },
  "venueplay-backend/worker/overage-charge.test.js": {
   "checks": 104,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/overage-note.test.js": {
+  "checks": 39,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/owner-only-routes.test.js": {
