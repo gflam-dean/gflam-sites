@@ -7,9 +7,7 @@
         while no prize is set; and the five patterns' short names
      2. the wall's played strip: the last five, the current one outlined, "+N" for the rest, a dashed "Song N" slot
         while a song is held back, the song number bottom left, and the held song never named
-     3. the phone card's ONE hyphen: Wonder-wall, Sep-tember, Bright-side, Cali-fornia (words of nine letters or more); one per title,
-        in its longest word; never in a short word, never a second, never in a word with an apostrophe (Believin'), and
-        only where fitCells finds the word cannot fit whole (9 Nov 2026; tools/musical-newlook-in-chrome.test.py measures it)
+     3. the phone card never hyphenates (Dean, 10 Nov 2026; the 9 Nov one-hyphen rule is gone): see tools/test-musical-card-10nov.js
      4. the phone's pattern by its own marks (the faint claim) and the lines "Highlight my lines" outlines: the
         finished rows solid, the closest ones still needed dashed, as many as the pattern needs
      5. the venue's ad on the phone (/app/vp-phonead.js): only picture slides with a plain https address, in date,
@@ -94,21 +92,13 @@ print('\n== 2. the played strip: the last five, "+N", and a dashed slot for the 
 })();
 
 /* ======================================================================================= 3 */
-print('\n== 3. the phone card\'s ONE hyphen, inside a long word ==');
+print('\n== 3. the phone card: NO hyphen, ever (Dean, 10 Nov 2026 sign-off; supersedes the 9 Nov one-hyphen rule) ==');
 (function () {
-  var f = new Function(lift(PLAY, 'softBreak', 'musical/play.html') + lift(PLAY, 'withSoftBreak', 'musical/play.html') + 'return { b: softBreak, w: withSoftBreak };')();
-  function shown(t) { return f.w(t).replace('­', '-'); }
-  [['Wonderwall', 'Wonder-wall'], ['September', 'Sep-tember'], ['Brightside', 'Bright-side'], ['California', 'Cali-fornia'], ['Misunderstanding', 'Misunder-standing']].forEach(function (p) {
-    show(p[0] + ' may break as ' + p[1], shown(p[0]) === p[1], shown(p[0]));
-  });
-  show('a title takes one break, in its longest word, never two', (f.w('Californication Misunderstanding').match(/\u00AD/g) || []).length === 1);
-  show('eight letters or fewer step down a size instead, as on the approved card ("Sweet Caroline", "Bohemian Rhapsody", "Blinding Lights")', ['Sweet Caroline', 'Bohemian Rhapsody', 'Blinding Lights'].every(function (t) { return f.w(t) === t; }));
-  show('"Hotel California" breaks California, not Hotel', shown('Hotel California') === 'Hotel Cali-fornia', shown('Hotel California'));
-  show('short words are never split', ['Africa', 'Hey Ya!', 'Khe Sanh', 'Take On Me', 'The Horses', 'Eagle Rock'].every(function (t) { return f.w(t) === t; }));
-  show('nothing but letters is split (a name with digits or a dash keeps its shape)', f.w('Summer of \'69') === 'Summer of \'69' && f.w('Ob-La-Di Ob-La-Da') === 'Ob-La-Di Ob-La-Da');
-  show('each part of a break keeps at least three letters', ['Wonderwall', 'September', 'Brightside', 'California', 'Sweetheart', 'Wellington'].every(function (w) { var i = f.b(w); return i >= 3 && w.length - i >= 3; }));
-  show('a word with an apostrophe is never split ("Don\'t Stop Believin\'" keeps Believin\' whole, never "Belie-vin\'"; 9 Nov 2026)', f.w("Don't Stop Believin'") === "Don't Stop Believin'" && f.b("Believin'") === -1, shown("Don't Stop Believin'"));
-  show('the card is built from the plain titles; only fitCells adds the hyphen, and the tile lets the browser use it (hyphens:manual)', PLAY.indexOf('ct.textContent=titles[i];') > 0 && PLAY.indexOf('withSoftBreak(titles[i])') < 0 && /#vCard \.cc\{[^}]*hyphens:manual;-webkit-hyphens:manual\}/.test(PLAY.replace(/\s+/g, ' ').replace(/; /g, ';')));
+  var flat = PLAY.replace(/\s+/g, ' ').replace(/; /g, ';');
+  show('no soft-hyphen helper is left in the phone (softBreak, withSoftBreak)', PLAY.indexOf('function softBreak(') < 0 && PLAY.indexOf('function withSoftBreak(') < 0);
+  show('the tile says hyphens:none', /#vCard \.cc\{[^}]*hyphens:none;-webkit-hyphens:none\}/.test(flat));
+  show('the card is built from the plain titles (cardTitle), never a hyphenated copy', PLAY.indexOf('ct.textContent=cardTitle(titles[i]);') > 0);
+  show('the details (one size, 15px, wider card, brackets dropped) are in tools/test-musical-card-10nov.js', readFile('tools/test-musical-card-10nov.js').indexOf('one size, 15px floor') > 0);
 })();
 
 /* ======================================================================================= 4 */

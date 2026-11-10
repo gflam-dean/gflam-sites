@@ -220,8 +220,17 @@
   .ptop{border-bottom:none}
   .view{padding:0}
   #vCard{padding:2px 16px 0;display:flex;flex-direction:column}
-  #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible}
-  #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch}
+  #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible;scrollbar-width:none}
+  #vCard #cardWrap::-webkit-scrollbar{display:none}
+  #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch;width:calc(100% * var(--aw,1))}
+  /* THE CARD NEVER CHANGES SIZE FOR A NOTE (Dean, 10 Nov 2026 live sign-off: the orange "marked songs not played yet"
+     note and "Sent, the host is checking" grew the bar under the card, the card was the part of the screen that gave,
+     so its squares shrank and the titles were cut off). The note now has its OWN slot between the card and the button,
+     always there and always the same height (two lines at 15px), so nothing above it moves when a note comes or goes.
+     With no note the slot carries a quiet hint. The card's height is the screen less fixed parts only. */
+  #vCard .noteslot{flex:none;height:62px;display:flex;align-items:center;justify-content:center;padding-top:6px}
+  #vCard .noteslot .bingonote{margin:0;width:100%;max-width:none;padding:7px 12px;font-size:15px;line-height:1.3;box-shadow:none}
+  #vCard .notehint{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;line-height:1.3;color:#8A8A95;text-align:center}
   /* THE WORDS SIT IN THE MIDDLE OF THEIR SQUARE (Dean, 9 Nov 2026: the song words in the squares were not spaced
      right). The same 4px all round, marked or not, so a title is centred both ways and never moves when it is
      tapped; lines 1.15 apart; lines balanced (text-wrap) so a two-line title is two even lines, not a long one and a
@@ -229,25 +238,29 @@
      clear of the tick's corner instead, measured from the lines as drawn. */
   #vCard .cc{aspect-ratio:auto;position:relative;background:#1C1C21;border:2px solid transparent;border-radius:14px;
     font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:4px;line-height:1.15;
-    word-break:normal;overflow-wrap:normal;hyphens:manual;-webkit-hyphens:manual}
+    word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none}   /* NO HYPHEN, EVER (Dean, 10 Nov 2026: "Sur-render", "Thunder-struck"): lines break on spaces only */
   #vCard .cc .ct{text-wrap:balance}
   #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
   #vCard .cc.daub::after{content:"";position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px 14px no-repeat}   /* in its own corner, 3px in; the title's lines are kept out of it by fitCells (TICK_IN, TICK_SZ) */
-  /* THE FREE SQUARE IS A MARKED SQUARE (Dean, 4 Nov 2026 evening, from the store screenshot review): the near-black
-     tile with a faint pink edge and pink "Free" read as unmarked, which is confusing on a winning card. It is now
-     exactly #vCard .cc.daub: the same fill, the solid pink border, white text and the same pink tick (the
-     .cc.daub::after above, no longer hidden). The light screen matches body.light #vCard .cc.daub below. */
-  #vCard .cc.free,#vCard .cc.free.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;text-transform:none}   /* fitCells sets Free to the card's own size */
+  /* THE FREE SQUARE HAS ITS OWN LOOK (Dean, 4 Nov 2026, again at the 10 Nov live sign-off: Free looked exactly like a
+     marked song, the same pink tint, edge and tick). Free is now a solid gold tile with near-black "Free" and no tick;
+     a marked song stays a dark pink tile with a pink edge and a pink tick, so the two never read as the same thing.
+     Still counted as marked for every pattern (P.daubs[12]). fitCells sets Free to the card's own size. */
+  #vCard .cc.free,#vCard .cc.free.daub{background:var(--gold);border-color:var(--gold);color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em;text-transform:none}
+  #vCard .cc.free::after{display:none}
   #vCard .cc.early{border-color:var(--roll);box-shadow:0 0 0 2px rgba(245,165,36,.22)}
   #vCard .cc.justdone{animation:justdone 1.1s ease-in-out 3}
   #vCard .pmsg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;min-height:0}   /* for a screen reader; the answer to a tap is the note on the button */
-  #vCard .bingobar{padding-top:12px}
+  #vCard .bingobar{padding-top:6px}
   #vCard .bingoBtn{border-radius:999px;min-height:60px;padding:16px 12px;font-size:22px;font-weight:800;color:#fff;box-shadow:0 0 0 6px var(--ink)}
   #vCard .bingoBtn.faint{background:rgba(255,31,142,.32);color:rgba(255,255,255,.72)}
   #vCard .bingoBtn:disabled{opacity:.55}
   body.light #vCard .cc{background:#FFFFFF;color:#191420}
   body.light #vCard .cc.daub{background:#FFE3F0;color:#191420}
-  body.light #vCard .cc.free{background:#FFE3F0;color:#191420}   /* = body.light #vCard .cc.daub */
+  body.light #vCard .cc.free{background:var(--gold);border-color:var(--gold);color:#0A0A0B}   /* gold on the light screen too, never like a marked square */
+  /* NO SPACED MONO CAPITALS ON THIS PHONE (Dean's brand rule; 10 Nov 2026 sign-off: "MUSICAL BINGO" on the win screen,
+     "UP FIRST" in the lobby, the code step's kicker). Plain words in Manrope, as written. */
+  .vp-kicker,.vp-tiles .k{font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0;text-transform:none}
   /* HIGHLIGHT MY LINES (a Menu option, off by default): a finished line gets a solid pink outline in the gutter
      round its tiles, a line still needed a dashed one; measured from the real tiles (drawLines). */
   .hl{position:absolute;pointer-events:none;border:2.5px solid var(--pink);border-radius:18px;z-index:2}
@@ -336,7 +349,8 @@
     <div class="prizestrip" id="prizeStrip">Playing for <b>the prize</b></div>
     <div id="cardWrap"><div class="card5" id="cardGrid"></div></div>
     <div class="pmsg" id="pMsg">Tap a title when you hear it play.</div>
-    <div class="bingobar"><div class="bingonote hidden" id="bingoNote" role="status" aria-live="polite"></div><button class="btn pink bingoBtn" id="bingoBtn">I've got a line</button></div>
+    <div class="noteslot" id="noteSlot"><div class="bingonote hidden" id="bingoNote" role="status" aria-live="polite"></div><div class="notehint" id="noteHint">Tap a song when you hear it.</div></div>
+    <div class="bingobar"><button class="btn pink bingoBtn" id="bingoBtn">I've got a line</button></div>
   </div>
 
   <!-- WON: the prize, the card number for the host to check, then the venue's ad -->
@@ -614,6 +628,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
+  var END_LEAVE_MS=20000, _endLeaveT=null;   // after End game, the won/lost screen stays this long, then the lobby
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } frame(which); }
   /* ROW TWO OF THE HEADER: the pattern pill and the prize, on the lobby, the code-known join steps and the card;
      never on the code step (no venue yet) and never after the game (Dean, 3 Nov 2026). */
@@ -691,7 +706,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      hyphen (withSoftBreak: Wonder-wall), and only then; a word with an apostrophe never does.
      Every size is checked against the lines as drawn: inside the square's 4px padding, and clear of the tick's
      corner (TICK_IN, TICK_SZ, as #vCard .cc.daub::after), marked or not, so a title never moves when tapped. */
-  var FIT_MAX=20, FIT_MIN=12, FIT_FLOOR=10, FIT_LH=1.15, HY_MIN=13, CARD_SHARE=0.5, CARD_STEP=0.85, FIT_LAST=7, TICK_IN=3, TICK_SZ=14, _fitPending=false;
+  /* ONE SIZE FOR THE WHOLE CARD, NEVER UNDER 15px, NEVER A HYPHEN (Dean, 10 Nov 2026 live sign-off: "Sur-render",
+     "Thunder-struck", titles about 9px at 375, and neighbouring squares at very different sizes). Supersedes the
+     9 Nov "one hyphen" rule.
+       1. Every title is drawn at ONE size, the biggest from FIT_MAX down to FIT_MIN at which all of them sit inside
+          their squares on whole words, broken only at spaces. Free takes the same size.
+       2. A five-wide card on a phone often cannot hold a long single word ("Thunderstruck") at 15px, and a word is
+          never split. Then the card is made WIDER than the screen (--aw, in steps, up to WIDEN_MAX) until 15px fits,
+          and the player swipes it sideways (the slot under the card says so). Its height never changes.
+       3. Only a card that still cannot fit at WIDEN_MAX goes under 15px, the whole card evenly, down to FIT_FLOOR.
+     Titles are also kept clear of the tick's corner (TICK_IN, TICK_SZ, as #vCard .cc.daub::after), marked or not,
+     so a tap never moves a title. The text-size buttons in the menu raise the floor and the cap together (cz). */
+  var FIT_MAX=20, FIT_MIN=15, FIT_FLOOR=11, FIT_LH=1.15, WIDEN_MAX=2.2, WIDEN_STEP=0.1, TICK_IN=3, TICK_SZ=14, _fitPending=false, _aw=1;
   function clearOfTick(el, sp){
     var tn=sp.firstChild; if(!tn || tn.nodeType!==3) return true;
     var cb=el.getBoundingClientRect(), x0=cb.right-el.clientLeft-TICK_IN-TICK_SZ-1, y1=cb.top+el.clientTop+TICK_IN+TICK_SZ+1;
@@ -700,55 +726,51 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return true;
   }
   function cellFits(el, sp, W, H){ return sp.offsetWidth<=W+0.5 && sp.offsetHeight<=H+0.5 && clearOfTick(el, sp); }
-  /* the biggest size, from FIT_MAX down to FIT_FLOOR, where the title fits in three lines (or four, when three
-     would need type 3px smaller than four); 0 when nothing fits */
-  function bestFit(el, sp, W, H){
-    var three=0, four=0;
-    for(var size=FIT_MAX*cz; size>=FIT_FLOOR*cz; size-=0.5){
-      el.style.fontSize=size+"px";
-      if(!cellFits(el, sp, W, H)) continue;
-      var lines=Math.round(sp.offsetHeight/(size*FIT_LH));
-      if(!four && lines<=4) four=size;
-      if(lines<=3){ three=size; break; }
+  /* every title on the card at this one size: true when all of them fit */
+  function cardFits(todo, size){
+    var k, c, cs;
+    for(k=0;k<todo.length;k++) todo[k].el.style.fontSize=size+"px";
+    for(k=0;k<todo.length;k++){
+      c=todo[k]; cs=getComputedStyle(c.el);
+      var W=c.el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+      var H=c.el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+      if(!cellFits(c.el, c.sp, W, H)) return false;
     }
-    return (three && (three>=14*cz || !four || three>=four-3)) ? three : four;
+    return true;
   }
+  function setAw(grid, aw){ _aw=aw; grid.style.setProperty("--aw", String(aw)); }
   function fitCells(){
     var grid=document.getElementById("cardGrid");
     if(!grid || !grid.clientWidth){ _fitPending=true; return; }   // hidden: fit it when it is shown
     _fitPending=false;
-    var cells=document.querySelectorAll("#cardGrid .cc"), todo=[], fits=[], i;
+    var cells=document.querySelectorAll("#cardGrid .cc"), todo=[], i;
     for(i=0;i<cells.length;i++){
       var el=cells[i]; if(el.classList.contains("free")) continue;
       var sp=el.querySelector(".ct"); if(!sp) continue;
-      var title=sp.textContent.replace(/\u00AD/g,"");
-      sp.style.transform=""; sp.textContent=title;
-      var cs=getComputedStyle(el);
-      var W=el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
-      var H=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-      var best=bestFit(el, sp, W, H), hy=withSoftBreak(title);
-      if(best<HY_MIN*cz && hy!==title){ sp.textContent=hy; var b2=bestFit(el, sp, W, H); if(b2>best) best=b2; sp.textContent=title; }
-      el._fit=best; todo.push({ el:el, sp:sp, t:title, hy:hy, W:W, H:H, best:best }); fits.push(best||FIT_FLOOR*cz);
+      sp.style.transform=""; todo.push({ el:el, sp:sp });
     }
     if(!todo.length) return;
-    fits.sort(function(a,b){ return a-b; });
-    var card=Math.max(FIT_MIN*cz, fits[Math.floor(fits.length*CARD_SHARE)]);
-    var step=Math.max(FIT_FLOOR*cz, Math.floor(card*CARD_STEP*2)/2);
-    for(i=0;i<todo.length;i++){
-      var c=todo[i], size = c.best>=card ? card : c.best>=step ? step : (c.best||FIT_FLOOR*cz);
-      c.el.style.fontSize=size+"px";
-      /* whole words at this size if they fit; the one hyphen only if they do not */
-      if(!cellFits(c.el, c.sp, c.W, c.H) && c.hy!==c.t){ c.sp.textContent=c.hy; if(!cellFits(c.el, c.sp, c.W, c.H)) c.sp.textContent=c.t; }
-      while(size>FIT_FLOOR*cz && !cellFits(c.el, c.sp, c.W, c.H)){ size-=0.5; c.el.style.fontSize=size+"px"; }
-      /* A VERY LONG TITLE ("I Would Do Anything for Love (But I Won't Do That)") that is still too tall at the floor
-         on a short phone: smaller again, to FIT_LAST, rather than cut off. */
-      while(size>FIT_LAST*cz && c.sp.offsetHeight>c.H+0.5){ size-=0.5; c.el.style.fontSize=size+"px"; }
-      /* ONE WORD WIDER THAN THE SQUARE EVEN AT THE FLOOR ("Supercalifragilisticexpialidocious"): narrowed whole. */
-      if(c.sp.offsetWidth>c.W+0.5){
-        c.sp.style.transform="scaleX("+Math.max(0.3, c.W/c.sp.offsetWidth).toFixed(3)+")";
+    var top=FIT_MAX*cz, min=FIT_MIN*cz, floor=FIT_FLOOR, size=0, aw=1, s;
+    /* 1. the screen's width: the biggest one size, 15px or more */
+    setAw(grid, 1);
+    for(s=top; s>=min; s-=0.5){ if(cardFits(todo, s)){ size=s; break; } }
+    /* 2. wider, a step at a time, at 15px */
+    if(!size){
+      for(aw=1+WIDEN_STEP; aw<=WIDEN_MAX+0.001; aw=Math.round((aw+WIDEN_STEP)*10)/10){
+        setAw(grid, aw);
+        if(cardFits(todo, min)){ size=min; break; }
       }
+      if(!size) aw=WIDEN_MAX;
     }
-    for(i=0;i<cells.length;i++){ if(cells[i].classList.contains("free")) cells[i].style.fontSize=card+"px"; }
+    /* 3. still not: the whole card smaller, evenly */
+    if(!size){
+      setAw(grid, WIDEN_MAX);
+      for(s=min-0.5; s>=floor; s-=0.5){ if(cardFits(todo, s)){ size=s; break; } }
+      if(!size){ size=floor; cardFits(todo, floor); }
+    }
+    grid._fit=size;
+    for(i=0;i<cells.length;i++){ cells[i]._fit=size; if(cells[i].classList.contains("free")) cells[i].style.fontSize=size+"px"; }
+    paintHint();
   }
   (function(){
     function refit(){ if(P.cells) fitCells(); }
@@ -863,7 +885,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
           wrap.appendChild(cell); continue; }
         cell.className="cc";
         cell.setAttribute("data-i",i);
-        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=titles[i];   // fitCells sizes it, and adds the one hyphen only where a word cannot fit whole
+        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=cardTitle(titles[i]); cell.setAttribute("aria-label", titles[i]);   // fitCells sizes it; never a hyphen; the full title for a screen reader
         cell.appendChild(ct);
         wrap.appendChild(cell);
       }
@@ -937,35 +959,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     lineRows().forEach(function(x){ box([x.r*5,x.r*5+1,x.r*5+2,x.r*5+3,x.r*5+4], x.done); });
   }
   window.addEventListener("resize", function(){ if(_hl) drawLines(); });
-  /* ONE HYPHEN, ONLY WHERE A WORD CANNOT FIT WHOLE (Dean, 3 Nov 2026): the longest word of NINE letters or more gets
-     one soft hyphen at a sensible place (Wonder-wall, Sep-tember, Bright-side, Cali-fornia), never more than one per
-     title, shorter words never (as on the approved card, m1: "Sweet Caroline", "Bohemian Rhapsody" and "Blinding
-     Lights" step down a size instead). The browser only breaks there, and shows the hyphen, when the word is
-     wider than its tile at the size being tried. */
-  function softBreak(word){
-    if(word.length<9 || !/^[A-Za-z]+$/.test(word)) return -1;   // letters only: "Believin'" stays whole, never "Belie-vin'" (9 Nov 2026)
-    /* Between syllables: before a lone consonant (Cali-fornia), or inside a run of consonants before the longest
-       start a syllable can have (Wonder-wall, Sep-tember, Bright-side, Misunder-standing); the break nearest the
-       middle wins, with three letters at least either side. */
-    var V=/[aeiouy]/i, ON=/^(str|spr|scr|squ|thr|shr|st|sp|sc|sk|sl|sm|sn|sw|tr|pr|br|cr|dr|fr|gr|bl|cl|fl|gl|pl|th|sh|ch|wh|ph|qu|[b-df-hj-np-tv-z])$/i;
-    var best=-1, bd=1e9, mid=word.length/2, i=1;
-    while(i<word.length){
-      if(V.test(word.charAt(i)) || !V.test(word.charAt(i-1))){ i++; continue; }
-      var j=i; while(j<word.length && !V.test(word.charAt(j))) j++;   // word[i..j) is a run of consonants after a vowel
-      if(j<word.length){
-        for(var k=i;k<j;k++){ if(ON.test(word.slice(k,j))){ if(k>=3 && word.length-k>=3){ var dd=Math.abs(k-mid); if(dd<bd){ bd=dd; best=k; } } break; } }
-      }
-      i=j;
-    }
-    return best;
-  }
-  function withSoftBreak(title){
-    var words=String(title||"").split(" "), at=-1, len=0;
-    for(var w=0;w<words.length;w++){ if(words[w].length>len){ len=words[w].length; at=w; } }
-    if(at<0) return title;
-    var cut=softBreak(words[at]); if(cut<0) return title;
-    words[at]=words[at].slice(0,cut)+"\u00AD"+words[at].slice(cut);
-    return words.join(" ");
+  /* NO HYPHEN, EVER (Dean, 10 Nov 2026): softBreak/withSoftBreak (the 9 Nov "one hyphen in a long word") are gone.
+     A title breaks only at its spaces; fitCells widens the card or sizes it down instead. */
+  /* THE TITLE ON THE PHONE SQUARE (Dean, 10 Nov 2026: one size, 15px or more). A trailing part in brackets is a
+     version note or a subtitle nobody sings ("(Hot Summer Night)", "[Radio Edit]", "(feat. Eminem)",
+     "(But I Won't Do That)"), and on a square it costs the whole card's size. The square shows the title without
+     it; the host's card and the TV keep the full title. A title that IS brackets, or starts with them
+     ("(I Can't Get No) Satisfaction"), keeps them. */
+  function cardTitle(t){
+    var s=String(t||"").trim(), prev;
+    do{ prev=s; s=s.replace(/\s+[\(\[][^\(\)\[\]]*[\)\]]\s*$/, "").trim(); } while(s!==prev && s);
+    return s || String(t||"").trim();
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
   /* The answer to a BINGO! tap: in the line under the card AND in the note on the button, where the player is
@@ -975,10 +979,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     setMsg(html,cls);
     var n=$("bingoNote"); if(!n) return;
     n.innerHTML=html; n.className="bingonote"+(cls?" "+cls:"");
+    paintHint();
     if(_noteT) clearTimeout(_noteT);
-    _noteT=setTimeout(function(){ n.classList.add("hidden"); }, ms||6000);
+    _noteT=setTimeout(function(){ n.classList.add("hidden"); paintHint(); }, ms||6000);
   }
-  function hideBingoNote(){ var n=$("bingoNote"); if(n) n.classList.add("hidden"); if(_noteT){ clearTimeout(_noteT); _noteT=null; } }
+  function hideBingoNote(){ var n=$("bingoNote"); if(n) n.classList.add("hidden"); if(_noteT){ clearTimeout(_noteT); _noteT=null; } paintHint(); }
+  /* THE SLOT UNDER THE CARD (10 Nov 2026): the note when there is one, otherwise a quiet hint; "swipe" when the card
+     is wider than the screen. Same height either way, so the card never moves. */
+  function paintHint(){
+    var h=$("noteHint"), n=$("bingoNote"); if(!h) return;
+    h.textContent = _aw>1.001 ? "Swipe the card sideways to see every song." : "Tap a song when you hear it.";
+    h.classList.toggle("hidden", !!(n && !n.classList.contains("hidden")));
+  }
 
   // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
   var _ac=null;
@@ -1185,20 +1197,20 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // renderCard FIRST: it writes its own message at the end, so a message set before it is wiped.
     if(P.cells) renderCard();
     if(early.length){
-      noteBingo("You have marked "+early.length+" song"+(early.length===1?"":"s")+" that "+(early.length===1?"has":"have")+" not played yet. They are outlined in orange, tap one to unmark it. Keep listening!","no",9000);
+      noteBingo((early.length===1?"1 marked song has":early.length+" marked songs have")+" not played yet. Tap "+(early.length===1?"the":"an")+" orange one to unmark it.","no",9000);
       if(_earlyTimer) clearTimeout(_earlyTimer);
       _earlyTimer=setTimeout(function(){
         _showEarly=false;
         if(P.active && P.cells && !P.won && !P.ended) renderCard();
       }, 10000);
     } else {
-      noteBingo(markedCount() ? "Not a line yet. The songs for that pattern have not all played. Keep listening!" : "Mark the songs you hear first. Tap a title when it plays.","no");
+      noteBingo(markedCount() ? "Not yet. The songs for that pattern have not all played. Keep listening!" : "Mark the songs you hear first. Tap a title when it plays.","no");
     }
   }
   function markedCount(){ var n=0; if(P.daubs) for(var i=0;i<25;i++){ if(i!==12 && P.daubs[i]) n++; } return n; }
   function pressBingo(){
     if(P.claimPending || P.won) return;   // the button is disabled while a claim is with the host, and gone once won
-    if(!P.active || !P.cells){ noteBingo("The game has not started yet. Your card will be ready when the host starts.","no"); return; }
+    if(!P.active || !P.cells){ noteBingo("Your card will be ready when the host starts the game.","no"); return; }
     // Quick local gate to avoid a needless server call; the Worker is the authority.
     if(!checkPattern()){ sayNotYet(); return; }
     if(!P.gameId){ noteBingo("One moment, your card is still connecting. Try again in a few seconds.","no"); return; }
@@ -1240,6 +1252,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
+      if(_endLeaveT){ clearTimeout(_endLeaveT); _endLeaveT=null; }
       hideBingoNote();   // a new game: last game's answer goes
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
@@ -1295,7 +1308,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       else { route(); }
     }
     else if(m.t==="idle"){
-      if(P.joined){ P.active=false; P.cells=null; route(); }   // host sent the TV back to ads; wait for the next round
+      /* THE GAME IS OVER: THE PHONE MOVES ON (Dean, 10 Nov 2026 sign-off: the winner's phone stayed on "You won" after
+         End game, for good). route() puts a won or lost phone back on its end screen, so those flags are cleared here,
+         after END_LEAVE_MS, long enough to show the host the card number and answer "how did it go". A new game
+         ("started") before then takes over at once. */
+      if(P.joined){
+        P.active=false; P.cells=null;
+        if(P.won || P.ended){
+          if(_endLeaveT) clearTimeout(_endLeaveT);
+          _endLeaveT=setTimeout(function(){ _endLeaveT=null; if(!P.active){ P.won=false; P.ended=false; P.split=false; route(); } }, END_LEAVE_MS);
+        }
+        route();
+      }   // host sent the TV back to ads; wait for the next round
     }
   }
 
@@ -1395,7 +1419,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("bingoBtn").addEventListener("click", pressBingo);
   // Card zoom + full screen (older players squinting at a dim phone). Scales the card and the
   // title text together, with horizontal scroll; full screen hides the browser bars.
-  function applyZoom(){ cz=Math.max(1, Math.min(2.4, Math.round(cz*10)/10)); $("cardGrid").style.setProperty("--cz", cz); try{ localStorage.setItem("vp-mzoom", String(cz)); }catch(e){} if(P.cells) fitCells(); }
+  function applyZoom(){ cz=Math.max(1, Math.min(2.4, Math.round(cz*10)/10)); $("cardGrid").style.setProperty("--cz", 1); try{ localStorage.setItem("vp-mzoom", String(cz)); }catch(e){} if(P.cells) fitCells(); }
   $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
   $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
   (function(){

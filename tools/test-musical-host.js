@@ -364,7 +364,7 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
     bcast: function(m){ said.push(m.t); }, send: function(m){ said.push(m.t); }, sendState: function(){},
     closeNight: function(){}, renderConsole: function(){}, clearErrForAction: function(){}, clearMusic: function(){}, stopAudio: function(){},
     postMusicReport: function(){}, clearClaims: function(){}, showRoomVerdict: function(){}, hostError: function(){},
-    endBtnReset: function(){}, nextPat: function(){ return null; }, joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; },
+    endBtnReset: function(){}, nextPat: function(){ return null; }, nextPatOptions: function(){ return []; }, joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; },
     setTimeout: function(f, ms){ timers.push({ f: f, ms: ms }); return timers.length; } };
   var keys = Object.keys(env);
   var api = (new Function(keys.join(","), src + "\n return { now: endGameNow, asked: endGameAsked, won: afterWin, hold: endBtnHold };")).apply(null, keys.map(function(k){ return env[k]; }));
@@ -404,6 +404,76 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   pass("i. CONTROL: left alone, the nine second timer ends the game it was set for (g3), once", G.status === "setup" && JSON.stringify(ends) === '["g1","g2","g3"]', JSON.stringify({ status: G.status, ends: ends }));
   if (tm) tm.f();
   pass("j. and firing again ends nothing more", JSON.stringify(ends) === '["g1","g2","g3"]', JSON.stringify(ends));
+})();
+
+/* 10. THE CARRY-ON CHOICE (Dean, 10 Nov 2026: "jump straight to full house") and the stale carry-on box
+   (Test Charlie, "Audit Two won!" left over the setup page after End game). The real afterWin, carryOn,
+   endGameAsked, endGameNow, syncCarry, nextPat and nextPatOptions run here. */
+(function(){
+  var need = ["nextPat", "nextPatOptions", "syncCarry", "afterWin", "carryOn", "endGameAsked", "endGameNow", "endBtnHold"], src = "";
+  for (var i = 0; i < need.length; i++) { var f = grab(need[i], host); pass(need[i] + " is where the carry-on test lifts it from", !!f); if (!f) return; src += f + "\n"; }
+  src += 'var CARRY_LABELS={two:"Two lines",full:"Full house"};\n';
+  var posts = [], said = [], timers = [];
+  var syncP = { then: function(f){ if (f) f({}); return syncP; }, catch: function(){ return syncP; } };   // settles at once, so the checks read straight on
+  function mk(){ return { hidden: true, html: "", value: "", disabled: false, textContent: "",
+    classList: { add: function(c){ if (c === "hidden") this.o.hidden = true; }, remove: function(c){ if (c === "hidden") this.o.hidden = false; } } }; }
+  var els = {}; ["carryModal", "carryPats", "carryTitle", "carryBody", "carryPrize", "endGameBtn"].forEach(function(id){ els[id] = mk(); els[id].classList.o = els[id]; });
+  Object.defineProperty(els.carryPats, "innerHTML", { get: function(){ return this.html; }, set: function(v){ this.html = v; } });
+  var G = { busy: false, status: "running", gameId: "g1", pattern: "one", prize: "Meat tray", prizesWon: [], playedOrder: [], claims: [] };
+  var env = { G: G, PATTERN_NAMES: { one: "One line across", two: "Two lines across", corners: "Four corners", full: "Full house" },
+    $: function(id){ return els[id] || (els[id] = mk()); },
+    apiPost: function(path, body){ posts.push([path, body]); return syncP; },
+    bcast: function(m){ said.push(m); }, send: function(){}, sendState: function(){}, closeNight: function(){},
+    renderConsole: function(){ api.sync(); }, clearErrForAction: function(){}, clearMusic: function(){}, stopAudio: function(){}, postMusicReport: function(){},
+    clearClaims: function(){}, showRoomVerdict: function(){}, hostError: function(){}, endBtnReset: function(){}, saveMusic: function(){}, playedArray: function(){ return []; },
+    joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; }, setTimeout: function(f, ms){ timers.push(f); return 1; } };
+  var keys = Object.keys(env);
+  var api = (new Function(keys.join(","), src + "\n return { won: afterWin, carry: carryOn, asked: endGameAsked, now: endGameNow, sync: syncCarry, opts: nextPatOptions };")).apply(null, keys.map(function(k){ return env[k]; }));
+  var W = [{ name: "Audit Two", pid: "p1", cardNo: "001" }];
+  function btns(){ return (els.carryPats.html.match(/data-carrypat="(\w+)"/g) || []).map(function(x){ return x.replace(/.*="|"/g, ""); }); }
+  function labels(){ return (els.carryPats.html.match(/>([^<]+)</g) || []).map(function(x){ return x.slice(1, -1); }); }
+
+  api.won(W);
+  pass("a. after one line the modal offers two buttons: Two lines and Full house", JSON.stringify(btns()) === '["two","full"]' && JSON.stringify(labels()) === '["Two lines","Full house"]' && !els.carryModal.hidden, els.carryPats.html);
+  pass("b. the body text does not promise one pattern", !/for <b>/.test(els.carryBody.innerHTML) && !/Two lines across<\/b>/.test(els.carryBody.innerHTML), els.carryBody.innerHTML);
+  pass("b2. no button is tall or small enough to miss: the css gives .carrypats .btn 48px / 15px", /\.carrypats \.btn[^{]*\{[^}]*min-height:48px;font-size:15px/.test(host));
+  els.carryPrize.value = "Bottle of wine";
+  api.carry("full"); 
+  pass("c. tapping Full house posts pattern full with the new prize", posts.length === 1 && posts[0][0] === "/host/game/pattern" && posts[0][1].pattern === "full" && posts[0][1].prize === "Bottle of wine", JSON.stringify(posts));
+  api.carry("full");
+  pass("c2. a second tap while busy posts nothing more", posts.length === 1);
+  {
+    pass("d. the console is now on a full house, with that pattern and prize sent to phones and the TV", G.pattern === "full" && G.prize === "Bottle of wine" && said.some(function(m){ return m.t === "carryon" && m.pattern === "full" && m.prize === "Bottle of wine"; }) && els.carryModal.hidden, JSON.stringify({ p: G.pattern, said: said.map(function(m){ return m.t + ":" + m.pattern; }) }));
+    // two lines -> only full house
+    G.pattern = "two"; G.busy = false; posts.length = 0;
+    api.won(W);
+    pass("e. after two lines the only button is Full house", JSON.stringify(btns()) === '["full"]', els.carryPats.html);
+    api.carry("one");
+    pass("e2. a pattern that was not offered is refused", posts.length === 0);
+    // full house and four corners: no modal
+    G.pattern = "full"; els.carryModal.hidden = true; G._nextPat = ""; api.won(W);
+    pass("f. after a full house there is no carry-on box (the game ends on its timer)", els.carryModal.hidden && timers.length >= 1);
+    G.pattern = "corners"; G.status = "running"; els.carryModal.hidden = true; api.won(W);
+    pass("f2. four corners keeps today's behaviour: no carry-on box", els.carryModal.hidden);
+
+    // STALE MODAL: every way out of a won-awaiting-decision state takes the box down
+    function pending(){ G.status = "running"; G.pattern = "one"; G.gameId = "g9"; G.busy = false; G._endAsked = 0; api.won(W); return !els.carryModal.hidden; }
+    pass("g0. setup: box is up", pending());
+    api.asked();
+    pass("g. End game (two-tap path) takes the box down and clears the pending pattern", els.carryModal.hidden && !G._nextPat && G.status === "setup", JSON.stringify({ s: G.status, n: G._nextPat }));
+    pending(); api.now("g9");
+    pass("h. the carry-on box's own End game takes it down", els.carryModal.hidden && !G._nextPat);
+    // the real cause: the status leaves running by another route (restore, state change) and only renderConsole runs
+    pending(); G.status = "setup";
+    api.sync();
+    pass("i. ROOT CAUSE: any route that leaves 'running' (reload, pick-up elsewhere, new game) is caught by renderConsole's sync", els.carryModal.hidden && !G._nextPat);
+    pending(); G._nextPat = ""; api.sync();
+    pass("j. no pending win decision means no box", els.carryModal.hidden);
+    pending(); api.sync();
+    pass("k. CONTROL: a live win still waiting for a decision keeps its box", !els.carryModal.hidden);
+    G.status = "setup"; els.carryModal.hidden = true; G._nextPat = ""; api.won(W);
+    pass("l. a confirm that lands after the game has ended does not raise the box", els.carryModal.hidden);
+  }
 })();
 
 print("");
