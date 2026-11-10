@@ -419,6 +419,10 @@
   "checks": 122,
   "counted_by": "lines"
  },
+ "tools/suite-queue.test.py": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
  "tools/support-phone.test.py": {
   "checks": 30,
   "counted_by": "lines"

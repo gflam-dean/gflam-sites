@@ -357,6 +357,7 @@
   "stripe-fields-detector.test.py",
   "stripe-idempotency.test.js",
   "subscribe-in-chrome.test.py",
+  "suite-queue.test.py",
   "support-phone-emails.test.js",
   "support-phone.test.py",
   "suspend-not-before-auth.test.js",

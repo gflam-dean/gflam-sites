@@ -1,0 +1,87 @@
+{
+ "_about": "Edit me. The order the Chrome suites run in (suite-queue.py), the words that place a suite in an area, and the files every suite counts as 'read' for the result cache (suite-cache.py). First matching area in 'order' wins. A suite named under 'suites' goes where you say, whatever its name. Anything that matches nothing runs last, in 'other'.",
+ "order": [
+  "tv",
+  "console",
+  "phone",
+  "hq",
+  "emails",
+  "billing",
+  "other"
+ ],
+ "words": {
+  "tv": [
+   "tv",
+   "screen",
+   "countdown",
+   "slides",
+   "reconnect",
+   "sting"
+  ],
+  "console": [
+   "console",
+   "host",
+   "wizard",
+   "settings",
+   "caller",
+   "account",
+   "pickup",
+   "dropdowns",
+   "details"
+  ],
+  "phone": [
+   "phone",
+   "lobby",
+   "play",
+   "tap",
+   "safe",
+   "signin",
+   "session",
+   "purchase",
+   "raffle",
+   "qr",
+   "stale",
+   "join"
+  ],
+  "hq": [
+   "hq",
+   "admin",
+   "prospects",
+   "venues",
+   "night",
+   "live",
+   "helpdesk",
+   "help",
+   "logo",
+   "tools"
+  ],
+  "emails": [
+   "email",
+   "emails",
+   "unsub",
+   "consent",
+   "feedback",
+   "offer"
+  ],
+  "billing": [
+   "billing",
+   "subscribe",
+   "stripe",
+   "invoice",
+   "checkout",
+   "card",
+   "money",
+   "overage"
+  ]
+ },
+ "suites": {},
+ "shared": [
+  "venueplay/app/vp-session.js",
+  "venueplay-backend/worker/*.js",
+  "venueplay-backend/worker/lib/*.js",
+  "tools/browser-rig/*",
+  "tools/gatelib.py",
+  "tools/verify-live.py",
+  "tools/regulated-manifest.json"
+ ]
+}
