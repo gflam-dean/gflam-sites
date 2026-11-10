@@ -678,7 +678,7 @@
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
-    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvQCount").appendChild(dp); }
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Last round counts double"; $("tvQCount").appendChild(dp); }
     var qi=$("tvQImg"), lay=$("tvQ"), hasPic=!!(m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl)));
     if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); curQ.imageUrl=m.imageUrl; } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
     lay.classList.toggle("pic", hasPic);   // picture round layout; a picture that fails to load drops back to this text layout (see onerror)
@@ -719,7 +719,7 @@
     if(okCi && mk.parentNode){ var par=mk.parentNode, nx=mk.nextSibling; par.removeChild(mk); par.insertBefore(mk, nx); }
     /* THE SAME GRID AS THE QUESTION: label, question text, picture and cards land where they just were. */
     $("tvRevCount").textContent=curQ.label||"Question";
-    if(curQ.double){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvRevCount").appendChild(dp); }
+    if(curQ.double){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Last round counts double"; $("tvRevCount").appendChild(dp); }
     var rq=$("tvRevQText"); rq.textContent=curQ.text||""; rq.className=qClass(curQ.text);
     var lay=$("tvReveal"), ri=$("tvRevImg"), pic=curQ.imageUrl || ((m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl))) ? m.imageUrl : "");
     if(pic){ if(ri.getAttribute("src")!==pic) ri.src=pic; ri.classList.remove("hidden"); } else { ri.classList.add("hidden"); ri.removeAttribute("src"); }

@@ -322,12 +322,12 @@
                 <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
               </div>
               <div class="field">
-                <label>Double points final round</label>
+                <label>Last round counts double</label>
                 <div class="two" style="align-items:center">
                   <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
-                  <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+                  <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the last round, which count double"></div>
                 </div>
-                <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
+                <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night count double, speed bonus included. The TV and phones say so on each one.</div>
               </div>
               <div style="margin-top:4px;padding:12px 14px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:11px">
                 <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
@@ -898,7 +898,7 @@
     if(G.status==="question"){
       var q=G.current;
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+'</span>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+'</span>'+
         '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
         /* Picture round: the same image the TV shows, so the host can describe it. A broken
            link hides itself and the question carries on as a plain text one. */
@@ -921,7 +921,7 @@
     if(G.status==="reveal"){
       var q2=G.current;
       var rw=el("div","qwrap");
-      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; revealed</span></div>'+
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+' &middot; revealed</span></div>'+
         (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qtext-h">'+esc(q2.text)+'</div>';
       /* How the room split. The TV draws these bars; until now the host had to look over their
@@ -2043,7 +2043,7 @@
     var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
     if(G.status==="reveal" && q){
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
         '<div class="qtext-h">'+esc(q.text)+'</div>'+
         '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
       for(var i=0;i<q.options.length;i++){
@@ -2112,22 +2112,22 @@
   $("setSel").addEventListener("change", function(){ syncSetCount(); var n=$("setLastNote"); if(n) n.style.display="none"; queueTriviaPrefs(); });
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
-  /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
+  /* COUNTS DOUBLE FINAL ROUND. Which questions it covers is decided by the Worker when the night
      starts (config.double_seqs) and handed back; the console only ever asks isDouble(). */
   function isDouble(qseq){ return !!(G.doubleSeqs && G.doubleSeqs.indexOf(qseq) >= 0); }
   function paintDouble(){
     var seg=$("cfgDouble"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.doublePoints); }); }
     var inp=$("cfgDoubleLast"); if(inp){ inp.value=G.doubleLast; inp.disabled=!G.doublePoints; }
     var nt=$("doubleNote"); if(nt) nt.textContent = G.doublePoints
-      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included.")
-      : "Off. Turn it on to make the last questions of the night count double.";
+      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night count double, speed bonus included. The TV and phones say so on each one.")
+      : "Off. Turn it on and the last round of the night counts double.";
   }
   document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
     G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble(); queueTriviaPrefs();
   }); });
   (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
     G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
-    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
+    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night count double, speed bonus included. The TV and phones say so on each one."; }); })();
   paintDouble();
   if(/[?&]pr=1/.test(location.search)){ var _pf=$("prField"); if(_pf) _pf.classList.remove("hidden"); }   // switched off unless asked for
   document.querySelectorAll("#cfgRoundType button").forEach(function(b){ b.addEventListener("click", function(){
