@@ -3565,10 +3565,9 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     /* WHEN IT GOES. Resend holds it (scheduled_at) until then, so nothing here has to wake up to send
        it, and HQ can cancel it or send it now until that minute (vp_prospect_welcomes, migration 124). */
     const sendAtMs = Date.now() + delayMin * 60000;
-    /* ITS BUTTON SIGNS THEM STRAIGHT IN, ONCE (migration 123). Only the hash is kept. It lasts 30 DAYS FROM
-       SETUP (Dean, 4 Nov 2026, VPA_PROSPECT_LINK_DAYS), the same moment every link resent to them ends at,
-       so the follow-ups can count down one true number. Before migration 151 it is 14 days from when the
-       email goes, and HQ is told. No table yet, or no login: the button opens the email sign-in instead,
+    /* ITS BUTTON SIGNS THEM STRAIGHT IN, ONCE (migration 123). Only the hash is kept. It lasts 60 DAYS FROM
+       SETUP (Dean, 4 Nov 2026, VPA_PROSPECT_LINK_DAYS; 60 not 30 since Dean, 7 Nov 2026), the same moment every link resent to them ends at,
+       so the follow-ups can count down one true number. Before migration 184 it is 30 days (14 before 151), and HQ is told. No table yet, or no login: the button opens the email sign-in instead,
        and HQ is told. */
     let signinToken = null, signinHash = null;
     // A mobile login signs in by text code, so it needs no one-click link (and has none to leak).
@@ -3577,7 +3576,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
         const one = await vpaProspectOneLink(env, venue.id, login.id, {});
         const minted = one || await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
         signinToken = minted.token; signinHash = minted.hash || null;
-        if (minted.shortened) warnings.push('Their sign-in link lasts 14 days, not 30 (run migration 151 for the 30 day prospect link).');
+        if (minted.shortened) warnings.push('Their sign-in link lasts ' + vpaDaysLeft(minted.expiresAt, Date.now()) + ' days, not ' + VPA_PROSPECT_LINK_DAYS + ' (run migration 184 for the ' + VPA_PROSPECT_LINK_DAYS + ' day prospect link).');
       }
       catch (e) { warnings.push('The one-click sign-in button was not made (run migration 123), so their email button opens the email-code sign-in instead.'); }
     }
@@ -3630,7 +3629,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
 
 /* The one-tap sign-in for a reply in their own thread (Dean, 5 Nov 2026). The SAME two kinds as the welcome's button
    (vpaFireProspectWelcome): a mobile login opens the text-code sign-in with their number filled in (no token, nothing
-   to leak), an email login gets a one-use token (vpaMintSigninLinkFor, hash only) that ends with their 30 days.
+   to leak), an email login gets a one-use token (vpaMintSigninLinkFor, hash only) that ends with their 60 days.
    Returns { url, kind: 'sms' | 'link', expires_at, days_left, mobile_ends } or { url: null, reason }. */
 async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobileRaw, email, endMs) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
@@ -4272,7 +4271,7 @@ async function vpaProspectsData(env, dopts) {
       phone: r.phone || null, mobile: mobile, tel: ring ? 'tel:' + String(ring).replace(/[^\d+]/g, '') : null,
       website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
       created_at: r.created_at, days_since_setup: days, welcome: welcome,
-      /* Their sign-in link's true end, 30 days from setup or from HQ's last resend (link_from), the whole days
+      /* Their sign-in link's true end, 60 days from setup or from HQ's last resend (link_from), the whole days
          left on it, and nudge_day: the day of THAT clock the follow-ups count from (Dean, 4 Nov 2026). */
       link_from: isFinite(vpaProspectWindowFromMs(r)) ? new Date(vpaProspectWindowFromMs(r)).toISOString() : null,
       link_expires_at: isFinite(vpaProspectWindowFromMs(r)) ? new Date(vpaProspectWindowFromMs(r) + VPA_PROSPECT_LINK_DAYS * DAY).toISOString() : null,
@@ -4357,7 +4356,7 @@ function vpaQuietProspect(p) {
    Signing in, adding a card and cancelling all take them off the quiet list (vpaQuietProspect: free_month,
    card_added, cancelled). A TAP on the link that never became a sign-in is the one thing the list cannot
    see, so the one-click route records it (signin_link_used) and this reads it back, since the start of
-   their current 30 days (an HQ resend starts a fresh clock, and an old tap does not count against it). */
+   their current 60 days (an HQ resend starts a fresh clock, and an old tap does not count against it). */
 async function vpaProspectTappedLink(env, venueId, sinceMs) {
   try {
     const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) + '&action=eq.signin_link_used'
@@ -4376,8 +4375,8 @@ async function vpaAutopilotQuietProspects(request, env, json) {
        on the Mac's next run with nothing else to do. */
     mobile: p.mobile || (vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null),
     state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
-    /* The link's true end (30 days from setup) and the whole days left on it (4 Nov 2026), so the Mac can
-       draft "expires in {days} days" and time the "3 days before" follow-up. The Worker fills {days} again
+    /* The link's true end (60 days from setup) and the whole days left on it (4 Nov 2026), so the Mac can
+       draft "expires in {days} days" and time the "3 days before" follow-up (day 57 of 60). The Worker fills {days} again
        from the link it actually mints when the email goes. A Mac on an older Worker sees neither field. */
     link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
     link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
@@ -4501,10 +4500,10 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const since = new Date(Date.now() - 86400000).toISOString();
   const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
   if (recent && recent.length >= VPA_SIGNIN_LINKS_PER_DAY_HQ) return await refuse('Too many sign-in links went to them in the last day, so no text was sent.', 429);
-  /* The text's link ends when the email's does: the prospect's 30 days from setup (Dean, 4 Nov 2026), and
+  /* The text's link ends when the email's does: the prospect's 60 days from setup (Dean, 4 Nov 2026; 60 since 7 Nov), and
      {days} in the text is filled from the link that was minted, like the email. */
   const win = await vpaProspectLinkWindow(env, venueId);
-  if (win && win.ended) return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Resend from HQ to give them a fresh 30 days.');
+  if (win && win.ended) return await refuse('Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.');
   if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
   let token, minted;
   try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { win: win })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
@@ -4566,13 +4565,13 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (/[\u2014\u2013]/.test(text) || /VenuePlay/.test(text)) return json({ error: 'The email must have no long dash, and venueplay in lowercase.' }, 400);
   const winN = await vpaProspectLinkWindow(env, venueId);
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
-  /* NOT hq: an automatic follow-up never restarts the 30 days, and after them it sends nothing (reason 'ended'
+  /* NOT hq: an automatic follow-up never restarts the 60 days, and after them it sends nothing (reason 'ended'
      below): Dean decides from HQ. The HQ per-day link cap still applies (opts.hqCap). */
   const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: subjectRaw || 'Your venueplay is ready when you are' });
   await vpaAudit(env, actor, r.ok ? 'prospect_nudge_sent' : 'prospect_nudge_refused', 'venue:' + venueId,
     { name: p.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, expires_at: r.ok ? r.expires_at : undefined, days_left: r.ok ? r.days_left : undefined });
   if (r.ok) return json({ ok: true, to: r.to, expires_at: r.expires_at, days_left: r.days_left, shortened: !!r.shortened });
-  if (r.reason === 'ended') return json({ error: 'Their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so nothing was sent. Resend from HQ to give them a fresh 30 days.', refused: true, ended: true }, 409);
+  if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so nothing was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', refused: true, ended: true }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
   return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
@@ -4588,7 +4587,7 @@ async function vpaAutopilotProspectNudge(request, env, json) {
  *     anyone else is refused (409) and nothing is made. A key that leaks can never open a customer's account.
  *   - a mobile login: the text-code sign-in with their number filled in (no token).
  *   - an email login: vpaSendSigninLink with returnOnly, the SAME rules as HQ's Resend sign-in link (older
- *     unused links retired first, so only the newest works; the per-day cap) WITHOUT restarting their 30 days.
+ *     unused links retired first, so only the newest works; the per-day cap) WITHOUT restarting their 60 days.
  * Recorded in vp_admin_audit (prospect_thread_link_made / _refused), never the link itself.
  * ======================================================================== */
 async function vpaAutopilotThreadSigninLink(request, env, json) {
@@ -4627,7 +4626,7 @@ async function vpaAutopilotThreadSigninLink(request, env, json) {
   } else {
     const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, returnOnly: true });
     if (!r.ok) {
-      if (r.reason === 'ended') return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so no link was made. Resend from HQ to give them a fresh 30 days.', { ended: true });
+      if (r.reason === 'ended') return await refuse('Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so no link was made. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', { ended: true });
       if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have been made for ' + r.to + ' in the last day, so no more were made.' }, 429);
       return json({ error: 'No link could be made (' + r.reason + ').' }, r.reason === 'no_table' ? 503 : 400);
     }
@@ -5604,15 +5603,17 @@ async function vpaMembersReminderSweep(env, nowMs) {
  *   limit    per network, like /contact and the help desk (helpIpLimit: durable, hashed address).
  * ======================================================================== */
 const VPA_SIGNIN_LINK_DAYS = 14;
-/* A PROSPECT'S SIGN-IN LINK LASTS 30 DAYS FROM SETUP (Dean, 4 Nov 2026, the two journeys). The link in the
-   welcome, the day-3 "here's your sign-in link again" and the "expires in 3 days" one all end at the SAME
-   moment, 30 days after vp_prospects.created_at, so "this link expires in {X} days" is one true number
-   that counts down. After that point a resent link (the sign-in page's "Send me a new link", or HQ) is an
-   ordinary 14 day one, and the free month still only starts the first time they sign in. Migration 123
-   caps a link at 15 days; migration 151 lifts that to 31. Until 151 has run, vpaMintSigninLinkFor falls
-   back to 14 days and the words printed are the days the link REALLY has (never a number that is not
-   the real expiry). Logins that are not a prospect's keep 14 days. */
-const VPA_PROSPECT_LINK_DAYS = 30;
+/* A PROSPECT'S SIGN-IN LINK LASTS 60 DAYS FROM SETUP (Dean, 4 Nov 2026, the two journeys; 60, not 30, since
+   Dean, 7 Nov 2026: the link only fills in their mobile, the code still goes to their phone and needs a tap).
+   The link in the welcome, the day-3 "here's your sign-in link again" and the "expires in 3 days" one (day 57)
+   all end at the SAME moment, 60 days after vp_prospects.created_at, so "this link expires in {X} days" is one
+   true number that counts down. After that nothing hands itself out; HQ's "Start a fresh 60 days" gives a new
+   window. The free month still only starts the first time they sign in (it stays 30 days: VPA_FREE_MONTH_DAYS).
+   Migration 123 capped a one-click link at 15 days, 151 at 31, 184 at 63. Until 184 has run,
+   vpaMintSigninLinkFor falls back to 30 days (14 before 151) and the words printed are the days the link
+   REALLY has (never a number that is not the real expiry). Logins that are not a prospect's keep 14 days. */
+const VPA_PROSPECT_LINK_DAYS = 60;
+const VPA_PROSPECT_LINK_DAYS_BEFORE_184 = 30;   // migration 151's cap (31 days) holds a 30 day link
 function vpaProspectLinkEndMs(createdAt) { const c = Date.parse(createdAt || ''); return isFinite(c) ? c + VPA_PROSPECT_LINK_DAYS * 86400000 : NaN; }
 /* Whole days a link has left, counted up: 3 days and 2 hours is 4 days, the day it expires is 1, gone is 0. */
 function vpaDaysLeft(expiresMs, nowMs) { return Math.max(0, Math.ceil((Number(expiresMs) - Number(nowMs)) / 86400000)); }
@@ -5626,7 +5627,7 @@ function vpaFillDays(text, days, expiresMs) {
     .replace(/\{days\}/g, String(n))
     .replace(/\{expires\}/g, isFinite(Number(expiresMs)) ? vpaBneDateWords(Number(expiresMs)) : '');
 }
-/* WHEN A PROSPECT'S 30 DAYS RUN. From setup (vp_prospects.created_at), or from the last time HQ resent their
+/* WHEN A PROSPECT'S 60 DAYS RUN (30 until Dean, 7 Nov 2026). From setup (vp_prospects.created_at), or from the last time HQ resent their
    link (link_from, migration 151): Dean, 4 Nov 2026, "an HQ resend by Dean or staff starts a fresh 30 days
    from the resend, with the journey-1 emails re-dated from there. The automatic nudges never reset it." */
 function vpaProspectWindowFromMs(row) {
@@ -5664,12 +5665,12 @@ async function vpaSigninTokenHash(token) { return vpbSha256Hex(new TextEncoder()
 async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
   return (await vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, null)).token;
 }
-/* expiresAtMs (optional): the moment the link should end, a prospect's 30 days from setup, whether that is
-   sooner or later than 14 days (on day 29 the link has one day, and the email says one day). Without one,
+/* expiresAtMs (optional): the moment the link should end, a prospect's 60 days from setup, whether that is
+   sooner or later than 14 days (on day 59 the link has one day, and the email says one day). Without one,
    or with one already past, the link is the ordinary 14 days from when its email goes. Returns the token
    AND the expiry it was really given, so every sentence about it is written from the row that exists.
-   Before migration 151 the table refuses a life over 15 days: then the same link is made again with 14, and
-   `shortened` says so (the row that was refused never existed, so nothing is left behind). */
+   Before migration 184 the table refuses a life over 31 days: then the same link is made again ending 30 days
+   out (before 151, over 15 days: 14), and `shortened` says so (the row that was refused never existed, so nothing is left behind). */
 /* THE SHORT LINK (Dean, 6 Nov 2026: "shorten the sign-in link in text messages", never a third-party shortener).
    venueplay.com.au/s/AB2CD7KMNPQR is OUR link. The 12 letters are NOT a login key (security review, 6 Nov 2026):
    opening them leads to the normal sign-in, where a text code to the account's own mobile is what lets anyone in
@@ -5702,14 +5703,14 @@ function vpaSigninTokenShape(t) {
 /* ONE LINK PER PROSPECT (Dean, 6 Nov 2026): "the email and the text, and every follow-up email or text for that
    prospect, use the SAME link, and sending it again must NOT renew the 30 days ... Only an explicit HQ 'start a fresh
    30 days' action may issue a new window."
-   A prospect inside its 30 days has ONE short link (venueplay.com.au/s/XXXXXXXXXXXX), made the first time we send it and
+   A prospect inside its 60 days (30 until 7 Nov 2026) has ONE short link (venueplay.com.au/s/XXXXXXXXXXXX), made the first time we send it and
    kept on vp_prospects (migration 175): signin_code_hash to find it, signin_code_enc sealed (the 12 letters XOR an
    HMAC keystream from a Worker secret and a random nonce) so the same letters can go in the next email. Behind it,
    no token at all: opening it leads to the normal text-code sign-in (OPENING THE SHORT LINK, below). A send we make (the
    welcome, the thread reply, HQ's Resend, Dean's approved follow-ups) hands out the same short link, ending at the
    same moment. Self-serve paths ("Send me a new link", /go/{venue code}) never touch it: they email a long one-tap
    link of their own (single use, the same end). Only HQ's "Start a fresh
-   30 days" makes a new window and new letters. */
+   60 days" makes a new window and new letters. */
 async function vpaCodeKeyStream(env, nonce) {
   const secret = String(env.SIGNIN_LINK_SECRET || env.CARD_LINK_SECRET || env.SUPABASE_SERVICE_KEY || '');
   if (!secret) throw new Error('no secret to seal a sign-in code with');
@@ -5734,8 +5735,8 @@ async function vpaOpenCode(env, sealed) {
     return VPA_SHORT_RE.test(code) ? code : null;
   } catch (e) { return null; }
 }
-/* The prospect's one link: { token: the short letters, short: true, expiresAt: the end of their 30 days }, or null when
-   it does not apply (not a prospect, outside the 30 days, another login, or migration 175 not run: the caller then makes
+/* The prospect's one link: { token: the short letters, short: true, expiresAt: the end of their 60 days }, or null when
+   it does not apply (not a prospect, outside the 60 days, another login, or migration 175 not run: the caller then makes
    a long link of its own, as before). The letters are NOT a login key: see THE FIRST OPEN, below. */
 async function vpaProspectOneLink(env, venueId, authUserId, opts) {
   opts = opts || {};
@@ -5863,8 +5864,17 @@ async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expire
   try { await row(want); return { token: token, expiresAt: want, shortened: false }; }
   catch (e) {
     if (want === plain) throw e;                       // not the 15 day cap: no table, or worse
+    /* Migration 184 not run yet (151's cap is 31 days): the link ends 30 days out instead, and say so. */
+    const old = now + VPA_PROSPECT_LINK_DAYS_BEFORE_184 * 86400000;
+    if (want > old && old > plain) {
+      try {
+        await row(old);
+        console.log('[signin-link] a ' + VPA_PROSPECT_LINK_DAYS + ' day prospect link was refused (run migration 184): made a ' + VPA_PROSPECT_LINK_DAYS_BEFORE_184 + ' day one for venue ' + venueId);
+        return { token: token, expiresAt: old, shortened: true };
+      } catch (_) {}
+    }
     await row(plain);                                  // migration 151 not run yet: the 14 day link, and say so
-    console.log('[signin-link] a 30 day prospect link was refused (run migration 151): made a 14 day one for venue ' + venueId);
+    console.log('[signin-link] a ' + VPA_PROSPECT_LINK_DAYS + ' day prospect link was refused (run migrations 151 and 184): made a 14 day one for venue ' + venueId);
     return { token: token, expiresAt: plain, shortened: true };
   }
 }
@@ -5960,36 +5970,36 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
   if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
   /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
-     prospect inside its 30 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
+     prospect inside its 60 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
   const retireOthers = async (keepHash) => {
     try {
       await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null' + (keepHash ? '&token_hash=neq.' + keepHash : ''), {
         method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
     } catch (_) {}
   };
-  /* WHEN IT ENDS (Dean, 4 Nov 2026): a prospect's venue inside its 30 days from setup gets a link that ends at
+  /* WHEN IT ENDS (Dean, 4 Nov 2026): a prospect's venue inside its 60 days from setup gets a link that ends at
      that same moment, so every link they are sent counts down the one true number; anyone else, or after
-     the 30 days (the sign-in page's "Send me a new link" still works then), the ordinary 14 days. */
+     the 60 days (the sign-in page's "Send me a new link" still works then), the ordinary 14 days. */
   const win = await vpaProspectLinkWindow(env, pick.venue_id);
   const vs0 = win ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1') : null;
-  /* AFTER THE 30 DAYS, NO LINK HANDS ITSELF OUT (Dean, 4 Nov 2026: "they already had their one chance", but
+  /* AFTER THE 60 DAYS, NO LINK HANDS ITSELF OUT (Dean, 4 Nov 2026: "they already had their one chance", but
      "maybe it just wasn't the right time"). The sign-in page's "Send me a new link" (opts.self) and the
      automatic follow-ups (opts.nudge) stop here; the caller tells the person and opens a sales ticket, and
-     Dean chooses whether to resend from HQ. HQ's "Start a fresh 30 days" (opts.fresh, below) is the one place a fresh
-     30 days starts (Dean, 6 Nov 2026: a normal resend never renews them, so after the 30 days it is refused too). */
+     Dean chooses whether to resend from HQ. HQ's "Start a fresh 60 days" (opts.fresh, below) is the one place a fresh
+     60 days starts (Dean, 6 Nov 2026: a normal resend never renews them, so after the 60 days it is refused too). */
   if (win && win.ended && !opts.fresh) {
     return { ok: false, reason: 'ended', to: email, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
              window_from: new Date(win.from).toISOString(), window_end: new Date(win.end).toISOString() };
   }
   let windowEnd = null, restart = false;
   if (opts.expiresAtMs != null) windowEnd = Number(opts.expiresAtMs);
-  else if (win && opts.fresh && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ's "Start a fresh 30 days" only
+  else if (win && opts.fresh && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ's "Start a fresh 60 days" only
   else if (win && !win.ended) windowEnd = win.end;                                                                         // every other send: the same end, never reset
   let token, expiresAt, shortened = false, oneLink = false;
   try {
     let one = null;
     if (restart) {
-      /* A fresh 30 days: link_from moves to now (below), the old code is dropped and a new one made for the new window. */
+      /* A fresh 60 days: link_from moves to now (below), the old code is dropped and a new one made for the new window. */
       try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { link_from: new Date().toISOString() }); } catch (_) {}
       try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { signin_code_enc: null }); } catch (_) {}   // before 175: no column, nothing to drop
       await retireOthers(null);
@@ -6008,12 +6018,12 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   }
   catch (e) { return { ok: false, reason: 'no_table' }; }
   /* THE JOURNEY-1 CLOCK RESTARTS WITH AN HQ RESEND: link_from is what the quiet list and the nudges count
-     from. Before migration 151 the column is not there; the link still goes and HQ is told the 30 days
+     from. Before migration 151 the column is not there; the link still goes and HQ is told the 60 days
      could not be re-dated. Written before the email, so a resend never goes out un-dated. */
   let redated = false;
   if (restart) {
     try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { link_from: new Date().toISOString() }); redated = true; }
-    catch (e) { console.log('[signin-link] could not re-date the prospect\'s 30 days (run migration 151) for venue ' + pick.venue_id); }
+    catch (e) { console.log('[signin-link] could not re-date the prospect\'s ' + VPA_PROSPECT_LINK_DAYS + ' days (run migration 151) for venue ' + pick.venue_id); }
   }
   const daysLeft = vpaDaysLeft(expiresAt, Date.now());
   const expiresWords = vpaBneDateWords(expiresAt);
@@ -6142,7 +6152,7 @@ async function vpaHandleOneClickResend(request, env, json) {
       const r = await vpaSendSigninLink(env, who.id, who.venue, { self: true });
       await vpaAudit(env, { actorId: null, label: 'self (sign-in page)', role: null }, r.ok ? 'signin_link_resent' : (r.reason === 'ended' ? 'signin_link_ended' : 'signin_link_resend_refused'),
         'auth_user:' + who.id, { reason: r.ok ? undefined : r.reason, venue_id: r.venue_id || who.venue || undefined, by_token: !!(t && who.venue) });
-      /* THE 30 DAYS ARE OVER (Dean, 4 Nov 2026): no link by itself. The page says the link has ended and that
+      /* THE 60 DAYS ARE OVER (Dean, 4 Nov 2026): no link by itself. The page says the link has ended and that
          we will be in touch, and a SALES ticket opens in HQ, buzzing like the other sales alerts, so Dean can
          choose to resend. One ticket per venue a week, so a second tap does not make a second ticket. This
          answer is different from SAME only for someone holding that venue's own link or address. */
@@ -6162,10 +6172,10 @@ async function vpaProspectLinkEndedTicket(env, r) {
   if (have && have.length) return null;
   const name = r.venue_name || 'a prospect';
   const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'urgent',
-    title: VPA_LINK_ENDED_TITLE + name + ' tapped "Send me a new link" after their 30 days',
-    message: name + ' tapped "Send me a new link" on the sign-in page, but their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end))
+    title: VPA_LINK_ENDED_TITLE + name + ' tapped "Send me a new link" after their ' + VPA_PROSPECT_LINK_DAYS + ' days',
+    message: name + ' tapped "Send me a new link" on the sign-in page, but their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end))
       + ' and no link goes by itself after that (Dean, 4 Nov 2026: "they already had their one chance", but "maybe it just wasn\'t the right time").\n\n'
-      + 'They were told the link has ended and that we will be in touch. To give them a fresh 30 days, press Resend sign-in link on their card in HQ > Prospects.',
+      + 'They were told the link has ended and that we will be in touch. To give them a new link and a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days, press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days on their card in HQ > Prospects.',
     contact_email: r.to || null, venue_id: r.venue_id || null });
   if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, name, null).catch(() => null); }
   return t;
@@ -6173,7 +6183,7 @@ async function vpaProspectLinkEndedTicket(env, r) {
 /* ===========================================================================
  * THE SAME SIGN-IN LINK BY TEXT, FROM HQ (Dean, 4 Nov 2026): "the SIGN-IN LINK is what they need, because they
  * can't get into their account without it." HQ's one button, "Send them a new sign-in link", sends it by EMAIL
- * (vpaSendSigninLink, a fresh 30 days) and, when we have their mobile, by TEXT at the same time, on its own
+ * (vpaSendSigninLink, their 60 day link) and, when we have their mobile, by TEXT at the same time, on its own
  * one-use link that ends at the same moment as the email's (made after the email's, so neither retires the
  * other). The text keeps the follow-up text's rules (vpaAutopilotProspectNudgeSms):
  *   - through Mobile Message (ClickSend only as a backup), only while PROSPECT_SMS_ON is "on"; off, the email
@@ -6198,16 +6208,16 @@ function vpaSmsAllowedAt(ms) {
   }
   return t;
 }
-/* DEAN'S WORDING RULE (6 Nov 2026): never explain when the free month starts; say "This link is available for 30
-   days." (urgency), with the date. The number is the link's own, from the row that was made (30 for a fresh one,
-   fewer once their 30 days from setup are partly used), so it is never untrue. */
+/* DEAN'S WORDING RULE (6 Nov 2026): never explain when the free month starts; say "This link is available for 60
+   days." (urgency; 30 until Dean, 7 Nov 2026), with the date. The number is the link's own, from the row that was made
+   (60 for a fresh one, fewer once their 60 days from setup are partly used), so it is never untrue. */
 function vpaLinkAvailableWords(expiresMs, nowMs) {
   const n = Math.max(1, vpaDaysLeft(expiresMs, nowMs == null ? Date.now() : nowMs));
   return 'This link is available for ' + n + (n === 1 ? ' day' : ' days') + ', until ' + vpaBneDateWords(expiresMs) + '.';
 }
 /* ONE SMS PART (Dean, 6 Nov 2026: "the sign-in text is too long"). No "venueplay:" prefix (the sender already shows
    venueplay); venueplay is named once in the words (Spam Act: who it is from). Dean's words:
-     "Hi {first}, here's your venueplay sign-in link for {venue}: {short link} Available for 30 days. Reply STOP to opt out"
+     "Hi {first}, here's your venueplay sign-in link for {venue}: {short link} Available for 60 days. Reply STOP to opt out"
    (vpaSendSms turns the opt-out into Mobile Message's own link), plus "We've emailed it too, check junk." 160 characters
    is one part: a text over it drops " for {venue}", then the first name; past that it is two parts (never more: the
    link and the opt-out are never cut, and every other piece has a fixed length). */
@@ -6339,7 +6349,7 @@ async function vpaAdminSigninLink(request, env, json) {
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name&limit=1');
   const venue = vs && vs[0];
   if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
-  /* "Start a fresh 30 days" (Dean, 6 Nov 2026): its own, clearly labelled HQ button, the ONLY thing that gives a
+  /* "Start a fresh 60 days" (Dean, 6 Nov 2026; 60 since 7 Nov): its own, clearly labelled HQ button, the ONLY thing that gives a
      prospect a new window and a new link. The normal "Resend sign-in link" sends the same link, same end. */
   const fresh = !!(_b.body && _b.body.fresh === true);
   // Whose link: the prospect's own login first (HQ > Prospects), then the venue's owner, then a manager.
@@ -6355,7 +6365,7 @@ async function vpaAdminSigninLink(request, env, json) {
     r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true, fresh: fresh });
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
-  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });
+  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });   // the key keeps its name: older rows and audit searches use it (the window is 60 days since 7 Nov 2026)
   /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
   let text = null;
   if (r.ok && _b.body && _b.body.text === true) {
@@ -6366,7 +6376,7 @@ async function vpaAdminSigninLink(request, env, json) {
                           text: text || undefined, line: text ? vpaSigninSentLine(r, text) : undefined,
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
-  if (r.reason === 'ended') return json({ error: 'Their 30 days ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so the same link cannot be sent again. To give them a new link and a fresh 30 days, press Start a fresh 30 days.', ended: true, window_end: r.window_end }, 409);
+  if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so the same link cannot be sent again. To give them a new link and a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days, press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days.', ended: true, window_end: r.window_end }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
   if (r.reason === 'no_table') return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503);
