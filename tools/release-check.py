@@ -4213,7 +4213,7 @@ def local_checks(which):
             # VPA_CANCEL_REASONS and vpbCancelVenue, and HQ's cxReasonHtml on the venue Details panel.
             ('D190. A venue that cancels is asked why; the reason and note are kept for HQ and the cancellation is the same whatever they say',
              'test-cancel-reason.js',
-             'seven plain reasons and an optional note, stored word for word; the same Stripe sync, emails and dates as skipping; shown on the venue in HQ', 121,
+             'seven plain reasons and an optional note, stored word for word; the same Stripe sync, emails and dates as skipping; shown on the venue in HQ', 126,
              'A reason that changed what happens to the money, or a form field that stopped a venue leaving, is a billing '
              'fault; a reason nobody can read in HQ was never worth asking'),
         ):

@@ -988,7 +988,10 @@
           '<label class="flabel" for="nwEmail">Their email</label><input id="nwEmail" class="cxin" type="email" maxlength="200" autocomplete="off">' +
           '<label class="flabel" for="nwMobile">Their mobile</label><input id="nwMobile" class="cxin" type="tel" inputmode="tel" maxlength="30" autocomplete="off">' +
         '</div>' +
-        '<p class="cxback">Change your mind within 90 days and you keep your current plan and price.</p>' +
+        /* The 90-day words (Dean, 10 Nov 2026, INBOX 149): the fallback until the restart billing that keeps their
+           plan and price ships (fix/restart-90day-15nov, Monday 16). Then: "Change your mind within 90 days and you
+           keep your current plan and price." */
+        '<p class="cxback">Change your mind? Come back within 90 days and we\u2019ll sort your plan out.</p>' +
         '<div class="dlgacts" id="whyActs">' +
           '<button type="button" id="whyMain" class="dlgbtn main" hidden></button>' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
@@ -1047,7 +1050,16 @@
       cxPaintActs();
     });
     mainBtn.addEventListener("click", function(){
-      if (mainBtn.getAttribute("data-do") === "keep") { if (SCREEN && SCREEN.keep_plan && SCREEN.keep_plan.url) location.href = SCREEN.keep_plan.url; return; }
+      /* KEEP THE BASICS, plan switch off: a help request to HQ, nothing changes in billing (INBOX 149). */
+      if (mainBtn.getAttribute("data-do") === "keep") {
+        mainBtn.disabled = true;
+        api("/account/keep-request", { venue_id:v.id, reason:pick.value || null, reason_detail:(more.value || "").trim() || null }).then(function(r){
+          mainBtn.disabled = false;
+          if (r && r.ok) { close(); showMsg("Thanks. We have your request to move " + v.name + " to Keep the basics, and we\u2019ll be in touch. Nothing has been cancelled.", true); return; }
+          showMsg((r && r.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.", false);
+        });
+        return;
+      }
       var val = function(id){ return String(w.querySelector("#" + id).value || "").trim(); };
       mainBtn.disabled = true;
       api("/account/transfer-request", { venue_id:v.id, new_name:val("nwName"), new_email:val("nwEmail"), new_mobile:val("nwMobile") }).then(function(r){

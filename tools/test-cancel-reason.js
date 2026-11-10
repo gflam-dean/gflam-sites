@@ -396,8 +396,10 @@ check('a window (for the reminder emails) narrows sessions and opt-ins, and leav
 
 var SC_OFF = runP(vpaCancelScreen({}, { id: 'v9', name: 'The Royal' }));
 var SC_ON = runP(vpaCancelScreen({ VPB_KEEP_PLAN: '1' }, { id: 'v9', name: 'The Royal' }));
-check('the keep plan is OFF unless VPB_KEEP_PLAN is 1: no words, no button', SC_OFF && SC_OFF.keep_plan === null && SC_OFF.lines.length > 0 && /members list of 3/.test(SC_OFF.lose), SC_OFF);
-check('switched on, its words are Dean\'s', SC_ON && SC_ON.keep_plan && SC_ON.keep_plan.title === 'Keep the basics for $10 a month'
+check('Keep the basics is shown with Dean\'s words, and with the plan switch OFF it is a help request (mode request, no switch)',
+      SC_OFF && SC_OFF.keep_plan && SC_OFF.keep_plan.mode === 'request' && SC_OFF.keep_plan.plan_switch === false && SC_OFF.keep_plan.title === 'Keep the basics for $10 a month'
+      && SC_OFF.lines.length > 0 && /members list of 3/.test(SC_OFF.lose), SC_OFF);
+check('even with the switch set, nothing is built to change billing: still a request, its words Dean\'s', SC_ON && SC_ON.keep_plan && SC_ON.keep_plan.mode === 'request' && SC_ON.keep_plan.title === 'Keep the basics for $10 a month'
       && SC_ON.keep_plan.sub === '$10 a month, whatever the number of players. Our cheapest plan.', SC_ON && SC_ON.keep_plan);
 vpaSelectAll = function () { return Promise.reject(new Error('down')); };
 var SC_BAD = runP(vpaCancelScreen({}, { id: 'v9', name: 'X' }));
@@ -411,7 +413,7 @@ helpAnnounce = function () { return Promise.resolve(); };
 parm();
 var ask2 = pcall('GET', 'f=fid1&t=tokfid1&reply=json');
 check('the free-month question carries the screen: numbers, what they would lose, keep plan off',
-      ask2 && ask2.json && ask2.json.screen && ask2.json.screen.lines.length > 0 && ask2.json.screen.keep_plan === null && /your slides/.test(ask2.json.screen.lose), ask2 && ask2.json);
+      ask2 && ask2.json && ask2.json.screen && ask2.json.screen.lines.length > 0 && ask2.json.screen.keep_plan && ask2.json.screen.keep_plan.mode === 'request' && /your slides/.test(ask2.json.screen.lose), ask2 && ask2.json);
 parm(); TICKETS = [];
 var tr = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json&action=transfer&reason=closing&new_name=Sam+Lee&new_email=sam%40pub.com&new_mobile=0400000000');
 check('the hand-over: a "Transfer ownership" request to HQ with the new owner\'s name, email and mobile',
@@ -440,6 +442,20 @@ var by = bpost(vpbTransferRequest, { venue_id: 'nope', new_name: 'Sam', new_emai
 check('a venue that is not theirs is refused', by && by.status === 403 && TICKETS.length === 1, by);
 var bs = bpost(vpbCancelScreen, { venue_id: 'v1' });
 check('billing\'s cancel screen answers for their own venue only', bs && bs.status === 200 && Array.isArray(bs.body.lines) && bpost(vpbCancelScreen, { venue_id: 'x' }).status === 403, bs);
+
+/* KEEP THE BASICS with its plan switch off (INBOX 149): a help request to HQ, nothing cancelled, nothing in billing. */
+parm(); TICKETS = [];
+var kp1 = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json&action=keep&reason=expensive&reason_detail=Quiet+winter');
+check('free month: "Keep the basics" sends HQ a "Keep the basics" request with their reason and note, and cancels nothing',
+      TICKETS.length === 1 && TICKETS[0].title === 'Keep the basics' && TICKETS[0].venue_id === 'pv1' && /It costs too much for us/.test(TICKETS[0].message)
+      && /Quiet winter/.test(TICKETS[0].message) && kp1 && kp1.json && kp1.json.state === 'keep_sent' && !pRow.cancelled_at && pVenue.status === 'active'
+      && pAudit.some(function (x) { return x.action === 'keep_plan_requested'; }) && !pAudit.some(function (x) { return x.action === 'prospect_cancelled'; }), [TICKETS, kp1 && kp1.json]);
+arm(); TICKETS = [];
+var bk = bpost(vpbKeepRequest, { venue_id: 'v1', reason: 'pausing', reason_detail: 'Back in March' });
+check('billing: "Keep the basics" sends HQ the same request; the venue, Stripe and the emails are untouched',
+      bk && bk.status === 200 && bk.body.ok && TICKETS.length === 1 && TICKETS[0].title === 'Keep the basics' && /Just pausing for now/.test(TICKETS[0].message)
+      && row.cancel_at_period_end === false && calls.length === 0, [bk, calls, TICKETS]);
+check('billing: a venue that is not theirs is refused', bpost(vpbKeepRequest, { venue_id: 'zz' }).status === 403 && TICKETS.length === 1);
 
 /* The free-month page, run: the screen drawn, the main button by reason, Cancel always there. */
 function crun2(answers, steps) {
@@ -483,11 +499,15 @@ check('no games: no numbers block', R2.els.stats.className === '' && R2.els.stat
   check('keep plan switched on, "' + k + '": Keep the basics is the main button, Cancel beside it',
         R2.els.main.className === 'main' && R2.els.main.innerHTML.indexOf('Keep the basics for $10 a month') === 0 && R2.els.acts.className === 'acts two' && /hand hidden/.test(R2.els.hand.className));
 });
+R2.els.whyPick.value = 'pausing'; R2.els.whyPick.on.change(); R2.els.main.on.click(); drainMicrotasks();
+var kpost = R2.calls.filter(function (c) { return c.method === 'POST'; })[0] || {};
+check('free month: tapping Keep the basics posts the request (action=keep, with their reason), never the cancel',
+      /&action=keep&reason=pausing/.test(kpost.body || '') && R2.calls.filter(function (c) { return c.method === 'POST'; }).length === 1 && !/new_name/.test(kpost.body || ''), kpost.body);
 R2.els.whyPick.value = 'closing'; R2.els.whyPick.on.change();
 check('keep plan on, closing or changing hands: no $10 button, the hand-over instead', R2.els.main.innerHTML === 'Hand the account to the new owner');
 var CP2 = CPAGE.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
 check('the free-month page has no price words of its own, the 90-day line, and no members list download',
-      !/\$\d/.test(CP2) && CP2.indexOf('Change your mind within 90 days and you keep your current plan and price.') !== -1 && !/download|export/i.test(CP2));
+      !/\$\d/.test(CP2) && CP2.indexOf('Change your mind? Come back within 90 days and we&rsquo;ll sort your plan out.') !== -1 && CP2.indexOf('keep your current plan and price') === -1 && !/download|export/i.test(CP2));
 
 /* billing.html's dialog. */
 var DLG2 = (function () { var a = PAGE.indexOf('function askWhy('), b = PAGE.indexOf('function showMsg(', a); return PAGE.slice(a, b); })();
@@ -498,7 +518,9 @@ check('the hand-over is the main button for closing, the keep plan only from the
       /var closing = pick\.value === "closing", kp = SCREEN && SCREEN\.keep_plan;/.test(DLG2) && /mainBtn\.innerHTML = "Hand the account to the new owner"/.test(DLG2)
       && /'<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue<\/button>'/.test(DLG2) && !/id="whyGo"[^>]*hidden/.test(DLG2) && !/goBtn\.hidden/.test(DLG2));
 check('billing\'s dialog: the 90-day line, no price words, no members list download',
-      DLG2.indexOf('Change your mind within 90 days and you keep your current plan and price.') !== -1 && !/\$\d/.test(DLG2c) && !/download|export/i.test(DLG2c));
+      DLG2.indexOf("'<p class=\"cxback\">Change your mind? Come back within 90 days and we\\u2019ll sort your plan out.</p>'") !== -1 && DLG2c.indexOf('keep your current plan and price') === -1 && !/\$\d/.test(DLG2c) && !/download|export/i.test(DLG2c));
+check('billing: Keep the basics posts /account/keep-request with their reason and note, never the cancel',
+      /api\("\/account\/keep-request", \{ venue_id:v\.id, reason:pick\.value \|\| null, reason_detail:\(more\.value \|\| ""\)\.trim\(\) \|\| null \}\)/.test(DLG2));
 check('the hand-over posts to /account/transfer-request with the new owner',
       /api\("\/account\/transfer-request", \{ venue_id:v\.id, new_name:val\("nwName"\), new_email:val\("nwEmail"\), new_mobile:val\("nwMobile"\) \}\)/.test(DLG2));
 

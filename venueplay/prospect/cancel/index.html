@@ -98,7 +98,8 @@
         <label for="nwEmail">Their email</label><input id="nwEmail" type="email" maxlength="200" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 12px">
         <label for="nwMobile">Their mobile</label><input id="nwMobile" type="tel" inputmode="tel" maxlength="30" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 14px">
       </div>
-      <p class="back90" id="back90">Change your mind within 90 days and you keep your current plan and price.</p>
+      <!-- The fallback 90-day words until the restart billing ships (INBOX 149; fix/restart-90day-15nov, Monday 16). -->
+      <p class="back90" id="back90">Change your mind? Come back within 90 days and we&rsquo;ll sort your plan out.</p>
       <div id="acts" class="acts">
         <button type="button" class="main hidden" id="main"></button>
         <button type="button" class="go" id="go">Yes, cancel it</button>
@@ -194,18 +195,19 @@
   if (pickEl && pickEl.addEventListener) pickEl.addEventListener("change", paintActs);
   var mainEl = $("main");
   if (mainEl && mainEl.addEventListener) mainEl.addEventListener("click", function () {
-    if (mainEl.getAttribute("data-do") === "keep") { if (SCREEN && SCREEN.keep_plan && SCREEN.keep_plan.url) location.href = SCREEN.keep_plan.url; return; }
-    /* A help request to HQ titled "Transfer ownership". Nothing is cancelled by it. */
+    /* Two help requests to HQ, and neither cancels anything: "Keep the basics" (its plan switch is off, so HQ sets it
+       up by hand, INBOX 149) and "Transfer ownership". */
+    var keep = mainEl.getAttribute("data-do") === "keep";
     var val = function (id) { var e = $(id); return e && e.value ? String(e.value).trim() : ""; };
     mainEl.disabled = true;
     fetch(VP_WORKER + "/prospect/cancel", { method: "POST", credentials: "omit",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "f=" + encodeURIComponent(f) + "&t=" + encodeURIComponent(t) + "&reply=json&action=transfer" + whySaid() +
-            "&new_name=" + encodeURIComponent(val("nwName")) + "&new_email=" + encodeURIComponent(val("nwEmail")) + "&new_mobile=" + encodeURIComponent(val("nwMobile")) })
+      body: "f=" + encodeURIComponent(f) + "&t=" + encodeURIComponent(t) + "&reply=json" + (keep ? "&action=keep" + whySaid() : "&action=transfer" + whySaid() +
+            "&new_name=" + encodeURIComponent(val("nwName")) + "&new_email=" + encodeURIComponent(val("nwEmail")) + "&new_mobile=" + encodeURIComponent(val("nwMobile"))) })
       .then(function (r) { return r.json(); })
       .then(function (a) {
         mainEl.disabled = false;
-        if (a && a.state === "transfer_sent") { show({ state: "done", title: a.title, text: a.text, foot: a.foot }); return; }
+        if (a && (a.state === "transfer_sent" || a.state === "keep_sent")) { show({ state: "done", title: a.title, text: a.text, foot: a.foot }); return; }
         $("err").textContent = (a && a.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.";
         $("err").className = "err";
       })

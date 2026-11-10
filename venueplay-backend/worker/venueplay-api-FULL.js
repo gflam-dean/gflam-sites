@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '10 Nov 2026, 13:48 · 57054cf4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 17:46 · 3a1a4bfa';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -203,6 +203,7 @@ export default {
       if (request.method === 'POST' && path === '/account/cancel-venue' && typeof vpbCancelVenue === 'function')  return await vpbCancelVenue(request, env, json);
       if (request.method === 'POST' && path === '/account/cancel-screen' && typeof vpbCancelScreen === 'function')  return await vpbCancelScreen(request, env, json);
       if (request.method === 'POST' && path === '/account/transfer-request' && typeof vpbTransferRequest === 'function')  return await vpbTransferRequest(request, env, json);
+      if (request.method === 'POST' && path === '/account/keep-request' && typeof vpbKeepRequest === 'function')  return await vpbKeepRequest(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-upload' && typeof vpbScreenUpload === 'function') return await vpbScreenUpload(request, env, json);
@@ -5214,6 +5215,15 @@ async function vpaProspectCancel(request, env, json) {
       '<label for="whyMore" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Anything you\u2019d like to tell us? (optional)</label>' +
       '<textarea id="whyMore" name="reason_detail" rows="3" maxlength="2000" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:8px;margin:0 0 16px"></textarea>' +
       '<button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
+  }
+  /* "Keep the basics" while its plan switch is off (Dean, 10 Nov 2026, INBOX 149): a help request to HQ, nothing cancelled. */
+  if (postedForm.action === 'keep') {
+    try { await vpaKeepTicket(env, v, { name: prow.contact_name || '', email: prow.email || '', phone: prow.phone || '' }, postedWhy); }
+    catch (e) { return page('That has not gone through', 'Call us on 07 5228 3667, press 2, and we will sort it out for you.'); }
+    await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'keep_plan_requested', 'venue:' + v.id, { name: v.name });
+    return asJson && json ? json({ ok: true, state: 'keep_sent', title: 'Thanks, we\u2019ll be in touch',
+      text: 'We have your request to move ' + (v.name || 'your venue') + ' to Keep the basics. We will contact you to set it up. Nothing has been cancelled.', foot: FOOT })
+      : page('Thanks, we\u2019ll be in touch', 'We have your request to move ' + name + ' to Keep the basics. Nothing has been cancelled.');
   }
   /* "Hand the account to the new owner" (Dean, 10 Nov 2026): a help request to HQ, and NOTHING is cancelled. */
   if (postedForm.action === 'transfer') {
@@ -12624,9 +12634,11 @@ function vpaLoseWords(st) {
 async function vpaCancelScreen(env, venue) {
   let st = null;
   try { st = await vpaVenueHistory(env, venue.id); } catch (_) { st = null; }
-  /* THE KEEP PLAN'S WORDS COME FROM HERE, and only while VPB_KEEP_PLAN is on (it is OFF until Dean says go,
-     INBOX 133/137). Off, the pages have no price words at all to show. */
-  const keep = vpaKeepPlanOn(env) ? { title: 'Keep the basics for $10 a month', sub: '$10 a month, whatever the number of players. Our cheapest plan.' } : null;
+  /* KEEP THE BASICS (Dean, 10 Nov 2026, INBOX 137 and 149): the button is shown, and its words come from here, so the
+     pages carry no price of their own. The plan switch itself (VPB_KEEP_PLAN) stays OFF and is not built: while it is,
+     the button only sends HQ a help request ("Keep the basics") and changes nothing in billing. */
+  const keep = { title: 'Keep the basics for $10 a month', sub: '$10 a month, whatever the number of players. Our cheapest plan.',
+                 mode: 'request', plan_switch: vpaKeepPlanOn(env) };
   return { venue_name: venue.name || '', lines: vpaVenueStatsLines(st), lose: vpaLoseWords(st), keep_plan: keep };
 }
 /* POST /account/cancel-screen { venue_id } (owner only, like cancel-venue): what billing.html's cancel
@@ -12663,6 +12675,35 @@ async function vpaTransferTicket(env, venue, from, nw) {
   return t;
 }
 
+/* "KEEP THE BASICS" WHILE THE PLAN SWITCH IS OFF: a help request to HQ, nothing else. Nothing is cancelled and
+   nothing in billing changes; HQ rings them and sets it up by hand. */
+async function vpaKeepTicket(env, venue, from, why) {
+  const label = why && why.reason ? VPA_CANCEL_REASONS[why.reason] : null;
+  const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'web_form', priority: 'normal',
+    title: 'Keep the basics', venue_id: venue.id,
+    contact_name: from.name || null, contact_email: from.email || null, contact_phone: from.phone || null,
+    message: (venue.name || 'This venue') + ' would like to move to Keep the basics ($10 a month) instead of cancelling.' +
+      (label ? '\n\nTheir reason: ' + label : '') + (why && why.reasonDetail ? '\nTheir note: ' + why.reasonDetail : '') +
+      '\n\nSent from the cancel screen. Nothing has been cancelled and nothing in billing has changed.' });
+  try { await helpAnnounce(env, t, venue.name); } catch (_) {}
+  return t;
+}
+/* POST /account/keep-request { venue_id, reason, reason_detail } (owner only). */
+async function vpbKeepRequest(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venue = (o.venues || []).filter((v) => v.id === String(b.venue_id || '').trim())[0];
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  let t;
+  try { t = await vpaKeepTicket(env, venue, { name: o.account.contact_name || '', email: o.account.email || o.account.contact_email || '', phone: '' }, vpaCancelReasonOf(b, false)); }
+  catch (e) { return json({ error: 'We could not send that just now. Call us on 07 5228 3667, press 2.' }, 503); }
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel screen)' }, 'keep_plan_requested', 'venue:' + venue.id, { name: venue.name, ticket_no: t && t.ticket_no });
+  return json({ ok: true, ticket_no: t && t.ticket_no });
+}
 /* POST /account/transfer-request { venue_id, new_name, new_email, new_mobile } (owner only). */
 async function vpbTransferRequest(request, env, json) {
   const o = await vpbRequireOwner(request, env);
