@@ -432,6 +432,9 @@
       from += t.brand + ".com.au";
       var st = { "new": "gold", open: "gold", waiting: "indep", closed: "idle" }[t.status] || "idle";
       function fld(label, html) { return '<div class="field"><label>' + label + "</label>" + html + "</div>"; }
+      var blockAt = String(t.contact_email || "").toLowerCase().lastIndexOf("@"), blockDomain = blockAt > 0 ? String(t.contact_email).toLowerCase().slice(blockAt + 1) : "";
+      var blockFree = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|aol|proton|protonmail|bigpond|optusnet|tpg|iinet|telstra)\./.test(blockDomain);
+      if (/(^|\.)(venueplay|partyplay)\.com\.au$/.test(blockDomain)) blockDomain = "";
       var KIND = { note: "Note, only HQ sees it", reply: "You emailed them", email_in: "They wrote" };
       var history = (j.notes || []).map(function (n) {
         if (n.kind === "change") return '<div class="hdnote change">' + hdEsc(n.body) + ' <span class="k">&middot; ' + hdEsc(when(n.created_at)) + "</span></div>";
@@ -472,7 +475,12 @@
             '<div class="hdquick">' +
               (t.status === "closed" ? '<button class="mini" id="hdReopen">Reopen</button>' : '<button class="mini" id="hdCloseT">Close ticket without replying</button>') +
               (t.status !== "waiting" && t.status !== "closed" ? '<button class="mini" id="hdWaitT">Waiting on them</button>' : "") +
+              (blockDomain ? '<button class="mini" id="hdBlockT">Block sender</button>' : "") +
             "</div>" +
+            (blockDomain ? '<div id="hdBlockBox" class="hidden restrict" style="margin-top:9px">Block this sender and close the ticket? Their future emails go to spam with no ticket and no reply.' +
+              '<div class="hdacts" style="margin-top:8px"><button class="btn pink" id="hdBlockEmail">Block ' + hdEsc(email) + '</button>' +
+              (blockFree ? "" : '<button class="btn ghost" id="hdBlockDom">Block everything from @' + hdEsc(blockDomain) + '</button>') +
+              '<button class="btn ghost" id="hdBlockNo">Cancel</button></div></div>' : "") +
           "</div>" +
           '<details class="panel pad hddet" style="margin-top:12px"><summary>Ticket details</summary><div class="hdgrid">' +
             fld("Status", '<select id="hdtStatus">' + opts(ST) + "</select>") +
@@ -527,6 +535,18 @@
       });
       function after(msg) { done(msg); load(); if (root.history.state && root.history.state.hd) { try { root.history.back(); return; } catch (e) {} } backToList(false); }
       if ($("hdCloseT")) $("hdCloseT").addEventListener("click", function () { update({ status: "closed" }, function () { after("Ticket " + t.ticket_no + " closed."); }); });
+      if ($("hdBlockT")) {
+        $("hdBlockT").addEventListener("click", function () { $("hdBlockBox").classList.remove("hidden"); });
+        $("hdBlockNo").addEventListener("click", function () { $("hdBlockBox").classList.add("hidden"); });
+        var blockGo = function (scope) {
+          post("/admin/help/block", { id: t.id, scope: scope }).then(function (r) {
+            if (r.error) { say(r.error); return; }
+            after("Blocked " + r.blocked + ". Ticket " + t.ticket_no + " closed.");
+          });
+        };
+        $("hdBlockEmail").addEventListener("click", function () { blockGo("email"); });
+        if ($("hdBlockDom")) $("hdBlockDom").addEventListener("click", function () { blockGo("domain"); });
+      }
       if ($("hdReopen")) $("hdReopen").addEventListener("click", function () { update({ status: "open" }, function () { openTicket(t.id); load(); }); });
       if ($("hdWaitT")) $("hdWaitT").addEventListener("click", function () { update({ status: "waiting" }, function () { after("Ticket " + t.ticket_no + " is waiting on them."); }); });
       $("hdtNoteGo").addEventListener("click", function () {

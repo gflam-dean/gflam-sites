@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 16:20 · c671b626';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -181,6 +181,9 @@ export default {
       if (request.method === 'POST' && path === '/admin/help/get')         return await helpAdminGet(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/update')      return await helpAdminUpdate(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/note')        return await helpAdminNote(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/block')       return await helpAdminBlock(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/blocklist')   return await helpAdminBlocklist(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/unblock')     return await helpAdminUnblock(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/reply')       return await helpAdminReply(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/log-call')    return await helpAdminLogCall(request, env, json);
       // Saved replies (Dean, 29 Oct 2026; migration 126). HQ only, like every /admin/help/ route.
@@ -19102,6 +19105,154 @@ function helpIgnoreEmail(mail) {
   if (/^(mailer-daemon|postmaster|no-?reply|do-?not-?reply)@/i.test(from)) return 'an automatic sender';
   return '';
 }
+/* ==========================================================================================
+   BLOCK SENDER AND PHISHING FILTER (Dean, 10 Nov 2026; migration 184)
+
+   Ticket #1027 "American Express | Non-Compliance Issues" from donotreply_us@secure.net was a
+   phishing email, and Dean had already closed three like it. Two things:
+
+   1. A BLOCKLIST. HQ's "Block sender" on a ticket puts the sender's address, or the whole domain
+      (Dean picks), on vp_help_blocklist and closes the ticket. Mail from a blocked sender is
+      filed as spam SILENTLY: no ticket, no acknowledgement, no reply, no alert to Dean. A blocked
+      sender is never written to, ever. The first entry, secure.net, lives in this file as well as
+      the table (HELP_BLOCK_SEED), so it holds even before migration 184 has run. Migadu still
+      keeps its own copy of everything, so a wrong block loses nothing.
+   2. A PHISHING FILTER for the obvious shape: a famous brand's name in the sender's display name
+      (or a brand name plus an alarm word in the subject, from a non-free-mail address) while the
+      address is not on that brand's real domain. Conservative on purpose: it never runs on a
+      reply to one of our own tickets, nor on an address that is a venue account's contact email,
+      and a customer who merely MENTIONS PayPal in a subject from their own address is not caught.
+   ========================================================================================== */
+const HELP_BLOCK_SEED = [
+  { kind: 'domain', value: 'secure.net' },
+  { kind: 'email', value: 'donotreply_us@secure.net' },
+];
+const HELP_FREE_MAIL = ['gmail.com', 'googlemail.com', 'outlook.com', 'outlook.com.au', 'hotmail.com', 'hotmail.com.au', 'live.com',
+  'live.com.au', 'msn.com', 'yahoo.com', 'yahoo.com.au', 'ymail.com', 'icloud.com', 'me.com', 'aol.com', 'protonmail.com', 'proton.me',
+  'bigpond.com', 'bigpond.net.au', 'optusnet.com.au', 'tpg.com.au', 'iinet.net.au', 'internode.on.net', 'telstra.com'];
+const HELP_OWN_DOMAINS = ['venueplay.com.au', 'partyplay.com.au', 'gflam.com.au', 'gflam.com'];
+/* names: how the brand writes itself (lowercase, matched on word edges); domains: where its real mail comes from. */
+const HELP_PHISH_BRANDS = [
+  { names: ['american express', 'amex'], domains: ['americanexpress.com', 'aexp.com', 'amex.com', 'americanexpress.com.au'] },
+  { names: ['paypal'], domains: ['paypal.com', 'paypal.com.au', 'paypal-communications.com'] },
+  { names: ['westpac'], domains: ['westpac.com.au', 'westpac.co.nz'] },
+  { names: ['commonwealth bank', 'commbank'], domains: ['commbank.com.au', 'cba.com.au'] },
+  { names: ['national australia bank'], domains: ['nab.com.au'] },
+  { names: ['anz bank', 'anz internet banking'], domains: ['anz.com', 'anz.com.au', 'anz.co.nz'] },
+  { names: ['st george bank', 'st. george bank'], domains: ['stgeorge.com.au'] },
+  { names: ['bendigo bank'], domains: ['bendigobank.com.au'] },
+  { names: ['macquarie bank'], domains: ['macquarie.com', 'macquarie.com.au'] },
+  { names: ['mygov'], domains: ['servicesaustralia.gov.au', 'my.gov.au', 'ato.gov.au'] },
+  { names: ['australian taxation office'], domains: ['ato.gov.au'] },
+  { names: ['australia post', 'auspost'], domains: ['auspost.com.au', 'australiapost.com.au'] },
+  { names: ['docusign'], domains: ['docusign.com', 'docusign.net'] },
+  { names: ['netflix'], domains: ['netflix.com'] },
+  { names: ['microsoft'], domains: ['microsoft.com', 'microsoftonline.com', 'office.com', 'outlook.com', 'live.com'] },
+  { names: ['apple id'], domains: ['apple.com', 'icloud.com', 'email.apple.com'] },
+  { names: ['stripe'], domains: ['stripe.com'] },
+  { names: ['moshtix'], domains: ['moshtix.com.au', 'moshtix.com'] },
+];
+const HELP_PHISH_ALARM = /\b(non-?compliance|compliance (issue|notice|alert)|verify (your|account)|account (suspended|locked|limited|restricted|on hold|closure)|(suspended|locked|limited|restricted) account|unusual (sign-?in|activity)|security (alert|notice)|action required|urgent action|confirm your (account|identity|details)|payment (declined|failed|on hold)|invoice attached|(has|have) been (suspended|locked|limited))\b/i;
+function helpDomainOf(email) { const m = /@([^@\s]+)$/.exec(String(email || '').toLowerCase()); return m ? m[1] : ''; }
+function helpOnDomain(domain, list) { return list.some((d) => domain === d || domain.endsWith('.' + d)); }
+/* A display name that IS the brand: the brand's name plus only generic words ("PayPal Service",
+   "AMEX Security Team"). "Amy Stripe" or "Dan Netflix-Fan" is a person who shares a word with a brand. */
+const HELP_PHISH_GENERIC = ['the', 'of', 'team', 'service', 'services', 'support', 'security', 'secure', 'alert', 'alerts', 'notification',
+  'notifications', 'notice', 'notices', 'online', 'customer', 'care', 'account', 'accounts', 'billing', 'payments', 'payment', 'no', 'reply',
+  'noreply', 'donotreply', 'do', 'not', 'official', 'help', 'desk', 'department', 'fraud', 'card', 'cards', 'au', 'australia', 'us', 'inc', 'ltd', 'bank', 'banking', 'internet', 'id'];
+function helpNameIsBrand(name, brandName) {
+  const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const n = ' ' + norm(name) + ' ', b = ' ' + norm(brandName) + ' ';
+  if (n.indexOf(b) < 0) return false;
+  const rest = n.replace(b, ' ').split(' ').filter(Boolean);
+  return rest.every((w) => HELP_PHISH_GENERIC.indexOf(w) >= 0);
+}
+function helpWordIn(text, name) {
+  const norm = (x) => ' ' + String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  return norm(text).indexOf(norm(name)) >= 0;
+}
+/* Is this mail impersonating a brand? Returns a short reason, or '' (the common answer). */
+function helpPhishing(mail) {
+  const email = mail && mail.from && mail.from.email, domain = helpDomainOf(email);
+  if (!domain || helpOnDomain(domain, HELP_OWN_DOMAINS)) return '';
+  const name = (mail.from && mail.from.name) || '', title = mail.title || '';
+  const free = helpOnDomain(domain, HELP_FREE_MAIL);
+  for (let i = 0; i < HELP_PHISH_BRANDS.length; i++) {
+    const b = HELP_PHISH_BRANDS[i];
+    if (helpOnDomain(domain, b.domains)) continue;
+    for (let j = 0; j < b.names.length; j++) {
+      // A brand in the display name over an address that is not theirs is the classic spoof.
+      if (helpNameIsBrand(name, b.names[j])) return 'display name says ' + b.names[j] + ' but the address is ' + domain;
+      // In the subject it needs an alarm word as well, and a free-mail sender is a customer talking about it.
+      if (!free && helpWordIn(title, b.names[j]) && HELP_PHISH_ALARM.test(title)) return 'subject uses ' + b.names[j] + ' with an alarm word from ' + domain;
+    }
+  }
+  return '';
+}
+/* Pure: does this address match a blocklist (rows of {kind, value})? A domain entry covers its subdomains. */
+function helpBlockedBy(email, list) {
+  const e = String(email || '').toLowerCase(), d = helpDomainOf(e);
+  if (!e) return false;
+  return (list || []).some((r) => {
+    const v = String(r.value || '').toLowerCase();
+    return r.kind === 'email' ? v === e : r.kind === 'domain' ? (!!v && (d === v || d.endsWith('.' + v))) : false;
+  });
+}
+/* The table's rows plus the seed. If the table is not there yet (migration 184), the seed alone. */
+async function helpBlocklist(env) {
+  let rows = [];
+  try { rows = (await vpaSelect(env, 'vp_help_blocklist', 'select=kind,value&limit=5000')) || []; } catch (e) { rows = []; }
+  return HELP_BLOCK_SEED.concat(Array.isArray(rows) ? rows : []);
+}
+/* POST /admin/help/block {id, scope: 'email' | 'domain'} : block this ticket's sender and close it. */
+async function helpAdminBlock(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const t = await helpFindTicket(env, g.body.id);
+  if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
+  const email = String(t.contact_email || '').toLowerCase();
+  if (!HELP_EMAIL_RE.test(email)) return json({ error: 'This ticket has no email address to block.' }, 400);
+  const scope = g.body.scope === 'domain' ? 'domain' : 'email';
+  const domain = helpDomainOf(email);
+  if (helpOnDomain(domain, HELP_OWN_DOMAINS)) return json({ error: 'That is one of our own addresses. It is not blocked.' }, 400);
+  if (scope === 'domain' && helpOnDomain(domain, HELP_FREE_MAIL)) {
+    return json({ error: domain + ' is a free mail service used by real customers, so the whole domain is not blocked. Block this one address instead.' }, 400);
+  }
+  const value = scope === 'domain' ? domain : email;
+  const have = await helpBlocklist(env);
+  const already = have.some((r) => r.kind === scope && String(r.value).toLowerCase() === value);
+  if (!already) {
+    try {
+      await vpaInsert(env, 'vp_help_blocklist', { kind: scope, value: value, reason: helpLine(t.subject, 200) || null,
+        blocked_by: g.admin.label, from_ticket_no: t.ticket_no }, false);
+    } catch (e) {
+      if (!/duplicate|unique|23505/i.test(String(e && e.message))) {
+        return json({ error: 'The block list is not set up yet (it needs migration 184), so nothing was blocked. The ticket is still open.' }, 503);
+      }
+    }
+  }
+  const patch = { status: 'closed', closed_at: helpNow(), updated_at: helpNow() };
+  await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change',
+    body: 'Blocked ' + (scope === 'domain' ? 'everything from @' + value : value) + ' and closed. Mail from it is filed as spam with no ticket and no reply.',
+    author: g.admin.label, author_id: g.admin.actorId }, false);
+  await vpaAudit(env, g.admin, 'help_block_sender', value, { scope: scope, ticket_no: t.ticket_no });
+  return json({ ok: true, blocked: value, scope: scope, ticket: Object.assign({}, t, patch) });
+}
+/* POST /admin/help/blocklist {} : what is blocked, so HQ can show it and take one off. */
+async function helpAdminBlocklist(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  let rows = [];
+  try { rows = (await vpaSelect(env, 'vp_help_blocklist', 'select=id,kind,value,reason,blocked_by,created_at&order=created_at.desc&limit=500')) || []; } catch (e) { rows = []; }
+  return json({ ok: true, seed: HELP_BLOCK_SEED, blocked: rows });
+}
+/* POST /admin/help/unblock {id} : take a table row off. The built-in seed entries cannot be removed here. */
+async function helpAdminUnblock(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  if (!HELP_UUID.test(String(g.body.id || ''))) return json({ error: 'Which entry?' }, 400);
+  const gone = await vpaDelete(env, 'vp_help_blocklist', 'id=eq.' + encodeURIComponent(g.body.id));
+  if (gone.length) await vpaAudit(env, g.admin, 'help_unblock_sender', gone[0].value, { kind: gone[0].kind });
+  return json({ ok: true, removed: gone.length });
+}
 async function helpReadRaw(message) {
   if (typeof message.raw === 'string') return message.raw.slice(0, 2000000);
   const text = await new Response(message.raw).text();
@@ -19110,6 +19261,12 @@ async function helpReadRaw(message) {
 async function helpTicketFromEmail(env, to, mail) {
   const why = helpIgnoreEmail(mail);
   if (why) return { action: 'ignored', why: why };
+  /* BLOCKED SENDER: filed as spam, silently. Before the duplicate check, the reply-tag check and
+     everything else: no ticket, no note on an old ticket, no acknowledgement, no alert. */
+  if (helpBlockedBy(mail.from.email, await helpBlocklist(env))) {
+    console.log('[help] blocked sender filed as spam: ' + mail.from.email);
+    return { action: 'spam', why: 'blocked sender' };
+  }
   const mid = mail.message_id || null;
   if (mid) {
     const a = await vpaSelect(env, 'vp_help_tickets', 'email_message_id=eq.' + encodeURIComponent(mid) + '&select=ticket_no&limit=1');
@@ -19166,6 +19323,15 @@ async function helpTicketFromEmail(env, to, mail) {
     if (mine) {
       const v = await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(mine.id) + '&select=id&order=created_at.asc&limit=1');
       if (v && v[0]) venueId = v[0].id;
+    }
+  }
+  /* BRAND IMPERSONATION: after the reply-tag check (a genuine reply to us is never dropped) and the
+     account-contact lookup (a venue we know is never dropped). */
+  if (!venueId && !instantlyLead) {
+    const phish = helpPhishing(mail);
+    if (phish) {
+      console.log('[help] phishing filed as spam (' + phish + '): ' + mail.from.email);
+      return { action: 'spam', why: phish };
     }
   }
   let t;

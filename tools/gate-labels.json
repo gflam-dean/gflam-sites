@@ -160,6 +160,7 @@
   "group-billing.test.js",
   "health.test.js",
   "held-back opt-ins are counted and reported, never silent (11 checks)",
+  "help-block-sender.test.js",
   "help-desk-pages.test.py",
   "help-seed-matches-faq.test.py",
   "helpdesk-hq-in-chrome.test.py",
