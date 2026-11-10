@@ -249,7 +249,7 @@ function row(html, name) {
   check('and it says why', miss.games && /163/.test(miss.games.skipped || ''), miss.games);
   check('the venue reports still go', sent.some(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }) && DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent'; }), [miss, sent.length]);
   COLUMN_MISSING = false;
-  await vprMonthlySweep(ENVON, Date.parse('2026-11-02T02:00:00Z'));
+  await vprMonthlySweep(ENVON, Date.parse('2026-11-02T01:30:00Z'));
   check('once the column is there, the next tick sends it, once', gamesMail().length === 1 && gamesAudits().length === 1);
 
   print('nobody has answered yet, or the record cannot be written');
