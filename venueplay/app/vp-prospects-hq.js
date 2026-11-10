@@ -108,6 +108,13 @@
   /* THE PRICE THEY GET (Dean, 7 Nov 2026: the offer needs the FIRST sign-in by its date). The Worker words it on its own
      clock (vpaProspectRateInfo): the rate they got once signed in, or "Gets $2.50 if they sign in by 30 November, else
      $3.00" while they have not. An older Worker sends no words. */
+  /* WHY A FREE-MONTH VENUE SAID NO (Dean, 10 Nov 2026): the Worker's cancel_reason, from the same seven reasons and
+     optional note as a paid cancel (VPA_CANCEL_REASONS). They may skip it: "Not given". */
+  function whyHtml(p) {
+    var c = p && p.cancel_reason;
+    if (!c || !c.label) return '<span class="prnophone">Not given</span>';
+    return prEsc(c.label) + (c.note ? '<div class="prnote" data-pr-whynote="1">&ldquo;' + prEsc(c.note) + "&rdquo;</div>" : "");
+  }
   function rateText(p) { return (p && p.rate_words) ? String(p.rate_words) : "Not known yet"; }
   function phoneHtml(p) {
     if (p.phone && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.phone) + "</a>";
@@ -203,6 +210,7 @@
         (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
+        (st === "cancelled" ? '<div><span class="k">Why they cancelled</span><span data-pr-why="1">' + whyHtml(p) + "</span></div>" : "") +
         '<div><span class="k">Price</span><span data-pr-rate="1">' + prEsc(rateText(p)) + "</span></div>" +
         '<div><span class="k">Where</span>' + prEsc([p.postcode, p.state].filter(Boolean).join(" ") || "Not known") + "</div>" +
       "</div>" + called + form + "</div></div>";

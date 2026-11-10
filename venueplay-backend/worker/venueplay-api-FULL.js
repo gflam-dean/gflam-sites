@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '10 Nov 2026, 08:36 · afbd1bd4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 17:46 · 3a1a4bfa';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -201,6 +201,9 @@ export default {
       if (request.method === 'POST' && path === '/account/portal'    && typeof vpbBillingPortal === 'function')  return await vpbBillingPortal(request, env, json);
       if (request.method === 'POST' && path === '/webhooks/resend' && typeof vpaHandleResendWebhook === 'function') return await vpaHandleResendWebhook(request, env, json);
       if (request.method === 'POST' && path === '/account/cancel-venue' && typeof vpbCancelVenue === 'function')  return await vpbCancelVenue(request, env, json);
+      if (request.method === 'POST' && path === '/account/cancel-screen' && typeof vpbCancelScreen === 'function')  return await vpbCancelScreen(request, env, json);
+      if (request.method === 'POST' && path === '/account/transfer-request' && typeof vpbTransferRequest === 'function')  return await vpbTransferRequest(request, env, json);
+      if (request.method === 'POST' && path === '/account/keep-request' && typeof vpbKeepRequest === 'function')  return await vpbKeepRequest(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-upload' && typeof vpbScreenUpload === 'function') return await vpbScreenUpload(request, env, json);
@@ -4273,6 +4276,22 @@ async function vpaProspectsData(env, dopts) {
       catch (_) { p.delivery = { welcome: 'unknown', words: 'Could not check just now' }; }
     }));
   }
+  /* WHY A CANCELLED ONE SAID NO (Dean, 10 Nov 2026): the newest prospect_cancelled audit row for the venue,
+     the same reason / reason_label / reason_detail a paid cancel stores. cancel_reason is null when they
+     skipped it (or cancelled before the page asked), so HQ can say "Not given". */
+  const gone = out.filter((p) => p.status === 'cancelled');
+  for (let i = 0; i < gone.length; i += 100) {
+    const tg = gone.slice(i, i + 100).map((p) => encodeURIComponent('"venue:' + p.venue_id + '"')).join(',');
+    let rows = [];
+    try { rows = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.prospect_cancelled&target=in.(' + tg + ')&select=action,target,detail,created_at&order=created_at.desc'); }
+    catch (_) { rows = []; }
+    const seen = {};
+    (rows || []).forEach((a) => { const id = String(a.target || '').replace(/^venue:/, ''); if (a.action === 'prospect_cancelled' && !seen[id]) seen[id] = a; });
+    gone.slice(i, i + 100).forEach((p) => {
+      const d = (seen[p.venue_id] && seen[p.venue_id].detail) || {};
+      p.cancel_reason = d.reason ? { reason: d.reason, label: d.reason_label || VPA_CANCEL_REASONS[d.reason] || d.reason, note: d.reason_detail || null } : null;
+    });
+  }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
@@ -5155,7 +5174,9 @@ async function vpaProspectCancel(request, env, json) {
   const FOOT = 'Need a hand? Call us on 07 5228 3667, Monday to Friday, 9am to 5pm (Brisbane time).';
   let asJson = false;
   const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
-  const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
+  let screen = null;
+  const page = (title, body, form) => (asJson && json) ? json(Object.assign({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT },
+    form ? { reasons: vpaCancelReasonList(), screen: screen } : {})) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
     '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0A0A0B">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
     '<div style="background:#0A0A0B;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
@@ -5165,6 +5186,7 @@ async function vpaProspectCancel(request, env, json) {
   const url = new URL(request.url);
   let f = url.searchParams.get('f') || '', t = url.searchParams.get('t') || '';
   asJson = url.searchParams.get('reply') === 'json';
+  let postedWhy = { reason: null, reasonDetail: null }, postedForm = {};
   if (request.method === 'POST') {
     const form = {};
     String(await request.text().catch(() => '')).split('&').forEach((kv) => {
@@ -5173,6 +5195,8 @@ async function vpaProspectCancel(request, env, json) {
     });
     f = form.f || f; t = form.t || t;
     if (form.reply === 'json') asJson = true;
+    postedWhy = vpaCancelReasonOf(form, false);
+    postedForm = form;
   }
   const want = await vpaProspectCancelToken(env, f);
   if (!f || !want || !vpaSameSecret(t, want)) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
@@ -5183,9 +5207,36 @@ async function vpaProspectCancel(request, env, json) {
   const name = vpaEsc(v.name || 'your venue');
   if (prow.cancelled_at) return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.');
   if (request.method !== 'POST') {
+    if (asJson) screen = await vpaCancelScreen(env, v);
     return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
+      /* WHY (Dean, 10 Nov 2026): the same seven as billing.html, optional, never in the way of the button. */
+      '<label for="whyPick" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Before you go, what\u2019s the main reason? (optional)</label>' +
+      '<select id="whyPick" name="reason" style="width:100%;font-size:16px;padding:10px;border-radius:8px;margin:0 0 12px"><option value="">Pick one (optional)</option>' +
+      vpaCancelReasonList().map((r) => '<option value="' + vpaEsc(r.key) + '">' + vpaEsc(r.label) + '</option>').join('') + '</select>' +
+      '<label for="whyMore" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Anything you\u2019d like to tell us? (optional)</label>' +
+      '<textarea id="whyMore" name="reason_detail" rows="3" maxlength="2000" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:8px;margin:0 0 16px"></textarea>' +
       '<button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
+  }
+  /* "Keep the basics" while its plan switch is off (Dean, 10 Nov 2026, INBOX 149): a help request to HQ, nothing cancelled. */
+  if (postedForm.action === 'keep') {
+    try { await vpaKeepTicket(env, v, { name: prow.contact_name || '', email: prow.email || '', phone: prow.phone || '' }, postedWhy); }
+    catch (e) { return page('That has not gone through', 'Call us on 07 5228 3667, press 2, and we will sort it out for you.'); }
+    await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'keep_plan_requested', 'venue:' + v.id, { name: v.name });
+    return asJson && json ? json({ ok: true, state: 'keep_sent', title: 'Thanks, we\u2019ll be in touch',
+      text: 'We have your request to move ' + (v.name || 'your venue') + ' to Keep the basics. We will contact you to set it up. Nothing has been cancelled.', foot: FOOT })
+      : page('Thanks, we\u2019ll be in touch', 'We have your request to move ' + name + ' to Keep the basics. Nothing has been cancelled.');
+  }
+  /* "Hand the account to the new owner" (Dean, 10 Nov 2026): a help request to HQ, and NOTHING is cancelled. */
+  if (postedForm.action === 'transfer') {
+    const nw = vpaTransferFields(postedForm);
+    if (nw.error) return (asJson && json) ? json({ ok: false, state: 'transfer_bad', error: nw.error }, 400) : page('One more thing', vpaEsc(nw.error));
+    try { await vpaTransferTicket(env, v, { name: prow.contact_name || '', email: prow.email || '', phone: prow.phone || '' }, nw); }
+    catch (e) { return page('That has not gone through', 'Call us on 07 5228 3667, press 2, and we will sort it out for you.'); }
+    await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'transfer_requested', 'venue:' + v.id, { name: v.name });
+    return asJson && json ? json({ ok: true, state: 'transfer_sent', title: 'Thanks, we\u2019ll be in touch',
+      text: 'We have your request to hand ' + (v.name || 'your venue') + ' to its new owner. We will contact you and them to move it across. Nothing has been cancelled.', foot: FOOT })
+      : page('Thanks, we\u2019ll be in touch', 'We have your request to hand ' + name + ' to its new owner. Nothing has been cancelled.');
   }
   const at = new Date().toISOString();
   await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
@@ -5193,7 +5244,11 @@ async function vpaProspectCancel(request, env, json) {
     await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id), { method: 'PATCH', headers: vpaHeaders(env),
       body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled' }) });
   }
-  await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name });
+  /* WHY, RECORDED THE SAME WAY AS A PAID CANCEL (Dean, 10 Nov 2026): reason key, the exact label the page
+     showed, and their note, in the audit row's detail. Optional: none given is null, and the cancel above
+     has already happened whatever they said. */
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name,
+    reason: postedWhy.reason, reason_label: postedWhy.reason ? VPA_CANCEL_REASONS[postedWhy.reason] : null, reason_detail: postedWhy.reasonDetail });
   return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
 }
 /* A card has come in (the Checkout webhook, or the sweep noticing): reminders stop by themselves (the
@@ -12548,12 +12603,239 @@ const VPA_CANCEL_ALERTS = ['dean@venueplay.com.au', 'hello@venueplay.com.au'];
    than rejected: a venue must ALWAYS be able to leave, and a cancellation is never
    refused because a form field did not validate. */
 const VPA_CANCEL_REASONS = {
-  expensive: 'venueplay is too expensive',
+  /* THE SEVEN THE PAGE SHOWS (Dean, 10 Nov 2026: "ASK them why they're cancelling, a short
+     reason picker plus an optional note"). Plain words, in the order billing.html lists them.
+     None of them leads anywhere near a price: a venue that picks "costs too much" or "just
+     pausing" is not offered a discount or a different rate (memory venue-comeback-pricing,
+     the leeway is never published). HQ reads the reason and decides whether to ring. */
+  not_using: 'We weren’t using it enough',
+  expensive: 'It costs too much for us',
+  players: 'Our players didn’t take to it',
+  closing: 'We’re closing or changing hands',
+  switched: 'We’re using something else',
+  pausing: 'Just pausing for now',
+  other: 'Something else',
+  /* THE TWO RETIRED ONES, still accepted with their old words. A billing page loaded before
+     the release can still post them, and their audit rows already carry these labels. The
+     page no longer offers them. */
   trial: 'We just wanted to trial it',
   dislike: 'We do not like it',
-  other: 'Something else',
 };
+const VPA_CANCEL_REASONS_RETIRED = ['trial', 'dislike'];
+/* THE LIST A PAGE SHOWS: the seven, in order, never the retired two. The free-month cancel page
+   (venueplay/prospect/cancel/, Dean 10 Nov 2026: "the SAME 7 reasons") draws its choices from this
+   answer, so it can never list different words from billing.html or from what HQ stores. */
+function vpaCancelReasonList() {
+  return Object.keys(VPA_CANCEL_REASONS).filter((k) => VPA_CANCEL_REASONS_RETIRED.indexOf(k) === -1)
+    .map((k) => ({ key: k, label: VPA_CANCEL_REASONS[k] }));
+}
+/* ONE READING OF WHAT A LEAVING VENUE SAID, for a paid cancel (vpbCancelVenue) and a free-month one
+   (vpaProspectCancel) alike. Never reject a cancellation over a form field: an unknown reason becomes
+   'other' and a missing one becomes null; neither stops them leaving. The note is one line, at most
+   2000 characters. */
+function vpaCancelReasonOf(b, undo) {
+  b = b || {};
+  const reason = (!undo && Object.prototype.hasOwnProperty.call(VPA_CANCEL_REASONS, String(b.reason || ''))) ? String(b.reason)
+               : (!undo && b.reason ? 'other' : null);
+  const reasonDetail = (!undo && b.reason_detail)
+    ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
+  return { reason: reason, reasonDetail: reasonDetail };
+}
 
+/* ===========================================================================
+   WHAT VENUEPLAY HAS DONE FOR A VENUE (Dean, 10 Nov 2026, INBOX 136 and 137).
+   "Before you go, here's what venueplay has done for <venue>:" on both cancel screens (billing.html's
+   dialog and the free-month page), over their WHOLE history with us. ONE builder, so the reminder
+   emails can use the same counts over their free-month window later (range { from, to }, ISO).
+
+   The same rules as the monthly report: demo sessions never counted (VPA_NOT_DEMO), test players and
+   kicked players never counted. Counts only: nothing here can name a player.
+   A range narrows the night-based counts (games, people, came back, opt-ins). Raffles, members draws
+   and prizes are whole history only (their tables carry no date this read can trust yet), so with a
+   range they come back null and their lines are left off.
+   =========================================================================== */
+function vpaKeepPlanOn(env) { return !!(env && String(env.VPB_KEEP_PLAN || '') === '1'); }
+const VPA_CAME_BACK_NIGHTS = 5;   // "came back more than three times": seen on 5 or more nights
+async function vpaVenueHistory(env, venueId, range) {
+  range = range || {};
+  const windowed = !!(range.from || range.to);
+  const rng = (col) => (range.from ? '&' + col + '=gte.' + encodeURIComponent(range.from) : '') + (range.to ? '&' + col + '=lt.' + encodeURIComponent(range.to) : '');
+  const vid = encodeURIComponent(venueId);
+  const out = { games: 0, by_type: {}, people: 0, came_back: 0, opt_ins: 0, raffles: windowed ? null : 0,
+                draws: windowed ? null : 0, prizes: windowed ? null : 0, members: 0 };
+  const sessions = await vpaSelectAll(env, 'vp_sessions', 'venue_id=eq.' + vid + VPA_NOT_DEMO + rng('created_at') + '&select=id,created_at,opened_at&order=id.asc');
+  const dayOf = {};
+  sessions.forEach((x) => { dayOf[x.id] = vpmLocalDay(x.opened_at || x.created_at, 'Australia/Brisbane'); });
+  const sids = sessions.map((x) => x.id);
+  const games = sids.length ? await vpmInChunks(sids, (inl) => vpaSelectAll(env, 'vp_games',
+    'session_id=in.(' + inl + ')&select=id,session_id,format&order=id.asc')) : [];
+  games.forEach((g) => {
+    const f = String(g.format || '');
+    if (f === 'raffle') return;                       // a raffle is counted as a raffle, below
+    out.games++;
+    const k = f === 'bingo90' ? 'bingo' : f;
+    out.by_type[k] = (out.by_type[k] || 0) + 1;
+  });
+  const players = sids.length ? await vpmInChunks(sids, (inl) => vpaSelectAll(env, 'vp_players',
+    'session_id=in.(' + inl + ')&select=id,session_id,device_id,is_test,kicked&order=id.asc')) : [];
+  const nightsOf = {};
+  players.forEach((pl) => {
+    if (pl.is_test || pl.kicked) return;
+    const k = pl.device_id ? 'd:' + pl.device_id : 'p:' + pl.id;
+    (nightsOf[k] || (nightsOf[k] = {}))[dayOf[pl.session_id] || ''] = true;
+  });
+  Object.keys(nightsOf).forEach((k) => { out.people++; if (Object.keys(nightsOf[k]).length >= VPA_CAME_BACK_NIGHTS) out.came_back++; });
+  const optins = await vpaSelectAll(env, 'v_vp_player_optins', 'venue_id=eq.' + vid + rng('opted_in_at') + '&select=venue_id,opted_in_at&order=opted_in_at.asc,email.asc,mobile.asc');
+  out.opt_ins = optins.length;
+  if (!windowed) {
+    const raffleIds = games.filter((g) => g.format === 'raffle').map((g) => g.id);
+    if (raffleIds.length) {
+      const rr = await vpmInChunks(raffleIds, (inl) => vpaSelectAll(env, 'vp_raffle_results',
+        'game_id=in.(' + inl + ')&select=id,game_id&order=id.asc'));
+      out.raffles = rr.length;
+    }
+    const draws = await vpaSelectAll(env, 'vp_member_draws', 'venue_id=eq.' + vid + '&select=id&order=id.asc');
+    if (draws.length) {
+      const dr = await vpmInChunks(draws.map((d) => d.id), (inl) => vpaSelectAll(env, 'vp_member_draw_results',
+        'draw_id=in.(' + inl + ')&select=id,draw_id&order=id.asc'));
+      out.draws = dr.length;
+    }
+    const prizes = await vpaSelectAll(env, 'v_vp_prizes_given', 'venue_id=eq.' + vid + '&select=*&order=venue_id.asc');
+    prizes.forEach((r) => { out.prizes += (+r.prizes_given_count || 0) + (+r.unvalued_given_count || 0); });
+  }
+  const rosters = await vpaSelectAll(env, 'vp_member_rosters', 'venue_id=eq.' + vid + '&select=id&order=id.asc');
+  if (rosters.length) {
+    const mem = await vpmInChunks(rosters.map((r) => r.id), (inl) => vpaSelectAll(env, 'vp_members',
+      'roster_id=in.(' + inl + ')&select=id&order=id.asc'));
+    out.members = mem.length;
+  }
+  return out;
+}
+/* THE WORDS (Dean's example, 10 Nov 2026: "You ran 38 trivia games and 28 musical bingo games. 146 people
+   played, and 72 of them came back more than three times. 62 players asked to hear more about your
+   venue."). A line whose number is 0 is never written; no games at all means no block (empty list).
+   Games in Dean's order: trivia, musical bingo, bingo, then anything else as "other games". */
+const VPA_STATS_GAME_WORDS = [['trivia', 'trivia game'], ['musical_bingo', 'musical bingo game'], ['bingo', 'bingo game']];
+function vpaPlural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+function vpaAndList(parts) { return parts.length < 2 ? parts.join('') : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1]; }
+function vpaVenueStatsLines(st) {
+  if (!st || !(st.games > 0)) return [];
+  const lines = [], seen = {};
+  const parts = [];
+  VPA_STATS_GAME_WORDS.forEach((w) => { const n = st.by_type[w[0]] || 0; seen[w[0]] = 1; if (n > 0) parts.push(vpaPlural(n, w[1])); });
+  const other = Object.keys(st.by_type).filter((k) => !seen[k]).reduce((a, k) => a + (st.by_type[k] || 0), 0);
+  if (other > 0) parts.push(vpaPlural(other, parts.length ? 'other game' : 'game'));
+  lines.push('You ran ' + vpaAndList(parts) + '.');
+  if (st.people > 0) {
+    lines.push(st.people + (st.people === 1 ? ' person' : ' people') + ' played' +
+      (st.came_back > 0 ? ', and ' + st.came_back + ' of them came back more than three times.' : '.'));
+  }
+  if (st.opt_ins > 0) lines.push(vpaPlural(st.opt_ins, 'player') + ' asked to hear more about your venue.');
+  const drawn = [];
+  if (st.raffles > 0) drawn.push(vpaPlural(st.raffles, 'raffle'));
+  if (st.draws > 0) drawn.push(vpaPlural(st.draws, 'members draw'));
+  if (drawn.length) lines.push('You drew ' + vpaAndList(drawn) + '.');
+  if (st.prizes > 0) lines.push('You gave away ' + vpaPlural(st.prizes, 'prize') + '.');
+  return lines;
+}
+/* "Your members list of 62, your results and your slides": what they'd lose. The members list part only
+   when they have members. */
+function vpaLoseWords(st) {
+  const n = st && st.members > 0 ? st.members : 0;
+  return (n ? 'your members list of ' + n + ', ' : '') + 'your results and your slides';
+}
+/* One answer for both cancel screens. A failed read never stops a cancel: no lines, the plain words. */
+async function vpaCancelScreen(env, venue) {
+  let st = null;
+  try { st = await vpaVenueHistory(env, venue.id); } catch (_) { st = null; }
+  /* KEEP THE BASICS (Dean, 10 Nov 2026, INBOX 137 and 149): the button is shown, and its words come from here, so the
+     pages carry no price of their own. The plan switch itself (VPB_KEEP_PLAN) stays OFF and is not built: while it is,
+     the button only sends HQ a help request ("Keep the basics") and changes nothing in billing. */
+  const keep = { title: 'Keep the basics for $10 a month', sub: '$10 a month, whatever the number of players. Our cheapest plan.',
+                 mode: 'request', plan_switch: vpaKeepPlanOn(env) };
+  return { venue_name: venue.name || '', lines: vpaVenueStatsLines(st), lose: vpaLoseWords(st), keep_plan: keep };
+}
+/* POST /account/cancel-screen { venue_id } (owner only, like cancel-venue): what billing.html's cancel
+   dialog shows above the reasons. Reads only. */
+async function vpbCancelScreen(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body && _b.body.venue_id) || '').trim();
+  const venue = (o.venues || []).filter((v) => v.id === venueId)[0];
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  return json(Object.assign({ ok: true }, await vpaCancelScreen(env, venue)));
+}
+/* HAND THE ACCOUNT TO THE NEW OWNER (Dean, 10 Nov 2026, INBOX 137). The transfer flow is a future
+   release; until it ships the button sends HQ a help request titled "Transfer ownership" with the new
+   owner's name, email and mobile. Nothing is cancelled and nothing is exported by this. */
+function vpaTransferFields(b) {
+  const name = helpLine(b && b.new_name, 120), email = helpLine(b && b.new_email, 200).toLowerCase(), mobile = helpLine(b && b.new_mobile, 30);
+  if (!name) return { error: 'Put in the new owner’s name.' };
+  if (!email && !mobile) return { error: 'Put in the new owner’s email or mobile, so we can reach them.' };
+  if (email && !HELP_EMAIL_RE.test(email)) return { error: 'That email address does not look right.' };
+  return { name: name, email: email, mobile: mobile };
+}
+async function vpaTransferTicket(env, venue, from, nw) {
+  const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'web_form', priority: 'normal',
+    title: 'Transfer ownership', venue_id: venue.id,
+    contact_name: from.name || null, contact_email: from.email || null, contact_phone: from.phone || null,
+    message: 'Please move ' + (venue.name || 'this venue') + ' to its new owner.\n\nNew owner: ' + nw.name +
+      '\nEmail: ' + (nw.email || 'not given') + '\nMobile: ' + (nw.mobile || 'not given') +
+      '\n\nSent from the cancel screen. Nothing has been cancelled. The members list stays with the venue and is not handed over by this request.' });
+  try { await helpAnnounce(env, t, venue.name); } catch (_) {}
+  return t;
+}
+
+/* "KEEP THE BASICS" WHILE THE PLAN SWITCH IS OFF: a help request to HQ, nothing else. Nothing is cancelled and
+   nothing in billing changes; HQ rings them and sets it up by hand. */
+async function vpaKeepTicket(env, venue, from, why) {
+  const label = why && why.reason ? VPA_CANCEL_REASONS[why.reason] : null;
+  const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'web_form', priority: 'normal',
+    title: 'Keep the basics', venue_id: venue.id,
+    contact_name: from.name || null, contact_email: from.email || null, contact_phone: from.phone || null,
+    message: (venue.name || 'This venue') + ' would like to move to Keep the basics ($10 a month) instead of cancelling.' +
+      (label ? '\n\nTheir reason: ' + label : '') + (why && why.reasonDetail ? '\nTheir note: ' + why.reasonDetail : '') +
+      '\n\nSent from the cancel screen. Nothing has been cancelled and nothing in billing has changed.' });
+  try { await helpAnnounce(env, t, venue.name); } catch (_) {}
+  return t;
+}
+/* POST /account/keep-request { venue_id, reason, reason_detail } (owner only). */
+async function vpbKeepRequest(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venue = (o.venues || []).filter((v) => v.id === String(b.venue_id || '').trim())[0];
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  let t;
+  try { t = await vpaKeepTicket(env, venue, { name: o.account.contact_name || '', email: o.account.email || o.account.contact_email || '', phone: '' }, vpaCancelReasonOf(b, false)); }
+  catch (e) { return json({ error: 'We could not send that just now. Call us on 07 5228 3667, press 2.' }, 503); }
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel screen)' }, 'keep_plan_requested', 'venue:' + venue.id, { name: venue.name, ticket_no: t && t.ticket_no });
+  return json({ ok: true, ticket_no: t && t.ticket_no });
+}
+/* POST /account/transfer-request { venue_id, new_name, new_email, new_mobile } (owner only). */
+async function vpbTransferRequest(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venue = (o.venues || []).filter((v) => v.id === String(b.venue_id || '').trim())[0];
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  const nw = vpaTransferFields(b);
+  if (nw.error) return json({ error: nw.error }, 400);
+  let t;
+  try { t = await vpaTransferTicket(env, venue, { name: o.account.contact_name || '', email: o.account.email || o.account.contact_email || '', phone: '' }, nw); }
+  catch (e) { return json({ error: 'We could not send that just now. Call us on 07 5228 3667, press 2.' }, 503); }
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel screen)' }, 'transfer_requested', 'venue:' + venue.id, { name: venue.name, ticket_no: t && t.ticket_no });
+  return json({ ok: true, ticket_no: t && t.ticket_no });
+}
 async function vpaFireCancelAlert(env, opts) {
   const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
     actor_admin: null, actor_label: 'system',
@@ -13520,12 +13802,8 @@ async function vpbCancelVenue(request, env, json) {
   const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const undo = b.undo === true;
-  /* Never reject a cancellation over a form field. An unknown reason becomes 'other'
-     and a missing one becomes null; neither stops them leaving. */
-  const reason = (!undo && VPA_CANCEL_REASONS[String(b.reason || '')]) ? String(b.reason)
-               : (!undo && b.reason ? 'other' : null);
-  const reasonDetail = (!undo && b.reason_detail)
-    ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
+  /* Never reject a cancellation over a form field (vpaCancelReasonOf, shared with the free-month cancel). */
+  const _why = vpaCancelReasonOf(b, undo), reason = _why.reason, reasonDetail = _why.reasonDetail;
   const venue = o.venues.filter((v) => v.id === venueId)[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 

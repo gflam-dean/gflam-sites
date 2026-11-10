@@ -1567,8 +1567,11 @@
       .order("created_at",{ascending:false}).limit(2000)
       .then(function(r){
         if(!r || r.error) return;
+        var first=!S.cancelAudit;
         if(!S.cancelAudit) S.cancelAudit=(r.data)||[];
         setTabBadge("cancelled", cancelledToChase());
+        /* A Details panel opened before the history arrived was drawn without the reason. */
+        if(first && S.openVenue) renderVenues();
       }).catch(function(){});
   }
   function loadQuietContacts(){
@@ -1867,6 +1870,29 @@
   }
   // The audit stores a venue as "venue:<uuid>". Everything else here works in plain ids.
   function cxVenueId(t){ return String(t||"").replace(/^venue:/,""); }
+  /* WHY THEY CANCELLED, ON THE VENUE ITSELF (Dean, 10 Nov 2026: "ASK them why they're cancelling
+     ... and record it for HQ"). The Cancelled screen already showed it; the Details panel under
+     Venues did not, so whoever opened a venue there could not see why it was leaving. Read from
+     the same audit rows (the newest venue_cancel_scheduled for this venue), so the two screens
+     can never disagree. Only for a venue that is cancelling or has left: an old reason on a venue
+     that changed its mind and stayed is history, not news. */
+  function cxReasonHtml(v){
+    if(!v || !(isCancelling(v) || hasLeft(v))) return "";
+    if(!S.cancelAudit) return "";
+    var row=null, id=String(v.id);
+    for(var i=0;i<S.cancelAudit.length;i++){
+      var a=S.cancelAudit[i];
+      if(a.action==="venue_cancel_scheduled" && cxVenueId(a.target)===id){ row=a; break; }
+    }
+    var d=(row && row.detail) || {};
+    var reason = d.reason_label ? esc(d.reason_label)
+               : (d.reason ? esc(d.reason) : '<span style="color:var(--faint)">Not given</span>');
+    return '<div class="cxreason" data-cxreason="'+esc(id)+'" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'
+      + '<b>Why they cancelled</b> '+reason
+      + (row ? ' <span style="color:var(--faint)">&middot; '+esc(cxWhen(row.created_at))+'</span>' : '')
+      + (d.reason_detail ? '<div class="cxsaid">&ldquo;'+esc(d.reason_detail)+'&rdquo;</div>' : '')
+      + '</div>';
+  }
   function cxWhen(iso){
     var t=Date.parse(iso||""); if(isNaN(t)) return "";
     var d=new Date(t);
@@ -2515,6 +2541,7 @@
         '<b>Total players</b> '+players+' &middot; '+
         '<b>Billing</b> '+billTxt+' &middot; '+
         '<b>Created</b> '+esc(fmtWhen(v.created_at))+
+        cxReasonHtml(v)+
         /* This venue's help desk tickets (Dean, 29 Oct 2026), filled by vp-helpdesk-hq.js. */
         '<div class="vphd" data-vphd="'+esc(v.id)+'"></div>'+
         /* Its logins, with Remove login for one that belongs to no other venue (Dean, 30 Oct 2026; vp-logins-hq.js). */

@@ -380,6 +380,20 @@
     .dlgacts .dlgbtn{width:100%} }
 /* NO CSV UPLOAD ON A PHONE (Dean, round 12 note 9): nobody picks a CSV on a phone; the weekly reminder stands in its place */
 @media (max-width:700px){#md-upload.md-nophone{display:none}}
+  /* THE CANCEL SCREEN (Dean, 10 Nov 2026, INBOX 136 and 137): their numbers, what they'd lose, and a main
+     button beside Cancel, the same size, Cancel never hidden. */
+  .cxstats{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px}
+  .cxstats p{color:#fff;font-weight:700;font-size:14.5px;margin:0 0 6px}
+  .cxstats ul{margin:0 0 0 18px;font-size:14px;color:var(--text);line-height:1.5}
+  .cxlose{font-size:14px;color:var(--text);margin:0 0 16px} .cxlose b{color:#fff}
+  .cxback{font-size:13.5px;color:#fff;margin:14px 0 0}
+  .dlg input.cxin{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;
+    padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif;margin:0 0 10px}
+  .dlgacts.stack{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:10px;align-items:stretch}
+  .dlgacts.stack .dlgbtn{width:100%;min-height:52px}
+  .dlg .dlgacts.stack .dlgbtn.go,.dlg .dlgacts.stack .dlgbtn.go:hover{background:transparent;border:1.5px solid rgba(255,255,255,.7)}
+  .dlgbtn.main{background:var(--pink);border:1px solid var(--pink);color:#fff}
+  .dlgbtn.main small{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;margin-top:2px}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
@@ -954,12 +968,14 @@
      until it is answered, and this one has a dropdown and a text box in it anyway.
 
      THE WORDING IS THE WORKER'S. VPA_CANCEL_REASONS in venueplay-api-FULL.js holds the
-     same four keys and the same four labels, so the reason stored is the reason they were
-     shown. If you change one, change both.
+     same seven keys and the same seven labels (plus two retired ones it still accepts), so
+     the reason stored is the reason they were shown. If you change one, change both:
+     tools/test-cancel-reason.js fails when they differ.
 
-     IT NEVER BLOCKS THE CANCELLATION. "Skip and cancel" is always there, the dropdown
-     starts empty, and both fields are optional. They are leaving; making them fill in a
-     form first is how a cancellation becomes a complaint. */
+     THE SERVER NEVER BLOCKS THE CANCELLATION. The dropdown starts empty and the note is
+     optional. The page asks for a reason before the button wakes (Dean, 17 Sep 2026, below),
+     but the Worker accepts a cancellation with no reason at all, so a venue whose page failed
+     can still leave. */
   function askWhy(v, lastOne, go){
     var old = document.getElementById("whyWrap");
     if (old) old.remove();
@@ -974,35 +990,50 @@
             ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
             : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
         '</p>' +
-        '<label class="flabel" for="whyPick">Before you go, why?</label>' +
+        /* Their numbers over their whole history, and what they'd lose: filled from /account/cancel-screen
+           below. Hidden until it answers, and hidden for a venue with no games. */
+        '<div id="whyStats" class="cxstats" hidden><p id="whyStatsHead"></p><ul id="whyStatsList"></ul></div>' +
+        '<p id="whyLose" class="cxlose" hidden></p>' +
+        '<label class="flabel" for="whyPick">Before you go, what\u2019s the main reason?</label>' +
         '<select id="whyPick">' +
           '<option value="" selected disabled>Pick one&hellip;</option>' +
-          '<option value="expensive">venueplay is too expensive</option>' +
-          '<option value="trial">We just wanted to trial it</option>' +
-          '<option value="dislike">We do not like it</option>' +
+          '<option value="not_using">We weren\u2019t using it enough</option>' +
+          '<option value="expensive">It costs too much for us</option>' +
+          '<option value="players">Our players didn\u2019t take to it</option>' +
+          '<option value="closing">We\u2019re closing or changing hands</option>' +
+          '<option value="switched">We\u2019re using something else</option>' +
+          '<option value="pausing">Just pausing for now</option>' +
           '<option value="other">Something else</option>' +
         '</select>' +
-        '<div id="whyMoreWrap" class="dlgmore" style="display:none">' +
-          '<label class="flabel" id="whyMoreLbl" for="whyMore"></label>' +
+        '<div id="whyMoreWrap" class="dlgmore">' +
+          '<label class="flabel" id="whyMoreLbl" for="whyMore">Anything you\u2019d like to tell us? (optional)</label>' +
           '<textarea id="whyMore" rows="3" maxlength="2000"></textarea>' +
         '</div>' +
-        '<div class="dlgacts">' +
+        /* Closing or changing hands: the new owner, for a help request to HQ. NO members list download is
+           offered on this path (Dean, 10 Nov 2026: if they've sold, the list is not theirs to use). */
+        '<div id="whyHand" class="dlgmore" hidden>' +
+          '<label class="flabel" for="nwName">New owner\u2019s name</label><input id="nwName" class="cxin" type="text" maxlength="120" autocomplete="off">' +
+          '<label class="flabel" for="nwEmail">Their email</label><input id="nwEmail" class="cxin" type="email" maxlength="200" autocomplete="off">' +
+          '<label class="flabel" for="nwMobile">Their mobile</label><input id="nwMobile" class="cxin" type="tel" inputmode="tel" maxlength="30" autocomplete="off">' +
+        '</div>' +
+        /* The 90-day words (Dean, 10 Nov 2026, INBOX 149): the fallback until the restart billing that keeps their
+           plan and price ships (fix/restart-90day-15nov, Monday 16). Then: "Change your mind within 90 days and you
+           keep your current plan and price." */
+        '<p class="cxback">Change your mind? Come back within 90 days and we\u2019ll sort your plan out.</p>' +
+        '<div class="dlgacts" id="whyActs">' +
+          '<button type="button" id="whyMain" class="dlgbtn main" hidden></button>' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
           '<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(w);
 
-    /* The follow up only appears where the answer is something we could act on. Asking
-       "how could we improve" of somebody who only ever wanted a trial is noise, and it
-       reads as if nobody listened to the answer they just gave. */
-    var ASK = {
-      dislike:   "What could we have done better?",
-      other:     "What happened?",
-      expensive: "What would have felt fair? (optional)"
-    };
-    var pick = w.querySelector("#whyPick"), moreWrap = w.querySelector("#whyMoreWrap"),
-        moreLbl = w.querySelector("#whyMoreLbl"), more = w.querySelector("#whyMore");
+    /* ONE OPTIONAL NOTE BOX, ALWAYS THERE (Dean, 10 Nov 2026: "a short reason picker plus an
+       optional note"). It used to appear only for some answers, and the "too expensive" one asked
+       "What would have felt fair?", which reads as an opening to haggle. Nothing here offers or
+       hints at a different price, whatever they pick (memory venue-comeback-pricing: the leeway
+       is never published). */
+    var pick = w.querySelector("#whyPick"), more = w.querySelector("#whyMore");
     /* REQUIRED IN THE FORM, NEVER REFUSED BY THE SERVER. Dean, 17 Sep 2026: "The Average Joe
        didnt give a reason, lets force the customer to give us a answer."
 
@@ -1016,12 +1047,54 @@
        "Rather not say" is gone as an option, but "Something else" takes anything, so nobody
        is actually trapped into a reason they do not hold. */
     var goBtn = w.querySelector("#whyGo");
+    /* THE MAIN BUTTON (Dean, 10 Nov 2026): "Hand the account to the new owner" for closing or changing
+       hands; otherwise the keep plan, only while the Worker says it is switched on (its words come from
+       the Worker, so this page has no price of its own); otherwise none. Cancel is never hidden. */
+    var mainBtn = w.querySelector("#whyMain"), hand = w.querySelector("#whyHand"), acts = w.querySelector("#whyActs");
+    var SCREEN = null;
+    function cxPaintActs(){
+      var closing = pick.value === "closing", kp = SCREEN && SCREEN.keep_plan;
+      hand.hidden = !closing;
+      if (closing) { mainBtn.innerHTML = "Hand the account to the new owner"; mainBtn.setAttribute("data-do", "transfer"); }
+      else if (kp) { mainBtn.innerHTML = esc(kp.title) + "<small>" + esc(kp.sub) + "</small>"; mainBtn.setAttribute("data-do", "keep"); }
+      var on = closing || !!kp;
+      mainBtn.hidden = !on;
+      acts.className = on ? "dlgacts stack" : "dlgacts";
+    }
     pick.addEventListener("change", function(){
       goBtn.disabled = !pick.value;
-      var q = ASK[pick.value];
-      moreWrap.style.display = q ? "" : "none";
-      moreLbl.textContent = q || "";
-      if (q) more.focus();
+      cxPaintActs();
+    });
+    api("/account/cancel-screen", { venue_id:v.id }).then(function(sc){
+      if (!sc || sc.error || !document.getElementById("whyWrap")) return;
+      SCREEN = sc;
+      var lines = sc.lines || [];
+      if (lines.length) {
+        w.querySelector("#whyStatsHead").textContent = "Before you go, here\u2019s what venueplay has done for " + (sc.venue_name || v.name) + ":";
+        w.querySelector("#whyStatsList").innerHTML = lines.map(function(l){ return "<li>" + esc(l) + "</li>"; }).join("");
+        w.querySelector("#whyStats").hidden = false;
+      }
+      if (sc.lose) { var lo = w.querySelector("#whyLose"); lo.innerHTML = "If you cancel, you lose <b>" + esc(sc.lose) + "</b>."; lo.hidden = false; }
+      cxPaintActs();
+    });
+    mainBtn.addEventListener("click", function(){
+      /* KEEP THE BASICS, plan switch off: a help request to HQ, nothing changes in billing (INBOX 149). */
+      if (mainBtn.getAttribute("data-do") === "keep") {
+        mainBtn.disabled = true;
+        api("/account/keep-request", { venue_id:v.id, reason:pick.value || null, reason_detail:(more.value || "").trim() || null }).then(function(r){
+          mainBtn.disabled = false;
+          if (r && r.ok) { close(); showMsg("Thanks. We have your request to move " + v.name + " to Keep the basics, and we\u2019ll be in touch. Nothing has been cancelled.", true); return; }
+          showMsg((r && r.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.", false);
+        });
+        return;
+      }
+      var val = function(id){ return String(w.querySelector("#" + id).value || "").trim(); };
+      mainBtn.disabled = true;
+      api("/account/transfer-request", { venue_id:v.id, new_name:val("nwName"), new_email:val("nwEmail"), new_mobile:val("nwMobile") }).then(function(r){
+        mainBtn.disabled = false;
+        if (r && r.ok) { close(); showMsg("Thanks. We have your request to hand " + v.name + " to its new owner, and we\u2019ll be in touch. Nothing has been cancelled.", true); return; }
+        showMsg((r && r.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.", false);
+      });
     });
     function close(){ w.remove(); }
     w.querySelector("#whyBack").addEventListener("click", close);
