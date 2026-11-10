@@ -520,6 +520,10 @@ export default {
       if (r.error) { console.log('[sweep] FAILED to list stale sessions: ' + r.error); return; }
       console.log('[sweep] closed ' + r.closed + ', failed ' + r.failed + ', of ' + r.found + ' stale sessions');
     }));
+    ctx.waitUntil(sweepIdleGames(env).then(function (r) {
+      if (r.error) { console.log('[idle] FAILED: ' + r.error); return; }
+      if (r.closed) console.log('[idle] closed ' + r.closed + ' of ' + r.found + ' idle rounds');
+    }));
     /* The last night of a cancelled venue ends on the SAME CLOCK as the sessions above,
        and it rides this trigger because this is the Worker whose trigger actually runs.
        venueplay-api has no Cron Trigger at all. Its own separate waitUntil so a failure
@@ -816,6 +820,51 @@ async function sweepStaleSessions(env, staleHours, atLocal3am) {
     }
   }
   return { found: rows.length, closed: closed, failed: failed };
+}
+
+/* A ROUND LEFT RUNNING CLOSES ITSELF AFTER 90 MINUTES IDLE (Dean, INBOX 168/170, 10 Nov 2026).
+   Trivia and musical bingo rounds only: a host who walks away from a round no longer leaves the TV
+   stuck on it. A round is idle when nothing at all has happened for IDLE_GAME_MS: no question asked,
+   no answer in, no song played, no event on the night. The night itself stays open (the 3am sweep
+   closes and bills it); only the round is finished, exactly the way End game does it, so the TV goes
+   back to the slides and the next round can start. Never closes anything it cannot prove idle: a
+   failed read of the evidence leaves the round running. Bingo, raffle and members draw are not
+   touched (their calls are not logged per ball, so idle cannot be proved). Runs on the hourly trigger. */
+const IDLE_GAME_MS = 90 * 60 * 1000;
+async function sweepIdleGames(env) {
+  const cutoffMs = Date.now() - IDLE_GAME_MS;
+  let games = [];
+  try {
+    games = await sbGet(env, 'vp_games',
+      'status=eq.running&format=in.(trivia,musical_bingo)&started_at=lt.' + enc(new Date(cutoffMs).toISOString()) +
+      '&select=id,session_id,format,started_at,config&order=started_at.asc&limit=200');
+  } catch (e) { return { found: 0, closed: 0, error: String((e && e.message) || e) }; }
+  let closed = 0;
+  for (const g of games) {
+    try {
+      let last = Date.parse(g.started_at) || 0;
+      const bump = function (t) { const ms = Date.parse(t); if (ms && ms > last) last = ms; };
+      const ev = await sbGet(env, 'vp_session_events', 'session_id=eq.' + enc(g.session_id) + '&select=created_at&order=seq.desc&limit=1');
+      if (!Array.isArray(ev)) continue;
+      if (ev[0]) bump(ev[0].created_at);
+      if (g.format === 'trivia') {
+        const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(g.id) + '&select=question_ends_at&limit=1');
+        if (tg && tg[0] && tg[0].question_ends_at) bump(tg[0].question_ends_at);
+        const an = await sbGet(env, 'vp_trivia_answers', 'game_id=eq.' + enc(g.id) + '&select=answered_at&order=answered_at.desc&limit=1');
+        if (an && an[0] && an[0].answered_at) bump(an[0].answered_at);
+      }
+      if (last > cutoffMs) continue;   // something happened inside the 90 minutes
+      const session = await getSession(env, g.session_id);
+      if (session.ended_at) continue;
+      const rows = await sbPatchReturning(env, 'vp_games', 'id=eq.' + enc(g.id) + '&status=eq.running',
+        { status: 'finished', ended_at: new Date().toISOString() });
+      if (!Array.isArray(rows) || !rows.length) continue;   // the host ended it first
+      if (g.format === 'trivia') { try { await noteTriviaNight(env, session.id, g); } catch (e2) {} }
+      try { await emitEvent(env, session, 'game.ended', { game_id: g.id, idle: true }, 'system'); } catch (e2) {}
+      closed++;
+    } catch (e) { console.log('[idle] game ' + g.id + ' failed: ' + String((e && e.message) || e)); }
+  }
+  return { found: games.length, closed: closed };
 }
 
 /* POST /admin/sweep-sessions  (Gflam owner/accounts) : close the stale ones NOW.

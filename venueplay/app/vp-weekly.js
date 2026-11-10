@@ -106,6 +106,20 @@
     return since >= 0 && since < RESUME_GRACE;
   }
 
-  root.VPWeekly = { check: check, friendlyDay: friendlyDay, friendlyMsg: friendlyMsg,
+  /* THE FIRST-REAL-GAME NOTE (Dean, INBOX 168/170, 10 Nov 2026). A venue that has never run a real
+     night of this format (the demo does not count and never uses the week) is told, before it
+     starts, that trivia and musical bingo each run once a week, so it picks the night it wants.
+     Information only: it never blocks. Returns text, or null when there is nothing to say (the
+     venue has run one before, HQ lifted the rule, or no venue row). */
+  function firstNote(venue, format) {
+    if (!venue || venue.weekly_limit_off === true) return null;
+    var col = format === 'musical' ? 'last_musical_at' : 'last_trivia_at';
+    if (venue[col]) return null;
+    var label = format === 'musical' ? 'musical bingo' : 'trivia';
+    return 'This will be your first real ' + label + ' night. You can run ' + label + ' once a week, so start it on the night you want it. ' +
+           'The try-it demo never uses that week, and a bingo, raffle or members draw can run as often as you like.';
+  }
+
+  root.VPWeekly = { firstNote: firstNote, check: check, friendlyDay: friendlyDay, friendlyMsg: friendlyMsg,
                     passWaiting: passWaiting, WEEK: WEEK, RESUME_GRACE: RESUME_GRACE };
 }(typeof globalThis === 'object' ? globalThis : this));

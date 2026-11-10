@@ -2272,7 +2272,8 @@
     if (typeof VPWeekly === "undefined" || !VPWeekly || !VPWeekly.check) return;
     var bn=$("weekBanner"); if(!bn || !v) return;
     if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
-    var w=VPWeekly.check(v,"trivia"); if(!w) return;
+    var w=VPWeekly.check(v,"trivia");
+    if(!w){ var fn=(!DEMO && VPWeekly.firstNote) ? VPWeekly.firstNote(v,"trivia") : null; if(fn){ bn.textContent=fn; bn.style.display=""; } return; }
     var nextIso=w.nextIso;
     bn.innerHTML=w.text+'<b>'+w.nextDay+'</b>. '+
       '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Try anyway</button>';
