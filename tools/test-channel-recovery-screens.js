@@ -21,6 +21,7 @@ var SCREENS = ['trivia', 'musical', 'raffle', 'members'];
 function liftBlock(html, file) {
   var a = html.indexOf('var ch=');
   var s = html.indexOf('if(!VP_DEMO) ch.subscribe(function(status){', a);
+  if (s < 0) s = html.indexOf('if(!VP_DEMO && !VP_PREVIEW) ch.subscribe(function(status){', a);   // the trivia wall also opens no channel as the console's preview
   if (a < 0 || s < 0) throw new Error('cannot find the channel block in ' + file);
   var end = RIG.braceEnd(html, html.indexOf('{', s));
   var close = html.indexOf(');', end);
@@ -35,11 +36,11 @@ function boot(file, helper) {
   var world = RIG.makeClient();
   var heard = [];
   var win = { VPChannel: helper };
-  var f = new Function('client', 'CODE', 'vpGate', 'onMsg', 'reloadVenueLogo', '$', 'document', 'VP_DEMO', 'window', 'VPChannel',
+  var f = new Function('client', 'CODE', 'vpGate', 'onMsg', 'reloadVenueLogo', '$', 'document', 'VP_DEMO', 'VP_PREVIEW', 'window', 'VPChannel',
     '"use strict";\n' + (block.indexOf('function tvStatus') < 0 ? tvStatusSrc + '\n' : '') + block +
     '\nreturn { ch: function(){ return ch; }, sub: function(){ return tvSubscribed; } };');
   var page = f(world.client, 'ACDEFG', function (p, cb) { cb(p); }, function (m) { heard.push(m); }, function () {},
-               dom.$, dom.document, false, win, helper);
+               dom.$, dom.document, false, false, win, helper);
   return { world: world, page: page, dom: dom, heard: heard, html: html,
            status: function () { return dom.el('statusText').textContent; } };
 }

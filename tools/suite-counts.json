@@ -1107,8 +1107,12 @@
   "checks": 114,
   "counted_by": "lines"
  },
+ "tools/test-trivia-endnight.js": {
+  "checks": 140,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-live-fixes-6nov.js": {
-  "checks": 75,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
@@ -1565,6 +1569,10 @@
  },
  "venueplay-backend/worker/founding-month-expiry.test.js": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/games-night.test.js": {
+  "checks": 33,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/group-billing.test.js": {

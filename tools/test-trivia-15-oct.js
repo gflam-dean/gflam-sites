@@ -274,7 +274,7 @@ await (async function () {
   // g. "Start a new round" after the podium does not send the wall to the ads; the next lobby takes it
   var G = { status: 'ended', gameId: 'g1', pr: null }, bc = [], sent = [], timers = [];
   var f = new Function('G', 'bcast', 'send', 'clearTick', 'clearTrivia', 'renderConsole', 'apiPost', 'hostError', 'setTimeout', 'clearTimeout',
-    'var PODIUM_HOLD_MS=600000;\n' + liftAll(HOSTP, ['holdPodium', 'releasePodium', 'endRound'], 'trivia/host.html') + '; return { endRound: endRound, releasePodium: releasePodium };');
+    'var PODIUM_HOLD_MS=600000; function stopFinale(){}\n' + liftAll(HOSTP, ['holdPodium', 'releasePodium', 'endRound'], 'trivia/host.html') + '; return { endRound: endRound, releasePodium: releasePodium };');
   var api = f(G, function (o) { bc.push(o.t); }, function (o) { sent.push(o); }, function () {}, function () {}, function () {},
     function () { return Promise.resolve({}); }, function () {}, function (fn, ms) { timers.push([fn, ms]); return timers.length; }, function () {});
   api.endRound();
@@ -669,7 +669,7 @@ print('\nEND GAME FROM THE PODIUM resets the console, so the TV is not handed th
 (function () {
   var sent = [], b = [], closed = [];
   var G = { status: 'ended', board: [{ name: 'Test team', score: 148 }], current: null, gameId: 'g1', podiumHeld: true, podiumHoldT: 7, tick: null, setTitle: 'Anime' };
-  var src = lift(HOSTP, 'endGameToAds', 'trivia/host.html') + '\n' + lift(HOSTP, 'reassertToTv', 'trivia/host.html') + '\n; return { end: endGameToAds, reassert: reassertToTv };';
+  var src = 'function stopFinale(){}\n' + lift(HOSTP, 'endGameToAds', 'trivia/host.html') + '\n' + lift(HOSTP, 'reassertToTv', 'trivia/host.html') + '\n; return { end: endGameToAds, reassert: reassertToTv };';
   var fx = new Function('G', 'bcast', 'send', 'closeNight', 'endRound', 'clearTick', 'clearTimeout', 'clearTrivia', 'renderConsole', 'playerCount', 'remainingSecs', 'isDouble', src)(
     G, function (m) { b.push(m.t); }, function (m) { sent.push(m.t); }, function (e) { closed.push(e); }, function () { throw new Error('endRound must not run: no round in progress'); },
     function () {}, function () {}, function () { G.cleared = true; }, function () { G.rendered = true; }, function () { return 1; }, function () { return 0; }, function () { return false; });

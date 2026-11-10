@@ -131,6 +131,19 @@
   .since{font-size:12px;color:var(--faint);margin:0 0 14px}
   .since b{color:var(--muted)}
 
+  /* THE END OF THE NIGHT (Dean, 5 Nov 2026, INBOX 77-79): a big live preview of the TV, one tap, a small
+     quiet skip. The preview is the real TV page (screen.html?preview=1) fed what this console sends the TV,
+     so the host sees exactly what the room sees. */
+  .tvprev{margin:0 0 14px}
+  .tvprev-h{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin:0 0 6px}
+  .tvprev-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0A0A0B}
+  .tvprev-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+  .finline{font-size:13.5px;color:var(--muted);text-align:center;margin:8px 0 0}
+  .btn.finskip{display:block;margin:12px auto 0;padding:8px 14px;min-height:0;font-size:13.5px}
+  .btn.finpulse{animation:finpulse 1.6s ease-in-out infinite}
+  @keyframes finpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,31,142,.55)}50%{box-shadow:0 0 0 10px rgba(255,31,142,0)}}
+  @media (prefers-reduced-motion:reduce){.btn.finpulse{animation:none}}
+
   .board-h{margin:6px 0 0;max-height:min(60vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch}
   .board-h .allof{font-size:11.5px;color:var(--faint);padding:8px 10px 2px}
   .brow-h{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-top:1px solid var(--line-2);font-size:14px}
@@ -316,17 +329,12 @@
                 <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
               </div>
               <div class="field">
-                <label>Double points final round</label>
+                <label>Last round counts double</label>
                 <div class="two" style="align-items:center">
                   <div class="seg" id="cfgDouble"><button data-v="on">On</button><button data-v="off" class="on">Off</button></div>
-                  <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
+                  <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the last round, which count double"></div>
                 </div>
-                <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
-              </div>
-              <div class="field">
-                <label>How the winners show</label>
-                <div class="seg" id="cfgWinners"><button data-v="staged" class="on">One at a time</button><button data-v="all">All at once</button></div>
-                <div class="note" id="winnersNote" style="margin-top:4px">Tap to reveal third place, then second, then the winner (with the fanfare).</div>
+                <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night count double, speed bonus included. The TV and phones say so on each one.</div>
               </div>
               <div style="margin-top:4px;padding:12px 14px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:11px">
                 <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
@@ -341,6 +349,10 @@
         </div>
 
         <div id="liveBlock" class="hidden">
+          <div id="tvPreview" class="tvprev hidden">
+            <div class="tvprev-h">On the TV now</div>
+            <div class="tvprev-frame"><iframe id="tvPreviewFrame" title="What the TV is showing" tabindex="-1" aria-hidden="true"></iframe></div>
+          </div>
           <div id="runBody"></div>
         </div>
       </div>
@@ -394,6 +406,7 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
+<script src="/app/vp-trivia-finale.js"></script>   <!-- the end of the night, one timeline shared with the TV (INBOX 77-79) -->
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-print.js"></script>
@@ -466,7 +479,7 @@
      is stale (14 Oct 2026, see /app/vp-onetab.js). */
   function standingDown(){ return !!(window.VP_ONETAB && !VP_ONETAB.live()); }
   function rawSend(p){ if(standingDown()) return; if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
-  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  function send(obj){ previewFeed(obj); if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
   function rawGsend(p){ if(standingDown()) return; if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
@@ -560,7 +573,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    autoReveal:true, autoSecs:10, endReveal:0, endRanks:[], endBoard:false, allInAt:0, winnersAll:false, timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
+    autoReveal:true, autoSecs:10, allInAt:0, timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     noPlayersNote:false,            // Reveal leaderboard with nobody joined: a calm line, not an error
@@ -652,7 +665,8 @@
            host the right answer and "4/7 in", not "0/7" and no tick (break test, 14 Oct 2026). This
            tablet only; it never goes on a channel. */
         var cur = (G.current && G.status==="question") ? { qseq:G.current.qseq, ci:G.current.correctIndex, pids:G.answeredPids||{} } : null;
-        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId }));
+        var fin = G.finale ? { s:G.finale.s, runAt:G.finale.runAt, auto:G.finale.auto, ph:G.finale.phones, ended:G.status==="ended" } : null;   // the end-of-night clock, this tablet only
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId, fin:fin }));
       }
     }catch(e){}
   }
@@ -745,6 +759,7 @@
         } else if(q && phase==="revealed"){
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0, imageUrl:q.image_url||"" };
           G.status="reveal"; G.board=[];
+          if(!G.defer && G.qtotal && G.current.qi>=G.qtotal) restoreFinale(p.fin);   // the last answer: pick the end of the night up where it was
           rebuildBoard();
         } else {
           G.status="ready"; G.current=null; G.board=[];   // game running, between questions
@@ -875,6 +890,7 @@
   }
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
+    previewShow(!!G.finale && (G.status==="reveal" || G.status==="ended"));
     if(G.roundType==="pr" && G.pr) return renderPRRun(body);
     if(G.defer && renderPaperRun(body)) return;
 
@@ -892,7 +908,7 @@
     if(G.status==="question"){
       var q=G.current;
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+'</span>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+(isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+'</span>'+
         '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
         /* Picture round: the same image the TV shows, so the host can describe it. A broken
            link hides itself and the question carries on as a plain text one. */
@@ -915,7 +931,7 @@
     if(G.status==="reveal"){
       var q2=G.current;
       var rw=el("div","qwrap");
-      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; revealed</span></div>'+
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+(isDouble(q2.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+' &middot; revealed</span></div>'+
         (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qtext-h">'+esc(q2.text)+'</div>';
       /* How the room split. The TV draws these bars; until now the host had to look over their
@@ -936,7 +952,7 @@
       var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
       var brow=el("div","btnrow");
       var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
-      main.addEventListener("click", isLast ? finish : nextQuestion); brow.appendChild(main);
+      main.addEventListener("click", isLast ? finTap : nextQuestion); brow.appendChild(main);
       var endb=el("button","btn ghost big","End round");
       /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
          sits beside the control the host taps about nineteen times a night. endRound() clears the
@@ -946,33 +962,37 @@
         vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
       }); brow.appendChild(endb);
       body.appendChild(brow);
-      if(isLast && G.finishAt){ var afn=el("div","note",autoFinishText(G.finishAt-Date.now())); afn.id="autoFinishNote"; afn.style.margin="8px 0 0"; afn.style.textAlign="center"; body.appendChild(afn); }
+      if(isLast && G.finale){ var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite"); body.appendChild(fl); paintFinLine(); }   // "Final scores come up in 0:30"
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
       return;
     }
 
     if(G.status==="ended"){
-      var done=el("div","qwrap");
-      done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
-        '<div class="qtext-h">The winners are on the big screen.</div>';
-      body.appendChild(done);
+      /* THE END OF THE NIGHT (INBOX 77-79): the preview above shows what the room sees. One tap while the
+         suspense screen waits, a small quiet skip while the TV reveals, and the small time lines. */
+      var fst=finStage(), stg=fst ? fst.stage : "board";
+      if(stg==="wait" || stg==="cover"){
+        var go=el("button","btn pink big"+(stg==="cover"?" finpulse":""),"Reveal leaderboard"); go.id="finGo";
+        go.addEventListener("click", finTap); body.appendChild(go);
+      }
+      var fl2=el("div","finline"); fl2.id="finLine"; fl2.setAttribute("aria-live","polite"); body.appendChild(fl2); paintFinLine();
+      if(stg==="third" || stg==="second" || stg==="drum" || stg==="winner"){
+        var sk=el("button","btn ghost finskip","Show the whole leaderboard now"); sk.id="finSkip";
+        sk.addEventListener("click", finSkip); body.appendChild(sk);
+      }
+      if(!G.finale){
+        var done=el("div","qwrap");
+        done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
+          '<div class="qtext-h">The winners are on the big screen.</div>';
+        body.appendChild(done);
+      }
       /* The room's verdict, favourable only and as true counts (/app/vp-loved.js), once phones have rated. */
       var lv=el("div","",""); lv.id="triviaLoved"; lv.style.cssText="display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.28);color:var(--win);font-weight:700;font-size:14px";
       body.appendChild(lv);
       if(window.VPLoved && G.sessionId) VPLoved.show(VP_GAME_API, G.sessionId, lv);
-      var PLACE={3:"third",2:"second",1:"first"};
-      var nxt = (!G.endBoard && G.endReveal>1) ? G.endRanks[G.endRanks.indexOf(G.endReveal)+1]||1 : 0;
-      if(!G.endBoard && G.endReveal>1){ done.querySelector(".qtext-h").textContent="On the big screen: "+PLACE[G.endReveal]+" place. The rest are still covered."; }
-      if(!G.endBoard && G.endReveal===1){ done.querySelector(".qtext-h").textContent="The winner is on the big screen."; }
-      if(G.endBoard){ done.querySelector(".qtext-h").textContent="The final scores are on the big screen. The TV goes back to your ads in 2 minutes."; }
-      if(nxt){
-        var nb=el("button","btn pink big", nxt===1 ? "Reveal the winner" : "Reveal "+PLACE[nxt]+" place"); nb.id="endStepBtn";
-        nb.addEventListener("click", nextPlace); body.appendChild(nb);
-      } else if(!G.endBoard && G.endReveal===1){
-        var lb=el("button","btn pink big","Show the leaderboard"); lb.id="endStepBtn"; lb.addEventListener("click", showFinalBoard); body.appendChild(lb);
-        if(G.boardAt){ var bn=el("div","note",boardNoteText(G.boardAt-Date.now())); bn.id="boardNote"; bn.style.margin="8px 0 0"; bn.style.textAlign="center"; body.appendChild(bn); }
-      }
-      var again=el("button", G.endBoard ? "btn pink big" : "btn ghost big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
+      var late=(stg==="board" || stg==="ads");
+      var again=el("button","btn "+(late?"pink":"ghost")+" big","Start a new round"); again.id="finAgain"; again.style.marginTop="14px";
+      again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
     }
   }
   /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
@@ -1034,12 +1054,6 @@
   function paintAutoReveal(){ paintSeg("cfgAutoReveal", G.autoReveal ? "on" : "off");
     var w=$("autoRevealWrap"); if(w && w.style) w.style.opacity = G.autoReveal ? "1" : ".45";
     var i=$("cfgAutoSecs"); if(i && document.activeElement!==i) i.value=G.autoSecs; }
-  /* HOW THE WINNERS SHOW (Dean, 6 Nov 2026): staged (default) or all at once. Per venue, on this device, like auto reveal. */
-  var WIN_NOTE={ staged:"Tap to reveal third place, then second, then the winner (with the fanfare).",
-                 all:"All three places go up together, with the fanfare." };
-  function winKey(){ return "vpTriviaWinners:"+(G.venueId||""); }
-  function paintWinners(){ var v=G.winnersAll ? "all" : "staged"; paintSeg("cfgWinners", v); var n=$("winnersNote"); if(n) n.textContent=WIN_NOTE[v]; }
-  function loadWinners(){ try{ G.winnersAll = localStorage.getItem(winKey())==="all"; }catch(e){ G.winnersAll=false; } paintWinners(); }
   function loadAutoReveal(){
     try{ var v=JSON.parse(localStorage.getItem(autoKey())||"null");
       if(v && typeof v==="object"){ if(typeof v.on==="boolean") G.autoReveal=v.on; var n=parseInt(v.secs,10); if(n>=3 && n<=60) G.autoSecs=n; } }catch(e){}
@@ -1263,7 +1277,7 @@
   function rebuildBoard(){
     if(!G.gameId) return;
     apiPost("/host/reveal",{ game_id:G.gameId })
-      .then(function(r){ if(r && r.leaderboard){ G.board=r.leaderboard; renderConsole(); } })
+      .then(function(r){ if(r && r.leaderboard){ G.board=r.leaderboard; renderConsole(); if(G.finale && G.status==="ended") sendFinale(); } })
       .catch(function(){ /* leave the board empty; finish() below refuses to show an empty podium */ });
   }
   function reveal(){
@@ -1285,14 +1299,14 @@
         return;
       }
       // Safe to send correct_index now, the reveal has happened.
-      bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
-        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
+      if(G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal) armFinale();   // the last answer: the end of the night starts its clock
+      bcast(withFin({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
+        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board }));
       renderConsole();
       // Between-question leaderboard, but NOT after the last question - there the host reveals
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
-      if(isLast){ armAutoFinish(); renderConsole(); }   // the console shows the 1:30 line
-      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){
+      if(!isLast && G.roundBoard!==false){ setTimeout(function(){ if(G.status==="reveal"){
         /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
         if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
         else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
@@ -1311,23 +1325,8 @@
     return "error";
   }
   var NOBODY_MSG="Nobody has joined this game yet, so there are no scores to show. Players join with the code on the TV.";
-  /* THE TV IS NEVER STUCK ON THE LAST ANSWER (INBOX 50 and 77, Dean 5 Nov 2026: "TV reveals by itself in 1:30 if you don't
-     tap"). After the last question's reveal, if the host has not tapped Reveal leaderboard within 90 seconds, the podium goes
-     up by itself, the same way the tap does: staged (first place covered, silent) unless the venue chose "All at once". */
-  var AUTO_FINISH_MS=90000;
-  function clearAutoFinish(){ if(G.finishT){ clearTimeout(G.finishT); G.finishT=null; } if(G.finishTick){ clearInterval(G.finishTick); G.finishTick=null; } G.finishAt=0; }
-  function armAutoFinish(){
-    clearAutoFinish();
-    G.finishAt=Date.now()+AUTO_FINISH_MS;
-    G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(true); } }, AUTO_FINISH_MS);
-    G.finishTick=setInterval(function(){ var n=$("autoFinishNote"); if(n) n.textContent=autoFinishText(G.finishAt-Date.now()); }, 1000);
-  }
-  function autoFinishText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The TV reveals the winners by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+" if you don't tap."; }
-  /* auto: the 1:30 timer put the winners up, nobody tapped (Dean, 6 Nov 2026, 13:10): in "One at a time" the TV then steps
-     through third, second and the winner BY ITSELF, AUTO_PLACE_MS apart. The host's own tap (a click event) is never auto. */
-  function finish(auto){
-    clearAutoFinish();
-    G.autoPlaces = (auto===true);
+  /* The tap (finTap) and the automatic step (autoFinish) both land here; the TV is never stuck on the last answer. */
+  function finish(){
     clearTick();
     G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
@@ -1363,62 +1362,104 @@
       renderConsole();
       return;
     }
-    /* THE WINNERS (Dean, 6 Nov 2026, 11:30; INBOX 77/78). "One place at a time" (the default) is a click-through: the podium
-       goes up showing THIRD place only and nothing plays; tap 2 shows SECOND; tap 3 shows FIRST, with the fanfare on the TV and
-       the phones celebrating. "All at once": all three and the sound together. Ties share a place, so the taps follow the
-       places there are. Then the whole leaderboard: 60 seconds after the winner, or sooner on "Show the leaderboard"; it stays
-       2 minutes and then the TV goes back to the venue's ads. (A paper night's between-round boards are untouched.) */
-    clearEndTimers();
-    G.status="ended"; G.endBoard=false;
-    G.endRanks=podiumRanks(G.board);
-    G.endReveal = (G.winnersAll===true) ? 1 : G.endRanks[0];
-    bcast(endMsg());
-    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
-    renderConsole();
+    startFinale();   // the TV runs the reveal by itself from here (INBOX 77-79)
   }
-  var AUTO_PLACE_MS=6000;
-  function armAutoPlace(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=setTimeout(function(){ G.autoPlaceT=null; nextPlace(); }, AUTO_PLACE_MS); }
-  /* The places on the podium, lowest first: [3,2,1], or [2,1] with two teams, or [3,1] when two tie for first. The TV's
-     podiumEntries() draws the same places from the same rows. */
-  function podiumRanks(rows){
-    var out=[], rank=1, n=0;
-    for(var i=0;i<(rows||[]).length && n<4;i++){
-      if(i>0 && (Number(rows[i].points)||0)!==(Number(rows[i-1].points)||0)) rank=i+1;
-      if(rank>3) break;
-      n++; if(out.indexOf(rank)<0) out.push(rank);
+  /* ---- THE END OF THE NIGHT (Dean, 5 Nov 2026, INBOX 77, 78 and 79) ----
+     The host taps ONCE ("Reveal leaderboard"), and the TV runs the reveal by itself on one timeline
+     (/app/vp-trivia-finale.js): with "Suspense reveal at the end of the night" ON (the default), 3rd,
+     2nd, "And the winner is...", the winner, the whole leaderboard 60 s later for 2 minutes, then the
+     slides; OFF, straight to the whole leaderboard. No tap per step. If the host never taps, the
+     suspense screen comes up 30 s after the last answer and the reveal starts 90 s after that.
+     G.finale = { s: suspense on, runAt: when the reveal starts (this console's clock), auto: the
+     automatic step has been taken, phones: the phones have been told how they placed, st: the step
+     last painted }. Every finale message carries "e", how long ago the reveal started, so a TV that
+     reloads mid-reveal lands in the right step, whatever its own clock says. */
+  function finSuspense(){ return G.endSuspense!==false; }
+  function finSteps(){ return VPTriviaFinale.plan(G.finale.s, G.board); }
+  function finStage(){ if(!G.finale || !window.VPTriviaFinale) return null; return VPTriviaFinale.stageAt(finSteps(), Date.now()-G.finale.runAt); }
+  function finPastAds(){ var st=finStage(); return !!st && st.stage==="ads"; }
+  function finMsg(){ return { t:"finale", s:G.finale.s, rows:G.board, e:Date.now()-G.finale.runAt }; }
+  /* The reveal message on the last answer says the show is coming (so the TV can run it even if this
+     tablet goes to sleep), and every reveal says whether the leaderboard follows it (Game settings). */
+  function withFin(o){
+    if(G.finale) o.fin={ s:G.finale.s, e:Date.now()-G.finale.runAt };
+    if(G.finale || G.roundBoard===false) o.board=false;
+    return o;
+  }
+  function sendFinale(){ if(G.finale && G.board.length && !finPastAds()) send(finMsg()); }
+  function armFinale(){
+    if(!window.VPTriviaFinale) return;
+    G.finale={ s:finSuspense(), runAt:VPTriviaFinale.runAtFromReveal(Date.now(), finSuspense()), auto:false, phones:false, st:"" };
+    finTicker();
+  }
+  function restoreFinale(f){
+    if(!window.VPTriviaFinale) return;
+    if(f && typeof f.runAt==="number" && isFinite(f.runAt)){
+      G.finale={ s:!!f.s, runAt:f.runAt, auto:!!f.auto, phones:!!f.ph, st:"" };
+      if(f.ended) G.status="ended";
+      finTicker();
+    } else { armFinale(); }
+  }
+  /* finishNow() calls this once there are scores to show: the tap, or the automatic step. */
+  function startFinale(){
+    var auto=!!G.finAuto; G.finAuto=false;
+    if(!window.VPTriviaFinale){ G.status="ended"; bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board }); renderConsole(); return; }
+    if(!G.finale) G.finale={ s:finSuspense(), runAt:Date.now(), auto:true, phones:false, st:"" };   // a paper night's "Reveal the winners"
+    else if(!auto) G.finale.runAt=VPTriviaFinale.forward(G.finale.runAt, Date.now());              // the tap: now, never later
+    G.finale.auto=true;
+    G.status="ended"; saveTrivia();
+    sendFinale(); finTicker(); finTick(); renderConsole();
+  }
+  function finTap(){ G.finAuto=false; finish(); }
+  function autoFinish(){ G.finAuto=true; finish(); }
+  /* "Show the whole leaderboard now": the show jumps forward to the leaderboard, never back. */
+  function finSkip(){
+    if(!G.finale) return;
+    var at=VPTriviaFinale.stageStart(finSteps(), "board");
+    G.finale.runAt=VPTriviaFinale.forward(G.finale.runAt, Date.now()-(at||0));
+    saveTrivia(); sendFinale(); finTick(); renderConsole();
+  }
+  function finTicker(){ if(!G.finT) G.finT=setInterval(finTick, 500); }
+  function stopFinale(){ if(G.finT){ clearInterval(G.finT); G.finT=null; } G.finale=null; G.finAuto=false; previewShow(false); }
+  function finTick(){
+    if(!G.finale || !window.VPTriviaFinale) return;
+    var steps=finSteps(), e=Date.now()-G.finale.runAt, st=VPTriviaFinale.stageAt(steps, e);
+    if(G.status==="reveal" && st.stage!=="wait"){
+      if(!G.finale.auto){ G.finale.auto=true; autoFinish(); }   // the host has not tapped: the TV carries on by itself
+      return;
     }
-    if(!out.length) out=[1];
-    return out.sort(function(a,b){ return b-a; });
+    if(G.status!=="ended"){ paintFinLine(); return; }
+    if(!G.finale.phones && G.board.length && e>=VPTriviaFinale.phonesAt(steps)){
+      G.finale.phones=true; saveTrivia();
+      gsend({ t:"podium", top:G.board.slice(0,3), rows:G.board });   // the phones' "you came 2nd", once the TV has said it
+    }
+    if(st.stage!==G.finale.st){ G.finale.st=st.stage; renderConsole(); return; }
+    paintFinLine();
   }
-  function endMsg(){
-    if(G.endBoard) return { t:"leaderboard", title:"Final scores", rows:G.board, final:true };
-    return { t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:(G.endReveal||1) };
+  function finLineText(){
+    var F=window.VPTriviaFinale; if(!F || !G.finale) return "";
+    var steps=finSteps(), e=Date.now()-G.finale.runAt, st=F.stageAt(steps, e);
+    if(st.stage==="wait") return "Final scores come up in "+F.clock(st.next);
+    if(st.stage==="cover") return "TV reveals by itself in "+F.clock(st.next)+" if you don't tap";
+    if(st.stage==="board") return "Back to your slides in "+F.clock(st.next);
+    if(st.stage==="ads") return "The TV is back on your slides.";
+    return "Whole leaderboard on the TV in "+F.clock(F.stageStart(steps, "board")-e);
   }
-  function nextPlace(){
-    if(G.status!=="ended" || G.endBoard || !(G.endReveal>1)) return;
-    var i=G.endRanks.indexOf(G.endReveal);
-    G.endReveal = (i>=0 && i+1<G.endRanks.length) ? G.endRanks[i+1] : 1;
-    bcast(endMsg());
-    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
-    renderConsole();
-  }
-  var BOARD_AFTER_MS=60000, BOARD_STAYS_MS=120000;
-  function clearEndTimers(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=null; clearTimeout(G.boardT); clearTimeout(G.adsT); clearInterval(G.boardTick); G.boardT=G.adsT=G.boardTick=null; G.boardAt=0; }
-  function armBoardTimer(){
-    clearEndTimers();
-    G.boardAt=Date.now()+BOARD_AFTER_MS;
-    G.boardT=setTimeout(function(){ G.boardT=null; showFinalBoard(); }, BOARD_AFTER_MS);
-    G.boardTick=setInterval(function(){ var n=$("boardNote"); if(n) n.textContent=boardNoteText(G.boardAt-Date.now()); }, 1000);
-  }
-  function boardNoteText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The leaderboard comes up by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+"."; }
-  function showFinalBoard(){
-    if(G.status!=="ended" || G.endBoard || G.endReveal!==1) return;
-    clearEndTimers();
-    G.endBoard=true;
-    bcast(endMsg());
-    /* The end of the night: the board stays 2 minutes, then the venue's ads. */
-    G.adsT=setTimeout(function(){ G.adsT=null; if(G.status==="ended" && G.endBoard){ bcast({ t:"to_ads" }); } }, BOARD_STAYS_MS);
-    renderConsole();
+  function paintFinLine(){ var ln=$("finLine"); if(ln) ln.textContent=finLineText(); }
+  /* THE PREVIEW: the real TV page, connected to nothing (screen.html?preview=1), fed every message this
+     console sends the TV (send() mirrors it here). Loaded the first time it is needed, then brought up
+     to date with the same replay a reloaded TV gets. Same origin only, both ways. */
+  var _pv={ win:null, ready:false };
+  function previewFeed(obj){ if(_pv.ready && _pv.win){ try{ _pv.win.postMessage({ vpPreview:obj }, window.location.origin); }catch(e){} } }
+  function previewShow(on){
+    var box=$("tvPreview"); if(!box) return;
+    box.classList.toggle("hidden", !on);
+    if(!on) return;
+    var f=$("tvPreviewFrame");
+    if(f && !f.getAttribute("src")){
+      f.addEventListener("load", function(){ _pv.win=f.contentWindow; _pv.ready=true; replayState(null, previewFeed); });
+      f.setAttribute("src", "/app/trivia/screen.html?preview=1");
+    }
   }
   /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
      The referee is /app/topanswers/pr-game.js. Its board object, with the answers, never leaves this
@@ -1601,10 +1642,11 @@
     send({ t:"state", phase:"lobby", colour:G.colour });
   }
   function endRound(){
-    clearTick(); clearAuto(); clearAutoFinish(); clearEndTimers();
+    clearTick(); clearAuto();
     clearTrivia();
     var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
-    G.status="setup"; G.current=null; G.answeredPids={}; G.endReveal=0; G.endBoard=false;
+    stopFinale();
+    G.status="setup"; G.current=null; G.answeredPids={};
     /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
        "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
        (and a board ended mid-play flipped its answers for no time at all). */
@@ -1650,8 +1692,8 @@
      pid null replays to the TV on the pair channel. A pid replays to that one phone on
      the game channel, tagged so every other phone ignores it: re-broadcasting a live
      question to the room would wipe the answer somebody had already given. */
-  function replayState(pid){
-    var to = pid ? function(o){ o.to = pid; gsend(o); } : send;
+  function replayState(pid, only){
+    var to = only || (pid ? function(o){ o.to = pid; gsend(o); } : send);
     if(G.roundType==="pr" && G.pr && G.prPub){
       /* A phone or screen that arrives mid-board gets the board and what has been FOUND, never the rest.
          Phones filter on `to`, so a replay aimed at one phone is sent to that phone's pid. */
@@ -1677,13 +1719,13 @@
       to({ t:"roundanswers", round:G.round, items:G.roundItems });
       if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     } else if(G.status==="reveal" && G.current){
-      to({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
-           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
-      if(G.board.length) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });
+      to(withFin({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") }));
+      if(G.board.length && !G.finale && G.roundBoard!==false) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });   // never over the last answer
     } else if(G.status==="ended" && G.board.length){
-      /* A phone is never sent the leaderboard (it has no such screen) and gets first place once it is announced. */
-      var em=endMsg(); if(pid && em.t==="leaderboard") em={ t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:1 };
-      to(em);
+      if(!G.finale) to({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+      else if(!pid){ if(!finPastAds()) to(finMsg()); }   // the TV lands where the show is; after it went back to the slides, nothing
+      else if(G.finale.phones) to({ t:"podium", top:G.board.slice(0,3), rows:G.board });   // a phone hears how it placed only once the TV has said
     }
   }
     if(m.t==="tv_here"){
@@ -2011,7 +2053,7 @@
     var q=G.current, qn=q ? (q.qi||q.qseq) : 0, total=G.qtotal||0, last=total && qn>=total;
     if(G.status==="reveal" && q){
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">DOUBLE POINTS</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+qn+' of '+(total||"?")+(q && isDouble(q.qseq)?' &middot; <b style="color:var(--gold)">COUNTS DOUBLE</b>':'')+' &middot; round '+G.round+' &middot; answer held back</span></div>'+
         '<div class="qtext-h">'+esc(q.text)+'</div>'+
         '<div class="since" style="margin:0 0 8px">Paper teams are playing, so this answer stays off the TV and the phones until the end of round '+G.round+'.</div>';
       for(var i=0;i<q.options.length;i++){
@@ -2070,7 +2112,7 @@
       d.innerHTML='<div class="qmeta"><span class="qn">Round '+G.round+' done</span></div>'+
         '<div class="qtext-h">The leaderboard is on the TV.</div>';
       body.appendChild(d);
-      if(last){ var fb=el("button","btn pink big","Reveal the winners"); fb.addEventListener("click", finish); body.appendChild(fb); }
+      if(last){ var fb=el("button","btn pink big","Reveal the winners"); fb.addEventListener("click", finTap); body.appendChild(fb); }
       else { var rb=el("button","btn pink big","Start round "+(G.round+1)); rb.addEventListener("click", nextRoundQuestion); body.appendChild(rb); }
       body.appendChild(endBtn("End round"));
       return true;
@@ -2080,22 +2122,22 @@
   $("setSel").addEventListener("change", function(){ syncSetCount(); var n=$("setLastNote"); if(n) n.style.display="none"; queueTriviaPrefs(); });
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
-  /* DOUBLE POINTS FINAL ROUND. Which questions it covers is decided by the Worker when the night
+  /* COUNTS DOUBLE FINAL ROUND. Which questions it covers is decided by the Worker when the night
      starts (config.double_seqs) and handed back; the console only ever asks isDouble(). */
   function isDouble(qseq){ return !!(G.doubleSeqs && G.doubleSeqs.indexOf(qseq) >= 0); }
   function paintDouble(){
     var seg=$("cfgDouble"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.doublePoints); }); }
     var inp=$("cfgDoubleLast"); if(inp){ inp.value=G.doubleLast; inp.disabled=!G.doublePoints; }
     var nt=$("doubleNote"); if(nt) nt.textContent = G.doublePoints
-      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included.")
-      : "Off. Turn it on to make the last questions of the night count double.";
+      ? ("The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night count double, speed bonus included. The TV and phones say so on each one.")
+      : "Off. Turn it on and the last round of the night counts double.";
   }
   document.querySelectorAll("#cfgDouble button").forEach(function(b){ b.addEventListener("click", function(){
     G.doublePoints=b.getAttribute("data-v")==="on"; paintDouble(); queueTriviaPrefs();
   }); });
   (function(){ var inp=$("cfgDoubleLast"); if(inp) inp.addEventListener("input", function(){
     G.doubleLast=Math.max(1, Math.min(100, parseInt(inp.value,10)||10)); var nt=$("doubleNote");
-    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night score double, speed bonus included."; }); })();
+    if(nt && G.doublePoints) nt.textContent="The last "+G.doubleLast+" question"+(G.doubleLast===1?"":"s")+" of the night count double, speed bonus included. The TV and phones say so on each one."; }); })();
   paintDouble();
   if(/[?&]pr=1/.test(location.search)){ var _pf=$("prField"); if(_pf) _pf.classList.remove("hidden"); }   // switched off unless asked for
   document.querySelectorAll("#cfgRoundType button").forEach(function(b){ b.addEventListener("click", function(){
@@ -2145,8 +2187,6 @@
       else sn.classList.add("hidden"); });
     return true;
   }
-  document.querySelectorAll("#cfgWinners button").forEach(function(b){ b.addEventListener("click", function(){
-    G.winnersAll = b.getAttribute("data-v")==="all"; try{ localStorage.setItem(winKey(), G.winnersAll ? "all" : "staged"); }catch(e){} paintWinners(); }); });
   document.querySelectorAll("#cfgAutoReveal button").forEach(function(b){ b.addEventListener("click", function(){ G.autoReveal=b.getAttribute("data-v")==="on"; autoChanged(); }); });
   (function(){ var i=$("cfgAutoSecs"); if(i) i.addEventListener("change", function(){ var n=parseInt(i.value,10); G.autoSecs=(n>=3 && n<=60) ? n : 10; i.value=G.autoSecs; autoChanged(); }); })();
   document.querySelectorAll("#cfgBuzzer button").forEach(function(b){ b.addEventListener("click", function(){ setBuzzer(b.getAttribute("data-v")==="on", true); }); });
@@ -2208,6 +2248,7 @@
       if(typeof p.buzzer==="boolean") G.buzzer=p.buzzer;
       if(p.buzzer_where==="tv" || p.buzzer_where==="device") G.buzzWhere=p.buzzer_where;
       try{ localStorage.setItem(buzzKey(), G.buzzer?"1":"0"); localStorage.setItem(whereKey(), G.buzzWhere); }catch(e){} paintBuzzer(); }
+    if(window.VPTriviaFinale){ var fp=VPTriviaFinale.prefs(p); G.endSuspense=fp.end_suspense; G.roundBoard=fp.round_board; }   // Game settings (INBOX 78), venue-wide, even mid-quiz
     if(!p || G.status!=="setup") return;   // a quiz brought back keeps its own settings
     var sel=$("setSel");
     paintTriviaSetup(p);
@@ -2273,7 +2314,8 @@
     if (typeof VPWeekly === "undefined" || !VPWeekly || !VPWeekly.check) return;
     var bn=$("weekBanner"); if(!bn || !v) return;
     if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
-    var w=VPWeekly.check(v,"trivia"); if(!w) return;
+    var w=VPWeekly.check(v,"trivia");
+    if(!w){ var fn=(!DEMO && VPWeekly.firstNote) ? VPWeekly.firstNote(v,"trivia") : null; if(fn){ bn.textContent=fn; bn.style.display=""; } return; }
     var nextIso=w.nextIso;
     bn.innerHTML=w.text+'<b>'+w.nextDay+'</b>. '+
       '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Try anyway</button>';
@@ -2350,7 +2392,6 @@
       if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
-      loadWinners();      // how the winners show, as this venue left it (staged by default)
       loadAutoReveal();   // auto reveal, as this venue left it (on, 10 seconds, by default)
       loadBuzzer();    // the time's-up buzzer switch, as this venue left it (on by default)
       if(!DEMO) weeklyPreCheck(ctx.venue);   // a demo is not the week's trivia night
@@ -2406,10 +2447,10 @@
              secs:remainingSecs(), colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"), imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
       if(remainingSecs()<=0) send({ t:"lock" });
     } else if(G.status==="reveal" && G.current){
-      send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
-             options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
+      send(withFin({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+             options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") }));
     } else if(G.status==="ended" && G.board.length){
-      send(endMsg());
+      if(G.finale) sendFinale(); else send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
     }
   }
   /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
@@ -2446,6 +2487,7 @@
   });
   window.addEventListener("pagehide", function(){
     if(G.status==="question" || G.status==="reveal" || G.status==="ready") return;
+    if(G.finale && !finPastAds()) return;   // the end-of-night show runs on the TV by itself and goes back to the slides on its own
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
@@ -2460,7 +2502,7 @@
     var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
     var _ended = live ? endRound() : null;   // actually end it, rather than only telling the room it ended
     if(!live){
-      clearTick(); clearTimeout(G.podiumHoldT); G.podiumHeld=false;
+      clearTick(); clearTimeout(G.podiumHoldT); G.podiumHeld=false; stopFinale();
       G.status="setup"; G.board=[]; G.current=null; G.gameId=""; clearTrivia();
       try{ bcast({ t:"idle" }); }catch(e){}
       renderConsole();

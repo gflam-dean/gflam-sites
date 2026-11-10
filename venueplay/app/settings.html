@@ -200,6 +200,19 @@
       </div>
     </section>
 
+    <!-- TRIVIA, THE END OF THE NIGHT (Dean, 5 Nov 2026, INBOX 78). Saved for the venue with the console's own trivia
+         setup (vp_venue_settings.game_prefs.trivia, through the game Worker's /host/game-prefs), so every tablet and
+         the TV follow it. Both ON unless switched off. A switch saves the moment it is flicked. -->
+    <section class="sec" id="secTrivia">
+      <h2 class="sechead">Trivia</h2>
+      <div class="card">
+        <div class="row" style="border-top:0;padding-top:0"><div class="t"><div class="n">Show the leaderboard after each round</div><div class="d">The TV shows everyone's scores between questions and rounds.</div></div><div class="sw on" data-tk="round_board" role="switch" tabindex="0" aria-checked="true" aria-label="Show the leaderboard after each round"></div></div>
+        <div class="row"><div class="t"><div class="n">Suspense reveal at the end of the night</div><div class="d" id="trSuspenseHelp">After your one tap, the TV shows 3rd place, then 2nd, then "And the winner is...", then the winner, by itself.</div></div><div class="sw on" data-tk="end_suspense" role="switch" tabindex="0" aria-checked="true" aria-label="Suspense reveal at the end of the night"></div></div>
+        <div class="note" id="trFoot" style="margin-top:8px">The whole leaderboard comes up 60 seconds after the winner and stays for 2 minutes, then the TV goes back to your slides. If you don't tap, the TV carries on by itself.</div>
+        <div class="msg" id="trMsg" role="status"></div>
+      </div>
+    </section>
+
     <!-- PERMITS AND AUTHORITIES: the BINGO permit lives here, with the game settings. The raffle
          and members-draw permits are under Your account > Draws, beside the draws they belong to
          (Dean, 24 Oct 2026). All three are painted and saved by /app/vp-permits.js, which shows a
@@ -221,6 +234,7 @@
 <script src="/app/vp-venuepick.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="vp-permits.js"></script>
+<script src="/app/vp-trivia-finale.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -270,6 +284,7 @@
     gateOwnerOnly(ctx);
     paintVenueCode();
     paintPermits(ctx);
+    loadTriviaShow();
     $("body").classList.remove("hidden");
   });
 
@@ -326,6 +341,62 @@
       return VP.saveSettings(v.id, patch).catch(function(){ failed.push(v.name); });
     })).then(function(){ return { others:others.length-failed.length, failed:failed }; });
   }
+
+  /* TRIVIA, THE END OF THE NIGHT (Dean, 5 Nov 2026, INBOX 78). Two switches, both ON unless the venue switches
+     them off: the leaderboard between questions and rounds, and the suspense reveal (3rd, 2nd, the winner, run by
+     the TV itself after the host's one tap; off, straight to the whole leaderboard). Read and saved through
+     VP.gamePrefs("trivia"), which MERGES, so the console's own trivia setup is never touched. "Whole group" saves
+     them to every venue in the group, like the rest of this page. */
+  var triviaShow=window.VPTriviaFinale ? VPTriviaFinale.prefs(null) : { end_suspense:true, round_board:true };
+  var TRIVIA_HELP={
+    on:'After your one tap, the TV shows 3rd place, then 2nd, then "And the winner is...", then the winner, by itself.',
+    off:"After your one tap, the TV goes straight to the whole leaderboard."
+  };
+  var TRIVIA_FOOT={
+    on:"The whole leaderboard comes up 60 seconds after the winner and stays for 2 minutes, then the TV goes back to your slides. If you don't tap, the TV carries on by itself.",
+    off:"The whole leaderboard stays for 2 minutes, then the TV goes back to your slides. If you don't tap, the TV carries on by itself."
+  };
+  function triviaPrefsFor(id){
+    return VP.gamePrefs("trivia", { venueId:id, delay:0,
+      collect:function(){ return { end_suspense:triviaShow.end_suspense, round_board:triviaShow.round_board }; },
+      apply:function(p){ triviaShow=VPTriviaFinale.prefs(p); paintTriviaShow(); } });
+  }
+  function paintTriviaShow(){
+    document.querySelectorAll(".sw[data-tk]").forEach(function(sw){
+      var on=!!triviaShow[sw.getAttribute("data-tk")];
+      sw.classList.toggle("on", on); sw.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    var h=$("trSuspenseHelp"); if(h) h.textContent=triviaShow.end_suspense ? TRIVIA_HELP.on : TRIVIA_HELP.off;
+    var f=$("trFoot"); if(f) f.textContent=triviaShow.end_suspense ? TRIVIA_FOOT.on : TRIVIA_FOOT.off;
+  }
+  function loadTriviaShow(){
+    var sec=$("secTrivia");
+    if(!(window.VP && VP.gamePrefs && window.VPTriviaFinale)){ if(sec) sec.classList.add("hidden"); return; }
+    paintTriviaShow();
+    triviaPrefsFor(venueId).start().then(paintTriviaShow, paintTriviaShow);
+  }
+  function saveTriviaShow(){
+    var m=$("trMsg");
+    var ids=(scope==="group" && groupVenues.length>1) ? groupVenues.map(function(v){ return v.id; }) : [venueId];
+    if(m){ m.className="msg"; m.textContent="Saving..."; }
+    return Promise.all(ids.map(function(id){ return triviaPrefsFor(id).saveNow(); })).then(function(res){
+      var ok=res.filter(function(x){ return x===true; }).length;
+      if(!m) return;
+      if(ok===ids.length){ m.className="msg ok"; m.textContent = ids.length>1 ? ("Saved for all "+ids.length+" venues.") : "Saved."; }
+      else { m.className="msg err"; m.textContent="That did not save. Check your connection and try again."; }
+    });
+  }
+  function flipTrivia(sw){
+    var k=sw.getAttribute("data-tk");
+    if(k!=="end_suspense" && k!=="round_board") return;
+    triviaShow[k]=!triviaShow[k];
+    paintTriviaShow();
+    saveTriviaShow();
+  }
+  document.querySelectorAll(".sw[data-tk]").forEach(function(sw){
+    sw.addEventListener("click", function(){ flipTrivia(this); });
+    sw.addEventListener("keydown", function(e){ if(e.key===" " || e.key==="Enter"){ e.preventDefault(); flipTrivia(this); } });
+  });
 
   /* PERMITS AND AUTHORITIES: /app/vp-permits.js paints and saves the card (one copy, shared with
      Your account > Draws, which holds the raffle and members-draw permits). Only bingo is asked

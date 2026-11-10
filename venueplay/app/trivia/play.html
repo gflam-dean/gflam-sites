@@ -760,7 +760,7 @@
     if(typeof m.colour==="boolean") P.colour=m.colour;
     show("vQ");
     $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
-    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("pqCount").appendChild(dp); }
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Counts double"; $("pqCount").appendChild(dp); }
     var pqi=$("pqImg"); if(m.imageUrl){ pqi.src=m.imageUrl; pqi.classList.remove("hidden"); } else { pqi.classList.add("hidden"); pqi.removeAttribute("src"); }
     $("pqText").textContent = m.text||"";
     try{ $("pqText").className = phoneQClass(m.text); }catch(e){}

@@ -273,10 +273,20 @@
   .pcol.second .medal{height:12.5cqw}
   .pcol.first .medal{height:17cqw;font-size:7.8cqw;color:#FFD93D;border-top-color:#FFD93D;box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,217,61,.55)}
   @keyframes bandin{to{opacity:1;transform:none}}
-  /* A PLACE NOT REVEALED YET (Dean, 6 Nov 2026: third, then second, then the winner, one tap each): its step stands plain, the name and score hidden. */
-  .pcol.covered .pwho{visibility:hidden}
-  .pcol.covered .medal{color:#8A8A95;border-top-color:#2A2A31;box-shadow:none}
   @media (prefers-reduced-motion:reduce){.pcol{animation:none;opacity:1;transform:none}}
+  /* THE SUSPENSE REVEAL (Dean, 5 Nov 2026, INBOX 77-79, Option 1 Steps): the same podium, each step covered
+     with a pink top and a "?" over it until its place is called. The step keeps its height, so nothing moves
+     when a name lands. Yellow stays for the winner only. */
+  .pcol .pq{display:none;position:absolute;left:0;right:0;bottom:1.2cqw;text-align:center;font-family:'Anton',sans-serif;font-size:4.2cqw;line-height:1;color:rgba(255,255,255,.28)}
+  .pcol .pwho{position:relative}
+  .pcol.hid .pn,.pcol.hid .ps{visibility:hidden}
+  .pcol.hid .pq{display:block}
+  .pcol.hid .medal,.pcol.first.hid .medal{border-top-color:var(--pink);color:rgba(255,31,142,.55);box-shadow:none;animation:vpStepWait 1.6s ease-in-out infinite}
+  .pcol.landed .pwho{animation:vpLand .7s cubic-bezier(.22,1,.36,1)}
+  @keyframes vpStepWait{0%,100%{box-shadow:0 -.4cqw 1.6cqw -1cqw rgba(255,31,142,0)}50%{box-shadow:0 -.6cqw 2.2cqw -1cqw rgba(255,31,142,.5)}}
+  @keyframes vpLand{from{opacity:0;transform:translateY(1.2cqw) scale(.94)}to{opacity:1;transform:none}}
+  .wintitle .dots{color:#FFD93D}
+  @media (prefers-reduced-motion:reduce){.pcol.hid .medal,.pcol.first.hid .medal,.pcol.landed .pwho{animation:none}}
   /* join corner */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
@@ -381,7 +391,7 @@
   <!-- podium -->
   <div class="layer hidden qgrid" id="tvPodium">
     <div class="toplbl"><span class="tl-night" id="tvPodNight">Trivia</span></div>
-    <div class="boardtitle wintitle">Winners <span>tonight</span></div>
+    <div class="boardtitle wintitle" id="tvPodTitle">Winners <span>tonight</span></div>
     <div class="podium" id="tvPodiumCols"></div>
   </div>
 
@@ -405,6 +415,7 @@
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer (3 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
+<script src="/app/vp-trivia-finale.js"></script>   <!-- the end of the night, one timeline shared with the console (INBOX 77-79) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
@@ -445,9 +456,14 @@
      hermetic almost by construction. Deciding it after any of them would have bounced the
      sales page straight to /tv, which is exactly what a direct open is meant to do. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  /* ?preview=1 : THE HOST CONSOLE'S LIVE PREVIEW (INBOX 78). The real wall, inside the console, connected to
+     nothing: no venue, no channel, no sound, no tv_here. Its only input is the console that framed it
+     (same origin, its parent window), which hands it every message it sends the TV. Opened any other way
+     (not in a frame) it is an inert wall. */
+  var VP_PREVIEW = /[?&]preview=1/.test(window.location.search || "") && (function(){ try{ return window.parent!==window; }catch(e){ return true; } })();
   var VENUE_UNREAD=false;                        // set when the address held something we could not read
   var VENUE_SLUG=(function(){
-    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
+    if(VP_DEMO || VP_PREVIEW) return "";          // hermetic: never inherit a real venue
     /* The venue in the address comes from ONE reader, /app/vp-venueurl.js, the same one tv.html
        and the bingo phone use (venue=, slug=, any capitals, ?=slug, spaces as hyphens, a stray %
        no longer throws). No script, no venue from the address: memory takes over, and says so. */
@@ -526,7 +542,8 @@
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     /* THE JOIN NOW CARD: on the scores and the podium, not over the question (Dean, 3 Nov 2026: the four answers
        fill the lower half of the wall now, as approved), and not on the lobby, which is a join screen itself. */
-    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || which==="tvQ" || which==="tvReveal" || (!JOIN_ON_RESULTS && (which==="tvBoard" || which==="tvPodium")));
+    /* And never on the podium (Dean, 5 Nov 2026, INBOX 78): the winners' moment has no JOIN NOW card. */
+    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || which==="tvQ" || which==="tvReveal" || which==="tvPodium" || VP_PREVIEW || (!JOIN_ON_RESULTS && which==="tvBoard"));
     if(which!=="tvLobby"){ try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // the waiting card is the lobby's only
   }
   function renderPaper(m){
@@ -661,7 +678,7 @@
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
-    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvQCount").appendChild(dp); }
+    if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Last round counts double"; $("tvQCount").appendChild(dp); }
     var qi=$("tvQImg"), lay=$("tvQ"), hasPic=!!(m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl)));
     if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); curQ.imageUrl=m.imageUrl; } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
     lay.classList.toggle("pic", hasPic);   // picture round layout; a picture that fails to load drops back to this text layout (see onerror)
@@ -702,7 +719,7 @@
     if(okCi && mk.parentNode){ var par=mk.parentNode, nx=mk.nextSibling; par.removeChild(mk); par.insertBefore(mk, nx); }
     /* THE SAME GRID AS THE QUESTION: label, question text, picture and cards land where they just were. */
     $("tvRevCount").textContent=curQ.label||"Question";
-    if(curQ.double){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvRevCount").appendChild(dp); }
+    if(curQ.double){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Last round counts double"; $("tvRevCount").appendChild(dp); }
     var rq=$("tvRevQText"); rq.textContent=curQ.text||""; rq.className=qClass(curQ.text);
     var lay=$("tvReveal"), ri=$("tvRevImg"), pic=curQ.imageUrl || ((m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl))) ? m.imageUrl : "");
     if(pic){ if(ri.getAttribute("src")!==pic) ri.src=pic; ri.classList.remove("hidden"); } else { ri.classList.add("hidden"); ri.removeAttribute("src"); }
@@ -724,7 +741,9 @@
     renderRows($("tvRevBoard"), m.leaderboard||[], 5);
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
-    boardRollTimer=setTimeout(function(){
+    /* Not after the last answer (the end of the night follows it), and not when the venue switched the
+       leaderboard between rounds off (Game settings, INBOX 78): the console then says board:false. */
+    if(m.board!==false) boardRollTimer=setTimeout(function(){
       /* Never in the sales-page demo: its script puts the scores up only at the end of the round (7 Nov 2026). */
       if(state.phase==="reveal" && !VP_DEMO){ show("tvBoard"); renderBoardPaged("Leaderboard", m.leaderboard||[]); }
     }, 5200);
@@ -799,13 +818,9 @@
     }
     return out;
   }
-  /* reveal: the places shown so far, from the bottom: 3 is third only, 2 is second and third, 1 (or none, an older
-     console) is everybody, with the fanfare and the confetti, once. */
-  function renderPodium(top, rows, reveal){
+  function renderPodium(top, rows, quiet){
     show("tvPodium");
-    reveal = (reveal===2 || reveal===3) ? reveal : 1;
-    var already = state.phase==="podium" && state.podReveal===1;
-    state.podReveal = reveal;
+    var tt=$("tvPodTitle"); if(tt) tt.innerHTML='Winners <span>tonight</span>';
     var cols=$("tvPodiumCols"); cols.innerHTML="";
     var ents=podiumEntries(top, rows);
     var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"1",2:"2",3:"3"};
@@ -817,17 +832,67 @@
     cols.classList.toggle("four", order.length>3);
     var tiedRank={}; ents.forEach(function(e){ tiedRank[e.rank]=(tiedRank[e.rank]||0)+1; });
     order.forEach(function(o){ if(!o || !o.p) return;
-      var col=el("div","pcol "+CLS[o.rank]+(o.rank<reveal ? " covered" : ""));
+      var col=el("div","pcol "+CLS[o.rank]); col.setAttribute("data-rank", o.rank);
       var who=el("div","pwho");
+      who.appendChild(el("div","pq","?"));   // shown only while the step is covered (the suspense reveal)
       who.appendChild(el("div","pn",esc(o.p.name)+(tiedRank[o.rank]>1?' <span>(tied)</span>':'')));
       who.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
       col.appendChild(who);
       col.appendChild(el("div","medal",MEDAL[o.rank]));
       cols.appendChild(col);
     });
-    /* Nothing plays until the winner is revealed (Dean, 6 Nov 2026: "the sound played before you push the buttons"). */
-    if(reveal>1){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } return; }
-    if(!already) celebrate(9000);
+    if(!quiet) celebrate(9000);
+  }
+
+  /* ---- THE END OF THE NIGHT, RUN BY THE TV ITSELF (Dean, 5 Nov 2026, INBOX 77, 78 and 79) ----
+     The console taps once and sends t:"finale" (and, on the last answer, a reveal carrying fin), each with
+     e = how long ago the reveal started. From then on this screen runs the show on its own clock, one
+     step at a time, from the shared plan in /app/vp-trivia-finale.js: the suspense screen, 3rd, 2nd,
+     "And the winner is...", the winner, the whole leaderboard 60 s later (the existing board, item 79),
+     and back to the slides 2 minutes after that. Suspense off: the whole leaderboard at once. A screen
+     that reloads mid-show is handed e again and lands on the right step. The show only moves forward. */
+  var FIN=null;   // { s, rows, runAt (this screen's clock), painted, built, timer }
+  function finaleClear(){ if(FIN && FIN.timer) clearTimeout(FIN.timer); FIN=null; }
+  function finaleFrom(m, fromReveal){
+    var F=window.VPTriviaFinale; if(!F) return;
+    var spec=fromReveal ? m.fin : m;
+    var rows=fromReveal ? m.leaderboard : m.rows;
+    rows=Array.isArray(rows) ? rows : [];
+    if(!spec || typeof spec!=="object" || !rows.length) return;   // nobody scored: the calm end, never an empty podium
+    var s=spec.s!==false, runAt=Date.now()-(Number(spec.e)||0);
+    if(FIN && FIN.s===s){ FIN.runAt=F.forward(FIN.runAt, runAt); FIN.rows=rows; }
+    else { finaleClear(); FIN={ s:s, rows:rows, runAt:runAt, painted:"", built:false, timer:null }; }
+    finaleTick();
+  }
+  function finaleTick(){
+    var F=window.VPTriviaFinale; if(!FIN || !F) return;
+    if(FIN.timer){ clearTimeout(FIN.timer); FIN.timer=null; }
+    var st=F.stageAt(F.plan(FIN.s, FIN.rows), Date.now()-FIN.runAt);
+    if(st.stage!==FIN.painted){ FIN.painted=st.stage; finalePaint(st.stage); }
+    if(FIN && st.next!==null) FIN.timer=setTimeout(finaleTick, Math.max(50, st.next+30));
+  }
+  function finalePaint(stage){
+    var F=window.VPTriviaFinale;
+    if(stage==="wait") return;   // the last answer stays up
+    if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+    if(stage==="board"){ state.phase="leaderboard"; show("tvBoard"); renderBoardPaged("Final scores", FIN.rows); return; }
+    if(stage==="ads"){
+      finaleClear();
+      if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); });   // back to the venue's slides
+      return;
+    }
+    if(state.phase!=="podium" || !FIN.built){ state.phase="podium"; renderPodium(FIN.rows.slice(0,3), FIN.rows, true); FIN.built=true; }
+    var ents=F.podiumEntries(null, FIN.rows), firsts=0;
+    for(var i=0;i<ents.length;i++) if(ents[i].rank===1) firsts++;
+    var t=F.title(stage, firsts>1), tt=$("tvPodTitle");
+    if(tt) tt.innerHTML=esc(t.text)+(t.tail ? ' <span>'+esc(t.tail)+'</span>' : '')+(t.dots ? '<span class="dots">...</span>' : '');
+    var on=F.shown(stage), cols=$("tvPodiumCols").children||[];
+    for(var c=0;c<cols.length;c++){
+      var col=cols[c], r=Number(col.getAttribute("data-rank"))||0, hid=!on[r], was=col.classList.contains("hid");
+      col.classList.toggle("hid", hid);
+      if(was && !hid) col.classList.add("landed");   // the name lands on its step
+    }
+    if(stage==="winner"){ celebrate(9000); triviaEndShow(FIN.rows.slice(0,3), "FINAL SCORES"); }
   }
 
   // ---- confetti ----
@@ -874,6 +939,7 @@
        every call site and the kiosk unlock are untouched. If the shared file
        does not load we stay silent rather than throw: a missing celebration
        is cosmetic, an exception during a win is not. */
+    if(VP_PREVIEW) return;   // the console's preview is silent: the room hears the TV
     try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"pa", ctx:_ac }); }catch(e){}
   }
   function celebrate(ms){
@@ -986,12 +1052,13 @@
      page, and a subscribed screen would sit on a venue channel where a real game could appear
      on a marketing page, and would answer tv_here, which is what HQ reads to decide a screen
      is alive. A demo must never make a dead TV look healthy. */
-  if(!VP_DEMO) ch.subscribe(function(status){
+  if(!VP_DEMO && !VP_PREVIEW) ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
   var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1,nobody:1};
+  HOST_TYPES.finale=1;   // the end-of-night show (INBOX 77-79)
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -1056,6 +1123,9 @@
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="question" || m.t==="reveal" || m.t==="ta_board" || m.t==="closed") _endSaw=true; }catch(e){} }
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
+    /* Anything that starts or ends a game stops the end-of-night show; a reveal without fin is a new question's. */
+    if(FIN && (m.t==="question" || m.t==="started" || m.t==="idle" || m.t==="to_ads" || m.t==="podium" || m.t==="nobody" || m.t==="closed" ||
+               (m.t==="state" && m.phase==="lobby") || (m.t==="reveal" && !m.fin))) finaleClear();
     /* PUNTERS RECKON rounds. The board is its own layer, painted by the shared pr-board.js; the
        leaderboard after a board is the ordinary "leaderboard" message, handled below as for trivia. */
     if(m.t==="ta_board" || m.t==="ta_reveal" || m.t==="ta_showall"){
@@ -1103,8 +1173,15 @@
       if(typeof m.on==="boolean") BUZZ.on=m.on;
     }
     else if(m.t==="reveal"){
-      state.phase="reveal";
-      renderReveal(m);
+      if(m.fin && FIN && FIN.painted && FIN.painted!=="wait"){ finaleFrom(m, true); }   // the show has moved on: a replayed last answer does not go back over it
+      else {
+        state.phase="reveal";
+        renderReveal(m);
+        if(m.fin){ if(FIN) FIN.painted=""; finaleFrom(m, true); }   // the last answer: the end of the night is on its way
+      }
+    }
+    else if(m.t==="finale"){
+      finaleFrom(m, false);
     }
     /* A PAPER NIGHT holds every answer to the end of its round, so a team on paper cannot change a
        box after seeing it here. The console sends these three instead of "reveal". */
@@ -1136,8 +1213,8 @@
     }
     else if(m.t==="podium"){
       state.phase="podium";
-      renderPodium(m.top||[], m.rows, m.reveal);
-      if(!(m.reveal>1)) triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
+      renderPodium(m.top||[], m.rows);   // a paper night, or a console without the finale module: the whole podium at once
+      triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
     }
   }
   /* THE END-OF-GAME SHOW (2 Nov 2026): the top three teams and their scores, a tie sharing its place, then
@@ -1273,6 +1350,18 @@
       /* A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap(). */
       VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
+  }
+
+  /* THE CONSOLE'S PREVIEW (?preview=1, INBOX 78): fed by the console that framed it, nothing else. */
+  if(VP_PREVIEW){
+    document.documentElement.setAttribute("data-vp-preview","1");
+    (function(){ var d=document.getElementById("statusDot"); if(d && d.parentNode) d.parentNode.style.visibility="hidden"; })();   // no "Connecting" chip: it opens no channel
+    window.addEventListener("message", function(e){
+      if(e.source!==window.parent || e.origin!==window.location.origin) return;
+      var d=e.data;
+      if(!d || typeof d!=="object" || !d.vpPreview || typeof d.vpPreview!=="object") return;
+      try{ onMsg(d.vpPreview); }catch(err){}
+    });
   }
 
   /* ---- the venue's own logo, top left ----------------------------------------------------

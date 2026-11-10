@@ -70,64 +70,8 @@ ok('every team is in: one tap reveals', t4.n() === 1);
 ok('the Reveal button goes through the two-tap guard', /rv\.addEventListener\("click", function\(\)\{ revealTap\(rv\); \}\)/.test(HOST));
 
 
-print('THE WINNERS (Dean, 6 Nov 11:30): one tap each for third, second, the winner; or all at once; then the leaderboard');
-var SRC = ['finishOutcome', 'finishNow', 'podiumRanks', 'endMsg', 'nextPlace', 'armAutoPlace', 'clearEndTimers', 'armBoardTimer', 'boardNoteText', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
-var BOARD_AFTER = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[1]), BOARD_STAYS = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[2]);
-function makeHost(board, all) {
-  var G = { board: board, status: 'reveal', noPlayersNote: false, winnersAll: all === true, endRanks: [], endReveal: 0, endBoard: false };
-  var sent = [], errors = [], timers = [];
-  function playerCount() { return 3; } function bcast(m) { sent.push(m); } function renderConsole() {} function hostError(m) { errors.push(m); }
-  function setTimeout(f, ms) { timers.push({ f: f, ms: ms, on: true }); return timers.length; } function clearTimeout(id) { if (id && timers[id - 1]) timers[id - 1].on = false; }
-  function setInterval() { return 0; } function clearInterval() {} function $() { return null; }
-  var NOBODY_MSG = 'x', BOARD_AFTER_MS = BOARD_AFTER, BOARD_STAYS_MS = BOARD_STAYS, AUTO_PLACE_MS = +((HOST.match(/var AUTO_PLACE_MS=(\d+);/) || [])[1]);
-  eval(SRC);
-  return { G: G, sent: sent, timers: timers, finishNow: finishNow, nextPlace: nextPlace, showFinalBoard: showFinalBoard, podiumRanks: podiumRanks,
-           live: function () { return timers.filter(function (t) { return t.on; }); } };
-}
-function wire(h) { return h.sent.map(function (m) { return m.t + (m.reveal ? ':' + m.reveal : ''); }).join(','); }
-var B = [{ name: 'A', points: 900 }, { name: 'B', points: 700 }, { name: 'C', points: 500 }, { name: 'D', points: 100 }];
-var h = makeHost(B);
-h.finishNow(true);
-ok('the end of the quiz puts up the podium showing THIRD place only, and nothing else', wire(h) === 'podium:3', wire(h));
-h.showFinalBoard();
-ok('the leaderboard cannot come before the winner', wire(h) === 'podium:3');
-h.nextPlace();
-ok('tap 2 shows SECOND', wire(h) === 'podium:3,podium:2', wire(h));
-ok('no leaderboard timer yet', h.live().length === 0);
-h.nextPlace();
-ok('tap 3 shows the WINNER (reveal 1: the TV fanfare and the phones celebrate on this one only)', wire(h) === 'podium:3,podium:2,podium:1', wire(h));
-h.nextPlace();
-ok('and there is no fourth tap', wire(h) === 'podium:3,podium:2,podium:1');
-var lt = h.live();
-ok('the leaderboard comes up by itself 60 seconds after the winner', BOARD_AFTER === 60000 && lt.length === 1 && lt[0].ms === 60000, lt.map(function (t) { return t.ms; }));
-lt[0].on = false; lt[0].f();
-ok('it does: the final scores', wire(h) === 'podium:3,podium:2,podium:1,leaderboard', wire(h));
-var at = h.live();
-ok('they stay 2 minutes, then the TV goes back to the ads', BOARD_STAYS === 120000 && at.length === 1 && at[0].ms === 120000, at.map(function (t) { return t.ms; }));
-at[0].f();
-ok('to_ads is sent at the end of the 2 minutes', h.sent[h.sent.length - 1].t === 'to_ads');
-var hs = makeHost(B); hs.finishNow(true); hs.nextPlace(); hs.nextPlace(); hs.showFinalBoard();
-ok('"Show the leaderboard" before the 60 seconds brings it up at once, and the 60 second timer is cancelled', wire(hs) === 'podium:3,podium:2,podium:1,leaderboard' && hs.live().length === 1 && hs.live()[0].ms === 120000, wire(hs));
-hs.live()[0].f(); hs.timers.forEach(function (t) { if (t.ms === 60000) t.f(); });
-ok('and a late 60 second timer never sends the leaderboard twice', hs.sent.filter(function (m) { return m.t === 'leaderboard'; }).length === 1);
-var ha = makeHost(B, true);
-ha.finishNow(true);
-ok('"All at once": all three places together, with the sound (reveal 1)', wire(ha) === 'podium:1', wire(ha));
-ok('and the 60 second leaderboard timer starts at once', ha.live().length === 1 && ha.live()[0].ms === 60000);
-var hu = makeHost(B); hu.G.autoPlaces = true; hu.finishNow(true);
-var st = hu.live();
-ok('nobody tapped (the 1:30 timer): third, then a timer to the next place a few seconds later', wire(hu) === 'podium:3' && st.length === 1 && st[0].ms === 6000, st.map(function (t) { return t.ms; }));
-st[0].on = false; st[0].f();
-var st2 = hu.live();
-ok('second by itself, and another timer', wire(hu) === 'podium:3,podium:2' && st2.length === 1 && st2[0].ms === 6000);
-st2[0].on = false; st2[0].f();
-ok('then the winner by itself, and then the 60 second leaderboard', wire(hu) === 'podium:3,podium:2,podium:1' && hu.live().length === 1 && hu.live()[0].ms === 60000, wire(hu));
-ok('the host\'s own tap never steps by itself', h.timers.filter(function (t) { return t.ms === 6000; }).length === 0);
-ok('the 1:30 timer calls finish as auto; the button passes a click, which is not', /clearAutoFinish\(\); finish\(true\); \} \}, AUTO_FINISH_MS\);/.test(HOST) && /G\.autoPlaces = \(auto===true\);/.test(HOST));
-ok('two teams: second, then the winner', makeHost().podiumRanks([{ points: 9 }, { points: 5 }]).join() === '2,1');
-ok('a tie for first: third, then the two winners together', makeHost().podiumRanks([{ points: 9 }, { points: 9 }, { points: 5 }]).join() === '3,1');
-ok('one team: just the winner', makeHost().podiumRanks([{ points: 9 }]).join() === '1');
-ok('"One at a time" is the default, and the setting is in Advanced settings', /winnersAll:false/.test(HOST) && HOST.indexOf('id="cfgWinners"') > HOST.indexOf('id="triviaAdv"') && HOST.indexOf('id="cfgWinners"') < HOST.indexOf('</details>', HOST.indexOf('id="triviaAdv"')) && />One at a time</.test(HOST) && />All at once</.test(HOST));
+/* THE WINNERS, the 60 s leaderboard and the 1:30 auto reveal were rebuilt on 10 Nov 2026 (INBOX 77-79, Dean): the host taps ONCE and the TV runs
+   3rd, 2nd, the winner, the leaderboard and the slides by itself. Those checks live in tools/test-trivia-endnight.js now. */
 
 print('THE PHONE');
 function makePhone(rank) {
@@ -195,22 +139,6 @@ ok('the ad shows on the waits and the end of the night only, and the venue\'s sl
 ok('a heading for any other moment (no game, welcome back, game ended) hides the tick and the chip', /\$\("waitTiles"\)\.classList\.toggle\("hidden", !!head\)/.test(PLAY) && /\$\("waitIcon"\)\.classList\.toggle\("hidden", !!head\)/.test(PLAY));
 
 
-print('THE TV IS NEVER STUCK ON THE LAST ANSWER (INBOX 50/77: "TV reveals by itself in 1:30 if you don\'t tap")');
-var aft = eval(liftFrom(HOST, 'autoFinishText') + ';autoFinishText');
-ok('the console line counts down from 1:30', aft(90000) === "The TV reveals the winners by itself in 1:30 if you don't tap." && aft(9000) === "The TV reveals the winners by itself in 0:09 if you don't tap.", aft(90000));
-(function () {
-  var timers = [], finished = 0, G = { status: 'reveal', busy: false };
-  function setTimeout(f, ms) { timers.push({ f: f, ms: ms }); return 1; } function setInterval() { return 2; } function clearTimeout() {} function clearInterval() {}
-  function finish() { finished++; } function $() { return null; } var AUTO_FINISH_MS = +((HOST.match(/var AUTO_FINISH_MS=(\d+);/) || [])[1]);
-  eval(['clearAutoFinish', 'armAutoFinish', 'autoFinishText'].map(function (n) { return liftFrom(HOST, n); }).join('\n'));
-  armAutoFinish();
-  ok('after the last reveal a 90 second timer is set', timers.length === 1 && timers[0].ms === 90000);
-  timers[0].f();
-  ok('and with no tap it puts the winners up itself', finished === 1);
-  var G2 = G; G.status = 'ended'; timers = []; finished = 0; armAutoFinish(); timers[0].f();
-  ok('but not once the host has already tapped', finished === 0);
-})();
-ok('the last reveal arms it, and the host\'s tap and End round clear it', /if\(isLast\)\{ armAutoFinish\(\); renderConsole\(\); \}/.test(HOST) && /function finish\(auto\)\{\n    clearAutoFinish\(\);/.test(HOST) && /clearTick\(\); clearAuto\(\); clearAutoFinish\(\);/.test(HOST));
 
 print('THE +10 SECONDS BUTTON IS GONE (Dean, 6 Nov 2026)');
 ok('no "+10 seconds" button on the console', HOST.indexOf('+10 seconds') < 0 && HOST.indexOf('addTimeBtn') < 0);
@@ -218,8 +146,8 @@ ok('no addTime() function and no call to the add-time route from the console', H
 
 print('THE TV: no Join now card on the winners or the leaderboard');
 ok('one line switch, off', /var JOIN_ON_RESULTS=false;/.test(SCREEN));
-ok('show() hides the card on the board and the podium unless it is on', /\(!JOIN_ON_RESULTS && \(which==="tvBoard" \|\| which==="tvPodium"\)\)/.test(SCREEN));
-ok('the TV covers each place not yet revealed, and stays silent until the winner', /var col=el\("div","pcol "\+CLS\[o\.rank\]\+\(o\.rank<reveal \? " covered" : ""\)\);/.test(SCREEN) && /if\(reveal>1\)\{ if\(celebrateTimer\)[\s\S]*?return; \}\s*\n\s*if\(!already\) celebrate\(9000\);/.test(SCREEN));
+ok('show() hides the card on the board unless it is on, and on the podium always', /which==="tvPodium" \|\| VP_PREVIEW \|\| \(!JOIN_ON_RESULTS && which==="tvBoard"\)/.test(SCREEN));
+ok('the TV covers each place not yet revealed with the pink step and a question mark, and plays the fanfare only on the winner (the finale engine)', /\.pcol\.hid \.medal/.test(SCREEN) && /if\(stage==="winner"\)\{ celebrate\(9000\)/.test(SCREEN));
 ok('the TV no longer holds the leaderboard behind the podium on a timer', SCREEN.indexOf('_hold') < 0);
 
 print('');

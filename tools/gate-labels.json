@@ -154,6 +154,7 @@
   "founding-gate.test.js",
   "founding-month-expiry.test.js",
   "game-setup-in-chrome.test.py",
+  "games-night.test.js",
   "gate-record.test.py",
   "gate-reliability.test.py",
   "gflam-unsub.test.py",
