@@ -285,7 +285,7 @@ LAND = r"""(function(){
   var a=g.getBoundingClientRect(), b=h.querySelector("path").getBoundingClientRect();
   var d=Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.right-b.right),Math.abs(a.bottom-b.bottom));
   return {d:Math.round(d*100)/100, ours:[a.left,a.top,a.width,a.height].map(Math.round), head:[b.left,b.top,b.width,b.height].map(Math.round),
-          hidden:getComputedStyle(h).visibility==="hidden"};
+          hidden:getComputedStyle(h).visibility==="hidden", vh:innerHeight, vw:innerWidth};
 })()"""
 # The mark the show lands on is the page's own (vp-sting headMark): the header's wordmark, or, on the trivia
 # phone since its option 5 header (3 Nov 2026), our wordmark at the bottom of the page.
@@ -313,8 +313,16 @@ def phone_landing():
                     mid = r.ask(sid, LAND) or {}
                     r.ask(sid, 'VPSting.frame(2.52); true')
                     v = r.ask(sid, LAND) or {}
-                    ok(tag + ': the wordmark lands on the header logo, within 2px, while the real one waits hidden',
-                       isinstance(v.get('d'), (int, float)) and v['d'] <= 2 and v.get('hidden') is True and (mid.get('d') or 0) > 10, [v, mid])
+                    hd = v.get('head') or [0, 0, 0, 0]
+                    if v.get('vh') and (hd[1] > v['vh'] or hd[0] > v.get('vw', 9999)):
+                        # a short screen (musical bingo's card keeps its 64px squares, Dean 9 Nov): our logo sits at the
+                        # foot, below the fold, so there is nothing on screen to land on; vp-sting then fades in place
+                        # and must leave the real logo alone (never hidden)
+                        ok(tag + ': our logo is below the fold on this short screen: the show fades in place and leaves it showing',
+                           v.get('hidden') is False, [v, mid])
+                    else:
+                        ok(tag + ': the wordmark lands on the header logo, within 2px, while the real one waits hidden',
+                           isinstance(v.get('d'), (int, float)) and v['d'] <= 2 and v.get('hidden') is True and (mid.get('d') or 0) > 10, [v, mid])
                     if w == 390 and h == 844:
                         r.ask(sid, 'VPSting.frame(2.6); true')
                         ok(tag + ': then hands over: the header logo is back, exactly under ours', r.ask(sid, HEAD_SHOWN) is True and (r.ask(sid, LAND) or {}).get('d', 99) <= 2,
