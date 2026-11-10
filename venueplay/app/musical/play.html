@@ -784,7 +784,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     function refit(){ if(P.cells) fitCells(); }
     var g=document.getElementById("cardGrid"), lastW=0;
     if(g && window.ResizeObserver){
-      new ResizeObserver(function(){ var w=g.clientWidth; if(w && (w!==lastW || _fitPending)){ lastW=w; refit(); } }).observe(g);
+      /* The fit runs in the next frame, never inside the observer's own callback: fitCells() changes the card's width
+         (--aw), and a size change made while the observer is delivering is the "ResizeObserver loop" error. */
+      var _rf=0;
+      new ResizeObserver(function(){ var w=g.clientWidth; if(w && (w!==lastW || _fitPending)){ if(_rf) return; _rf=requestAnimationFrame(function(){ _rf=0; refit(); lastW=g.clientWidth; }); } }).observe(g);
     }
     /* The titles are measured in Manrope (the new look, 4 Nov 2026; Hanken Grotesk before). Measured in the stand-in font before it arrives, a
        title "fits" and then spills out of its square once the real (wider) face lands, so the card is
