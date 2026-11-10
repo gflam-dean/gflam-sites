@@ -50,6 +50,13 @@
   .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
   a{color:var(--pink);font-weight:700;text-decoration:none}
   .hidden{display:none}
+  /* WHY (Dean, 10 Nov 2026): optional, above the button, never in its way. */
+  .why{margin:4px 0 18px}
+  .why label{display:block;color:#fff;font-weight:700;font-size:16px;margin:0 0 8px}
+  .why select,.why textarea{width:100%;font-family:inherit;font-size:16px;color:var(--text);background:var(--ink);
+       border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:12px 12px;margin:0 0 14px}
+  .why textarea{resize:vertical;min-height:84px}
+  .why select:focus,.why textarea:focus{outline:2px solid var(--pink);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -58,6 +65,15 @@
     <h1 id="head">Cancel venueplay for your venue?</h1>
     <p id="lede">No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.</p>
     <div id="ask">
+      <!-- THE SAME SEVEN REASONS AS billing.html (Dean, 10 Nov 2026). The choices come from the Worker's answer
+           (VPA_CANCEL_REASONS, one list), so this page never has words of its own for them. Both optional:
+           the button cancels with or without them. Hidden until the Worker has sent the list. -->
+      <div id="why" class="why hidden">
+        <label for="whyPick">Before you go, what&rsquo;s the main reason? (optional)</label>
+        <select id="whyPick"><option value="">Pick one (optional)</option></select>
+        <label for="whyMore">Anything you&rsquo;d like to tell us? (optional)</label>
+        <textarea id="whyMore" rows="3" maxlength="2000"></textarea>
+      </div>
       <button type="button" class="go" id="go">Yes, cancel it</button>
     </div>
     <p id="err" class="err hidden" role="alert"></p>
@@ -82,6 +98,28 @@
     if (a.foot) $("foot").textContent = a.foot;
     $("ask").className = a.state === "ask" ? "" : "hidden";
     $("err").className = "err hidden";
+    if (a.state === "ask") whyList(a.reasons);
+  }
+  function whyEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  /* The Worker's seven, in its order and its words. No list (an older Worker, or it was out of reach): no
+     question, and the button still cancels. */
+  function whyList(list) {
+    var w = $("why"), pick = $("whyPick");
+    if (!w || !pick || !list || !list.length) return;
+    var h = '<option value="">Pick one (optional)</option>';
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].key) h += '<option value="' + whyEsc(list[i].key) + '">' + whyEsc(list[i].label) + "</option>";
+    }
+    pick.innerHTML = h;
+    w.className = "why";
+  }
+  /* What they said, added to the POST only when they said it. Never required. */
+  function whySaid() {
+    var pick = $("whyPick"), more = $("whyMore"), s = "";
+    if (pick && pick.value) s += "&reason=" + encodeURIComponent(pick.value);
+    var note = more && more.value ? String(more.value).trim() : "";
+    if (note) s += "&reason_detail=" + encodeURIComponent(note.slice(0, 2000));
+    return s;
   }
   var f = param("f"), t = param("t");
   if (!f || !t) {
@@ -101,7 +139,7 @@
     go.disabled = true; go.textContent = "One moment...";
     fetch(VP_WORKER + "/prospect/cancel", { method: "POST", credentials: "omit",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "f=" + encodeURIComponent(f) + "&t=" + encodeURIComponent(t) + "&reply=json" })
+      body: "f=" + encodeURIComponent(f) + "&t=" + encodeURIComponent(t) + "&reply=json" + whySaid() })
       .then(function (r) { return r.json(); })
       .then(function (a) { if (!a || !a.state) throw new Error("no answer"); show(a); })
       .catch(function () {

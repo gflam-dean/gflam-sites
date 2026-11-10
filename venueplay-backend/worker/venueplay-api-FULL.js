@@ -4271,6 +4271,22 @@ async function vpaProspectsData(env, dopts) {
       catch (_) { p.delivery = { welcome: 'unknown', words: 'Could not check just now' }; }
     }));
   }
+  /* WHY A CANCELLED ONE SAID NO (Dean, 10 Nov 2026): the newest prospect_cancelled audit row for the venue,
+     the same reason / reason_label / reason_detail a paid cancel stores. cancel_reason is null when they
+     skipped it (or cancelled before the page asked), so HQ can say "Not given". */
+  const gone = out.filter((p) => p.status === 'cancelled');
+  for (let i = 0; i < gone.length; i += 100) {
+    const tg = gone.slice(i, i + 100).map((p) => encodeURIComponent('"venue:' + p.venue_id + '"')).join(',');
+    let rows = [];
+    try { rows = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.prospect_cancelled&target=in.(' + tg + ')&select=action,target,detail,created_at&order=created_at.desc'); }
+    catch (_) { rows = []; }
+    const seen = {};
+    (rows || []).forEach((a) => { const id = String(a.target || '').replace(/^venue:/, ''); if (a.action === 'prospect_cancelled' && !seen[id]) seen[id] = a; });
+    gone.slice(i, i + 100).forEach((p) => {
+      const d = (seen[p.venue_id] && seen[p.venue_id].detail) || {};
+      p.cancel_reason = d.reason ? { reason: d.reason, label: d.reason_label || VPA_CANCEL_REASONS[d.reason] || d.reason, note: d.reason_detail || null } : null;
+    });
+  }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
@@ -5153,7 +5169,8 @@ async function vpaProspectCancel(request, env, json) {
   const FOOT = 'Need a hand? Call us on 07 5228 3667, Monday to Friday, 9am to 5pm (Brisbane time).';
   let asJson = false;
   const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
-  const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
+  const page = (title, body, form) => (asJson && json) ? json(Object.assign({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT },
+    form ? { reasons: vpaCancelReasonList() } : {})) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
     '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0A0A0B">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
     '<div style="background:#0A0A0B;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
@@ -5163,6 +5180,7 @@ async function vpaProspectCancel(request, env, json) {
   const url = new URL(request.url);
   let f = url.searchParams.get('f') || '', t = url.searchParams.get('t') || '';
   asJson = url.searchParams.get('reply') === 'json';
+  let postedWhy = { reason: null, reasonDetail: null };
   if (request.method === 'POST') {
     const form = {};
     String(await request.text().catch(() => '')).split('&').forEach((kv) => {
@@ -5171,6 +5189,7 @@ async function vpaProspectCancel(request, env, json) {
     });
     f = form.f || f; t = form.t || t;
     if (form.reply === 'json') asJson = true;
+    postedWhy = vpaCancelReasonOf(form, false);
   }
   const want = await vpaProspectCancelToken(env, f);
   if (!f || !want || !vpaSameSecret(t, want)) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
@@ -5183,6 +5202,12 @@ async function vpaProspectCancel(request, env, json) {
   if (request.method !== 'POST') {
     return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
+      /* WHY (Dean, 10 Nov 2026): the same seven as billing.html, optional, never in the way of the button. */
+      '<label for="whyPick" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Before you go, what\u2019s the main reason? (optional)</label>' +
+      '<select id="whyPick" name="reason" style="width:100%;font-size:16px;padding:10px;border-radius:8px;margin:0 0 12px"><option value="">Pick one (optional)</option>' +
+      vpaCancelReasonList().map((r) => '<option value="' + vpaEsc(r.key) + '">' + vpaEsc(r.label) + '</option>').join('') + '</select>' +
+      '<label for="whyMore" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Anything you\u2019d like to tell us? (optional)</label>' +
+      '<textarea id="whyMore" name="reason_detail" rows="3" maxlength="2000" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:8px;margin:0 0 16px"></textarea>' +
       '<button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
   }
   const at = new Date().toISOString();
@@ -5191,7 +5216,11 @@ async function vpaProspectCancel(request, env, json) {
     await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id), { method: 'PATCH', headers: vpaHeaders(env),
       body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled' }) });
   }
-  await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name });
+  /* WHY, RECORDED THE SAME WAY AS A PAID CANCEL (Dean, 10 Nov 2026): reason key, the exact label the page
+     showed, and their note, in the audit row's detail. Optional: none given is null, and the cancel above
+     has already happened whatever they said. */
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name,
+    reason: postedWhy.reason, reason_label: postedWhy.reason ? VPA_CANCEL_REASONS[postedWhy.reason] : null, reason_detail: postedWhy.reasonDetail });
   return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
 }
 /* A card has come in (the Checkout webhook, or the sweep noticing): reminders stop by themselves (the
@@ -12452,6 +12481,26 @@ const VPA_CANCEL_REASONS = {
   trial: 'We just wanted to trial it',
   dislike: 'We do not like it',
 };
+const VPA_CANCEL_REASONS_RETIRED = ['trial', 'dislike'];
+/* THE LIST A PAGE SHOWS: the seven, in order, never the retired two. The free-month cancel page
+   (venueplay/prospect/cancel/, Dean 10 Nov 2026: "the SAME 7 reasons") draws its choices from this
+   answer, so it can never list different words from billing.html or from what HQ stores. */
+function vpaCancelReasonList() {
+  return Object.keys(VPA_CANCEL_REASONS).filter((k) => VPA_CANCEL_REASONS_RETIRED.indexOf(k) === -1)
+    .map((k) => ({ key: k, label: VPA_CANCEL_REASONS[k] }));
+}
+/* ONE READING OF WHAT A LEAVING VENUE SAID, for a paid cancel (vpbCancelVenue) and a free-month one
+   (vpaProspectCancel) alike. Never reject a cancellation over a form field: an unknown reason becomes
+   'other' and a missing one becomes null; neither stops them leaving. The note is one line, at most
+   2000 characters. */
+function vpaCancelReasonOf(b, undo) {
+  b = b || {};
+  const reason = (!undo && Object.prototype.hasOwnProperty.call(VPA_CANCEL_REASONS, String(b.reason || ''))) ? String(b.reason)
+               : (!undo && b.reason ? 'other' : null);
+  const reasonDetail = (!undo && b.reason_detail)
+    ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
+  return { reason: reason, reasonDetail: reasonDetail };
+}
 
 async function vpaFireCancelAlert(env, opts) {
   const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
@@ -13419,12 +13468,8 @@ async function vpbCancelVenue(request, env, json) {
   const b = _b.body;
   const venueId = (b.venue_id || '').trim();
   const undo = b.undo === true;
-  /* Never reject a cancellation over a form field. An unknown reason becomes 'other'
-     and a missing one becomes null; neither stops them leaving. */
-  const reason = (!undo && Object.prototype.hasOwnProperty.call(VPA_CANCEL_REASONS, String(b.reason || ''))) ? String(b.reason)
-               : (!undo && b.reason ? 'other' : null);
-  const reasonDetail = (!undo && b.reason_detail)
-    ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
+  /* Never reject a cancellation over a form field (vpaCancelReasonOf, shared with the free-month cancel). */
+  const _why = vpaCancelReasonOf(b, undo), reason = _why.reason, reasonDetail = _why.reasonDetail;
   const venue = o.venues.filter((v) => v.id === venueId)[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 

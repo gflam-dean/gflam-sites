@@ -11,6 +11,8 @@
    3. The page's seven choices are the Worker's seven, word for word, and the dialog says
       nothing about price, discounts or what would be "fair".
    4. HQ's Details panel shows the reason and their note for a venue that is leaving.
+   5. The free-month cancel page (venueplay/prospect/cancel/) asks the same seven, from the Worker's
+      one list, optional; recorded the same way; shown on the prospect in HQ (Dean, 10 Nov 2026).
 
    Run:  jsc tools/test-cancel-reason.js
 */
@@ -178,6 +180,164 @@ check('an active venue that is staying shows nothing', cxReasonHtml({ id: 'v2', 
 leaving = {};
 check('a venue that undid its cancellation shows nothing', cxReasonHtml({ id: 'v1', status: 'active' }) === '');
 check('the Details panel draws it', /'<b>Created<\/b> '\+esc\(fmtWhen\(v\.created_at\)\)\+\n\s+cxReasonHtml\(v\)\+/.test(HQ));
+
+/* ---------- 5. the free-month cancel page asks the same seven (Dean, 10 Nov 2026, INBOX 131) ----------
+   venueplay/prospect/cancel/ ("Cancel, it's not for us", the link in every trial email) asked nothing.
+   Now: the Worker's JSON question carries the seven from VPA_CANCEL_REASONS, the page draws them, the
+   POST carries what they picked and typed, and the Worker records it the way a paid cancel does
+   (reason / reason_label / reason_detail). Optional throughout: the cancel happens whatever they say. */
+print('the free-month cancel page');
+check('the list a page shows is the seven, in order, in the stored words, never the retired two',
+      JSON.stringify(vpaCancelReasonList()) === JSON.stringify(SEVEN.map(function (k) { return { key: k, label: VPA_CANCEL_REASONS[k] }; })), vpaCancelReasonList());
+/* jsc has no URL or Response: the smallest stand-ins the cancel route reads (the same as test-prospect-free-month.js). */
+if (typeof URL === 'undefined') URL = function (u) { u = String(u); var q = u.indexOf('?'), sp = {};
+  this.pathname = (q >= 0 ? u.slice(0, q) : u).replace(/^https?:\/\/[^/]+/, '') || '/';
+  if (q >= 0) u.slice(q + 1).split('&').forEach(function (p) { var i = p.indexOf('='); sp[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); });
+  this.searchParams = { get: function (k) { return k in sp ? sp[k] : null; } }; };
+if (typeof Response === 'undefined') Response = function (body, init) { this.body = body; this.status = (init && init.status) || 200; this.text = function () { return Promise.resolve(body); }; };
+var P_ENV = { SUPABASE_URL: 'https://example.invalid', SITE_URL: 'https://venueplay.com.au' };
+var pRow, pVenue, pAudit, pFetch;
+function parm() {
+  pRow = { venue_id: 'pv1', founding_id: 'fid1', cancelled_at: null };
+  pVenue = { id: 'pv1', name: 'Lakeside Tavern', status: 'active', suspended_reason: null };
+  pAudit = []; pFetch = [];
+  vpaProspectCancelToken = function (env, fid) { return Promise.resolve(fid ? 'tok' + fid : ''); };
+  vpaProspectRowFor = function () { return Promise.resolve(pRow); };
+  vpaSelect = function (env, table) { return Promise.resolve(table === 'vp_venues' ? [pVenue] : []); };
+  vpaProspectPatch = function (env, id, patch) { for (var k in patch) pRow[k] = patch[k]; return Promise.resolve(true); };
+  fetch = function (url, o) { pFetch.push([String(url), o && o.method, o && o.body]);
+    if (/vp_venues/.test(url) && o && o.method === 'PATCH') { var b = JSON.parse(o.body); for (var k in b) pVenue[k] = b[k]; }
+    return Promise.resolve({ ok: true, json: function () { return Promise.resolve([]); }, text: function () { return Promise.resolve(''); } }); };
+  vpaAudit = function (env, actor, action, target, detail) { pAudit.push({ action: action, target: target, detail: detail }); return Promise.resolve(true); };
+}
+function pcall(method, qs, body) {
+  var req = { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''),
+              headers: { get: function () { return null; } }, text: function () { return Promise.resolve(body || ''); } };
+  var out = null;
+  vpaProspectCancel(req, P_ENV, function (b) { return { json: b }; })
+    .then(function (r) { out = r; }, function (e) { out = { json: { error: 'THREW ' + e } }; });
+  drainMicrotasks();
+  return out;
+}
+parm();
+var ask = pcall('GET', 'f=fid1&t=tokfid1&reply=json');
+check('the page\'s question (GET, reply=json) carries the seven, and writes nothing',
+      ask && ask.json && ask.json.state === 'ask' && JSON.stringify(ask.json.reasons) === JSON.stringify(vpaCancelReasonList()) && !pRow.cancelled_at && !pAudit.length, ask && ask.json);
+parm();
+var plainPage = null;
+vpaProspectCancel({ method: 'GET', url: 'https://api.venueplay.com.au/prospect/cancel?f=fid1&t=tokfid1', headers: { get: function () { return null; } }, text: function () { return Promise.resolve(''); } }, P_ENV, null)
+  .then(function (r) { return r.text(); }).then(function (t) { plainPage = t; });
+drainMicrotasks();
+check('an old link opening the Worker\'s own page asks the same seven, optional, above the same button',
+      !!plainPage && SEVEN.every(function (k) { return plainPage.indexOf('<option value="' + k + '">' + vpaEsc(VPA_CANCEL_REASONS[k]) + '</option>') !== -1; })
+      && /name="reason_detail"/.test(plainPage) && /Pick one \(optional\)/.test(plainPage) && plainPage.indexOf('trial') === -1 && /Yes, cancel it/.test(plainPage), plainPage && plainPage.slice(0, 300));
+var pBase = null;
+['', 'reason=closing&reason_detail=' + encodeURIComponent('  Sold to\nnew owners  '), 'reason=constructor', 'reason_detail=just+a+note'].forEach(function (extra, i) {
+  parm();
+  var r = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json' + (extra ? '&' + extra : ''));
+  var shape = JSON.stringify([r && r.json, pVenue.status, pVenue.suspended_reason, !!pRow.cancelled_at, pFetch.map(function (c) { return c[0] + ' ' + c[1] + ' ' + c[2]; })]);
+  if (i === 0) {
+    pBase = shape;
+    check('no reason: cancelled and switched off as before, and the reason is recorded as not given',
+          r && r.json && r.json.state === 'done' && pVenue.status === 'suspended' && pVenue.suspended_reason === 'cancelled' && !!pRow.cancelled_at
+          && pAudit.length === 1 && pAudit[0].action === 'prospect_cancelled' && pAudit[0].detail.reason === null && pAudit[0].detail.reason_label === null
+          && pAudit[0].detail.reason_detail === null && pAudit[0].detail.name === 'Lakeside Tavern', [r && r.json, pAudit]);
+  } else {
+    check('"' + extra.slice(0, 30) + '": the same cancel as giving no reason', shape === pBase, { got: shape, want: pBase });
+  }
+  if (i === 1) check('a reason and a note are recorded the way a paid cancel records them',
+          pAudit[0].detail.reason === 'closing' && pAudit[0].detail.reason_label === VPA_CANCEL_REASONS.closing && pAudit[0].detail.reason_detail === 'Sold to new owners', pAudit[0].detail);
+  if (i === 2) check('a made-up reason is "Something else", never refused', pAudit[0].detail.reason === 'other' && pAudit[0].detail.reason_label === 'Something else', pAudit[0].detail);
+  if (i === 3) check('a note with no reason is kept', pAudit[0].detail.reason === null && pAudit[0].detail.reason_detail === 'just a note', pAudit[0].detail);
+});
+
+/* The page itself, run with a fake page and network: it draws the Worker's list, sends what was picked. */
+var CPAGE = readFile('venueplay/prospect/cancel/index.html');
+var cscripts = CPAGE.match(/<script>([\s\S]*?)<\/script>/g) || [];
+var ccode = cscripts.length ? cscripts[cscripts.length - 1].replace(/^<script>|<\/script>$/g, '') : '';
+function crun(answers, pickVal, noteVal) {
+  var els = {}, calls = [], q = answers.slice();
+  ['head', 'lede', 'ask', 'go', 'err', 'foot', 'why', 'whyPick', 'whyMore'].forEach(function (id) {
+    els[id] = { id: id, textContent: '', className: id === 'why' ? 'why hidden' : '', innerHTML: '', value: '', disabled: false, on: {},
+                addEventListener: function (t, fn) { this.on[t] = fn; } };
+  });
+  var doc = { getElementById: function (id) { return els[id] || null; } };
+  var win = { location: { search: '?f=fid1&t=tokfid1' } };
+  var net = function (url, o) { calls.push({ url: String(url), method: (o && o.method) || 'GET', body: o && o.body });
+    var a = q.length ? q.shift() : null;
+    return Promise.resolve({ ok: true, json: function () { return Promise.resolve(a); } }); };
+  new Function('document', 'window', 'location', 'fetch', ccode)(doc, win, win.location, net);
+  drainMicrotasks();
+  els.whyPick.value = pickVal || ''; els.whyMore.value = noteVal || '';
+  els.go.on.click(); drainMicrotasks();
+  var post = calls.filter(function (c) { return c.method === 'POST'; })[0] || {};
+  var form = {}; String(post.body || '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) form[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); });
+  return { els: els, form: form };
+}
+var ASKJ = { ok: true, state: 'ask', title: 'Cancel venueplay for Lakeside Tavern?', text: 'x', reasons: vpaCancelReasonList() };
+var DONEJ = { ok: true, state: 'done', title: 'All done', text: 'y' };
+var C1 = crun([ASKJ, DONEJ], 'switched', '  We moved to another quiz app  ');
+var drawn = [], ore = /<option value="([a-z_]*)">([^<]*)<\/option>/g, om;
+while ((om = ore.exec(C1.els.whyPick.innerHTML))) drawn.push([om[1], om[2]]);
+check('the page shows the question once the Worker sends the list, with the seven in its words',
+      C1.els.why.className === 'why' && drawn.length === 8 && drawn[0][0] === '' &&
+      drawn.slice(1).every(function (o, i) { return o[0] === SEVEN[i] && o[1] === esc(VPA_CANCEL_REASONS[SEVEN[i]]); }), drawn);
+check('the button posts what they picked and typed, with the account and its signature',
+      C1.form.f === 'fid1' && C1.form.t === 'tokfid1' && C1.form.reply === 'json' && C1.form.reason === 'switched'
+      && C1.form.reason_detail === 'We moved to another quiz app', C1.form);
+var C2 = crun([ASKJ, DONEJ], '', '');
+check('skipping both still cancels: the POST goes, with no reason fields', C2.form.f === 'fid1' && C2.form.t === 'tokfid1'
+      && !('reason' in C2.form) && !('reason_detail' in C2.form), C2.form);
+var C3 = crun([{ ok: true, state: 'ask', title: 'Cancel?', text: 'x' }, DONEJ], '', '');
+check('a Worker that sends no list: no question shown, and the button still cancels', C3.els.why.className === 'why hidden' && C3.form.f === 'fid1', C3.els.why.className);
+var cText = CPAGE.replace(/<!--[\s\S]*?-->/g, '');
+check('the page has no reason words of its own (one list, the Worker\'s)',
+      SEVEN.every(function (k) { return cText.indexOf(VPA_CANCEL_REASONS[k]) === -1 && cText.indexOf(VPA_CANCEL_REASONS[k].replace('’', '&rsquo;')) === -1 && cText.indexOf(VPA_CANCEL_REASONS[k].replace('’', '\\u2019')) === -1; }));
+check('both fields say optional and nothing on the page talks price or discounts',
+      /what&rsquo;s the main reason\? \(optional\)<\/label>/.test(cText) && /like to tell us\? \(optional\)<\/label>/.test(cText)
+      && !/\$\d|discount|cheaper|felt fair|special rate|half price|% off/i.test(cText.replace(/\/\*[\s\S]*?\*\//g, '')));
+
+/* HQ > Prospects shows it on a cancelled prospect, from the Worker's cancel_reason. */
+var PRJS = readFile('venueplay/app/vp-prospects-hq.js');
+eval(lift(PRJS, 'prEsc'));
+eval(lift(PRJS, 'whyHtml'));
+var w1 = whyHtml({ cancel_reason: { reason: 'closing', label: VPA_CANCEL_REASONS.closing, note: 'New owners <March>' } });
+check('a cancelled prospect\'s reason and note show in HQ, escaped',
+      w1.indexOf(prEsc(VPA_CANCEL_REASONS.closing)) === 0 && w1.indexOf('New owners &lt;March&gt;') !== -1 && w1.indexOf('<March>') === -1, w1);
+check('a skipped reason reads "Not given"', /Not given/.test(whyHtml({ cancel_reason: null })));
+check('the card draws it only for a cancelled prospect', /\(st === "cancelled" \? '<div><span class="k">Why they cancelled<\/span><span data-pr-why="1">' \+ whyHtml\(p\)/.test(PRJS));
+
+/* The Worker's prospects list attaches the newest prospect_cancelled reason to each cancelled prospect. */
+var PROWS = [
+  { venue_id: 'pa', founding_id: 'fa', created_at: '2026-11-01T00:00:00Z', cancelled_at: '2026-11-05T00:00:00Z', first_signin_at: '2026-11-01T01:00:00Z' },
+  { venue_id: 'pb', founding_id: 'fb', created_at: '2026-11-01T00:00:00Z', cancelled_at: '2026-11-06T00:00:00Z', first_signin_at: '2026-11-01T01:00:00Z' },
+  { venue_id: 'pc', founding_id: 'fc', created_at: '2026-11-01T00:00:00Z', first_signin_at: '2026-11-01T01:00:00Z' }];
+var AUD = [
+  { action: 'prospect_cancelled', target: 'venue:pa', created_at: '2026-11-05T00:00:00Z', detail: { reason: 'players', reason_label: VPA_CANCEL_REASONS.players, reason_detail: 'Too quiet' } },
+  { action: 'prospect_cancelled', target: 'venue:pa', created_at: '2026-10-01T00:00:00Z', detail: { reason: 'expensive', reason_label: 'old' } },
+  { action: 'prospect_unpaused', target: 'venue:pb', created_at: '2026-11-07T00:00:00Z', detail: { reason: 'expensive' } },
+  { action: 'prospect_cancelled', target: 'venue:pb', created_at: '2026-11-06T00:00:00Z', detail: { name: 'B', reason: null } }];
+var auditAsked = '';
+vpaSelectAll = function (env, table, q) {
+  if (table === 'vp_prospects') return Promise.resolve(PROWS);
+  if (table === 'vp_venues') return Promise.resolve(PROWS.map(function (r) { return { id: r.venue_id, name: r.venue_id, status: 'active', founding_id: r.founding_id }; }));
+  if (table === 'vp_admin_audit') { auditAsked = q; return Promise.resolve(AUD); }
+  return Promise.resolve([]);
+};
+vpaProspectOfferCodes = function () { return Promise.resolve({}); };
+vpaProspectLastSignIn = function () { return Promise.resolve({ at: Date.parse('2026-11-01T01:00:00Z'), known: true }); };
+vpaProspectRateInfo = function () { return {}; };
+var PD = null;
+vpaProspectsData(ENV, {}).then(function (d) { PD = d; }, function (e) { PD = { error: 'THREW ' + e }; });
+drainMicrotasks();
+var byV = {}; ((PD && PD.prospects) || []).forEach(function (p) { byV[p.venue_id] = p; });
+check('HQ\'s list asks only for prospect_cancelled rows of the cancelled ones',
+      /^action=eq\.prospect_cancelled&target=in\.\(/.test(auditAsked) && auditAsked.indexOf('venue%3Apa') !== -1 && auditAsked.indexOf('venue%3Apc') === -1, auditAsked);
+check('a cancelled prospect carries its newest reason and note',
+      byV.pa && JSON.stringify(byV.pa.cancel_reason) === JSON.stringify({ reason: 'players', label: VPA_CANCEL_REASONS.players, note: 'Too quiet' }), byV.pa && byV.pa.cancel_reason);
+check('one that skipped it carries null (HQ: Not given); another action\'s row is never read as the reason',
+      byV.pb && byV.pb.cancel_reason === null, byV.pb && byV.pb.cancel_reason);
+check('a prospect still in its free month carries no cancel reason', byV.pc && !('cancel_reason' in byV.pc), byV.pc);
 
 if (fails) { throw new Error('cancel reason: ' + fails + ' failed'); }
 print('PASS');
