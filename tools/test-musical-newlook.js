@@ -80,7 +80,7 @@ print('\n== 2. the played strip: the last five, "+N", and a dashed slot for the 
   show('no dashed slot while nothing is held back', $('tvBoardNext').classList.contains('hidden'));
   state.played = songs.concat(['Mystery']); api.draw({ title: 'Mystery' });
   tiles = $('tvBoard').children;
-  show('song 15 held back: four played, then a dashed "Up now" with no number', tiles.length === 4 && tiles[3].textContent === 'Song 14 title' && $('tvBoardNext').textContent === 'Up now' && !$('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
+  show('song 15 held back: the last five played and no dashed slot after them (Dean, 11 Nov 2026)', tiles.length === 5 && tiles[4].textContent === 'Song 14 title' && $('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
   show('while held, no tile is outlined as current, and the song is not named on the strip', tiles.every(function (t) { return t.className === 'ptok' && t.textContent !== 'Mystery'; }));
   show('and the left says 14 songs played (the held one is not counted yet), and no other number', $('tvSongNo').textContent === '14 songs played' && $('tvBoardMore').classList.contains('hidden'), [$('tvSongNo').textContent, $('tvBoardMore').textContent]);
   state.played = ['A']; api.draw(null);

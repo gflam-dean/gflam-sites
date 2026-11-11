@@ -18,7 +18,7 @@ Club's round crest and The Pause Bar's 6.6:1 wordmark, at 1920x1080 and 1280x720
       sends one (Dean, 4 Nov 2026 evening: counts stay on the host console); a two-line title fits
       above the artist; nothing under either logo, vp-fit leaves the wall alone, no JOIN NOW card
     - listen: the neon triangle breathing (2.6 s) where the art goes, LISTEN, "Know it? Mark it on your card.", NO
-      "Song 15" label under the title (Dean, 3 Nov late), a dashed "Song 15" slot on the strip, the song not named
+      "Song 15" label under the title (Dean, 3 Nov late), no dashed slot on the strip (Dean, 11 Nov 2026), the song not named
     - the winner moment is today's (its redesign is a separate job)
   PHONE
     - the code: six boxes, Continue grey until all six are in; the name: option 5 header, YOUR NAME; the details:
@@ -331,7 +331,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: LISTEN, then "Name that tune." for a host who reveals by hand', (L.get('listen') or {}).get('text', '').replace('\n', ' ').strip().lower().startswith('listen'), L.get('listen'))
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
-        ok(tagn + ' listen: the strip keeps a dashed "Up now" for it (no number) after the four before', (L.get('next') or {}).get('text') == 'Up now' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
+        ok(tagn + ' listen: no dashed slot for it (Dean, 11 Nov 2026: the song said twice), the last five played on the strip', L.get('next') is None and len(L.get('tiles') or []) == 5, [L.get('next'), len(L.get('tiles') or [])])
         ok(tagn + ' listen: "15 songs played" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == '15 songs played' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
         # the listen line as most hosts run it
         P.js(say(chan, [{'t': 'played', 'title': 'Sweet Caroline', 'artist': 'Neil Diamond', 'artworkUrl': '/__fixture/art-305080.svg', 'played': allp + ['Sweet Caroline'], 'reveal': 'end', 'replay': True}]))

@@ -205,8 +205,8 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
 })();
 
 print('\n== 5. the TV\'s bottom left counts songs played (finding D) ==');
-ok('"N songs played", not "Song N", on the left, and it is the ONLY count on the wall: the dashed slot says "Up now", the "+N" chip is gone (Dean, 6 Nov 13:10)',
-   /no\.textContent = all\.length>0 \? \(all\.length\+" song"/.test(MSCREEN) && /nx\.textContent="Up now";/.test(MSCREEN) && /more\.classList\.toggle\("hidden", true\); more\.textContent="";/.test(MSCREEN) && !/"Song "\+total/.test(MSCREEN));
+ok('"N songs played", not "Song N", on the left, and it is the ONLY count on the wall: no dashed slot (11 Nov), the "+N" chip is gone (Dean, 6 Nov 13:10)',
+   /no\.textContent = all\.length>0 \? \(all\.length\+" song"/.test(MSCREEN) && /nx\.classList\.toggle\("hidden", true\); nx\.textContent="";/.test(MSCREEN) && /more\.classList\.toggle\("hidden", true\); more\.textContent="";/.test(MSCREEN) && !/"Song "\+total/.test(MSCREEN));
 
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' client lifecycle checks failed');

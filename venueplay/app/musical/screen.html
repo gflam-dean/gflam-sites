@@ -529,8 +529,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        redraws this once the song is shown. */
     var held=!!(_pendingSong && all.length && all[all.length-1]===_pendingSong.title);
     if(held) all=all.slice(0, -1);
-    /* While a song is held back the strip keeps one slot for it, dashed, "Up now": four played and the next. */
-    var room = held ? TV_BOARD_MAX-1 : TV_BOARD_MAX;
+    /* NO DASHED SLOT FOR THE SONG THAT IS ON (Dean, live play on The Mini Bar, 11 Nov 2026: on LISTEN the count bottom
+       left and an empty dashed box on the right said the same song twice, and the box looked unfinished). The big
+       "Listen" says a song is on; the strip is only the songs already played, the last five. */
+    var room = TV_BOARD_MAX;
     var start=Math.max(0, all.length-room), last=all.length-1;
     for(var i=start;i<all.length;i++){
       var d=document.createElement("div"); d.className="ptok"+(i===last && !held?" new":""); d.textContent=(typeof stripTitle==="function") ? stripTitle(all[i]) : all[i];
@@ -544,16 +546,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var total=all.length+(held?1:0);
     /* ONE SONG COUNT ON THE WALL (Dean, 6 Nov 2026, 13:10): "14 songs played" bottom left and nothing else that counts.
        The "+9" chip before the strip and the dashed "Song 15" slot were numbers too, and read as different counts. The
-       chip is gone; the dashed slot says "Up now". */
+       chip is gone, and (11 Nov 2026) so is the dashed slot. */
     var more=$("tvBoardMore");
     if(more){ more.classList.toggle("hidden", true); more.textContent=""; }
     var nx=$("tvBoardNext");
-    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Up now"; }
+    if(nx){ nx.classList.toggle("hidden", true); nx.textContent=""; }
     var no=$("tvSongNo");
     /* "14 songs played", NOT "Song 14" (Dean, live play, 6 Nov 2026: "Song N" bottom left over the last song's
        cover and a dashed "Song N" bottom right read as the same thing twice). The left says how many have
-       played; the dashed slot, while one is held back, is the one playing now. A song held back is not
-       counted as played yet. */
+       played. A song held back is not counted as played yet. */
     if(no) no.textContent = all.length>0 ? (all.length+" song"+(all.length===1?"":"s")+" played") : "";
     var lbl=$("tvBoardLbl");
     if(lbl){
