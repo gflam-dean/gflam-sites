@@ -19538,6 +19538,12 @@ MUTATIONS = [
     ('draw-looks-snapshot.test.py', 'tools/draw-looks-snapshot.py',
      "    if '--live' not in argv:", "    if False:",
      'the snapshot reads the live database without --live'),
+    ('draw-looks-default-in-chrome.test.py', 'venueplay/app/vp-drawstyle.js',
+     'var DEFAULT_LOOK = { raffle: "ticket", members: "flip" };', 'var DEFAULT_LOOK = { raffle: "", members: "" };',
+     'a venue with "" saved draws the old raffle and members draw on the TV again'),
+    ('draw-looks-default-in-chrome.test.py', 'venueplay/app/raffle/host.html',
+     '<button type="button" data-style="ticket">Ticket roll</button>', '<button type="button" data-style="">As now</button><button type="button" data-style="ticket">Ticket roll</button>',
+     'the raffle console in Chrome offers "As now" again'),
     # 12 Nov 2026: the draw looks (tools/test-drawstyle.js)
     ('test-drawstyle.js', 'venueplay/app/vp-drawstyle.js',
      'var LEN = { fast: 3, short: 6, normal: 9, long: 12 };', 'var LEN = { fast: 3, short: 5, normal: 9, long: 12 };',
