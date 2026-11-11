@@ -177,7 +177,7 @@ try:
             tid, sid = S.open(path, w, h, mobile)
             try:
                 prep(sid)
-                rows = json.loads(S.js(sid, MEASURE) or '[]')
+                rows = S.json(sid, MEASURE, [])
                 vis = [r for r in rows if r['visible']]
                 bad = judge(rows, mobile)
                 ok('%s at %s: every dropdown on brand' % (name, width_name), rows and vis and not bad,

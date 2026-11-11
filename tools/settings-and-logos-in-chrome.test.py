@@ -108,7 +108,7 @@ try:
     seen = {}
     for key in ('nsw_club', 'qld_club', 'vic_club', 'nsw_pub', 'vic_new', 'act_club'):
         tid, sid = settings(key)
-        seen[key] = json.loads(S.js(sid, PERMITS))
+        seen[key] = S.json(sid, PERMITS)
         if key in ('nsw_club', 'qld_club', 'vic_club'):
             shot(sid, 'after-%s-desktop' % key, 1280, False)
         S.close_tab(tid)

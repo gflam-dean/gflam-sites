@@ -53,7 +53,9 @@ def _load(name, rel):
 
 vl = _load('verify_live', 'tools/verify-live.py')
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
 import gatelib, pagesim
+import waits   # as_json: the page's answer whatever its shape, and its reason when it threw (4 Nov 2026)
 bankbuild = _load('live_here_now_bank', 'tools/live-here-now-bank.py')
 
 fails = 0
@@ -690,7 +692,7 @@ def main():
             tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
             wait(tf, lambda s: s.get('view') == 'vName')
-            f = json.loads(tf.js(FIT))
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, the name: nothing sideways, off the screen, cut off, under 15px or too small to tap' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             tf.shot('lhn-name-%d.png' % w)
@@ -700,14 +702,14 @@ def main():
             tf.type_into('whereIn', 'roy')
             wait(tf, lambda s: bool(s.get('picks')))
             tf.tap_id('notListed')
-            f = json.loads(tf.js(FIT))
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, where are you playing (picks and the typed-name box open): the same' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             tf.shot('lhn-where-%d.png' % w)
             where_step(tf, 'min', 'The Mini Bar')
             s = wait_question(tf)
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))
-            f = json.loads(tf.js(FIT))
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, a question: the same' % w, f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             if h >= 667:
                 check('%d px: the question and all four answers are on the first screen' % w, all(x['bottom'] <= h for x in s.get('btns', [])),
@@ -715,7 +717,7 @@ def main():
             tf.shot('lhn-question-%d.png' % w)
             _, s, _ = play_round(tf, [True, False, True, True, False])
             time.sleep(0.4)
-            f = json.loads(tf.js(FIT))
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, the end with the board: "3 of 5", the same' % w,
                   s.get('scoreN') == '3 of 5' and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), f))
             tf.shot('lhn-score-%d.png' % w)

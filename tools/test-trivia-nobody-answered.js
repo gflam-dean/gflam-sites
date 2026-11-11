@@ -1,4 +1,5 @@
-/* NOBODY ANSWERED, AND EVERY PHONE SAID "1st of 1" (live trivia test, 17 Oct 2026).
+/* NOBODY ANSWERED, AND EVERY PHONE SAID "1st of 1" (live trivia test, 17 Oct 2026). Since 4 Nov 2026 the phone
+   shows only the place ("1st"; no player counts anywhere, Dean), so the field is judged on P.playersCount.
 
    Three players in the room, nobody tapped an answer, and at the reveal every phone read
    "1st of 1". The phone takes the "of N" from /player/score, and the Worker counted the
@@ -61,7 +62,10 @@ function makePhone(tok) {
   }
   eval(PHONE_SRC);
   return { P: P, $: $, reveal: function (m) { showResult(m); },
-           placeLine: function () { var el = $('pResRank'); return el.classList.contains('hidden') ? '(hidden)' : el.textContent; } };
+           placeLine: function () { var el = $('pResRank'); return el.classList.contains('hidden') ? '(hidden)' : el.textContent; },
+           /* NO PLAYER COUNTS ANYWHERE (Dean, 4 Nov 2026): the phone SHOWS "1st", never "1st of 3", and keeps the
+              field the Worker counted in P.playersCount. Both halves are judged: "place|field". */
+           seen: function () { return this.placeLine() + '|' + P.playersCount; } };
 }
 async function flush() { for (var i = 0; i < 40; i++) await null; }
 function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, options: ['Melbourne', 'Sydney', 'Brisbane', 'Perth'] }; }
@@ -72,8 +76,8 @@ function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, optio
   var phones = [0, 1, 2].map(function (i) { return makePhone('tok' + i); });
   LOG.length = 0;
   for (var n = 0; n < phones.length; n++) { phones[n].reveal(reveal(1)); await flush(); }   // the phones stagger themselves, so they land one after another
-  var lines = phones.map(function (ph) { return ph.placeLine(); });
-  show('every phone reads "1st of 3", never "1st of 1"', lines.every(function (t) { return t === '1st of 3'; }), JSON.stringify(lines));
+  var lines = phones.map(function (ph) { return ph.seen(); });
+  show('every phone reads "1st" (no "of N" on the phone) and the Worker counts a field of 3, never 1', lines.every(function (t) { return t === '1st|3'; }), JSON.stringify(lines));
   show('and says "No answer" with a total of 0', phones.every(function (ph) { return ph.$('pResTag').textContent === 'No answer' && String(ph.$('pResTot').textContent) === '0'; }),
        JSON.stringify(phones.map(function (ph) { return [ph.$('pResTag').textContent, ph.$('pResTot').textContent]; })));
   var heads = LOG.filter(function (l) { return l.indexOf('HEAD vp_players') === 0; }).length;
@@ -84,9 +88,9 @@ function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, optio
   phones = [0, 1, 2].map(function (i) { var ph = makePhone('tok' + i); ph.P.q = { qseq: 3, options: ['A', 'B', 'C', 'D'] }; return ph; });
   phones.forEach(function (ph) { ph.reveal(reveal(3)); });
   await flush();
-  lines = phones.map(function (ph) { return ph.placeLine(); });
-  show('a team that did not answer keeps its standing: Team 0 "1st of 3", the others "2nd of 3"',
-       lines[0] === '1st of 3' && lines[1] === '2nd of 3' && lines[2] === '2nd of 3', JSON.stringify(lines));
+  lines = phones.map(function (ph) { return ph.seen(); });
+  show('a team that did not answer keeps its standing: Team 0 "1st", the others "2nd", in a field of 3',
+       lines[0] === '1st|3' && lines[1] === '2nd|3' && lines[2] === '2nd|3', JSON.stringify(lines));
   show('and Team 0 keeps its 130', String(phones[0].$('pResTot').textContent) === '130', String(phones[0].$('pResTot').textContent));
 
   print('who is in the field');
@@ -95,13 +99,13 @@ function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, optio
   DB.vp_players.push({ id: pid(8), session_id: OTHER, token_hash: 'h-tok8', display_name: 'Next door', kicked: false, played_at: STAMP });
   DB.vp_players.push({ id: pid(9), session_id: SESSION, token_hash: 'h-tok9', display_name: 'Only loaded the page', kicked: false, played_at: null });
   var ph = makePhone('tok1'); ph.reveal(reveal(1)); await flush();
-  show('a removed team, a phone at another venue and a phone that never held a question are not counted', ph.placeLine() === '1st of 3', ph.placeLine());
+  show('a removed team, a phone at another venue and a phone that never held a question are not counted', ph.seen() === '1st|3', ph.seen());
 
   reset();
   DB.vp_players.forEach(function (p) { p.played_at = null; });           // phones that never said they were alive
   [0, 1, 2, 3].forEach(function (i) { DB.v_vp_trivia_leaderboard.push({ game_id: GAME, player_id: pid(i), points: 400 - i * 100 }); });
   ph = makePhone('tok2'); ph.reveal(reveal(4)); await flush();
-  show('the room count can only raise the field, never shrink it below the board', ph.placeLine() === '3rd of 4', ph.placeLine());
+  show('the room count can only raise the field, never shrink it below the board', ph.seen() === '3rd|4', ph.seen());
 
   reset();
   var _fetch = fetch;
@@ -109,7 +113,7 @@ function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, optio
   DB.v_vp_trivia_leaderboard.push({ game_id: GAME, player_id: pid(0), points: 130 }, { game_id: GAME, player_id: pid(1), points: 0 });
   ph = makePhone('tok1'); ph.reveal(reveal(2)); await flush();
   fetch = _fetch;
-  show('if the count cannot be read the phone still gets its place from the board', ph.placeLine() === '2nd of 2', ph.placeLine());
+  show('if the count cannot be read the phone still gets its place from the board', ph.seen() === '2nd|2', ph.seen());
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });
 drainMicrotasks();

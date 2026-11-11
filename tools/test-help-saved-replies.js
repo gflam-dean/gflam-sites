@@ -45,6 +45,18 @@ function sqlStrings(s) {   // every E'...' literal, in order, unescaped the way 
 var ins = SQL.slice(SQL.indexOf('insert into public.vp_help_saved_replies'), SQL.indexOf('on conflict (seed_key) do nothing'));
 var lits = sqlStrings(ins), rows = [];
 for (var i = 0; i + 3 < lits.length; i += 4) rows.push({ key: lits[i], audience: lits[i + 1], title: lits[i + 2], body: lits[i + 3] });
+/* Later word-only updates, applied as Postgres would (126, then 156): each sets one seed row's body only if it
+   still holds the words it replaces (Dean, 4 Nov 2026: the name is lowercase in all customer text). */
+var LATER = ['venueplay-backend/supabase/venueplay-156-saved-reply-lowercase-name.sql'];
+var laterApplied = 0;
+LATER.forEach(function (f) {
+  var u = readFile(f);
+  var re = /update public\.vp_help_saved_replies\s+set body = (E'(?:[^'\\]|\\.)*')[\s\S]*?where seed_key = (E'(?:[^'\\]|\\.)*')\s+and body = (E'(?:[^'\\]|\\.)*');/g, m;
+  while ((m = re.exec(u))) {
+    var nb = sqlStrings(m[1])[0], key = sqlStrings(m[2])[0], ob = sqlStrings(m[3])[0];
+    rows.forEach(function (r) { if (r.key === key && r.body === ob) { r.body = nb; laterApplied++; } });
+  }
+});
 var positions = (ins.match(/E'[^']*', E'[^']*', (\d+),/g) || []).map(function (x) { return +/(\d+),$/.exec(x)[1]; });
 
 print('THE STARTER REPLIES: THE PAGE AND THE MIGRATION ARE ONE ANSWER');
@@ -52,6 +64,7 @@ check('the page carries a starter set of at least 12 saved replies', SEED.length
 check('the migration seeds exactly the same rows, in the same order, word for word',
       SEED.length > 0 && JSON.stringify(rows) === JSON.stringify(SEED.map(function (r) { return { key: r.key, audience: r.audience, title: r.title, body: r.body }; })),
       rows.length + ' vs ' + SEED.length);
+check('migration 156 changes the one prize reply it was written for (126\'s words, then lowercase venueplay)', laterApplied === 1, laterApplied);
 check('the seed places are 10, 20, 30... in that order', positions.length === SEED.length && positions.every(function (p, n) { return p === (n + 1) * 10; }), positions);
 check('every seed key is different', SEED.every(function (r, n) { return SEED.filter(function (x) { return x.key === r.key; }).length === 1; }));
 ['venue', 'player', 'partyplay'].forEach(function (a) {
@@ -97,15 +110,16 @@ check('safe to run twice: the seed skips a key already there, so HQ\'s own edits
 check('it says it has NOT been run, and how to roll back', /NOT RUN\./.test(SQL) && /drop table if exists public\.vp_help_saved_replies;/.test(SQL));
 var manifest = readFile('venueplay-backend/supabase/MIGRATIONS.md');
 check('MIGRATIONS.md records 126', manifest.indexOf('venueplay-126-help-saved-replies.sql') !== -1);
+check('MIGRATIONS.md records 156', manifest.indexOf('venueplay-156-saved-reply-lowercase-name.sql') !== -1);
 
 print('THE PAGE FILLS A REPLY FROM THE TICKET');
 var tvRow = SEED.filter(function (r) { return r.key === 'venue-tv'; })[0] || { body: '' };
 var venueT = { brand: 'venueplay', category: 'venue_support', contact_name: 'Sam Smith', ticket_no: 1042 };
 var filled = P.fillReply ? P.fillReply(tvRow.body, venueT, { venue_name: 'The Royal Hotel', venue_slug: 'royal' }) : '';
-check('a venue ticket: their first name, the venue, and that venue\'s own TV address', /^Hi Sam,/.test(filled) && filled.indexOf('the TV at The Royal Hotel') !== -1 && filled.indexOf('venueplay.com.au/tv?royal') !== -1, filled.slice(0, 200));
+check('a venue ticket: their first name, the venue, and that venue\'s own TV address', /^Hi Sam,/.test(filled) && filled.indexOf('the TV at The Royal Hotel') !== -1 && filled.indexOf('open venueplay.com.au/tv (then type the six-character screen code from your host console).') !== -1 && filled.indexOf('/tv?') === -1, filled.slice(0, 200));
 check('...and nothing is left in braces', !/\{[a-z_]+\}/.test(filled));
 var noSlug = P.fillReply ? P.fillReply(tvRow.body, { brand: 'venueplay', category: 'venue_support', contact_name: '' }, {}) : '';
-check('no name and no known venue: "Hi there", "your venue", and where to find the TV link', /^Hi there,/.test(noSlug) && noSlug.indexOf('the TV at your venue') !== -1 && noSlug.indexOf('(it is on your Account page)') !== -1, noSlug.slice(0, 220));
+check('no name and no known venue: "Hi there", "your venue", and the same bare TV address and screen-code words', /^Hi there,/.test(noSlug) && noSlug.indexOf('the TV at your venue') !== -1 && noSlug.indexOf('open venueplay.com.au/tv (then type the six-character screen code from your host console).') !== -1 && noSlug.indexOf('/tv?') === -1, noSlug.slice(0, 220));
 var pp = SEED.filter(function (r) { return r.key === 'pp-join'; })[0] || { body: '' };
 check('a PartyPlay ticket: its party code', (P.fillReply ? P.fillReply(pp.body, { brand: 'partyplay', category: 'venue_support', contact_name: 'Pat', room_code: 'KFP7QX' }, {}) : '').indexOf('type the party code KFP7QX') !== -1);
 check('{ticket_no} is the ticket\'s number', (P.fillReply ? P.fillReply('ticket {ticket_no}', venueT, {}) : '') === 'ticket 1042');
