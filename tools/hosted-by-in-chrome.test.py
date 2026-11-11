@@ -223,7 +223,7 @@ WALL = r'''(function(){
     [".qfoot",".pod",".podium > *","#tvBoardRows .brow",".answers .ans",".qrbig",".codebox"].forEach(function(sel){ [].forEach.call(lay.querySelectorAll(sel),function(e){ var r=R(e); if(r && (ink===null||r[1]<ink)) ink=r[1]; }); }); }
   return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(ln), name: bold ? bold.textContent : null,
     lbl: ln ? ln.textContent.slice(0, ln.textContent.length - (bold ? bold.textContent.length : 0)) : null, lineFs: ln ? parseFloat(getComputedStyle(ln).fontSize) : 0, lineClip: ln ? ln.scrollWidth > ln.clientWidth + 1 : false,
-    img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
+    divW: hb ? parseFloat(getComputedStyle(hb).borderLeftWidth) : 0, divA: hb ? getComputedStyle(hb).borderLeftColor : '', box: R(hb), img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
     tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids, top: top, ink: ink, ring: R(ring), q: R(q) });
 })()'''
 
@@ -276,6 +276,9 @@ def wall_checks(tag, m, base, host_logo, venue):
     img = m.get('img')
     if host_logo:
         ok('%s: the host\'s logo has loaded' % tag, m.get('imgOk') is True and bool(img), img)
+        box = m.get('box')
+        ok('%s: a thin divider (2px, light) stands between the venue\'s logo and the host\'s, as tall as the host\'s logo, with the logo after it' % tag,
+           bool(box) and bool(img) and m.get('divW', 0) >= 1.5 and 'rgba(255, 255, 255' in (m.get('divA') or '') and box[0] >= (L[2] if L else 0) and img[0] > box[0] + m.get('divW', 0) and box[3] - box[1] >= (img[3] - img[1]) - 1, [box, img, m.get('divW'), m.get('divA')])
         if img:
             ih = img[3] - img[1]
             want = max(round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' and m.get('logo') else round(0.044 * H), round(0.05 * H))

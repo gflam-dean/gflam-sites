@@ -99,6 +99,8 @@
       ".hostedby[hidden]{display:none}" +
       ".hostedby .hb-logo{display:block;width:auto;object-fit:contain;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.55))}" +
       ".hostedby .hb-logo[hidden]{display:none}" +
+      /* a thin divider before the host's logo, so it never reads as part of the venue's own wordmark */
+      ".hostedby{gap:max(10px,1.1vh);padding-left:max(12px,1.4vh);border-left:2px solid rgba(255,255,255,.28)}" +
       /* the words: smaller than the game's name, centred under it, one line (a long name is cut with an ellipsis) */
       ".hb-line{position:fixed;z-index:60;pointer-events:none;display:block;text-align:center;font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:max(16px,2.78vh);line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
       ".hb-line[hidden]{display:none}" +
