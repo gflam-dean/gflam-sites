@@ -19,7 +19,7 @@ Touches no git and no remote. Screenshots (desktop and phone width) with --shots
 
     python3 tools/prospects-status-in-chrome.test.py [--shots DIR]
 """
-import argparse, datetime, os, subprocess, sys, time
+import argparse, datetime, os, re, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
@@ -214,7 +214,7 @@ try:
     ok('Paused Pub: Paused, the free month "Ended ..., paused ..."', c.get('st') == 'paused' and c.get('chip') == 'Paused'
        and c.get('ends', '').startswith('Ended ') and ', paused ' in c.get('ends', ''), c)
     c = card(sid, CANCEL)
-    ok('Cancelled Bowls Club (paused, then cancelled): Cancelled, not Paused, and no Called button (they said no)', c.get('st') == 'cancelled' and c.get('chip') == 'Cancelled' and not c.get('called'), c)
+    ok('Cancelled Bowls Club (paused, then cancelled): Cancelled, not Paused, and no Called button (they said no)', c.get('st') == 'cancelled' and re.match(r'^Cancelled \d{1,2} [A-Z][a-z]{2}$', c.get('chip') or '') and not c.get('called'), c)   # "Cancelled 11 Nov" (INBOX 237)
     ok('...and no Send them a new sign-in link either: they asked us to stop', not c.get('resend'), c)
     ok('every prospect still in play (not signed in, free month, paused, card added) keeps Send them a new sign-in link (phone sign-in, 29 Oct)',
        all(card(sid, n).get('resend') for n in (NOSIGN, ASKED, FRESH, LAST3, FINAL, PAUSED, CARD)),

@@ -12710,6 +12710,10 @@ MUTATIONS = [
      '(st.state === "paused_prospect" || st.state === "cancelled") && d.has_subscription === false); });',
      'st.state === "paused_prospect" && d.has_subscription === false); });',
      'a free month cancelled and off is shown an Invoices & card Open button with nothing behind it'),
+    ('prospects-status-in-chrome.test.py', 'venueplay/app/vp-prospects-hq.js',
+     '    if (st === "cancelled" && p.cancelled_at) { var cw = when(p.cancelled_at).replace(/^\\w+ /, ""); if (cw) t += " " + cw; }\n',
+     '',
+     'HQ Prospects says only "Cancelled", not the day they cancelled (INBOX 237: Bodalla Pub read wrongly)'),
     # A FREE MONTH CANCEL TELLS US (Dean, 11 Nov 2026, INBOX 235, live fault: Bodalla Pub's cancel reached nobody),
     # branch fix/cancel-alert-15nov: tools/test-trial-cancel-alert.js.
     ('test-trial-cancel-alert.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
