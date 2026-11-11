@@ -458,6 +458,7 @@
   "tv-app-setup-line.test.py",
   "tv-bare-setup-in-chrome.test.py",
   "tv-drawstyle-in-chrome.test.py",
+  "tv-drawstyle-real-pages-in-chrome.test.py",
   "tv-endshow-in-chrome.test.py",
   "tv-first-slide-in-chrome.test.py",
   "tv-landing-in-chrome.test.py",
