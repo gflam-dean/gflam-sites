@@ -284,8 +284,8 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
     mail.subject === 'Your venueplay sign-in link' && /Open your venueplay<\/a>/.test(html) && /^[A-Za-z0-9_-]{43}$/.test(fresh) && fresh !== spent &&
     hrefs(html).every(function (h) { return h.indexOf('signin=email') === -1; }) && /Hi Amit,/.test(html) && /for Caz Reitop/.test(html) && /pop in your mobile/i.test(html) && !/[\u2014\u2013]/.test(html), html.slice(0, 300));
   var row = DB.vp_signin_links[DB.vp_signin_links.length - 1];
-  check('only its hash is kept, for this login and the venue the old link was for, 14 days, unused', row.token_hash === await vpaSigninTokenHash(fresh) && row.auth_user_id === AMIT && row.venue_id === V1 &&
-    row.used_at === null && Math.abs(Date.parse(row.expires_at) - Date.now() - 14 * 86400000) < 60000 && JSON.stringify(DB).indexOf(fresh) === -1, row);
+  check('only its hash is kept, for this login and the venue the old link was for, 90 days (VPA_LINK_DAYS, Dean 10 Nov 2026), unused', row.token_hash === await vpaSigninTokenHash(fresh) && row.auth_user_id === AMIT && row.venue_id === V1 &&
+    row.used_at === null && Math.abs(Date.parse(row.expires_at) - Date.now() - 90 * 86400000) < 60000 && JSON.stringify(DB).indexOf(fresh) === -1, row);
   var ok = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
   var twice = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
   check('the new link signs in once, like the first', ok.status === 200 && ok.body.ok === true && ok.body.venue_id === V1 && twice.status === 410, [ok, twice]);

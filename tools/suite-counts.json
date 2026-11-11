@@ -723,6 +723,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-link-90-days.js": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/test-lobby-format.js": {
   "checks": 9,
   "counted_by": "lines"

@@ -12,7 +12,7 @@
         Close and reopen; and index.html opens it before anything else for a prospect venue
      2. THE DELAYED EMAIL on the REAL billing Worker (tools/rig-billing-worker.js): booked with Resend
         for HQ's delay (90 by default, 0 sends now, out of range refused before anything is made), its
-        sign-in link's 14 days starting when it goes, HQ's list, Cancel (Resend cancels, the link is
+        sign-in link's 90 days starting when it goes, HQ's list, Cancel (Resend cancels, the link is
         retired) and Send now (the booked one cancelled, a new one at once with a NEW link), both refused
         once the minute has passed, by a staff admin, or when Resend says no; before migration 124 it is
         still booked and HQ is told it cannot change it
@@ -407,7 +407,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     row.send_at === m.scheduled_at && row.status === 'scheduled' && row.created_by === ADMIN, row);
   var tok = tokenOf(m), link = await linkFor(tok);
   check('the record keeps only the HASH of the sign-in link the email carries, never the link', !!link && row.signin_token_hash === link.token_hash && JSON.stringify(DB.vp_prospect_welcomes).indexOf(tok) === -1, row.signin_token_hash);
-  check('that link lasts 30 DAYS FROM SETUP (Dean, 4 Nov 2026), the same moment every follow-up link ends at, not 14 days from when the email goes', link && Math.abs(Date.parse(link.expires_at) - t0 - 30 * 86400000) < 5000 && Date.parse(link.expires_at) > Date.parse(m.scheduled_at) + 14 * 86400000, link && [link.created_at, link.expires_at]);
+  check('that link lasts 90 DAYS FROM SETUP (Dean, 4 Nov 2026; 90 since 10 Nov), the same moment every follow-up link ends at, not 14 days from when the email goes', link && Math.abs(Date.parse(link.expires_at) - t0 - 90 * 86400000) < 5000 && Date.parse(link.expires_at) > Date.parse(m.scheduled_at) + 14 * 86400000, link && [link.created_at, link.expires_at]);
   check('the record holds what the email was made from, so Send now can make it again', row.detail && row.detail.venueName === CAZ.name && row.detail.firstName === 'Amit' && row.detail.authUserId === AUTH[0].id && row.detail.seats === 60, row.detail);
   check('the audit row says when it goes', (DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_set_up'; })[0] || {}).detail.welcome_send_at === m.scheduled_at);
   check('it carries a text part as well as the HTML', typeof m.text === 'string' && m.text.length > 100 && m.text === helpPlainFromHtml(m.html));
@@ -418,12 +418,12 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   world(); t0 = Date.now();
   r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: 0 })), ENV, J);
   var l0 = await linkFor(tokenOf(sent[0]));
-  check('0 minutes: sent now (no scheduled_at), recorded as sent, its link 30 days from setup', r.status === 200 && sent.length === 1 && sent[0].scheduled_at === undefined && r.body.welcome.status === 'sent' &&
-    DB.vp_prospect_welcomes[0].status === 'sent' && l0 && Math.abs(Date.parse(l0.expires_at) - t0 - 30 * 86400000) < 5000, [sent[0] && sent[0].scheduled_at, r.body.welcome]);
+  check('0 minutes: sent now (no scheduled_at), recorded as sent, its link 90 days from setup', r.status === 200 && sent.length === 1 && sent[0].scheduled_at === undefined && r.body.welcome.status === 'sent' &&
+    DB.vp_prospect_welcomes[0].status === 'sent' && l0 && Math.abs(Date.parse(l0.expires_at) - t0 - 90 * 86400000) < 5000, [sent[0] && sent[0].scheduled_at, r.body.welcome]);
   world();
   r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: 1440 })), ENV, J);
   var l1 = await linkFor(tokenOf(sent[0]));
-  check('1440 minutes (a day, the most): booked, and its link still fits migration 151\'s 31-day check (30 days from setup)', r.status === 200 && l1 && Date.parse(l1.expires_at) - Date.parse(l1.created_at) <= 31 * 86400000 && Math.abs(Date.parse(l1.expires_at) - t0 - 30 * 86400000) < 5000, l1);
+  check('1440 minutes (a day, the most): booked, and its link still fits migration 185\'s 92-day check (90 days from setup)', r.status === 200 && l1 && Date.parse(l1.expires_at) - Date.parse(l1.created_at) <= 92 * 86400000 && Math.abs(Date.parse(l1.expires_at) - t0 - 90 * 86400000) < 5000, l1);
   var badOnes = [[1441, 'over a day'], [-5, 'negative'], ['soon', 'not a number'], [2.5, 'not whole minutes']];
   for (var bi = 0; bi < badOnes.length; bi++) {
     world(); r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: badOnes[bi][0] })), ENV, J);
@@ -463,7 +463,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var m2 = sent[1] || {}, newTok = tokenOf(m2), newLink = await linkFor(newTok), oldLink = await linkFor(firstTok);
   check('Resend cancels the booked one FIRST, then the new one goes with no scheduled_at', sn.status === 200 && CANCELS.join() === 're_1' && sent.length === 2 && m2.scheduled_at === undefined && m2.to[0] === 'cazreitop@gmail.com' && m2.subject === sent[0].subject, [sn.body, CANCELS, m2.scheduled_at]);
   check('the same email, made again (same words, same venue), with a different sign-in link', newTok && newTok !== firstTok && m2.html.replace(newTok, 'T') === sent[0].html.replace(firstTok, 'T'), [newTok, firstTok]);
-  check('the new link\'s 14 days start now; the old one is retired', newLink && Math.abs(Date.parse(newLink.expires_at) - t0 - 14 * 86400000) < 5000 && !newLink.used_at && oldLink && !!oldLink.used_at, [newLink, oldLink]);
+  check('the new link\'s 90 days start now; the old one is retired', newLink && Math.abs(Date.parse(newLink.expires_at) - t0 - 90 * 86400000) < 5000 && !newLink.used_at && oldLink && !!oldLink.used_at, [newLink, oldLink]);
   check('the record says sent now, when, Resend\'s new id and the new link\'s hash', W.status === 'sent_now' && Math.abs(Date.parse(W.send_at) - t0) < 5000 && W.resend_id === 're_2' && W.signin_token_hash === newLink.token_hash, W);
   var sn2 = await vpaProspectWelcomeNow(as(ADMIN, { id: W.id }), ENV, J);
   check('Send now again: refused, nothing more sent', sn2.status === 409 && sent.length === 2, sn2.body);
@@ -520,8 +520,8 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     again.subject === "Your venueplay account for Caz Reitop's Dirty Secrets" && again.from === 'venueplay <hello@send.venueplay.com.au>' && again.reply_to === 'hello@venueplay.com.au' &&
     !/One thing left|add-card|Add my card/i.test(again.html), [rw.body, again.subject]);
   check('to the account\'s own contact email and nobody else (one address, no cc, no bcc)', onlyTo(again, 'cazreitop@gmail.com'), again.to);
-  check('a FRESH one-click sign-in for their own login: a new token, unused, 14 days from now, and the old link is retired',
-    !!newTok2 && newTok2 !== oldTok && newL && newL.auth_user_id === login.id && newL.venue_id === v.id && !newL.used_at && Math.abs(Date.parse(newL.expires_at) - t0 - 14 * 86400000) < 5000 && oldL && !!oldL.used_at, [newL, oldL]);
+  check('a FRESH one-click sign-in for their own login: a new token, unused, 90 days from now, and the old link is retired',
+    !!newTok2 && newTok2 !== oldTok && newL && newL.auth_user_id === login.id && newL.venue_id === v.id && !newL.used_at && Math.abs(Date.parse(newL.expires_at) - t0 - 90 * 86400000) < 5000 && oldL && !!oldL.used_at, [newL, oldL]);
   check('signed by whoever signed the original (Harry, from the setup\'s audit row), with the venueplay team and the site', /Cheers, Harry the venueplay team venueplay\.com\.au/.test(txt2) && !/The venueplay team/.test(txt2), txt2.slice(-400));
   check('it counts the slides on their screen now (the "few quick slides" line), and greets them by name', /Hi Amit,/.test(txt2) && /a few quick slides our marketing team made from your website/.test(txt2) && rw.body.slides === 3, txt2.slice(0, 400));
   check('no workers.dev or any .dev link, no Gflam, no em dash, nothing left unfilled', linksIn(again.html).every(function (h) { return !/\.dev(\/|$|\?|#)/.test(h.replace(/^mailto:.*/, '')); }) && !/workers\.dev/.test(again.html) &&
@@ -585,8 +585,8 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   rw = await resend({ venue_id: v.id, send_at: at3 });
   again = sent[1] || {};
   var bookedL = await linkFor(tokenOf(again)), rec3 = DB.vp_prospect_welcomes[DB.vp_prospect_welcomes.length - 1] || {};
-  check('send_at: Resend holds it until then (scheduled_at), it is recorded as scheduled so HQ can still cancel it, and its link\'s 14 days start then',
-    rw.status === 200 && again.scheduled_at === at3 && rw.body.send_at === at3 && rec3.status === 'scheduled' && rec3.send_at === at3 && bookedL && Date.parse(bookedL.expires_at) === Date.parse(at3) + 14 * 86400000, [rw.body, rec3]);
+  check('send_at: Resend holds it until then (scheduled_at), it is recorded as scheduled so HQ can still cancel it, and its link\'s 90 days start then',
+    rw.status === 200 && again.scheduled_at === at3 && rw.body.send_at === at3 && rec3.status === 'scheduled' && rec3.send_at === at3 && bookedL && Date.parse(bookedL.expires_at) === Date.parse(at3) + 90 * 86400000, [rw.body, rec3]);
   var bad1 = await resend({ venue_id: v.id, send_at: new Date(t0 + 2 * 86400000).toISOString() }), bad2 = await resend({ venue_id: v.id, send_at: 'monday' }), bad3 = await resend({ venue_id: v.id, send_at: new Date(t0 - 60000).toISOString() });
   check('send_at two days out, not a time, or already past: refused, nothing goes', [bad1, bad2, bad3].every(function (x) { return x.status === 400 && /next 24 hours/.test(x.body.error); }) && sent.length === 2, [bad1.body, bad2.body]);
 

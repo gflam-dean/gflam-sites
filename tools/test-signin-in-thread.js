@@ -106,7 +106,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var wl = sent[0] || {};
   check('the account email says which address our emails come from, and comes from it (Dean, 6 Nov 2026: "so they look out for it")',
     /Our emails come from <strong>hello@send\.venueplay\.com\.au<\/strong>\. If one lands in junk, mark it as not junk\./.test(String(wl.html || '')) && /hello@send\.venueplay\.com\.au/.test(String(wl.from || '')), [wl.from, String(wl.html || '').slice(0, 200)]);
-  check('the link ends with their 30 days, and says when', r.body.signin.days_left >= 29 && !!r.body.signin.expires_words, r.body.signin);
+  check('the link ends with their 90 days, and says when', r.body.signin.days_left >= 89 && !!r.body.signin.expires_words, r.body.signin);
   check('the token is never written to the audit', JSON.stringify(DB.vp_admin_audit).indexOf(r.body.signin.url.split('#t=')[1].split('&')[0]) === -1);
   world(); N = 10;
   r = await call('/autopilot/prospect', body({ return_signin_link: true, mobile: '0400 111 333' }), AP);
@@ -134,7 +134,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   check('a quiet prospect: 200, a one-tap link, kind "link", to their address', x.status === 200 && x.body.ok && x.body.kind === 'link' && /\/app\/go#t=[A-Za-z0-9_-]{43}&e=/.test(x.body.url) && /^sam\d+@testcharlie\.example$/.test(x.body.to), x.body);
   check('NOTHING was emailed', sent.length === before, sent.slice(before));
   check('only the newest works: the welcome\'s unused link was retired, one live link left', liveLinks(vid).length === 1, DB.vp_signin_links);
-  check('their 30 days were NOT restarted (no link_from)', !DB.vp_prospects[0].link_from, DB.vp_prospects[0]);
+  check('their 90 days were NOT restarted (no link_from)', !DB.vp_prospects[0].link_from, DB.vp_prospects[0]);
   check('recorded as prospect_thread_link_made, with no token in it', DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_thread_link_made'; }) &&
     JSON.stringify(DB.vp_admin_audit).indexOf(x.body.url.split('#t=')[1].split('&')[0]) === -1);
   check('tapped is false until they tap', x.body.tapped === false, x.body);
@@ -225,7 +225,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   check('the key only: no autopilot key, nothing texted', bad2.status === 401 || bad2.status === 403 ? SMS.length === 0 : false, bad2);
   ENV.PROSPECT_SMS_ON = ''; ENV.MOBILEMESSAGE_USERNAME = ''; ENV.MOBILEMESSAGE_PASSWORD = '';
 
-  section('7. ONE LINK PER PROSPECT (Dean, 6 Nov 2026; migration 175): the same link everywhere, never a login key, only HQ\'s "Start a fresh 30 days" renews');
+  section('7. ONE LINK PER PROSPECT (Dean, 6 Nov 2026; migration 175): the same link everywhere, never a login key, only HQ\'s "Start a fresh 90 days" renews');
   MIG175 = true; world(); SMS = [];
   ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; ENV.PROSPECT_SMS_ON = 'on';
   var CODE_IN = function (t) { var m = /\/s\/([ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12})(?![A-Za-z0-9])/.exec(String(t || '')); return m ? m[1] : ''; };
@@ -236,7 +236,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   DB.venueplay_founding.forEach(function (f) { if (f.id === opr.founding_id) f.mobile = '0400 555 666'; });   // their mobile, as Edit details adds it
   var welcome1 = String((sent[0] || {}).html || '');
   var cWelcome = CODE_IN(welcome1), cReply = CODE_IN(o1.body.signin && o1.body.signin.url);
-  var winEnd = Date.parse(opr.created_at) + 30 * 86400000;
+  var winEnd = Date.parse(opr.created_at) + 90 * 86400000;
   check('the welcome email and the reply in their thread carry the SAME short link, and no sign-in token is made for it',
     !!cWelcome && cWelcome === cReply && DB.vp_signin_links.filter(function (l) { return l.venue_id === ov && !l.used_at; }).length === 0 && Math.abs(Date.parse(o1.body.signin.expires_at) - winEnd) < 120000, [cWelcome, cReply, DB.vp_signin_links.length]);
   check('the welcome says the button texts a code ("we\'ll text a code to your mobile to sign you in")', /Tap the button below and we&#39;ll text a code to your mobile to sign you in\./.test(welcome1) && !/The button below opens your account for you/.test(welcome1));
@@ -251,7 +251,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
     oText.status === 200 && oNudge.status === 200 && oHq.status === 200 && texts.length >= 1 && mails.length >= 2 &&
     texts.concat(mails).every(function (t) { return CODE_IN(t) === cWelcome; }) && texts.every(function (t) { return /(^|\s)venueplay\.com\.au\/s\/[A-Z0-9]{12} /.test(t); }), [oText.status, oNudge.status, oHq.status, texts, mails.map(CODE_IN)]);
   var pr2 = DB.vp_prospects.filter(function (x) { return x.venue_id === ov; })[0] || {};
-  check('...and not one of them renewed the 30 days: the same end, link_from never set, HQ told not restarted',
+  check('...and not one of them renewed the 90 days: the same end, link_from never set, HQ told not restarted',
     Math.abs(Date.parse(oHq.body.expires_at) - winEnd) < 120000 && !pr2.link_from && oHq.body.restarted === false, [oHq.body, pr2.link_from]);
 
   /* OPENING IT (Dean: the normal sign-in screen, mobile filled in; nothing else to build). */
@@ -294,20 +294,20 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var atAgain = await call('/short/attach', { code: nCode, mobile: '0433 999 999' }, NET7());
   check('...and once a mobile is on, the link can not change it', atAgain.status === 409 && String(nLogin.phone).replace(/\D/g, '') === '61433444555', atAgain.body);
 
-  /* EXPIRED, HQ BEFORE A CLAIM, A FRESH 30 DAYS */
+  /* EXPIRED, HQ BEFORE A CLAIM, A FRESH 90 DAYS */
   world(); SMS = [];
   var e1 = await call('/autopilot/prospect', body({ name: 'Ended Link Hotel', return_signin_link: true }), AP);
   var ev7 = e1.body.venue.id, epr = DB.vp_prospects.filter(function (x) { return x.venue_id === ev7; })[0], eCode = CODE_IN(e1.body.signin.url);
   var eHq = await call('/admin/signin-link', { venue_id: ev7 }, HQ);
   check('HQ\'s Resend before a claim: the same letters, the same end', eHq.status === 200 && CODE_IN(sent[sent.length - 1].html) === eCode && eHq.body.restarted === false, eHq.body);
-  epr.created_at = new Date(Date.now() - 31 * 86400000).toISOString();
+  epr.created_at = new Date(Date.now() - 91 * 86400000).toISOString();
   var opE = await call('/short/open', { code: eCode }, NET7());
   var eHq2 = await call('/admin/signin-link', { venue_id: ev7 }, HQ);
-  check('EXPIRED (their 30 days ended): the plain sign-in, and HQ\'s normal Resend is refused naming "Start a fresh 30 days"', opE.body.go === '/app/' && opE.body.state === 'ended' && eHq2.status === 409 && /Start a fresh 30 days/.test(eHq2.body.error || ''), [opE.body, eHq2.body]);
+  check('EXPIRED (their 90 days ended): the plain sign-in, and HQ\'s normal Resend is refused naming "Start a fresh 90 days"', opE.body.go === '/app/' && opE.body.state === 'ended' && eHq2.status === 409 && /Start a fresh 90 days/.test(eHq2.body.error || ''), [opE.body, eHq2.body]);
   var eFresh = await call('/admin/signin-link', { venue_id: ev7, fresh: true }, HQ);
   var cFresh = CODE_IN(sent[sent.length - 1].html);
   var opF = await call('/short/open', { code: cFresh }, NET7()), opOld = await call('/short/open', { code: eCode }, NET7());
-  check('HQ "Start a fresh 30 days": NEW letters for a new 30 days that open the sign-in again; the old letters are dead, link_from moved',
+  check('HQ "Start a fresh 90 days": NEW letters for a new 90 days that open the sign-in again; the old letters are dead, link_from moved',
     eFresh.status === 200 && eFresh.body.restarted === true && !!cFresh && cFresh !== eCode && /^\/app\/\?signin=sms/.test(opF.body.go) && opOld.body.go === '/app/' && opOld.body.state === 'none' && !!epr.link_from &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_sent' && a.detail && a.detail.fresh_30_days === true; }), [eFresh.body, opF.body, opOld.body]);
 
