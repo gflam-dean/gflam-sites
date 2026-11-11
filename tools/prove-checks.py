@@ -19179,6 +19179,15 @@ MUTATIONS = [
      'HQ View as is offered product updates in the console'),
     # "HOSTED BY" ON THE TV (Dean, 6 Nov 2026, INBOX 120; migration 181). The account half, the game Worker's half
     # and the shared file in jsc; the console, the wall and the People panel in Chrome.
+    # The gate's own D186 and D187 lines (release-check.py), by their labels (15 Nov 2026, the merge into release/15nov).
+    ('two owners on two accounts add one mobile and get one host login listed at both pubs', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const venue = o.venues.filter((v) => v.id === venueId)[0];\n  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);\n  if (target === o.authUserId",
+     "  const venue = { id: venueId, name: '' };\n  if (target === o.authUserId",
+     'the gate: an owner can switch Hosted by on the TV of a venue on another account'),
+    ('/host/hosted-by answers the signed-in host\'s card at a venue where they are staff', 'venueplay-backend/worker/venueplay-game.js',
+     "  return json({ trivia: sw.trivia === true ? card : null, musical: sw.musical === true ? card : null });",
+     "  return json({ trivia: card, musical: card });",
+     'the gate: a host\'s card shows for a game the venue did not switch on'),
     ('test-hosted-by.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  { const g = vpbStaffGuard(o, rows, json); if (g) return g; }\n  if (rows.some((r) => r.role === 'owner' || (r.role !== 'host' && !r.permissions))) {",
      "  if (rows.some((r) => r.role === 'owner' || (r.role !== 'host' && !r.permissions))) {",
