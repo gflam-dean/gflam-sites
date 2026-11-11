@@ -10,7 +10,7 @@ tick:
   - play.html (bingo): a phone that is in, on the lobby
 and checks, on each:
   - the shared waiting screen is drawn (/app/vp-tonight.js), and the venue's ad is up
-  - the ad's bottom is on screen, and our venueplay logo (the trivia and musical foot; bingo's is in its header) too
+  - the ad's bottom is on screen, and our venueplay logo at the foot (bingo too since its new look, 12 Nov 2026)
   - nothing on the page scrolls sideways
   - the trivia and musical menus offer "Join Tugun Bowls Club's list" (the venue collects the tick)
 
@@ -95,7 +95,7 @@ def main():
                     ('trivia', '/app/trivia/play.html?room=ACDE23&sting=0', '', [JOIN], 'lobby', 'trivia', True),
                     ('trivia-nogame', '/app/trivia/play.html?room=ACDE23&sting=0', TRIVIA_BACK, [], 'nogame', 'trivia', True),
                     ('musical', '/app/musical/play.html?room=ACDE23&sting=0', '', [JOIN], 'lobby', 'musical_bingo', True),
-                    ('bingo', '/play.html?room=ACDE23&sting=0', BINGO_IN, [], 'lobby', 'bingo90', False)):
+                    ('bingo', '/play.html?room=ACDE23&sting=0', BINGO_IN, [], 'lobby', 'bingo90', True)):   # number bingo's new look: our logo at the foot too (12 Nov 2026)
                 MODE.update(m=mode, fmt=fmt)
                 x = look(B, base, path, w, h, ls, acts, name)
                 tag = '%s %dx%d' % (name, w, h)

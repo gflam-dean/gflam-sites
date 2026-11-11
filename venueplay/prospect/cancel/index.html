@@ -62,7 +62,6 @@
   .stats p{color:#fff;font-weight:700;font-size:16px;margin:0 0 8px}
   .stats ul{margin:0 0 0 20px;font-size:16px;color:var(--text)} .stats li{margin:0 0 4px}
   .lose{font-size:16px;color:var(--text);margin:0 0 16px} .lose b{color:#fff}
-  .back90{font-size:15px;color:#fff;margin:0 0 12px}
   .hand{margin:0 0 6px}
   .acts{display:grid;gap:12px;grid-auto-rows:1fr}
   .acts button{margin-top:0}
@@ -98,8 +97,8 @@
         <label for="nwEmail">Their email</label><input id="nwEmail" type="email" maxlength="200" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 12px">
         <label for="nwMobile">Their mobile</label><input id="nwMobile" type="tel" inputmode="tel" maxlength="30" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 14px">
       </div>
-      <!-- The fallback 90-day words until the restart billing ships (INBOX 149; fix/restart-90day-15nov, Monday 16). -->
-      <p class="back90" id="back90">Change your mind? Come back within 90 days and we&rsquo;ll sort your plan out.</p>
+      <!-- No 90-day line here: a free-month venue has no paid plan to come back to; that line is for PAID venues only
+           (billing.html's dialog, INBOX 191.5, 11 Nov 2026). -->
       <div id="acts" class="acts">
         <button type="button" class="main hidden" id="main"></button>
         <button type="button" class="go" id="go">Yes, cancel it</button>

@@ -506,8 +506,8 @@ check('free month: tapping Keep the basics posts the request (action=keep, with 
 R2.els.whyPick.value = 'closing'; R2.els.whyPick.on.change();
 check('keep plan on, closing or changing hands: no $10 button, the hand-over instead', R2.els.main.innerHTML === 'Hand the account to the new owner');
 var CP2 = CPAGE.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
-check('the free-month page has no price words of its own, the 90-day line, and no members list download',
-      !/\$\d/.test(CP2) && CP2.indexOf('Change your mind? Come back within 90 days and we&rsquo;ll sort your plan out.') !== -1 && CP2.indexOf('keep your current plan and price') === -1 && !/download|export/i.test(CP2));
+check('the free-month page has no price words of its own, NO 90-day line (paid venues only, INBOX 191.5), and no members list download',
+      !/\$\d/.test(CP2) && !/90 days/.test(CP2) && CP2.indexOf('keep your current plan and price') === -1 && !/download|export/i.test(CP2));
 
 /* billing.html's dialog. */
 var DLG2 = (function () { var a = PAGE.indexOf('function askWhy('), b = PAGE.indexOf('function showMsg(', a); return PAGE.slice(a, b); })();
