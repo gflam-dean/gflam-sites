@@ -165,7 +165,15 @@
       /* The host's logo is 70% of the venue logo's height, so the venue's own logo stays the bigger one (a wide
          wordmark is short, so it is too), no wider than 13% of the screen; beside a venue's NAME it is 4.4% of
          the height. */
-      ih = logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H);
+      /* NEVER SMALLER THAN ITS OWN WORDS (15 Nov 2026, the pictures for Dean): beside a wide venue wordmark or a
+         venue's name the 70% rule made the host's logo about 20px tall at 720, a smudge. So it is at least as tall
+         as HOSTED BY over one line of the name, and still 70% of a tall venue logo (a crest) when that is bigger. */
+      var lblEl = el.querySelector(".hb-lbl"), nmEl = el.querySelector(".hb-name"), txtH = 0;
+      try {   /* HOSTED BY over ONE line of the name: a long name that wraps does not blow the logo up beside a name */
+        var gp = parseFloat(w.getComputedStyle(el.querySelector(".hb-text")).rowGap) || 0, nfs = parseFloat(w.getComputedStyle(nmEl).fontSize) || 0;
+        txtH = Math.round(lblEl.offsetHeight + gp + 1.15 * nfs);
+      } catch (e) {}
+      ih = Math.max(logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H), txtH);
       img.style.height = Math.round(ih) + "px"; img.style.maxWidth = Math.round(0.13 * W) + "px";
       var anchor = logo || tag, left = anchor ? anchor.right + gap : inset;
       s.left = Math.round(left) + "px";
@@ -176,8 +184,18 @@
       for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.left < tl.left)) tl = tr; }
       var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.28 * W);
       s.maxWidth = Math.round(Math.max(0.1 * W, stop - left)) + "px";
+      /* CENTRED ON THE LOGOS' LINE, BUT NEVER HIGHER THAN THE LOGOS THEMSELVES (15 Nov 2026). Beside a short
+         anchor (a wide wordmark, a venue's name) the two-line block is taller than the anchor, and centring it
+         put HOSTED BY 14px from the top of a 720 TV, above the venue's logo and our mark, where a TV that crops
+         its edges cuts it. So its top is no higher than the higher of the venue's logo (or name) and the
+         venueplay mark; beside a crest, which is taller than the block, nothing changes. */
       var h = el.offsetHeight || 0, mid = anchor ? anchor.top + anchor.height / 2 : inset + h / 2;
-      s.top = Math.round(Math.max(inset, mid - h / 2)) + "px";
+      var floor = anchor ? anchor.top : inset;
+      try {
+        var mk = w.VPVenueLogo && w.VPVenueLogo.markBox ? w.VPVenueLogo.markBox(d.querySelector(".tv-corner")) : null;
+        if (mk && mk.height) floor = Math.min(floor, mk.top);
+      } catch (e) {}
+      s.top = Math.round(Math.max(inset, floor, mid - h / 2)) + "px";
       s.bottom = "auto";
     }
     var at = MODE + s.left + "," + s.top + "," + s.bottom + "," + img.style.height + "," + el.offsetWidth + "," + el.offsetHeight;

@@ -209,7 +209,7 @@ WALL = r'''(function(){
   var mk=document.querySelector(".tv-corner .vn svg, .tv-corner svg");
   var ti=lay && lay.querySelector(".toplbl .tl-night");
   return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(hb), name: nm ? nm.textContent : null,
-    nameFs: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0, lblFs: lb ? parseFloat(getComputedStyle(lb).fontSize) : 0, lblR: R(lb), nameR: R(nm),
+    nameFs: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0, gap: (hb && hb.querySelector(".hb-text") && hb.querySelector(".hb-text").parentNode===hb) ? (parseFloat(getComputedStyle(hb.querySelector(".hb-text")).rowGap) || 0) : 0, lblFs: lb ? parseFloat(getComputedStyle(lb).fontSize) : 0, lblR: R(lb), nameR: R(nm),
     img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
     tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids });
 })()'''
@@ -257,8 +257,13 @@ def wall_checks(tag, m, base, host_logo, venue, mode):
         ok('%s: BESIDE the venue\'s %s, on its line, never on it' % (tag, 'name' if venue == 'none' else 'logo'), bool(L) and hb[0] >= L[2] and not overlap(hb, L), [hb, L])
         if L:
             mid = lambda r: (r[1] + r[3]) / 2
-            ok('%s: the whole block centred on the venue %s\'s middle (within 2px, or held at the top margin)' % (tag, 'name' if venue == 'none' else 'logo'),
-               abs(mid(hb) - mid(L)) <= 2 or abs(hb[1] - inset) <= 1, [hb, L])
+            mk = m.get('mark')
+            top_floor = max(inset, min(L[1], mk[1]) if mk else L[1])
+            ok('%s: the whole block centred on the venue %s\'s middle (within 2px, or held at the logos\' top)' % (tag, 'name' if venue == 'none' else 'logo'),
+               abs(mid(hb) - mid(L)) <= 2 or abs(hb[1] - top_floor) <= 1, [hb, L, mk])
+            # 15 Nov 2026: beside a wide wordmark or a name, centring put HOSTED BY above everything, 14px from the top.
+            ok('%s: never higher than the venue %s and our mark (top %.0f, at least %.0f), so a TV that crops its edges keeps it' % (tag, 'name' if venue == 'none' else 'logo', hb[1], top_floor),
+               hb[1] >= top_floor - 1, [hb, L, mk])
             ok('%s: inside the header band: no lower than the venue %s or 15%% of the height' % (tag, 'name' if venue == 'none' else 'logo'), hb[3] <= max(L[3], 0.15 * H) + 1, [hb, L])
         ok('%s: one shape: HOSTED BY above the name' % tag, bool(m.get('lblR')) and bool(m.get('nameR')) and m['lblR'][3] <= m['nameR'][1] + 1, [m.get('lblR'), m.get('nameR')])
     else:
@@ -272,8 +277,14 @@ def wall_checks(tag, m, base, host_logo, venue, mode):
         if img and mode == 'top':
             ih, iw = img[3] - img[1], img[2] - img[0]
             want = round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' else round(0.044 * H)
-            ok('%s: the host\'s logo is 70%% of the venue logo\'s height (%.0f against %.0f), or held to 13%% of the width' % (tag, ih, want),
+            # 15 Nov 2026: never smaller than its own words (HOSTED BY over the name); beside a wide wordmark the 70%
+            # rule alone made it about 20px tall at 720.
+            words = round((m['lblR'][3] - m['lblR'][1]) + m.get('gap', 0) + 1.15 * m.get('nameFs', 0)) if m.get('lblR') else 0   # HOSTED BY over one line of the name
+            want = max(want, words)
+            ok('%s: the host\'s logo is 70%% of the venue logo\'s height or as tall as HOSTED BY over one line of the name, whichever is more (%.0f against %.0f), or held to 13%% of the width' % (tag, ih, want),
                abs(ih - want) <= 1.5 or iw >= 0.13 * W - 1.5, [ih, iw, want])
+            ok('%s: the host\'s logo is at least as tall as HOSTED BY over one line of the name (%.0f against %.0f)' % (tag, ih, words),
+               words > 0 and ih >= words - 1.5, [ih, words])
     else:
         ok('%s: no host logo, so no empty space for one' % tag, m.get('img') is None, m.get('img'))
 
@@ -282,9 +293,12 @@ def wall(B, base):
     print('\n2. THE WALL: trivia and musical bingo at 1920x1080 and 1280x720, option A (top) and option B (bottom)')
     # THE LOBBY IS 0 TO 0.9 s OF THE DEMO with the opening show off (round 2 caught the question at 2.5 s and called it the
     # lobby): measured at 0.7 s, with the titles put on the logos' line as the wall's own one-second tick does.
-    trivia = [('lobby', 700), ('question', 4000), ('board', 12500), ('podium', 44000)]
+    # Since 7 Nov 2026 the trivia demo shows the scores only at the round's end, after the podium (36 s, then 41 s), and
+    # the musical bingo demo opens on the game and comes back to its lobby at 39 s (old-tv and trivia-newlook use the
+    # same times). The states must be in time order: the clock only runs forward.
+    trivia = [('lobby', 700), ('question', 4000), ('podium', 36000), ('board', 41000)]
     short = [('lobby', 700), ('question', 4000)]
-    musical = [('lobby', 700), ('song', 6000)]
+    musical = [('song', 6000), ('lobby', 39000)]
     NL.SHOTS = ''   # the new-look suite's own pictures are not wanted here
     for w, h in ((1920, 1080), (1280, 720)):
         for venue, vq in (('crest', ''), ('wide', '&logo=/__fixture/wide-logo.svg'), ('none', '&logo=none')):
