@@ -287,6 +287,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/musical-live-11nov-in-chrome.test.py": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
  "tools/musical-newlook-in-chrome.test.py": {
   "checks": 250,
   "counted_by": "lines"
@@ -805,6 +809,10 @@
  },
  "tools/test-musical-host.js": {
   "checks": 119,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-live-11nov.js": {
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
@@ -1412,7 +1420,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 105,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {

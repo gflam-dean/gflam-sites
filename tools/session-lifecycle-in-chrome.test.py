@@ -123,8 +123,8 @@ def scene_sound():
         ok('CONTROL: no sound warning while the TV has said nothing', r.ask(h, note_vis) is not True)
         r.ask(h, TELL + '(%s)' % json.dumps({'t': 'tv_here', 'audio': 'blocked'}))
         ok('the TV reports blocked sound: the bar shows at once, before any song has played', r.until(h, note_vis, 8) is True, r.ask(h, '(document.getElementById("tvAudioNote")||{}).className'))
-        ok('it ASKS first: "The TV can\'t play sound. Play the songs on this device?" with Yes and No (Dean, 6 Nov 13:10)',
-           'Play the songs on this device?' in (r.ask(h, 'document.getElementById("tvAudioNote").textContent') or '') and r.ask(h, '!!document.getElementById("tvSoundYes") && !!document.getElementById("tvSoundNo")') is True,
+        ok('it ASKS first: "The TV has no sound yet. Click once on the TV screen to turn its sound on. Or play the songs on this device?" with Yes and No (Dean, 6 Nov 13:10; words 11 Nov)',
+           'Click once on the TV screen to turn its sound on. Or play the songs on this device?' in (r.ask(h, 'document.getElementById("tvAudioNote").textContent') or '') and r.ask(h, '!!document.getElementById("tvSoundYes") && !!document.getElementById("tvSoundNo")') is True,
            r.ask(h, 'document.getElementById("tvAudioNote").textContent'))
         ok('and nothing plays here until the host answers', r.ask(h, 'document.querySelector("audio").muted') is True, r.ask(h, 'document.querySelector("audio").muted'))
         for w, hgt, name in ((375, 667, 'lifecycle-musical-host-sound-ask-375'), (390, 664, 'lifecycle-musical-host-sound-ask-390x664')):

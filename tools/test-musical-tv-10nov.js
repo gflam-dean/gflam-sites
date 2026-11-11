@@ -21,7 +21,7 @@ var SCREEN = readFile('venueplay/app/musical/screen.html');
 var CSS = SCREEN.slice(SCREEN.indexOf('<style>'), SCREEN.indexOf('</style>'));
 
 print('\n== 1. the no-sound message is a bottom bar ==');
-var aw = SCREEN.slice(SCREEN.indexOf('w.id="audioWarn"'), SCREEN.indexOf('No sound on this screen'));
+var aw = SCREEN.slice(SCREEN.indexOf('w.id="audioWarn"'), SCREEN.indexOf('w.textContent=SOUND_BAR_TEXT'));
 show('it is pinned to the bottom edge, full width', /bottom:0;left:0;right:0/.test(aw));
 show('and never to the top, where the title is', !/top:/.test(aw));
 
@@ -38,7 +38,7 @@ show('the chip is wider than the old 15.36cqw', /flex:0 0 16\.4cqw/.test(ptok));
 var fit = lift(SCREEN, 'fitStrip', 'screen.html');
 show('fitStrip steps the size down for a long word (width) as well as for height', /scrollWidth>t\.clientWidth/.test(fit) && /scrollHeight>t\.clientHeight/.test(fit) && /lines\(\)>2\.3/.test(fit));
 show('five chips and the strip gaps fit the strip (87.5cqw)', 5 * (16.4 + 0.94) <= 87.5, 5 * (16.4 + 0.94));
-show('one song count only: "N songs played" left, "Up now" in the dashed slot (no "Song N" twice)', /nx\.textContent="Up now"/.test(SCREEN) && /" song"\+\(all\.length===1\?"":"s"\)\+" played"/.test(SCREEN) && !/textContent\s*=\s*"Song /.test(SCREEN));
+show('one song count only: "N songs played" left, and no dashed slot at all (Dean, 11 Nov 2026; no "Song N" twice)', /nx\.classList\.toggle\("hidden", true\); nx\.textContent="";/.test(SCREEN) && /" song"\+\(all\.length===1\?"":"s"\)\+" played"/.test(SCREEN) && !/textContent\s*=\s*"Song /.test(SCREEN));
 
 print('\n== 3. no spaced mono capitals; the claim line ==');
 var rules = CSS.match(/[^{}]*\{[^}]*\}/g) || [];

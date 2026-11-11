@@ -327,7 +327,7 @@ def join_loading():
 
 # ======================================================================================
 def musical_toast():
-    print('\nThe musical TV\'s "No sound on this screen" toast: a bar along the bottom edge, off the MUSICAL BINGO title (Dean, 10 Nov 2026), gone in eight seconds')
+    print('\nThe musical TV\'s no-sound bar: along the bottom edge, off the MUSICAL BINGO title (Dean, 10 Nov 2026); "Click anywhere on this screen to turn the sound on", up until the sound is on (Dean, 11 Nov 2026)')
     src = io.open(os.path.join(RIG.ROOT, 'venueplay/app/musical/screen.html'), encoding='utf-8').read()
     a = src.find('  var _audioWarned=false'); b = src.find('  function audioOk(){', a)
     ok('CONTROL: audioBlocked() is where this test lifts it from', a > 0 and b > a)
@@ -344,10 +344,11 @@ def musical_toast():
                           'return {top:a.top,bottom:a.bottom,mid:a.left+a.width/2,h:a.height,overlap:!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)};})()')
         ok('the toast is up', rect is not None)
         shot(r, sid, 'tv-3-no-sound-toast')
-        ok('along the bottom edge, centred, one slim bar (under 6.5% of the screen tall, so clear of the played strip)', rect and abs(rect['bottom'] - 720) < 1 and abs(rect['mid'] - 640) < 20 and rect['h'] < 720 * 0.065, rect)
+        ok('along the bottom edge, centred, one bar under 5% of the width tall (the played strip ends 4.95cqw above the bottom)', rect and abs(rect['bottom'] - 720) < 1 and abs(rect['mid'] - 640) < 20 and rect['h'] < 1280 * 0.05, rect)
+        ok('it says what to do: "Click anywhere on this screen to turn the sound on"', r.ask(sid, 'document.getElementById("audioWarn").textContent') == 'Click anywhere on this screen to turn the sound on', r.ask(sid, 'document.getElementById("audioWarn").textContent'))
         ok('and not over the MUSICAL BINGO title', rect and not rect['overlap'], rect)
         time.sleep(8.6)
-        ok('gone after eight seconds', r.ask(sid, '!document.getElementById("audioWarn")') is True)
+        ok('still up after eight seconds: it stays until the sound is on (Dean, 11 Nov 2026)', r.ask(sid, '!!document.getElementById("audioWarn")') is True)
     finally:
         r.close()
 

@@ -165,7 +165,8 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   var btn = { innerHTML: '' };
   var G = { hostMonitor: false, tvLastSeen: 1, status: 'running' };
   var audio = { muted: true, paused: false, src: '' };
-  var _tvAudio = 'unknown', _autoMonitor = false, _soundAsked = false;
+  var _tvAudio = 'unknown', _autoMonitor = false, _soundAsked = false, _audioErrShown = false;
+  function clearHostError() {}
   var document = { createElement: function () { var h = {}; return { style: {}, addEventListener: function (e, f) { h[e] = f; }, click: function () { h.click(); } }; },
                    createTextNode: function (t) { return { textContent: t }; } };
   function $(id) { return id === 'tvAudioNote' ? note : btn; }
@@ -175,9 +176,9 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   noteTvAudio('blocked');
   var yes = kids.filter(function (k) { return k.id === 'tvSoundYes'; })[0], no = kids.filter(function (k) { return k.id === 'tvSoundNo'; })[0];
   ok('blocked: the console ASKS first (Dean, 6 Nov 13:10), "The TV can\'t play sound. Play the songs on this device?" Yes / No, and stays quiet until answered',
-     G.hostMonitor === false && audio.muted === true && !note.cls.hidden && /The TV can.t play sound\. Play the songs on this device\?/.test(note.textContent) && !!yes && !!no && yes.textContent === 'Yes' && no.textContent === 'No', JSON.stringify([G, note.textContent]));
+     G.hostMonitor === false && audio.muted === true && !note.cls.hidden && /The TV has no sound yet\. Click once on the TV screen to turn its sound on\. Or play the songs on this device\?/.test(note.textContent) && !!yes && !!no && yes.textContent === 'Yes' && no.textContent === 'No', JSON.stringify([G, note.textContent]));
   no.click();
-  ok('No: this device stays quiet, and the bar says how to fix the TV', G.hostMonitor === false && audio.muted === true && /press any key on the TV remote/i.test(note.textContent));
+  ok('No: this device stays quiet, and the bar says how to fix the TV', G.hostMonitor === false && audio.muted === true && /Click once on the TV screen to turn its sound on/.test(note.textContent));
   noteTvAudio('ok'); noteTvAudio('blocked');
   yes = kids.filter(function (k) { return k.id === 'tvSoundYes'; })[0];
   yes.click();
@@ -205,8 +206,8 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
 })();
 
 print('\n== 5. the TV\'s bottom left counts songs played (finding D) ==');
-ok('"N songs played", not "Song N", on the left, and it is the ONLY count on the wall: the dashed slot says "Up now", the "+N" chip is gone (Dean, 6 Nov 13:10)',
-   /no\.textContent = all\.length>0 \? \(all\.length\+" song"/.test(MSCREEN) && /nx\.textContent="Up now";/.test(MSCREEN) && /more\.classList\.toggle\("hidden", true\); more\.textContent="";/.test(MSCREEN) && !/"Song "\+total/.test(MSCREEN));
+ok('"N songs played", not "Song N", on the left, and it is the ONLY count on the wall: no dashed slot (11 Nov), the "+N" chip is gone (Dean, 6 Nov 13:10)',
+   /no\.textContent = all\.length>0 \? \(all\.length\+" song"/.test(MSCREEN) && /nx\.classList\.toggle\("hidden", true\); nx\.textContent="";/.test(MSCREEN) && /more\.classList\.toggle\("hidden", true\); more\.textContent="";/.test(MSCREEN) && !/"Song "\+total/.test(MSCREEN));
 
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' client lifecycle checks failed');
