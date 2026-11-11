@@ -138,6 +138,22 @@ _CHROME_WATCHED = [0]        # how many Chrome suites were run under a process-g
 _SUITE_OUT_DIR = tempfile.mkdtemp(prefix='gate-suite-out-')   # every suite's output, for the ledger
 atexit.register(lambda: shutil.rmtree(_SUITE_OUT_DIR, ignore_errors=True))
 
+# --chrome-record (12 Nov 2026, INBOX 265.4; what the pre-push hook runs): a Chrome suite is left out HERE only when a
+# signed record from vp-tests-1 covers it for this exact tree, under 24 h old, every Chrome suite green, every count at
+# or over the ledger (tools/gate-server.py, accepted()). No record, or any fault in it, and every Chrome suite runs on
+# this Mac exactly as before. MAC_ONLY suites (signin-logo-in-chrome) always run here. Never with --skip-chrome.
+CHROME_RECORD = '--chrome-record' in sys.argv and not SKIP_CHROME
+_CHROME_COVERED, _CHROME_RECORD_WHY = set(), ''
+if CHROME_RECORD:
+    try:
+        import importlib.util as _ilu
+        _gs_spec = _ilu.spec_from_file_location('gate_server', os.path.join(ROOT, 'tools', 'gate-server.py'))
+        _gs = _ilu.module_from_spec(_gs_spec)
+        _gs_spec.loader.exec_module(_gs)
+        _CHROME_COVERED, _CHROME_RECORD_WHY = _gs.accepted(ROOT)
+    except Exception as _e:
+        _CHROME_COVERED, _CHROME_RECORD_WHY = set(), 'tools/gate-server.py could not be read (%s)' % type(_e).__name__
+
 
 def _save_suite_output(rel, r):
     """The ledger (D30) used to run every suite AGAIN to count its checks, which ran all fifteen
@@ -617,6 +633,10 @@ def local_checks(which):
         if chrome and SKIP_CHROME:
             _CHROME_SKIPPED.add(os.path.abspath(p))
             note(f, 'SKIPPED by --skip-chrome: a targeted prove run, never a release gate')
+            continue
+        if chrome and f in _CHROME_COVERED:
+            _CHROME_SKIPPED.add(os.path.abspath(p))
+            note(f, 'judged on vp-tests-1 under the signed gate record for this tree (tools/gate-server.py)')
             continue
         if chrome:
             _CHROME_WATCHED[0] += 1
@@ -3649,7 +3669,11 @@ def local_checks(which):
             # --reuse: the suites this gate has ALREADY run are counted from the output it kept
             # (gatelib, 27 Oct 2026), so the fifteen Chrome suites no longer run a second time,
             # six at once, inside every gate. Only what the gate did not run itself is run here.
-            r = subprocess.run([sys.executable, t, '--reuse', _SUITE_OUT_DIR] + (['--skip-chrome'] if SKIP_CHROME else []),
+            # Suites a signed server record covers were judged against this same ledger by tools/gate-server.py.
+            _elsewhere = os.path.join(_SUITE_OUT_DIR, 'judged-elsewhere.txt')
+            io.open(_elsewhere, 'w', encoding='utf-8').write(''.join('tools/%s\n' % c for c in sorted(_CHROME_COVERED)))
+            r = subprocess.run([sys.executable, t, '--reuse', _SUITE_OUT_DIR] + (['--skip-chrome'] if SKIP_CHROME else [])
+                               + (['--judged-elsewhere', _elsewhere] if _CHROME_COVERED else []),
                                capture_output=True, text=True, timeout=900, cwd=ROOT)
             out = ((r.stdout or '') + (r.stderr or '')).strip()
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
@@ -6231,6 +6255,10 @@ def summary(which, ran_live):
     elif SKIP_CHROME:
         print('%sTHIS RUN SKIPPED %d CHROME SUITE(S) (--skip-chrome). It is a targeted prove run, NOT a release gate.%s'
               % (RED, len(_CHROME_SKIPPED), OFF))
+    if CHROME_RECORD and _CHROME_COVERED:
+        print('%sCHROME HALF FROM vp-tests-1: %s%s' % (YEL, _CHROME_RECORD_WHY[:400], OFF))
+    elif CHROME_RECORD:
+        print('%sGATE RECORD NOT USED (%s): every Chrome suite ran on this Mac.%s' % (DIM, _CHROME_RECORD_WHY[:300], OFF))
 
     print('\n%sWHAT THIS DOES NOT CHECK%s' % (YEL, OFF))
     print("""  Four of the five faults found in live testing on 27 Aug only appear when a
