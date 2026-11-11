@@ -232,7 +232,7 @@
   "counted_by": "lines"
  },
  "tools/hosted-by-in-chrome.test.py": {
-  "checks": 954,
+  "checks": 1086,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -696,7 +696,7 @@
   "counted_by": "lines"
  },
  "tools/test-hosted-by-game.js": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-hosted-by.js": {

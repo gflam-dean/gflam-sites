@@ -18,9 +18,12 @@ nights. Three parts, each on the REAL pages served from this checkout:
          there is no logo; "hosted by <name>" is a smaller line centred UNDER the game's name (Dean picked this, 11 Nov 2026)
        - it never overlaps the venue's logo or name, our venueplay mark, the game's name, the question, the
          answers, the join QR and code, or a score row, and a long name stays on its one line
-       - the venue's logo, our mark and the game's name are exactly where they are without it
+       - the game's name and the line under it are ONE block, centred on the venue logo's (or name's) middle within 2px,
+         with our mark and the host's logo on the same line, never above the logo's own distance from the top; a round
+         crest does not move, a wide wordmark or a name drops with the block (Dean's second look, 11 Nov 2026, INBOX 249)
        - the question, the timer and the top of every slide are at the SAME height on every variant (within 1px), with a
-         little clear room under the line (at least 1.5% of the height)
+         little clear room under the line (at least 1.5% of the height); the final scores where Dean left them and the
+         winners at least 3% of the height lower
        - the host's logo is 70% of the venue's own, never under 5% of the height, and the words are at least 30px at 1080
      with a round crest (Tugun), a wide 6.6:1 wordmark, and no logo at all; with and without a host logo
   3. THE SETTING, Account > People > a host's row > Hosted by (tools/browser-rig/admin_site.py, the real
@@ -260,9 +263,21 @@ def wall_checks(tag, m, base, host_logo, venue):
        bool(ti) and abs((hb[0] + hb[2]) / 2 - (ti[0] + ti[2]) / 2) <= 2 and hb[1] >= ti[3] - 1 and hb[1] - ti[3] <= 0.01 * H, [hb, ti])
     ok('%s: the name fits on its one line (nothing cut off)' % tag, m.get('lineClip') is False, m.get('lineClip'))
     ok('%s: clear of our venueplay mark' % tag, not overlap(hb, m.get('mark')), [hb, m.get('mark')])
-    ok('%s: the header does not move: the venue logo, our mark and the game\'s name exactly where they are without it' % tag,
-       same(m.get('logo'), base.get('logo')) and same(m.get('mark'), base.get('mark')) and same(m.get('title'), base.get('title')),
-       [m.get('logo'), base.get('logo'), m.get('mark'), base.get('mark'), m.get('title'), base.get('title')])
+    # ONE BLOCK ON ONE MIDDLE LINE (Dean's second look, 11 Nov 2026, INBOX 249): the game's name and the line under it
+    # are one block, its middle on the venue logo's middle (its name's when it has no logo), and our mark on it too.
+    A = m.get('logo') if venue != 'none' else m.get('tag')
+    mid = lambda r: (r[1] + r[3]) / 2
+    if ti and A:
+        bmid = (ti[1] + hb[3]) / 2
+        ok('%s: the game\'s name and "hosted by" are one block centred on the venue %s\'s middle (block %.1f, %s %.1f, within 2px)' % (tag, 'name' if venue == 'none' else 'logo', bmid, venue, mid(A)),
+           abs(bmid - mid(A)) <= 2, [ti, hb, A])
+        ok('%s: the block\'s top is never higher than the venue logo\'s own distance from the top (%.0f, at least %.0f)' % (tag, ti[1], inset), ti[1] >= inset - 1, [ti, inset])
+        mk = m.get('mark')
+        ok('%s: our venueplay mark is on the same middle line (within 2px)' % tag, bool(mk) and abs(mid(mk) - mid(A)) <= 2, [mk, A])
+    else:
+        ok('%s: the game\'s name and the venue %s are on the wall' % (tag, 'name' if venue == 'none' else 'logo'), False, [ti, A])
+    if venue == 'crest':
+        ok('%s: a round logo does not move for it (its middle has room for the block)' % tag, same(m.get('logo'), base.get('logo')), [m.get('logo'), base.get('logo')])
     hits = [p for p in m.get('parts') or [] if overlap(hb, p['r'], 1)]
     ok('%s: clear of the question, the answers, the join and the scores' % tag, not hits, hits[:3])
     top = m.get('top')
@@ -286,11 +301,8 @@ def wall_checks(tag, m, base, host_logo, venue):
             ok('%s: BESIDE the venue\'s %s, never on it, and never over the game\'s name' % (tag, 'name' if venue == 'none' else 'logo'),
                bool(L) and img[0] >= L[2] and not overlap(img, L) and not overlap(img, ti), [img, L, ti])
             if L:
-                mid = lambda r: (r[1] + r[3]) / 2
-                mk = m.get('mark')
-                top_floor = max(inset, min(L[1], mk[1]) if mk else L[1])
-                ok('%s: centred on the venue %s\'s middle (within 2px, or held at the logos\' top)' % (tag, 'name' if venue == 'none' else 'logo'), abs(mid(img) - mid(L)) <= 2 or abs(img[1] - top_floor) <= 1, [img, L, mk])
-                ok('%s: never higher than the venue %s and our mark, so a TV that crops its edges keeps it' % (tag, 'name' if venue == 'none' else 'logo'), img[1] >= top_floor - 1, [img, L, mk])
+                ok('%s: centred on the same middle line as the venue %s and the block (within 2px)' % (tag, 'name' if venue == 'none' else 'logo'), abs(mid(img) - mid(L)) <= 2, [img, L])
+                ok('%s: never higher than the venue logo\'s own distance from the top, so a TV that crops its edges keeps it' % tag, img[1] >= inset - 1, [img, inset])
             ok('%s: the host\'s logo stays above the slide' % tag, top is not None and img[3] <= top, [img, top])
     else:
         ok('%s: no host logo, so no empty space for one' % tag, img is None, img)
@@ -358,6 +370,16 @@ def wall(B, base):
             bad_v = {k: val(v) for k, v in vs.items() if val(v) is None or abs(val(v) - r0) > 1.0}
             what = {'top': 'the top of the slide', 'ring': 'the timer', 'q': 'the question'}[field]
             ok('%dx%d %s: %s is at the same height on all %d variants (%.0fpx, within 1px)' % (w, h, slide, what, len(vs), r0), not bad_v, bad_v)
+    # THE WINNERS A LITTLE LOWER, THE FINAL SCORES WHERE DEAN LEFT THEM (11 Nov 2026, INBOX 249): the scores heading at
+    # 17.2% of the height plus the fit's own gap, the winners heading at least 3% of the height under that.
+    for w, h in ((1920, 1080), (1280, 720)):
+        bd = (TOPS.get((w, h, 'board')) or {}).get('crest/hostlogo') or {}
+        pd = (TOPS.get((w, h, 'podium')) or {}).get('crest/hostlogo') or {}
+        want = round(0.172 * h) + round(0.006 * w)
+        ok('%dx%d: the final scores start where Dean left them (%s, want %d, within 1px)' % (w, h, bd.get('top'), want),
+           bd.get('top') is not None and abs(bd['top'] - want) <= 1, bd)
+        ok('%dx%d: the winners start lower than the final scores, by at least 3%% of the height (%s against %s)' % (w, h, pd.get('top'), bd.get('top')),
+           pd.get('top') is not None and bd.get('top') is not None and pd['top'] - bd['top'] >= 0.03 * h - 0.5, [pd, bd])
 
 
 def snap(B, base, path, w, h, states, stem):

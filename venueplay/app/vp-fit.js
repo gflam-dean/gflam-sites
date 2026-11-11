@@ -94,11 +94,15 @@
      corner whose box is wider than its text), and the wall is then scaled AND moved up or down
      the least it takes for nothing it painted to sit under one. A page that marks nothing is
      fitted exactly as before: this path only runs when there is something to avoid. */
-  function avoidRects() {
+  /* data-fit-only="<layer id> ...": a keep-out for those layers only (the hosted-by winners slide sits lower than the
+     rest, Dean 11 Nov 2026). Without it a keep-out holds for every layer, as before. */
+  function avoidRects(layer) {
     var out = [], els = d.querySelectorAll("[data-fit-avoid]");
     for (var i = 0; i < els.length; i++) {
       var e = els[i];
       if (e.classList.contains("hidden")) continue;
+      var only = e.getAttribute("data-fit-only");
+      if (only && (!layer || (" " + only + " ").indexOf(" " + layer.id + " ") < 0)) continue;
       var cs = getComputedStyle(e);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       var parts = e.getAttribute("data-fit-avoid") === "kids" ? e.children : [e];
@@ -196,7 +200,7 @@
     var tf = scale === 1 ? "" : "scale(" + scale + ")";
     /* data-fit-self: a layer that already stops short of the keep-outs on its own (a full-wall
        board) is only fitted to the screen, as before. */
-    var avoids = layer.hasAttribute("data-fit-self") ? [] : avoidRects();
+    var avoids = layer.hasAttribute("data-fit-self") ? [] : avoidRects(layer);
     if (avoids.length) {
       var lb = layer.getBoundingClientRect();
       var W = w.innerWidth, H = w.innerHeight;

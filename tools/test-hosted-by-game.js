@@ -122,7 +122,8 @@ function card(r, g) { return r && r.body && r.body[g]; }
        && lib.fromQuery('?hostedby=Quiz&hostlogo=https://evil.example/x.png').logo === '');
   var src = readFile('venueplay/app/vp-hostedby.js');
   show('one layout only (Dean picked "hosted by" under the game\'s name, 11 Nov 2026): no ?hostedat= switch, no top or bottom mode, no option B', !/hostedat/.test(src) && !/\bMODE\b/.test(src) && !/\bSPLIT\b/.test(src) && !/hb-bottom|hb-top|hb-inline/.test(src));
-  show('  the words are one line under the game\'s name and the slide is held clear of one fixed band (the same height on every variant)', /id = "hostedByLine"/.test(src) && /id = "hostedByBand"/.test(src) && /var BAND = 0\.\d+;/.test(src) && /data-fit-ignore/.test(src));
+  show('  the words are one line under the game\'s name and the slide is held clear of one fixed band (the same height on every variant)', /id = "hostedByLine"/.test(src) && /mkBand\("hostedByBand", ""\)/.test(src) && /var UNDER = 0\.\d+;/.test(src) && /data-fit-ignore/.test(src));
+  show('  the winners a little lower (their own keep-out) and the final scores where Dean left them (11 Nov 2026, INBOX 249)', /mkBand\("hostedByBandWin", "tvPodium"\)/.test(src) && /mkBand\("hostedByBandBoard", "tvBoard"\)/.test(src) && /var BOARD = 0\.172;/.test(src));
 
 })().catch(function (e) { show('threw: ' + (e && e.stack || e), false); }).then(function () {
   print(bad ? (bad + ' of ' + ran + ' checks FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));
