@@ -87,6 +87,11 @@
                clear of the bottom for overscan (40px at 720). A vp-fit keep-out, so a slide that reaches the
                bottom (the podium) is lifted clear of it; the header never changes. */
   var MODE = /[?&]hostedat=bottom(&|$)/.test(String((w.location && w.location.search) || "")) ? "bottom" : "top";
+  /* TEMPORARY, 11 Nov 2026 (INBOX 215): two options for Dean, pictures only; ONE will be removed. ?hostedat=under
+     (option A) puts "hosted by <name>" as a smaller line centred under the game's name; ?hostedat=line (option B)
+     puts it on the game's name's own baseline: TRIVIA  hosted by <name>. In both the host's LOGO stays top left,
+     after the venue's logo, and the HOSTED BY words leave it. The default is unchanged. */
+  var SPLIT = (/[?&]hostedat=(under|line)(&|$)/.exec(String((w.location && w.location.search) || "")) || [])[1] || "";
 
   function css() {
     if (d.getElementById("vpHostedByCss")) return;
@@ -107,7 +112,18 @@
       /* bottom: one line, label, logo, name */
       ".hostedby.hb-bottom{gap:max(10px,1.3vh)}" +
       ".hostedby.hb-bottom .hb-text{flex-direction:row;align-items:center;gap:max(10px,1.3vh)}" +
-      ".hostedby.hb-bottom .hb-name{font-size:max(16px,2.6vh);-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}";
+      ".hostedby.hb-bottom .hb-name{font-size:max(16px,2.6vh);-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}" +
+      /* options A and B: the logo stays by the venue's, the words are a line in the game's name's box */
+      ".hostedby.hb-split .hb-text{display:none}" +
+      ".toplbl .hb-line{font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:1.55cqw;line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
+      ".toplbl .hb-line[hidden]{display:none}" +
+      ".toplbl .hb-line b{font-weight:800;color:#fff}" +
+      ".hb-underline{position:fixed;z-index:60;pointer-events:none;display:block;text-align:center;font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:max(16px,2.78vh);line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
+      ".hb-underline[hidden]{display:none}" +
+      ".hb-underline b{font-weight:800;color:#fff}" +
+      ".toplbl .hb-line{font-size:2.78vh}" +
+      ".toplbl .hb-line.hb-inline{flex:0 1 auto;margin-left:1cqw}" +
+      "";
     (d.head || d.documentElement).appendChild(s);
   }
 
@@ -116,7 +132,7 @@
     css();
     el = d.createElement("div");
     el.id = "hostedBy";
-    el.className = "hostedby hb-" + MODE;
+    el.className = "hostedby hb-" + MODE + (SPLIT ? " hb-split" : "");
     if (MODE === "bottom") el.setAttribute("data-fit-avoid", "");
     el.hidden = true;
     var img = d.createElement("img"); img.className = "hb-logo"; img.alt = ""; img.hidden = true;
@@ -131,6 +147,50 @@
     return el;
   }
 
+  /* A and B: the words, in every game name's box (each slide has its own). */
+  var under = null, underKey = "";
+  function paintUnder(c) {
+    if (!c) { if (under) under.hidden = true; underKey = ""; try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} return; }
+    if (!under) {
+      under = d.createElement("div"); under.id = "hostedByLine"; under.className = "hb-underline"; under.setAttribute("data-fit-avoid", "");
+      (d.body || d.documentElement).appendChild(under);
+    }
+    under.textContent = "";
+    under.appendChild(d.createTextNode("hosted by "));
+    var b = d.createElement("b"); b.textContent = c.name; under.appendChild(b);
+    under.hidden = false;
+    placeUnder();
+  }
+  function placeUnder() {
+    if (!under || under.hidden) return;
+    var W = w.innerWidth || 1920, tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
+    for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.top < tl.top)) tl = tr; }
+    if (!tl) return;
+    var mid = tl.left + tl.width / 2, mw = Math.round(0.5 * W);
+    under.style.maxWidth = mw + "px";
+    under.style.left = Math.round(mid - mw / 2) + "px"; under.style.width = mw + "px";
+    under.style.top = Math.round(tl.bottom + Math.max(2, 0.004 * (w.innerHeight || 1080))) + "px";
+    var at = under.style.left + "," + under.style.top;
+    if (at !== underKey) { underKey = at; try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} }
+  }
+  function paintLines(c) {
+    if (SPLIT === "under") { paintUnder(c); return; }
+    var tls = d.querySelectorAll(".toplbl");
+    for (var i = 0; i < tls.length; i++) {
+      var t = tls[i], ln = t.querySelector(".hb-line");
+      if (!c) { if (ln) ln.hidden = true; continue; }
+      if (!ln) {
+        ln = d.createElement("span");
+        t.appendChild(ln);
+      }
+      ln.className = "hb-line hb-inline";
+      ln.textContent = "";
+      ln.appendChild(d.createTextNode("hosted by "));
+      var b = d.createElement("b"); b.textContent = c.name; ln.appendChild(b);
+      ln.hidden = false;
+    }
+  }
+
   function visible(x) {
     if (!x || x.hidden) return null;
     var cs = w.getComputedStyle ? w.getComputedStyle(x) : null;
@@ -141,6 +201,7 @@
 
   var placedAt = "";
   function place() {
+    if (SPLIT === "under") placeUnder();
     if (!el || el.hidden) return;
     var W = w.innerWidth || 1920, H = w.innerHeight || 1080;
     var inset = Math.max(14, Math.round(0.012 * W)), gap = Math.max(16, Math.round(0.016 * W));
@@ -173,6 +234,7 @@
         var gp = parseFloat(w.getComputedStyle(el.querySelector(".hb-text")).rowGap) || 0, nfs = parseFloat(w.getComputedStyle(nmEl).fontSize) || 0;
         txtH = Math.round(lblEl.offsetHeight + gp + 1.15 * nfs);
       } catch (e) {}
+      if (SPLIT) txtH = Math.round(0.05 * H);
       ih = Math.max(logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H), txtH);
       img.style.height = Math.round(ih) + "px"; img.style.maxWidth = Math.round(0.13 * W) + "px";
       var anchor = logo || tag, left = anchor ? anchor.right + gap : inset;
@@ -183,7 +245,7 @@
       var tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
       for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.left < tl.left)) tl = tr; }
       var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.28 * W);
-      s.maxWidth = Math.round(Math.max(0.1 * W, stop - left)) + "px";
+      s.maxWidth = SPLIT ? Math.round(0.13 * W + 40) + "px" : Math.round(Math.max(0.1 * W, stop - left)) + "px";
       /* CENTRED ON THE LOGOS' LINE, BUT NEVER HIGHER THAN THE LOGOS THEMSELVES (15 Nov 2026). Beside a short
          anchor (a wide wordmark, a venue's name) the two-line block is taller than the anchor, and centring it
          put HOSTED BY 14px from the top of a 720 TV, above the venue's logo and our mark, where a TV that crops
@@ -211,12 +273,13 @@
     var key = c ? JSON.stringify(c) : "";
     if (key === shown) return;
     shown = key;
+    if (SPLIT) paintLines(c);
     if (!c) { if (el) el.hidden = true; if (MODE === "bottom") { try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} } return; }
     make();
     var img = el.querySelector(".hb-logo"), nm = el.querySelector(".hb-name");
     nm.textContent = c.name;
     if (c.logo) { img.hidden = false; img.src = c.logo; } else { img.hidden = true; img.removeAttribute("src"); }
-    el.hidden = false;
+    el.hidden = !!(SPLIT && !c.logo);
     place();
     if (!timer) {
       timer = setInterval(place, 1000);   // the venue logo arrives and resizes after load
