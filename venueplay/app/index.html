@@ -106,6 +106,8 @@
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .skiplink{display:inline-block;margin-top:16px;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer}
   .skiplink:hover{color:var(--pink)}
+  .wrongnum{font-size:13px;color:var(--text);line-height:1.55;margin-top:10px;text-align:center;text-wrap:pretty}
+  .wrongnum a,.wrongnum .wnlink{color:var(--pink);text-decoration:underline;cursor:pointer;white-space:nowrap}
   .demorow{display:flex;gap:10px;margin-top:18px}
   .demorow .btn{flex:1}
   .demolbl{font-size:10.5px;color:var(--faint);text-transform:none;font-weight:700;font-family:'Hanken Grotesk',sans-serif;margin-top:22px;margin-bottom:2px}
@@ -405,6 +407,9 @@
         <div class="vp-c" id="stepMobile">
           <label class="flabel">Mobile number</label>
           <input class="vp-c" id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel">
+          <!-- OUR NUMBER, FILLED IN FROM OUR LINK (Dean, 12 Nov 2026). Shown only when the link filled the box. -->
+          <div class="hidden vp-c" id="notMine"><span class="skiplink" id="notMineBtn" role="button" tabindex="0" style="margin-top:8px">Not your number?</span></div>
+          <div class="hidden wrongnum" id="wrongNum" role="status" aria-live="polite"></div>
           <div class="cerr" id="mobileErr"></div>
           <button class="btn pink big" id="sendCodeBtn" style="margin-top:4px">Send code</button>
         </div>
@@ -1070,26 +1075,81 @@
      box, one Verify, one shift start, so the two ways in cannot drift apart. */
   var MODE="sms", EMAIL="";
   function showEmailAlt(){ $("emailAlt").classList.remove("hidden"); }
+  /* A DIFFERENT NUMBER IN OUR PRE-FILLED BOX SENDS NO CODE (Dean, 12 Nov 2026). Our link fills in the mobile we
+     hold for their venue. A different number typed over it made a brand new login for that number (phone codes
+     create a login when there is none), which signs in to "This login is not linked to a venue yet": a stray
+     login, and they never reach their venue. So: same number in any format (04.., +614.., spaces) sends as
+     always; a different one is told, once, and nothing is sent. "Not your number?" only explains; it is not a
+     way round. A visit with nothing filled in (hosts, new venues, the short link with no mobile) is unchanged.
+     The page does not know the venue's name from the link, so it says "your venue". */
+  var PREFILL_E164="";
+  var WRONG_NUMBER_LINES={
+    changed: "That's not the number we have for your venue. <span class=\"wnlink\" id=\"useOursBtn\" role=\"button\" tabindex=\"0\">Use that one</span>, or call us on <a href=\"tel:+61752283667\">07 5228 3667</a> (press 2) to change it.",
+    help: "That's the number we have for your venue. If it's not yours, call us on <a href=\"tel:+61752283667\">07 5228 3667</a> (press 2) to change it."
+  };
+  function wrongNumberLine(kind){
+    var box=$("wrongNum"); if(!box) return;
+    box.innerHTML=WRONG_NUMBER_LINES[kind]||"";
+    box.setAttribute && box.setAttribute("data-kind", kind);
+    box.classList.remove("hidden");
+  }
+  function hideWrongNumber(){ var box=$("wrongNum"); if(box){ box.classList.add("hidden"); box.innerHTML=""; } }
+  function prefillWords(e164){ var d="0"+String(e164||"").replace(/\D/g,"").slice(2); return d.slice(0,4)+" "+d.slice(4,7)+" "+d.slice(7); }
+  function setPrefill(local){
+    PREFILL_E164 = /^04\d{8}$/.test(local||"") ? toE164(local) : "";
+    var nm=$("notMine"); if(nm) nm.classList[PREFILL_E164 ? "remove" : "add"]("hidden");
+    if(!PREFILL_E164) hideWrongNumber();
+  }
+
+  /* THE SHORT LINK'S ATTACH: ONLY A YES GOES ON TO A CODE (Dean, 12 Nov 2026). Any other answer used to fall through
+     to a phone code, and a phone code makes a login for a number that has none: the same stray login as above. Now:
+     200 {ok} sends the code; 400 or "taken" says the Worker's own words; 409 (link claimed or ended, or we already
+     hold a mobile) says so, forgets the letters and from then on this tab only sends a code to a login that already
+     exists (shouldCreateUser:false); 429, any other answer, or no answer at all (Worker unreachable) asks them to
+     wait a minute. None of them sends a code. */
+  var SHORT_ATTACH_WORDS={
+    busy: "Something went wrong. Wait a minute and try again.",
+    used: "This link has already been used. Sign in with the number we have for your venue, or call us on 07 5228 3667 (press 2).",
+    has_mobile: "We already have a mobile for your venue. Sign in with that number, or call us on 07 5228 3667 (press 2) to change it."
+  };
+  function shortAttachVerdict(status, j){
+    j=j||{};
+    if(status===200 && j.ok===true) return { go:true };
+    if((status===400 || j.taken) && j.error) return { msg:String(j.error) };
+    if(status===409 && j.has_mobile) return { msg:SHORT_ATTACH_WORDS.has_mobile, existingOnly:"has_mobile" };
+    if(status===409 && j.state) return { msg:SHORT_ATTACH_WORDS.used, existingOnly:"used" };
+    return { msg:SHORT_ATTACH_WORDS.busy };
+  }
+  function noSuchLogin(err){ return /signups? not allowed|otp_disabled|user not found/i.test(String((err&&err.message)||"")+" "+String((err&&(err.code||err.error_code))||"")); }
 
   $("sendCodeBtn").addEventListener("click", function(){
     var raw=($("mobileIn").value||"").trim();
     if(raw.replace(/\D/g,"").length<8){ $("mobileErr").textContent="Pop in a mobile number to get a code."; return; }
     var e164=toE164(raw);
     if(!e164){ $("mobileErr").textContent="Pop in a mobile number to get a code."; return; }
+    if(PREFILL_E164 && e164!==PREFILL_E164){ $("mobileErr").textContent=""; wrongNumberLine("changed"); return; }   // no code, no login
+    hideWrongNumber();
     E164=e164; $("mobileErr").textContent="";
     var btn=this; btn.disabled=true; btn.textContent="Sending...";
     /* THE SHORT LINK, NO MOBILE YET (Dean, 6 Nov 2026): venueplay.com.au/s/... left its letters here (s.html). The
        billing Worker puts the number they typed on THAT account's login first, so the code below reaches the right
        login; the code then proves the number is theirs, and it is their login from then on. One use, then forgotten. */
-    var shortCode=""; try{ shortCode=sessionStorage.getItem("vpShortAttach")||""; }catch(e){}
+    var shortCode="", existingOnly=""; try{ shortCode=sessionStorage.getItem("vpShortAttach")||""; existingOnly=sessionStorage.getItem("vpShortExistingOnly")||""; }catch(e){}
     var attach = shortCode ? fetch("https://api.venueplay.com.au/short/attach", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ code:shortCode, mobile:e164 }) })
-        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._status=r.status; return j; }); })
-        .then(function(j){ if(j && j.error && j._status===400 || j && j.taken){ throw { shortMsg: j.error }; } try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} }, function(){})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return shortAttachVerdict(r.status, j); }); }, function(){ return shortAttachVerdict(0, null); })
+        .then(function(v){
+          if(v.go){ try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} return; }
+          if(v.existingOnly){ existingOnly=v.existingOnly; try{ sessionStorage.removeItem("vpShortAttach"); sessionStorage.setItem("vpShortExistingOnly", v.existingOnly); }catch(e){} }
+          throw { shortMsg: v.msg };   // no code, no login
+        })
       : Promise.resolve();
-    attach.then(function(){ return client.auth.signInWithOtp({ phone:e164 }); }, function(err){ btn.disabled=false; btn.textContent="Send code"; $("mobileErr").textContent=(err && err.shortMsg) || "Pop in a mobile number to get a code."; return { _stop:true }; }).then(function(res){
+    attach.then(function(){ return client.auth.signInWithOtp(existingOnly ? { phone:e164, options:{ shouldCreateUser:false } } : { phone:e164 }); }, function(err){ btn.disabled=false; btn.textContent="Send code"; $("mobileErr").textContent=(err && err.shortMsg) || SHORT_ATTACH_WORDS.busy; return { _stop:true }; }).then(function(res){
       if(res && res._stop) return;
       btn.disabled=false; btn.textContent="Send code";
-      if(res && res.error){ if(otpSendError(res.error)==="ours") showEmailAlt(); return; }
+      if(res && res.error){
+        if(existingOnly && noSuchLogin(res.error)){ $("mobileErr").textContent=SHORT_ATTACH_WORDS[existingOnly]||SHORT_ATTACH_WORDS.used; return; }
+        if(otpSendError(res.error)==="ours") showEmailAlt(); return;
+      }
       MODE="sms";
       $("sentTo").textContent=e164;
       $("stepMobile").classList.add("hidden");
@@ -1114,6 +1174,13 @@
     if(hm){
       var mi=$("mobileIn"); if(mi) mi.value=hm[1].slice(0,4)+" "+hm[1].slice(4,7)+" "+hm[1].slice(7);
       try{ window.history.replaceState(null, "", window.location.pathname + q); }catch(e){}
+      try{ sessionStorage.setItem("vpPrefillMobile", hm[1]); }catch(e){}
+      setPrefill(hm[1]);
+    } else {
+      /* The address lost #m= when it was read, so a reload in this tab keeps our number (and its guard) from here. */
+      var kept=""; try{ kept=sessionStorage.getItem("vpPrefillMobile")||""; }catch(e){}
+      if(/^04\d{8}$/.test(kept)){ var mk=$("mobileIn"); if(mk && !mk.value) mk.value=prefillWords(toE164(kept)); }
+      setPrefill(kept);
     }
     $("stepEmail").classList.add("hidden");
     $("stepCode").classList.add("hidden");
@@ -1179,6 +1246,18 @@
      did, so on a laptop a host typed the code, pressed Enter, and nothing happened. On a phone the
      keyboard's Go key is the same event. */
   $("mobileIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("sendCodeBtn").click(); } });
+  /* Our pre-filled number (see PREFILL_E164): "Not your number?" explains and changes nothing; "Use that one" puts our
+     number back; typing our number back (any format) clears the line. */
+  $("notMineBtn").addEventListener("click", function(){ $("mobileErr").textContent=""; wrongNumberLine("help"); });
+  $("notMineBtn").addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); this.click(); } });
+  $("wrongNum").addEventListener("click", function(e){
+    var t=e && e.target; if(!t || t.id!=="useOursBtn" || !PREFILL_E164) return;
+    $("mobileIn").value=prefillWords(PREFILL_E164); hideWrongNumber(); $("mobileErr").textContent="";
+  });
+  $("wrongNum").addEventListener("keydown", function(e){ if(e.target && e.target.id==="useOursBtn" && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); e.target.click(); } });
+  $("mobileIn").addEventListener("input", function(){
+    if(PREFILL_E164 && toE164(this.value||"")===PREFILL_E164) hideWrongNumber();
+  });
   $("otpIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("verifyBtn").click(); } });
   $("verifyBtn").addEventListener("click", function(){
     var code=($("otpIn").value||"").replace(/\D/g,"");
@@ -1188,6 +1267,7 @@
     client.auth.verifyOtp(ask).then(function(res){
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
+      try{ sessionStorage.removeItem("vpPrefillMobile"); sessionStorage.removeItem("vpShortExistingOnly"); }catch(e){}   // signed in: our link's number is done with
       try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });

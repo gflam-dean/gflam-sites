@@ -150,13 +150,23 @@ check('rate-limited: told to wait, the button comes back, the link is not given 
 /* ============================== 3. the sign-in page ============================== */
 section('3. The sign-in page: ALWAYS the mobile and a text code first (Dean, 29 Oct 2026)');
 var INDEX = readFile('venueplay/app/index.html');
+/* The wrong-number guard's own words and helpers (Dean, 12 Nov 2026), lifted as shipped so every harness that runs Send code runs it. */
+var WRONG_NUMBER_SRC = (function () {
+  var i = INDEX.indexOf('var WRONG_NUMBER_LINES='); if (i < 0) return '';
+  var j = INDEX.indexOf('};', i) + 2;
+  return 'var WRONG_NUMBER_LINES=' + INDEX.slice(i + 'var WRONG_NUMBER_LINES='.length, j) + '\n' + ['wrongNumberLine', 'hideWrongNumber', 'prefillWords', 'setPrefill'].map(function (n) { return lift(INDEX, n); }).join('\n') + '\n';
+})();
+var SHORT_ATTACH_SRC = (function () {   // the /short/attach answers (Dean, 12 Nov 2026): their words and the verdict, as shipped
+  var i = INDEX.indexOf('var SHORT_ATTACH_WORDS='); if (i < 0) return 'var SHORT_ATTACH_WORDS={};\n';
+  return INDEX.slice(i, INDEX.indexOf('};', i) + 2) + '\n' + lift(INDEX, 'shortAttachVerdict') + '\n' + lift(INDEX, 'noSuchLogin') + '\n';
+})();
 function signInPage(search, ls, prefill) {
-  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn'], els = {};
+  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn', 'notMine', 'wrongNum'], els = {};
   ids.forEach(function (i) { els[i] = new El(i); });
   els.stepCode.classList.add('hidden'); els.emailAlt.classList.add('hidden'); els.stepEmail.classList.add('hidden');
   els.authSub.textContent = 'Sign in with a text code to your mobile.';
   var LS = ls || store(), SS = store(); if (prefill) SS.setItem('vpSignInPrefill', prefill);
-  var fn = (new Function('$', 'localStorage', 'sessionStorage', 'window', 'var SUB_TEXT="Sign in with a text code to your mobile.";\n' + lift(INDEX, 'openSignInStep') + '\nreturn openSignInStep();'));
+  var fn = (new Function('$', 'localStorage', 'sessionStorage', 'window', 'var SUB_TEXT="Sign in with a text code to your mobile.", PREFILL_E164="";\n' + lift(INDEX, 'toE164') + '\n' + WRONG_NUMBER_SRC + lift(INDEX, 'openSignInStep') + '\nreturn openSignInStep();'));
   var hist = [], hash = arguments[3] || '';
   var out = fn(function (id) { return els[id]; }, LS, SS, { location: { search: search, hash: hash, pathname: '/app/' },
     history: { replaceState: function (a, b, u) { hist.push(u); } } });
@@ -213,6 +223,90 @@ check('a verified code (either way) starts the 4 hour shift and routes on, and r
 var initAt = INDEX.indexOf('// ================= INIT ================='), bootAt = INDEX.indexOf('go("vBoot");', initAt), callAt = INDEX.indexOf('openSignInStep();', initAt);
 check('index.html calls openSignInStep() at start-up, before the auth check routes anywhere', initAt > 0 && callAt > initAt && callAt < bootAt, [initAt, callAt, bootAt]);
 
+
+/* ============================== 3w. a different number in our pre-filled box ============================== */
+section('3w. Our link filled in their mobile: a DIFFERENT number sends no code (Dean, 12 Nov 2026, the stray login)');
+/* The whole sign-in step as shipped, in one scope: openSignInStep reads #m=, then the REAL Send code, "Not your
+   number?", "Use that one" and the box's input listener. A changed number used to go straight to signInWithOtp,
+   which makes a new login for it and lands on "This login is not linked to a venue yet". */
+function flowRun(hash, ssInit) {
+  var R = { otps: [], posts: [] }, els = {};
+  ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn', 'mobileErr', 'sentTo', 'otpIn', 'notMine', 'notMineBtn', 'wrongNum', 'sendCodeBtn'].forEach(function (id) {
+    els[id] = new El(id); els[id].focus = function () {}; });
+  ['stepCode', 'emailAlt', 'stepEmail', 'notMine', 'wrongNum'].forEach(function (id) { els[id].classList.add('hidden'); });
+  els.sendCodeBtn.textContent = 'Send code';
+  var SS = store(); Object.keys(ssInit || {}).forEach(function (k) { SS.setItem(k, ssInit[k]); });
+  var client = { auth: { signInWithOtp: function (o) { R.otps.push(o); return Promise.resolve({ error: null }); } } };
+  var fetch = function (u, o) { R.posts.push({ u: u, b: JSON.parse(o.body) }); return Promise.resolve({ status: 200, json: function () { return Promise.resolve({ ok: true }); } }); };
+  var win = { location: { search: '?signin=sms', hash: hash, pathname: '/app/' }, history: { replaceState: function () {} } };
+  function wire(id, ev, marker) { if (INDEX.indexOf(marker) >= 0) return 'els.' + id + '.addEventListener("' + ev + '", ' + liftAfter(INDEX, marker) + ');\n'; return ''; }
+  var src = 'var E164="", MODE="sms", PREFILL_E164="", SUB_TEXT="Sign in with a text code to your mobile.";\n' +
+    'function otpSendError(){ return "ours"; } function showEmailAlt(){}\n' +
+    lift(INDEX, 'toE164') + '\n' + WRONG_NUMBER_SRC + SHORT_ATTACH_SRC + lift(INDEX, 'openSignInStep') + '\nopenSignInStep();\n' +
+    wire('sendCodeBtn', 'click', '$("sendCodeBtn").addEventListener("click", ') +
+    wire('notMineBtn', 'click', '$("notMineBtn").addEventListener("click", ') +
+    wire('wrongNum', 'click', '$("wrongNum").addEventListener("click", ') +
+    wire('mobileIn', 'input', '$("mobileIn").addEventListener("input", ');
+  (new Function('$', 'els', 'client', 'sessionStorage', 'localStorage', 'fetch', 'window', src))(function (id) { return els[id]; }, els, client, SS, store(), fetch, win);
+  R.els = els; R.SS = SS;
+  R.send = function (typed) { if (typed !== undefined) els.mobileIn.value = typed; els.sendCodeBtn.click(); settle(); return R; };
+  R.type = function (v) { els.mobileIn.value = v; (els.mobileIn.handlers.input || []).forEach(function (f) { f.call(els.mobileIn); }); return R; };
+  R.line = function () { return els.wrongNum.classList.contains('hidden') ? '' : String(els.wrongNum.innerHTML || '').replace(/<[^>]+>/g, ''); };
+  R.shown = function (id) { return !els[id].classList.contains('hidden'); };
+  return R;
+}
+var CHANGED_LINE = "That's not the number we have for your venue. Use that one, or call us on 07 5228 3667 (press 2) to change it.";
+var W0 = flowRun('#m=0452510904').send();
+check('our number, untouched: the code goes to it as always (+61452510904), on to the code step, no wrong-number line',
+  W0.otps.length === 1 && W0.otps[0].phone === '+61452510904' && !W0.els.stepCode.classList.contains('hidden') && W0.line() === '', [W0.otps, W0.line()]);
+var W1 = flowRun('#m=0452510904').send('0433 999 888');
+check('a DIFFERENT number typed over ours: NO code (signInWithOtp never called), no call to us, still on the mobile step',
+  W1.otps.length === 0 && W1.posts.length === 0 && W1.els.stepCode.classList.contains('hidden') && W1.els.sendCodeBtn.disabled === false, W1.otps);
+check('...and one line says so, word for word: "' + CHANGED_LINE + '"', W1.line() === CHANGED_LINE && W1.els.mobileErr.textContent === '', [W1.line(), W1.els.mobileErr.textContent]);
+check('...the phone in it is the support line as a tel: link, never a person\'s mobile', /<a href="tel:\+61752283667">07 5228 3667<\/a>/.test(W1.els.wrongNum.innerHTML) && !/\b04\d{2}\s?\d{3}\s?\d{3}\b/.test(W1.els.wrongNum.innerHTML), W1.els.wrongNum.innerHTML);
+W1.send('0433 999 888');
+check('...asked again, still no code', W1.otps.length === 0, W1.otps);
+var fm = ['+61 452 510 904', '0452-510-904', '61452510904', ' 0452510904 ', '(04) 5251 0904'].map(function (f) { var w = flowRun('#m=0452510904').send(f); return [f, w.otps.length, w.otps[0] && w.otps[0].phone, w.line()]; });
+check('our number in another format (+61 452.., dashes, 614.., spaces, brackets) is the same number: sent to +61452510904, no line',
+  fm.every(function (x) { return x[1] === 1 && x[2] === '+61452510904' && x[3] === ''; }), fm);
+var W2 = flowRun('#m=0452510904').send('0433 999 888'); W2.type('0452 510 904');
+check('changed, then typed back to ours: the line clears as they type', W2.line() === '', W2.line());
+W2.send();
+check('...and Send code then sends to our number', W2.otps.length === 1 && W2.otps[0].phone === '+61452510904', W2.otps);
+var W3 = flowRun('#m=0452510904').send('0433 999 888');
+(W3.els.wrongNum.handlers.click || []).forEach(function (f) { f.call(W3.els.wrongNum, { target: { id: 'useOursBtn' } }); });
+check('"Use that one" puts our number back in the box and clears the line', W3.els.mobileIn.value === '0452 510 904' && W3.line() === '', [W3.els.mobileIn.value, W3.line()]);
+W3.send();
+check('...and it sends to our number', W3.otps.length === 1 && W3.otps[0].phone === '+61452510904', W3.otps);
+var W4 = flowRun('#m=0452510904');
+check('"Not your number?" is under the box when our link filled it in', W4.shown('notMine') && /<div class="hidden vp-c" id="notMine"><span class="skiplink" id="notMineBtn"[^>]*>Not your number\?<\/span><\/div>/.test(INDEX) &&
+  INDEX.indexOf('id="notMine"') > INDEX.indexOf('id="mobileIn"') && INDEX.indexOf('id="notMine"') < INDEX.indexOf('id="sendCodeBtn"'), W4.shown('notMine'));
+W4.els.notMineBtn.click(); settle();
+check('...tapping it shows the help line (the number we have, and the phone to change it) and sends nothing',
+  W4.line() === "That's the number we have for your venue. If it's not yours, call us on 07 5228 3667 (press 2) to change it." && W4.otps.length === 0, W4.line());
+W4.send('0433 999 888');
+check('...and it is not a way round: a different number after it still sends no code', W4.otps.length === 0 && W4.line() === CHANGED_LINE, [W4.otps, W4.line()]);
+var W5 = flowRun('').send('0433 999 888');
+check('NOTHING filled in (a host, a new venue): any number sends as always, no "Not your number?", no line',
+  W5.otps.length === 1 && W5.otps[0].phone === '+61433999888' && !W5.shown('notMine') && W5.line() === '' && W5.SS.getItem('vpPrefillMobile') === null, [W5.otps, W5.shown('notMine')]);
+var W6 = flowRun('#m=07522836' + '67').send('0433 999 888');
+check('a number in the link that is not a mobile fills nothing and guards nothing', W6.otps.length === 1 && !W6.shown('notMine'), W6.otps);
+var W7 = flowRun('', { vpPrefillMobile: '0452510904' });
+check('a reload in the same tab (the address has lost #m=): our number is back in the box with "Not your number?"', W7.els.mobileIn.value === '0452 510 904' && W7.shown('notMine'), W7.els.mobileIn.value);
+W7.send('0433 999 888');
+check('...and a different number is still refused', W7.otps.length === 0 && W7.line() === CHANGED_LINE, W7.otps);
+(function () {
+  var LS = store(), SS = store(); SS.setItem('vpPrefillMobile', '0452510904'); SS.setItem('vpShortExistingOnly', 'used');
+  var btn = new El('verifyBtn'), otp = new El('otpIn'); otp.value = '123456'; var els = { otpIn: otp, otpErr: new El('otpErr'), verifyBtn: btn };
+  var h = (new Function('$', 'localStorage', 'sessionStorage', 'MODE', 'EMAIL', 'E164', 'client', 'routeAfterAuth', 'return (' + liftAfter(INDEX, '$("verifyBtn").addEventListener("click", ') + ');'))(
+    function (id) { return els[id]; }, LS, SS, 'sms', '', '+61452510904', { auth: { verifyOtp: function () { return Promise.resolve({ data: { user: { id: 'u' }, session: {} }, error: null }); } } }, function () {});
+  h.call(btn); settle();
+  check('signed in with the code: our link\'s number is forgotten, so a later sign-in on this tab is a normal one', SS.getItem('vpPrefillMobile') === null && !!LS.getItem('vpShiftStart'), SS._s);
+  check('...and so is a refused short link\'s "existing logins only" (vpShortExistingOnly)', SS.getItem('vpShortExistingOnly') === null && !!LS.getItem('vpShiftStart'), SS._s);
+})();
+var WL = (function () { var i = INDEX.indexOf('var WRONG_NUMBER_LINES='); return i < 0 ? '' : INDEX.slice(i, INDEX.indexOf('};', i)); })();
+check('the new words have no em or en dash ("Not your number?", both lines)', WL.length > 0 && !/[–—]|&mdash;|&ndash;/.test(WL + 'Not your number?') &&
+  !/[–—]/.test(INDEX.slice(INDEX.indexOf('id="notMine"'), INDEX.indexOf('id="mobileErr"'))), WL.slice(0, 80));
 /* ============================== 4. the 4 hour sign-out ============================== */
 section('4. A shift the go page started still ends at 4 hours (compliance: opt-in player data)');
 function sessionAfter(startedMsAgo) {
@@ -451,18 +545,21 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('_redirects serves /s/* from that page, and it sends no referrer', /^\/s\/\*\s+\/s\s+200$/m.test(readFile('venueplay/_redirects')) && /name="referrer" content="no-referrer"/.test(SH));
   /* The sign-in page's Send code (app/index.html), run as shipped: with the letters left by /s/ (no mobile held) it puts
      the typed number on that account's login (POST /short/attach) BEFORE the code is sent; without them, as always. */
-  function sendCodeRun(store, attachAnswer, typed) {
+  function sendCodeRun(store, attachAnswer, typed, otpAnswer) {
     var R = { posts: [], otps: [], err: '', store: store };
     var els = {}; ['mobileIn', 'mobileErr', 'sentTo', 'stepMobile', 'stepCode', 'otpIn', 'emailAlt'].forEach(function (id) { els[id] = new El(id); els[id].focus = function () {}; });
     els.mobileIn.value = typed || '0433 444 555';
+    els.stepCode.classList.add('hidden');   // the page opens on the mobile step
     var $ = function (id) { return els[id]; };
-    var client = { auth: { signInWithOtp: function (o) { R.otps.push(o); return Promise.resolve({ error: null }); } } };
-    var sessionStorage = { getItem: function (k) { return k in store ? store[k] : null; }, removeItem: function (k) { delete store[k]; } };
+    var client = { auth: { signInWithOtp: function (o) { R.otps.push(o); return Promise.resolve(otpAnswer && o.options && o.options.shouldCreateUser === false ? otpAnswer : { error: null }); } } };
+    var sessionStorage = { getItem: function (k) { return k in store ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
     var fetch = function (u, o) { R.posts.push({ u: u, b: JSON.parse(o.body) }); var a = attachAnswer || { status: 200, body: { ok: true } };
-      return Promise.resolve({ status: a.status, json: function () { return Promise.resolve(a.body); } }); };
+      if (a === 'down') return Promise.reject(new TypeError('Failed to fetch'));   // the Worker unreachable
+      return Promise.resolve({ status: a.status, json: function () { return a.body === 'not json' ? Promise.reject(new SyntaxError('bad json')) : Promise.resolve(a.body); } }); };
     var h = liftAfter(INDEX, '$("sendCodeBtn").addEventListener("click", ');
+    els.wrongNum = new El('wrongNum'); els.wrongNum.classList.add('hidden');
     var fn = (new Function('$', 'client', 'sessionStorage', 'fetch', 'toE164', 'otpSendError', 'showEmailAlt',
-      'var E164 = "", MODE = "sms";\n' + 'return ' + h + ';'))($, client, sessionStorage, fetch, (new Function(lift(INDEX, 'toE164') + '\nreturn toE164;'))(), function () { return 'ours'; }, function () {});
+      'var E164 = "", MODE = "sms", PREFILL_E164 = "";\n' + WRONG_NUMBER_SRC + SHORT_ATTACH_SRC + 'return ' + h + ';'))($, client, sessionStorage, fetch, (new Function(lift(INDEX, 'toE164') + '\nreturn toE164;'))(), function () { return 'ours'; }, function () {});
     fn.call({ disabled: false, textContent: 'Send code' });
     for (var i = 0; i < 10; i++) drainMicrotasks();
     R.err = els.mobileErr.textContent; R.stepCode = !els.stepCode.classList.contains('hidden');
@@ -474,8 +571,35 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
     sc1.otps.length === 1 && sc1.otps[0].phone === '+61433444555' && !('vpShortAttach' in sc1.store), sc1);
   var sc2 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 409, body: { error: 'That mobile already has a venueplay login. Sign in with it, or use a different mobile.', taken: true } });
   check('...a mobile that is another login: they are told, and NO code is sent', sc2.otps.length === 0 && /already has a venueplay login/.test(sc2.err), sc2);
+  /* Every OTHER attach answer stops too (Dean, 12 Nov 2026). It used to fall through to signInWithOtp({phone}), which
+     makes a brand new login for a number that has none: the stray login on "This login is not linked to a venue yet". */
+  var BUSY = 'Something went wrong. Wait a minute and try again.';
+  var USED = 'This link has already been used. Sign in with the number we have for your venue, or call us on 07 5228 3667 (press 2).';
+  var HASM = 'We already have a mobile for your venue. Sign in with that number, or call us on 07 5228 3667 (press 2) to change it.';
+  var scB = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 429, body: { error: 'Too many tries. Wait a minute.', busy: true } });
+  check('...429 busy: NO code (signInWithOtp never called), still on the mobile step, and "' + BUSY + '"; the letters are kept for the next try',
+    scB.posts.length === 1 && scB.otps.length === 0 && !scB.stepCode && scB.err === BUSY && scB.store.vpShortAttach === 'AB2CD7KMNPQR', scB);
+  var scD = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, 'down');
+  check('...the Worker unreachable (fetch rejects): NO code, the same wait-a-minute line, letters kept',
+    scD.posts.length === 1 && scD.otps.length === 0 && !scD.stepCode && scD.err === BUSY && scD.store.vpShortAttach === 'AB2CD7KMNPQR', scD);
+  var odd = [{ status: 500, body: { error: 'x' } }, { status: 502, body: 'not json' }, { status: 200, body: {} }, { status: 404, body: { error: 'Not found' } }].map(function (a) { var r = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, a); return [a.status, r.otps.length, r.err]; });
+  check('...any other answer (500, 502 with no JSON, a 200 without ok, 404): NO code, the wait-a-minute line', odd.every(function (x) { return x[1] === 0 && x[2] === BUSY; }), odd);
+  var scU = ['claimed', 'ended'].map(function (st) { var r = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 409, body: { ok: false, state: st } }); return r; });
+  check('...409 the link is claimed or ended: NO code, "' + USED + '", and the letters are forgotten',
+    scU.every(function (r) { return r.otps.length === 0 && !r.stepCode && r.err === USED && !('vpShortAttach' in r.store) && r.store.vpShortExistingOnly === 'used'; }), scU.map(function (r) { return [r.otps.length, r.err, r.store]; }));
+  var scH = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 409, body: { ok: false, has_mobile: true } });
+  check('...409 has_mobile (we already hold one): NO code, "' + HASM + '", letters forgotten',
+    scH.otps.length === 0 && !scH.stepCode && scH.err === HASM && !('vpShortAttach' in scH.store) && scH.store.vpShortExistingOnly === 'has_mobile', scH);
+  check('...the phone in all three lines is the support line, never a mobile, and none has an em or en dash',
+    SHORT_ATTACH_SRC.indexOf(BUSY) > 0 && SHORT_ATTACH_SRC.indexOf(USED) > 0 && SHORT_ATTACH_SRC.indexOf(HASM) > 0 && !/\b04\d{2}\s?\d{3}\s?\d{3}\b/.test(SHORT_ATTACH_SRC) && !/[\u2013\u2014]|&mdash;|&ndash;/.test(SHORT_ATTACH_SRC), SHORT_ATTACH_SRC.slice(0, 120));
+  var scN = sendCodeRun({ vpShortExistingOnly: 'has_mobile' }, null, '0452 510 904');
+  check('...after that 409, Send code again (the number we hold): no call to us, a code that can only reach a login that EXISTS (shouldCreateUser:false)',
+    scN.posts.length === 0 && scN.otps.length === 1 && scN.otps[0].phone === '+61452510904' && !!scN.otps[0].options && scN.otps[0].options.shouldCreateUser === false && scN.stepCode, scN.otps);
+  var scX = sendCodeRun({ vpShortExistingOnly: 'used' }, null, '0433 999 888', { error: { message: 'Signups not allowed for otp', code: 'otp_disabled', status: 422 } });
+  check('...and a number with no login is refused there (no new login), on the mobile step, with the same line',
+    scX.otps.length === 1 && !!scX.otps[0].options && scX.otps[0].options.shouldCreateUser === false && !scX.stepCode && scX.err === USED, [scX.otps, scX.err]);
   var sc3 = sendCodeRun({});
-  check('...and without the letters the page is exactly as before: no call to us, the normal code', sc3.posts.length === 0 && sc3.otps.length === 1 && sc3.otps[0].phone === '+61433444555', sc3);
+  check('...and without the letters the page is exactly as before: no call to us, the normal code', sc3.posts.length === 0 && sc3.otps.length === 1 && sc3.otps[0].phone === '+61433444555' && !sc3.otps[0].options, sc3);
   var GW = {}; (new Function('window', ONECLICK))(GW);
   check('the go page takes only the long one-tap token: the short letters are not a token there', GW.VPOneClick.parse('#t=ab2cd7kmnpqr').t === '' && GW.VPOneClick.parse('#t=' + TOKEN_A).t === TOKEN_A);
 
