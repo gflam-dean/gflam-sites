@@ -87,7 +87,7 @@ var ok0;
   paintVenueLogo('/logos/x.png');
   show('the venue logo the screen paints is marked as a keep-out', made && made.attrs['data-fit-avoid'] === '', made && JSON.stringify(made.attrs));
   show('Punters Reckon (a full-wall board) stops above the card instead', /#tvPR\{bottom:calc\(4\.6cqw \+ clamp\(44px,8cqw,110px\) \+ 2px\)\}/.test(SCREEN) && /id="tvPR" data-fit-self/.test(SCREEN));
-  show('vp-fit only fits a data-fit-self layer to the screen', /layer\.hasAttribute\("data-fit-self"\) \? \[\] : avoidRects\(\)/.test(FIT));
+  show('vp-fit only fits a data-fit-self layer to the screen', /layer\.hasAttribute\("data-fit-self"\) \? \[\] : avoidRects\(layer\)/.test(FIT));
 })();
 
 /* ======================================================================================= 2 */

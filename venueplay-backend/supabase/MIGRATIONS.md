@@ -752,3 +752,13 @@ used_at, so they stay dead) 90 days from its own created_at, unless those 90 day
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker is
 refused the 90 day row and makes a 30 day link, printing the days that link really has. NUMBER: 180 to 184 taken (183 was
 spoken for by an uncommitted link-life change), so 185. Branch `fix/link-90-days-15nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-181-hosted-by.sql` (Dean, 6 Nov 2026, INBOX 120, "Hosted by" on the TV with the host's logo): one new table,
+`vp_host_brands`, the Hosted by card per host LOGIN (name, 1 to 40 characters, and a logo in the venue-logos bucket under
+hosts/<login>/), so it follows the host to every venue they run; RLS on, no policy, anon and authenticated grants revoked,
+written only by the billing Worker. And ONE column, `vp_venue_staff.hosted_by` (jsonb, e.g. {"trivia":true,"musical":false}),
+each venue's own switch per game on that host's staff row there. No existing policy, grant or function changes.
+RLS-BASELINE.json gains one table: rerun venueplay-backend/tools/dump-rls-baseline.py after running and commit it. Either order
+with the Workers and the site: before it runs the game Worker's /host/hosted-by answers "nothing to show", the TV shows no
+line, and an owner's save on Account > People is told the feature is not switched on yet. NUMBER: 177 to 180 are taken, so
+181. Branch `fix/hosted-by-12nov`. NOT RUN. Read-back and rollback in the file.

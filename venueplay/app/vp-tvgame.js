@@ -60,9 +60,13 @@
       if (!mb) { var mk = d.querySelector(".tv-corner svg"); if (!mk) return; mb = mk.getBoundingClientRect(); }
       if (!(mb.height > 0)) return;
       var mid = mb.top + mb.height / 2, ls = d.querySelectorAll(".layer .toplbl");
+      /* HOSTED BY (Dean, 11 Nov 2026): the name and the "hosted by" line under it are ONE block, centred on the venue
+         logo's middle, so the name sits higher by half the line. VPHostedBy.titleTop says where; null when no card. */
+      var hb = (w.VPHostedBy && w.VPHostedBy.titleTop) ? w.VPHostedBy.titleTop : null;
       for (var i = 0; i < ls.length; i++) { var l = ls[i], h = l.offsetHeight; if (!h) continue;
         var lay = l.parentNode, lt = lay ? lay.getBoundingClientRect().top : 0;
-        var top = Math.round(mid - lt - h / 2) + "px"; if (l.style.top !== top) l.style.top = top; }
+        var want = hb ? hb(l) : null;
+        var top = Math.round(want == null ? mid - lt - h / 2 : want - lt) + "px"; if (l.style.top !== top) l.style.top = top; }
     } catch (e) {}
   }
   w.VPTvGame = { css: CSS, alignTitles: alignTitles };

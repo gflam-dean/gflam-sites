@@ -334,6 +334,7 @@
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
+<script src="/app/vp-hostedby.js"></script>   <!-- "Hosted by" beside the venue logo (INBOX 120) -->
 <script src="/app/vp-venueurl.js"></script>
 <script>
 (function(){
@@ -1082,6 +1083,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
+    if(m.t==="mode" && window.VPHostedBy){ try{ VPHostedBy.fromMessage(m); }catch(e){} }   // "Hosted by" beside the venue logo (INBOX 120)
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
@@ -1357,9 +1359,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
        server. */
     var demoLogo="/logos/venue-tugun-bowls.png";
     try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
+    /* ?logo=none: the demo venue with no logo, its name top left instead (6 Nov 2026, the Hosted by pictures). */
+    var noLogo=/[?&]logo=none(&|$)/.test(window.location.search||"");
     var dnt0=document.getElementById("venueNameTag");
-    if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=true; }
-    paintVenueLogo(demoLogo);
+    if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=!noLogo; }
+    paintVenueLogo(noLogo ? "" : demoLogo);
+    /* ?hostedby=<name>&hostlogo=/path: the Hosted by line as a host's card paints it (/app/vp-hostedby.js). */
+    try{ if(window.VPHostedBy) VPHostedBy.paint(VPHostedBy.fromQuery(window.location.search)); }catch(e){}
   }
   function paintVenueLogo(url){
     var el=document.getElementById("venueLogo");

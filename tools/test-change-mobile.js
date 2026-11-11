@@ -337,7 +337,7 @@ function anyHtml(n) { if (n.innerHTMLSet) return true; for (var i = 0; i < n.chi
   check('the editor is all textContent', !anyHtml(panel));
   var rh = lift(page, 'renderHosts');
   check('Edit mobile is drawn exactly where Remove is (mayTouch), and opens its own editor',
-    /mayTouch \? '<button class="edv">Edit venues<\/button><button class="edv edm">Edit mobile<\/button><button class="rm">Remove<\/button>'/.test(rh) &&
+    /mayTouch \? '<button class="edv">Edit venues<\/button><button class="edv edm">Edit mobile<\/button>'( \+ \(hostedReady \? '<button class="edv hbb">Show on TV<\/button>' : ''\) \+ ')?<button class="rm">Remove<\/button>'/.test(rh) &&
     /var em = hostMobileEditor\(h, api, showMsg, loadHosts\)/.test(rh) && /querySelector\("\.edm"\)\.addEventListener/.test(rh), rh.slice(0, 200));
   var mm = (new Function('document', 'window', 'localStorage', '$', 'VP', 'VPChangeMobile', 'showMsg', 'loadHosts',
     lift(page, 'mountMyMobile') + '\nreturn mountMyMobile;'));

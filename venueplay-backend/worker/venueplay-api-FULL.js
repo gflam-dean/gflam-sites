@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 17:31 · ea7bbbb9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 18:21 · c47131fa';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -232,6 +232,7 @@ export default {
       if (request.method === 'POST' && path === '/account/hosts'       && typeof vpbListHosts === 'function')    return await vpbListHosts(request, env, json);
       if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/host-add'    && typeof vpbAddHost === 'function')      return await vpbAddHost(request, env, json);
+      if (request.method === 'POST' && path === '/account/hosted-by-save' && typeof vpbHostedBySave === 'function') return await vpbHostedBySave(request, env, json);   // INBOX 120, migration 181
       if (request.method === 'POST' && path === '/account/manager-add'  && typeof vpbAddManager === 'function')   return await vpbAddManager(request, env, json);
       if (request.method === 'POST' && path === '/account/managers'     && typeof vpbListManagers === 'function') return await vpbListManagers(request, env, json);
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
@@ -15780,40 +15781,51 @@ async function vpbLogoDoor(request, env, json) {
 }
 
 /* --- POST /account/logo-upload { venue_id, data } : data is a data: URL or bare base64. --- */
-async function vpbLogoUpload(request, env, json) {
-  const g = await vpbLogoDoor(request, env, json);
-  if (g.res) return g.res;
-  const raw = String(g.b.data || '');
+/* THE ONE CHECK ON AN UPLOADED LOGO, and the one write of it to storage (6 Nov 2026). The venue logo
+   and the host's Hosted by logo (INBOX 120) are the same kind of file on the same screen, so they pass
+   the same rules: a data: URL or bare base64, a PNG or WebP of 1MB or less, 16 to 4096 pixels each way,
+   into the venue-logos bucket under <folder>/<sha256>.<ext>. Returns { url, bytes, kind } or
+   { status, error } in the words the page shows. */
+async function vpbStoreLogo(env, rawData, folder) {
+  const raw = String(rawData || '');
   const m = raw.match(/^data:[^;,]*;base64,(.+)$/);
   const b64 = (m ? m[1] : raw).replace(/\s+/g, '');
-  if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return json({ error: 'That did not look like an image.' }, 400);
+  if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return { status: 400, error: 'That did not look like an image.' };
   // Refuse on the encoded length first: four characters carry three bytes, so nothing this
   // long can decode to 1 MB or less, and a 40 MB string is never decoded at all.
   if (Math.floor(b64.length * 3 / 4) > VPB_MAX_LOGO_BYTES + 2) {
-    return json({ error: 'That logo is too big. Keep it to 1MB or less.' }, 413);
+    return { status: 413, error: 'That logo is too big. Keep it to 1MB or less.' };
   }
   let bytes;
-  try { bytes = vpaB64ToBytes(b64); } catch (_) { return json({ error: 'That did not look like an image.' }, 400); }
-  if (bytes.length > VPB_MAX_LOGO_BYTES) return json({ error: 'That logo is too big. Keep it to 1MB or less.' }, 413);
+  try { bytes = vpaB64ToBytes(b64); } catch (_) { return { status: 400, error: 'That did not look like an image.' }; }
+  if (bytes.length > VPB_MAX_LOGO_BYTES) return { status: 413, error: 'That logo is too big. Keep it to 1MB or less.' };
   const kind = vpbLogoSniff(bytes);
-  if (!kind) return json({ error: 'Use a PNG (or a WebP). A PNG with a transparent background sits best on the screen.' }, 415);
+  if (!kind) return { status: 415, error: 'Use a PNG (or a WebP). A PNG with a transparent background sits best on the screen.' };
   if (kind.w < VPB_LOGO_MIN_PX || kind.h < VPB_LOGO_MIN_PX) {
-    return json({ error: 'That logo is only ' + kind.w + ' by ' + kind.h + ' pixels, too small to read on a TV. Use one at least 200 pixels wide.' }, 400);
+    return { status: 400, error: 'That logo is only ' + kind.w + ' by ' + kind.h + ' pixels, too small to read on a TV. Use one at least 200 pixels wide.' };
   }
   if (kind.w > VPB_LOGO_MAX_PX || kind.h > VPB_LOGO_MAX_PX) {
-    return json({ error: 'That logo is ' + kind.w + ' by ' + kind.h + ' pixels. Keep it under ' + VPB_LOGO_MAX_PX + ' pixels each way.' }, 400);
+    return { status: 400, error: 'That logo is ' + kind.w + ' by ' + kind.h + ' pixels. Keep it under ' + VPB_LOGO_MAX_PX + ' pixels each way.' };
   }
 
   await vpbEnsureBucket(env, 'venue-logos', { limit: VPB_MAX_LOGO_BYTES, types: ['image/png', 'image/webp'] });
-  const path = g.venue.id + '/' + (await vpbSha256Hex(bytes)) + '.' + kind.ext;
+  const path = folder + '/' + (await vpbSha256Hex(bytes)) + '.' + kind.ext;
   const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/venue-logos/' + path, {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY,
                'Content-Type': kind.type, 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
     body: bytes,
   });
-  if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
-  const url = env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path;
+  if (!up.ok) { const t = await up.text(); return { status: 500, error: 'Upload failed. ' + t.slice(0, 160) }; }
+  return { url: env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path, bytes: bytes, kind: kind };
+}
+
+async function vpbLogoUpload(request, env, json) {
+  const g = await vpbLogoDoor(request, env, json);
+  if (g.res) return g.res;
+  const st = await vpbStoreLogo(env, g.b.data, g.venue.id);
+  if (st.error) return json({ error: st.error }, st.status);
+  const url = st.url, bytes = st.bytes, kind = st.kind;
   const was = await vpbReadScreen(env, g.venue.id);
   if (!(await vpbWriteLogo(env, g.venue, url, vpbScreenActor(g.o, 'logo-upload')))) return json({ error: 'The logo uploaded but could not be saved. Try again.' }, 500);
   await vpbScreenAudit(env, g.o, 'logo_set', g.venue.id, was.ok ? was.row : undefined,
@@ -19614,7 +19626,12 @@ async function vpbListHosts(request, env, json) {
     byUser[ids[i]].mobile_last3 = vpaMaskMobile(u.phone);
     if (fullMobiles) byUser[ids[i]].mobile = vpaShowMobile(u.phone);
   });
+  // Each person's Hosted by card and this account's TV switches for them (INBOX 120). A read of its
+  // own, so before migration 181 runs the list is exactly what it was, with hosted_by_ready false.
+  const hb = await vpbHostedForList(env, venueIds, Object.keys(byUser));
+  Object.keys(byUser).forEach((k) => { byUser[k].hosted_by = hb.cards[k] || null; byUser[k].hosted_shows = hb.shows[k] || {}; });
   return json({
+    hosted_by_ready: hb.ready,
     hosts: Object.keys(byUser).map((k) => byUser[k]),
     venues: o.venues.map((v) => ({ id: v.id, name: v.name })),
     can_manage_hosts: vpbIsOwner(o) || vpbCan(o, 'add_hosts'),
@@ -19962,6 +19979,131 @@ async function vpbSetStaffVenues(request, env, json) {
   }
   await vpbRotateScreenKeys(env, lost);
   return json({ ok: true, auth_user_id: target, venue_ids: wanted });
+}
+
+/* ---------------------------------------------------------------------------------------
+   "HOSTED BY" ON THE TV (Dean, 6 Nov 2026, INBOX 120; migration 181).
+
+   A venue's trivia host, or their trivia company, shows "Hosted by <name>" and their logo on the TV
+   during the nights they run. Two things, one per question:
+     WHAT the card says belongs to the host's LOGIN (vp_host_brands), so it follows them to every
+       venue they run, on any account. One name, 40 characters at most, and one logo.
+     WHETHER it shows is each VENUE'S choice, per game (vp_venue_staff.hosted_by on the host's row
+       at that venue: { trivia, musical }). An owner switches it for their own TV only.
+   Set on Account > People, on the host's row, by the owner or a manager allowed to add hosts, for a
+   host-role login (or a restricted manager) at one of their own venues: the same people who may
+   Edit venues or Remove that person (vpbStaffGuard). Never the owner's own full-access login.
+   The game Worker reads both at /host/hosted-by; the console carries the card to the TV.
+
+   Before migration 181 runs the reads below come back not-ok and the page is told the feature is
+   not switched on yet; nothing else on People changes.
+   --------------------------------------------------------------------------------------- */
+const VPB_HOSTED_GAMES = ['trivia', 'musical'];
+const VPB_HOSTED_NAME_MAX = 32;   // two lines at most beside the venue logo on a TV (design review 2)
+function vpbHostedName(v) {
+  return String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, VPB_HOSTED_NAME_MAX);
+}
+/* A logo address this Worker wrote: our own public venue-logos bucket, under hosts/. Anything else
+   (an old value, a hand edit) is never handed to a TV. The game Worker has the same test. */
+function vpbHostedLogoOk(env, url) {
+  const pre = String(env.SUPABASE_URL || '') + '/storage/v1/object/public/venue-logos/hosts/';
+  return typeof url === 'string' && url.length <= 500 && url.indexOf(pre) === 0 && /^[A-Za-z0-9\/._-]+$/.test(url.slice(pre.length));
+}
+/* A read that says whether it worked: vpaSelect answers [] for "no rows" and for "no such column"
+   alike, and here those mean different things to the owner (nothing set yet, or not switched on). */
+async function vpbHostedRead(env, table, query) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { headers: vpaHeaders(env) });
+    if (!res.ok) return { ok: false, rows: [] };
+    const rows = await res.json();
+    return { ok: Array.isArray(rows), rows: Array.isArray(rows) ? rows : [] };
+  } catch (_) { return { ok: false, rows: [] }; }
+}
+/* What People shows on each person's row: their card, and this account's switches for them. */
+async function vpbHostedForList(env, venueIds, userIds) {
+  const out = { ready: false, cards: {}, shows: {} };
+  if (!venueIds.length || !userIds.length) return out;
+  const sw = await vpbHostedRead(env, 'vp_venue_staff',
+    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&auth_user_id=in.(' + userIds.map(encodeURIComponent).join(',') + ')' +
+    '&select=auth_user_id,venue_id,hosted_by');
+  const br = await vpbHostedRead(env, 'vp_host_brands',
+    'auth_user_id=in.(' + userIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,name,logo_url');
+  out.ready = sw.ok && br.ok;
+  for (const r of sw.rows) {
+    const h = (r && r.hosted_by && typeof r.hosted_by === 'object') ? r.hosted_by : {};
+    (out.shows[r.auth_user_id] = out.shows[r.auth_user_id] || {})[r.venue_id] = { trivia: h.trivia === true, musical: h.musical === true };
+  }
+  for (const r of br.rows) {
+    out.cards[r.auth_user_id] = { name: vpbHostedName(r.name), logo_url: vpbHostedLogoOk(env, r.logo_url) ? r.logo_url : '' };
+  }
+  return out;
+}
+
+/* --- POST /account/hosted-by-save ---
+   { auth_user_id, venue_id, name, trivia, musical, logo_data?, remove_logo? }
+   Saves the person's card (name, and a new logo or none) and THIS venue's switches for them. A new
+   logo passes exactly the venue logo's checks (vpbStoreLogo) into the same bucket, under
+   hosts/<login>/. Switching a game on needs a name to show. */
+async function vpbHostedBySave(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const target = String(b.auth_user_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(target)) return json({ error: 'Which host?' }, 400);
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.filter((v) => v.id === venueId)[0];
+  if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+  if (target === o.authUserId && !vpbIsOwner(o)) return json({ error: 'Ask your account owner to set this for you.' }, 403);
+
+  const accountIds = o.venues.map((v) => v.id);
+  const rows = await vpaSelect(env, 'vp_venue_staff',
+    'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=in.(' + accountIds.map(encodeURIComponent).join(',') + ')' +
+    '&select=venue_id,role,permissions');
+  if (!rows || !rows.length) return json({ error: 'That person is not set up on this account.' }, 404);
+  if (rows.some((r) => r.role === 'marketing')) return json({ error: 'A marketing login does not run games, so it has no Hosted by card.' }, 400);
+  { const g = vpbStaffGuard(o, rows, json); if (g) return g; }
+  if (rows.some((r) => r.role === 'owner' || (r.role !== 'host' && !r.permissions))) {
+    return json({ error: 'That login has full access to this account. Hosted by is for the hosts you add.' }, 403);
+  }
+  if (!rows.some((r) => r.venue_id === venueId)) return json({ error: 'They do not run games at ' + (venue.name || 'that venue') + '. Use Edit venues first.' }, 400);
+
+  const name = vpbHostedName(b.name);
+  const on = { trivia: b.trivia === true, musical: b.musical === true };
+  if ((on.trivia || on.musical) && !name) return json({ error: 'Put in the name to show on the TV first.' }, 400);
+
+  // Not switched on yet (migration 181 not run): say so before anything is uploaded.
+  const was = await vpbHostedRead(env, 'vp_host_brands', 'auth_user_id=eq.' + encodeURIComponent(target) + '&select=name,logo_url&limit=1');
+  const sw = await vpbHostedRead(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(venueId) + '&select=hosted_by&limit=1');
+  if (!was.ok || !sw.ok) return json({ error: 'Hosted by is not switched on for your account yet. Nothing was changed.' }, 503);
+  const before = was.rows[0] || null;
+
+  let logoUrl;   // undefined: leave the logo as it is
+  if (b.remove_logo === true) logoUrl = null;
+  if (b.logo_data) {
+    const st = await vpbStoreLogo(env, b.logo_data, 'hosts/' + target);
+    if (st.error) return json({ error: st.error }, st.status);
+    logoUrl = st.url;
+  }
+  if (name || logoUrl !== undefined) {
+    if (!name && !before) return json({ error: 'Put in the name to show on the TV first.' }, 400);
+    const card = { auth_user_id: target, name: name || before.name, updated_at: new Date().toISOString(), updated_by: o.authUserId || null };
+    if (logoUrl !== undefined) card.logo_url = logoUrl;
+    const up = await fetch(env.SUPABASE_URL + '/rest/v1/vp_host_brands?on_conflict=auth_user_id', {
+      method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(card) });
+    if (!up.ok) return json({ error: 'The Hosted by card did not save. Try again.' }, 502);
+  }
+  const pt = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_staff?auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(venueId), {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ hosted_by: (on.trivia || on.musical) ? on : null }) });
+  if (!pt.ok) return json({ error: 'The card saved but the TV switches did not. Try again.' }, 502);
+
+  const after = { name: name || (before && before.name) || '', logo_url: logoUrl !== undefined ? logoUrl : ((before && before.logo_url) || null) };
+  try {
+    await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'hosted_by_set', target: 'venue:' + venueId,
+      detail: { host: target, before: before, after: after, shows: on, user: o.authUserId || null, via: o.actingAsAdmin ? 'hq_view_as' : 'venue' } }, false);
+  } catch (e) { console.error('hosted_by audit failed', String((e && e.message) || e).slice(0, 200)); }
+  return json({ ok: true, card: { name: after.name, logo_url: vpbHostedLogoOk(env, after.logo_url) ? after.logo_url : '' }, shows: on, venue_id: venueId });
 }
 
 // The signed-in host's venues, for the sign-in venue picker (any staff role).
