@@ -122,7 +122,7 @@ QTEXT = '(document.getElementById("pqText")||{}).textContent'
 
 def scene_a(RIG):
     print('\nA. ON A LAPTOP, AS A PLAYER, TWO PHONES')
-    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
+    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'), real_qr=True)
     try:
         seed(r); clock_now(r)
         tl, lap = r.open('/app/try.html?device=computer', width=1366, height=768)
@@ -220,7 +220,7 @@ def scene_a(RIG):
 
 def scene_bcd(RIG):
     print('\nB. NO OTHER DEVICE: NO DEMO, STRAIGHT INTO THEIR ACCOUNT (Dean, 6 Nov 2026)')
-    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
+    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'), real_qr=True)
     try:
         seed(r)
         for dev, w, h in (('phone', 375, 812), ('computer', 1366, 768)):

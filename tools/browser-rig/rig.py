@@ -68,7 +68,7 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class Rig(object):
-    def __init__(self, hold=None, host_pages=(), review=False):
+    def __init__(self, hold=None, host_pages=(), review=False, real_qr=False):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
         as slow pub wifi does, so a test can look at a page whose scripts have not all arrived.
         `host_pages` adds pages served with the host signed in, beside /app/index.html and the purchase
@@ -76,6 +76,10 @@ class Rig(object):
         ask sees exactly what it saw before."""
         self.hold = dict(hold or {})
         self.host_pages = tuple(host_pages or ())
+        # `real_qr` (11 Nov 2026, INBOX 190): serve the real /app/vendor/qrcode-1.4.4.min.js instead of the fake.
+        # The fake calls back "drawn" whatever it is handed, so a <div> passed to VPQR.draw looked fine here while
+        # the real library refused it and left a blank white square. Default off: every other suite unchanged.
+        self.real_qr = bool(real_qr)
         # The rig's venue is months old, so its owner would be asked to check the new games setup (VPGameSetup.review,
         # Dean 9 Nov 2026) on every console it opens. Suites that are not about that say so, as every rig page always
         # has; review=True (tools/wizard-r10-in-chrome.test.py) lets it open.
@@ -138,7 +142,7 @@ class Rig(object):
                     host_page = p in ('/app/index.html', '/app/purchase-raffle/index.html') or p in rig.host_pages   # pages that need a signed-in host
                     if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
                     text = text.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
-                    text = text.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
+                    if not rig.real_qr: text = text.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
                     text = text.replace('https://game.venueplay.com.au', '/__worker')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')
