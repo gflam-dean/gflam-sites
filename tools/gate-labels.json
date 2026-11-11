@@ -80,6 +80,7 @@
   "and the licence library states the same number",
   "and the page checks what it is about to SEND, not what was picked",
   "and the privacy page promises the same number of days",
+  "any-line-in-chrome.test.py",
   "anything a venue may collect, it may also download (33 checks)",
   "archiving starts the purge clock and reactivating clears it",
   "assess() on the paid path matches the Anisimoff tables; the gate offers free entry, never a paid game, where the state says no",

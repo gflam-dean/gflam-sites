@@ -463,17 +463,19 @@
 
   /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
    who has played bingo anywhere else, and the free square makes it look even more like a
-   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
-   told in their own dropdown ("any full row"). The player and the TV were the two screens
-   that never said so, which is a dispute at the bar waiting to happen. */
-var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
+   diagonal counts. For "One line" it does not: checkMusicPattern checks rows only, which is what
+   the host is told in their own dropdown ("any full row"), and the phone and TV say "One line
+   across". "Any line" (Dean, 11 Nov 2026, INBOX 256, the default for new venues) is a full row,
+   column or diagonal: the console and the TV say "Any line (across, down or diagonal)", the
+   phone just "Any line". */
+var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
   // The Worker sends vp_music_games pattern values; map to the UI labels/keys.
-  var PAT_FROM_WORKER={one_line:"one",two_lines:"two",four_corners:"corners",full_house:"full"};
+  var PAT_FROM_WORKER={any_line:"any",one_line:"one",two_lines:"two",four_corners:"corners",full_house:"full"};
   /* MUSICAL BINGO IS NOT BINGO (Dean, 3 Nov 2026), so its claim button never says "BINGO!". It says what
      the player has, in the pattern the host set: "I've got a line", "I've got two lines", "I've got four
      corners", "Full house". Number bingo (/play) keeps BINGO!. Set by renderCard, which runs whenever the
      pattern can change (start, join, catch-up, a progressive round's new pattern). */
-  var CLAIM_WORDS={one:"I've got a line",two:"I've got two lines",corners:"I've got four corners",full:"Full house"};
+  var CLAIM_WORDS={any:"I've got a line",one:"I've got a line",two:"I've got two lines",corners:"I've got four corners",full:"Full house"};
   function claimWords(){ return CLAIM_WORDS[P.pattern]||"I've got the pattern"; }
   function setClaimWords(){ var b=$("bingoBtn"), w=claimWords(); if(b && b.textContent!==w) b.textContent=w; }
 
@@ -620,6 +622,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     function rowDone(row){ for(c=0;c<5;c++){ if(!isCovered(set,row*5+c)) return false; } return true; }
     var rows=0; for(r=0;r<5;r++){ if(rowDone(r)) rows++; }
     switch(P.pattern){
+      case "any": return ANY_LINES.some(function(l){ return l.every(function(i){ return isCovered(set,i); }); });
       case "one": return rows>=1;
       case "two": return rows>=2;
       case "corners": return isCovered(set,0)&&isCovered(set,4)&&isCovered(set,20)&&isCovered(set,24);
@@ -932,12 +935,30 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     drawLines();
   }
   /* THE PATTERN BY THE PLAYER'S OWN MARKS (the Worker judges the claim by the songs played; this only says whether the
-     card LOOKS done, for the faint button and the outlines). Rows, for "one" and "two", as checkPattern. */
+     card LOOKS done, for the faint button and the outlines). Rows, for "one" and "two", as checkPattern; for "any",
+     every row, column and diagonal, the same twelve lines as the Worker's MUSIC_ANY_LINES. Index 12 is the FREE centre
+     on every card the Worker deals (dealMusicCard), so it always counts as marked. */
   function rowMarks(r){ var n=0; for(var c=0;c<5;c++){ var i=r*5+c; if(i===12 || P.daubs[i]) n++; } return n; }
+  var ANY_LINES=(function(){
+    var out=[], r, c, a;
+    for(r=0;r<5;r++){ a=[]; for(c=0;c<5;c++) a.push(r*5+c); out.push(a); }
+    for(c=0;c<5;c++){ a=[]; for(r=0;r<5;r++) a.push(r*5+c); out.push(a); }
+    out.push([0,6,12,18,24],[4,8,12,16,20]);
+    return out;
+  })();
+  function lineMarks(line){ var n=0; for(var k=0;k<line.length;k++){ if(line[k]===12 || P.daubs[line[k]]) n++; } return n; }
+  /* The one line to outline on an "Any line" night: a finished one if there is one, else the nearest (first in row,
+     column, diagonal order on a tie). */
+  function anyLine(){
+    var best=ANY_LINES[0], bn=-1;
+    for(var k=0;k<ANY_LINES.length;k++){ var n=lineMarks(ANY_LINES[k]); if(n>bn){ bn=n; best=ANY_LINES[k]; } }
+    return { cells:best, done:bn===5 };
+  }
   function markedPattern(){
     if(!P.cells) return false;
     var full=0, r; for(r=0;r<5;r++){ if(rowMarks(r)===5) full++; }
     switch(P.pattern){
+      case "any": return ANY_LINES.some(function(l){ return lineMarks(l)===5; });
       case "two": return full>=2;
       case "corners": return !!(P.daubs[0]&&P.daubs[4]&&P.daubs[20]&&P.daubs[24]);
       case "full": return full===5;
@@ -970,6 +991,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       d.style.left=(L-wb.left+wrap.scrollLeft-G)+"px"; d.style.top=(T-wb.top-G)+"px"; d.style.width=(R-L+2*G)+"px"; d.style.height=(B-T+2*G)+"px";
       wrap.appendChild(d);
     }
+    if(P.pattern==="any"){ var al=anyLine(); box(al.cells, al.done); return; }
     if(P.pattern==="corners"){ var cd=!!(P.daubs[0]&&P.daubs[4]&&P.daubs[20]&&P.daubs[24]); [0,4,20,24].forEach(function(i){ box([i], cd); }); return; }
     lineRows().forEach(function(x){ box([x.r*5,x.r*5+1,x.r*5+2,x.r*5+3,x.r*5+4], x.done); });
   }

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Nov 2026, 12:11 · ce2dc167';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 18:15 · 6cb32a86';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4286,7 +4286,7 @@ const GAME_PREFS_KEYS = {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,
     playlist_name: (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     hits_only:     (v) => (typeof v === 'boolean') ? v : undefined,
-    pattern:       (v) => ({ one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),
+    pattern:       (v) => ({ any: 1, one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),   // 'any' = Any line (INBOX 256)
     prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),
     /* The setup wizard (INBOX 104 round 2): the music they picked (one or many playlists, the first is the console's
@@ -4347,10 +4347,10 @@ async function handleGamePrefs(request, env, json) {
 
 async function hostStartMusical(env, json, b, session, staff, seq) {
   // Pattern: accept the host UI values (one/two/corners/full) and the DB values, map to
-  // the four vp_music_games patterns. Musical bingo DOES have four_corners (5x5 grid).
+  // the vp_music_games patterns (any_line since migration 186). Musical bingo DOES have four_corners (5x5 grid).
   const patternMap = {
-    one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
-    one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
+    any: 'any_line', one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
+    any_line: 'any_line', one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
   };
   const pattern = patternMap[String(b.pattern || '')];
   if (!pattern) return json({ error: 'Invalid pattern' }, 400);
@@ -6163,8 +6163,8 @@ async function handleMusicPattern(request, env, json) {
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
   const patternMap = {
-    one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
-    one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
+    any: 'any_line', one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
+    any_line: 'any_line', one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
   };
   const pattern = patternMap[String(b.pattern || '')];
   if (!pattern) return json({ error: 'Invalid pattern' }, 400);
@@ -11883,8 +11883,19 @@ function generateMusicCard(songs) {
 // Server-authoritative pattern check for a 5x5 musical card. cells is the 25-value grid
 // ({song_id,title} per square, 0 at the FREE centre); playedSet is a Set of song_ids
 // actually played. A square is covered if it is the FREE centre or its song_id has been
-// played. Line patterns check ROWS only (matching the host/player UI: "any full row").
+// played. 'one_line' and 'two_lines' check ROWS only (the host dropdown says "any full row", the
+// phone and TV "One line across"). 'any_line' is a full row, column or diagonal (Dean, 11 Nov 2026,
+// INBOX 256: he finished the right-hand COLUMN on The Mini Bar and expected a win; "Any line" is the
+// pattern for new venues). The player phone's markedPattern and outlines use the same lines.
 // Returns {valid, cells:[covered indices]}.
+// Every line on a 5x5 card for 'any_line': the 5 rows, the 5 columns, then the 2 diagonals.
+const MUSIC_ANY_LINES = (() => {
+  const out = [];
+  for (let r = 0; r < 5; r++) out.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
+  for (let c = 0; c < 5; c++) out.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
+  out.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+  return out;
+})();
 function checkMusicPattern(pattern, cells, playedSet) {
   const covered = (i) => {
     if (i === 12) return true;                  // FREE centre
@@ -11907,6 +11918,10 @@ function checkMusicPattern(pattern, cells, playedSet) {
   }
   if (pattern === 'one_line') {
     for (let r = 0; r < 5; r++) if (rowComplete[r]) return { valid: true, cells: rowCells[r] };
+    return { valid: false, cells: [] };
+  }
+  if (pattern === 'any_line') {
+    for (const line of MUSIC_ANY_LINES) if (line.every(covered)) return { valid: true, cells: line.slice() };
     return { valid: false, cells: [] };
   }
   if (pattern === 'two_lines') {
@@ -12530,7 +12545,7 @@ function dbError(op, target, detail) {
  *       'music.song_played' (title+artist are public, players daub by ear; idempotent per song).
  *       /player/card serves the musical card + played songs (deals on demand for late joiners).
  *       /player/claim checks the card's song_ids against played songs (checkMusicPattern:
- *       one_line/two_lines/four_corners/full_house, rows only, FREE centre) and reuses the SAME
+ *       any_line (row, column or diagonal)/one_line/two_lines (rows)/four_corners/full_house, FREE centre) and reuses the SAME
  *       claim + /host/claim/resolve flow as bingo (confirmed vp_claims row IS the winner;
  *       confirm finishes the game). Emits music.claim_submitted / music.claim_result.
  *       PLAYLIST SOURCE: vp_music_plays.song_id is a FK to vp_playlist_songs, so songs must be

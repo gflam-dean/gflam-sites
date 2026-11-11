@@ -507,6 +507,10 @@
   "checks": 5,
   "counted_by": "lines"
  },
+ "tools/test-any-line-15nov.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/test-archive-sweep-fails-closed.js": {
   "checks": 7,
   "counted_by": "lines"

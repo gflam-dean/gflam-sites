@@ -749,3 +749,14 @@ used_at, so they stay dead) 90 days from its own created_at, unless those 90 day
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker is
 refused the 90 day row and makes a 30 day link, printing the days that link really has. NUMBER: 180 to 184 taken (183 was
 spoken for by an uncommitted link-life change), so 185. Branch `fix/link-90-days-15nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-186-musical-any-line.sql` (Dean, 11 Nov 2026, INBOX 256: musical bingo "Any line", a full row, column or
+diagonal, is the DEFAULT FOR NEW VENUES; existing venues keep theirs): (1) a snapshot table `vp_backup_186_game_prefs`
+(every venue's game_prefs and whether it had a settings row; RLS on, nothing granted), (2) every venue with no saved
+musical pattern gets `game_prefs.musical.pattern = 'one'` written explicitly (the pattern the console started on until
+now; the same one-key merge as vp_set_game_prefs; a saved pattern is never touched), (3) `vp_music_games.pattern`
+accepts 'any_line' (a CHECK naming pattern is replaced with one that includes it; an enum gets the value; neither, no
+change). RUN IT BEFORE deploying the game Worker and the musical pages from this branch: the new console starts on Any
+line for a venue with nothing saved. Early is safe (the live code never sends 'any_line'). RLS-BASELINE.json: one new
+table, re-dump after. NUMBER: 181, 184, 185 live or taken, 183 spoken for, checked every branch and worktree 11 Nov 2026,
+so 186. Branch `fix/any-line-15nov`. NOT RUN. Read-back and rollback in the file.
