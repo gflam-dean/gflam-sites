@@ -30,10 +30,10 @@
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   .hidden{display:none!important}
 
-  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;z-index:6;max-width:40cqw}
+  .tv-corner{position:absolute;top:2cqw;right:1.2cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;z-index:6;max-width:40cqw}
   /* THE VENUE'S NAME, TOP LEFT, WHEN IT HAS NO LOGO (Dean, 1 Nov 2026). It sat under the venueplay mark in
      the right corner, small, as a caption to OUR name. Top left is where a venue's logo goes, so a venue
-     without one has its name there instead, in plain text, at the logo's own 14px (one unit per corner), a keep-out for
+     without one has its name there instead, in plain text, moved by VPVenueLogo.alignName (12 Nov 2026) to the venueplay mark's own distance in from the edge, its middle on the mark's middle, a keep-out for
      vp-fit so no wall runs under it. A logo wins: the two never show together. Identical in tv.html and
      the four game screens, so a game embedded on the TV paints it in exactly the same place. */
   .venuename-left{position:absolute;top:14px;left:14px;max-width:34cqw;z-index:16;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(13px,1.6cqw,30px);line-height:1.2;letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6);pointer-events:none}
