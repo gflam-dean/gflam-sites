@@ -381,6 +381,7 @@
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
       <button type="button" id="firstRunBtn" class="hact" style="display:none">Setup guide</button>
+      <button type="button" id="myEmailBtn" class="hact" style="display:none">My email</button>
       <button type="button" id="switchVenue" class="hact" style="display:none">Switch venue</button>
       <a id="billingLink" class="hact" href="billing.html">Account</a>
       <button type="button" id="signoutBtn" class="hact">Sign out</button>
@@ -424,16 +425,11 @@
         </div>
 
         <!-- THE WAY IN WHEN TEXTS DO NOT ARRIVE (21 Oct 2026, the night Mobile Message went down).
-             The same login, sent its code by email: same staff check, same 4 hour shift. -->
+             Rebuilt 15 Nov 2026 (Dean, items 63 to 67, 102): there is NO email box. The mobile they already
+             typed goes to the Worker, which sends a one-tap sign-in link ONLY to the email saved on that
+             login, and this note says the same words whether or not one is saved. -->
         <div id="emailAlt" class="hidden vp-c" style="margin-top:14px"><span class="skiplink" id="emailAltBtn">Code not arriving? Get it by email instead</span></div>
-        <div id="stepEmail" class="hidden vp-c">
-          <label class="flabel">Email address on your venueplay login</label>
-          <input class="vp-c" id="emailIn" type="email" placeholder="you@yourvenue.com.au" autocomplete="email">
-          <div class="cerr" id="emailErr"></div>
-          <button class="btn pink big" id="sendEmailBtn" style="margin-top:4px">Email me a code</button>
-          <p class="note vp-c" style="margin-top:10px">No email on your login yet? Email support@venueplay.com.au and we will get you in.</p>
-          <div class="vp-c" style="margin-top:8px"><span class="skiplink" id="backToTextBtn">Use a text code instead</span></div>
-        </div>
+        <p id="emailAltMsg" class="note vp-c hidden" role="status" style="margin-top:14px"></p>
 
       </div>
     </div>
@@ -1082,9 +1078,9 @@
   /* SAY THE TEXT FAILED, AND WHERE TO GO INSTEAD. Not the host's number, and not a silent wait. */
   var TEXT_FAILED="We could not send a text right now. Use the email option below. "+
     "Still stuck? Email support@venueplay.com.au and we will get you in.";
-  /* The code goes by text (MODE "sms", to E164) or by email (MODE "email", to EMAIL). One code
-     box, one Verify, one shift start, so the two ways in cannot drift apart. */
-  var MODE="sms", EMAIL="";
+  /* The code always goes by text, to E164. The email backup below sends a one-tap sign-in LINK (not a code) to
+     the email already saved on the login that owns that mobile, and never to anything typed on this page. */
+  var EMAIL_BACKUP_SAID="If there's an email saved on your profile, we've sent a sign-in link to it. It can take a minute, so check your junk folder too. No email saved? Ask your manager to send you a new sign-in.";
   function showEmailAlt(){ $("emailAlt").classList.remove("hidden"); }
   /* A DIFFERENT NUMBER IN OUR PRE-FILLED BOX SENDS NO CODE (Dean, 12 Nov 2026). Our link fills in the mobile we
      hold for their venue. A different number typed over it made a brand new login for that number (phone codes
@@ -1161,7 +1157,6 @@
         if(existingOnly && noSuchLogin(res.error)){ $("mobileErr").textContent=SHORT_ATTACH_WORDS[existingOnly]||SHORT_ATTACH_WORDS.used; return; }
         if(otpSendError(res.error)==="ours") showEmailAlt(); return;
       }
-      MODE="sms";
       $("sentTo").textContent=e164;
       $("stepMobile").classList.add("hidden");
       $("stepCode").classList.remove("hidden");
@@ -1193,65 +1188,34 @@
       if(/^04\d{8}$/.test(kept)){ var mk=$("mobileIn"); if(mk && !mk.value) mk.value=prefillWords(toE164(kept)); }
       setPrefill(kept);
     }
-    $("stepEmail").classList.add("hidden");
     $("stepCode").classList.add("hidden");
     $("emailAlt").classList.add("hidden");
+    $("emailAltMsg").classList.add("hidden");
     $("stepMobile").classList.remove("hidden");
     $("authSub").textContent=SUB_TEXT;
     return "sms";
   }
+  /* THE EMAIL BACKUP (items 63 to 67). The page sends the MOBILE it already holds and nothing else; there is no
+     field to type an address into. Whatever the Worker answers, a person reads the SAME words, so the page
+     never says whether an email exists for a number. Only "too many tries" and "could not reach us" differ,
+     and neither says anything about any account. */
   $("emailAltBtn").addEventListener("click", function(){
-    $("stepMobile").classList.add("hidden");
-    $("stepCode").classList.add("hidden");
-    $("emailAlt").classList.add("hidden");
-    $("stepEmail").classList.remove("hidden");
-    $("emailErr").textContent="";
-    $("emailIn").focus();
+    if(!E164){ return; }
+    var msg=$("emailAltMsg"), link=$("emailAltBtn");
+    link.textContent="Sending..."; msg.classList.add("hidden");
+    fetch("https://api.venueplay.com.au/auth/email-backup", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ mobile:E164 }) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { status:r.status, body:j }; }); })
+      .then(function(x){
+        link.textContent="Code not arriving? Get it by email instead";
+        if(x.status===429){ msg.textContent="Too many tries just now. Wait a few minutes and try again."; }
+        else if(x.status===200 && x.body && x.body.ok===true){ msg.textContent=EMAIL_BACKUP_SAID; $("emailAlt").classList.add("hidden"); }
+        else { msg.textContent="We could not do that just now. Try again in a minute."; }
+        msg.classList.remove("hidden");
+      }, function(){
+        link.textContent="Code not arriving? Get it by email instead";
+        msg.textContent="We could not do that just now. Try again in a minute."; msg.classList.remove("hidden");
+      });
   });
-  $("backToTextBtn").addEventListener("click", function(){
-    MODE="sms"; $("authSub").textContent=SUB_TEXT;
-    $("stepEmail").classList.add("hidden");
-    $("stepCode").classList.add("hidden");
-    $("stepMobile").classList.remove("hidden");
-    showEmailAlt();
-  });
-  /* EMAIL ONLY REACHES A LOGIN THAT ALREADY EXISTS. shouldCreateUser:false, because a brand new
-     login has no venue staff row: it would sign in to "no venue" and be a stray account. The
-     email has to be on the host's OWN login, which is what keeps the staff check identical. */
-  function emailSendError(err){
-    var msg=(err&&err.message)?String(err.message).toLowerCase():"";
-    var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
-    if(code.indexOf("otp_disabled")>=0 || msg.indexOf("signups not allowed")>=0 || code.indexOf("user_not_found")>=0){
-      $("emailErr").textContent="That email is not on a venueplay login yet. Email support@venueplay.com.au and we will get you in.";
-    } else if(code.indexOf("rate_limit")>=0 || msg.indexOf("rate limit")>=0){
-      $("emailErr").textContent="Too many codes asked for just now. Wait a minute and try again.";
-    } else if(code.indexOf("validation_failed")>=0 || (msg.indexOf("invalid")>=0 && msg.indexOf("email")>=0)){
-      $("emailErr").textContent="That email did not look right. Check it and try again.";
-    } else {
-      $("emailErr").textContent="We could not send the email right now. Email support@venueplay.com.au and we will get you in.";
-    }
-  }
-  function emailOtp(addr){
-    return client.auth.signInWithOtp({ email:addr, options:{ shouldCreateUser:false,
-      emailRedirectTo: (location.origin||"")+"/app/" } });
-  }
-  $("sendEmailBtn").addEventListener("click", function(){
-    var addr=($("emailIn").value||"").trim().toLowerCase();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)){ $("emailErr").textContent="Pop in the email address on your login."; return; }
-    $("emailErr").textContent="";
-    var btn=this; btn.disabled=true; btn.textContent="Sending...";
-    emailOtp(addr).then(function(res){
-      btn.disabled=false; btn.textContent="Email me a code";
-      if(res && res.error){ emailSendError(res.error); return; }
-      MODE="email"; EMAIL=addr;
-      $("sentTo").textContent=addr;
-      $("stepEmail").classList.add("hidden");
-      $("stepCode").classList.remove("hidden");
-      $("otpIn").value=""; $("otpErr").textContent="";
-      $("otpIn").focus();
-    }).catch(function(err){ btn.disabled=false; btn.textContent="Email me a code"; emailSendError(err); });
-  });
-  $("emailIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("sendEmailBtn").click(); } });
   $("otpIn").addEventListener("input", function(){ this.value=this.value.replace(/\D/g,"").slice(0,6); $("otpErr").textContent=""; });
   /* Enter submits. The TV pairing box below has done this since the start and these two never
      did, so on a laptop a host typed the code, pressed Enter, and nothing happened. On a phone the
@@ -1272,9 +1236,9 @@
   $("otpIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("verifyBtn").click(); } });
   $("verifyBtn").addEventListener("click", function(){
     var code=($("otpIn").value||"").replace(/\D/g,"");
-    if(code.length<6){ $("otpErr").textContent="Enter the 6-digit code from your "+(MODE==="email"?"email.":"phone."); return; }
+    if(code.length<6){ $("otpErr").textContent="Enter the 6-digit code from your phone."; return; }
     var btn=this; btn.disabled=true; btn.textContent="Verifying...";
-    var ask = MODE==="email" ? { email:EMAIL, token:code, type:"email" } : { phone:E164, token:code, type:"sms" };
+    var ask = { phone:E164, token:code, type:"sms" };
     client.auth.verifyOtp(ask).then(function(res){
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
@@ -1284,12 +1248,10 @@
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
   $("resendBtn").addEventListener("click", function(){
-    if(MODE==="email" ? !EMAIL : !E164){ return; }
+    if(!E164){ return; }
     var el=this; el.textContent="Sending..."; $("otpErr").textContent="";
-    (MODE==="email" ? emailOtp(EMAIL) : client.auth.signInWithOtp({ phone:E164 })).then(function(res){
-      if(res && res.error){ el.textContent="Resend code";
-        $("otpErr").textContent = MODE==="email" ? "Could not resend, give it a moment and try again." : TEXT_FAILED;
-        if(MODE!=="email") showEmailAlt(); return; }
+    client.auth.signInWithOtp({ phone:E164 }).then(function(res){
+      if(res && res.error){ el.textContent="Resend code"; $("otpErr").textContent=TEXT_FAILED; showEmailAlt(); return; }
       el.textContent="Code sent"; setTimeout(function(){ el.textContent="Resend code"; }, 3000);
     }).catch(function(){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; });
   });
@@ -1312,6 +1274,8 @@
     }
     return null;
   }
+  /* "My email" (Dean, 5 Nov 2026, item 64): the backup email is theirs to change any time. Opens the same one-field screen, saved on their own login only. */
+  $("myEmailBtn").addEventListener("click", function(){ if(window.VPAboutYou && VPAboutYou.openEmail && window.VP && VP.getClient) VPAboutYou.openEmail(__ctx, { client:VP.getClient(), edit:true, onDone:function(){} }); });
   $("firstRunBtn").addEventListener("click", function(){ if(window.VPFirstRun && window.VP && VP.getClient) VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); });
   $("signoutBtn").addEventListener("click", function(){
     var live=liveNightElsewhere();
@@ -1437,6 +1401,7 @@
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
     // A new venue's setup guide opens again from here (vp-firstrun.js, 28 Oct 2026; every new venue since 30 Oct).
     var fr=$("firstRunBtn"); if(fr) fr.style.display = (window.VPFirstRun && (VPFirstRun.offered ? VPFirstRun.offered(__ctx) : VPFirstRun.isProspect(__ctx))) ? "" : "none";
+    var me=$("myEmailBtn"); if(me) me.style.display = (__ctx && __ctx.authed && !__ctx.isAdmin && __ctx.scope==="staff" && __ctx.user && __ctx.user.phone) ? "" : "none";
     // An admin can reach every venue, so they always need the switcher, even with no staff rows.
     // A host with ONE venue never sees it (Dean, 4 Nov 2026, round 3 M): the count is DISTINCT venues, because an
     // owner who is also the host at the same pub has two staff rows and nothing to switch to.
@@ -1622,6 +1587,10 @@
        from the welcome signs one in) is asked for both before anything else, and from then on signs in with
        a text code. "Code not arriving? Carry on for now" lets them in for this sign-in only. */
     if(window.VPAboutYou && VPAboutYou.wants(__ctx) && window.VP && VP.getClient){ VPAboutYou.open(__ctx, { client:VP.getClient(), onDone:function(){ proceedVenue(); } }); go("vBoot"); return; }
+    /* THEIR OWN EMAIL NEXT (Dean, 5 Nov 2026, items 64/65): a login with a mobile and no email is asked once per sign-in,
+       optionally, for the address the sign-in page's email backup can use. Saved on THEIR login only; "My email" in the
+       header changes it later. Never asked by email. */
+    if(window.VPAboutYou && VPAboutYou.wantsEmail && VPAboutYou.wantsEmail(__ctx) && window.VP && VP.getClient){ VPAboutYou.openEmail(__ctx, { client:VP.getClient(), onDone:function(){ proceedVenue(); } }); go("vBoot"); return; }
     /* "Which venue are you at?" only for a host with more than one DISTINCT venue (Dean, 4 Nov 2026, round 3 M/N):
        two staff rows at one pub (owner and host) is one venue and no question. Written out here, not through
        hostHasChoice(), because the sign-in tests lift this function on its own. */

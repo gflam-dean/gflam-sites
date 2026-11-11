@@ -80,6 +80,27 @@
     return later === null || later !== "shift:" + shiftNow(shift);
   }
 
+  /* The mark row at the top of each of these screens, the same one the sign-in page shows. */
+  function logoRow(doc, el, box) {
+  /* The same mark as the sign-in page above it, so this reads as the next step of signing in. */
+  var logo = el("div", "display:flex;align-items:center;justify-content:center;gap:11px;margin:0 0 18px");
+  /* The 1 Nov 2026 logo, the lowercase wordmark with the pink triangle in the a (it was the old
+     outline triangle with the word set beside it). The drawing below is written in by
+     tools/sync-brand-mark.py from venueplay/brand/vp-mark.svg, and parsed as SVG, never as HTML. A
+     browser without DOMParser gets the word in text instead. */
+  var WORDMARK = '<svg xmlns="http://www.w3.org/2000/svg" width="148" height="30" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" style="display:block;color:#FFFFFF;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg>';
+  var wm = null;
+  try {
+    var P = (typeof DOMParser !== "undefined") ? DOMParser : null;
+    var parsed = P ? new P().parseFromString(WORDMARK, "image/svg+xml") : null;
+    var svgEl = parsed && parsed.documentElement;
+    if (svgEl && svgEl.nodeName === "svg" && doc.importNode) wm = doc.importNode(svgEl, true);
+  } catch (e) { wm = null; }
+  if (wm) logo.appendChild(wm);
+  else logo.appendChild(el("span", "font-family:" + HEAD + ";font-weight:800;font-size:22px;color:#FFFFFF", "venueplay"));
+  box.appendChild(logo);
+  }
+
   function open(ctx, deps) {
     deps = deps || {};
     var doc = deps.doc || root.document, storage = deps.storage || root.localStorage;
@@ -103,23 +124,7 @@
     shell.id = "vpAboutYou"; shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-labelledby", "vpAyTitle");
     var box = el("div", "max-width:420px;margin:0 auto;padding:9vh 0 40px");
     shell.appendChild(box);
-    /* The same mark as the sign-in page above it, so this reads as the next step of signing in. */
-    var logo = el("div", "display:flex;align-items:center;justify-content:center;gap:11px;margin:0 0 18px");
-    /* The 1 Nov 2026 logo, the lowercase wordmark with the pink triangle in the a (it was the old
-       outline triangle with the word set beside it). The drawing below is written in by
-       tools/sync-brand-mark.py from venueplay/brand/vp-mark.svg, and parsed as SVG, never as HTML. A
-       browser without DOMParser gets the word in text instead. */
-    var WORDMARK = '<svg xmlns="http://www.w3.org/2000/svg" width="148" height="30" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" style="display:block;color:#FFFFFF;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg>';
-    var wm = null;
-    try {
-      var P = (typeof DOMParser !== "undefined") ? DOMParser : null;
-      var parsed = P ? new P().parseFromString(WORDMARK, "image/svg+xml") : null;
-      var svgEl = parsed && parsed.documentElement;
-      if (svgEl && svgEl.nodeName === "svg" && doc.importNode) wm = doc.importNode(svgEl, true);
-    } catch (e) { wm = null; }
-    if (wm) logo.appendChild(wm);
-    else logo.appendChild(el("span", "font-family:" + HEAD + ";font-weight:800;font-size:22px;color:#FFFFFF", "venueplay"));
-    box.appendChild(logo);
+    logoRow(doc, el, box);
     var title = el("h1", "margin:0 0 10px;font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;font-size:32px;line-height:1.05;color:#FFFFFF;text-align:center", "You're in");
     title.id = "vpAyTitle";
     var sub = el("p", "margin:0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted + ";text-align:center",
@@ -234,5 +239,95 @@
     return { el: shell, ask: ask, confirmCode: confirmCode, carryOn: carryOn };
   }
 
-  root.VPAboutYou = { open: open, wants: wants, mobileE164: mobileE164, mobileShow: mobileShow, cleanName: cleanName, LATER: LATER };
+  /* ========================================================================================================
+     "YOUR EMAIL": the backup way in, saved by the person it belongs to (Dean, 5 Nov 2026, items 63 to 65).
+
+     "There shouldn't be anyone without an email." A manager adds a host with a NAME and MOBILE only, never an
+     address; the host adds their own, here, at their first sign-in (after their mobile is on the login), and
+     can change it later from "My email" in the console header. It is one optional step: "Not now" lets them in
+     and it is asked again at the next sign-in, never re-asked once an address is saved, and never by email.
+
+     WHERE IT GOES. Onto THIS login only, through Auth's own email change (updateUser): Auth emails a link to the
+     address they typed and the address only becomes the login's email once that link is tapped. So a typo, or
+     someone else's address, never ends up as the place a sign-in link is sent. The sign-in page's email backup
+     (Worker POST /auth/email-backup) takes a mobile and sends ONLY to an email saved this way.
+     It is not the marketing opt-in: that stays its own tick, elsewhere. Every word is set with textContent. */
+  var LATER_EMAIL = "vpAboutEmailLater:";
+  function cleanEmail(raw) { var e = String(raw || "").trim().toLowerCase(); return (e.length <= 200 && /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e)) ? e : ""; }
+  /* Who is asked: a venue login, signed in, WITH a mobile (a login without one is asked for it first), with no
+     email on it and none waiting to be confirmed, that has not said "not now" this sign-in. */
+  function wantsEmail(ctx, storage, shift) {
+    if (!ctx || !ctx.authed || ctx.isAdmin || ctx.scope !== "staff" || !ctx.user || !ctx.user.id) return false;
+    if (!ctx.user.phone || ctx.user.email || ctx.user.new_email) return false;
+    var later = null; try { later = (storage || root.localStorage).getItem(LATER_EMAIL + ctx.user.id); } catch (e) {}
+    return later === null || later !== "shift:" + shiftNow(shift);
+  }
+  function openEmail(ctx, deps) {
+    deps = deps || {};
+    var doc = deps.doc || root.document, storage = deps.storage || root.localStorage, client = deps.client;
+    var done = typeof deps.onDone === "function" ? deps.onDone : function () {};
+    var editing = !!deps.edit;
+    var have = (ctx && ctx.user && ctx.user.email) || "";
+    function el(tag, css, text) { var e = doc.createElement(tag); if (css) e.setAttribute("style", css); if (text != null) e.textContent = text; return e; }
+    var old = doc.getElementById("vpAboutEmail"); if (old && old.parentNode) old.parentNode.removeChild(old);
+    var shell = el("div", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;overflow-y:auto;background:#0A0A0B;" + FONT + ";color:" + C.text + ";padding:0 16px;box-sizing:border-box");
+    shell.id = "vpAboutEmail"; shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-labelledby", "vpAeTitle");
+    var box = el("div", "max-width:420px;margin:0 auto;padding:9vh 0 40px");
+    shell.appendChild(box);
+    logoRow(doc, el, box);
+    var title = el("h1", "margin:0 0 10px;font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;font-size:32px;line-height:1.05;color:#FFFFFF;text-align:center", editing ? "Your email" : "One more thing");
+    title.id = "vpAeTitle";
+    var sub = el("p", "margin:0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted + ";text-align:center",
+      editing ? "This is where a sign-in link goes if your text code ever doesn't arrive." : "Add your email so you can still get in if your text code ever doesn't arrive. It's only used for that.");
+    sub.id = "vpAeSub";
+    box.appendChild(title); box.appendChild(sub);
+    var card = el("div", "background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:22px 20px");
+    box.appendChild(card);
+    var form = el("div", ""); form.id = "vpAeForm"; card.appendChild(form);
+    var l = el("label", LABEL, "Your email (optional)"); l.setAttribute("for", "vpAeEmail");
+    var inp = el("input", INPUT); inp.id = "vpAeEmail"; inp.setAttribute("type", "email"); inp.setAttribute("inputmode", "email"); inp.setAttribute("autocomplete", "email"); inp.setAttribute("maxlength", "200"); inp.setAttribute("placeholder", "you@example.com");
+    inp.value = have;
+    var save = el("button", BTN_PINK, "Save my email"); save.id = "vpAeSave"; save.setAttribute("type", "button");
+    var msg = el("p", "margin:12px 0 0;font-size:14px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); msg.id = "vpAeMsg"; msg.setAttribute("role", "status");
+    var skip = el("button", "background:none;border:none;padding:10px 0 0;color:" + C.pinkSoft + ";font:600 13.5px/1.4 Manrope,system-ui,sans-serif;text-decoration:underline;cursor:pointer", editing ? "Close" : "Not now");
+    skip.id = "vpAeSkip"; skip.setAttribute("type", "button");
+    form.appendChild(l); form.appendChild(inp); form.appendChild(save); form.appendChild(msg); form.appendChild(skip);
+    doc.body.appendChild(shell);
+
+    var saving = false;
+    function finish(how) { if (shell.parentNode) shell.parentNode.removeChild(shell); done(how); }
+    function ask() {
+      var addr = cleanEmail(inp.value);
+      if (!addr) { msg.textContent = inp.value ? "That doesn't look like an email. Check it and try again." : "Type your email, or tap Not now."; return Promise.resolve(false); }
+      if (addr === have) { msg.textContent = "That's the email we already have."; return Promise.resolve(false); }
+      if (saving) return Promise.resolve(false);
+      if (!client || !client.auth) { msg.textContent = "We couldn't save that just now. Try again in a minute."; return Promise.resolve(false); }
+      saving = true; save.disabled = true; save.textContent = "Saving..."; msg.textContent = "";
+      return client.auth.updateUser({ email: addr }, { emailRedirectTo: ((root.location && root.location.origin) || "") + "/app/" }).then(function (r) {
+        saving = false; save.disabled = false; save.textContent = "Save my email";
+        /* One kind sentence for every refusal. It does not say whether the address is used on another login. */
+        if (r && r.error) { msg.textContent = "We couldn't save that email. Check it, or try another."; return false; }
+        if (ctx && ctx.user) ctx.user.new_email = addr;   // waiting to be confirmed: not asked again this sign-in
+        while (card.firstChild) card.removeChild(card.firstChild);
+        title.textContent = "Check your inbox";
+        sub.textContent = "We've sent a link to " + addr + ". Tap it to confirm, and that's your backup way in. If it doesn't show up, check your junk folder.";
+        var go = el("button", BTN_PINK, "Let's go"); go.id = "vpAeGo"; go.setAttribute("type", "button");
+        go.addEventListener("click", function () { finish("saved"); });
+        card.appendChild(go);
+        try { go.focus(); } catch (e) {}
+        return true;
+      }, function () { saving = false; save.disabled = false; save.textContent = "Save my email"; msg.textContent = "We couldn't save that just now. Try again in a minute."; return false; });
+    }
+    function notNow() {
+      if (!editing && ctx && ctx.user) { try { storage.setItem(LATER_EMAIL + ctx.user.id, "shift:" + shiftNow(deps.shift)); } catch (e) {} }
+      finish("later"); return Promise.resolve(true);
+    }
+    save.addEventListener("click", ask);
+    skip.addEventListener("click", notNow);
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ask(); } });
+    try { inp.focus(); } catch (e) {}
+    return { el: shell, ask: ask, notNow: notNow };
+  }
+
+  root.VPAboutYou = { open: open, wants: wants, wantsEmail: wantsEmail, openEmail: openEmail, cleanEmail: cleanEmail, LATER_EMAIL: LATER_EMAIL, mobileE164: mobileE164, mobileShow: mobileShow, cleanName: cleanName, LATER: LATER };
 })(typeof window !== "undefined" ? window : this);

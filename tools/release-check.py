@@ -3967,6 +3967,16 @@ def local_checks(which):
              'Change my mobile asks Auth\'s phone change for the NEW number in the sign-in format and saves nothing until verifyOtp type phone_change passes, with a 30 second Send it again; never drawn for HQ View as; /account/host-mobile lets the owner, or a manager allowed to add hosts for a host, change a login that is staff on this account only, never their own, a full-access or venueplay staff login, or a number another login has, and a failed read changes nothing; /admin/login-mobile is HQ Owner only, on the venue named, the confirm naming the login; both audited with last three digits only', 78,
              'A typo or a stranger\'s number put on a venue\'s login with no code, a manager taking over the owner\'s login, '
              'one business changing a host\'s sign-in at another, or a mobile changed with nothing in the audit log'),
+            # D197/D198: the email backup for phone sign-in (Dean, 5 Nov 2026 items 63 to 67; 9 Nov item 102), branch fix/email-backup-15nov.
+            ('D197. The sign-in page\'s email backup sends a link only to the email already saved on that login, says the same thing whatever the truth, and is limited',
+             'test-email-backup.js',
+             'runs POST /auth/email-backup on the billing Worker: it reads only the mobile, an address in any field (or in the mobile field) never receives anything; no email saved, banned, off every venue, ended, no login, a landline, nothing: the same { ok:true } as a send; every answer waits the same minimum time; 6 an hour per network (429, same for any number), 3 an hour per mobile, 4 links a day per login; HQ gets an audit row with only the last 3 digits, no address and no token; the handler cannot reach vpaSendEmail by itself', 18,
+             'A typed address that is sent a sign-in link to someone else\'s account, a stranger told which mobiles have an email saved, '
+             'or a free email cannon aimed at one inbox'),
+            ('D198. A host adds their own email at first sign-in, saved on their login only, optional, and never re-asked',
+             'test-email-step.js',
+             'a login with a mobile and no email is asked once per sign-in after name and mobile; one Auth email change on their own login (a confirmation goes to the address, so a typo or someone else\'s address never becomes the place a link goes); Not now holds for this sign-in only; a login with an email or one pending is never re-asked; an address Auth refuses gets one line that does not say why; My email reopens it in the console header', 29,
+             'A host with no way in when texts stop, an unconfirmed typo that receives their sign-in links, or the same question every shift'),
             # D115: the sign-in link in the prospect's own thread, and where the account email got to (Dean, 5 Nov 2026),
             # branch feature/signin-in-thread-6nov.
             ('D115. A prospect\'s sign-in link can go in their own email thread, and HQ shows where the account email got to',

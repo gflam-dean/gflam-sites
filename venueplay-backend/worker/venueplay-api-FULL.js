@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 16:42 · cdd8e55a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 17:04 · 317789a6';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -153,6 +153,8 @@ export default {
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
       if (request.method === 'POST' && path === '/auth/one-click/resend' && typeof vpaHandleOneClickResend === 'function') return await vpaHandleOneClickResend(request, env, json);
+      // The quiet email backup on the sign-in page's code step (Dean, 5 Nov 2026, items 63 to 67; 9 Nov, item 102). Takes a MOBILE, never an address.
+      if (request.method === 'POST' && path === '/auth/email-backup' && typeof vpaEmailBackup === 'function') return await vpaEmailBackup(request, env, json);
       if (request.method === 'POST' && path === '/short/open'   && typeof vpaShortOpen === 'function')   return await vpaShortOpen(request, env, json);
       if (request.method === 'POST' && path === '/short/attach' && typeof vpaShortAttach === 'function') return await vpaShortAttach(request, env, json);
       if (request.method === 'POST' && path === '/venue-signin/lookup' && typeof vpaVenueSigninLookup === 'function') return await vpaVenueSigninLookup(request, env, json);
@@ -6494,6 +6496,56 @@ async function vpaHandleOneClickResend(request, env, json) {
     }
   } catch (_) {}
   return json(SAME);
+}
+/* ===========================================================================
+ * THE EMAIL BACKUP FOR PHONE SIGN-IN (Dean, 5 Nov 2026, items 63 to 67; 9 Nov, item 102)
+ *
+ *   POST /auth/email-backup { mobile }   from the sign-in page's "Code not arriving? Get it by email instead",
+ *        which shows only after a text code has been asked for. It takes a MOBILE and nothing else.
+ *
+ *   destination   a sign-in link goes ONLY to the email already saved on the login that owns that mobile
+ *                 (vpaSendSigninLink reads it from Auth, then needs staff at a venue, not banned, and the
+ *                 4 a day cap). No address is read from the request, so a typed address can never receive
+ *                 a link or a code: an "email" or "e" field in the body is never looked at.
+ *   one answer    { ok:true } whatever happens: no login for that mobile, a login with no email, a login
+ *                 off every venue, a banned one, over a limit, a failed send, or sent. The page shows the same
+ *                 words every time (Dean's item 67), so a stranger holding a mobile learns nothing.
+ *   same timing   every answer waits until at least VPA_EMAIL_BACKUP_MIN_MS has passed, so the quick "no
+ *                 login" path and the slow "sent an email" path cannot be told apart by a stopwatch.
+ *   limits        per network 6 an hour (429, about the caller, not any number); per mobile 3 an hour (the
+ *                 answer does not change); per login 4 links a day (inside vpaSendSigninLink).
+ *   log           an audit row for HQ for each real attempt: only the last 3 digits of a mobile, never an address.
+ * ======================================================================== */
+const VPA_EMAIL_BACKUP_PER_IP = 6;
+const VPA_EMAIL_BACKUP_PER_MOBILE = 3;
+const VPA_EMAIL_BACKUP_MIN_MS = 2500;
+async function vpaEmailBackup(request, env, json) {
+  const SAME = { ok: true };
+  const started = Date.now();
+  const floor = (env && env.VPA_EMAIL_BACKUP_MIN_MS !== undefined) ? Number(env.VPA_EMAIL_BACKUP_MIN_MS) : VPA_EMAIL_BACKUP_MIN_MS;
+  const same = async () => {
+    const wait = floor - (Date.now() - started);
+    if (wait > 0 && typeof setTimeout === 'function') await new Promise((r) => setTimeout(r, wait));
+    return json(SAME);
+  };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'email-backup', ip, VPA_EMAIL_BACKUP_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return await same();
+  try {
+    const e164 = vpaNormaliseMobileAU(_b.body && _b.body.mobile);
+    if (!vpaIsAuMobileE164(e164)) return await same();
+    if (!(await helpLimit(env, 'email-backup-mobile:' + (await helpSha256Hex((env.HELP_LIMIT_SALT || env.SUPABASE_SERVICE_KEY || 'vp-help') + '|' + e164)).slice(0, 32), VPA_EMAIL_BACKUP_PER_MOBILE, 3600))) return await same();
+    const u = await vpaFindAuthUser(env, { phone: e164 });
+    if (!u || !u.id) {
+      await vpaAudit(env, { actorId: null, label: 'self (sign-in page, email backup)', role: null }, 'signin_email_backup_nologin', 'mobile:...' + e164.slice(-3), {});
+      return await same();
+    }
+    const r = await vpaSendSigninLink(env, u.id, null, { self: true });
+    await vpaAudit(env, { actorId: null, label: 'self (sign-in page, email backup)', role: null }, r.ok ? 'signin_email_backup_sent' : 'signin_email_backup_refused',
+      'auth_user:' + u.id, { reason: r.ok ? undefined : r.reason, venue_id: r.venue_id || undefined });
+  } catch (e) { console.log('[email-backup] ' + String((e && e.message) || e).slice(0, 160)); }
+  return await same();
 }
 const VPA_LINK_ENDED_TITLE = 'Sign-in link ended: ';
 async function vpaProspectLinkEndedTicket(env, r) {

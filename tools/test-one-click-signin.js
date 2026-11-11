@@ -161,9 +161,9 @@ var SHORT_ATTACH_SRC = (function () {   // the /short/attach answers (Dean, 12 N
   return INDEX.slice(i, INDEX.indexOf('};', i) + 2) + '\n' + lift(INDEX, 'shortAttachVerdict') + '\n' + lift(INDEX, 'noSuchLogin') + '\n';
 })();
 function signInPage(search, ls, prefill) {
-  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn', 'notMine', 'wrongNum'], els = {};
+  var ids = ['stepMobile', 'stepCode', 'emailAlt', 'emailAltMsg', 'authSub', 'emailIn', 'mobileIn', 'notMine', 'wrongNum'], els = {};
   ids.forEach(function (i) { els[i] = new El(i); });
-  els.stepCode.classList.add('hidden'); els.emailAlt.classList.add('hidden'); els.stepEmail.classList.add('hidden');
+  els.stepCode.classList.add('hidden'); els.emailAlt.classList.add('hidden'); els.emailAltMsg.classList.add('hidden');
   els.authSub.textContent = 'Sign in with a text code to your mobile.';
   var LS = ls || store(), SS = store(); if (prefill) SS.setItem('vpSignInPrefill', prefill);
   var fn = (new Function('$', 'localStorage', 'sessionStorage', 'window', 'var SUB_TEXT="Sign in with a text code to your mobile.", PREFILL_E164="";\n' + lift(INDEX, 'toE164') + '\n' + WRONG_NUMBER_SRC + lift(INDEX, 'openSignInStep') + '\nreturn openSignInStep();'));
@@ -172,7 +172,7 @@ function signInPage(search, ls, prefill) {
     history: { replaceState: function (a, b, u) { hist.push(u); } } });
   return { out: out, els: els, SS: SS, LS: LS, hist: hist };
 }
-function onMobile(P) { return P.out === 'sms' && !P.els.stepMobile.classList.contains('hidden') && P.els.stepEmail.classList.contains('hidden') && P.els.emailAlt.classList.contains('hidden') && P.els.authSub.textContent === 'Sign in with a text code to your mobile.'; }
+function onMobile(P) { return P.out === 'sms' && !P.els.stepMobile.classList.contains('hidden') && P.els.emailAltMsg.classList.contains('hidden') && P.els.emailAlt.classList.contains('hidden') && P.els.authSub.textContent === 'Sign in with a text code to your mobile.'; }
 var S1 = signInPage('?signin=email&gone=1', null, 'amit@caz.example');
 check('an old ?signin=email link (every link in the welcome used to carry it): the MOBILE step, never the email box, and nothing put in it', onMobile(S1) && S1.els.emailIn.value === '' && S1.SS.getItem('vpSignInPrefill') === null, [S1.out, S1.els.authSub.textContent]);
 var LSe = store(); LSe.setItem('vpSignInWith', 'email');
@@ -186,8 +186,8 @@ check('?signin=sms from the welcome: the mobile step, their mobile filled in, th
   onMobile(S5) && S5.els.mobileIn.value === '0452 510 904' && S5.hist[0] === '/app/?signin=sms', [S5.out, S5.els.mobileIn.value, S5.hist]);
 var S6 = signInPage('?signin=sms', null, null, '#m=07522836' + '67');
 check('a number in the link that is not a mobile is never put in the box', onMobile(S6) && S6.els.mobileIn.value === '', S6.els.mobileIn.value);
-check('the email code is still there, but only behind "Code not arriving? Get it by email instead"', /<div id="emailAlt" class="hidden vp-c"[^>]*><span class="skiplink" id="emailAltBtn">Code not arriving\? Get it by email instead<\/span><\/div>/.test(INDEX) &&
-  /<div id="stepEmail" class="hidden vp-c">/.test(INDEX));
+check('the email backup is still there, but only behind "Code not arriving? Get it by email instead", with no email box', /<div id="emailAlt" class="hidden vp-c"[^>]*><span class="skiplink" id="emailAltBtn">Code not arriving\? Get it by email instead<\/span><\/div>/.test(INDEX) &&
+  /<p id="emailAltMsg" class="note vp-c hidden"/.test(INDEX) && !/id="stepEmail"/.test(INDEX) && !/id="emailIn"/.test(INDEX));
 /* A VENUE'S LINK NEVER LANDS IN HQ (Dean, 29 Oct 2026: the go page "links back to HQ"). The console's own
    router, run: an HQ session already in the browser, on a link that carries ?signin=, is dropped and the
    venue's sign-in shown; without ?signin= an admin still goes to HQ as before. */

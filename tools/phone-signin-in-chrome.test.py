@@ -178,21 +178,17 @@ try:
     ok('the code box sits inside the card and is the dark on-brand box, not a white browser box', fits_dark(sid, 'otpIn'), fits_dark(sid, 'otpIn', True))
     shot(sid, '2-signin-code-sent')
     click(sid, 'emailAltBtn')
-    S.until(sid, '!document.getElementById("stepEmail").classList.contains("hidden")', 5)
-    ok('the email code still works as the outage fallback: tapping it opens the email box', visible(sid, 'emailIn') and not visible(sid, 'stepMobile'))
-    ok('and that email box is the dark on-brand box inside the card too', fits_dark(sid, 'emailIn'), fits_dark(sid, 'emailIn', True))
-    shot(sid, '2b-signin-email-fallback')
-    # The same box at desktop width (Dean, 29 Oct 2026: "the box for the email isn't the one we usually have").
+    S.until(sid, '!document.getElementById("emailAltMsg").classList.contains("hidden")', 8)
+    ok('the email backup has NO box to type an address in: tapping it shows a note and nothing else', visible(sid, 'emailAltMsg') and not js(sid, '!!document.getElementById("emailIn") || !!document.getElementById("stepEmail") || !!document.querySelector("#vSignIn input[type=email]")'))
+    ok('the note reads as one calm paragraph that does not say whether an email is saved, and nothing on it is a masked address',
+       'If there\'s an email saved on your profile' in text(sid, 'emailAltMsg') or 'could not do that' in text(sid, 'emailAltMsg').lower(), text(sid, 'emailAltMsg'))
+    ok('and it fits inside the card at phone width, with no sideways scroll', no_sideways(sid) and fits_dark(sid, 'otpIn'), fits_dark(sid, 'otpIn', True))
+    shot(sid, '2b-signin-email-backup-note')
+    # The same note at desktop width.
     S.B.call('Emulation.setDeviceMetricsOverride', {'width': 1280, 'height': 900, 'deviceScaleFactor': 1, 'mobile': False}, session=sid)
     time.sleep(0.3)
-    js(sid, 'document.getElementById("emailIn").blur()')
-    time.sleep(0.5)   # the field's border eases back over .15s once it loses focus
-    diff = js(sid, '(function(){var a=document.getElementById("emailIn"), b=document.getElementById("mobileIn"); var sa=getComputedStyle(a), sb=getComputedStyle(b);'
-                   'return ["backgroundColor","borderTopColor","borderTopWidth","borderRadius","paddingTop","paddingLeft","fontSize","fontFamily","color"].filter(function(k){return sa[k]!==sb[k];})'
-                   '.map(function(k){return k+": "+sa[k]+" vs "+sb[k];});})()')
-    wide = js(sid, 'document.getElementById("emailIn").getBoundingClientRect().width > 300')
-    ok('at desktop width the email box is the dark full-width field, styled exactly as the mobile field', fits_dark(sid, 'emailIn') and wide and diff == [], diff)
-    shot(sid, '2c-signin-email-fallback-desktop')
+    ok('at desktop width the note sits inside the card, not past its edge', js(sid, '(function(){var n=document.getElementById("emailAltMsg").getBoundingClientRect(), c=n.parentElement.getBoundingClientRect(); return n.left>=c.left-1 && n.right<=c.right+1;})()'))
+    shot(sid, '2c-signin-email-backup-desktop')
     S.close_tab(tid)
 
     # ------------------------------------------------------------------ 1w. our pre-filled number, changed
