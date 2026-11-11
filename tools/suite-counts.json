@@ -231,6 +231,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/hosted-by-in-chrome.test.py": {
+  "checks": 629,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -689,6 +693,14 @@
  },
  "tools/test-host-updates-optin.js": {
   "checks": 58,
+  "counted_by": "lines"
+ },
+ "tools/test-hosted-by-game.js": {
+  "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-hosted-by.js": {
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {

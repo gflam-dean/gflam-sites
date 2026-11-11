@@ -4087,6 +4087,15 @@ def local_checks(which):
              'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 54,
              'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
              'console, or the emails promising a grace the billing does not give'),
+            ('D186. Hosted by on the TV: one card per host login, each venue its own switch, set only by that venue\'s owner (INBOX 120)',
+             'test-hosted-by.js',
+             'two owners on two accounts add one mobile and get one host login listed at both pubs; the card (a name of 32 characters at most, no markup, and a logo through the venue logo\'s own checks into venue-logos/hosts/<login>/) follows the host while each venue switches trivia and musical bingo for its own TV only; another account, a stranger, the host, a manager without add hosts and the owner\'s own login are refused; a bad, oversized or tiny logo and a switch with no name change nothing; before migration 181 (NOT RUN) the save writes nothing and People is the old list', 37,
+             'A pub owner able to switch a rival pub\'s TV, a host card set by somebody the venue never added, or a '
+             'half-written card before the migration has run, all ship green otherwise'),
+            ('D187. Hosted by reaches only the host\'s own venues\' TVs, and only our own logo address (INBOX 120)',
+             'test-hosted-by-game.js',
+             '/host/hosted-by answers the signed-in host\'s card at a venue where they are staff, for exactly the games that venue switched on; refused elsewhere; nothing to show (never an error) for the owner, HQ View as, a switch off, no name, or before migration 181; a logo outside our venue-logos/hosts/ storage never reaches a TV; the console tags only "mode" and only once it has heard back, and the TV keeps a foreign logo address off the wall', 25,
+             'A TV painting any address a broadcast names, or every console failing because a migration has not run'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

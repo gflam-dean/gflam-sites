@@ -740,3 +740,14 @@ function and RLS-BASELINE.json does not change. Either order with the Workers: b
 events_off (the account page says What's on is being switched on) and the game Worker asks again without the column (no
 events on the TV or phones). NUMBER: 177 (the coordinator's number, 6 Nov 2026; 176 and below are taken). Branch
 `feature/whats-on-12nov`. NOT RUN. Read-back and rollback in the file.
+branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-181-hosted-by.sql` (Dean, 6 Nov 2026, INBOX 120, "Hosted by" on the TV with the host's logo): one new table,
+`vp_host_brands`, the Hosted by card per host LOGIN (name, 1 to 40 characters, and a logo in the venue-logos bucket under
+hosts/<login>/), so it follows the host to every venue they run; RLS on, no policy, anon and authenticated grants revoked,
+written only by the billing Worker. And ONE column, `vp_venue_staff.hosted_by` (jsonb, e.g. {"trivia":true,"musical":false}),
+each venue's own switch per game on that host's staff row there. No existing policy, grant or function changes.
+RLS-BASELINE.json gains one table: rerun venueplay-backend/tools/dump-rls-baseline.py after running and commit it. Either order
+with the Workers and the site: before it runs the game Worker's /host/hosted-by answers "nothing to show", the TV shows no
+line, and an owner's save on Account > People is told the feature is not switched on yet. NUMBER: 177 to 180 are taken, so
+181. Branch `fix/hosted-by-12nov`. NOT RUN. Read-back and rollback in the file.
