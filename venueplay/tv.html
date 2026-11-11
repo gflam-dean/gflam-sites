@@ -2479,6 +2479,11 @@
   }
   function enterEmbed(game){
     stopReveal();   // a ball in the air must not paint over wherever the screen goes next
+    /* ANOTHER GAME HAS THE WALL: last bingo's winner does not ride along underneath it (12 Nov 2026,
+       INBOX 282.8b). The same reason forgetLastGame() runs when the ads go up: a later mode:"bingo"
+       repainted the old winner over whatever came next. */
+    if(tvMode==="bingo" || tvMode==="ads") forgetLastGame();
+    embedGame=game;
     tvMode="embed"; stopAds(); stopCelebrate(); cancelHolding();
     hideBingoLayers();
     $("tvCorner").style.display="";
@@ -2672,9 +2677,30 @@
   /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
      without another format's chatter answering it for us. */
   var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
+  /* A FINISHED BINGO WIN (12 Nov 2026, INBOX 282.8 and 282.8b). Finish game leaves the winner up for the
+     host to announce, and nothing else ever took it down: no ball comes after it, End game may never be
+     pressed, and the host-silence timer is ninety minutes. So the wall sat on "BINGO!" through a raffle
+     and two members draws. A win counts as finished once it has been up WIN_DONE_MS with no ball since:
+     other games may then take the wall (bingoFinished), and after WIN_HOLD_MS it goes back to the ads
+     by itself. A Keep playing win is never finished: it goes back to the board on the next ball. */
+  var WIN_DONE_MS=20*1000, WIN_HOLD_MS=10*60*1000, lastWinAt=0, lastBallAt=0, embedGame="";
+  function bingoFinished(){
+    return tvMode==="bingo" && !!state && state.phase==="win" && !!lastWinAt &&
+           (Date.now()-lastWinAt)>WIN_DONE_MS && lastBallAt<=lastWinAt;
+  }
+  /* What is on the wall, for a console that asks (vp-tvclaim.js). */
+  function showingNow(){
+    if(tvMode==="embed") return embedGame||"starting";
+    if(tvMode==="holding") return "starting";
+    return tvMode==="bingo" ? "bingo" : "ads";
+  }
   function noteHostAlive(){ lastHostAt=Date.now(); }
   setInterval(function(){
     if(tvMode==="ads") { lastHostAt=Date.now(); return; }
+    if(bingoFinished() && Date.now()-lastWinAt>WIN_HOLD_MS){   // a finished bingo winner does not hang on all night
+      try{ sessionStorage.setItem("vpTvReloadWhy", "bingo-win-done"); }catch(e){}
+      enterAds(); return;
+    }
     // A bingo screen sitting in the lobby is not a game. Everything else keeps the long window.
     var idleLobby = (tvMode==="bingo" && state && state.phase==="lobby");
     var window_ms = idleLobby ? LOBBY_SILENCE_MS : HOST_SILENCE_MS;
@@ -2995,7 +3021,7 @@
       state.phase="lobby"; applyBingo();
     }
     else if(m.t==="ball"){
-      lastBingoAt=Date.now();
+      lastBingoAt=Date.now(); lastBallAt=lastBingoAt;
       state.called=m.called||state.called;
       state.phase="running";
       // Mark the ball in flight BEFORE the repaint, not after. applyBingo runs renderRun, and
@@ -3026,6 +3052,7 @@
       state.phase="running"; applyBingo();
     }
     else if(m.t==="winner"){
+      if(!m.cont) lastWinAt=Date.now();   // a win that stays up (Confirm winner, Finish game); see bingoFinished()
       /* The same real-balls win said again (a screen that reloaded asked the console to catch it
          up): every other wall is already showing it, so it is not a second fanfare. */
       var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
@@ -3395,6 +3422,7 @@
       }catch(e){}
       return make();
     }
+    var saidShowing={};
     GAMES.forEach(function(game){
       var c=gameChannel(game);
       // Named, because re-subscribing after a dropped socket has to reattach it.
@@ -3406,8 +3434,22 @@
            round: only a mode could move it, and the console's heartbeat kept bingo looking live
            (break test, 14 Oct 2026). Real play on another game's channel now takes the wall. */
         var idleBingo = tvMode==="bingo" && state && state.phase==="lobby" && !(state.called && state.called.length);
-        if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
+        /* A FINISHED BINGO GAME IS NOT A GAME TO PROTECT EITHER (12 Nov 2026, INBOX 282.8, FINDINGS R3/R7).
+           Finish game leaves the winner on the wall, and a winner is not a lobby, so the line above let
+           nothing through: the raffle drew three times on the console with the room still looking at
+           the bingo winner. A win that has been up for a while, with no ball since, is over. */
+        if(bingoFinished()) idleBingo=true;
+        if(m.t==="mode" && m.mode===game && m.force){ enterEmbed(game); }   // the host's own "Put it on the TV": whatever is on (vp-tvclaim.js)
+        else if(m.t==="mode") onGameMode(game, idleBingo && !!m.claim);   // a claim (a real action: Draw) takes a finished or idle bingo; a bare mode keeps the old rule
+        else if(tvMode==="ads" && onAir(m)) onGameMode(game);
         else if(idleBingo && onAir(m) && m.t!=="state") onGameMode(game, true);
+        /* SAY WHAT IS ON THE WALL (vp-tvclaim.js). The raffle and members consoles tell their host when
+           the TV is not showing the draw, and only the TV knows. Answered to a console's own words,
+           at most once per ten seconds per channel; the embedded game screen answers for itself. */
+        if(HOST_TYPES[m.t] && m.t!=="mode" && Date.now()-(saidShowing[game]||0)>10000){
+          saidShowing[game]=Date.now();
+          try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", showing:showingNow() } }); }catch(e){}
+        }
       }); }
       /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
          only ever called from the bingo channel, so a trivia or musical night past 90 minutes,

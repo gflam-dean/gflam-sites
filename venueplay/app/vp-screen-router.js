@@ -83,9 +83,12 @@
     var embedded = false;
     try { embedded = window.top !== window.self; } catch (e) { embedded = true; }
 
-    function goTo(game) {
+    function goTo(game, force) {
       if (switched || game === self) return;
-      if (ourGameIsLive()) return;              // do not walk out on a game being played
+      /* A HOST'S OWN "PUT IT ON THE TV" (force:1, vp-tvclaim.js, 12 Nov 2026) is obeyed whatever is
+         on: the console has just told that host the TV is not showing their draw, and they chose to
+         take it. Everything else, a claim from Draw included, still waits for a live game. */
+      if (!force && ourGameIsLive()) return;    // do not walk out on a game being played
       switched = true;
       if (embedded) {
         try {
@@ -122,7 +125,7 @@
              on "Starting Musical..." (played at Test Charlie, 1 Oct 2026). For the same reason only
              traffic that only bingo makes (a ball, a new round, a claim, a winner) counts as bingo
              being on air there; state and volume are said by every format. */
-          if (m.t === "mode") { goTo(m.mode && URLS[m.mode] ? m.mode : game); return; }
+          if (m.t === "mode") { goTo(m.mode && URLS[m.mode] ? m.mode : game, !!m.force); return; }
           if (m.fmt && m.fmt !== game) return;   // another game's traffic on a shared channel (14 Oct 2026)
           if (game === "bingo" ? BINGO_ON_AIR[m.t] : onAir(m)) goTo(game);
         };

@@ -154,6 +154,10 @@
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
 
   .hidden{display:none!important}
+  /* The TV is not showing this draw (vp-tvclaim.js): one plain line and the way to fix it. */
+  .tvline{margin:0 0 12px;padding:12px 14px;border:1px solid rgba(255,31,142,.45);border-radius:12px;background:rgba(255,31,142,.07);color:#fff;font-size:15px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+  .tvline span{flex:1 1 220px}
+  .tvline .tvline-btn{width:auto;min-height:44px;margin:0;padding:0 16px;font-size:15px}
 
   /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
      What used to be the same style="" attribute on every console, so a size is set once
@@ -381,6 +385,7 @@
           <button type="button" data-once="race">Race plate</button>
         </div>
       </div>
+      <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
       <button class="btn pink xl" id="drawBtn">Draw the winner</button>
       <p class="hint" id="drawHint"></p>
       <p class="note hidden" id="freeEntryNote" style="margin-top:10px">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
@@ -417,6 +422,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-channel.js"></script>
+<script src="/app/vp-tvclaim.js"></script>   <!-- the TV is taken only by Draw, and the host is told when it is not showing the draw (12 Nov 2026) -->
 <script src="/app/vp-drawrecord.js"></script>
 <script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: ticket roll, race plate; only its draw times are read here -->
 <script>
@@ -469,6 +475,13 @@
   function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
   function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  /* THE TV IS TAKEN BY DRAW, NEVER BY OPENING THIS PAGE (12 Nov 2026, INBOX 282.8 and 286; /app/vp-tvclaim.js).
+     Opening the console, coming back to its tab and a TV saying hello used to put the raffle on the wall;
+     now only Draw (or the host's own "Put the draw on the TV") does, and until then this is a settings page
+     that leaves the wall alone. A live round counts as on air, so a reload mid-claim puts it back. */
+  var TVC=(window.VPTvClaim ? VPTvClaim.make({ game:"raffle", send:function(m){ send(m); if(m && m.t==="mode") send({ t:"host_here" }); }, box:"tvLine",
+    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV" })
+    : { onAir:function(){ return true; }, claim:function(){}, release:function(){}, heard:function(){}, whenShowing:function(fn){ fn(true); }, showing:function(){ return true; }, render:function(){} });
 
   // ---- console state (the Worker is authoritative; this is the console's view) ----
   var G={ venueId:null, code:"", sessionId:"", gameId:"", gameSig:"",
@@ -842,6 +855,7 @@
     try{
       if(G.round || G.busy) return;      // a live round speaks for itself
       if(!G.venueId) return;             // not signed in yet
+      if(!TVC.onAir()) return;           // a console nobody has drawn from keeps no board on the wall: it times out to the ads (12 Nov 2026)
       sendIdle();
     }catch(e){}
   }, RAFFLE_HEARTBEAT_MS);
@@ -1241,6 +1255,7 @@
     if(r && r.free){ G.freeEntry=true; var fe=$("freeEntryNote"); if(fe) fe.classList.remove("hidden"); }
     startDraw();
   }
+  var _tvReady=false;
   function startDraw(){
     if(G.busy) return;
     readInputs();
@@ -1256,6 +1271,15 @@
     if(!G.jackOn && !drawingPrize()){ hostError("Add at least one prize to draw for."); return; }
     if(!G.jackOn && liquorBlocked(drawingPrize())){ hostError(VPGaming.LIQUOR_PRIZE_MSG, "liquor"); return; }
     if(remainingCount()<1){ hostError("No undrawn tickets left. Tap New raffle to start again."); return; }
+    /* DRAW TAKES THE TV, AND WAITS A MOMENT FOR IT (12 Nov 2026, INBOX 282.8). The raffle used to claim the wall
+       only when the page opened, so the room could miss the whole draw. Now Draw claims it, and if the TV was
+       not already on the raffle the spin waits (a few seconds at most) for the raffle screen to say it is up,
+       so the room sees the whole draw. If it never comes, the draw goes ahead and the console says why. */
+    if(!_tvReady){
+      G.busy=true; var _b=$("drawBtn"); _b.disabled=true; _b.textContent="Putting the draw on the TV\u2026";
+      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); _tvReady=true; try{ startDraw(); } finally { _tvReady=false; } });
+      return;
+    }
 
     G.busy=true; clearTimers(); G.lastWin=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
@@ -1497,7 +1521,7 @@
         if(status === "CLOSED") _closed = true;
         if(status !== "SUBSCRIBED" && _leaving) return;   // the page is going: nothing to tell the host
       if(status==="SUBSCRIBED"){
-        subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"raffle" }); flushQueue();   // put the raffle screen on the unified /tv
+        subscribed=true; send({ t:"host_here" }); if(TVC.onAir()) send({ t:"mode", mode:"raffle", claim:1 }); flushQueue();   // back on the wall after a drop, ONLY if this console had taken it (vp-tvclaim.js)
         $("statusDot").classList.remove("on"); $("statusText").textContent=""; $("statusText").setAttribute("data-conn","up");   // no words while all is well (Dean, 11 Nov 2026, INBOX 194)
       /* CLOSED BELONGS HERE, and leaving it out is the fault that blinded a live venue's telly
          all day on 16 Sep. The branch above already resets `subscribed` on CLOSED, so sends
@@ -1525,9 +1549,11 @@
     if(!m||!m.t) return;
     if(m.t==="tv_here"){
       $("statusDot").classList.add("on"); $("statusText").textContent=""; $("statusText").setAttribute("data-conn","tv");
+      TVC.heard(m);   // what the TV says it is showing
       if(m.hello){
         send({ t:"host_here" });
-        send({ t:"mode", mode:"raffle" });   // so a /tv that just pinged switches to the raffle screen
+        if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, FINDINGS R6)
+        send({ t:"mode", mode:"raffle", claim:1 });   // so a /tv that just reloaded mid-raffle comes back to it
         if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
         else { sendState(); }
       }
@@ -1765,7 +1791,8 @@
      timer, so the wall sat on "Raffle tonight" until /tv gave up 90 minutes later. A live round
      is left alone: closing the tab mid-claim must not wipe the drawn ticket off the screen. */
   function reassertToTv(){
-    send({ t:"mode", mode:"raffle" });
+    if(!TVC.onAir()) return;   // coming back to a tab is not an action (12 Nov 2026, INBOX 286)
+    send({ t:"mode", mode:"raffle", claim:1 });
     if(typeof sendState === "function") sendState();
   }
   /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
@@ -1793,6 +1820,7 @@
   window.addEventListener("pagehide", function(){
     _leaving = true;                          // the socket closing as the page goes is not a dropped link
     if(G.round) return;
+    if(!TVC.onAir()) return;   // never took the TV, so nothing to hand back: a settings tablet closing must not touch the wall
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
@@ -1814,6 +1842,7 @@
       var ended = started ? newRaffleNow() : null;
       try{ send({ t:"idle" }); }catch(e){}
       try{ send({ t:"to_ads" }); }catch(e){}
+      TVC.release();   // handed back: from here this is a settings page again
       closeNight(ended);
       var b=$("toAdsBtn"); if(b){ b.textContent="Ads are back on"; setTimeout(function(){ b.textContent="End game"; }, 2500); }
     });

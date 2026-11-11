@@ -700,7 +700,7 @@
      tv_here, which is what HQ reads to decide a screen is alive. A demo must never make a dead
      TV look healthy. */
   if(!VP_DEMO) ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true, showing:"raffle" }); tvStatus(true); }   // showing: what is on the wall, for the console (vp-tvclaim.js, 12 Nov 2026)
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
@@ -715,7 +715,7 @@
     if(window.VPSting && VPSting.on){ try{ VPSting.forDraw(m, { line:"<i>IT\u2019S</i> RAFFLE <i>TIME</i>" }); }catch(e){} }
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next draw stops it. */
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); }catch(e){} }
-    if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here", showing:"raffle" }); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
     // The host tapped "Back to ads". Go now rather than sit through the 18 second

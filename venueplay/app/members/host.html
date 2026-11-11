@@ -138,6 +138,10 @@
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
 
   .hidden{display:none!important}
+  /* The TV is not showing this draw (vp-tvclaim.js): one plain line and the way to fix it. */
+  .tvline{margin:0 0 12px;padding:12px 14px;border:1px solid rgba(255,31,142,.45);border-radius:12px;background:rgba(255,31,142,.07);color:#fff;font-size:15px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+  .tvline span{flex:1 1 220px}
+  .tvline .tvline-btn{width:auto;min-height:44px;margin:0;padding:0 16px;font-size:15px}
   /* the in-page question (draw again?), styled like the rest of the console */
   .ask{position:fixed;top:0;left:0;right:0;bottom:0;inset:0;z-index:9000;background:rgba(8,6,12,.82);display:flex;align-items:center;justify-content:center;padding:18px}
   .askbox{max-width:30em;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
@@ -356,6 +360,7 @@
           <button type="button" data-once="race">Race plate</button>
         </div>
       </div>
+      <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
       <button class="btn pink xl" id="drawBtn">Draw</button>
       <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button>
         <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
@@ -388,6 +393,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-channel.js"></script>
+<script src="/app/vp-tvclaim.js"></script>   <!-- the TV is taken only by Draw, and the host is told when it is not showing the draw (12 Nov 2026) -->
 <script src="/app/vp-drawrecord.js"></script>
 <script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: flip board, race plate; only its draw times are read here -->
 <script>
@@ -463,6 +469,14 @@
   function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
   function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  /* THE TV IS TAKEN BY DRAW, NEVER BY OPENING THIS PAGE (12 Nov 2026, INBOX 286, FINDINGS D7; /app/vp-tvclaim.js).
+     Opening this console only to change a setting switched The Mini Bar's TV to the members draw and kept it
+     there: the page claimed the wall as it connected, on every return to its tab and to every TV hello, and
+     its heartbeat kept the board's return-to-ads timer from running out. Now only Draw (or the host's own
+     "Put the draw on the TV") takes it; until then this is a settings page and the wall is left alone. */
+  var TVC=(window.VPTvClaim ? VPTvClaim.make({ game:"members", send:function(m){ send(m); if(m && m.t==="mode") send({ t:"host_here" }); }, box:"tvLine",
+    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV" })
+    : { onAir:function(){ return true; }, claim:function(){}, release:function(){}, heard:function(){}, whenShowing:function(fn){ fn(true); }, showing:function(){ return true; }, render:function(){} });
 
   // ---- authoritative-ish console state (the Worker is the real authority) ----
   var G={
@@ -586,6 +600,7 @@
     try{
       if(G.busy || G.round) return;      // a live draw speaks for itself
       if(!G.venueId) return;             // not signed in yet
+      if(!TVC.onAir()) return;           // a console nobody has drawn from keeps no board on the wall: it times out to the ads (12 Nov 2026)
       sendState();
     }catch(e){}
   }, MEMBERS_HEARTBEAT_MS);
@@ -834,6 +849,7 @@
   }
   function closeDrawAgain(){ var a=$("drawAgainAsk"); if(a) a.classList.add("hidden"); }
   function drawAgainYes(){ closeDrawAgain(); _drawAgainOk=true; startDraw(); }
+  var _tvReady=false;
   function startDraw(){
     if(alreadyDrawnTonight() && !_drawAgainOk){ askDrawAgain(); return; }
     _drawAgainOk=false;
@@ -858,6 +874,15 @@
       return;
     }
     if(activeMembers(d).length < 1){ hostError("No active members to draw from. Enable at least one member."); return; }
+    /* DRAW TAKES THE TV, AND WAITS A MOMENT FOR IT (12 Nov 2026; FINDINGS D2, the TV racing to catch up). If the
+       wall was not already on the members draw, the spin waits a few seconds at most for the members screen to
+       say it is up, so the room sees the whole draw; if it never comes the draw goes ahead and the console
+       says why (vp-tvclaim.js). */
+    if(!_tvReady){
+      G.busy=true; $("drawBtn").disabled=true; $("drawBtn").textContent="Putting the draw on the TV\u2026";
+      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); _tvReady=true; _drawAgainOk=true; try{ startDraw(); } finally { _tvReady=false; } });
+      return;
+    }
     clearTimers(); hideWinnerCard();
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
@@ -1170,7 +1195,7 @@
         if(status === "CLOSED") _closed = true;
         if(status !== "SUBSCRIBED" && _leaving) return;   // the page is going: nothing to tell the host
       if(status==="SUBSCRIBED"){
-        subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"members" }); flushQueue();   // put the members-draw screen on the unified /tv
+        subscribed=true; send({ t:"host_here" }); if(TVC.onAir()) send({ t:"mode", mode:"members", claim:1 }); flushQueue();   // back on the wall after a drop, ONLY if this console had taken it (vp-tvclaim.js)
         $("statusDot").classList.remove("on"); $("statusText").textContent=""; $("statusText").setAttribute("data-conn","up");   // no words while all is well (Dean, 11 Nov 2026, INBOX 194)
         sendState();
       /* CLOSED BELONGS HERE, and leaving it out is the fault that blinded a live venue's telly
@@ -1202,9 +1227,11 @@
     if(!m||!m.t) return;
     if(m.t==="tv_here"){
       $("statusDot").classList.add("on"); $("statusText").textContent=""; $("statusText").setAttribute("data-conn","tv");
+      TVC.heard(m);   // what the TV says it is showing
       if(m.hello){
         send({ t:"host_here" });
-        send({ t:"mode", mode:"members" });   // so a /tv that just pinged switches to the members-draw screen
+        if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, INBOX 286)
+        send({ t:"mode", mode:"members", claim:1 });   // so a /tv that just reloaded mid-draw comes back to it
         if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:(G.round.remaining>0?G.round.remaining:0) }); }
         else { sendState(); }
       }
@@ -1372,6 +1399,7 @@
     b.addEventListener("click", function(){
       try{ send({ t:"idle" }); }catch(e){}
       try{ send({ t:"to_ads" }); }catch(e){}
+      TVC.release();   // handed back: from here this is a settings page again
       b.textContent="Ads are back on";
       setTimeout(function(){ b.textContent="End game"; }, 2500);
     });
@@ -1386,7 +1414,8 @@
      A live round is left alone: closing the tab mid-draw must not wipe a winner off the wall, and
      the round now survives a reload anyway. */
   function reassertToTv(){
-    send({ t:"mode", mode:"members" });
+    if(!TVC.onAir()) return;   // coming back to a tab is not an action (12 Nov 2026, INBOX 286)
+    send({ t:"mode", mode:"members", claim:1 });
     if(typeof sendState === "function") sendState();
   }
   /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
@@ -1414,6 +1443,7 @@
   window.addEventListener("pagehide", function(){
     _leaving = true;                          // the socket closing as the page goes is not a dropped link
     if(G.round) return;                       // a draw is live: leave the room as it is
+    if(!TVC.onAir()) return;                  // never took the TV, so nothing to hand back
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 })();
