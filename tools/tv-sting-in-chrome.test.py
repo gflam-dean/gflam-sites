@@ -313,13 +313,16 @@ def phone_landing():
                     mid = r.ask(sid, LAND) or {}
                     r.ask(sid, 'VPSting.frame(2.52); true')
                     v = r.ask(sid, LAND) or {}
-                    hd = v.get('head') or [0, 0, 0, 0]
-                    if v.get('vh') and (hd[1] > v['vh'] or hd[0] > v.get('vw', 9999)):
-                        # a short screen (musical bingo's card keeps its 64px squares, Dean 9 Nov): our logo sits at the
-                        # foot, below the fold, so there is nothing on screen to land on; vp-sting then fades in place
-                        # and must leave the real logo alone (never hidden)
+                    # where the header logo is: from the landing frame, or (when the show has already faded in place and
+                    # taken its own mark down by 2.52 s, as on number bingo's new-look phone at 844x390) from the frame before
+                    geo = v if v.get('head') else mid
+                    hd = geo.get('head') or [0, 0, 0, 0]
+                    if geo.get('vh') and (hd[1] > geo['vh'] or hd[0] > geo.get('vw', 9999)):
+                        # a short screen (musical bingo's card keeps its 64px squares, Dean 9 Nov; number bingo's new look
+                        # the same at 844x390): our logo sits at the foot, below the fold, so there is nothing on screen to
+                        # land on; vp-sting then fades in place and must leave the real logo alone (never hidden)
                         ok(tag + ': our logo is below the fold on this short screen: the show fades in place and leaves it showing',
-                           v.get('hidden') is False, [v, mid])
+                           (v.get('hidden') is False) if 'hidden' in v else (r.ask(sid, HEAD_SHOWN) is True), [v, mid])
                     else:
                         ok(tag + ': the wordmark lands on the header logo, within 2px, while the real one waits hidden',
                            isinstance(v.get('d'), (int, float)) and v['d'] <= 2 and v.get('hidden') is True and (mid.get('d') or 0) > 10, [v, mid])

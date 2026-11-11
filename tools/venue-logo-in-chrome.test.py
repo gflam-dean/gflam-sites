@@ -787,8 +787,10 @@ try:
     phone_logo('play', '/play?room=TUGUN2', 320, 640)
     phone_logo('trivia/play', '/app/trivia/play.html?room=TUGUN2', 390, 844)
     phone_logo('musical/play', '/app/musical/play.html?room=TUGUN2', 320, 640)
-    phone_header('play', '/play?demo=1', 320, 640)
-    phone_header('play', '/play?demo=1', 390, 844)
+    # THE BINGO PHONE, OPTION 5 TOO (number bingo's new look, 12 Nov 2026): our wordmark moved to the foot like the
+    # trivia and musical phones, so it takes their checks; phone_header() stays for a header that still carries the brand.
+    phone_header_opt5('play', '/play?demo=1', 320, 640)
+    phone_header_opt5('play', '/play?demo=1', 390, 844)
     phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 320, 640)
     phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 390, 844)
     # THE MUSICAL PHONE, OPTION 5 TOO (4 Nov 2026, feature/newlook-musical-5nov): the venue's logo top left, our

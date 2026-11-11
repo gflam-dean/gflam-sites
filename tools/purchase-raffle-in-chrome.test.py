@@ -252,7 +252,8 @@ try:
     ok('the page names the recorded winner, with a phone number and email to ring', wname == draws[0]['winner_name'] and '@example.com' in (text(sid, '#wContact') or ''), [wname, text(sid, '#wContact')])
     shot(sid, '10-draw-winner-tablet.jpg')
     ok('the TV shows the same winner', R.until(tsid, tv('vis("tvWin") && txt("tvWinNum")===%s' % json.dumps(wname)), 30) is True, js(tsid, tv('txt("tvWin")')))
-    R.until(tsid, tv('vis("tvWinName")'), 8); time.sleep(0.8)
+    # the prize line comes up 1.5 s after the name (tvWinName stays empty now: no phone digits on the wall, Dean 6 Nov 2026)
+    R.until(tsid, tv('/Wins /.test(txt("tvPresent"))'), 10); time.sleep(0.3)
     tvtext = js(tsid, tv('txt("tvWin")')) or ''
     ok('the TV names the prize and never a phone ending or a count', 'Fiji' in tvtext and 'ending' not in tvtext and str(draws[0].get('phone_last3')) not in tvtext and 'entr' not in tvtext, tvtext)
     ok('the TV never shows a whole mobile', not any(p[0][1:] in tvtext.replace(' ', '') for p in people) and '412345678' not in tvtext.replace(' ', ''), tvtext)

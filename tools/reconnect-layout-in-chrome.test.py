@@ -210,7 +210,11 @@ def main():
         ok('the demo plays to a winner', r.until(tv, '(function(){var w=document.getElementById("tvWin");return !!w&&!w.classList.contains("hidden")&&w.getBoundingClientRect().height>0;})()', 60) is True)
         time.sleep(0.6)
         sub = r.ask(tv, 'document.getElementById("winSubPhone").innerText')
-        ok('the winner screen names a believable card, never "#000"', sub and '#000' not in sub and 'Card #47' in sub, sub)
+        card = r.ask(tv, 'document.getElementById("winCard").textContent')
+        # number bingo's new look (f6c56828, Dean's pick F) shows NO card number on the wall: the line says "show your phone
+        # to the host", and the card it holds back is still a believable one, never "#000"
+        ok('the winner screen names a believable card, never "#000" (held back, not shown: the new look shows no card number)',
+           sub and '#' not in sub and 'show your phone to the host' in sub and card == '#47', [sub, card])
         shot(r, tv, 'tv-demo-winner-1280')
         r.close_tab(tid)
     finally:

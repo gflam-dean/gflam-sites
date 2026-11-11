@@ -534,8 +534,10 @@
          the child after it is given its margin back. */
       var side = /column/.test(cx.dir) ? (/reverse/.test(cx.dir) ? "bottom" : "top") : (/reverse/.test(cx.dir) ? "right" : "left");
       var size = /column/.test(cx.dir) ? rg : cg;
+      /* Nor is the shared game title (.toplbl, position:absolute, vp-tvgame.js): an absolutely placed child is no flex
+         item on a new engine, so the bingo wall's balls sat 3cqw right of a new set on an old one (11 Nov 2026). */
       css = g.sel + ">*+*{margin-" + side + ":" + size + "}" +
-            g.sel + ">.hidden:first-child+*," + g.sel + ">[hidden]:first-child+*{margin-" + side + ":0}";
+            g.sel + ">.hidden:first-child+*," + g.sel + ">[hidden]:first-child+*," + g.sel + ">.toplbl:first-child+*{margin-" + side + ":0}";
       /* A ROW THAT WRAPS. Margins cannot know where a line breaks, so after layout the child that
          starts each new line is marked (data-vpwl: no left margin) and every child below the first
          line is marked (data-vpwr: the row gap above it). See fixWraps. The set-up card's two halves

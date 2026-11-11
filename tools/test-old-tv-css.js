@@ -105,7 +105,8 @@ ok("a cqw inside @keyframes is resolved", /translateY\(96px\)/.test(T), T.match(
 ok("no cqw is left anywhere in the sheet", !/\dcq[wh]/.test(T), T.match(/[^;{]*\dcq[wh][^;}]*/));
 var G = (p.added[0] && p.added[0].textContent) || "";
 ok("the gap stylesheet is added once", p.added.length === 1 && p.added[0].id === "vp-oldtv-gap", p.added.length);
-ok("a hidden first child is not a gap: the child after it gets its margin back", G.indexOf(".row>.hidden:first-child+*,.row>[hidden]:first-child+*{margin-left:0}") >= 0, G);
+ok("a hidden first child is not a gap: the child after it gets its margin back", G.indexOf(".row>.hidden:first-child+*,.row>[hidden]:first-child+*,") >= 0, G);
+ok("nor is the shared game title (.toplbl, absolute): the child after it gets its margin back (bingo wall, 11 Nov 2026)", G.indexOf(".row>.toplbl:first-child+*{margin-left:0}") >= 0, G);
 ok("a row flex box's gap becomes a left margin on each child after the first", G.indexOf(".row>*+*{margin-left:19.2px}") >= 0, G);
 ok("a column flex box's gap (row value) becomes a top margin", G.indexOf(".col>*+*{margin-top:9.6px}") >= 0, G);
 ok("a wrapping row also gets the rules for its line starts and its lower lines", G.indexOf(".wr>[data-vpwl]{margin-left:0}.wr>[data-vpwr]{margin-top:38.4px}") >= 0, G);
