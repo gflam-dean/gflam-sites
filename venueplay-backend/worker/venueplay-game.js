@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 01:52 · 09e170cb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 02:00 · 9b69135c';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2774,10 +2774,10 @@ async function handleCoasterOptin(request, env, json) {
     const ask = await coasterOptinAsk(env, where);
     if (!ask) return json({ ok: true, stored: false });   // not switched on for this venue: nothing is kept
     const cfg = await venueCollectCfg(env, where.venue_id);
-    const cap = gatedCapture(cfg, { email: email || null, mobile: mobile || null, marketing_optin: b.marketing_optin === true });
-    if (!cap.email && !cap.mobile) return json({ ok: true, stored: false });
+    const cap = gatedCapture(cfg, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile || null });
+    if (!(cap.email || cap.mobile)) return json({ ok: true, stored: false });
     const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
-    if (cap.marketing_optin && consentVersion) cap.consent_version = consentVersion;
+    if (consentVersion && cap.marketing_optin) cap.consent_version = consentVersion;   // migration 174's column
     const ipHash = await abuseIpHash(request, env);
     const ins = Object.assign({ venue_id: where.venue_id, source: 'coaster', during_game: false }, cap);
     if (ipHash) ins.source_ip_hash = ipHash;
