@@ -159,23 +159,20 @@ def deadline_from(hhmm, now):
 
 
 def judged_pass(rc, out, timed_out=False):
-    """A clean pass and nothing else: exit 0, no FAIL line, and the last line says every check passed."""
-    if rc != 0 or timed_out:
-        return False
-    lines = (out or '').strip().splitlines()
-    if not lines or any(l.strip().startswith('FAIL') for l in lines):
-        return False
-    last = lines[-1].strip()
-    if 'ALL' in last and 'PASSED' in last:
-        return True
-    m = re.match(r'^(\d+) of (\d+) checks? passed', last)
-    if m:
-        return m.group(1) == m.group(2) and int(m.group(1)) > 0
-    # the older jsc style: "<n> passed, 0 failed" then a closing "PASS" (test-analytics-ignores-robots.js)
-    if last == 'PASS' and len(lines) > 1:
-        m = re.match(r'^(\d+) passed, 0 failed$', lines[-2].strip())
-        return bool(m) and int(m.group(1)) > 0
-    return False
+    """A clean pass and nothing else, by THE ONE PASS JUDGE (tools/passwording.py, 12 Nov 2026), the same
+    function the full gate, the deploy fast gate and the test server use: exit 0, no FAIL line, and a last
+    line that says every check passed. This had its own copy of the rule, as did three other readers."""
+    return _passwording().judged_pass(rc, out, timed_out)
+
+
+def _passwording():
+    """tools/passwording.py beside this file, loaded once."""
+    if 'pw' not in _PW:
+        _PW['pw'] = _load(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'passwording.py'), 'passwording_sq')
+    return _PW['pw']
+
+
+_PW = {}
 
 
 # ---------------------------------------------------------------- running

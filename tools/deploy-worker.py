@@ -176,6 +176,7 @@ def wait_for_build(name, stamp, seconds=90):
 
 sys.path.insert(0, str(REPO / 'tools'))
 import gatelib          # the shared-Mac rules: heavy lock, process-group suite runs, Chrome-only retry
+import passwording      # the one pass judge every gate reader uses (12 Nov 2026)
 
 
 # A deploy file is built from a source the suites name instead: DEPLOY-partyplay-api.js is the
@@ -301,23 +302,18 @@ def fast_gate(name, path, skip_live=False):
         cmd = [sys.executable, str(REPO / s)] if s.endswith('.py') else [gatelib.JSC, str(REPO / s)]
 
         def _passed(rr):
-            # The gate's rule for the tools/test-*.js suites as well (release-check.py section D: exit 0,
-            # "PASS" printed, no FAIL line). They print "PASS 27 checks", which _suite_passed does not know,
-            # so on 28 Oct 2026 this fast gate called 13 green suites red and refused a deploy the full gate
-            # had passed. A FAIL line or a non-zero exit is still red either way.
-            if rr.rc != 0:
-                return False
-            if _suite_passed(rr.last):
-                return True
-            text = re.sub(r'\x1b\[[0-9;]*m', '', rr.out or '')
-            # Exactly release-check.py's section D rule: "PASS" anywhere in the output (some suites print it
-            # first and end on an "ok" line), and no line that starts with FAIL.
-            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())
+            # THE ONE PASS JUDGE (tools/passwording.py, 12 Nov 2026), the same function the full gate,
+            # suite-queue.py and the test server use. This fast gate had its own rule, and on 12 Nov it read
+            # tools/test-try-demo-billing.js ("All 22 checks passed") as red after the full gate had passed it:
+            # the push was out, the Workers were not, and Pages had to be rolled back by hand.
+            return passwording.run_passed(rr)
         rr, flake = gatelib.run_suite_with_retry(cmd, os.path.basename(s), _passed, cwd=str(REPO),
                                                  timeout=900 if is_chrome else 300, chrome=is_chrome,
                                                  say=lambda x: print('  ' + x))
-        line(os.path.basename(s), _passed(rr), '%s (%.0fs%s)' % (rr.last[:90], rr.seconds,
-             ', passed on retry' if flake and flake['outcome'] == 'passed on retry' else ''))
+        good, why = passwording.verdict(rr.rc, rr.out, rr.timed_out)
+        line(os.path.basename(s), good, '%s (%.0fs%s)%s' % (rr.last[:90], rr.seconds,
+             ', passed on retry' if flake and flake['outcome'] == 'passed on retry' else '',
+             '' if good else '  why: ' + why[:140]))
         if rr.leaked:
             line('%s left no headless Chrome behind' % os.path.basename(s), False, '%d killed' % len(rr.leaked))
 
@@ -337,12 +333,9 @@ def fast_gate(name, path, skip_live=False):
 
 
 def _suite_passed(line):
-    """The gate's own rule (release-check.suite_passed): ALL n CHECKS PASSED, or "n of n checks passed"."""
-    line = (line or '').strip()
-    if 'ALL' in line and 'PASSED' in line:
-        return True
-    m = re.match(r'^(\d+) of (\d+) checks? passed', line)
-    return bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0
+    """A last line on its own, read by the one pass judge (tools/passwording.py). Kept for callers that
+    only have the last line; a suite run is judged whole by passwording.run_passed."""
+    return passwording.last_line_ok(line)
 
 
 def gate_or_die(flags, name, path):

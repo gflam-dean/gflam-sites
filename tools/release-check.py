@@ -126,6 +126,7 @@ labels_seen = []        # every label ok() judged, for the label ledger (see lab
 # /tmp/vp-heavy.lock.
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import gatelib
+import passwording   # THE ONE PASS JUDGE: every reader of a suite's output asks it (12 Nov 2026)
 
 # --skip-chrome: run the gate WITHOUT its Chrome suites. For prove-checks' targeted proofs only
 # (a proof of a non-browser check used to re-run ten minutes of Chrome to see one line go red).
@@ -598,7 +599,7 @@ def local_checks(which):
                     continue
                 r = _run_jsc_suite(os.path.join(d, f))
                 _SUITES_RUN.add(os.path.abspath(os.path.join(d, f)))
-                ok(f, suite_passed(r.last), r.last)
+                ok(f, passwording.run_passed(r), r.last)
     """A .test.py under tools/ runs the same way a .test.js does. redirect-verdict.test.py is
     the first: it drives redirect_verdict with the answers a broken edge rule would give, which
     a live probe can never produce while the rule is working.
@@ -622,7 +623,7 @@ def local_checks(which):
             _CHROME_WATCHED[0] += 1
 
         def _passed(r):
-            return r.rc == 0 and suite_passed(r.last)
+            return passwording.run_passed(r)
         r, flake = gatelib.run_suite_with_retry(
             [sys.executable, p], f, _passed, cwd=ROOT, timeout=_suite_timeout(chrome), chrome=chrome,
             say=lambda s: print('  %s%s%s' % (DIM, s, OFF)))
@@ -744,7 +745,7 @@ def local_checks(which):
     for t in vp_suites:
         r = _run_jsc_suite(t)
         _SUITES_RUN.add(os.path.abspath(t))
-        ok(os.path.basename(t), suite_passed(r.last), r.last)
+        ok(os.path.basename(t), passwording.run_passed(r), r.last)
 
     every_suite_is_run()
     every_page_loads_what_it_calls()
@@ -3190,7 +3191,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('adding a venue charges a month and credits it straight back (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-add-venue-free-month.js. Either the credit stopped '
                    'happening, which means groups are being charged to expand, or it started '
@@ -3225,7 +3226,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('one email, one bill, and the promised free month (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-checkout-trial-and-duplicates.js. This guards money at '
                    'the front door: a duplicate subscription the venue cannot see to cancel, a '
@@ -3259,7 +3260,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('an unsubscribe keeps them off the marketing list (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-unsubscribe-is-honoured.js. This is the Spam Act one: '
                    'marketing to somebody who has withdrawn consent is the single fault here that '
@@ -3291,7 +3292,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('no join can write player data the venue never switched on (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-collection-gate.js. Player contact data ranks with billing '
                    'and the games working, and a fault here does not look like a fault: nothing '
@@ -3321,7 +3322,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('player-data permission needs an explicit tick, in every copy (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-manager-permissions.js. An absent permission must not '
                    'grant a manager a venue customer list')
@@ -3341,7 +3342,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('every TV in a venue shows the same slide at the same time (%d checks)' % n,
-               r.returncode == 0 and 'PASSED' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-tv-slides-in-step.js. Each wall must read its slide off the clock')
 
@@ -3359,7 +3360,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a woken wall rejoins the clock, and the screen check knows a restart from an advance (%d checks)' % n,
-               r.returncode == 0 and 'PASSED' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-screen-check-wake.js. startAds must land on the clock\'s slot after a wake, and '
                    'screen-check.html\'s wakeVerdict must pass that slot or the one before it and fail slide one')
@@ -3382,7 +3383,7 @@ def local_checks(which):
         bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
         n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
         ok('the tour cards say loading, retry once and tell the truth; Coming Soon only when nothing is on (%d checks)' % n,
-           r.returncode == 0 and 'PASSED' in out and not bad,
+           passwording.judged_pass(r.returncode, out) and not bad,
            detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
            why='run jsc tools/test-touring-cards-loader.js. touring/index.html and current-tours.html must say loading '
                'until the database answers, give a read TC_FETCH_MS and try once more, write Coming Soon only when '
@@ -3413,7 +3414,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('anything a venue may collect, it may also download (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-optin-export-gate.js. If you change the words in one gate, '
                    'change them in the other: venueplay-backend/supabase/venueplay-82-*.sql and '
@@ -3438,7 +3439,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('held-back opt-ins are counted and reported, never silent (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-optin-held-back.js. A venue that collected details and '
                    'sees an empty file concludes the product does not work')
@@ -3463,7 +3464,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a failed page throws instead of truncating the export (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-optin-fails-closed.js. A short customer list with no '
                    'error is worse than no list at all: nobody questions it')
@@ -3505,7 +3506,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a real visitor is counted, an automated browser is not (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-analytics-ignores-robots.js. Our own live checks '
                    'inflating the numbers makes every marketing decision off them wrong')
@@ -3525,7 +3526,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a club past 1,000 members sees all of them (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-members-paged.js. A member the host cannot see '
                    'is a member who cannot be drawn, and the screen gives no hint')
@@ -3580,7 +3581,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a room shares one leaderboard read, and nobody sees another question\'s numbers',
-               r.returncode == 0 and n >= 11 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 11 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-score-pull-is-shared.js. The gateway sustains about 50 calls a '
                    'second for the whole platform; two rooms revealing together stalled every venue')
@@ -3662,6 +3663,22 @@ def local_checks(which):
                    (b.split() + ['', ''])[1] for b in bad[3:])) if bad else (m.group(0) if m else out[-120:])),
                why='run python3 tools/check-suite-ledger.py. If a suite was shrunk ON PURPOSE, run it '
                    'with --update and commit the ledger: the diff is the record that it was a decision')
+
+            # D211 (12 Nov 2026, INBOX 270): release.py pushed 606b3959 with this gate green, then the deploy
+            # tool's fast gate refused the Workers because tools/test-try-demo-billing.js ended "All 22 checks
+            # passed" and that reader knew two other shapes. Pages went live on old Workers and was rolled
+            # back by hand. Every reader now asks tools/passwording.py, and every suite ends on a line it
+            # reads: the ledger run above judges each passing suite's LAST line and prints a WORDING line for
+            # each one that does not. A new suite that ends any other way is red here the day it is added.
+            head('D211. Every suite ends on a line the one pass judge reads, so no gate reader can call it red')
+            wording = [l.strip()[8:] for l in out.splitlines() if l.strip().startswith('WORDING ')]
+            mw = re.search(r'wording: (\d+) passing suite\(s\) read, (\d+) end on a line', out)
+            ok('every suite ends on ALL N CHECKS PASSED (or another line tools/passwording.py reads)',
+               bool(mw) and int(mw.group(1)) >= 100 and int(mw.group(2)) == 0 and not wording,
+               detail=(mw.group(0) if mw else 'the ledger printed no wording line'),
+               why=('; '.join(w[:140] for w in wording[:3]) + ('' if len(wording) <= 3 else '; also: ' + ', '.join(
+                   w.split(' :: ')[0] for w in wording[3:]))) + '. Make the suite print "ALL N CHECKS PASSED" as its last line'
+                   if wording else 'tools/check-suite-ledger.py did not report the wording count')
 
         # D24: HQ said "Screen ok" about a screen that had been silent for 29 hours, because the
         # page never refreshed. Dean found it by asking "is that right?", 21 Sep 2026.
@@ -4372,7 +4389,7 @@ def local_checks(which):
             out = ((r.stdout or '') + (r.stderr or '')).strip()
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
-            ok(title, r.returncode == 0 and n >= floor and not bad,
+            ok(title, passwording.judged_pass(r.returncode, out) and n >= floor and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/%s. %s' % (fn, why))
 
@@ -4387,7 +4404,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a dropped game channel is rebuilt, and the screen still follows the host',
-               r.returncode == 0 and n >= 10 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 10 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-router-heals-after-a-blip.js. A telly on a wall has '
                    'nobody to press reload; if it cannot heal itself it stays wrong all night')
@@ -4403,7 +4420,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a win survives heartbeats and reconnects, and a new round still clears it',
-               r.returncode == 0 and n >= 10 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 10 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-winner-screen-survives.js from the repo root. The win '
                    'screen is what a player shows the host to be paid')
@@ -4418,7 +4435,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a manager whose permissions cannot be read is refused, never promoted',
-               r.returncode == 0 and n >= 28 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 28 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-fail-closed-batch.js. Not knowing what somebody may do '
                    'is a reason to ask them to try again, never to let them do everything')
@@ -4434,7 +4451,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('the real templates render with every venue, the bare venueplay.com.au/tv link and no raw tags',
-               r.returncode == 0 and n >= 9 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 9 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-welcome-email-renders.js. This is the first thing a '
                    'paying venue reads, and the TV link in it is how their screen finds them')
@@ -4450,7 +4467,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('archiving starts the purge clock and reactivating clears it',
-               r.returncode == 0 and n >= 6 and not bad,
+               passwording.judged_pass(r.returncode, out) and n >= 6 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-status-moves-the-clock.js. A reactivated venue that '
                    'keeps an old closed date can have its players wiped, and that has no undo')
@@ -4466,7 +4483,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('the venue list is complete and still one call for a host (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-venue-list-paged.js. A venue HQ cannot see is a '
                    'venue nobody can fix, and a second call on every console boot costs '
@@ -4483,7 +4500,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('parked questions are not advertised, and a bad count writes nothing (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-set-count.js. A host told there are more questions '
                    'than can be drawn runs short on the night')
@@ -4499,7 +4516,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('a malformed body is refused with a reason (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-body-reader.js')
 
@@ -4588,7 +4605,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('the nightly archive sweep fails closed (%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-archive-sweep-fails-closed.js. A venue archived '
                    'by mistake is a dark room on a Friday night')
@@ -4605,7 +4622,7 @@ def local_checks(which):
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('an archived venue is not restored, and an explicit choice still works '
                '(%d checks)' % n,
-               r.returncode == 0 and n > 0 and not bad,
+               passwording.judged_pass(r.returncode, out) and n > 0 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-archived-venue-restore.js. A host locked into an '
                    'archived venue reads as an outage, and an admin bounced out of View as '
@@ -4634,7 +4651,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('closed venues lose their player details, and nobody else does (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-retention-sweep.js. Getting this wrong in one direction '
                    'breaks a written promise; in the other it empties a paying venue\'s customer '
@@ -4659,7 +4676,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('permissions are read per account, most restrictive wins (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-manager-perms-scope.js')
 
@@ -4687,7 +4704,7 @@ def local_checks(which):
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
             ok('every console says it is there, and only a lobby times out fast (%d checks)' % n,
-               r.returncode == 0 and 'PASS' in out and not bad,
+               passwording.judged_pass(r.returncode, out) and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-abandoned-lobby.js. Getting this wrong one way leaves a '
                    'venue looking at a dead join code all night; the other way pulls the wall '
@@ -5209,17 +5226,11 @@ _SUITES_RUN = set()
 def suite_passed(line):
     """Did a suite's last line say every check passed?
 
-    TWO SHAPES, because there are two. Most print "ALL 26 CHECKS PASSED"; touring-api
-    prints "36 of 36 checks passed". The second was never recognised, so that suite
-    would have read as a failure the moment anybody swept it in, which is one of the
-    two reasons nobody had.
-
-    The numbers must MATCH. "35 of 36 checks passed" is a failure and has to stay one."""
-    line = (line or '').strip()
-    if 'ALL' in line and 'PASSED' in line:
-        return True
-    m = re.match(r'^(\d+) of (\d+) checks? passed', line)
-    return bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0
+    TWO SHAPES, once: "ALL 26 CHECKS PASSED" and touring-api's "36 of 36 checks passed". Since 12 Nov
+    2026 every reader asks tools/passwording.py instead (the deploy fast gate had its own rule and
+    refused a release this gate had passed). A whole run is judged by passwording.run_passed; this
+    one-line form stays for anything that kept only the last line. "35 of 36" is still a failure."""
+    return passwording.last_line_ok(line)
 
 
 # A SUITE THAT NOBODY RUNS, WITH THE REASON. Anything here is deliberately outside the

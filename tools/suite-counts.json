@@ -240,7 +240,7 @@
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
-  "checks": 71,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {
@@ -381,6 +381,10 @@
  },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/passwording.test.py": {
+  "checks": 79,
   "counted_by": "lines"
  },
  "tools/phone-lobby-fit-in-chrome.test.py": {
@@ -812,7 +816,7 @@
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
-  "checks": 10,
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-link-90-days.js": {

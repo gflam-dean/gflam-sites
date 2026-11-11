@@ -30,6 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import gatelib       # run_suite (own process group, kills the Chrome on timeout) and uses_chrome
+import passwording   # the one pass judge (12 Nov 2026): what every gate reader calls a pass
 LEDGER = os.path.join(ROOT, 'tools', 'suite-counts.json')
 # Live integration tests that create real venues. Run by hand, never on a gate. Same list, same
 # reason, as RUN_BY_HAND in release-check.py.
@@ -78,6 +79,16 @@ REUSE = None
 if '--reuse' in sys.argv:
     REUSE = sys.argv[sys.argv.index('--reuse') + 1]
 REUSED = []
+# WORDING[suite] = passwording.verdict(...) for every suite judged here. A suite that passes every
+# rule above but ENDS on a line the pass judge cannot read is green here and red in whichever reader
+# looks at the last line: on 12 Nov 2026 the deploy fast gate refused a release over exactly that.
+# release-check.py D211 reads the WORDING lines this prints.
+WORDING = {}
+
+
+def judged(rel, rc, out):
+    WORDING[rel] = passwording.verdict(rc, out)
+    return judge(rc, out)
 
 
 def run(rel):
@@ -88,7 +99,7 @@ def run(rel):
             try:
                 rc = int(io.open(c, encoding='utf-8').read().strip() or '1')
                 REUSED.append(rel)
-                return judge(rc, io.open(o, encoding='utf-8', errors='replace').read())
+                return judged(rel, rc, io.open(o, encoding='utf-8', errors='replace').read())
             except Exception:
                 pass
     cmd = [sys.executable, rel] if rel.endswith('.py') else [JSC, rel]
@@ -105,7 +116,7 @@ def run(rel):
                                   timeout=int(os.environ.get('VP_LEDGER_TIMEOUT', '900' if _chrome else '300')))
         except Exception as e:
             best = best or (1, 0, ['could not run: %s' % e], 'lines'); continue
-        res = judge(r.rc, r.out)
+        res = judged(rel, r.rc, r.out)
         if r.rc == 0 and not res[2]:
             return res
         if best is None or res[1] > best[1]:
@@ -159,6 +170,13 @@ def main():
     for s in sorted(set(ledger) - set(suites) - set(skipped)):
         print('FAIL %s is in the ledger and gone from disk: a suite was deleted' % s); bad += 1
     total = sum(r[1] for r in results.values())
+    # THE LAST LINE, judged by the one pass judge, for every suite that passed everything else here.
+    # Printed as WORDING lines (not FAIL: the counts above are not wrong), read by release-check D211.
+    clean = [s for s in suites if results[s][0] == 0 and not results[s][2]]
+    unread = [(s, WORDING.get(s, (False, 'not judged'))[1]) for s in clean if not WORDING.get(s, (False, ''))[0]]
+    for s, why in unread:
+        print('WORDING %s :: %s' % (s, why))
+    print('wording: %d passing suite(s) read, %d end on a line the pass judge cannot read' % (len(clean), len(unread)))
     print(('FAILED: %d problem(s)' % bad) if bad else ('ok   %d suites ran %d checks, none fewer than the ledger%s'
           % (len(suites), total, (' (%d counted from the gate\'s own run)' % len(REUSED)) if REUSED else '')))
     return 1 if bad else 0

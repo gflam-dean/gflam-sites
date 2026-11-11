@@ -21054,6 +21054,7 @@ MUTATIONS_LIVE = [
 
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import gatelib       # the shared-Mac rules: heavy lock, process-group suite runs, uses_chrome
+import passwording   # the one pass judge every gate reader uses (12 Nov 2026)
 
 FULL = '--full' in sys.argv      # the old behaviour: the whole local gate for every mutation
 JSC = gatelib.JSC
@@ -21102,14 +21103,11 @@ def route(label, rel, root):
 
 def suite_went_red(path, root):
     """Run one suite the way the gate runs it and say whether the gate would have called it red:
-    a non-zero exit, a FAIL line, or a last line that is not a pass (release-check.suite_passed)."""
+    a non-zero exit, a FAIL line, or a last line that is not a pass (tools/passwording.py)."""
     cmd = [sys.executable, path] if path.endswith('.py') else [JSC, path]
     r = gatelib.run_suite(cmd, cwd=root, timeout=900)
-    last = r.last.strip()
-    m = re.match(r'^(\d+) of (\d+) checks? passed', last)
-    passed_line = ('ALL' in last and 'PASSED' in last) or (bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0) \
-        or (os.path.basename(path).startswith('test-') and 'PASS' in r.out and not r.fails)
-    return r.rc != 0 or bool(r.fails) or not passed_line
+    # THE ONE PASS JUDGE (tools/passwording.py, 12 Nov 2026), from THIS checkout, never the mutated copy.
+    return not passwording.run_passed(r)
 
 
 def gate(only_label, root, live=False, rel=''):

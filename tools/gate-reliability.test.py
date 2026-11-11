@@ -304,8 +304,8 @@ try:
     green_said = r.returncode == 0 and 'GATE ONLY: green' in out and 'EXIT 0' in out
     ok('with the suite green: exit 0, nothing uploaded on purpose', green_said, '' if green_said else out[-300:])
     ok('and the fast gate parsed the file and checked its definitions', 'venueplay-sms-hook.js parses' in out and 'calls a function that does not exist' in out)
-    # 28 Oct 2026: the tools/test-*.js suites end "PASS 27 checks". The full gate passes them (exit 0, PASS,
-    # no FAIL line); this fast gate called 13 of them red and refused a deploy. Same rule both places now.
+    # 28 Oct 2026: the tools/test-*.js suites ended "PASS 27 checks" and this fast gate called 13 of them red.
+    # Every suite now prints ALL N CHECKS PASSED, and the one judge still reads the older line (12 Nov 2026).
     io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("  ok the hook fails over");\nprint("PASS 27 checks");\n')
     r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
                         'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
@@ -316,10 +316,18 @@ try:
     r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
                         'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
     ok('... and "PASS" after a FAIL line is still red', r.returncode != 0, r.returncode)
+    # 12 Nov 2026 (INBOX 270): the fast gate and the full gate ask ONE judge, tools/passwording.py. A suite that
+    # printed PASS and then kept running was green here on 28 Oct; every suite now ends on its pass line, so it is red.
     io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("PASS: the hook");\nprint("  ok   the hook fails over");\n')
     r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
                         'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
-    ok('a suite that prints PASS first and ends on an "ok" line is green too (test-add-venue-free-month.js, 28 Oct 2026)', r.returncode == 0,
+    ok('a suite that prints PASS first and ends on an "ok" line is RED now: its last line is not a pass (one judge, 12 Nov 2026)',
+       r.returncode != 0 and 'the last line is not a pass line' in (r.stdout + r.stderr), r.returncode)
+    # The line that stopped the 12 Nov release: the full gate passed it, this fast gate refused it.
+    io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("  ok   the hook fails over");\nprint("All 22 checks passed");\n')
+    r = subprocess.run([sys.executable, os.path.join(scratch, 'tools', 'deploy-worker.py'), '--gate-only', 'venueplay-sms',
+                        'venueplay-backend/worker/venueplay-sms-hook.js'], capture_output=True, text=True, env=env, cwd=scratch, timeout=300)
+    ok('a suite ending "All 22 checks passed" is green in the fast gate, as in the full gate (12 Nov 2026)', r.returncode == 0 and 'GATE ONLY: green' in r.stdout,
        '' if r.returncode == 0 else (r.stdout + r.stderr)[-300:])
     io.open(broken, 'w', encoding='utf-8').write('// reads venueplay-sms-hook.js\nprint("ok the hook fails over");\nprint("ALL 1 CHECKS PASSED");\n')   # section 7 reuses it, green
     dw_src = io.open(os.path.join(TOOLS, 'deploy-worker.py'), encoding='utf-8').read()
