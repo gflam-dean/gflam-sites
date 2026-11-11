@@ -114,6 +114,7 @@
   "cryptoInt() is the same in all 12 file(s)",
   "definition check across 169 file(s)",
   "demo-hermetic.test.js",
+  "demo-pairs-in-chrome.test.py",
   "deploy build parses",
   "details-autofill-in-chrome.test.py",
   "drag-bingo-clubs-page.test.py",
