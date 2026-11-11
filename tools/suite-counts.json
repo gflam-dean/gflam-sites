@@ -135,6 +135,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/any-line-in-chrome.test.py": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
  "tools/billing-words-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"
