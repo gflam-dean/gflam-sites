@@ -339,6 +339,10 @@
   "checks": 31,
   "counted_by": "lines"
  },
+ "tools/prospects-day21-in-chrome.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/prospects-edit-in-chrome.test.py": {
   "checks": 26,
   "counted_by": "lines"
@@ -601,6 +605,10 @@
  },
  "tools/test-console-venue-from-link.js": {
   "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-day21-flag.js": {
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {

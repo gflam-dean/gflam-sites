@@ -158,6 +158,16 @@ for (;;) {
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning
      (tools/signup-tick-in-chrome.test.py: a signup made in Chrome, provisioned, then read in HQ). */
+  /* The hourly trigger's day-21 games check (Dean, 10 Nov 2026, INBOX 129), run once at rq.now (ms), as scheduled() does
+     (tools/prospects-day21-in-chrome.test.py: the alert it files is then read in the real HQ help desk). */
+  if (rq.ask === 'day21') {
+    var ddone = null;
+    Promise.resolve().then(function () { return vpaProspectDay21Sweep(ENV, Number(rq.now) || Date.now()); })
+      .then(function (r) { ddone = { status: 200, body: r }; }, function (e) { ddone = { status: 500, body: { error: String(e && e.message || e) } }; });
+    for (var di = 0; di < 400 && !ddone; di++) drainMicrotasks();
+    print(JSON.stringify(ddone || { status: 504, body: { error: 'the day-21 sweep did not finish' } }));
+    continue;
+  }
   if (rq.ask === 'provision') {
     var pdone = null;
     Promise.resolve().then(function () { return vpaProvisionFromCheckout(ENV, rq.session); })

@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 14:40 · 8c06e0c8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 15:41 · b43fe2d7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -405,6 +405,8 @@ export default {
     try { await vpaSigninTextSweep(env, Date.now()); } catch (e7) { /* the next tick looks again */ }
     /* Two or more "Not for me" at a venue in one night (Dean, 2 Nov 2026): one soft alert to HQ's phones (migration 137 not needed for it). */
     try { await vpfAlertSweep(env, Date.now()); } catch (e8) { /* the next tick looks again */ }
+    /* Day 21 of a free month, games picked and not played (Dean, 10 Nov 2026, INBOX 129): one HQ alert a day, sends nothing to a venue. */
+    try { await vpaProspectDay21Sweep(env, Date.now()); } catch (e9) { /* the next tick looks again */ }
   },
 };
 
@@ -4208,7 +4210,7 @@ async function vpaProspectsData(env, dopts) {
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
   catch (e) { return { error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125, status: 503 }; }
-  const now = Date.now(), DAY = 86400000;
+  const now = Number(dopts.now) || Date.now(), DAY = 86400000;   // dopts.now: the day-21 sweep's own clock
   const ids = rows.map((r) => r.venue_id);
   const venues = {}, accounts = {}, staff = {}, welcomes = {};
   for (let i = 0; i < ids.length; i += 100) {
@@ -4319,12 +4321,178 @@ async function vpaProspectsData(env, dopts) {
       p.cancel_reason = d.reason ? { reason: d.reason, label: d.reason_label || VPA_CANCEL_REASONS[d.reason] || d.reason, note: d.reason_detail || null } : null;
     });
   }
+  /* DAY 21 (Dean, 10 Nov 2026, INBOX 129): the games they picked and have not played, on every read. A failed read
+     leaves day21 null (no flag), and never stops the list. */
+  try { await vpaDay21Attach(env, out.concat(cardAdded), now); } catch (_) { out.concat(cardAdded).forEach((p) => { p.day21 = null; }); }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   return { ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
     follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp,
-    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS };
+    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS,
+    day21_count: out.concat(cardAdded).filter((p) => p.day21).length, day21_day: VPA_DAY21_DAY };
+}
+
+/* ===========================================================================
+ * DAY 21: THE GAMES THEY PICKED AND HAVE NOT PLAYED (Dean, 10 Nov 2026, INBOX 129)
+ *
+ * "On day 21 of a free month, HQ Prospects flags any venue that has NOT played one or more of the games it
+ * picked at sign-up ... picked trivia + bingo, played neither = 'picked trivia, bingo; played none', played
+ * trivia only = 'bingo not played' ... Venues with no wizard answers: flag if no game at all by day 21.
+ * Nothing is sent to the venue by this flag."
+ *
+ *   PICKED   the setup wizard's answer, vp_venue_settings.setup_answers.games (migration 163, live), the keys
+ *            vp-gamesetup.js ticks: trivia, musical, bingo, raffles, members. Anything else ("other", a game
+ *            not live yet) is not a game we can see played, so it is left out.
+ *   PLAYED   the same rows HQ already reads for "has this venue played": a game row (vp_games.format) in one of
+ *            the venue's NON-demo sessions (VPA_NOT_DEMO: the try-it demo is never a night), a broadcast bingo
+ *            report (vp_game_reports, which opens no session), and a members draw with a result. Musical bingo
+ *            is its own game (musical_bingo), never bingo.
+ *   DAY 21   the Brisbane day 21 days after the first sign-in's Brisbane day, the same count as the card
+ *            reminders (VPA_REMINDER_DAYS: day 3 is start + 3). The flag shows from then until the free month
+ *            ends, while the venue is in its free month (or has added a card during it); never once it is
+ *            paused or cancelled.
+ *   ON READ  HQ > Prospects works it out on every read (vpaProspectsData), never stored.
+ *   THE ALERT  vpaProspectDay21Sweep, on the hourly trigger: once a Brisbane day, from 9am, ONE HQ ticket with
+ *            ONE line per venue that flagged since the last one, each venue once ever (vp_admin_audit
+ *            prospect_day21_flag), pushed to HQ's phones like the other sales alerts. No email or text to anyone.
+ * No migration: setup_answers (163) and the audit table are already live.
+ * ======================================================================== */
+const VPA_DAY21_DAY = 21;
+const VPA_DAY21_ALERT_FROM_H = 9;   // Brisbane hour the day's one alert may go from
+/* House order, and the words HQ reads (MUSICAL BINGO IS NOT BINGO). */
+const VPA_DAY21_GAMES = [['trivia', 'trivia'], ['musical', 'musical bingo'], ['bingo', 'bingo'], ['raffles', 'raffles'], ['members', 'members draws']];
+/* A vp_games / vp_game_reports format as one of the wizard's keys, or null. */
+function vpaDay21Game(format) {
+  const f = String(format || '').toLowerCase();
+  if (f === 'trivia') return 'trivia';
+  if (f === 'musical_bingo' || f === 'musical') return 'musical';
+  if (f === 'raffle' || f === 'raffles') return 'raffles';
+  if (/^bingo/.test(f)) return 'bingo';
+  return null;
+}
+/* The games a venue picked in the wizard, in house order. [] = no answer (or none we can see played). */
+function vpaDay21Picked(answers) {
+  const g = answers && Array.isArray(answers.games) ? answers.games.map((x) => String(x)) : [];
+  return VPA_DAY21_GAMES.map((w) => w[0]).filter((k) => g.indexOf(k) !== -1);
+}
+function vpaDay21Words(keys) {
+  return keys.map((k) => (VPA_DAY21_GAMES.filter((w) => w[0] === k)[0] || [k, k])[1]).join(', ');
+}
+/* The Brisbane day number of the free month nowMs falls on (the first sign-in's day is 0), or null. */
+function vpaDay21DayOf(firstSigninAt, nowMs) {
+  const f = Date.parse(firstSigninAt || '');
+  if (!isFinite(f)) return null;
+  return Math.round((vpaBneDayStartMs(vpaBneDay(nowMs)) - vpaBneDayStartMs(vpaBneDay(f))) / 86400000);
+}
+/* THE ONE ANSWER. p: { status, first_signin_at, free_month_ends_at }; answers: setup_answers (or null);
+   played: { trivia: true, ... } (or null when it could not be read: then no flag, never a wrong one).
+   Returns null, or { day, picked, missing, played_none, words }. */
+/* The day of the free month when a row is due a look (day 21 or later of a RUNNING month), else null. The one gate
+   for the list, the flag and the alert. */
+function vpaDay21Due(p, nowMs) {
+  if (!p || (p.status !== 'free_month' && p.status !== 'card_added')) return null;
+  const day = vpaDay21DayOf(p.first_signin_at, nowMs);
+  if (day == null || day < VPA_DAY21_DAY) return null;
+  const end = vpaProspectMonthEndMs({ first_signin_at: p.first_signin_at, free_month_ends_at: p.free_month_ends_at });
+  if (isFinite(end) && nowMs > end) return null;
+  return day;
+}
+function vpaDay21Flag(p, answers, played, nowMs) {
+  if (!p || !played) return null;
+  const day = vpaDay21Due(p, nowMs);
+  if (day == null) return null;
+  const picked = vpaDay21Picked(answers);
+  const any = VPA_DAY21_GAMES.some((w) => played[w[0]]);
+  if (!picked.length) {
+    if (any) return null;
+    return { day: day, picked: [], missing: [], played_none: true, words: 'no game played yet' };
+  }
+  const missing = picked.filter((k) => !played[k]);
+  if (!missing.length) return null;
+  /* "played none" only when NOTHING was played: a venue that picked bingo and ran musical bingo instead has played
+     something, so it reads "bingo not played". */
+  const none = missing.length === picked.length && !any;
+  return { day: day, picked: picked, missing: missing, played_none: none,
+    words: none ? 'picked ' + vpaDay21Words(picked) + '; played none' : vpaDay21Words(missing) + ' not played' };
+}
+/* What each venue has played and what it picked, for a handful of venues: { played: {id: {...}}, answers: {id: {...}} }.
+   A read that fails leaves that venue out of played, so it is never flagged on a guess. */
+async function vpaDay21Read(env, venueIds) {
+  const played = {}, answers = {};
+  if (!venueIds.length) return { played: played, answers: answers };
+  try {
+    const mark = (vid, k) => { if (k && played[vid]) played[vid][k] = true; };
+    const sessions = await vpmInChunks(venueIds, (inl) => vpaSelectAll(env, 'vp_sessions',
+      'venue_id=in.(' + inl + ')' + VPA_NOT_DEMO + '&select=id,venue_id&order=id.asc'));
+    const games = sessions.length ? await vpmInChunks(sessions.map((s) => s.id), (inl) => vpaSelectAll(env, 'vp_games',
+      'session_id=in.(' + inl + ')&select=id,session_id,format&order=id.asc')) : [];
+    const reports = await vpmInChunks(venueIds, (inl) => vpaSelectAll(env, 'vp_game_reports',
+      'venue_id=in.(' + inl + ')&select=id,venue_id,format&order=id.asc'));
+    const draws = await vpmInChunks(venueIds, (inl) => vpaSelectAll(env, 'vp_member_draws',
+      'venue_id=in.(' + inl + ')&select=id,venue_id&order=id.asc'));
+    const results = draws.length ? await vpmInChunks(draws.map((d) => d.id), (inl) => vpaSelectAll(env, 'vp_member_draw_results',
+      'draw_id=in.(' + inl + ')&select=id,draw_id&order=id.asc')) : [];
+    venueIds.forEach((id) => { played[id] = {}; });
+    const venueOfSession = {}; sessions.forEach((s) => { venueOfSession[s.id] = s.venue_id; });
+    games.forEach((g) => mark(venueOfSession[g.session_id], vpaDay21Game(g.format)));
+    reports.forEach((r) => mark(r.venue_id, vpaDay21Game(r.format || 'bingo')));
+    const venueOfDraw = {}; draws.forEach((d) => { venueOfDraw[d.id] = d.venue_id; });
+    results.forEach((r) => mark(venueOfDraw[r.draw_id], 'members'));
+  } catch (e) { Object.keys(played).forEach((k) => { delete played[k]; }); return { played: {}, answers: answers }; }
+  try {
+    const rows = await vpmInChunks(venueIds, (inl) => vpaSelectAll(env, 'vp_venue_settings',
+      'venue_id=in.(' + inl + ')&select=venue_id,setup_answers&order=venue_id.asc'));
+    rows.forEach((r) => { answers[r.venue_id] = r.setup_answers || null; });
+  } catch (e) { return { played: {}, answers: {} }; }   // picked unknown: no flag rather than the wrong one
+  return { played: played, answers: answers };
+}
+/* Puts p.day21 on every HQ row that is on day 21 or later of a running free month (others get null). */
+async function vpaDay21Attach(env, rows, nowMs) {
+  const due = rows.filter((p) => { p.day21 = null; return vpaDay21Due(p, nowMs) != null; });
+  if (!due.length) return rows;
+  const got = await vpaDay21Read(env, due.map((p) => p.venue_id));
+  due.forEach((p) => { p.day21 = vpaDay21Flag(p, got.answers[p.venue_id] || null, got.played[p.venue_id] || null, nowMs); });
+  return rows;
+}
+/* THE ONE LINE IN DEAN'S HQ ALERT. Once a Brisbane day from 9am: every venue newly flagged gets one line in ONE
+   sales ticket, pushed to HQ's phones. Each venue is alerted once ever. Sends nothing to any venue. */
+const VPA_DAY21_ALERT_BY = 'automatic (day 21 games check)';
+async function vpaProspectDay21Sweep(env, nowMs) {
+  const hour = new Date(nowMs + VPA_BNE_MS).getUTCHours();
+  if (hour < VPA_DAY21_ALERT_FROM_H) return { alerted: 0, why: 'before 9am Brisbane' };
+  const today = vpaBneDay(nowMs);
+  const lock = 'day21-alert:' + today;
+  const done = await vpaSelect(env, 'vp_admin_audit', 'action=eq.prospect_day21_alert&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
+  if (done && done.length) return { alerted: 0, why: 'already today' };
+  /* Cheap first look: nobody on day 21 or later of a running month, nothing more is read this hour. */
+  const started = await vpaSelectAll(env, 'vp_prospects', 'first_signin_at=not.is.null&cancelled_at=is.null&paused_at=is.null&select=venue_id,first_signin_at&order=venue_id.asc');
+  if (!(started || []).some((r) => (vpaDay21DayOf(r.first_signin_at, nowMs) || 0) >= VPA_DAY21_DAY)) return { alerted: 0 };
+  const d = await vpaProspectsData(env, { day21: true, now: nowMs });
+  if (!d || d.error) return { alerted: 0, why: 'prospects not readable' };
+  const flagged = (d.prospects || []).concat(d.card_added || []).filter((p) => p.day21);
+  if (!flagged.length) return { alerted: 0 };
+  const tg = flagged.map((p) => encodeURIComponent('"venue:' + p.venue_id + '"')).join(',');
+  const before = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.prospect_day21_flag&target=in.(' + tg + ')&select=id,target&order=id.asc');
+  const told = {}; (before || []).forEach((a) => { told[String(a.target || '').replace(/^venue:/, '')] = true; });
+  const fresh = flagged.filter((p) => !told[p.venue_id]);
+  if (!fresh.length) return { alerted: 0, why: 'all already alerted' };
+  /* Written first, so two ticks at once cannot both alert: the audit rows are the "once". */
+  await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: VPA_DAY21_ALERT_BY, action: 'prospect_day21_alert', target: lock,
+    detail: { venues: fresh.length } }, false);
+  for (const p of fresh) {
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: VPA_DAY21_ALERT_BY, action: 'prospect_day21_flag', target: 'venue:' + p.venue_id,
+      detail: { name: p.name || '', day: p.day21.day, picked: p.day21.picked, missing: p.day21.missing, words: p.day21.words } }, false);
+  }
+  const lines = fresh.map((p) => (p.name || 'A venue') + ' (day ' + p.day21.day + '): ' + p.day21.words);
+  try {
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'manual', raised_by: VPA_DAY21_ALERT_BY,
+      title: 'Day 21: ' + fresh.length + ' free-month venue' + (fresh.length === 1 ? ' has' : 's have') + ' not played their games',
+      message: lines.join('\n') + '\n\nNothing has been sent to ' + (fresh.length === 1 ? 'this venue' : 'these venues')
+        + '. Each one is flagged in HQ > Prospects.', venue_id: fresh.length === 1 ? fresh[0].venue_id : null });
+    if (t) await helpPushNew(env, t);
+  } catch (e) { /* the audit rows stand: one try per venue */ }
+  return { alerted: fresh.length, lines: lines };
 }
 
 /* ===========================================================================
