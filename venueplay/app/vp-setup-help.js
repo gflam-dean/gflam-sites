@@ -174,9 +174,10 @@
       { key: "time_to_present", label: "How long do winners have to claim?", kind: "select", def: 180,
         options: [[60, "1 minute"], [120, "2 minutes"], [180, "3 minutes"], [300, "5 minutes"], [600, "10 minutes"], [0, "No time limit"]],
         help: "How long a winner has to show their ticket before you can draw again. No time limit: you draw again when you are ready." },
-      { key: "draw_style", notYet: true, label: "How the draw looks", kind: "select", def: "numbers", advanced: true, prompt: "How the draw looks",
-        options: [["numbers", "Spinning numbers"], ["barrel", "A barrel"], ["wheel", "A wheel"]],
-        help: "What the TV shows while the winner is drawn. Spinning numbers is how it works today." },
+      /* the same three looks as the raffle console's chips and the game Worker (games look, 11 Nov 2026); "" is the draw every venue has today */
+      { key: "draw_style", notYet: true, label: "How the draw looks", kind: "select", def: "", advanced: true, prompt: "How the draw looks",
+        options: [["", "As now"], ["ticket", "Ticket roll"], ["race", "Race plate"]],
+        help: "What the TV shows while the winner is drawn. As now is how it works today." },
       { key: "jackpot_on", label: "Cash prize", kind: "seg", options: ON_OFF, def: false, advanced: true, prompt: "A cash prize instead of a prize?",
         help: "For a cash prize instead of a prize. We warn you if it's over your state's limit." },
       { key: "jackpot_amount_cents", label: "Cash prize amount ($)", kind: "money", def: 50000, advanced: true, showIf: { jackpot_on: true },

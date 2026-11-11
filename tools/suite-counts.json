@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {
-  "checks": 43,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
@@ -499,6 +499,10 @@
   "checks": 4,
   "counted_by": "lines"
  },
+ "tools/test-bingo-newlook.js": {
+  "checks": 51,
+  "counted_by": "lines"
+ },
  "tools/test-bingo-seat-15-oct.js": {
   "checks": 41,
   "counted_by": "lines"
@@ -591,6 +595,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-drawstyle.js": {
+  "checks": 65,
+  "counted_by": "lines"
+ },
  "tools/test-early-bingo-restore.js": {
   "checks": 8,
   "counted_by": "lines"
@@ -628,7 +636,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 171,
+  "checks": 175,
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
@@ -660,7 +668,7 @@
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {
-  "checks": 68,
+  "checks": 69,
   "counted_by": "lines"
  },
  "tools/test-join-cost.js": {
@@ -708,7 +716,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 42,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-members-csv.js": {
@@ -928,7 +936,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 55,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {
@@ -1339,8 +1347,12 @@
   "checks": 73,
   "counted_by": "lines"
  },
+ "tools/tv-drawstyle-in-chrome.test.py": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
  "tools/tv-endshow-in-chrome.test.py": {
-  "checks": 76,
+  "checks": 84,
   "counted_by": "lines"
  },
  "tools/tv-first-slide-in-chrome.test.py": {

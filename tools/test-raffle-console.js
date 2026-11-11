@@ -43,7 +43,7 @@ Cls.prototype.add = function (c) { this.s[c] = 1; };
 Cls.prototype.remove = function (c) { delete this.s[c]; };
 Cls.prototype.contains = function (c) { return !!this.s[c]; };
 Cls.prototype.toggle = function (c, on) { if (on === undefined) on = !this.s[c]; if (on) this.s[c] = 1; else delete this.s[c]; };
-function El(id) { this.id = id; this.value = ''; this.checked = false; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.className = ''; }
+function El(id) { this.id = id; this.value = ''; this.checked = false; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.className = ''; this.style = {}; }
 El.prototype.appendChild = function (k) { this.kids.push(k); this.textContent += (k.textContent || ''); };
 var els = {};
 function $(id) { if (!els[id]) els[id] = new El(id); return els[id]; }
@@ -86,6 +86,9 @@ function drawBody() { return {}; }
 function drawingPrize() { return 'Meat Tray'; }
 function addPrize() {}
 function stopCountdown() { intervals = []; }
+// the new look's card (9 Nov 2026): the step, the summary lines and the words are the page's own concern here
+function syncStep() {} function renderAdvSum() {} function renderSkipLine() {}
+function lower(p) { return String(p); } var _redrawArm = null;
 var REDRAW_NOTICE_MS = 3000, CLAIM_CELEBRATE_MS = 30000, _celebrateUntil = 0, _suppressIdle = false;
 
 var G = { min: 1, max: 150, drawn: {}, jackOn: false, jackAmt: 0, allowRedraw: true, time: 180,
@@ -103,7 +106,9 @@ eval(lift('drawnCount')); eval(lift('skippedCount')); eval(lift('remainingCount'
 // the cash jackpot warning (15 Oct 2026): renderRange and startDraw call renderJackWarn
 eval(lift('jackpotWarning')); eval(lift('stateLimit')); eval(lift('renderJackWarn'));
 eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
-eval(lift('updateCd')); eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
+eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle'));
+eval(lift('pickOrder')); eval(lift('prizeNext')); eval(lift('announcing')); eval(lift('sendAnnounce')); var ANNOUNCE_MS = 4000;   // Dean's two choices (9 Nov 2026)
+eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
 
 function form(o) {
   $('rfPrize').value = ''; $('rfStart').value = '1'; $('rfEnd').value = '150'; $('rfTime').value = '180';
@@ -355,6 +360,87 @@ if (typeof raffleOldPrefs === 'function' && typeof applyRafflePrefs === 'functio
   check('last raffle\'s unsold tickets are NOT put into this raffle\'s box', $('rfSkip').value === '' && _old && !('excluded_ranges' in _old), $('rfSkip').value + ' ' + JSON.stringify(_old));
   check('CONTROL: the rest of the template still fills in (range and time to claim)', String($('rfEnd').value) === '400' && String($('rfTime').value) === '120',
         { end: $('rfEnd').value, time: $('rfTime').value });
+}
+
+/* ================= 9. Not here waits for the claim clock (Dean, 6 Nov 2026) ================= */
+section('9. "Not here, draw again" is locked while the claim clock runs, and opens at zero');
+/* A host who taps Not here with 2:41 left voids a ticket whose holder is still walking up. The members draw
+   already waited; the raffle now does too. Run on the page's own revealServer, updateCd and tapRedraw. */
+eval(lift('tapRedraw'));
+var REDRAW_ARM_MS = 4000, redrew = 0;
+var onRedrawReal = onRedraw; onRedraw = function () { redrew++; };
+reset(); form(); readInputs();
+revealServer({ seq: 9, tickets: [20], allow_redraw: true, time_to_present: 180 });
+check('a fresh winner with 3 minutes to claim: Not here is locked', G.round && G.round.locked === true, G.round && G.round.locked);
+tapRedraw(); tapRedraw();
+check('tapping it (twice, as the arm needs) while locked voids nothing', redrew === 0 && G.round && !G.round.resolved, redrew);
+check('the button counts down beside its words', /^Not here, draw again \(in /.test(redrawLabelIdle()), redrawLabelIdle());
+tick(181);
+check('at zero it opens', G.round && G.round.locked === false, G.round && G.round.locked);
+tapRedraw(); tapRedraw();
+check('CONTROL: once open, two taps draw again as before', redrew === 1, redrew);
+reset(); form(); readInputs();
+revealServer({ seq: 10, tickets: [21], allow_redraw: true, time_to_present: 0, recovered: true });
+check('a round picked up after a reload (no clock) is open from the start: the host decides', G.round && G.round.locked === false, G.round && G.round.locked);
+onRedraw = onRedrawReal;
+
+/* ================= 10. Two choices, off unless switched on (Dean, 9 Nov 2026) ================= */
+section('10. "Let me choose which prize to draw next" and "Show each prize on the TV before its draw"');
+if (typeof saveRaffle !== 'function') { var saveRaffle = function () {}; }
+var raffleName = function () { return ''; };
+reset(); form(); readInputs();
+G.prizes = ['Meat tray', 'Seafood platter', 'Fruit box']; G.prizeIdx = 0;
+$('rfPickOrder').checked = false; prizeNext(2);
+check('off (every venue that has not switched it on): the prizes stay in the order on the list', G.prizes.join('|') === 'Meat tray|Seafood platter|Fruit box', G.prizes);
+$('rfPickOrder').checked = true; prizeNext(2);
+check('on: "Draw this next" moves that prize to the front of what is left', G.prizes.join('|') === 'Fruit box|Meat tray|Seafood platter', G.prizes);
+G.prizeIdx = 1; prizeNext(0);
+check('a prize already drawn is never moved back', G.prizes.join('|') === 'Fruit box|Meat tray|Seafood platter', G.prizes);
+G.prizeIdx = 0; $('rfPickOrder').checked = false;
+var drew = []; var sendDrawingReal = sendDrawing; sendDrawing = function () { drew.push(sent.length); };
+var ensureReal = ensureRaffleGame; ensureRaffleGame = function () { return new Promise(function () {}); };
+reset(); form(); readInputs(); G.prizes = ['Meat tray']; G.prizeIdx = 0; timers = [];
+$('rfAnnounce').checked = false; startDraw();
+check('off: the spin starts at once and nothing is shown first, as always', drew.length === 1 && !sent.some(function (m) { return m.t === 'idle'; }), { drew: drew, sent: sent });
+reset(); form(); readInputs(); G.prizes = ['Meat tray']; G.prizeIdx = 0; timers = []; drew = [];
+$('rfAnnounce').checked = true; startDraw();
+var card = sent.filter(function (m) { return m.t === 'idle'; })[0];
+check('on: the TV is shown the prize first ("Next prize", the card it already knows)', !!card && card.next === true && drew.length === 0, sent);
+timers.forEach(function (t) { t(); });
+check('and the spin starts after it', drew.length === 1, drew);
+sendDrawing = sendDrawingReal; ensureRaffleGame = ensureReal; $('rfAnnounce').checked = false; G.busy = false;
+
+/* ================= 11. The draw order and where tickets are sold (Dean, 9 Nov 2026) ================= */
+section('11. Twenty prizes put in order before the draw; "Get your tickets from the bar"');
+eval(lift('moveP'));
+reset(); form(); readInputs();
+G.prizes = []; for (var pi = 1; pi <= 20; pi++) G.prizes.push('Prize ' + pi); G.prizeIdx = 0;
+moveP(19, -1); moveP(18, -1);
+check('a prize moves up one place at a time (20 prizes)', G.prizes[17] === 'Prize 20' && G.prizes[18] === 'Prize 18' && G.prizes[19] === 'Prize 19', G.prizes.slice(16));
+moveP(0, 1);
+check('and down', G.prizes[0] === 'Prize 2' && G.prizes[1] === 'Prize 1', G.prizes.slice(0, 3));
+moveP(0, -1); moveP(19, 1);
+check('nothing moves past the top or the bottom', G.prizes[0] === 'Prize 2' && G.prizes[19] === 'Prize 19' && G.prizes.length === 20, [G.prizes[0], G.prizes[19]]);
+G.prizeIdx = 2; moveP(2, -1); moveP(1, 1);
+check('a prize already drawn never moves, and nothing moves into its place', G.prizes[0] === 'Prize 2' && G.prizes[1] === 'Prize 1' && G.prizes[2] === 'Prize 3', G.prizes.slice(0, 3));
+G.prizeIdx = 0;
+eval(lift('sendIdle'));
+var celebrating = function () { return false; };
+sent = []; G.ticketsFrom = ''; sendIdle();
+check('nothing chosen: the TV is told nothing about where tickets are sold (the card every venue has today)', sent.length === 1 && !('from' in sent[0]), sent);
+sent = []; G.ticketsFrom = 'bar'; sendIdle();
+check('"The bar" chosen: the TV is sent the key, not words', sent.length === 1 && sent[0].from === 'bar', sent);
+G.ticketsFrom = '';
+var SCR = readFile('venueplay/app/raffle/screen.html');
+var tf = /var TICKETS_FROM=\{[^}]*\};/.exec(SCR), line = /    if\(m\.t==="idle"\)\{ S\.ticketsFrom=[^\n]*?; \}/.exec(SCR);   // the statement, without its comment
+check('the TV has its own words for each key, and the line that reads them', !!tf && !!line);
+if (tf && line) {
+  var tvSays = new Function('m', 'var S={};' + tf[0] + '\n' + line[0] + '\nreturn S.ticketsFrom;');
+  check('the TV says "from the host", "at the front of the room", "at the entrance", "from the bar", "from our ticket sellers"', tvSays({ t: 'idle', from: 'bar' }) === 'from the bar' && tvSays({ t: 'idle', from: 'host' }) === 'from the host' &&
+        tvSays({ t: 'idle', from: 'front' }) === 'at the front of the room' && tvSays({ t: 'idle', from: 'entrance' }) === 'at the entrance' && tvSays({ t: 'idle', from: 'sellers' }) === 'from our ticket sellers');
+  var HOSTP = readFile('venueplay/app/raffle/host.html'), keys = (HOSTP.match(/data-from="([a-z]+)"/g) || []).map(function (x) { return x.slice(11, -1); });
+  check('every choice on the console has the TV\'s own words (Dean, 9 Nov 2026: five places)', keys.join(',') === 'host,front,entrance,bar,sellers' && keys.every(function (k) { return !!tvSays({ t: 'idle', from: k }); }), keys);
+  check('anything else, or nothing, says nothing (never the message\'s own text on the wall)', tvSays({ t: 'idle', from: '<b>free beer</b>' }) === '' && tvSays({ t: 'idle' }) === '' && tvSays({ t: 'idle', from: 'toString' }) === '', tvSays({ t: 'idle', from: '<b>x</b>' }));
 }
 
 drainMicrotasks();

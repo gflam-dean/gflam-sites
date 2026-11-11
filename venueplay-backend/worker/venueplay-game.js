@@ -4260,15 +4260,25 @@ const GAME_PREFS_KEYS = {
     /* round 11 (Dean, 9 Nov): name each raffle (one per raffle, in order), how the draw looks, and a prize swapped for one week.
        The raffle console does not read these yet (noted for the raffle new look). */
     raffle_names:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : ''); if (out.length >= 12) break; } return out; },
-    draw_style:    (v) => ({ numbers: 1, barrel: 1, wheel: 1 }[v] ? v : undefined),
     /* round 12 (Dean, 10 Nov): each raffle says on its own line whether its prizes are the same every week (or draw), one true/false per raffle in order.
        prizes_weekly above stays: true only while every raffle's is. The raffle console does not read raffle_weekly yet. */
     raffle_weekly: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (typeof x === 'boolean') out.push(x); if (out.length >= 12) break; } return out.length ? out : undefined; },
     prize_swaps:   gpSwaps,
+    // Dean, 9 Nov 2026, both off unless a venue switches them on: the host chooses the next prize, and the TV
+    // shows each prize before its draw.
+    pick_order:    gpBool,
+    announce_prize: gpBool,
+    // where tickets are sold, said on the TV under GET YOUR TICKETS (Dean, 9 Nov 2026); '' is "not said"
+    tickets_from:  (v) => (['', 'host', 'front', 'entrance', 'bar', 'sellers'].indexOf(v) >= 0 ? v : undefined),
+    // the TV's draw look and draw time (Dean, 10 Nov 2026); '' / absent is the draw every venue already has
+    draw_style:    (v) => (['', 'ticket', 'race'].indexOf(v) >= 0 ? v : undefined),
+    draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
     draw_id:       gpUuid,   // which draw the console opens on; the draw's own settings live in vp_member_draws
+    draw_style:    (v) => (['', 'flip', 'race'].indexOf(v) >= 0 ? v : undefined),   // the TV's draw look and time (Dean, 10 Nov 2026)
+    draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
   },
   musical: {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,

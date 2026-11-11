@@ -36,7 +36,10 @@
   /* ORDER, the way PostgREST does it, for the HQ screens that read the audit newest first
      (19 Oct 2026). Nulls last. Unordered reads keep the stored order, as before. */
   Query.prototype.order = function (k, o) { (this.ord = this.ord || []).push({ k: k, asc: !(o && o.ascending === false) }); return this; };
-  Query.prototype.range = function () { return this; };
+  /* RANGE, offset then limit, the way PostgREST pages (9 Nov 2026). It answered every page with the whole table,
+     so a console that pages its members list until an EMPTY page (members/host.html loadAllMembers) never saw
+     one and gave up "did not end": a fake that cannot page cannot model the reads that page (CLAUDE.md). */
+  Query.prototype.range = function (a, b) { this.off = Math.max(0, a | 0); this.lim = Math.max(0, (b | 0) - (a | 0) + 1); return this; };
   Query.prototype.limit = function (n) { this.lim = n; return this; };
   Query.prototype.maybeSingle = function () { this.one = 'maybe'; return this; };
   Query.prototype.single = function () { this.one = 'single'; return this; };
@@ -65,6 +68,7 @@
         return 0;
       });
     }
+    if (this.off) rows = rows.slice(this.off);
     if (this.lim != null) rows = rows.slice(0, this.lim);
     return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: rows.length });
   };

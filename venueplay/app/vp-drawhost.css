@@ -1,0 +1,212 @@
+/* vp-drawhost.css: THE RAFFLE AND MEMBERS DRAW CONSOLES IN THE NEW LOOK (Dean's agreed mocks, 6 Nov 2026; built 9 Nov 2026).
+
+   One column on every device: the card for the step the host is on sits on top at its own height (three step
+   tiles, ONE big button per step, rare actions as small links), and tonight's lists fold into short rows under
+   it. On an iPad and a laptop the card is a third bigger and the lists open side by side where there is room.
+   Pink is the one accent, green is "they are here", yellow is for the winning number and the claim clock only.
+   No number is set in the mono face (its zero has a dot in it, Dean 6 Nov 2026).
+
+   Shared by app/raffle/host.html and app/members/host.html, linked after each page's own <style> so these rules
+   win. The header's TV words (.who) are left to each page: this file never shows or styles a connection state. */
+
+/* ---- the header: one row; "< Play" left, End game right ---- */
+.bar>.vp-navlink{order:1}
+.bar>.brand{order:2}
+.bar>.tag{order:3}
+.bar>.who{order:4}
+.bar>#toAdsBtn{order:6;margin-left:auto}
+.bar>.who+#toAdsBtn,.bar>.who~#toAdsBtn{margin-left:12px}
+.vp-hdrbtn.vp-hdrbtn{min-height:44px;margin-right:0}
+.vp-navlink.vp-navlink{display:inline-flex;align-items:center;min-height:44px;padding:0 6px}
+@media (min-width:700px){
+  header .bar,.wrap{max-width:824px}
+  .einner{max-width:824px}
+}
+@media (max-width:640px){
+  header .bar{flex-wrap:nowrap;min-height:56px;padding:6px 18px 6px 4px;gap:8px}
+  .bar>.vp-navlink{order:0;margin:0;padding:0 8px;font-size:20px;min-width:44px;justify-content:center}
+  .bar>.vp-navlink .pl{display:none}
+  .bar>.tag{font-size:10.5px;letter-spacing:.12em;white-space:nowrap}
+  .bar>#toAdsBtn{height:44px;padding:0 12px;margin-left:auto}
+  .wrap{padding:14px}
+}
+@media (max-width:400px){ .bar>.tag{display:none} header .bar{gap:6px} }
+
+/* ---- the line over the card: HOST CONSOLE, then the rare actions as links ---- */
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-4px 0 10px}
+.toprow .lbl{margin:0}
+.toprow .links{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.tlink,.toprow .vp-foot-link{display:inline-flex;align-items:center;width:auto;margin:0;background:none;border:none;color:var(--muted);font:600 14px/1.4 Manrope,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:48px;padding:0 6px}
+.tlink:hover,.toprow .vp-foot-link:hover{color:var(--text)}
+#downloadRecordMsg:empty{display:none}
+#downloadRecordMsg{margin:-4px 0 10px;text-align:right}
+
+/* ---- the card ---- */
+.one{max-width:780px;margin:0 auto}
+.one>.panel{margin:0}
+.steps{display:flex;align-items:center;gap:8px;margin:0 0 16px}
+.steps .st{flex:1;display:flex;align-items:center;gap:8px;padding:0 10px;min-height:52px;border:1px solid var(--line-2);border-radius:12px;background:var(--ink-3);color:var(--faint);font:700 13.5px/1.2 'Hanken Grotesk',sans-serif}
+.steps .st .n{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--ink-2);border:1px solid var(--line);color:var(--muted)}
+.steps .st.now{border-color:var(--pink);background:rgba(255,31,142,.10);color:#fff;box-shadow:0 0 0 2px rgba(255,31,142,.12)}
+.steps .st.now .n{background:var(--pink);border-color:var(--pink);color:#0A0A0B}
+.steps .st.done{color:var(--muted)} .steps .st.done .n{background:rgba(53,208,127,.15);border-color:rgba(53,208,127,.5);color:var(--win)}
+.stepline{display:none;font:800 15px/1.3 'Hanken Grotesk',sans-serif;color:#fff;margin:0 0 14px}
+.stepline .sn{font:800 13px/1 'Hanken Grotesk',sans-serif;color:var(--pink);margin-right:8px}
+.stepline .gm{display:none}
+
+.flab{display:block;font:800 15px/1.3 'Hanken Grotesk',sans-serif;color:#fff;margin-bottom:8px}
+.flab small{display:block;font:500 13px/1.4 Manrope,sans-serif;color:var(--muted);margin-top:2px}
+.field2{margin-bottom:18px}
+.hint{font-size:14px;color:var(--muted);text-align:center;margin:12px 0 0;line-height:1.5}
+.hint b{color:#fff}
+.hint:empty{display:none}
+.btn.xl{width:100%;min-height:72px;padding:18px;font-size:19px;text-transform:uppercase;letter-spacing:.04em;border-radius:14px}
+.btn.xl.green{background:var(--win);color:#04120a;box-shadow:0 8px 20px rgba(53,208,127,.25)}
+.btn.second{width:100%;min-height:56px;margin-top:10px;font-size:15px}
+.btn.second:disabled{opacity:1;color:#B4B4BE;background:transparent;border:1px dashed rgba(255,255,255,.28);cursor:not-allowed}
+.btn.xl:disabled{opacity:.45}
+.sublbl{text-align:center;font-size:14px;color:var(--muted);margin:8px 0 2px}
+.sublbl:empty{display:none}
+.nextp{text-align:center;font:600 15px/1.4 Manrope,sans-serif;color:var(--muted);margin:14px 0 0}
+.nextp b{color:#fff}
+.nextp:empty{display:none}
+.chg{background:none;border:none;color:var(--text);font:600 14px/1 Manrope,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 6px;cursor:pointer}
+
+/* chips: tonight's choices (a prize, a draw); the picked ones pink-edged */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button,.chip{min-height:48px;padding:10px 16px;border-radius:24px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);font:700 14.5px/1.2 'Hanken Grotesk',sans-serif;display:inline-flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;text-transform:none}
+.chips button.on,.chip.on{border-color:var(--pink);background:rgba(255,31,142,.12);color:#fff}
+.chips button.add,.chip.add{color:var(--muted);border-style:dashed}
+.chips button:hover{border-color:var(--pink);color:#fff}
+.chips .empty,.chips .presets .empty{font-size:14px;color:var(--muted);padding:6px 0}
+
+/* the winning number on the console */
+.wcard{background:var(--ink-3);border:1px solid var(--line);border-radius:16px;padding:20px 18px 18px;text-align:center;margin:0 0 14px}
+.wcard .k{font:800 14px/1 'Hanken Grotesk',sans-serif;color:#FFD93D}
+.wcard .k.drawing{color:var(--pink)}
+.wcard .num{font:800 64px/1 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;color:#fff;margin-top:10px;letter-spacing:.02em}
+.wcard .wn{font:800 24px/1.2 'Hanken Grotesk',sans-serif;color:#fff;margin-top:6px}
+.wcard .pz{font:800 17px/1.3 'Hanken Grotesk',sans-serif;color:var(--muted);margin-top:4px}
+.wcard .wlist{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.wcard .wlist span{font:800 28px/1 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;color:#fff;background:var(--ink-2);border:1px solid var(--line-2);border-radius:10px;padding:8px 14px}
+.cdrow{margin:16px auto 0;max-width:340px}
+.cdrow .t{display:flex;justify-content:space-between;gap:10px;font:800 14px/1.3 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;color:#fff}
+.cdrow .t.msg{justify-content:center;text-align:center;color:var(--text);font-weight:700}
+.cdrow .t b{color:#FFD93D}
+.cdrow .b{margin-top:7px;height:6px;border-radius:3px;background:var(--ink-2);overflow:hidden}
+.cdrow .b span{display:block;height:100%;width:100%;background:#FFD93D;transition:width 1s linear}
+.cdrow.nobar .b{display:none}
+.cdrow:empty{display:none}
+
+/* the outcome, centred: a tick for a win, the pink arrow for a jackpot that rolls over */
+.ok{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.4);border-radius:16px;padding:22px 18px;margin-bottom:14px}
+.ok .tick{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--win);color:#04120a;font:800 18px/1 sans-serif}
+.ok b{display:block;font:800 22px/1.3 'Hanken Grotesk',sans-serif;color:#fff}
+.ok span.sub{display:block;font-size:16px;color:#E7E7EC}
+.ok span.sub:empty{display:none}
+.ok.roll{background:rgba(255,31,142,.07);border-color:rgba(255,31,142,.4)} .ok.roll .tick{background:var(--pink);color:#0A0A0B}
+
+/* the numbers sold, side by side */
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.nbox{display:flex;flex-direction:column;gap:6px}
+.nbox span{font:700 13px/1.2 'Hanken Grotesk',sans-serif;color:var(--muted)}
+.nbox input{min-height:56px;font:800 24px 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;text-align:center}
+.opt-line{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;padding:0 6px 0 14px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:14px;margin-top:10px}
+.opt-line b{color:var(--text);font-weight:600}
+
+/* a stat box: plain white (yellow is for a win only) */
+.stat .box .v{font-family:'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;font-size:24px}
+.stat .box .v.g{color:#fff}
+.stat .box .k{font-size:12px}
+.since{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+.nudge1{text-align:center;font-size:14px;color:var(--muted);margin:10px 0 0}
+.nudge1 .chg{min-height:44px;font-size:14px;display:inline-flex;align-items:center}
+
+/* the settings disclosure, in the console's own words */
+.vp-adv{margin:0 0 16px}
+.vp-adv>summary{min-height:64px;padding:12px 16px}
+.vp-adv>summary>span{font:800 16px/1.25 'Hanken Grotesk',sans-serif;color:#fff}
+.vp-adv .vp-adv-sub{font-size:13.5px;color:var(--text)}
+
+/* tonight's lists, folded */
+.folds{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+details.fold{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px}
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:60px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold .t{flex:1;min-width:0;font:800 16px/1.25 'Hanken Grotesk',sans-serif;color:#fff}
+details.fold .t small{display:block;font:500 14px/1.4 Manrope,system-ui,sans-serif;color:var(--muted);margin-top:2px}
+details.fold .chev{flex:none;width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 6px 4px 0}
+details.fold[open] .chev{transform:rotate(-135deg);margin:5px 6px 0 0;border-color:var(--pink)}
+details.fold .fb{padding:4px 16px 16px;border-top:1px solid var(--line-2)}
+.plist{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.plist .prow{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 8px 8px 14px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;font:800 15.5px/1.2 'Hanken Grotesk',sans-serif;color:#fff;opacity:1}
+.plist .prow .pi{flex:none;width:28px;height:28px;min-width:0;border-radius:8px;display:grid;place-items:center;background:var(--ink-2);border:1px solid var(--line);font:800 13px 'Hanken Grotesk',sans-serif;color:var(--muted)}
+.plist .prow.next{border-color:rgba(255,31,142,.55)} .plist .prow.next .pi{background:var(--pink);border-color:var(--pink);color:#0A0A0B}
+.plist .prow .pl{flex:1;min-width:0;color:inherit;font-weight:800;text-decoration:none}
+.plist .prow .pd{font:800 12.5px 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;color:var(--win);text-transform:none;letter-spacing:0}
+.plist .prow.done{color:var(--muted)} .plist .prow.done .pl{text-decoration:none}
+.plist .prow.done .pi{color:var(--win);border-color:rgba(53,208,127,.5);background:rgba(53,208,127,.12)}
+.plist .prow .tag2{font:800 12.5px 'Hanken Grotesk',sans-serif;color:var(--pink)}
+.plist .prow .px{min-width:44px;min-height:44px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+.tbl th{font:700 12px 'Hanken Grotesk',sans-serif;letter-spacing:.06em;text-transform:none;color:var(--faint);text-align:left;padding:8px 6px;background:none}
+.tbl td{padding:10px 6px;border-top:1px solid var(--line-2);color:var(--text)}
+.tbl td.num{font:800 14px 'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums;color:#fff}
+.empty{font-size:14px;color:var(--muted);padding:10px 0 2px}
+
+/* ---- phones: the step tiles become one line ---- */
+@media (max-width:640px){
+  .steps{display:none} .stepline{display:block}
+  .wcard .num{font-size:52px}
+  .tbl th:first-child,.tbl td:first-child{display:none}
+}
+@media (max-width:400px){ .stepline .gm{display:inline;font:inherit;color:#fff} }
+
+/* ---- iPad and laptop: the card a third bigger, the open lists side by side ---- */
+@media (min-width:700px){
+  .one .folds{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .one .folds>details:only-child,.one .folds>details.wide{grid-column:1 / -1}
+  .one .field2{margin-bottom:14px}
+  .one .rangewrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .one .rangewrap .opt-line{margin-top:0;min-height:56px;align-self:end}
+  .one details.fold>summary{min-height:64px} .one details.fold .t{font-size:17px}
+}
+@media (min-width:768px){
+  .one .steps .st{min-height:64px;font-size:18px} .one .steps .st .n{width:34px;height:34px;font-size:15px}
+  .one .btn.xl{min-height:112px;font-size:27px;border-radius:16px} .one .btn.second{min-height:72px;font-size:19px}
+  .one .ok{padding:36px 26px;gap:12px} .one .ok .tick{width:64px;height:64px;font-size:32px}
+  .one .ok b{font-size:40px;line-height:1.15} .one .ok span.sub{font-size:22px}
+  .one .wcard{padding:34px 26px 30px} .one .wcard .k{font-size:16px} .one .wcard .num{font-size:120px} .one .wcard .wn{font-size:40px} .one .wcard .pz{font-size:24px}
+  .one .cdrow{max-width:520px} .one .cdrow .t{font-size:20px} .one .cdrow .b{height:10px}
+  .one .nextp{font-size:21px;margin-top:18px} .one .sublbl{font-size:16px} .one .hint{font-size:17px}
+  .one .chips button,.one .chip{min-height:60px;font-size:18px} .one .flab{font-size:19px} .one .stat .box .v{font-size:36px}
+}
+
+/* members: tonight's draw is picked with the chips; the drop-down stays in the page for its id and its change */
+#drawSel{display:none}
+/* drawn tonight already: the button asks, in the quiet style (yellow is for a win only) */
+.btn.xl.again{background:var(--ink-3);color:var(--text);border:1px solid var(--line);box-shadow:none;text-transform:none;letter-spacing:0}
+.resolve{display:block;margin:0}
+/* raffle: the next prize is the same pink button (the gold "next" button was yellow, which is for a win only) */
+.btn.xl.nextmode{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+.btn.xl.nextmode:hover{background:var(--pink-deep);filter:none}
+.wcard .pz{text-transform:none;letter-spacing:0;margin-bottom:0}
+.ok b,.hint,.nextp,.flab{text-wrap:balance}
+
+/* design review of the built pages (9 Nov 2026) */
+body{background:var(--ink)}                                            /* flat, as the mock: no pink glow in the corner */
+.btn.xl.pulse{animation:none}                                          /* the big buttons hold their colour; nothing on the card fades */
+.since{text-wrap:balance}
+.plist .prow .pnext{min-height:44px;font-size:13.5px;white-space:nowrap}
+/* raffle: the draw order, put right before the first draw (Dean, 9 Nov 2026) */
+.orderwrap{margin-top:14px}
+.flab.osub{font-size:15px}
+.plist .prow .mv{flex:none;min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--ink-2);color:#fff;font:800 18px/1 'Hanken Grotesk',sans-serif;cursor:pointer}
+.plist .prow .mv:disabled{opacity:.3;cursor:default}
+.plist .prow .mv+.mv{margin-left:-4px}
+/* second review (9 Nov 2026): plain sentence-case titles, no letter-spaced capitals; the remove button kept apart */
+.bar>.tag{text-transform:none;letter-spacing:0;font-size:14px;font-weight:800}
+.toprow .lbl{text-transform:none;letter-spacing:0;font-size:14px;color:var(--muted)}
+.plist .prow .px{margin-left:6px;font-size:22px;color:var(--muted)}
+.osub small,.rangeline{color:#A6A6B0}
+@media (max-width:640px){ .plist .prow{gap:8px;padding-left:10px} .plist .prow .mv+.mv{margin-left:0} }

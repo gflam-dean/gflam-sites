@@ -241,11 +241,11 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   rafWeekly(P, 0, 'false');
   check('raffles: not the same every week, so a week can be swapped, one box for each prize in order', shown(P, 'prize_swaps') && !!$(P, 'vpGsSwapAdd'));
   $(P, 'vpGsSwapAdd').click(); box(P, 'vpGsSwapWeek_0', '2026-12-09'); box(P, 'vpGsSwapP_0_0', 'Hamper'); box(P, 'vpGsSwapP_0_1', 'Voucher');
-  check('raffles: draw style has a barrel and a wheel; the cash prize asks its amount', $(P, 'vpGsIn_draw_style').children.map(function (o) { return o.value; }).join() === 'numbers,barrel,wheel' && !shown(P, 'jackpot_amount_cents'));
-  box(P, 'vpGsIn_draw_style', 'barrel'); seg(P, 'jackpot_on', 'true'); box(P, 'vpGsIn_jackpot_amount_cents', '250'); seg(P, 'allow_redraw', 'false'); box(P, 'vpGsIn_spin_seconds', 6);
+  check('raffles: draw style offers As now, the ticket roll and the race plate (the console\'s looks); the cash prize asks its amount', $(P, 'vpGsIn_draw_style').children.map(function (o) { return o.value; }).join() === ',ticket,race' && !shown(P, 'jackpot_amount_cents'));
+  box(P, 'vpGsIn_draw_style', 'ticket'); seg(P, 'jackpot_on', 'true'); box(P, 'vpGsIn_jackpot_amount_cents', '250'); seg(P, 'allow_redraw', 'false'); box(P, 'vpGsIn_spin_seconds', 6);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var rp = lastPost('/host/game-prefs');
-  var wantR = { raffles: 2, raffle_counts: [3, 1], raffle_names: ['Friday Meat Raffle', 'Hamper Draw'], raffle_prizes: [['Meat tray', 'Meat tray', 'Meat tray'], ["Winner's choice"]], prizes: ['Meat tray', "Winner's choice"], prize_count: 3, prizes_same: true, time_to_present: 300, prizes_weekly: false, raffle_weekly: [false, true], prize_swaps: [{ week: '2026-12-07', prizes: ['Hamper', 'Voucher'] }], draw_style: 'barrel', jackpot_on: true, jackpot_amount_cents: 25000, allow_redraw: false, spin_seconds: 6 };
+  var wantR = { raffles: 2, raffle_counts: [3, 1], raffle_names: ['Friday Meat Raffle', 'Hamper Draw'], raffle_prizes: [['Meat tray', 'Meat tray', 'Meat tray'], ["Winner's choice"]], prizes: ['Meat tray', "Winner's choice"], prize_count: 3, prizes_same: true, time_to_present: 300, prizes_weekly: false, raffle_weekly: [false, true], prize_swaps: [{ week: '2026-12-07', prizes: ['Hamper', 'Voucher'] }], draw_style: 'ticket', jackpot_on: true, jackpot_amount_cents: 25000, allow_redraw: false, spin_seconds: 6 };
   var missR = Object.keys(wantR).filter(function (k) { return !rp || JSON.stringify(rp.prefs[k]) !== JSON.stringify(wantR[k]); });
   check('raffles: every answer saved to game_prefs.raffle (' + Object.keys(wantR).length + ' settings)', rp && rp.game === 'raffle' && missR.length === 0, { missing: missR, sent: rp && rp.prefs });
   check('raffles: the game Worker keeps every one', rp && keptByWorker('raffle', rp.prefs), rp && WK.clean('raffle', rp.prefs));
@@ -396,10 +396,10 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
   $(P, 'vpGsAllYes_raffles').click(); await settle();
-  box(P, 'vpGsRafName_0', 'Meat Raffle'); box(P, 'vpGsIn_draw_style', 'wheel');
+  box(P, 'vpGsRafName_0', 'Meat Raffle'); box(P, 'vpGsIn_draw_style', 'race');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var rsp = lastPost('/host/game-prefs').prefs;
-  check('existing venue: naming a raffle and picking the wheel sends just raffle_names and draw_style', srtj(rsp) === srtj({ raffle_names: ['Meat Raffle', ''], draw_style: 'wheel' }) && keptByWorker('raffle', rsp), rsp);
+  check('existing venue: naming a raffle and picking the race plate sends just raffle_names and draw_style', srtj(rsp) === srtj({ raffle_names: ['Meat Raffle', ''], draw_style: 'race' }) && keptByWorker('raffle', rsp), rsp);
   P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
   $(P, 'vpGsAllYes_members').click(); await settle();
@@ -519,7 +519,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   $(P, 'vpGsExtrasNo').click(); await settle();
   check('an earlier email choice is kept, and gets today as its "since" so the sender\'s first email is after today', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'sat', time: '10:30', since: P.GS.brisbaneDate(NOW) }), lastAnswers());
   P = oldVenue(); 
-  check('hidden: the keys and defaults are still there for later (picture_round on, draw_style numbers)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'numbers' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === 'wheel');
+  check('hidden: the keys and defaults are still there for later (picture_round on, draw_style As now)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === '' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'race' }).draw_style === 'race' && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === undefined);
   UNHIDE = true;
 
   section('7. ROUND 12 (Dean, 10 Nov 2026, INBOX 118): THE TEN NOTES');

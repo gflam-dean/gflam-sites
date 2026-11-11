@@ -29,7 +29,7 @@ var timers = [], redraws = 0;
 function setTimeout(fn, ms) { timers.push({ fn: fn, ms: ms }); return timers.length; }
 function clearTimeout(id) { if (timers[id - 1]) timers[id - 1].fn = null; }
 function fireTimers() { var t = timers.slice(); timers = []; t.forEach(function (x) { if (x.fn) x.fn(); }); }
-var btn = { textContent: 'Not here · redraw', cls: {}, classList: { add: function (c) { btn.cls[c] = 1; }, remove: function (c) { delete btn.cls[c]; } } };
+var btn = { textContent: 'Not here, draw again', cls: {}, classList: { add: function (c) { btn.cls[c] = 1; }, remove: function (c) { delete btn.cls[c]; } } };
 function $(id) { return id === 'redrawBtn' ? btn : null; }
 function pad(n) { return String(n); }
 function onRedraw() { redraws++; }
@@ -48,11 +48,11 @@ ok('it names the ticket it is about to void', btn.textContent === 'Tap again to 
 ok('and the arm lasts ' + (REDRAW_ARM_MS / 1000) + ' seconds, not for ever', timers.length === 1 && timers[0].ms === REDRAW_ARM_MS);
 
 fireTimers();
-ok('left alone, it disarms and the label comes back', !btn.cls.armed && btn.textContent === 'Not here · redraw' && redraws === 0);
+ok('left alone, it disarms and the label comes back', !btn.cls.armed && btn.textContent === 'Not here, draw again' && redraws === 0);
 
 tapRedraw(); tapRedraw();
 ok('two taps inside the window redraw exactly once', redraws === 1);
-ok('and the button is plain again afterwards', !btn.cls.armed && btn.textContent === 'Not here · redraw');
+ok('and the button is plain again afterwards', !btn.cls.armed && btn.textContent === 'Not here, draw again');
 
 ok('claiming the ticket disarms a half-tapped redraw', /G\.round\.resolved=true; clearTimers\(\); disarmRedraw\(\);/.test(H),
    'otherwise the arm outlives the round and the next winner\'s first tap is a second tap');
@@ -60,7 +60,7 @@ ok('claiming the ticket disarms a half-tapped redraw', /G\.round\.resolved=true;
 /* Live on 8 Sep 2026 the Draw button read "Drawing…" for the whole claim window, which on a phone
    looks like a hang. While a winner is up it should say what it is waiting on. */
 ok('while a winner is up, the Draw button says what it is waiting on, not Drawing…',
-   /if\(allowRedraw\)\{\s*show\("wcResolve",true\);\s*drawBtnWaiting\(nums\);/.test(H) &&
+   /if\(allowRedraw\)\{\s*show\("wcResolve",true\);[^\n]*\n\s*drawBtnWaiting\(nums\);/.test(H) &&
    /function drawBtnWaiting\(nums\)\{[^\n]*"Waiting on ticket "\+nums\.map\(pad\)/.test(H));
 
 if (ran !== EXPECT) { print('ONLY ' + ran + ' OF ' + EXPECT + ' CHECKS RAN'); throw new Error('incomplete'); }

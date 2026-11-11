@@ -232,17 +232,19 @@ try:
              ' function txt(id){var e=d.getElementById(id); return e?e.textContent.trim():"";}'
              ' return (%s);})()')
     def tv(expr): return FRAME % expr
-    ok('the TV on /tv brings the draw up by itself: masked mobile endings spinning, or the reveal already up',
-       R.until(tsid, tv('(vis("tvDraw") && /^04xx xxx \\d{3}$/.test(txt("tvSpin"))) || d.getElementById("tvWinNum").classList.contains("isname")'), 40) is True,
+    # NO PHONE DIGITS ON THE WALL, NOT EVEN WHILE IT SPINS (Dean, 6 Nov 2026): the spin shuffles initials ("J. K."), and
+    # the winner is named by first name and initial only.
+    ok('the TV on /tv brings the draw up by itself: initials spinning, or the reveal already up',
+       R.until(tsid, tv('(vis("tvDraw") && /^[A-Z]\\. [A-Z]\\.$/.test(txt("tvSpin"))) || d.getElementById("tvWinNum").classList.contains("isname")'), 40) is True,
        js(tsid, '(function(){var f=document.getElementById("gameFrame"); return f?[f.style.display,f.src].join(" "):"no frame";})()'))
     if js(tsid, tv('vis("tvDraw")')) is True: shot(tsid, '09-tv-drawing.jpg')
-    # And while it spins, every frame is a masked ending: sampled across the spin, never a whole number.
+    # And while it spins, every frame is a pair of initials: sampled across the spin, never a digit.
     spins = []
     for _ in range(8):
         v = js(tsid, tv('vis("tvDraw") ? txt("tvSpin") : ""'))
         if v: spins.append(v)
         time.sleep(0.35)
-    ok('the spin on the wall only ever shows 04xx xxx and three digits', len(spins) >= 2 and all(__import__('re').match(r'^04xx xxx \d{3}$', x) for x in spins), spins)
+    ok('the spin on the wall only ever shows initials, never a digit', len(spins) >= 2 and all(__import__('re').match(r'^[A-Z]\. [A-Z]\.$', x) for x in spins), spins)
     ok('the winner card comes up on the venue page', R.until(sid, visible('#winnerCard'), 25) is True, text(sid, '#drawMsg'))
     wname = text(sid, '#wName')
     draws = line({'table': 'vp_purchase_raffle_draws'})['body'] or [{}]
@@ -252,7 +254,7 @@ try:
     ok('the TV shows the same winner', R.until(tsid, tv('vis("tvWin") && txt("tvWinNum")===%s' % json.dumps(wname)), 30) is True, js(tsid, tv('txt("tvWin")')))
     R.until(tsid, tv('vis("tvWinName")'), 8); time.sleep(0.8)
     tvtext = js(tsid, tv('txt("tvWin")')) or ''
-    ok('the TV gives the last three digits, the entries and the prize', ('Mobile ending ' + str(draws[0].get('phone_last3'))) in tvtext and 'entr' in tvtext and 'Fiji' in tvtext, tvtext)
+    ok('the TV names the prize and never a phone ending or a count', 'Fiji' in tvtext and 'ending' not in tvtext and str(draws[0].get('phone_last3')) not in tvtext and 'entr' not in tvtext, tvtext)
     ok('the TV never shows a whole mobile', not any(p[0][1:] in tvtext.replace(' ', '') for p in people) and '412345678' not in tvtext.replace(' ', ''), tvtext)
     shot(tsid, '11-tv-winner.jpg')
     ok('no errors on the venue page', errs(sid) == '[]', errs(sid))

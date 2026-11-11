@@ -194,7 +194,7 @@ BC_BEFORE = ('(function(){var B=window.BroadcastChannel;if(!B)return;window.__bc
              'var W=function(n){window.__bcNames.push(String(n));return new B(n);};W.prototype=B.prototype;window.BroadcastChannel=W;})();')
 HOST_SAYS = r'''(function(msgs){
   /* ONLY the raffle's own channel (its code is on the wall): a draw on another game's channel would hop this screen to that game */
-  var code=(document.getElementById("hostLineCode")||{}).textContent||"";
+  var code=(document.getElementById("hostLineCode")||document.getElementById("hostCode")||{}).textContent||"";   /* raffle, members */
   var names=(window.__bcNames||[]).filter(function(n){return n==="fake-rt:vp-"+code;}), seen={};
   names.forEach(function(n){ if(seen[n]) return; seen[n]=1; var b=new BroadcastChannel(n);
     msgs.forEach(function(m){ b.postMessage({event:"msg", payload:m}); }); setTimeout(function(){ try{ b.close(); }catch(e){} }, 500); });
@@ -378,6 +378,50 @@ def same_logo():
     for frag in ('var T=1.12, GX=(2*-85+112)/3;', 'var P=[[-85,-118],[112,0],[-85,118]]', 'var RO=15*T, SOLID=RO+RHO+0.5, HT=266*T;', 'var CX=3830, CY=-245, INKW=4676, INKL=-1'):
         ok('the triangle geometry is the same in both: ' + frag, frag in a and frag in b)
 
+def members():
+    print('\n6. MEMBERS DRAW: the real members screen (the new look, 9 Nov 2026), a jackpot won, then one not claimed')
+    r = RIG.Rig()
+    try:
+        slug = r.W.info['slug']
+        def screen():
+            _, s = r.open('/app/members/screen?venue=' + slug + '&sting=0&endshow=1', width=1280, height=720,
+                          before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){};' % json.dumps(slug) + BC_BEFORE)
+            r.until(s, 'document.readyState==="complete" && !!window.VPEndShow && (window.__bcNames||[]).some(function(n){return /^fake-rt:vp-/.test(n);})', 20)
+            time.sleep(1.5)
+            return s
+        s = screen()
+        host_says(r, s, [{'t': 'state', 'drawName': 'Friday members draw', 'jackpotCents': 145000, 'playing': False}])
+        host_says(r, s, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 1}]); time.sleep(1.2)
+        host_says(r, s, [{'t': 'winner', 'number': 418, 'name': 'J. Hollis', 'claimSecs': 0}])
+        host_says(r, s, [{'t': 'claimed', 'name': 'J. Hollis', 'amountCents': 145000, 'nextResetCents': 20000}])
+        ok('CONTROL: the jackpot win is on the wall, and no show yet', r.ask(s, vis('tvResult')) is True and (r.ask(s, STATS) or {}).get('plays') == 0, r.ask(s, STATS))
+        host_says(r, s, [{'t': 'to_ads'}])
+        ok('Back to ads: the show plays the members draw\'s result', r.until(s, 'VPEndShow.playing()', 10) is True and (r.ask(s, STATS) or {}).get('kind') == 'members', r.ask(s, STATS))
+        sh = r.ask(s, SHOWN) or {}
+        ok('WE HAVE A WINNER, J. HOLLIS, Wins $1,450', sh.get('eye') == 'WE HAVE A WINNER' and sh.get('big') == 'J. HOLLIS' and sh.get('sub') == 'Wins $1,450', sh)
+        time.sleep(1.4); shot(r, s, 'endshow-6-members')
+        ok('Back to ads waits for the show', r.ask(s, 'VPEndShow.playing() && /\\/app\\/members\\//.test(location.pathname)') is True, r.ask(s, 'location.pathname'))
+        ok('then goes to the venue\'s TV page', r.until(s, '/^\\/tv/.test(location.pathname)', 12) is True, r.ask(s, 'location.pathname'))
+
+        s2 = screen()
+        host_says(r, s2, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 1}]); time.sleep(1.2)
+        host_says(r, s2, [{'t': 'winner', 'number': 418, 'name': 'J. Hollis', 'claimSecs': 0}])
+        host_says(r, s2, [{'t': 'rollover', 'missedName': 'J. Hollis', 'missedNumber': 418, 'incrementCents': 5000, 'nextJackpotCents': 150000}])
+        host_says(r, s2, [{'t': 'to_ads'}])
+        up = r.until(s2, 'VPEndShow.playing()', 10) is True
+        sh = r.ask(s2, SHOWN) or {}
+        ok('a jackpot not claimed: NOT CLAIMED TONIGHT, $1,500, Next week\'s jackpot',
+           up and sh.get('eye') == 'NOT CLAIMED TONIGHT' and sh.get('big') == '$1,500' and sh.get('sub') == 'Next week\u2019s jackpot', sh)
+        s3 = screen()
+        host_says(r, s3, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 1}]); time.sleep(1.2)
+        host_says(r, s3, [{'t': 'to_ads'}])
+        ok('a draw that never got a result plays no show and goes straight to the ads',
+           r.until(s3, '/^\\/tv/.test(location.pathname)', 2.5) is True, r.ask(s3, 'location.pathname'))
+        ok('no page errors on the members screen', not (r.ask(s2, 'window.__errs') or []), r.ask(s2, 'window.__errs'))
+    finally:
+        r.close()
+
+
 def io_read(p):
     import io
     return io.open(os.path.join(ROOT, p), encoding='utf-8').read()
@@ -387,7 +431,7 @@ if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('tv-endshow-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
     only = sys.argv[1:]   # a section by name, for working on one; the gate runs them all
-    for part in (same_logo, the_show, bingo, demos, raffle, musical_live):
+    for part in (same_logo, the_show, bingo, demos, raffle, members, musical_live):
         if not only or part.__name__ in only: part()
     # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))

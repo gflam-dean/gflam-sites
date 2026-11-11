@@ -209,7 +209,8 @@ print("7. MUSICAL BINGO IS NOT BINGO: THE CLAIM BUTTON SAYS WHAT THE PLAYER HAS 
   pass("the button as the page ships it says \"I've got a line\", never BINGO!", !!mk && mk[1] === "I've got a line", mk && mk[1]);
   pass("no message on the musical phone tells the player to hit or try BINGO", !/(Hit|Try|tap) BINGO|BINGO sent/.test(play.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
   var num = readFile("venueplay/play.html"), nb = /<button[^>]*id="bingoBtn"[^>]*>([^<]*)</.exec(num || "");
-  pass("CONTROL: number bingo (/play) keeps BINGO!", !!nb && nb[1] === "BINGO!", nb && nb[1]);
+  // number bingo's new look (a9260bbb, Dean 3 Nov) moved its claim words to the pattern too; the control is now that /play keeps its OWN button
+  pass("CONTROL: number bingo (/play) keeps its own claim button (pattern words since its new look)", !!nb && /^(BINGO!|I&#39;ve got a line)$/.test(nb[1]), nb && nb[1]);
 })();
 
 print("");

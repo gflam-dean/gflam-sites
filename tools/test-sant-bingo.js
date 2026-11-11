@@ -265,7 +265,7 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
   var RAFFLE = readFile('venueplay/app/raffle/host.html');
   function raffleAdd(state, label) {
     var errs = [], cleared = [];
-    var env = { G: { venue: { au_state: state }, jackOn: false, prizes: [] }, VPGaming: G,
+    var env = { G: { venue: { au_state: state }, jackOn: false, prizes: [], savedPrizes: [] }, VPGaming: G,   // savedPrizes: addPrize saves only a prize that is not saved yet (9 Nov 2026)
                 hostError: function (m, k) { errs.push([m, k]); }, clearHostErrorIf: function (k) { cleared.push(k); },
                 savePrize: function () {}, renderPrizeList: function () {}, saveRaffle: function () {},
                 $: function () { return { value: label }; } };

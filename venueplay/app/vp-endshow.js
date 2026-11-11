@@ -283,6 +283,9 @@
   window.VPEndShow={
     on:ON, reduced:REDUCED, seconds:DUR_FULL, closeSeconds:DUR_CLOSE,
     play:play,
+    /* A NEW-LOOK DRAW SWITCHES ITS OWN END SHOW ON (12 Nov 2026, Dean: the start and end show on every new-look game). The raffle and members
+       screens call this the moment the host sends a draw look; ?endshow=0 still wins. Every other screen stays as it was. */
+    enable:function(){ if(!/[?&]endshow=0(&|$)/.test(location.search || "")){ ON=true; window.VPEndShow.on=true; } return ON; },
     /* every message the page hears: the next game's first word stops the show at once */
     heard:function(m){ if(playing && m && NEXT[m.t]) finish("next"); },
     stop:function(why){ if(playing) finish(why||"stop"); },
