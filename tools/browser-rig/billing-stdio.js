@@ -166,7 +166,7 @@ for (;;) {
     print(JSON.stringify(pdone || { status: 504, body: { error: 'provisioning did not finish' } }));
     continue;
   }
-  var h = rq.headers || {}, txt = JSON.stringify(rq.body || {});
+  var h = rq.headers || {}, txt = typeof rq.body === 'string' ? rq.body : JSON.stringify(rq.body || {});   // a form post is its own text (11 Nov 2026)
   var req = { method: rq.method || 'POST', url: 'https://api.test' + rq.path,
               headers: { get: function (k) { for (var x in h) { if (x.toLowerCase() === String(k).toLowerCase()) return h[x]; } return null; } },
               text: function () { return Promise.resolve(txt); }, json: function () { return Promise.resolve(JSON.parse(txt)); } };

@@ -1192,7 +1192,8 @@
       '<div role="dialog" aria-modal="true" aria-labelledby="whyH" class="dlg">' +
         '<h3 id="whyH">Cancel ' + esc(v.name) + '?</h3>' +
         '<p class="dtext">' +
-          (lastOne
+          /* A FREE MONTH (Dean, 11 Nov 2026, INBOX 191): the Worker's own words, with the date it stays on to. */
+          (v.trial && v.trial.cancel_text ? esc(v.trial.cancel_text) : lastOne
             ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
             : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
         '</p>' +
@@ -1224,7 +1225,7 @@
         '</div>' +
         /* The 90-day words (Dean, 10 Nov 2026, INBOX 142 and 149): the restart billing that keeps their plan and price
            (fix/restart-90day-15nov) ships with this line. Paid venues only: the free-month page has none (INBOX 191.5). */
-        '<p class="cxback">Change your mind within 90 days and you keep your current plan and price.</p>' +
+        (v.trial ? '' : '<p class="cxback">Change your mind within 90 days and you keep your current plan and price.</p>') +
         '<div class="dlgacts" id="whyActs">' +
           '<button type="button" id="whyMain" class="dlgbtn main" hidden></button>' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
@@ -1460,6 +1461,23 @@
         });
         wrap.appendChild(row); return;
       }
+      if (v.trial && v.trial.cancelled && !v.left){
+        /* CANCELLED IN ITS FREE MONTH (INBOX 191): still on to the end date; carrying on is one tap, the same month. */
+        row.innerHTML =
+          '<div class="nm"><b>' + esc(v.name) + '</b><small>Cancelled</small></div>' +
+          '<div class="cxbanner"><span>' + (v.trial.ends_words ? 'You can keep using venueplay until ' + esc(v.trial.ends_words) + ', then we\u2019ll switch it off.' : 'This venue is cancelled.') + '</span>' +
+          (v.trial.ends_words ? '<button class="keep" type="button">Keep my free month going</button>' : '') + '</div>';
+        var kf = row.querySelector(".keep");
+        if (kf) kf.addEventListener("click", function(){
+          kf.disabled = true;
+          api("/account/cancel-venue", { venue_id:v.id, undo:true }).then(function(r){
+            kf.disabled = false;
+            if (r.error){ showMsg(r.error); return; }
+            showMsg(r.text || ("Your free month at " + v.name + " carries on."), true); load();
+          });
+        });
+        wrap.appendChild(row); return;
+      }
       if (v.cancelling){
         // Cancelled venues keep access until the period ends; offer a one-click "keep it".
         var until = d.next_charge ? (" until " + d.next_charge) : " until the end of your paid period";
@@ -1605,6 +1623,7 @@
             canx.disabled = true; canx.textContent = "Cancelling…";
             api("/account/cancel-venue", { venue_id:v.id, reason:reason, reason_detail:detail }).then(function(r){
               if (r.error){ showMsg(r.error); canx.disabled=false; canx.textContent="Cancel this venue"; return; }
+              if (r.trial && r.text){ showMsg(r.text, true); load(); return; }   // a free month (INBOX 191): the Worker's words
               var when = r.ends ? (" It stays live until " + r.ends + ".") : "";
               showMsg(v.name + " is set to cancel." + when, true); load();
             });
@@ -1917,6 +1936,9 @@
     var money = function(r){ return "$" + Number(r).toFixed(2); };
     var pl = q.players + " player" + (q.players === 1 ? "" : "s");
     var until = q.restart_until_words ? (" You can come back from here until " + q.restart_until_words + ".") : "";
+    /* Cancelled before anyone signed in (INBOX 191.6): their free month was never used, so it starts now, no card. */
+    if (q.kind === "prospect_fresh") return { label: "Start your free month",
+      note: "Your free month starts today and there\u2019s no card needed. After it, " + pl + " at " + money(q.rate) + " a player." };
     if (q.kind === "group") return { label: "Bring " + (q.venue_name || "this venue") + " back",
       note: pl + " at " + money(q.rate) + " a player. " + (q.trialing ? "Nothing extra this cycle, " : (q.stub + " for the rest of this cycle (" + q.stub_words + ") goes on your next bill, ")) +
             "on " + q.next_bill_words + ", then " + q.monthly + " a month." + until };
@@ -1947,7 +1969,7 @@
     btn.disabled = true; var was = btn.textContent; btn.textContent = "One moment\u2026"; note.classList.remove("err");
     api("/account/restart", { venue_id: vid }).then(function(r){
       if (r && r.card_url && /^https:\/\//.test(r.card_url)){ window.location.href = r.card_url; return; }
-      if (r && (r.restarted || r.already)){ showMsg("Welcome back. Your games are on again.", true); if (after) after(); return; }
+      if (r && (r.restarted || r.already)){ showMsg(r.kind === "prospect_fresh" && r.ends_words ? ("Welcome back. Your free month runs until " + r.ends_words + ".") : "Welcome back. Your games are on again.", true); if (after) after(); return; }
       btn.disabled = false; btn.textContent = was;
       note.textContent = (r && r.error) || "That did not work just now. Nothing has been charged. Please try again.";
       note.classList.add("err");

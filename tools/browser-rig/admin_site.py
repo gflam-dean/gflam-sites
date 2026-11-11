@@ -165,7 +165,12 @@ class Site(object):
 
             def api(self, method):
                 n = int(self.headers.get('Content-Length') or 0)
-                body = json.loads(self.rfile.read(n) or b'{}') if n else {}
+                raw = self.rfile.read(n) if n else b''
+                # A form post (the free-month cancel page, 11 Nov 2026) goes to the Worker as its own text; JSON as before.
+                if 'x-www-form-urlencoded' in (self.headers.get('Content-Type') or ''):
+                    body = raw.decode('utf-8')
+                else:
+                    body = json.loads(raw or b'{}') if n else {}
                 path = self.path[len('/__api'):] or '/'
                 r = site.W.ask(method, path, body, {k: v for k, v in self.headers.items()})
                 self.send(r.get('status', 500), json.dumps(r.get('body')), 'application/json')

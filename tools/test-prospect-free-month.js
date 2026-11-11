@@ -313,12 +313,17 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('opening the link only ASKS (a mail scanner opening it cancels nothing)', /Cancel venueplay for/.test(g.body) && /Yes, cancel it/.test(g.body) && !F.row().cancelled_at && F.v.status === 'active', g.body.slice(0, 200));
   var bad = await vpaProspectCancel(creq('POST', '', 'f=' + F.v.founding_id + '&t=' + new Array(33).join('0')), ENV);
   check('a wrong token cancels nothing', /has not worked/.test(bad.body) && !F.row().cancelled_at);
+  /* A FIXED clock, day 5 of the month (never the real one: the cancel reads Date.now). Since 11 Nov 2026 (Dean, INBOX 191)
+     a cancel inside the free month keeps it on to the end date; tools/test-trial-cancel.js walks every rule. */
+  var realNowF = Date.now; Date.now = function () { return bne(2026, 11, 7, 10, 0); };
   var ok = await vpaProspectCancel(creq('POST', '', q), ENV);
-  check('the button: cancelled, switched off, audited, and the page says nothing was charged', /All done/.test(ok.body) && /Nothing was ever charged/.test(ok.body) && !!F.row().cancelled_at &&
-    F.v.status === 'suspended' && F.v.suspended_reason === 'cancelled' && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_cancelled'; }), [F.v.status, F.v.suspended_reason]);
-  check('a cancelled prospect starts the 90-day clock too (closed_at = when they cancelled), like a paid venue that cancels', !!F.v.closed_at && F.v.closed_at === F.row().cancelled_at, [F.v.closed_at, F.row().cancelled_at]);
+  Date.now = realNowF;
+  check('the button: cancelled and audited, still on to the end date, and the page says nothing was charged', /All done/.test(ok.body) && /nothing was ever charged/.test(ok.body) && /keep using it until 2 December/.test(ok.body) && !!F.row().cancelled_at &&
+    F.v.status === 'active' && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_cancelled'; }), [F.v.status, ok.body.slice(0, 600)]);
   await walk(fs, bne(2026, 12, 4, 12, 0), 6 * 3600000);
   check('a cancelled prospect gets no reminders and is never paused', REM().length === 0 && !F.row().paused_at, REM().length);
+  check('after the end date the sweep switches it off as "cancelled", and the 90-day clock starts then, like a paid venue at its period end',
+    F.v.status === 'suspended' && F.v.suspended_reason === 'cancelled' && !!F.v.closed_at && Date.parse(F.v.closed_at) > Date.parse(F.row().free_month_ends_at), [F.v.status, F.v.closed_at]);
   check('the cancel link is our own page on venueplay.com.au (never workers.dev: Ozemail bounced it, 31 Oct 2026), signed per account', /^https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&]+&t=[0-9a-f]{32}$/.test(link) && link !== await vpaProspectCancelLink(ENV, U(4242)), link);
 
   /* THE venueplay.com.au PAGE ASKS THE WORKER IN JSON (31 Oct 2026), through the real router, from our origin.
@@ -331,7 +336,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var ja = await rcall('GET', q2 + '&reply=json');
   check('the page\'s GET (reply=json) only ASKS: the Worker page\'s own question and words, the button kept, nothing written',
     ja.status === 200 && ja.body && ja.body.state === 'ask' && ja.body.title === 'Cancel venueplay for Lakeside Test Tavern?' &&
-    ja.body.text === 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.' &&
+    ja.body.text === 'No problem at all, and thanks for having a look. There\u2019s no card on your account, so nothing has been charged and nothing will be. We\u2019ll switch it off and stop the reminders.' &&
     !F2.row().cancelled_at && F2.v.status === 'active', ja.raw);
   check('the answer is readable by venueplay.com.au (CORS reflects our origin)', ja.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', ja.headers);
   var jb = await rcall('POST', '', 'f=' + encodeURIComponent(F2.v.founding_id) + '&t=' + new Array(33).join('0') + '&reply=json');

@@ -236,7 +236,8 @@ async function main() {
   check('a POST that fails says so and gives the button back', posts(O).length === 1 && O.els.go.disabled === false && O.els.err.className === 'err' && /did not go through/.test(O.els.err.textContent), [O.els.go.disabled, O.els.err.className]);
   var pageText = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script>[\s\S]*?<\/script>/g, '');
   check('the page\'s own words: the Worker\'s question, "Yes, cancel it", no em dash', /<h1 id="head">Cancel venueplay for your venue\?<\/h1>/.test(pageText) &&
-    pageText.indexOf('No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.') !== -1 &&
+    /* The Worker sends the rest: the date it stays on to, or that it switches off now (Dean, 11 Nov 2026, INBOX 191). */
+    pageText.indexOf('No problem at all, and thanks for having a look. There&rsquo;s no card on your account, so nothing has been charged and nothing will be.</p>') !== -1 &&
     />Yes, cancel it</.test(pageText) && !/[\u2014\u2013]/.test(html));
 
   print('');
