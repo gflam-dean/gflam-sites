@@ -14,12 +14,14 @@ nights. Three parts, each on the REAL pages served from this checkout:
          name or logo, on the lobby, the question and the end screen, and never another venue's
   2. THE WALL (the sales-page demos, ?demo=1, on Chrome's virtual clock) at 1920x1080 and 1280x720, the
      trivia lobby, a question, the scores and the podium, and musical bingo's lobby and a song:
-       - the line sits BESIDE the venue's logo (its middle on the logo's middle), or UNDER the venue's name
-         when there is no logo, inside the screen
+       - the host's logo sits BESIDE the venue's logo (its middle on the logo's middle), or beside the venue's name when
+         there is no logo; "hosted by <name>" is a smaller line centred UNDER the game's name (Dean picked this, 11 Nov 2026)
        - it never overlaps the venue's logo or name, our venueplay mark, the game's name, the question, the
-         answers, the join QR and code, or a score row
-       - the venue's logo and our mark are exactly where they are without it (nothing pushed)
-       - the host's logo is never taller than the venue's own, and the words are at least 12px
+         answers, the join QR and code, or a score row, and a long name stays on its one line
+       - the venue's logo, our mark and the game's name are exactly where they are without it
+       - the question, the timer and the top of every slide are at the SAME height on every variant (within 1px), with a
+         little clear room under the line (at least 1.5% of the height)
+       - the host's logo is 70% of the venue's own, never under 5% of the height, and the words are at least 30px at 1080
      with a round crest (Tugun), a wide 6.6:1 wordmark, and no logo at all; with and without a host logo
   3. THE SETTING, Account > People > a host's row > Hosted by (tools/browser-rig/admin_site.py, the real
      billing Worker), at 375 and 390 (phone), 768 (iPad) and 1280 (laptop):
@@ -70,9 +72,9 @@ HOST_LOGO = ('<svg xmlns="http://www.w3.org/2000/svg" width="440" height="200" v
 TVHB = r'''(function(){ var f=document.getElementById("gameFrame"), d=f && f.contentDocument; if(!d) return JSON.stringify({none:1});
   function shown(e){ if(!e) return false; var s=d.defaultView.getComputedStyle(e), b=e.getBoundingClientRect(); return !e.hidden && !e.classList.contains("hidden") && s.display!=="none" && s.visibility!=="hidden" && b.width>0 && b.height>0; }
   var lay=[].filter.call(d.querySelectorAll(".layer"),function(l){ return shown(l); })[0];
-  var hb=d.getElementById("hostedBy"), img=hb && hb.querySelector(".hb-logo");
-  return JSON.stringify({ layer: lay ? lay.id : null, hb: shown(hb), name: hb ? (hb.querySelector(".hb-name")||{}).textContent : null,
-    lbl: hb ? (hb.querySelector(".hb-lbl")||{}).textContent : null, src: img ? (img.getAttribute("src")||"") : null,
+  var ln=d.getElementById("hostedByLine"), bold=ln && ln.querySelector("b"), img=d.querySelector("#hostedBy .hb-logo");
+  return JSON.stringify({ layer: lay ? lay.id : null, hb: shown(ln), name: bold ? bold.textContent : null,
+    lbl: ln ? ln.textContent.slice(0, ln.textContent.length - (bold ? bold.textContent.length : 0)).trim() : null, src: img ? (img.getAttribute("src")||"") : null,
     venue: (d.getElementById("venueNameTag")||{}).textContent||"", errs: (f.contentWindow.__errs||[]).length }); })()'''
 
 
@@ -197,21 +199,22 @@ class Site(NL.Site):
 
 
 WALL = r'''(function(){
-  try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){}
+  try{ if(window.VPTvGame) VPTvGame.alignTitles(); if(window.VPHostedBy) VPHostedBy.place(); }catch(e){}
   function R(e){ if(!e) return null; var cs=getComputedStyle(e); if(e.hidden || cs.display==="none" || cs.visibility==="hidden") return null; var b=e.getBoundingClientRect(); return (b.width>0&&b.height>0) ? [b.left,b.top,b.right,b.bottom] : null; }
   function on(l){ return !l.classList.contains("hidden") && getComputedStyle(l).display!=="none"; }
   var lay=[].filter.call(document.querySelectorAll(".layer"),on)[0];
-  var hb=document.getElementById("hostedBy"), img=hb && hb.querySelector(".hb-logo"), nm=hb && hb.querySelector(".hb-name"), lb=hb && hb.querySelector(".hb-lbl");
-  var parts=[], kids=[];
+  var hb=document.getElementById("hostedBy"), img=hb && hb.querySelector(".hb-logo"), ln=document.getElementById("hostedByLine"), bold=ln && ln.querySelector("b");
+  var parts=[], kids=[], top=null;
   if(lay){ [".qtext",".answers .ans",".qrbig",".scanplay",".codebox",".joinurl",".lobbyname","#tvBoardRows .brow",".pod",".podium > *",".nowplaying",".np",".songcard",".jsub"].forEach(function(sel){
     [].forEach.call(lay.querySelectorAll(sel),function(e){ var r=R(e); if(r) parts.push({sel:sel, r:r}); }); });
-    [].forEach.call(lay.children,function(k){ var r=R(k); if(r) kids.push(r); }); }
+    [].forEach.call(lay.children,function(k){ var r=R(k); if(r){ kids.push(r); if(!k.hasAttribute("data-fit-ignore") && (top===null || r[1]<top)) top=r[1]; } }); }
   var mk=document.querySelector(".tv-corner .vn svg, .tv-corner svg");
   var ti=lay && lay.querySelector(".toplbl .tl-night");
-  return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(hb), name: nm ? nm.textContent : null,
-    nameFs: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0, gap: (hb && hb.querySelector(".hb-text") && hb.querySelector(".hb-text").parentNode===hb) ? (parseFloat(getComputedStyle(hb.querySelector(".hb-text")).rowGap) || 0) : 0, lblFs: lb ? parseFloat(getComputedStyle(lb).fontSize) : 0, lblR: R(lb), nameR: R(nm),
+  var ring=lay && lay.querySelector(".qfoot"), q=lay && lay.querySelector(".qtext");
+  return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(ln), name: bold ? bold.textContent : null,
+    lbl: ln ? ln.textContent.slice(0, ln.textContent.length - (bold ? bold.textContent.length : 0)) : null, lineFs: ln ? parseFloat(getComputedStyle(ln).fontSize) : 0, lineClip: ln ? ln.scrollWidth > ln.clientWidth + 1 : false,
     img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
-    tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids });
+    tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids, top: top, ring: R(ring), q: R(q) });
 })()'''
 
 
@@ -224,9 +227,11 @@ def same(a, b, tol=1.0):
 
 
 names = {}
+TOPS = {}       # (width, height, slide) -> {variant: {top, ring, q}}: the slide's height on every variant
+MIN_GAP = 0.015  # the clear room under the title block, as a share of the height (16px at 1080, 11px at 720)
 
 
-def wall_checks(tag, m, base, host_logo, venue, mode):
+def wall_checks(tag, m, base, host_logo, venue):
     hb, W, H = m.get('hb'), m.get('W', 0), m.get('H', 0)
     want_layer = {'lobby': 'tvLobby', 'question': 'tvQ', 'board': 'tvBoard', 'podium': 'tvPodium'}.get(tag.rsplit(', ', 1)[-1])
     if want_layer and 'musical' not in tag:
@@ -234,112 +239,108 @@ def wall_checks(tag, m, base, host_logo, venue, mode):
     if 'musical' in tag and tag.endswith('lobby'):
         ok('%s: the picture is of the lobby (scan to play, the code)' % tag, m.get('layer') == 'tvLobby', m.get('layer'))
     nm = names.get(tag, NAME)
-    ok('%s: "Hosted by %s" is on the wall' % (tag, nm), bool(hb) and m.get('name') == nm, m.get('name'))
+    ok('%s: "hosted by %s" is on the wall, the words lowercase, the name in bold' % (tag, nm), bool(hb) and m.get('name') == nm and (m.get('lbl') or '').strip() == 'hosted by', [m.get('name'), m.get('lbl')])
     if not hb: return
     inset = max(14, round(0.012 * W))
-    ok('%s: inside the screen, at least the venue logo\'s own margin from the left edge (%dpx)' % (tag, inset), hb[0] >= inset - 0.5 and hb[1] >= 0 and hb[2] <= W, hb)
-    ok('%s: big enough to read across a pub: the name %.0fpx (about 30 at 1080), HOSTED BY %.0fpx (about 18)' % (tag, m.get('nameFs'), m.get('lblFs')),
-       m.get('nameFs', 0) >= 0.024 * H and m.get('lblFs', 0) >= 0.0155 * H, (m.get('nameFs'), m.get('lblFs')))
-    ok('%s: clear of our venueplay mark and the game\'s name' % tag, not overlap(hb, m.get('mark')) and not overlap(hb, m.get('title')), [hb, m.get('mark'), m.get('title')])
-    # B lifts a slide that reaches the bottom (musical bingo's song chip, the podium) a few pixels clear of the line,
-    # so its game name may move by up to 0.6% of the height there; the logos never move, and in A nothing moves.
-    tt = 1.0 if mode == 'top' else 0.006 * H
-    ok('%s: the header does not move: the venue logo and our mark exactly, the game\'s name %s' % (tag, 'exactly' if mode == 'top' else 'within %.0fpx' % tt),
-       same(m.get('logo'), base.get('logo')) and same(m.get('mark'), base.get('mark')) and same(m.get('title'), base.get('title'), tt),
+    ok('%s: inside the screen' % tag, hb[0] >= 0 and hb[1] >= 0 and hb[2] <= W and hb[3] <= H, hb)
+    ok('%s: big enough to read across a pub: %.0fpx (about 30 at 1080)' % (tag, m.get('lineFs', 0)), m.get('lineFs', 0) >= 0.0255 * H, m.get('lineFs'))
+    ti = m.get('title')
+    ok('%s: a smaller line under the game\'s name, centred on it (within 2px) and not touching it' % tag,
+       bool(ti) and abs((hb[0] + hb[2]) / 2 - (ti[0] + ti[2]) / 2) <= 2 and hb[1] >= ti[3] - 1 and hb[1] - ti[3] <= 0.01 * H, [hb, ti])
+    ok('%s: the name fits on its one line (nothing cut off)' % tag, m.get('lineClip') is False, m.get('lineClip'))
+    ok('%s: clear of our venueplay mark' % tag, not overlap(hb, m.get('mark')), [hb, m.get('mark')])
+    ok('%s: the header does not move: the venue logo, our mark and the game\'s name exactly where they are without it' % tag,
+       same(m.get('logo'), base.get('logo')) and same(m.get('mark'), base.get('mark')) and same(m.get('title'), base.get('title')),
        [m.get('logo'), base.get('logo'), m.get('mark'), base.get('mark'), m.get('title'), base.get('title')])
     hits = [p for p in m.get('parts') or [] if overlap(hb, p['r'], 1)]
     ok('%s: clear of the question, the answers, the join and the scores' % tag, not hits, hits[:3])
+    top = m.get('top')
+    ok('%s: a little clear room under the line before the slide starts (%.0fpx, at least %.0f)' % (tag, (top or 0) - hb[3], MIN_GAP * H),
+       top is not None and top - hb[3] >= MIN_GAP * H - 0.5, [top, hb])
+    ok('%s: the whole slide is on the screen' % tag, all(k[1] >= 0 and k[3] <= H and k[0] >= 0 and k[2] <= W for k in m.get('kids') or []), [k for k in m.get('kids') or [] if k[3] > H][:2])
     L = m.get('logo') if venue != 'none' else m.get('tag')
-    if mode == 'top':
-        ok('%s: the slide does not move at all (every part of it where it is without the line)' % tag,
-           m.get('tf') == base.get('tf') and len(m.get('kids') or []) == len(base.get('kids') or []) and all(same(a, b) for a, b in zip(m.get('kids') or [], base.get('kids') or [])),
-           [m.get('tf'), base.get('tf')])
-        ok('%s: BESIDE the venue\'s %s, on its line, never on it' % (tag, 'name' if venue == 'none' else 'logo'), bool(L) and hb[0] >= L[2] and not overlap(hb, L), [hb, L])
-        if L:
-            mid = lambda r: (r[1] + r[3]) / 2
-            mk = m.get('mark')
-            top_floor = max(inset, min(L[1], mk[1]) if mk else L[1])
-            ok('%s: the whole block centred on the venue %s\'s middle (within 2px, or held at the logos\' top)' % (tag, 'name' if venue == 'none' else 'logo'),
-               abs(mid(hb) - mid(L)) <= 2 or abs(hb[1] - top_floor) <= 1, [hb, L, mk])
-            # 15 Nov 2026: beside a wide wordmark or a name, centring put HOSTED BY above everything, 14px from the top.
-            ok('%s: never higher than the venue %s and our mark (top %.0f, at least %.0f), so a TV that crops its edges keeps it' % (tag, 'name' if venue == 'none' else 'logo', hb[1], top_floor),
-               hb[1] >= top_floor - 1, [hb, L, mk])
-            ok('%s: inside the header band: no lower than the venue %s or 15%% of the height' % (tag, 'name' if venue == 'none' else 'logo'), hb[3] <= max(L[3], 0.15 * H) + 1, [hb, L])
-        ok('%s: one shape: HOSTED BY above the name' % tag, bool(m.get('lblR')) and bool(m.get('nameR')) and m['lblR'][3] <= m['nameR'][1] + 1, [m.get('lblR'), m.get('nameR')])
-    else:
-        x0 = L[0] if L else inset
-        ok('%s: along the bottom, left-aligned with the venue %s (%dpx)' % (tag, 'name' if venue == 'none' else 'logo', x0), abs(hb[0] - x0) <= 1 and hb[1] > 0.8 * H, [hb, L])
-        ok('%s: clear of the bottom edge for overscan (%.0fpx, at least 40)' % (tag, H - hb[3]), H - hb[3] >= 39.5, hb)
-        ok('%s: no part of the slide runs under it or off the screen' % tag, all(not overlap(hb, k, 1) and k[3] <= H for k in m.get('kids') or []), [k for k in m.get('kids') or [] if overlap(hb, k, 1)][:2])
+    img = m.get('img')
     if host_logo:
-        img = m.get('img')
         ok('%s: the host\'s logo has loaded' % tag, m.get('imgOk') is True and bool(img), img)
-        if img and mode == 'top':
-            ih, iw = img[3] - img[1], img[2] - img[0]
-            want = round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' else round(0.044 * H)
-            # 15 Nov 2026: never smaller than its own words (HOSTED BY over the name); beside a wide wordmark the 70%
-            # rule alone made it about 20px tall at 720.
-            words = round((m['lblR'][3] - m['lblR'][1]) + m.get('gap', 0) + 1.15 * m.get('nameFs', 0)) if m.get('lblR') else 0   # HOSTED BY over one line of the name
-            want = max(want, words)
-            ok('%s: the host\'s logo is 70%% of the venue logo\'s height or as tall as HOSTED BY over one line of the name, whichever is more (%.0f against %.0f)' % (tag, ih, want),
-               abs(ih - want) <= 1.5, [ih, iw, want])   # the 13% width cap narrows the box, never its height (object-fit), so no escape for it (15 Nov 2026: the escape hid a full-height logo)
-            ok('%s: the host\'s logo is at least as tall as HOSTED BY over one line of the name (%.0f against %.0f)' % (tag, ih, words),
-               words > 0 and ih >= words - 1.5, [ih, words])
+        if img:
+            ih = img[3] - img[1]
+            want = max(round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' and m.get('logo') else round(0.044 * H), round(0.05 * H))
+            ok('%s: the host\'s logo is 70%% of the venue logo\'s height, never under 5%% of the screen\'s (%.0f against %.0f)' % (tag, ih, want), abs(ih - want) <= 1.5, [ih, want])
+            ok('%s: BESIDE the venue\'s %s, never on it, and never over the game\'s name' % (tag, 'name' if venue == 'none' else 'logo'),
+               bool(L) and img[0] >= L[2] and not overlap(img, L) and not overlap(img, ti), [img, L, ti])
+            if L:
+                mid = lambda r: (r[1] + r[3]) / 2
+                mk = m.get('mark')
+                top_floor = max(inset, min(L[1], mk[1]) if mk else L[1])
+                ok('%s: centred on the venue %s\'s middle (within 2px, or held at the logos\' top)' % (tag, 'name' if venue == 'none' else 'logo'), abs(mid(img) - mid(L)) <= 2 or abs(img[1] - top_floor) <= 1, [img, L, mk])
+                ok('%s: never higher than the venue %s and our mark, so a TV that crops its edges keeps it' % (tag, 'name' if venue == 'none' else 'logo'), img[1] >= top_floor - 1, [img, L, mk])
+            ok('%s: the host\'s logo stays above the slide' % tag, top is not None and img[3] <= top, [img, top])
     else:
-        ok('%s: no host logo, so no empty space for one' % tag, m.get('img') is None, m.get('img'))
+        ok('%s: no host logo, so no empty space for one' % tag, img is None, img)
 
 
 def wall(B, base):
-    print('\n2. THE WALL: trivia and musical bingo at 1920x1080 and 1280x720, option A (top) and option B (bottom)')
+    print('\n2. THE WALL: trivia and musical bingo at 1920x1080 and 1280x720, "hosted by" under the game\'s name')
     # THE LOBBY IS 0 TO 0.9 s OF THE DEMO with the opening show off (round 2 caught the question at 2.5 s and called it the
     # lobby): measured at 0.7 s, with the titles put on the logos' line as the wall's own one-second tick does.
     # Since 7 Nov 2026 the trivia demo shows the scores only at the round's end, after the podium (36 s, then 41 s), and
     # the musical bingo demo opens on the game and comes back to its lobby at 39 s (old-tv and trivia-newlook use the
     # same times). The states must be in time order: the clock only runs forward.
     trivia = [('lobby', 700), ('question', 4000), ('podium', 36000), ('board', 41000)]
-    short = [('lobby', 700), ('question', 4000)]
     musical = [('song', 6000), ('lobby', 39000)]
     NL.SHOTS = ''   # the new-look suite's own pictures are not wanted here
     for w, h in ((1920, 1080), (1280, 720)):
+        def note(slide, variant, m):
+            TOPS.setdefault((w, h, slide), {})[variant] = {k: m.get(k) for k in ('top', 'ring', 'q')}
         for venue, vq in (('crest', ''), ('wide', '&logo=/__fixture/wide-logo.svg'), ('none', '&logo=none')):
-            st = trivia if venue == 'crest' else short
-            basem = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, False, st, WALL)
+            basem = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, False, trivia, WALL)
             if SHOTS and venue == 'crest':
-                snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, st, 'tv-trivia-%dx%d-crest-nohost' % (w, h))
-            for mode in ('top', 'bottom'):
-                for host_logo in ((True, False) if (venue == 'crest' and mode == 'top') else (True,)):
-                    q = '&hostedby=' + urllib.parse.quote(NAME) + ('&hostlogo=/x-fixture/host-logo.svg' if host_logo else '') + ('&hostedat=bottom' if mode == 'bottom' else '')
-                    m = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, False, st, WALL)
-                    for name, _ in st:
-                        t = '%s trivia %dx%d %s venue logo, %s, %s' % ('A' if mode == 'top' else 'B', w, h, venue, 'host logo' if host_logo else 'name only', name)
-                        wall_checks(t, m.get(name) or {}, basem.get(name) or {}, host_logo, venue, mode)
-                    if SHOTS:
-                        snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, st,
-                             'tv-%s-trivia-%dx%d-%s-%s' % ('A' if mode == 'top' else 'B', w, h, venue, 'hostlogo' if host_logo else 'nameonly'))
+                snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, trivia, 'tv-trivia-%dx%d-crest-nohost' % (w, h))
+            for host_logo in ((True, False) if venue == 'crest' else (True,)):
+                q = '&hostedby=' + urllib.parse.quote(NAME) + ('&hostlogo=/x-fixture/host-logo.svg' if host_logo else '')
+                m = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, False, trivia, WALL)
+                for name, _ in trivia:
+                    t = 'trivia %dx%d %s venue logo, %s, %s' % (w, h, venue, 'host logo' if host_logo else 'name only', name)
+                    wall_checks(t, m.get(name) or {}, basem.get(name) or {}, host_logo, venue)
+                    note(name, '%s/%s' % (venue, 'hostlogo' if host_logo else 'nohostlogo'), m.get(name) or {})
+                if SHOTS:
+                    snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, trivia,
+                         'tv-A-trivia-%dx%d-%s-%s' % (w, h, venue, 'hostlogo' if host_logo else 'nameonly'))
         basem = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0', w, h, False, musical, WALL)
-        for mode in ('top', 'bottom'):
-            q = '&hostedby=' + urllib.parse.quote(NAME) + '&hostlogo=/x-fixture/host-logo.svg' + ('&hostedat=bottom' if mode == 'bottom' else '')
-            m = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, False, musical, WALL)
-            for name, _ in musical:
-                wall_checks('%s musical bingo %dx%d crest, host logo, %s' % ('A' if mode == 'top' else 'B', w, h, name), m.get(name) or {}, basem.get(name) or {}, True, 'crest', mode)
-            if SHOTS:
-                snap(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, musical, 'tv-%s-musical-%dx%d-crest-hostlogo' % ('A' if mode == 'top' else 'B', w, h))
-        # A LONG NAME (design review 2): wraps to two lines at most and stops short of the game's name, on the
-        # short TRIVIA and the long MUSICAL BINGO.
+        q = '&hostedby=' + urllib.parse.quote(NAME) + '&hostlogo=/x-fixture/host-logo.svg'
+        m = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, False, musical, WALL)
+        for name, _ in musical:
+            wall_checks('musical bingo %dx%d crest, host logo, %s' % (w, h, name), m.get(name) or {}, basem.get(name) or {}, True, 'crest')
+            note('musical-' + name, 'crest/hostlogo', m.get(name) or {})
+        if SHOTS:
+            snap(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, musical, 'tv-A-musical-%dx%d-crest-hostlogo' % (w, h))
+        # A LONG NAME: one line, never over the game's name or the logos, on the short TRIVIA and the long MUSICAL BINGO.
         q = '&hostedby=' + urllib.parse.quote(LONG) + '&hostlogo=/x-fixture/host-logo.svg'
         for page, st, base_m, stem in (('trivia', trivia, NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, False, trivia, WALL), 'trivia'),
                                        ('musical', musical, basem, 'musical')):
             m = NL.load(B, base, '/app/%s/screen.html?demo=1&sting=0' % page + q, w, h, False, st, WALL)
             for name, _ in st:
-                t = 'A %s %dx%d crest, a long name, %s' % ('musical bingo' if page == 'musical' else 'trivia', w, h, name)
+                t = '%s %dx%d crest, a long name, %s' % ('musical bingo' if page == 'musical' else 'trivia', w, h, name)
                 names[t] = LONG
                 x = m.get(name) or {}
-                wall_checks(t, x, base_m.get(name) or {}, True, 'crest', 'top')
-                nr, fs, ti, hb = x.get('nameR'), x.get('nameFs', 0), x.get('title'), x.get('hb')
-                ok('%s: the name wraps to two lines at most' % t, bool(nr) and (nr[3] - nr[1]) <= 2 * 1.15 * fs + 2 and (nr[3] - nr[1]) > 1.5 * fs, [nr, fs])
-                ok('%s: and stops at least %dpx short of the game\'s name' % (t, max(16, round(0.016 * w))), bool(hb and ti) and hb[2] <= ti[0] - max(16, round(0.016 * w)) + 1, [hb, ti])
+                wall_checks(t, x, base_m.get(name) or {}, True, 'crest')
+                note(('musical-' if page == 'musical' else '') + name, 'crest/longname', x)
             if SHOTS:
                 snap(B, base, '/app/%s/screen.html?demo=1&sting=0' % page + q, w, h, st, 'tv-A-%s-%dx%d-crest-longname' % (stem, w, h))
+    # THE SLIDE IS AT THE SAME HEIGHT ON EVERY VARIANT (Dean, 11 Nov 2026: beside a wide wordmark the question dropped far
+    # too much, beside no logo it sat too high): the question's box, the timer and the top of the slide are the same line
+    # on a crest, a wordmark, no venue logo, no host logo and a long host name, within 1px.
+    print('\nThe slide at the same height on every variant')
+    for (w, h, slide), vs in sorted(TOPS.items()):
+        ref = vs.get('crest/hostlogo')
+        if not ref: continue
+        for field in ('top', 'ring', 'q'):
+            if ref.get(field) is None: continue
+            val = lambda v, f=field: (v.get(f) if f == 'top' else (v.get(f) or [None, None])[1])
+            r0 = val(ref)
+            bad_v = {k: val(v) for k, v in vs.items() if val(v) is None or abs(val(v) - r0) > 1.0}
+            what = {'top': 'the top of the slide', 'ring': 'the timer', 'q': 'the question'}[field]
+            ok('%dx%d %s: %s is at the same height on all %d variants (%.0fpx, within 1px)' % (w, h, slide, what, len(vs), r0), not bad_v, bad_v)
 
 
 def snap(B, base, path, w, h, states, stem):

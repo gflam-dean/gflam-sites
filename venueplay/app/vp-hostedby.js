@@ -18,10 +18,10 @@
          when it does not, so a console from before this file changes nothing on the wall.
      VPHostedBy.paint(card)     { name, logo } or null. The sales demo calls it with ?hostedby=.
 
-   WHERE IT SITS (the new-look header: venue logo top left, venueplay top right, game name centred). Two
-   placements for Dean to compare, "top" (the default) and "bottom"; see MODE below. Either way the header is
-   exactly the height it is without the line, so the game's name and the slide never move for it. Measured
-   each second, as the venueplay mark is, because the venue logo arrives and resizes after load.
+   WHERE IT SITS (Dean picked this, 11 Nov 2026): the host's logo top left after the venue's logo, and
+   "hosted by <name>" as a smaller line centred under the game's name. The slide sits at one fixed height
+   whatever the logos are (see BAND below). Measured each second, as the venueplay mark is, because the venue
+   logo arrives and resizes after load.
 
    A LOGO ONLY FROM OUR OWN STORAGE. A broadcast is signed at an enforcing venue, but not everywhere yet,
    so the TV takes a logo address only from our Supabase public bucket under venue-logos/hosts/ (where the
@@ -77,21 +77,17 @@
   }
 
   /* ---------------------------------------------------------------- the TV */
-  var el = null, shown = null, timer = null, watched = null;
-  /* WHERE, two ways for Dean to compare (design review, 6 Nov 2026). The default is "top"; ?hostedat=bottom
-     on a screen's link (or VPHostedBy.mode = "bottom") shows the other.
-       top     beside the venue's logo, on its line: [divider] [host logo, the venue logo's height] HOSTED BY /
-               the name. Kept inside the logo's own band and NOT a vp-fit keep-out, so the header is the
-               same height as without it and the game's name and the slide do not move at all.
-       bottom  one line along the bottom edge, left-aligned with the venue's logo: HOSTED BY [logo] the name,
-               clear of the bottom for overscan (40px at 720). A vp-fit keep-out, so a slide that reaches the
-               bottom (the podium) is lifted clear of it; the header never changes. */
-  var MODE = /[?&]hostedat=bottom(&|$)/.test(String((w.location && w.location.search) || "")) ? "bottom" : "top";
-  /* TEMPORARY, 11 Nov 2026 (INBOX 215): two options for Dean, pictures only; ONE will be removed. ?hostedat=under
-     (option A) puts "hosted by <name>" as a smaller line centred under the game's name; ?hostedat=line (option B)
-     puts it on the game's name's own baseline: TRIVIA  hosted by <name>. In both the host's LOGO stays top left,
-     after the venue's logo, and the HOSTED BY words leave it. The default is unchanged. */
-  var SPLIT = (/[?&]hostedat=(under|line)(&|$)/.exec(String((w.location && w.location.search) || "")) || [])[1] || "";
+  var el = null, shown = null, timer = null, watched = null, line = null, band = null;
+  /* WHERE IT SITS (Dean picked option A, 11 Nov 2026, INBOX 220): the host's LOGO stays top left, after the venue's
+     logo (or its name), and the words are a smaller line, "hosted by <name>", centred UNDER the game's name.
+     THE SLIDE SITS AT THE SAME HEIGHT ON EVERY VARIANT. The title block is on the logos' centre line, which moves
+     with the venue logo's shape (a crest is tall, a wide wordmark is short), so the room under it did too and the
+     question dropped far more beside a wordmark than beside a crest. So a hosted slide is kept clear of ONE
+     fixed band across the top (BAND of the screen's height, a vp-fit keep-out), whatever the logos are: the
+     question and the timer land on the same line on a crest, a wordmark, no venue logo and no host logo, with a
+     little clear room under the line. The game's name is marked data-fit-ignore so the fit does not treat it as
+     part of the slide it is lifting the slide clear of. Nothing moves when there is no card. */
+  var BAND = 0.16;
 
   function css() {
     if (d.getElementById("vpHostedByCss")) return;
@@ -103,27 +99,13 @@
       ".hostedby[hidden]{display:none}" +
       ".hostedby .hb-logo{display:block;width:auto;object-fit:contain;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.55))}" +
       ".hostedby .hb-logo[hidden]{display:none}" +
-      ".hostedby .hb-text{display:flex;flex-direction:column;justify-content:center;min-width:0}" +
-      ".hostedby .hb-lbl{font-weight:800;font-size:max(11px,1.67vh);line-height:1.1;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.86);white-space:nowrap}" +
-      ".hostedby .hb-name{font-weight:800;font-size:max(16px,2.78vh);line-height:1.15;min-width:0;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}" +
-      /* top: a thin divider so the host never reads as part of the venue's own wordmark */
-      ".hostedby.hb-top{gap:max(10px,1.1vh);padding-left:max(12px,1.4vh);border-left:2px solid rgba(255,255,255,.28)}" +
-      ".hostedby.hb-top .hb-text{gap:max(2px,.35vh)}" +
-      /* bottom: one line, label, logo, name */
-      ".hostedby.hb-bottom{gap:max(10px,1.3vh)}" +
-      ".hostedby.hb-bottom .hb-text{flex-direction:row;align-items:center;gap:max(10px,1.3vh)}" +
-      ".hostedby.hb-bottom .hb-name{font-size:max(16px,2.6vh);-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}" +
-      /* options A and B: the logo stays by the venue's, the words are a line in the game's name's box */
-      ".hostedby.hb-split .hb-text{display:none}" +
-      ".toplbl .hb-line{font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:1.55cqw;line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
-      ".toplbl .hb-line[hidden]{display:none}" +
-      ".toplbl .hb-line b{font-weight:800;color:#fff}" +
-      ".hb-underline{position:fixed;z-index:60;pointer-events:none;display:block;text-align:center;font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:max(16px,2.78vh);line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
-      ".hb-underline[hidden]{display:none}" +
-      ".hb-underline b{font-weight:800;color:#fff}" +
-      ".toplbl .hb-line{font-size:2.78vh}" +
-      ".toplbl .hb-line.hb-inline{flex:0 1 auto;margin-left:1cqw}" +
-      "";
+      /* the words: smaller than the game's name, centred under it, one line (a long name is cut with an ellipsis) */
+      ".hb-line{position:fixed;z-index:60;pointer-events:none;display:block;text-align:center;font-family:'Hanken Grotesk','Manrope',system-ui,sans-serif;font-size:max(16px,2.78vh);line-height:1.2;color:rgba(255,255,255,.8);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.85)}" +
+      ".hb-line[hidden]{display:none}" +
+      ".hb-line b{font-weight:800;color:#fff}" +
+      /* the keep-out: nothing painted, one fixed band across the top */
+      ".hb-band{position:fixed;left:0;top:0;width:100%;pointer-events:none;visibility:visible;background:transparent}" +
+      ".hb-band[hidden]{display:none}";
     (d.head || d.documentElement).appendChild(s);
   }
 
@@ -132,63 +114,19 @@
     css();
     el = d.createElement("div");
     el.id = "hostedBy";
-    el.className = "hostedby hb-" + MODE + (SPLIT ? " hb-split" : "");
-    if (MODE === "bottom") el.setAttribute("data-fit-avoid", "");
+    el.className = "hostedby";
     el.hidden = true;
     var img = d.createElement("img"); img.className = "hb-logo"; img.alt = ""; img.hidden = true;
     img.onload = function () { place(); };
     img.onerror = function () { img.hidden = true; place(); };
-    var txt = d.createElement("span"); txt.className = "hb-text";
-    var lbl = d.createElement("span"); lbl.className = "hb-lbl"; lbl.textContent = "Hosted by";
-    var nm = d.createElement("span"); nm.className = "hb-name";
-    if (MODE === "bottom") { el.appendChild(lbl); el.appendChild(img); el.appendChild(nm); }
-    else { txt.appendChild(lbl); txt.appendChild(nm); el.appendChild(img); el.appendChild(txt); }
+    el.appendChild(img);
     (d.body || d.documentElement).appendChild(el);
+    line = d.createElement("div"); line.id = "hostedByLine"; line.className = "hb-line"; line.hidden = true;
+    (d.body || d.documentElement).appendChild(line);
+    band = d.createElement("div"); band.id = "hostedByBand"; band.className = "hb-band"; band.hidden = true;
+    band.setAttribute("data-fit-avoid", "");
+    (d.body || d.documentElement).appendChild(band);
     return el;
-  }
-
-  /* A and B: the words, in every game name's box (each slide has its own). */
-  var under = null, underKey = "";
-  function paintUnder(c) {
-    if (!c) { if (under) under.hidden = true; underKey = ""; try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} return; }
-    if (!under) {
-      under = d.createElement("div"); under.id = "hostedByLine"; under.className = "hb-underline"; under.setAttribute("data-fit-avoid", "");
-      (d.body || d.documentElement).appendChild(under);
-    }
-    under.textContent = "";
-    under.appendChild(d.createTextNode("hosted by "));
-    var b = d.createElement("b"); b.textContent = c.name; under.appendChild(b);
-    under.hidden = false;
-    placeUnder();
-  }
-  function placeUnder() {
-    if (!under || under.hidden) return;
-    var W = w.innerWidth || 1920, tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
-    for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.top < tl.top)) tl = tr; }
-    if (!tl) return;
-    var mid = tl.left + tl.width / 2, mw = Math.round(0.5 * W);
-    under.style.maxWidth = mw + "px";
-    under.style.left = Math.round(mid - mw / 2) + "px"; under.style.width = mw + "px";
-    under.style.top = Math.round(tl.bottom + Math.max(2, 0.004 * (w.innerHeight || 1080))) + "px";
-    var at = under.style.left + "," + under.style.top;
-    if (at !== underKey) { underKey = at; try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} }
-  }
-  function paintLines(c) {
-    if (SPLIT === "under") { paintUnder(c); return; }
-    var tls = d.querySelectorAll(".toplbl");
-    for (var i = 0; i < tls.length; i++) {
-      var t = tls[i], ln = t.querySelector(".hb-line");
-      if (!c) { if (ln) ln.hidden = true; continue; }
-      if (!ln) {
-        ln = d.createElement("span");
-        t.appendChild(ln);
-      }
-      ln.className = "hb-line hb-inline";
-      ln.textContent = "";
-      ln.appendChild(d.createTextNode("hosted by "));
-      var b = d.createElement("b"); b.textContent = c.name; ln.appendChild(b);
-      ln.hidden = false;
-    }
   }
 
   function visible(x) {
@@ -201,57 +139,45 @@
 
   var placedAt = "";
   function place() {
-    if (SPLIT === "under") placeUnder();
-    if (!el || el.hidden) return;
+    if (!el || (el.hidden && (!line || line.hidden))) return;
+    /* the game's name sits on the logos' line (VPTvGame.alignTitles, which the wall also runs each second); settle
+       it first so the line is measured against the name where it will be painted */
+    try { if (w.VPTvGame && w.VPTvGame.alignTitles) w.VPTvGame.alignTitles(); } catch (e) {}
     var W = w.innerWidth || 1920, H = w.innerHeight || 1080;
     var inset = Math.max(14, Math.round(0.012 * W)), gap = Math.max(16, Math.round(0.016 * W));
     var logoEl = d.getElementById("venueLogo");
-    /* The venue logo arrives, and is sized by its shape, after this line is first painted: follow it the
-       moment it changes rather than on the next one-second tick. */
+    /* The venue logo arrives, and is sized by its shape, after this is first painted: follow it the moment it
+       changes rather than on the next one-second tick. */
     if (logoEl && logoEl !== watched && typeof w.ResizeObserver === "function") {
       watched = logoEl;
       try { new w.ResizeObserver(function () { place(); }).observe(logoEl); } catch (e) {}
       try { logoEl.addEventListener("load", function () { place(); }); } catch (e) {}
     }
     var logo = visible(logoEl), tag = visible(d.getElementById("venueNameTag"));
+    var tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
+    for (var t = 0; t < tls.length; t++) {
+      var tr = visible(tls[t]);
+      if (tr && (!tl || tr.top < tl.top)) tl = tr;
+      var box = tls[t].parentNode;   /* the game's name is not part of the slide the fit lifts clear of the band */
+      if (box && box.setAttribute && !box.hasAttribute("data-fit-ignore")) box.setAttribute("data-fit-ignore", "");
+    }
     var img = el.querySelector(".hb-logo"), s = el.style, ih;
-    if (MODE === "bottom") {
-      ih = Math.round(Math.max(30, 0.052 * H));
-      img.style.height = ih + "px"; img.style.maxWidth = Math.round(0.14 * W) + "px";
-      s.left = Math.round(logo ? logo.left : (tag ? tag.left : inset)) + "px";   /* the venue logo's or name's own margin */
-      s.top = "auto";
-      s.bottom = Math.round(Math.max(40, 0.056 * H)) + "px";
-      s.maxWidth = Math.round(0.5 * W) + "px";
-    } else {
-      /* The host's logo is 70% of the venue logo's height, so the venue's own logo stays the bigger one (a wide
-         wordmark is short, so it is too), no wider than 13% of the screen; beside a venue's NAME it is 4.4% of
-         the height. */
-      /* NEVER SMALLER THAN ITS OWN WORDS (15 Nov 2026, the pictures for Dean): beside a wide venue wordmark or a
-         venue's name the 70% rule made the host's logo about 20px tall at 720, a smudge. So it is at least as tall
-         as HOSTED BY over one line of the name, and still 70% of a tall venue logo (a crest) when that is bigger. */
-      var lblEl = el.querySelector(".hb-lbl"), nmEl = el.querySelector(".hb-name"), txtH = 0;
-      try {   /* HOSTED BY over ONE line of the name: a long name that wraps does not blow the logo up beside a name */
-        var gp = parseFloat(w.getComputedStyle(el.querySelector(".hb-text")).rowGap) || 0, nfs = parseFloat(w.getComputedStyle(nmEl).fontSize) || 0;
-        txtH = Math.round(lblEl.offsetHeight + gp + 1.15 * nfs);
-      } catch (e) {}
-      if (SPLIT) txtH = Math.round(0.05 * H);
-      ih = Math.max(logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H), txtH);
-      img.style.height = Math.round(ih) + "px"; img.style.maxWidth = Math.round(0.13 * W) + "px";
+    if (!el.hidden) {
+      /* The host's logo is 70% of the venue logo's height (a wide wordmark is short, so it is too), no wider than
+         13% of the screen; beside a venue's NAME it is 4.4% of the height. NEVER SMALLER THAN 5% of the height
+         (a smudge beside a wide wordmark or a name). */
+      ih = Math.max(logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H), Math.round(0.05 * H));
       var anchor = logo || tag, left = anchor ? anchor.right + gap : inset;
-      s.left = Math.round(left) + "px";
       /* NEVER REACHES THE GAME'S NAME: it stops a gap short of the name as painted (TRIVIA is short, MUSICAL
-         BINGO is long), and never past 28% of the screen's width beyond its own start. A long name wraps to two
-         lines and is then cut with an ellipsis. */
-      var tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
-      for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.left < tl.left)) tl = tr; }
-      var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.28 * W);
-      s.maxWidth = SPLIT ? Math.round(0.13 * W + 40) + "px" : Math.round(Math.max(0.1 * W, stop - left)) + "px";
-      /* CENTRED ON THE LOGOS' LINE, BUT NEVER HIGHER THAN THE LOGOS THEMSELVES (15 Nov 2026). Beside a short
-         anchor (a wide wordmark, a venue's name) the two-line block is taller than the anchor, and centring it
-         put HOSTED BY 14px from the top of a 720 TV, above the venue's logo and our mark, where a TV that crops
-         its edges cuts it. So its top is no higher than the higher of the venue's logo (or name) and the
-         venueplay mark; beside a crest, which is taller than the block, nothing changes. */
-      var h = el.offsetHeight || 0, mid = anchor ? anchor.top + anchor.height / 2 : inset + h / 2;
+         BINGO is long), and never past 13% of the screen's width beyond its own start. */
+      var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.13 * W);
+      var mw = Math.round(Math.max(0.06 * W, stop - left));
+      s.left = Math.round(left) + "px";
+      s.maxWidth = mw + "px";
+      img.style.height = Math.round(ih) + "px"; img.style.maxWidth = mw + "px";
+      /* CENTRED ON THE LOGOS' LINE, BUT NEVER HIGHER THAN THE LOGOS THEMSELVES (15 Nov 2026): a TV that crops its
+         edges would cut it. Its top is no higher than the higher of the venue's logo (or name) and our mark. */
+      var h = el.offsetHeight || ih, mid = anchor ? anchor.top + anchor.height / 2 : inset + h / 2;
       var floor = anchor ? anchor.top : inset;
       try {
         var mk = w.VPVenueLogo && w.VPVenueLogo.markBox ? w.VPVenueLogo.markBox(d.querySelector(".tv-corner")) : null;
@@ -260,11 +186,20 @@
       s.top = Math.round(Math.max(inset, floor, mid - h / 2)) + "px";
       s.bottom = "auto";
     }
-    var at = MODE + s.left + "," + s.top + "," + s.bottom + "," + img.style.height + "," + el.offsetWidth + "," + el.offsetHeight;
+    var lk = "";
+    if (line && !line.hidden && tl) {
+      var lw = Math.round(0.5 * W), mx = tl.left + tl.width / 2;
+      line.style.width = lw + "px"; line.style.maxWidth = lw + "px";
+      line.style.left = Math.round(mx - lw / 2) + "px";
+      line.style.top = Math.round(tl.bottom + Math.max(2, 0.004 * H)) + "px";
+      lk = line.style.left + "," + line.style.top;
+    }
+    if (band && !band.hidden) { band.style.height = Math.round(BAND * H) + "px"; lk += "," + band.style.height; }
+    var at = s.left + "," + s.top + "," + img.style.height + "," + el.offsetWidth + "," + el.offsetHeight + "," + lk;
     if (at !== placedAt) {
       placedAt = at;
-      /* only "bottom" is a keep-out; re-fit the wall around it when it moves */
-      if (MODE === "bottom") { try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} }
+      /* the band is a keep-out, and the line and the logo ride on the logos; re-fit the wall when they move */
+      try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {}
     }
   }
 
@@ -273,13 +208,24 @@
     var key = c ? JSON.stringify(c) : "";
     if (key === shown) return;
     shown = key;
-    if (SPLIT) paintLines(c);
-    if (!c) { if (el) el.hidden = true; if (MODE === "bottom") { try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {} } return; }
+    if (!c) {
+      if (el) el.hidden = true;
+      if (line) line.hidden = true;
+      if (band) band.hidden = true;
+      placedAt = "";
+      var tls = d.querySelectorAll(".toplbl[data-fit-ignore]");
+      for (var i = 0; i < tls.length; i++) tls[i].removeAttribute("data-fit-ignore");
+      try { if (typeof w.VP_FIT === "function") w.VP_FIT(); } catch (e) {}
+      return;
+    }
     make();
-    var img = el.querySelector(".hb-logo"), nm = el.querySelector(".hb-name");
-    nm.textContent = c.name;
+    var img = el.querySelector(".hb-logo");
+    line.textContent = "";
+    line.appendChild(d.createTextNode("hosted by "));
+    var b = d.createElement("b"); b.textContent = c.name; line.appendChild(b);
+    line.hidden = false; band.hidden = false;
     if (c.logo) { img.hidden = false; img.src = c.logo; } else { img.hidden = true; img.removeAttribute("src"); }
-    el.hidden = !!(SPLIT && !c.logo);
+    el.hidden = !c.logo;
     place();
     if (!timer) {
       timer = setInterval(place, 1000);   // the venue logo arrives and resizes after load

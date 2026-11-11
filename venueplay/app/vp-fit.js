@@ -71,6 +71,7 @@
     for (var i = 0; i < kids.length; i++) {
       var k = kids[i];
       if (k.classList && k.classList.contains("hidden")) continue;
+      if (k.hasAttribute && k.hasAttribute("data-fit-ignore")) continue;   /* a child the page keeps out of the fit (the hosted-by game name) */
       var cs = getComputedStyle(k);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       var b = k.getBoundingClientRect();
@@ -161,6 +162,7 @@
     for (var i = 0; i < kids.length; i++) {
       var k = kids[i];
       if (k.classList && k.classList.contains("hidden")) continue;
+      if (k.hasAttribute && k.hasAttribute("data-fit-ignore")) continue;   /* a child the page keeps out of the fit (the hosted-by game name) */
       var cs = getComputedStyle(k);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       var b = k.getBoundingClientRect();

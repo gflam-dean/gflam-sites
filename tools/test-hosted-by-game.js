@@ -120,6 +120,9 @@ function card(r, g) { return r && r.body && r.body[g]; }
   show('a card with no name is no card', lib.clean({ name: '  ', logo: LOGO }) === null);
   show('the demo takes a logo from this site only', JSON.stringify(lib.fromQuery('?demo=1&hostedby=Quiz%20Co&hostlogo=/logos/x.png')) === '{"name":"Quiz Co","logo":"/logos/x.png"}'
        && lib.fromQuery('?hostedby=Quiz&hostlogo=https://evil.example/x.png').logo === '');
+  var src = readFile('venueplay/app/vp-hostedby.js');
+  show('one layout only (Dean picked "hosted by" under the game\'s name, 11 Nov 2026): no ?hostedat= switch, no top or bottom mode, no option B', !/hostedat/.test(src) && !/\bMODE\b/.test(src) && !/\bSPLIT\b/.test(src) && !/hb-bottom|hb-top|hb-inline/.test(src));
+  show('  the words are one line under the game\'s name and the slide is held clear of one fixed band (the same height on every variant)', /id = "hostedByLine"/.test(src) && /id = "hostedByBand"/.test(src) && /var BAND = 0\.\d+;/.test(src) && /data-fit-ignore/.test(src));
 
 })().catch(function (e) { show('threw: ' + (e && e.stack || e), false); }).then(function () {
   print(bad ? (bad + ' of ' + ran + ' checks FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));

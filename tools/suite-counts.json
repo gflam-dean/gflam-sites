@@ -696,7 +696,7 @@
   "counted_by": "lines"
  },
  "tools/test-hosted-by-game.js": {
-  "checks": 25,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/test-hosted-by.js": {
