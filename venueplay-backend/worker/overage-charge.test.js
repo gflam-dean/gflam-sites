@@ -41,7 +41,9 @@ function lift(src, name) {
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var NAMES = ["isDemoSession", "chargeNightOverage", "applyOverageCharge", "playerIdsWhoPlayed", "countPlayersWhoPlayed",
              "countPlayers", "overageCeiling", "brisbaneNightKey", "venueInFreeMonth", "openInvoice", "settleInvoice",
-             "stripeGet", "stripePost", "recordOverageCrash", "subscriptionPaymentMethod"];
+             "stripeGet", "stripePost", "recordOverageCrash", "subscriptionPaymentMethod",
+             // one phone is one player a night (12 Nov 2026): the earlier games tonight, none in this suite's world
+             "earlierNightPlayers", "playerKeysWhoPlayed"];
 var missing = NAMES.filter(function (n) { return !lift(GAME, n); });
 pass("every function in the charge path came out of the shipped Worker", missing.length === 0, missing.join(", "));
 if (missing.length) { print("\n1 OF 1 CHECKS FAILED"); throw new Error("nothing to test"); }

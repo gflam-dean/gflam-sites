@@ -869,6 +869,31 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   function playedArray(){ return G.playedOrder.map(function(p){ return p.title; }); }
   function playedIdArray(){ return G.playedOrder.map(function(p){ return p.song_id||""; }); }
   function playerCount(){ return G.order.length; }
+  /* Seat a phone's join on the roster; false when it is not a musical bingo player. Cosmetic roster only: the
+     Worker meters vp_players and deals the card. The phone fetches its own card via /player/card off the
+     "started"/"state" broadcast.
+     ONE PERSON IS ONE CHIP (live play test, 24 Oct 2026). Phones still on the bingo page from the game before
+     answer this console's rollcall with a bingo join (its pid is the bingo page's key fingerprint), and the
+     same phone's musical page joins under its own pid, so PLAYERS read 4 with "Phone Sam, Phone Jo" listed
+     twice. Both pages carry the browser's one device id (vpDeviceId), so the roster is keyed on that, and on
+     the pid only without one.
+     ONLY A MUSICAL PHONE IS A MUSICAL PLAYER (live play on The Mini Bar, 12 Nov 2026). A phone still on the
+     trivia page from the game before answered this console's hello with a TRIVIA join (fmt "trivia", its
+     trivia pid, no device id) a few seconds before it hopped across, then joined again from the musical
+     page: Players (4) "Claude Test, Dean, Claude Test, Dean" and "2 over the 2 your plan includes. The extra
+     will be charged" for two phones. The trivia console has refused other games' joins since 14 Oct; this
+     one now does too. The phone is seated when its musical page joins, which it does within seconds. */
+  function rosterJoin(m){
+    if(!m || !m.pid) return false;
+    if(m.fmt && m.fmt!=="musical") return false;   // somebody else's game: it follows the host here and joins again
+    var rk=rosterKey(m);
+    if(rk.charAt(0)==="d" && G.players["p:"+m.pid]){             // this pid was seen before it sent its device id
+      delete G.players["p:"+m.pid]; G.order=G.order.filter(function(k){ return k!=="p:"+m.pid; });
+    }
+    if(!G.players[rk]){ G.players[rk]={ name:(m.name||"Player") }; G.order.push(rk); }
+    else { G.players[rk].name=(m.name||G.players[rk].name); }
+    return true;
+  }
   function rosterKey(m){ var d=m && m.did; return (typeof d==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(d)) ? "d:"+d : "p:"+String(m.pid); }
   var _claimSeq=0;
   function clearClaims(){ G.claims=[]; G.claim=null; }
@@ -2051,20 +2076,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
        this console ask the Worker whether its game was picked up elsewhere (/app/vp-pickup.js). */
     if(m.t==="host_here"){ if(window.VP_PICKUP) VP_PICKUP.heard(m.cid); return; }
     if(m.t==="join"){
-      // Cosmetic roster only: the Worker meters vp_players and deals the card. The phone
-      // fetches its own card via /player/card off the "started"/"state" broadcast.
-      if(!m.pid) return;
-      /* ONE PERSON IS ONE CHIP (live play test, 24 Oct 2026). Phones still on the bingo page from
-         the game before answer this console's rollcall with a bingo join (its pid is the bingo
-         page's key fingerprint), and the same phone's musical page joins under its own pid, so
-         PLAYERS read 4 with "Phone Sam, Phone Jo" listed twice. Both pages carry the browser's one
-         device id (vpDeviceId), so the roster is keyed on that, and on the pid only without one. */
-      var rk=rosterKey(m);
-      if(rk.charAt(0)==="d" && G.players["p:"+m.pid]){             // this pid was seen before it sent its device id
-        delete G.players["p:"+m.pid]; G.order=G.order.filter(function(k){ return k!=="p:"+m.pid; });
-      }
-      if(!G.players[rk]){ G.players[rk]={ name:(m.name||"Player") }; G.order.push(rk); }
-      else { G.players[rk].name=(m.name||G.players[rk].name); }
+      if(!rosterJoin(m)) return;
       sendPlayers();
       if(playerCount()>G.peak) G.peak=playerCount();
       if(G.status==="running") sendState();   // nudge a late joiner's phone to fetch its card

@@ -558,6 +558,25 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   // vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-mtoken-"+room)||""; }catch(e){ return ""; } }
   var OWN_TOKEN_KEY="vp-mtoken-";
+  /* ONE PHONE, ONE NAME A NIGHT (live play on The Mini Bar, 12 Nov 2026: "Your details" again on the second
+     game). Each phone page keeps its name and token under its own keys (vp-tname-, vp-mname-, vp-name-), so a
+     phone that played trivia and then followed the host to musical bingo had no name HERE and was asked for its
+     details a second time. The same room's name and token from the other games on this phone are taken
+     instead: the token is the same Worker player row (shareToken keeps every copy the same, and /join reuses
+     the row by device id), and a stale one is re-joined under the same device id exactly as this page's own
+     would be. Only when a sibling page has BOTH a name and a token, i.e. this phone already joined through
+     that game's join screen (and saw its details form and tick then): a name with no token is not a join. */
+  var SIBLING_KEYS=[["vp-tname-","vp-ttoken-","vp-tsess-"],["vp-name-","vp-token-",""]];
+  function siblingIdentity(room){
+    if(!room) return null;
+    try{
+      for(var i=0;i<SIBLING_KEYS.length;i++){
+        var k=SIBLING_KEYS[i], nm=localStorage.getItem(k[0]+room)||"", tok=localStorage.getItem(k[1]+room)||"";
+        if(String(nm).trim() && tok) return { name:String(nm).trim().slice(0,20), token:tok, sess:(k[2] ? (localStorage.getItem(k[2]+room)||"") : "") };
+      }
+    }catch(e){}
+    return null;
+  }
   /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
      same player row, so the bingo, trivia and musical pages each holding their own copy meant a
      phone bounced through another page came back with a dead token: trivia answers were acked
@@ -1388,6 +1407,10 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     P.token=loadToken(room);
     P.sessionId=loadSess(room);
     var savedName=loadName(room);
+    if(!(savedName && P.token)){   // played another game here tonight: the same name, not the form again (see siblingIdentity)
+      var sib=siblingIdentity(room);
+      if(sib){ savedName=sib.name; P.token=sib.token; P.sessionId=sib.sess||""; saveName(room, savedName); saveToken(room, P.token); saveSess(room, P.sessionId); }
+    }
     if(savedName && P.token){ P.name=savedName; P.joined=true; checkStaleJoin(); }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
     // forged songs/winners in enforce mode. No key / enforce off / script absent -> as before.
