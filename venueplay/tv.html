@@ -2684,10 +2684,10 @@
      other games may then take the wall (bingoFinished), and after WIN_HOLD_MS it goes back to the ads
      by itself. A Keep playing win is never finished: it goes back to the board on the next ball. */
   var WIN_DONE_MS=20*1000, WIN_HOLD_MS=10*60*1000, lastWinAt=0, lastBallAt=0, embedGame="";
-  function bingoFinished(){
-    return tvMode==="bingo" && !!state && state.phase==="win" && !!lastWinAt &&
-           (Date.now()-lastWinAt)>WIN_DONE_MS && lastBallAt<=lastWinAt;
+  function bingoWinUp(){
+    return tvMode==="bingo" && !!state && state.phase==="win" && !!lastWinAt && lastBallAt<=lastWinAt;
   }
+  function bingoFinished(){ return bingoWinUp() && (Date.now()-lastWinAt)>WIN_DONE_MS; }
   /* What is on the wall, for a console that asks (vp-tvclaim.js). */
   function showingNow(){
     if(tvMode==="embed") return embedGame||"starting";
@@ -3440,7 +3440,7 @@
            the bingo winner. A win that has been up for a while, with no ball since, is over. */
         if(bingoFinished()) idleBingo=true;
         if(m.t==="mode" && m.mode===game && m.force){ enterEmbed(game); }   // the host's own "Put it on the TV": whatever is on (vp-tvclaim.js)
-        else if(m.t==="mode") onGameMode(game, idleBingo && !!m.claim);   // a claim (a real action: Draw) takes a finished or idle bingo; a bare mode keeps the old rule
+        else if(m.t==="mode") onGameMode(game, !!m.claim && (idleBingo || bingoWinUp()));   // a claim (a real action: Draw) takes an idle lobby or a bingo win that is up (the game is decided); a bare mode keeps the old rule
         else if(tvMode==="ads" && onAir(m)) onGameMode(game);
         else if(idleBingo && onAir(m) && m.t!=="state") onGameMode(game, true);
         /* SAY WHAT IS ON THE WALL (vp-tvclaim.js). The raffle and members consoles tell their host when
