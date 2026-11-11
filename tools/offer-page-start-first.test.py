@@ -208,10 +208,11 @@ ok('note 4: no mono face on the page (JetBrains Mono draws a dotted zero): not l
    'JetBrains' not in NSW and not re.search(r'font-family:[^;}]*monospace', CSS_ALL), re.findall(r'.{30}monospace.{10}', CSS_ALL)[:3])
 ok('note 4: the footer\'s shared "powered by" line is held to the page\'s own type too (it was the mono face)',
    re.search(r"footer \.powered \.powered-by-text\{font-family:'Manrope'", CSS_ALL) is not None)
-cnt = NSW[NSW.index('function showCount('):]
-cnt = cnt[:cnt.index("showCount('vp-music-count'")]
+# The counts are painted by the shared /app/vp-counts.js since INBOX 233.1 (11 Nov 2026), read live from the Worker.
+cnt = open(os.path.join(ROOT, 'venueplay', 'app', 'vp-counts.js')).read()
 ok('note 4: the bank counts are set once, never rolled up (no animation frame, no easing, no observer)',
-   'requestAnimationFrame' not in NSW and 'animateTo' not in NSW and 'IntersectionObserver' not in cnt and 'el.textContent = n.toLocaleString' in cnt, cnt[:200])
+   'requestAnimationFrame' not in NSW and 'animateTo' not in NSW and 'IntersectionObserver' not in cnt and 'requestAnimationFrame' not in cnt
+   and 'el.textContent = n.toLocaleString("en-AU");' in cnt and '<script src="/app/vp-counts.js"></script>' in NSW, cnt[:200])
 
 # note 1: the hero TV and phone fit their frames, both ways. RUN the hero's own script with a frame that
 # Safari has grown past 1280 x 720, and one that is the size it was asked for.

@@ -275,6 +275,8 @@ export default {
       /* THE HOMEPAGE "TRUSTED BY" STRIP. Public, read-only, names and logo addresses of live,
          paying, willing venues and nothing else. See vpbTrustedLogos. */
       if (request.method === 'GET' && path === '/trusted-logos') return await vpbTrustedLogosRoute(env, json);
+      /* THE HOMEPAGE BANK COUNTS (INBOX 233.1). Public, read-only, two numbers. See vpbLibraryCounts. */
+      if (request.method === 'GET' && path === '/library-counts') return await vpbLibraryCountsRoute(env, json);
 
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);
       // Followed from an HQ-onboarded venue's welcome email, in a browser, so it answers with a
@@ -16855,6 +16857,79 @@ async function vpbTrustedLogosRoute(env, json) {
   // json() takes no headers, so the cache line goes on afterwards. Ten minutes at the edge and
   // in the browser: the homepage is the busiest page there is, and this list barely moves.
   try { res.headers.set('cache-control', 'public, max-age=600'); } catch (_) {}
+  return res;
+}
+/* ---------------------------------------------------------------------------------------
+   GET /library-counts : the two bank counts on the sales pages. PUBLIC, no login.
+   (Dean, 11 Nov 2026, INBOX 233.1: the homepage said "39,392 questions" while the database held
+   39,412, and "6,740 songs", both typed.) Answers { questions, songs }, two numbers and nothing else.
+
+     questions   the rows of vp_questions in LIBRARY sets (visibility 'library' and no owner venue: the
+                 sets every venue draws from), counted BY THE DATABASE (HEAD, Prefer: count=exact, the
+                 total in Content-Range), a chunk of sets at a time so the address stays short. A venue's
+                 own questions and its copies of library questions sit in its own sets, so they are never
+                 counted. No library sets, or any read failing: null, never 0 or a part count.
+     songs       the songs a host console can actually play: every distinct song id in
+                 /data/musical-library.json (the file every musical bingo console loads its library
+                 from: the songs are not database rows, the database only records which were played)
+                 that has an https preview clip. Not a list, unreadable, or none: null.
+   Either half failing answers null for that half only. The page (/app/vp-counts.js) shows words, never
+   a number, for a null. Ten minutes of public cache, like /trusted-logos, and the answer is also kept
+   in this data centre's edge cache for those ten minutes, so the 3 MB library is read at most once
+   every ten minutes per data centre, not once per homepage visit.
+   --------------------------------------------------------------------------------------- */
+const VPB_COUNTS_SET_CHUNK = 50;
+async function vpbCountLibraryQuestions(env) {
+  const sets = await vpaSelectAll(env, 'vp_question_sets',
+    'visibility=eq.library&owner_venue_id=is.null&select=id&order=id.asc');
+  if (!sets.length) return null;
+  let total = 0;
+  for (let i = 0; i < sets.length; i += VPB_COUNTS_SET_CHUNK) {
+    const ids = sets.slice(i, i + VPB_COUNTS_SET_CHUNK).map(function (s) { return encodeURIComponent(s.id); }).join(',');
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_questions?select=id&set_id=in.(' + ids + ')&limit=1', {
+      method: 'HEAD', headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'count=exact' }),
+    });
+    if (!res.ok) throw new Error('count vp_questions: ' + res.status);
+    const n = parseInt(String((res.headers && res.headers.get('content-range')) || '').split('/')[1], 10);
+    if (!isFinite(n) || n < 0) throw new Error('count vp_questions: no count in Content-Range');
+    total += n;
+  }
+  return total > 0 ? total : null;
+}
+async function vpbCountLibrarySongs(env) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const res = await fetch(site + '/data/musical-library.json');
+  if (!res.ok) throw new Error('song library: ' + res.status);
+  const lib = await res.json();
+  if (!lib || !Array.isArray(lib.songs)) throw new Error('song library: no list');
+  const seen = {};
+  let n = 0;
+  lib.songs.forEach(function (s) {
+    if (!s || !s.id || seen[s.id]) return;
+    if (!/^https:\/\//.test(String(s.previewUrl || ''))) return;
+    seen[s.id] = true; n++;
+  });
+  return n > 0 ? n : null;
+}
+async function vpbLibraryCounts(env) {
+  let questions = null, songs = null;
+  try { questions = await vpbCountLibraryQuestions(env); } catch (_) { questions = null; }
+  try { songs = await vpbCountLibrarySongs(env); } catch (_) { songs = null; }
+  return { questions: questions, songs: songs };
+}
+async function vpbLibraryCountsRoute(env, json) {
+  const edge = (typeof caches !== 'undefined' && caches && caches.default) ? caches.default : null;
+  const key = 'https://api.venueplay.com.au/library-counts?edge=1';
+  if (edge) {
+    try { const hit = await edge.match(key); if (hit) return hit; } catch (_) {}
+  }
+  const counts = await vpbLibraryCounts(env);
+  const res = json(counts, 200);
+  try { res.headers.set('cache-control', 'public, max-age=600'); } catch (_) {}
+  // Only a whole answer is kept, so a blip never sticks for ten minutes.
+  if (edge && counts.questions != null && counts.songs != null) {
+    try { await edge.put(key, res.clone()); } catch (_) {}
+  }
   return res;
 }
 function vpbCleanDraws(arr) {

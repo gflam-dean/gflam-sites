@@ -4033,6 +4033,11 @@ def local_checks(which):
              'test-welcome-details.js',
              'runs the billing Worker with a fake Resend, Mobile Message, Auth and clock as a new prospect: a tap signs in without burning the link, "carry on" with no mobile keeps it, name + mobile saved retire every unused link and copy the name and verified mobile onto the account holder record (first time only, existing accounts untouched), the link again is the normal sign-in, a link past 90 days the same; the short link stays open after a text-code sign-in until the name is confirmed; the account email\'s login is the owner; the welcome screen asks only the name when the mobile is on the login; the People tab says Account holder', 36,
              'A prospect locked out because one tap spent their only link, a link that keeps signing in after they have a mobile, or the account holder shown as a manager'),
+            # D210: the homepage bank counts read live (Dean, 11 Nov 2026, INBOX 233.1), branch fix/sunday-small.
+            ('D210. The homepage question and song counts come from the live library through the Worker, never typed',
+             'test-library-counts.js',
+             'GET /library-counts answers only { questions, songs }: library-set questions counted by the database, songs with a playable clip counted once; a failed half is null; /app/vp-counts.js paints a good number once and keeps the "Thousands" words for anything else; index.html and nsw.html type no count', 41,
+             'A homepage that says a number the library does not have, or shows blank, 0 or NaN when the Worker is down'),
             # D195: change my mobile, Edit mobile on a host, and HQ changes a venue login's mobile (Dean, 8 Nov 2026; INBOX 138),
             # branch fix/change-mobile-9nov. No migration: Supabase Auth holds the phone, vp_admin_audit the record.
             ('D195. A venue login changes its own mobile only after a code to the new number, and a host\'s or HQ\'s change is guarded and audited',
