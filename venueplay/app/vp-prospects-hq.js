@@ -97,6 +97,8 @@
     var st = statusOf(p), t = CHIP[st];
     if (st === "not_signed_in") { var n = p.days_since_setup; if (n != null && isFinite(n)) t += " \u00b7 " + (n <= 0 ? "today" : n === 1 ? "1 day" : n + " days"); }
     if (st === "free_month" && p.days_left != null) t += " \u00b7 " + daysLeftText(p.days_left);
+    /* "Cancelled 11 Nov" (Dean, 11 Nov 2026, INBOX 237: Bodalla Pub read as Paused): the day they pressed it, on the chip. */
+    if (st === "cancelled" && p.cancelled_at) { var cw = when(p.cancelled_at).replace(/^\w+ /, ""); if (cw) t += " " + cw; }
     return t;
   }
   /* The chip is the row's button: it opens the details and actions, and closes them again. */
