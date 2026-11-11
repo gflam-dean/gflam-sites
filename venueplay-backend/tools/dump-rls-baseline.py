@@ -13,6 +13,14 @@ and authenticated, and every view and SECURITY DEFINER function those two roles 
 and writes venueplay-backend/supabase/RLS-BASELINE.json. --check reads the same and names
 every difference, so a policy dropped by hand in the dashboard turns the live gate red.
 
+THE COLUMNS TOO (12 Nov 2026, INBOX 278). A rewrite (no --check) also writes
+venueplay-backend/supabase/COLUMNS-BASELINE.json: every table and view in public and its
+columns. The release gate's LOCAL half (tools/check-columns.py --local) reads it, plus the
+columns the repo's migrations add, so a column the code names that the database does not have
+is caught before the push. The members list download shipped asking vp_members for "number"
+(the column is member_number) and only the live half saw it. It is a separate file so --check
+of the locks does not go red every time a migration adds a column.
+
 Read-only. Needs NEW_DB_URL in ~/.gflam-migrate.env and the pg8000 package
 (python3 -m pip install --user pg8000). Never prints the URL.
 """
@@ -20,6 +28,7 @@ import io, json, os, sys, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'RLS-BASELINE.json')
+COLS_OUT = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'COLUMNS-BASELINE.json')
 
 Q = {
     'rls': "select relname, relrowsecurity, relforcerowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace "
@@ -32,6 +41,7 @@ Q = {
     'secdef': "select p.proname, pg_get_function_identity_arguments(p.oid), "
               "  has_function_privilege('anon', p.oid, 'execute'), has_function_privilege('authenticated', p.oid, 'execute') "
               "from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prosecdef order by 1,2",
+    'columns': "select table_name, column_name from information_schema.columns where table_schema='public' order by 1, ordinal_position",
 }
 
 
@@ -67,6 +77,10 @@ def snapshot():
         out['grants'] = sorted('%s %s %s' % (r[0], r[1], r[2]) for r in con.run(Q['grants']))
         out['views'] = sorted(r[0] for r in con.run(Q['views']))
         out['security_definer_functions'] = {'%s(%s)' % (r[0], r[1]): {'anon': bool(r[2]), 'authenticated': bool(r[3])} for r in con.run(Q['secdef'])}
+        cols = {}
+        for r in con.run(Q['columns']):
+            cols.setdefault(r[0], []).append(r[1])
+        out['_columns'] = cols
         return out
     finally:
         con.close()
@@ -90,6 +104,7 @@ def flatten(snap):
 
 def main():
     live = snapshot()
+    cols = live.pop('_columns', {})
     if '--check' in sys.argv:
         try:
             base = json.load(io.open(OUT, encoding='utf-8'))
@@ -112,6 +127,9 @@ def main():
         return 0
     with io.open(OUT, 'w', encoding='utf-8') as fh:
         json.dump(live, fh, indent=1, sort_keys=True); fh.write('\n')
+    with io.open(COLS_OUT, 'w', encoding='utf-8') as fh:
+        json.dump(cols, fh, indent=1, sort_keys=True); fh.write('\n')
+    print('wrote %s: %d tables and views, %d columns' % (os.path.relpath(COLS_OUT, ROOT), len(cols), sum(len(v) for v in cols.values())))
     print('wrote %s: %d tables (RLS off on %d), %d policies, %d grants to anon/authenticated, %d views, %d security definer functions'
           % (os.path.relpath(OUT, ROOT), len(live['rls']), sum(1 for v in live['rls'].values() if not v['enabled']),
              len(live['policies']), len(live['grants']), len(live['views']), len(live['security_definer_functions'])))

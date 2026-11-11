@@ -2092,8 +2092,10 @@
       var ids = ((rr && rr.data) || []).map(function(x){ return x.id; });
       if (!ids.length) return [];
       function page(from){
-        return client.from("vp_members").select("number,first_name,last_name").in("roster_id", ids)
-          .order("number", { ascending: true }).order("id", { ascending: true }).range(from, from + PAGE - 1).then(function(r){
+        /* The column is member_number (12 Nov 2026, INBOX 278: "number" shipped and the download errored for every
+           left venue). Aliased so each row still reads m.number. */
+        return client.from("vp_members").select("number:member_number,first_name,last_name").in("roster_id", ids)
+          .order("member_number", { ascending: true }).order("id", { ascending: true }).range(from, from + PAGE - 1).then(function(r){
             if (r && r.error) throw r.error;
             var got = (r && r.data) || [];
             if (!got.length) return rows;

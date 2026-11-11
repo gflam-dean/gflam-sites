@@ -77,6 +77,33 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 12 Nov 2026 (INBOX 278, live fault): the left venue's members list download named vp_members."number"
+    # (the column is member_number). tools/test-members-csv-columns.js runs it against the column baseline, and the
+    # gate's local half (D212, tools/check-columns.py --local) now reads the same names before the push.
+    ('test-members-csv-columns.js', 'venueplay/app/billing.html',
+     'select("number:member_number,first_name,last_name")',
+     'select("number,first_name,last_name")',
+     'the members list download asks for a "number" column vp_members does not have, and every left venue is told it could not download'),
+    ('test-members-csv-columns.js', 'venueplay/app/billing.html',
+     '.order("member_number", { ascending: true })',
+     '.order("number", { ascending: true })',
+     'the members list download orders by a column that does not exist, so the whole read is refused'),
+    ('test-members-csv-columns.js', 'venueplay/app/billing.html',
+     'var csv = "Member number,First name,Surname\\n"',
+     'var csv = "number,first_name,last_name\\n"',
+     'the downloaded file loses its plain-English header'),
+    ('test-members-csv-columns.js', 'venueplay/app/billing.html',
+     'return page(from + got.length);',
+     'return rows.concat([]);',
+     'a members list over 1,000 is cut at the first page'),
+    ('cancelled-account-in-chrome.test.py', 'venueplay/app/billing.html',
+     '.order("member_number", { ascending: true })',
+     '.order("number", { ascending: true })',
+     'in a real browser, a left venue presses Download your members list and is told it could not download'),
+    ('every column the code names exists in the column baseline or a migration', 'venueplay/app/billing.html',
+     'select("number:member_number,first_name,last_name")',
+     'select("number,first_name,last_name")',
+     'a page names a column the database does not have and the local gate stays green until the live half sees it after the push'),
     # ---- 11 Nov 2026 (Dean, 10 Nov, INBOX 129): day 21 of a free month, the games picked and not played. tools/test-day21-flag.js.
     ('test-day21-flag.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if (f === 'musical_bingo' || f === 'musical') return 'musical';\n",

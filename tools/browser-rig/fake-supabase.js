@@ -30,16 +30,25 @@
   if (T.meta && typeof T.meta === "object") META = JSON.parse(JSON.stringify(T.meta));
   if (PST.get("meta") !== null) { try { META = JSON.parse(PST.get("meta")); } catch (e) {} }
   var CALLS = window.__FAKE_AUTH_CALLS = [];
-  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; this.ord = null; }
-  Query.prototype.select = function () { return this; };
-  Query.prototype.eq = function (k, v) { this.f.push(function (r) { return String(r[k]) === String(v); }); return this; };
-  Query.prototype.neq = function (k, v) { this.f.push(function (r) { return String(r[k]) !== String(v); }); return this; };
-  Query.prototype.in = function (k, vs) { this.f.push(function (r) { return vs.map(String).indexOf(String(r[k])) >= 0; }); return this; };
-  Query.prototype.is = function (k, v) { this.f.push(function (r) { return (r[k] == null) === (v == null); }); return this; };
+  /* sel and named are set here, never left to first use: from() wraps a query in a Proxy that answers ANY unknown
+     property with a function, so "this.named || []" would be that function (12 Nov 2026). */
+  function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; this.ord = null; this.sel = "*"; this.named = []; }
+  /* REAL COLUMNS (12 Nov 2026, INBOX 278). For a table in window.__FAKE_SCHEMA (the live column list, written by the
+     server from COLUMNS-BASELINE.json) a read naming a column the table does not have is refused the way PostgREST
+     refuses it, and a select returns only the columns it names, "alias:column" applied. The members list download
+     shipped selecting "number" from vp_members; a stand-in that hands back every column whatever is asked could
+     never have seen it. Tables not in the schema behave exactly as before. */
+  var SCHEMA = window.__FAKE_SCHEMA || {};
+  Query.prototype.select = function (s) { if (!this.write) this.sel = s == null ? "*" : String(s); return this; };
+  Query.prototype._col = function (k) { this.named.push(k); };
+  Query.prototype.eq = function (k, v) { this._col(k); this.f.push(function (r) { return String(r[k]) === String(v); }); return this; };
+  Query.prototype.neq = function (k, v) { this._col(k); this.f.push(function (r) { return String(r[k]) !== String(v); }); return this; };
+  Query.prototype.in = function (k, vs) { this._col(k); this.f.push(function (r) { return vs.map(String).indexOf(String(r[k])) >= 0; }); return this; };
+  Query.prototype.is = function (k, v) { this._col(k); this.f.push(function (r) { return (r[k] == null) === (v == null); }); return this; };
   Query.prototype.ilike = Query.prototype.like = function () { return this; };
   /* ORDER, the way PostgREST does it, for the HQ screens that read the audit newest first
      (19 Oct 2026). Nulls last. Unordered reads keep the stored order, as before. */
-  Query.prototype.order = function (k, o) { (this.ord = this.ord || []).push({ k: k, asc: !(o && o.ascending === false) }); return this; };
+  Query.prototype.order = function (k, o) { this._col(k); (this.ord = this.ord || []).push({ k: k, asc: !(o && o.ascending === false) }); return this; };
   /* RANGE, offset then limit, the way PostgREST pages (9 Nov 2026). It answered every page with the whole table,
      so a console that pages its members list until an EMPTY page (members/host.html loadAllMembers) never saw
      one and gave up "did not end": a fake that cannot page cannot model the reads that page (CLAUDE.md). */
@@ -60,6 +69,23 @@
     return Promise.resolve(this._answer()).then(res, rej);
   };
   Query.prototype._answer = function () {
+    var known = !this.write && SCHEMA[this.t], picks = null;
+    if (known) {
+      picks = String(this.sel).split(",").map(function (p) { p = p.trim(); var i = p.indexOf(":"); return i >= 0 ? { as: p.slice(0, i), col: p.slice(i + 1) } : { as: p, col: p }; });
+      var names = picks.map(function (p) { return p.col; }).concat(this.named);
+      for (var n = 0; n < names.length; n++) {
+        if (names[n] !== "*" && known.indexOf(names[n]) < 0)
+          return { data: null, error: { code: "42703", message: "column " + this.t + "." + names[n] + " does not exist" } };
+      }
+    }
+    var res = this._rows();
+    if (picks && res.data) {
+      var proj = function (x) { var o = {}; picks.forEach(function (p) { if (p.col === "*") { for (var k in x) o[k] = x[k]; } else o[p.as] = x[p.col]; }); return o; };
+      res.data = Array.isArray(res.data) ? res.data.map(proj) : proj(res.data);
+    }
+    return res;
+  };
+  Query.prototype._rows = function () {
     var rows = (DB[this.t] || []).filter(function (r) { return this.f.every(function (f) { return f(r); }); }, this);
     if (this.ord) {
       var ord = this.ord;

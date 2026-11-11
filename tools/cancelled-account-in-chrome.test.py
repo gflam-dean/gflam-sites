@@ -18,6 +18,11 @@ nothing here depends on today's date). Nothing is sent anywhere.
      never "subscription", and there is no "on hold for the moment" bar.
   4. A paid venue cancelled and off: "Your games are off", never "on hold for the moment".
   5. Every width: the sticky tab strip stops BELOW the header when the page scrolls (INBOX 238 layout bug).
+  6. Left, on the Draws tab: "Download your members list (CSV)" makes members-list.csv with the header "Member number,
+     First name,Surname" and this venue's members in member number order (12 Nov 2026, INBOX 278: it shipped asking
+     vp_members for "number", the column is member_number, and errored for every left venue). vp_members and
+     vp_member_rosters answer by the LIVE column list (COLUMNS-BASELINE.json, admin_site schema_tables), so a
+     column the database does not have is refused here as it is live. At 375 and 1440.
 
     python3 tools/cancelled-account-in-chrome.test.py [--shots DIR]      pictures at 375 and 1440 when --shots is given
 """
@@ -181,6 +186,54 @@ try:
             if SHOTS and tab == 'billing':
                 S.shot(sid, os.path.join(SHOTS, 'tabs-sticky-%d.png' % w), False)
             S.close_tab(tid)
+
+    print('\n6. Left: the members list downloads as a CSV (real column names)')
+    V9 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9'
+    S.schema_tables = ['vp_members', 'vp_member_rosters']
+    S.extra_db = {
+        'vp_member_rosters': [{'id': 'r1', 'venue_id': V1, 'name': 'Members', 'created_at': '2099-01-01T00:00:00Z'},
+                              {'id': 'r2', 'venue_id': V1, 'name': 'Life members', 'created_at': '2099-01-02T00:00:00Z'},
+                              {'id': 'r9', 'venue_id': V9, 'name': 'Another venue', 'created_at': '2099-01-03T00:00:00Z'}],
+        'vp_members': [{'id': 'm3', 'roster_id': 'r1', 'member_number': '1010', 'first_name': 'Ann', 'last_name': 'Lee', 'status': 'active', 'note': None, 'updated_at': None},
+                       {'id': 'm1', 'roster_id': 'r2', 'member_number': '1001', 'first_name': 'Bob, Jr', 'last_name': 'O"Neil', 'status': 'active', 'note': None, 'updated_at': None},
+                       {'id': 'm2', 'roster_id': 'r1', 'member_number': '1002', 'first_name': 'Cat', 'last_name': 'Ng', 'status': 'active', 'note': None, 'updated_at': None},
+                       {'id': 'm9', 'roster_id': 'r9', 'member_number': '1000', 'first_name': 'Not', 'last_name': 'Ours', 'status': 'active', 'note': None, 'updated_at': None}],
+    }
+    world(venue={'status': 'suspended', 'suspended_reason': 'cancelled', 'closed_at': '2099-12-11T00:00:00Z'})
+    WANT = 'Member number,First name,Surname\n1001,"Bob, Jr","O""Neil"\n1002,Cat,Ng\n1010,Ann,Lee\n'
+    HOOK = r'''(function(){ window.__csv = null; window.__csvName = null; window.__csvMsg = null;
+      var make = URL.createObjectURL; URL.createObjectURL = function(b){ b.text().then(function(t){ window.__csv = t; }); return make.call(URL, b); };
+      HTMLAnchorElement.prototype.click = function(){ if (this.download) window.__csvName = this.download; };
+      return "hooked"; })()'''
+    for (w, h, mob) in ((375, 812, True), (1440, 900, False)):
+        where = '%d wide' % w
+        tid, sid = S.open('/app/billing.html', w, h, mob)
+        S.until(sid, 'document.getElementById("leftCard").hidden===false', 25)
+        S.js(sid, 'document.querySelector(\'.tabs button[data-tab="draws"]\').click()')
+        shown = S.until(sid, '(function(){var b=document.getElementById("leftMembersCsv"); return !!b && !b.hidden && b.offsetParent!==null;})()', 20)
+        probe = S.json(sid, r'''(function(){ var out = {}; window.__probe = out;
+          VP.getClient().from("vp_members").select("number").limit(1).then(function(r){ out.bad = r && r.error ? r.error.code : "none"; });
+          VP.getClient().from("vp_members").select("member_number").limit(1).then(function(r){ out.good = r && r.error ? r.error.code : "ok"; });
+          return JSON.stringify(out); })()''', {})
+        S.until(sid, 'window.__probe && window.__probe.bad && window.__probe.good', 10)
+        pr = S.json(sid, 'JSON.stringify(window.__probe)', {})
+        ok('%s: CONTROL: the stand-in refuses vp_members."number" (42703) and reads member_number, as the live database does' % where,
+           pr.get('bad') == '42703' and pr.get('good') == 'ok', pr)
+        ok('%s: the Draws tab shows "Download your members list (CSV)" beside "3 members in your list."' % where,
+           shown is True and '3 members in your list.' in (S.js(sid, 'document.getElementById("leftMembersCount").textContent') or ''),
+           [shown, S.js(sid, 'document.getElementById("leftMembersCount").textContent')])
+        S.js(sid, HOOK)
+        S.js(sid, 'document.getElementById("leftMembersCsv").click()')
+        got = S.until(sid, 'typeof window.__csv === "string"', 15)
+        csv = S.js(sid, 'window.__csv') or ''
+        msg = S.js(sid, '(document.getElementById("msg")||{}).textContent || ""') or ''
+        ok('%s: a file is made, members-list.csv, no "Could not download" message' % where,
+           got is True and S.js(sid, 'window.__csvName') == 'members-list.csv' and 'Could not download' not in msg, [got, msg[:160]])
+        ok('%s: the header is "Member number,First name,Surname"' % where, csv.split('\n')[0] == 'Member number,First name,Surname', csv[:120])
+        ok('%s: this venue\'s three members in member number order, a comma and a quote kept, another venue\'s left out' % where, csv == WANT, csv[:300])
+        S.close_tab(tid)
+    S.schema_tables = []
+    S.extra_db = {}
 finally:
     S.close()
 
