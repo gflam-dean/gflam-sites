@@ -231,8 +231,8 @@ try:
     phone.ask('document.getElementById("vpTakeoverGo").click();true')
     ok('Pick it up here: the phone is on the live quiz', phone.until(LIVE) is True, phone.text()[:300])
     ok('...the same question', 'Which river runs through Brisbane?' in phone.text(), phone.text()[:300])
-    ok('...and then goes on to pair with the venue screen as usual', phone.until('/TV not connected yet|TV connected/.test(document.getElementById("statusText").textContent)') is True,
-       phone.ask('document.getElementById("statusText").textContent'))
+    ok('...and then goes on to pair with the venue screen as usual', phone.until('/^(up|tv)$/.test(document.getElementById("statusText").getAttribute("data-conn")||"")') is True,
+       phone.ask('document.getElementById("statusText").getAttribute("data-conn")'))
     ps = phone.save(TKEY)
     ok('...it knows the answer to the open question, as the tablet did (Brisbane River)', ps and ps.get('cur') and ps['cur'].get('ci') == 2, ps)
     ok('...and that the phone already in has answered', ps and ps.get('cur') and ps['cur'].get('pids', {}).get('dev-ann') is True, ps)

@@ -102,7 +102,9 @@ check('a host is held too, told games start once the owner or a manager ticks, w
   hh === true && hidden(H) && /Games start here once the owner or a manager ticks one box/.test(ht) && !H.document.getElementById('vpTermsTick'), ht);
 var A = page(); var ah = A.VP.termsGate(ctxFor('admin'));
 var at = card(A) ? allText(card(A)) : '';
-check('HQ View as is held and told only the venue can tick it', ah === true && /has not ticked section 6 yet, so its games cannot start/.test(at) && /HQ View as cannot do it for them/.test(at) && !A.document.getElementById('vpTermsTick'), at);
+check('HQ View as is NOT held: the card on top in plain words, and the venue\'s console still under it (Dean, 11 Nov 2026, INBOX 193)',
+  ah === false && !hidden(A) && A.wrap.children[0] === card(A) && /Caz Reitop's Dirty Secrets hasn't accepted the Terms yet, so games can't start/.test(at) &&
+  /Only the venue's owner or a manager can accept them when they sign in\. Their TV keeps showing their ads\./.test(at) && /Read the Terms/.test(at) && !/section 6/i.test(at) && !A.document.getElementById('vpTermsTick'), at);
 
 var O = page();
 check('an ordinary venue with no tick is NOT held (the plain card asks and blocks nothing)', O.VP.termsGate(ctxFor('owner', pv({ terms_required: false }))) === false && !hidden(O) && !card(O));

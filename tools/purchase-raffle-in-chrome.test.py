@@ -255,7 +255,11 @@ try:
     # the prize line comes up 1.5 s after the name (tvWinName stays empty now: no phone digits on the wall, Dean 6 Nov 2026)
     R.until(tsid, tv('/Wins /.test(txt("tvPresent"))'), 10); time.sleep(0.3)
     tvtext = js(tsid, tv('txt("tvWin")')) or ''
-    ok('the TV names the prize and never a phone ending or a count', 'Fiji' in tvtext and 'ending' not in tvtext and str(draws[0].get('phone_last3')) not in tvtext and 'entr' not in tvtext, tvtext)
+    # THE REAL FLAKE (11 Nov 2026): the winner is drawn at random, and Fran's mobile ends in 000, which IS inside the
+    # prize's own "$5,000". So whenever Fran won (3 entries of 20) the prize line was read as a phone ending. Look
+    # for the ending with the dollar amounts taken out: a phone ending is never written with a $ in front.
+    nodollars = __import__('re').sub(r'\$[\d,]+', '', tvtext)
+    ok('the TV names the prize and never a phone ending or a count', 'Fiji' in tvtext and 'ending' not in tvtext and str(draws[0].get('phone_last3')) not in nodollars and 'entr' not in tvtext, [draws[0].get('phone_last3'), tvtext])
     ok('the TV never shows a whole mobile', not any(p[0][1:] in tvtext.replace(' ', '') for p in people) and '412345678' not in tvtext.replace(' ', ''), tvtext)
     shot(tsid, '11-tv-winner.jpg')
     ok('no errors on the venue page', errs(sid) == '[]', errs(sid))

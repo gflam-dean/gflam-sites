@@ -87,7 +87,9 @@ print('3. A connection light is a word, never a dot')
 hidden = {'app/index.html': r'\.dot\{display:none\}', 'app/musical/host.html': r'\.dot\{display:none\}',
           'app/trivia/host.html': r'\.dot\{display:none\}', 'app/vp-phone.css': r'\.dot\{display:none\}',
           'app/purchase-raffle/index.html': r'\.dot\{display:none\}',
-          'app/musical/screen.html': r'\.sdot\{display:none\}', 'app/trivia/screen.html': r'\.sdot\{display:none\}'}
+          'app/musical/screen.html': r'\.sdot\{display:none\}', 'app/trivia/screen.html': r'\.sdot\{display:none\}',
+          'tv.html': r'\.sdot\{display:none\}', 'app/members/screen.html': r'\.sdot\{display:none\}', 'app/raffle/screen.html': r'\.sdot\{display:none\}',
+          'app/members/host.html': r'#statusDot\{display:none\}', 'app/raffle/host.html': r'#statusDot\{display:none\}'}
 for p, rx in hidden.items():
     ok('%s hides the status dot' % p, re.search(rx, rd(p)))
 CB = rd('app/vp-connbar.js')

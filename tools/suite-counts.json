@@ -128,7 +128,7 @@
   "counted_by": "lines"
  },
  "tools/ai-look-cleanup.test.py": {
-  "checks": 22,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/billing-words-in-chrome.test.py": {
@@ -225,6 +225,10 @@
  },
  "tools/home-hero-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/host-quiet-in-chrome.test.py": {
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -1104,7 +1108,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-acceptance-card.js": {
-  "checks": 56,
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {

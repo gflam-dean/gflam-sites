@@ -45,6 +45,8 @@ Cls.prototype.contains = function (c) { return !!this.s[c]; };
 Cls.prototype.toggle = function (c, on) { if (on === undefined) on = !this.s[c]; if (on) this.s[c] = 1; else delete this.s[c]; };
 function El(id) { this.id = id; this.value = ''; this.checked = false; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.className = ''; this.style = {}; }
 El.prototype.appendChild = function (k) { this.kids.push(k); this.textContent += (k.textContent || ''); };
+El.prototype.setAttribute = function (k, v) { this['attr:' + k] = String(v); };   // the console marks its state on #statusText (data-conn)
+El.prototype.getAttribute = function (k) { return this.hasOwnProperty('attr:' + k) ? this['attr:' + k] : null; };
 var els = {};
 function $(id) { if (!els[id]) els[id] = new El(id); return els[id]; }
 var document = { createElement: function () { return new El(''); } };
