@@ -2494,6 +2494,9 @@
        game screen inside the frame reads its own address, so hand the off switch on or it plays there anyway. */
     if(window.VPSting && !VPSting.on) url+="&sting=0";
     if(window.VPEndShow && VPEndShow.on) url+="&endshow=1";   // and the end-of-game show's switch (2 Nov 2026)
+    /* The venueplay TV app's flag goes to the game screen too (INBOX 282.2), so the frame knows there is no pointer to
+       click with: it never asks for a click, and tells the console it is the app. */
+    try{ if(window.VP_TV_APP && /^(tizen|webos)$/.test(VP_TV_APP.platform)) url+="&app="+VP_TV_APP.platform; }catch(e){}
     var fresh = f.getAttribute("src")!==url;
     if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the

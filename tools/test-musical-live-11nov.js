@@ -62,10 +62,11 @@ print("\n1. PAPER CARDS ARE ASKED ONCE");
     shuffledQueue: function(){ return []; }, clearClaims: function(){}, playerCount: function(){ return 0; },
     endBtnHold: function(){}, saveMusic: function(){}, stopAudio: function(){}, VP_HOLD: { release: function(){} },
     syncPlayBtn: function(){}, sendState: function(){}, renderConsole: function(){}, hostError: function(m){ hosted.push(m); },
-    window: { scrollTo: function(x, y){ scrolled.push([x, y]); } }
+    window: { scrollTo: function(x, y){ scrolled.push([x, y]); } },
+    PL_OPTS: [], selectPlaylist: function(){}, playlistNameOf: function(){ return "x"; }   // showDealtPlaylist (INBOX 282.3) runs for real
   };
   var names = Object.keys(env);
-  var src = grab("beginRound", HOST) + "\n" + grab("landAtTop", HOST);
+  var src = grab("beginRound", HOST) + "\n" + grab("landAtTop", HOST) + "\n" + grab("showDealtPlaylist", HOST);
   var run = new Function(names.join(","), src + "\nreturn beginRound;").apply(null, names.map(function(k){ return env[k]; }));
   run(null, "Start game"); drainMicrotasks();
   var g = bodies.filter(function(b){ return b[0] === "/host/game"; })[0];
@@ -132,15 +133,15 @@ print("\n8. A TV THAT BLOCKS SOUND SAYS HOW TO TURN IT ON, AND ONE CLICK DOES");
     addEventListener: function(ev, f){ (listeners[ev] = listeners[ev] || []).push(f); }
   };
   var plays = 0, pauses = 0, playOk = true;
-  var clipAudio = { _src: "", paused: true, ended: false, currentTime: 0, getAttribute: function(){ return this._src || null; },
+  var clipAudio = { _src: "", paused: true, ended: false, currentTime: 0, getAttribute: function(){ return this._src || null; }, addEventListener: function(){},
     play: function(){ plays++; var self = this; return { then: function(f){ if(playOk){ self.paused = false; f(); } return { catch: function(){} }; } }; },
     pause: function(){ pauses++; this.paused = true; } };
   var state = { phase: "running" };
   var navigator = { getAutoplayPolicy: function(){ return policy; } }, policy = "disallowed";
   var src = SCREEN.slice(SCREEN.indexOf("  var _audioWarned=false"), SCREEN.indexOf("  /* ============ LOUDER THAN THE LAPTOP CAN GO"));
-  var api = new Function("document", "clipAudio", "state", "navigator", "tvSend", "setTimeout", "unlockAudio", "buildBoost", "_ac2",
+  var api = new Function("document", "clipAudio", "state", "navigator", "tvSend", "setTimeout", "unlockAudio", "buildBoost", "_ac2", "window",
     src + "\nreturn { blocked: audioBlocked, ok: audioOk, tap: soundTap, early: soundBarIfBlocked, paused: function(v){ _hostPaused=v; }, stateOf: audioState };")(
-    document, clipAudio, state, navigator, function(m){ sent.push(m); }, function(f, ms){ timers.push([f, ms]); }, function(){}, function(){}, null);
+    document, clipAudio, state, navigator, function(m){ sent.push(m); }, function(f, ms){ timers.push([f, ms]); }, function(){}, function(){}, null, { location: { search: "?venue=the-mini-bar" } });
   function bar(){ return document.getElementById("audioWarn"); }
 
   api.early();
@@ -208,10 +209,10 @@ print("\n8. A TV THAT BLOCKS SOUND SAYS HOW TO TURN IT ON, AND ONE CLICK DOES");
   var document = { createElement: function(){ var h = {}; return { style: {}, addEventListener: function(e, f){ h[e] = f; }, click: function(){ h.click(); } }; },
                    createTextNode: function(t){ return { textContent: t }; } };
   function $(id){ return id === "tvAudioNote" ? note : btn; }
-  var src = ["tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere"].map(function(n){ return grab(n, HOST); }).join("\n");
+  var src = ["tvNoSoundWords", "tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere"].map(function(n){ return grab(n, HOST); }).join("\n");
   var onMsgSrc = grab("onMsg", HOST);
   var api = new Function("$", "G", "audio", "document", "hostError", "clearHostError", "tvHere",
-    "var _tvAudio='unknown', _autoMonitor=false, _soundAsked=false, _audioErrShown=false;\n" + src + "\n" + onMsgSrc + "\nreturn { onMsg: onMsg, note: noteTvAudio, sync: syncMonitorBtn };")(
+    "var _tvAudio='unknown', _autoMonitor=false, _soundAsked=false, _audioErrShown=false, _tvApp='';\n" + src + "\n" + onMsgSrc + "\nreturn { onMsg: onMsg, note: noteTvAudio, sync: syncMonitorBtn };")(
     $, G, audio, document, function(m){ hosted.push(m); }, function(){ cleared++; }, function(){});
   api.onMsg({ t: "tv_audio_blocked" });
   var said = hosted[hosted.length - 1] || "";

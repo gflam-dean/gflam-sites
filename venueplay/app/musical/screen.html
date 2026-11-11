@@ -977,7 +977,18 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      up until the sound really is on. One click anywhere (or a key on a remote) plays the song that is on now. It shows
      only when this screen really is blocked: a play was refused or never started, or the browser says so in advance. */
   var SOUND_BAR_TEXT="Click anywhere on this screen to turn the sound on";
+  /* THE venueplay TV APP NEVER ASKS FOR A CLICK (Dean, live play on The Mini Bar, 12 Nov 2026, INBOX 282.2: the Kogan's
+     remote OK does nothing, and the TV was playing anyway). In the Samsung (Tizen) or LG (webOS) app there is no pointer to
+     click with, so the bar is never shown there; the console is told the app has no sound and offers this device instead.
+     The app is known by &app=tizen|webos on this page's address (tv.html hands it to the frame) or by the /tv page around it. */
+  var TV_APP=(function(){
+    var m=/[?&]app=(tizen|webos)(?:&|$)/i.exec(window.location.search||""); if(m) return m[1].toLowerCase();
+    try{ if(window.parent && window.parent!==window && window.parent.VP_TV_APP && window.parent.VP_TV_APP.platform) return String(window.parent.VP_TV_APP.platform); }catch(e){}
+    try{ if(window.VP_TV_APP && window.VP_TV_APP.platform) return String(window.VP_TV_APP.platform); }catch(e){}
+    return "";
+  })();
   function showSoundBar(){
+    if(TV_APP) return;
     var w=document.getElementById("audioWarn");
     if(w) return;
     w=document.createElement("div"); w.id="audioWarn"; w.setAttribute("role","status");
@@ -997,7 +1008,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     var src=clipAudio.getAttribute("src");
     if(src && !clipAudio.ended && !_hostPaused && state.phase==="running"){
       try{ var p=clipAudio.play();
-        if(p&&p.then) p.then(function(){ audioOk(); if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} } buildBoost(); }).catch(function(){});
+        if(p&&p.then) p.then(function(){ audioOk(); buildBoost(); }).catch(function(){});
       }catch(e){}
       return;
     }
@@ -1008,10 +1019,25 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
   document.addEventListener("pointerdown", soundTap);
   document.addEventListener("keydown", soundTap);
   function audioBlocked(){
-    if(_audioWarned) { showSoundBar(); try{ tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){} return; } _audioWarned=true;
+    if(_audioHeardSrc && _audioHeardSrc===(clipAudio.getAttribute("src")||"")) return;   // this clip is playing: whatever said otherwise was wrong
+    if(_audioWarned) { showSoundBar(); try{ tvSend({ t:"tv_here", audio:"blocked", app:TV_APP }); }catch(e){} return; } _audioWarned=true;
     showSoundBar();
-    try{ tvSend({ t:"tv_audio_blocked" }); tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){}
+    try{ tvSend({ t:"tv_audio_blocked", app:TV_APP }); tvSend({ t:"tv_here", audio:"blocked", app:TV_APP }); }catch(e){}
   }
+  /* ONLY A REFUSAL IS "BLOCKED" (INBOX 282.2). The Kogan app played Meat Loaf while the console said "The TV has no sound
+     yet": every play() rejection counted, and a clip still loading after three seconds counted. A play() that is cut short
+     by the next song's load rejects with AbortError: that is the old song's promise, not a refusal. A slow clip over pub
+     wifi is loading, not blocked. The browser says "not allowed" with NotAllowedError, and only that is a refusal. */
+  function playRefused(e){
+    var n=(e && e.name) || "";
+    if(n==="NotAllowedError") audioBlocked();
+    else { try{ console.info("[venueplay musical] play() did not start: "+(n||e)); }catch(_e){} }
+  }
+  /* THE REAL EVIDENCE THAT THE ROOM HEARS IT: the element says "playing" and its clock moves. Not a timer. */
+  var _audioHeardSrc="";
+  function heardNow(){ _audioHeardSrc=clipAudio.getAttribute("src")||""; audioOk(); }
+  clipAudio.addEventListener("playing", function(){ if(!clipAudio.paused && !clipAudio.muted) heardNow(); });
+  clipAudio.addEventListener("timeupdate", function(){ if(!clipAudio.paused && !clipAudio.muted && clipAudio.currentTime>0.2 && (clipAudio.getAttribute("src")||"")!==_audioHeardSrc) heardNow(); });
   function audioOk(){
     var was=_audioWarned||!!document.getElementById("audioWarn"); _audioWarned=false; _audioHeard=true;
     hideSoundBar();
@@ -1041,19 +1067,27 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
        2. The graph is built once, after a play has actually started, so it never
           interferes with the autoplay unlock a kiosk screen has to satisfy. */
   var _ac2=null, _srcNode=null, _boostNode=null, _limiter=null, _boost=2.4, _graphDead=false;
+  /* NEVER INTO A SILENT GRAPH (INBOX 282.2/282.7). Once createMediaElementSource takes the clip, the room hears it ONLY
+     through the graph, for good. A context the browser holds "suspended" (no gesture yet: a TV app, a kiosk) would take
+     the room's sound with it. So the graph is built only once the context says "running"; until then, and if it never
+     does, the clip plays straight to the speakers, un-boosted, exactly as before the boost existed. */
   function buildBoost(){
     if(_srcNode || _graphDead) return;
     try{
       var AC=window.AudioContext||window.webkitAudioContext; if(!AC){ _graphDead=true; return; }
       if(!_ac2) _ac2=new AC();
+      if(_ac2.state!=="running"){
+        try{ var rp=_ac2.resume(); if(rp && rp.then) rp.then(function(){ if(_ac2 && _ac2.state==="running") buildBoost(); }, function(){}); }catch(e){}
+        return;
+      }
       _srcNode=_ac2.createMediaElementSource(clipAudio);
-      _boostNode=_ac2.createGain(); _boostNode.gain.value=_boost*fadeLevel();
+      _boostNode=_ac2.createGain(); _boostNode.gain.value=_boost;
       _limiter=_ac2.createDynamicsCompressor();
       // A limiter, not a squash: leave everything under the ceiling alone, catch the peaks.
       _limiter.threshold.value=-6; _limiter.knee.value=0; _limiter.ratio.value=20;
       _limiter.attack.value=0.003; _limiter.release.value=0.25;
       _srcNode.connect(_boostNode); _boostNode.connect(_limiter); _limiter.connect(_ac2.destination);
-      applyFade(fadeLevel());   // the fade moves from the element to the gain in one step, never on both at once
+      applyFade(fadeLevel());
     }catch(e){ _graphDead=true; _srcNode=null; }
   }
   function setBoost(x){
@@ -1066,9 +1100,15 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      boost (gain = Room volume x level), or on the element before that graph is built, never both.
      So the fade scales the slider and never overrides it. If the shared file did not load, the clip
      plays as it always did, at full level. */
+  /* THE FADE IS ON THE ELEMENT, ALWAYS; THE GAIN IS THE ROOM VOLUME, ALWAYS (INBOX 282.7, 12 Nov 2026: no fade on the
+     Kogan app, the whole 30 s clip at full). It used to move onto the gain once the graph was built. A TV whose own media
+     player does not feed Web Audio (Samsung's Tizen plays <audio> through the set's player) plays the element straight
+     out, so a fade on the gain did nothing and the element sat at 1. The element's volume (0 to 1, never above) is applied
+     before the graph in Chrome, so here the room gets volume x gain = fade x Room volume: one fade, never two. */
   function applyFade(lv){
-    if(_boostNode){ try{ clipAudio.volume=1; _boostNode.gain.value=_boost*lv; }catch(e){} }
-    else { try{ clipAudio.volume=lv; }catch(e){} }
+    lv=Number(lv); if(!(lv>0)) lv=0; if(lv>1) lv=1;
+    try{ clipAudio.volume=lv; }catch(e){}
+    if(_boostNode){ try{ _boostNode.gain.value=_boost; }catch(e){} }
   }
   var _clipFade=window.VPFade ? VPFade.create({ el:clipAudio, apply:applyFade }) : null;
   function fadeLevel(){ return _clipFade ? _clipFade.level() : 1; }
@@ -1080,25 +1120,35 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(_clipFade) _clipFade.out(function(){ startClip(url); }, "switch");
     else startClip(url);
   }
+  /* EVERY STEP ON ITS OWN, AND play() ALWAYS TRIED (INBOX 282.2: song 2 of game 1 played nothing on the Kogan). A new src
+     starts at 0 by itself; currentTime=0 on an element still loading can throw on a TV's own media player, and that throw
+     used to skip play() altogether and call the TV blocked. */
+  var _clipSeq=0;
   function startClip(url){
-    try{
-      clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
-      clipAudio.src=url; clipAudio.currentTime=0;
-      if(_clipFade) _clipFade.start(); else clipAudio.volume=1.0;   // always from 0 at a clip's start, never left at 0 by the last one
-      /* The host paused (or a claim came in) during the half-second fade: the new song is loaded and waits for Play. */
-      if(_hostPaused) return;
-      var pr=clipAudio.play();
-      /* A play() that neither rejects nor starts (the clip sat at 0:00 on Dean's TV for song 1): look again
-         after three seconds and call a clip that has not moved blocked, instead of waiting for song 2. */
-      var _src=url;
-      setTimeout(function(){ if(clipAudio.getAttribute("src")===_src || clipAudio.src===_src){ if(clipAudio.paused || clipAudio.currentTime<0.2) audioBlocked(); } }, 3000);
-      if(pr&&pr.then) pr.then(function(){
-        audioOk();
-        if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} }
-        buildBoost();
-      }).catch(audioBlocked);
-      else buildBoost();
-    }catch(e){ audioBlocked(); }
+    var seq=++_clipSeq;
+    try{ clipAudio.crossOrigin="anonymous"; }catch(e){}   // must be set before load, or the graph gets silence
+    try{ clipAudio.src=url; }catch(e){ try{ console.info("[venueplay musical] clip src refused: "+e); }catch(_e){} return; }
+    try{ if(clipAudio.currentTime>0) clipAudio.currentTime=0; }catch(e){}
+    if(_clipFade) _clipFade.start(); else { try{ clipAudio.volume=1.0; }catch(e){} }   // always from 0 at a clip's start, never left at 0 by the last one
+    /* The host paused (or a claim came in) during the half-second fade: the new song is loaded and waits for Play. */
+    if(_hostPaused) return;
+    var pr=null;
+    try{ pr=clipAudio.play(); }catch(e){ playRefused(e); return; }
+    /* A play() that neither rejects nor starts: look again after three seconds. A clip still LOADING is not blocked
+       (a slow clip over pub wifi on the Kogan was reported blocked while it played); only a clip that is sitting
+       paused with nothing heard, on a browser TV, gets the click bar. Looks again while it loads, up to 15 s. */
+    var tries=0;
+    (function look(){ setTimeout(function(){
+      if(seq!==_clipSeq || _hostPaused) return;
+      if(_audioHeardSrc && _audioHeardSrc===(clipAudio.getAttribute("src")||"")) return;
+      if(!clipAudio.paused){ if(++tries<5) look(); return; }   // asked to play and still loading: wait, never "blocked"
+      if(!TV_APP) audioBlocked();
+    }, 3000); })();
+    if(pr&&pr.then) pr.then(function(){
+      if(seq!==_clipSeq) return;
+      buildBoost();
+    }, function(e){ if(seq===_clipSeq) playRefused(e); });
+    else buildBoost();
   }
   function stopClip(){ if(_clipFade) _clipFade.stop(); try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
   // "Reveal when the clip ends" is this event. The timer above is only the safety net.

@@ -1259,7 +1259,11 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
      piled up and each OK skipped another song, under the name of a song long gone. While one is
      open a tap does nothing, and an OK skips only if the song it named is still the one playing. */
   var _skipAsking=false;
-  function holdLabel(left){ return (SONG_HOLD_SECONDS-left>=SKIP_ASK_SECONDS) ? "Next song in "+left+"s (tap to skip)" : "Next song in "+left+"s"; }
+  /* NO AUTO-NEXT, SO NO PROMISE OF ONE (Dean, live play on The Mini Bar, 12 Nov 2026, INBOX 282.6: "Next song in 15s" and
+     the next song never came). This countdown is the double-tap guard, not a timer that plays the next song: the host
+     paces the night (talking over a song, checking a card, holding the clip to its end, INBOX 253.3a). It counts down to
+     when the button is ready, and says so. */
+  function holdLabel(left){ return (SONG_HOLD_SECONDS-left>=SKIP_ASK_SECONDS) ? "Next song ready in "+left+"s (tap to skip)" : "Next song ready in "+left+"s"; }
   function playNext(skipAsked){
     var b=$("playNextBtn");
     if(VP_HOLD.busy(b)){
@@ -1605,7 +1609,12 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   function playlistPayload(){
     // Draw the night's set from whatever the host chose. A big library is good for variety across
     // weeks and fatal as a single game's pool, so the game itself is always a manageable set.
-    var songs=drawGameSet(songsForPlaylist(G.playlistId||"all"));
+    /* THE NAME IS THE THEME THE SONGS COME FROM, read here, never carried (INBOX 282.3, 12 Nov 2026): New game after the
+       host tapped another theme sent the new theme's songs under the OLD theme's name, and the Worker reused a stored
+       playlist by that name. The songs and their name now come from the one G.playlistId the cards show as on. */
+    var pid=G.playlistId||"all";
+    G.playlistName=playlistNameOf(pid);
+    var songs=drawGameSet(songsForPlaylist(pid));
     return { name:G.playlistName, songs:songs.map(function(s){ return { title:s.title, artist:s.artist }; }) };
   }
   // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
@@ -1690,6 +1699,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       });
     }).then(function(r){
       G.gameId=r.game_id;
+      showDealtPlaylist(r);
       // Merge the Worker's songs (song_id, title, artist) with the library (previewUrl,
       // artworkUrl) by title, so playSong has both the audio clip and the DB id.
       G.songs=(r.songs||[]).map(function(w){
@@ -1970,7 +1980,15 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
      at once (Dean saw it only after song 2, 6 Nov 2026). The host is ASKED, never switched over (Dean, 6 Nov 2026, 13:10):
      "The TV can't play sound. Play the songs on this device?" Yes turns this device's sound on (the tap also lets the browser
      play it); No leaves it off and says how to fix the TV. When the TV recovers, a switch the Yes turned on is put back. */
-  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false, _audioErrShown=false;
+  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false, _audioErrShown=false, _tvApp="";
+  /* THE venueplay TV APP HAS NO POINTER (INBOX 282.2): "click once on the TV screen" is impossible there, so the words for an
+     app (the screen says app:"tizen"|"webos") never ask for a click. */
+  function tvNoSoundWords(here){
+    if(_tvApp) return here ? "The TV app has no sound yet, so the songs are coming out of this device."
+                           : "The TV app has no sound yet. Play the songs on this device? ";
+    return here ? "The TV has no sound yet, so the songs are coming out of this device. Click once on the TV screen to turn its sound on."
+                : "The TV has no sound yet. Click once on the TV screen to turn its sound on. Or play the songs on this device? ";
+  }
   function tvSoundYes(){
     if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
     audio.muted = !(G.hostMonitor || soundIsOnlyHere());
@@ -1983,7 +2001,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   }
   function askTvSound(n){
     n.textContent="";
-    n.appendChild(document.createTextNode("The TV has no sound yet. Click once on the TV screen to turn its sound on. Or play the songs on this device? "));
+    n.appendChild(document.createTextNode(tvNoSoundWords(false)));
     var y=document.createElement("button"), no=document.createElement("button");
     y.type="button"; y.id="tvSoundYes"; y.className="btn pink"; y.textContent="Yes";
     no.type="button"; no.id="tvSoundNo"; no.className="btn ghost"; no.textContent="No";
@@ -1998,7 +2016,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     var n=$("tvAudioNote");
     if(state==="blocked"){
       audio.muted = !(G.hostMonitor || soundIsOnlyHere());   // a TV is there (it just spoke): quiet here until the host answers
-      if(n){ if(G.hostMonitor) n.textContent="The TV has no sound yet, so the songs are coming out of this device. Click once on the TV screen to turn its sound on."; else askTvSound(n); n.classList.remove("hidden"); }
+      if(n){ if(G.hostMonitor) n.textContent=tvNoSoundWords(true); else askTvSound(n); n.classList.remove("hidden"); }
     } else {
       if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
       if(n) n.classList.add("hidden");
@@ -2009,6 +2027,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   function tvHere(m){
     G.tvLastSeen = Date.now();          // proof something is out there to make the noise
     $("statusDot").classList.add("on"); $("statusText").textContent=""; $("statusText").setAttribute("data-conn","tv");
+    if(m && typeof m.app==="string") _tvApp=/^(tizen|webos)$/.test(m.app) ? m.app : "";
     if(m) noteTvAudio(m.audio);
     syncMonitorBtn();
     // A freshly (re)loaded screen announces itself with hello:true. Re-hand the session and,
@@ -2037,13 +2056,14 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     /* The screen could not start the audio. This console is muted by design, so without this the
        host has no way to know the room is hearing nothing until somebody complains. */
     if(m.t==="tv_audio_blocked"){
+      if(typeof m.app==="string") _tvApp=/^(tizen|webos)$/.test(m.app) ? m.app : "";
       noteTvAudio("blocked");
       /* PLAIN WORDS: WHAT TO DO, NOT WHY (Dean, live play on The Mini Bar, 11 Nov 2026: "autoplay is blocked on that screen.
          Turn on the monitor switch" and he did not know what to do). The TV itself now says "Click anywhere on this screen
          to turn the sound on"; this says the same, and names the Yes right under Now playing. */
-      hostError(G.hostMonitor
-        ? "The TV has no sound yet, so the songs are coming out of this device. Click once on the TV screen to turn its sound on."
-        : "The TV has no sound yet. Click once on the TV screen to turn its sound on, or tap Yes under Now playing to play the songs from this device.");
+      hostError(G.hostMonitor ? tvNoSoundWords(true)
+        : (_tvApp ? "The TV app has no sound yet. Tap Yes under Now playing to play the songs from this device."
+                  : "The TV has no sound yet. Click once on the TV screen to turn its sound on, or tap Yes under Now playing to play the songs from this device."));
       _audioErrShown=true;
       return;
     }
@@ -2140,6 +2160,15 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     w.style.display="";
   }
 
+  /* WHAT IS SHOWN IS WHAT IS DEALT (INBOX 282.3). A night with printed cards plays the printed cards' songs (the Worker
+     says so with from_paper): the theme cards then show THAT playlist as on, and the host is told why, so the console
+     never shows Pub Classics while the room is dealt something else. */
+  function showDealtPlaylist(r){
+    if(!r || !r.from_paper || !r.playlist_name || r.playlist_name===playlistNameOf(G.playlistId)) return;
+    G.playlistName=r.playlist_name;
+    for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].name===r.playlist_name){ selectPlaylist(PL_OPTS[i].id); break; } }
+    hostError("Playing the songs on your printed cards: "+r.playlist_name+".");
+  }
   // ---- playlist select ----
   // The theme picker: searchable named playlists shown as cards (mirrors the trivia builder). The
   // hidden <select id="playlistSel"> is kept in lockstep so every downstream read is unchanged.
