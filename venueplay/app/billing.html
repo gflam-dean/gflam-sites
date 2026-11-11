@@ -94,6 +94,33 @@
   .pastdue .pdtext{font-size:14.5px;line-height:1.5;color:#fff}
   .pastdue .pdactions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
   .pastdue .pdpay{color:var(--pink);font-size:13.5px;font-weight:700;text-decoration:underline}
+  /* AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33): one card at the top of Billing says where the account
+     stands, what is kept and how to come back. Amber like the console's hold card: nothing is wrong, the games are off. */
+  .label.framed{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}   /* kept for screen readers */
+  .setframe{display:block;width:100%;height:640px;border:0;background:transparent;color-scheme:dark}
+  /* Label on top, then the value with its Copy button beside it, at every width (a phone kept the button on a line of its own). */
+  .scrcard .scrrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:10px 0;border-top:1px solid var(--line-2)}
+  .scrcard .scrrow:first-of-type{border-top:0}
+  .scrcard .scrk{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+  .scrcard .scrv{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere}
+  .scrcard .scrcopy{margin:0;min-height:44px}
+  /* The long sentence about adding a venue shows with the form, not under the button all the time (review 5 Nov 2026). */
+  #addVenueNote{display:none}
+  .addform.show ~ #addVenueNote{display:block}
+  .leftcard{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;padding:16px 18px;margin:0 0 16px}
+  .leftcard h2{font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3;margin:0 0 6px}
+  .leftcard p{font-size:14px;line-height:1.55;color:var(--text);margin:0 0 8px}
+  .leftcard .lckeep{color:var(--muted);font-size:13px;margin:0}
+  .leftcard .lcact{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+  .leftcard .lcact a.go{text-decoration:none}
+  .leftcard .lcact .go{min-height:44px}
+  .leftcard .lcnote{font-size:13.5px;line-height:1.5;color:var(--text);margin:4px 0 8px}
+  .leftcard .lcnote.err{color:#FF8A8A}
+  .venue .backbtn{min-height:44px;display:inline-flex;align-items:center}
+  .ldrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line-2);flex-wrap:wrap}
+  .ldrow:first-child{border-top:0;padding-top:2px}
+  .ldrow b{color:#fff;font-size:15px}
+  .ldrow small{color:var(--muted);font-size:13px}
   /* One night, one row. On a phone the figures drop under the date instead of squeezing. */
   .night{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0;
     display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -227,6 +254,7 @@
     .stepper input{padding:12px 6px}
     .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
     .canxlink{min-height:44px;display:inline-flex;align-items:center}
+    .venue .keep{min-height:44px;display:inline-flex;align-items:center}   /* "Keep this venue" was 17px tall (demo audit, 5 Nov 2026) */
     .tabs{top:6px}
     /* ALL SEVEN TABS ON SCREEN (14 Oct 2026 audit; two even rows since 5 Nov 2026). The first four take
        about a quarter each, so a fifth can never join their row, and the last three share the second row.
@@ -239,7 +267,8 @@
   #otherAccounts a{color:var(--pink);font-weight:700;text-decoration:none;white-space:nowrap}
   #otherAccounts a:hover,#otherAccounts a:focus-visible{text-decoration:underline}
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
-  .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
+  /* A finger-sized remove button on a prize chip (it was 16px tall; review 5 Nov 2026). */
+  .rfx{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 4px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
   .rfx:hover{color:var(--pink)}
   /* THE SLIDE ROW, TIDIED (Dean, 3 Nov 2026: "tidy the formatting (image preview and controls)"). The preview is
      the shape of the TV (16:9) and shows the whole picture on black, as the TV does, instead of a cropped strip;
@@ -536,7 +565,10 @@
   <!-- The owner's intro is about billing (plan, hosts, next payment), so it shows on the Billing tab only (Dean,
        5 Nov 2026: "up the top it says we've still got host, next payment and everything on this page"). showTab
        hides it on every other tab. A manager's intro says what they can do here, so it drops "billonly" and stays. -->
-  <p class="lede billonly" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
+  <!-- NO DESCRIPTION UNDER THE HEADING (Dean, 5 Nov 2026, INBOX item 35: "Your account" is self-explanatory). The owner's
+       intro is gone; the paragraph stays empty and hidden. A manager's line (what the owner has switched on for them)
+       is written into it by gateSections and shows on every tab, because it tells them something the heading does not. -->
+  <p class="lede billonly" id="lede" hidden></p>
   <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
   <p class="lede" id="otherAccounts" hidden></p>
 
@@ -560,6 +592,8 @@
     </div>
 
     <div class="tabpanel on" id="tp-billing">
+    <!-- After a venue leaves (INBOX item 33): where the account stands, what is kept, how to come back. -->
+    <div id="leftCard" class="leftcard" role="status" hidden></div>
     <!-- Failed payment. Stripe emails the owner and the venue is suspended after repeat failures,
          but this page said nothing and kept showing a normal "Next payment" tile. -->
     <div id="pastDue" class="pastdue" style="display:none">
@@ -746,7 +780,9 @@
       <p class="note" style="margin:6px 0 16px">Change these in the console's Setup guide.</p>
     </div>
     <div class="label">Player data &amp; name display</div>
-    <p class="note" style="margin:0 0 10px">What players are asked when they join, and how names show on the TV.</p>
+    <!-- ONE VENUE, NO PICKER (Dean, 5 Nov 2026, INBOX item 34): an account with one venue sees that venue's settings right
+         here (settings.html?embed=1 in a frame that grows to fit); two or more venues get one row each, as before.
+         The description paragraph under the heading went (item 35). -->
     <div id="playerData"></div>
     
     </div><!-- /tp-settings -->
@@ -792,6 +828,22 @@
     </div><!-- /tp-marketing -->
 
     <div class="tabpanel" id="tp-draws">
+    <!-- READ ONLY AFTER A VENUE LEAVES (INBOX item 33): each members draw's jackpot and when it last ran, the members
+         list, and the winners download. The folds below are for setting draws up, so they are hidden then. -->
+    <div id="leftDraws" hidden>
+      <div class="label">Your draws</div>
+      <p class="note" style="margin:0 0 10px">Your games are off, so these are read only. Nothing here has been changed.</p>
+      <div class="scard">
+        <div class="scardhead">Members draws</div>
+        <div id="leftDrawRows"><p class="snote">Loading&hellip;</p></div>
+      </div>
+      <div class="scard">
+        <div class="scardhead">Your members list</div>
+        <div class="snote" id="leftMembersCount">Loading your members list&hellip;</div>
+        <div class="btnrow"><button class="addbtn" id="leftMembersCsv" type="button">Download your members list (CSV)</button></div>
+      </div>
+      <div id="leftDrawLogSlot"></div>
+    </div>
     <div class="label acchead" data-acc="raffles" role="button" tabindex="0" aria-expanded="false">Raffles<span class="accsum" id="rfSum"></span><span class="accchev"></span></div>
     <div class="accbody" id="acc-raffles">
     <p class="note" style="margin:8px 0 10px">Your raffle routine and usual prizes.</p>
@@ -957,7 +1009,7 @@
     <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
          "who won the members draw on 12 August, and how much" could only be answered by someone
          reading the database. -->
-    <div class="scard">
+    <div class="scard" id="drawLogCard">
             <p class="snote">Every raffle and members draw result.</p>
       <div class="btnrow">
         <label class="flabel" for="dlMonths" style="margin:0 6px 0 0;align-self:center">Show</label>
@@ -977,6 +1029,15 @@
     </div><!-- /tp-draws -->
 
     <div class="tabpanel" id="tp-screen">
+    <!-- YOUR SCREEN (Dean, 5 Nov 2026, INBOX item 21e): the screen-code rule, said the same way everywhere, as one tidy card
+         with a copy button on each line: venueplay.com.au/tv plus the venue's screen code (vp_venues.join_code, the code the
+         console shows and the TV asks for). Follows the venue at the top of the page. -->
+    <div class="scard scrcard" id="screenCard">
+      <div class="scardhead">Your screen<span class="forvenue" id="scrForVenue"></span></div>
+      <div class="scrrow"><span class="scrk">Open</span><b class="scrv" id="scrUrl">venueplay.com.au/tv</b><button class="addbtn scrcopy" type="button" data-copy="scrUrl" aria-label="Copy the screen address">Copy</button></div>
+      <div class="scrrow"><span class="scrk">Screen code</span><b class="scrv" id="scrCode">&hellip;</b><button class="addbtn scrcopy" type="button" data-copy="scrCode" aria-label="Copy the screen code">Copy</button></div>
+      <p class="snote" style="margin:10px 0 0">On the TV's web browser, open venueplay.com.au/tv and put in the screen code. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">venueplay TV app</a>, then put in your screen code.</p>
+    </div>
     <div class="label">Advertising</div>
     <p class="note" style="margin:0 0 10px">What your TV shows between games. Open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on it. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">venueplay TV app</a>, then put in your screen code.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
@@ -1161,10 +1222,9 @@
           '<label class="flabel" for="nwEmail">Their email</label><input id="nwEmail" class="cxin" type="email" maxlength="200" autocomplete="off">' +
           '<label class="flabel" for="nwMobile">Their mobile</label><input id="nwMobile" class="cxin" type="tel" inputmode="tel" maxlength="30" autocomplete="off">' +
         '</div>' +
-        /* The 90-day words (Dean, 10 Nov 2026, INBOX 149): the fallback until the restart billing that keeps their
-           plan and price ships (fix/restart-90day-15nov, Monday 16). Then: "Change your mind within 90 days and you
-           keep your current plan and price." */
-        '<p class="cxback">Change your mind? Come back within 90 days and we\u2019ll sort your plan out.</p>' +
+        /* The 90-day words (Dean, 10 Nov 2026, INBOX 142 and 149): the restart billing that keeps their plan and price
+           (fix/restart-90day-15nov) ships with this line. Paid venues only: the free-month page has none (INBOX 191.5). */
+        '<p class="cxback">Change your mind within 90 days and you keep your current plan and price.</p>' +
         '<div class="dlgacts" id="whyActs">' +
           '<button type="button" id="whyMain" class="dlgbtn main" hidden></button>' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
@@ -1387,6 +1447,19 @@
     var multi = d.venues.length > 1;
     d.venues.forEach(function(v){
       var row = document.createElement("div"); row.className = "venue" + (v.cancelling ? " cancelling" : "");
+      if (v.left && d.restart){
+        /* Off after leaving, with the self-serve restart on (INBOX 54.3): the quote says what it costs, one tap brings it back. */
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>Off since it left</small></div>' +
+          '<div class="cxbanner"><span class="lcnote">Checking&hellip;</span><button class="keep backbtn" type="button" disabled>Bring it back</button></div>';
+        var bb = row.querySelector(".backbtn"), bn = row.querySelector(".lcnote");
+        api("/account/restart-quote", { venue_id: v.id }).then(function(q){
+          var rv = restartView(q);
+          if (!rv){ bn.textContent = "This venue has left. Call us on 07 5228 3667 to bring it back."; bb.style.display = "none"; return; }
+          bn.textContent = rv.note;
+          if (rv.label){ bb.disabled = false; bb.onclick = function(){ restartTap(bb, bn, v.id, load); }; } else bb.style.display = "none";
+        });
+        wrap.appendChild(row); return;
+      }
       if (v.cancelling){
         // Cancelled venues keep access until the period ends; offer a one-click "keep it".
         var until = d.next_charge ? (" until " + d.next_charge) : " until the end of your paid period";
@@ -1545,7 +1618,20 @@
     // Player data + name display: reuse the existing per-venue settings page (what players are
     // asked for at join, and how their name shows on the TV). One link per venue.
     var pd = $("playerData");
-    if (pd){
+    if (pd && d.venues.length === 1){
+      var v1 = d.venues[0], want = "settings.html?venue=" + encodeURIComponent(v1.id) + "&embed=1";
+      var fr = pd.querySelector("iframe.setframe");
+      if (!fr || fr.getAttribute("data-src") !== want){
+        pd.innerHTML = "";
+        fr = document.createElement("iframe");
+        fr.className = "setframe"; fr.title = "Game settings for " + v1.name;
+        fr.setAttribute("data-src", want);   // loaded when the tab is first opened (paintSettingsFrame), not on every visit
+        pd.appendChild(fr);
+      }
+      paintSettingsFrame();
+      // The settings page inside has its own section headings, so the tab's label would be a second heading on top.
+      var pdl = pd.previousElementSibling; if (pdl && pdl.classList.contains("label")) pdl.classList.add("framed");
+    } else if (pd){
       pd.innerHTML = "";
       d.venues.forEach(function(v){
         var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none"; a.setAttribute("data-venue", v.id);
@@ -1698,6 +1784,234 @@
     }
   }
 
+  /* AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33). When every venue on the account is off (closed by us,
+     cancelled and past its end date, a prospect whose free month ran out with no card, or switched off for a failed
+     card), the account cannot run games, so the page shows only what is still theirs to use:
+       Billing    invoices, the card, and how to come back (a paused prospect adds a card right here)
+       Draws      read only: each members draw's jackpot and when it last ran, the members list, the winners download
+       Marketing  the opt-in download only
+     and hides People, Nights, Screen, Game settings, the venue link and the table signs. It opens on Billing.
+     The Worker decides the state (vpbAccountStanding, /account/summary "standing"); this only paints it.
+     A venue that has cancelled but is still inside its paid period is active and keeps every tab. */
+  var LEFT_TABS = ["billing", "draws", "marketing"];
+  function standingTabs(st){
+    return (!st || st.state === "active" || st.games !== false) ? null : LEFT_TABS.slice();
+  }
+  var leftState = null;
+  function leftWords(st, d){
+    var kept = st.kept_until ? fmtDay(st.kept_until) : null;
+    /* What the 90 days do (Dean, 5 Nov 2026, INBOX item 54): players' details and members' names go; the venue's own
+       details and its draw history (amounts, dates, counts) are kept. */
+    var keep = kept
+      ? ("Your players' details and your members' names are kept until " + kept + ", then deleted, as our privacy policy says. Your venue's own details and draw history stay on file.")
+      : "Nothing has been deleted. Your players' details, members list and draw history are all still here.";
+    var back = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on.";
+    /* THE SELF-SERVE RESTART (Dean, INBOX 54.3): with it switched on, a paused prospect or a cancelled venue comes back
+       from here in one tap, so the card says that instead of "call us". The Worker decides what the tap does. */
+    if (d && d.restart && (st.state === "paused_prospect" || st.state === "cancelled")){
+      return { title: st.state === "paused_prospect" ? "Your free month has ended, so your games are paused" : "Your subscription has ended",
+        text: "Nothing has been lost. Come back below and your games, members list, slides and draws are all just as you left them.",
+        keep: keep, restart: true };
+    }
+    if (st.state === "paused_prospect") return { title: "Your free month has ended, so your games are paused",
+      text: "Nothing has been lost. Add your card and everything comes straight back on, exactly as you left it.",
+      keep: keep, card: true };
+    if (st.state === "cancelled") return { title: "Your subscription has ended",
+      text: "Your games are off. Your invoices, opt-ins, members list and draw history are still here. " + back, keep: keep };
+    if (st.state === "closed") return { title: "This account is closed",
+      text: "Your games are off. Your invoices, opt-ins, members list and draw history are still here. " + back, keep: keep };
+    if (d && d.past_due) return { title: "Your games are off until the card is updated",
+      text: "Nothing has been lost. Update your card below and everything comes straight back on.", keep: keep };
+    return { title: "Your games are on hold",
+      text: "Nothing has been lost. Call us on 07 5228 3667 or email support@venueplay.com.au and we will sort it out.", keep: keep };
+  }
+  function fmtDay(iso){
+    var t = new Date(iso); if (isNaN(t)) return null;
+    var M = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return t.getDate() + " " + M[t.getMonth()] + " " + t.getFullYear();
+  }
+  function applyStanding(d){
+    var st = d && d.standing, tabs = standingTabs(st), left = !!tabs;
+    leftState = left ? st.state : null;
+    document.body.classList.toggle("vp-left", left);
+    /* The sign-in bar ("Your games are on hold for the moment") says less than the card on Billing and, for a paused
+       prospect or a cancelled account, says it wrongly, so the card replaces it on this page. */
+    if (left){ var sb = $("vpSuspendBar"); if (sb && sb.parentNode) sb.parentNode.removeChild(sb); }
+    // Tab buttons: only the three that still mean something. A manager's own gates (gateSections) ran first and win.
+    var btns = document.querySelectorAll(".tabs button");
+    for (var i = 0; i < btns.length; i++){
+      var id = btns[i].getAttribute("data-tab");
+      if (left && tabs.indexOf(id) < 0){ btns[i].setAttribute("data-left-hid", "1"); btns[i].style.display = "none"; }
+      else if (btns[i].getAttribute("data-left-hid")){ btns[i].removeAttribute("data-left-hid"); btns[i].style.display = ""; }
+    }
+    function hide(el, on){ if (!el) return; if (on){ el.setAttribute("data-left-hid", "1"); el.style.display = "none"; }
+                           else if (el.getAttribute("data-left-hid")){ el.removeAttribute("data-left-hid"); el.style.display = ""; } }
+    function sec(labelText){   // a .label and its siblings up to the next .label, as gateSections reads them
+      var out = [], labels = $("content").querySelectorAll(".label");
+      for (var i = 0; i < labels.length; i++){
+        if (labels[i].textContent.trim().toLowerCase() !== labelText.toLowerCase()) continue;
+        out.push(labels[i]);
+        for (var el = labels[i].nextElementSibling; el && !(el.classList && el.classList.contains("label")); el = el.nextElementSibling) out.push(el);
+      }
+      return out;
+    }
+    // Billing: the plan, venue steppers, adding a venue and payment reminders are about running games.
+    var sum = document.querySelector("#tp-billing > .card"); hide(sum, left);
+    ["Your venues", "Payment reminders"].forEach(function(t){ sec(t).forEach(function(el){ hide(el, left); }); });
+    // A paused prospect has no Stripe customer yet, so the portal has nothing to open: the card button is above.
+    sec("Invoices & card").forEach(function(el){ hide(el, left && st.state === "paused_prospect" && d.has_subscription === false); });
+    // Marketing: only the opt-in download. The venue link, the table signs and the pointer to Game settings go.
+    sec("Your venue link").forEach(function(el){ hide(el, left); });
+    hide($("optinSignpost"), left);
+    // Draws: the read-only block, and the folds (which are for setting draws up) hidden.
+    var ld = $("leftDraws"); if (ld) ld.hidden = !left;
+    [].forEach.call(document.querySelectorAll("#tp-draws .acchead, #tp-draws .accbody"), function(el){ hide(el, left); });
+    var log = $("drawLogCard"), slot = $("leftDrawLogSlot"), home = $("acc-winners");   // "Who won what" is its own fold (Dean, 6 Nov 2026)
+    if (log && slot && home){
+      if (left && log.parentNode !== slot) slot.appendChild(log);
+      if (!left && log.parentNode === slot) home.appendChild(log);
+    }
+    var lc = $("leftCard");
+    if (lc){
+      if (!left){ lc.hidden = true; lc.innerHTML = ""; }
+      else {
+        var w = leftWords(st, d);
+        lc.innerHTML = '<h2>' + esc(w.title) + '</h2><p>' + esc(w.text) + '</p>' +
+          (w.card ? '<div class="lcact"><a class="go" id="leftCardBtn" href="#" aria-disabled="true">Add your card</a></div>' : '') +
+          /* THE COME-BACK SLOT (Dean, 5 Nov 2026, INBOX item 54 answer 3): the self-serve restart's one button and its words.
+             Shown only when the restart is switched on (w.restart); otherwise hidden and the words above say how. */
+          '<div class="lcact" id="leftComeBack" data-state="' + esc(st.state) + '"' + (w.restart ? '' : ' hidden') + '>' +
+            (w.restart ? '<button class="go" type="button" id="leftRestartBtn" disabled>Checking&hellip;</button>' : '') + '</div>' +
+          (w.restart ? '<p class="lcnote" id="leftRestartNote"></p>' : '') +
+          '<p class="lckeep">' + esc(w.keep) + '</p>';
+        lc.hidden = false;
+        if (w.card) leftCardLink();
+        if (w.restart) leftRestart(d);
+      }
+    }
+    // Open on Billing, once, whatever tab was open last time (Dean: "fine with Billing first").
+    if (left && !applyStanding._tabbed){
+      applyStanding._tabbed = true;
+      var tb = document.querySelector('.tabs button[data-tab="billing"]'); if (tb) tb.click();
+    }
+    if (left) paintLeftDraws();
+  }
+  /* The paused prospect's own signed card link (/account/card-link, the same route the console's hold card uses). */
+  function leftCardLink(){
+    var a = $("leftCardBtn"); if (!a) return;
+    var vid = (acctVenues && acctVenues[0] && acctVenues[0].id) || pageVenueId || "";
+    api("/account/card-link", { venue_id: vid }).then(function(j){
+      if (j && j.card_url && /^https:\/\//.test(j.card_url)){ a.href = j.card_url; a.removeAttribute("aria-disabled"); }
+      else if (j && j.error){ a.removeAttribute("href"); a.textContent = "Add your card"; showMsg(j.error); }
+    });
+  }
+  /* THE RESTART BUTTON'S WORDS, from the Worker's quote (/account/restart-quote) and nothing else, so the page can only
+     ever say what the Worker will do. Pure, so tools/test-self-serve-restart.js runs it. null: the restart is not on. */
+  function restartView(q){
+    if (!q || q.available === false) return null;
+    if (q.already) return { done: true, note: "This venue is already back on. Reload the page to see everything." };
+    if (!q.can_restart) return { refused: true, held: !!q.held, note: q.error || "Call us on 07 5228 3667 and we will sort it out." };
+    var money = function(r){ return "$" + Number(r).toFixed(2); };
+    var pl = q.players + " player" + (q.players === 1 ? "" : "s");
+    var until = q.restart_until_words ? (" You can come back from here until " + q.restart_until_words + ".") : "";
+    if (q.kind === "group") return { label: "Bring " + (q.venue_name || "this venue") + " back",
+      note: pl + " at " + money(q.rate) + " a player. " + (q.trialing ? "Nothing extra this cycle, " : (q.stub + " for the rest of this cycle (" + q.stub_words + ") goes on your next bill, ")) +
+            "on " + q.next_bill_words + ", then " + q.monthly + " a month." + until };
+    /* BACK WITHIN 90 DAYS (Dean, 10 Nov 2026, INBOX 142): the Worker kept their previous plan and price, and says so.
+       A kept ongoing discount: the Worker does not work out the charge (Stripe applies the discount), so no figure. */
+    var same = q.kept_previous ? " Same plan and price as before" + (q.discount_kept ? ", with your discount." : ".") : "";
+    var disc = q.today == null;
+    if (q.mode === "card") return { label: q.kind === "prospect" ? "Add your card and come back" : "Add a card and come back",
+      note: pl + " at " + money(q.rate) + " a player" + (disc ? "" : (", " + q.monthly + " a month")) + (q.kind === "prospect" || disc ? "" : (", " + q.today + " today")) + "." + same + until };
+    var c = q.card || {}, cw = (c.brand ? (c.brand.charAt(0).toUpperCase() + c.brand.slice(1)) : "Card") + (c.last4 ? " ending " + c.last4 : "");
+    if (disc) return { label: "Come back on " + cw,
+      note: pl + " at " + money(q.rate) + " a player, less your discount, charged now for your first month." + same + until };
+    return { label: "Come back: " + q.today + " today on " + cw,
+      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + same + until };
+  }
+  /* Which left venue the restart is for: the one the leaving email named (?venue=), else the first that has left. */
+  function restartVenueId(d){
+    var vs = (d && d.venues) || [], want = (String(location.search || "").match(/[?&]venue=([0-9a-fA-F-]{36})/) || [])[1];
+    if (want && vs.some(function(v){ return v.id === want; })) return want;
+    var left = vs.filter(function(v){ return v.left; })[0];
+    return (left && left.id) || (vs[0] && vs[0].id) || pageVenueId || "";
+  }
+  /* One tap: the button does what the quote said. A card page (a first card, or a card that was refused) is Stripe's,
+     opened in this tab; a card already held restarts here and the page reloads its account. Disabled while it runs,
+     so a double tap sends one request (and the Worker would charge once anyway). */
+  function restartTap(btn, note, vid, after){
+    if (btn.disabled) return;
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "One moment\u2026"; note.classList.remove("err");
+    api("/account/restart", { venue_id: vid }).then(function(r){
+      if (r && r.card_url && /^https:\/\//.test(r.card_url)){ window.location.href = r.card_url; return; }
+      if (r && (r.restarted || r.already)){ showMsg("Welcome back. Your games are on again.", true); if (after) after(); return; }
+      btn.disabled = false; btn.textContent = was;
+      note.textContent = (r && r.error) || "That did not work just now. Nothing has been charged. Please try again.";
+      note.classList.add("err");
+    }).catch(function(){ btn.disabled = false; btn.textContent = was; note.textContent = "That did not work just now. Nothing has been charged. Please try again."; note.classList.add("err"); });
+  }
+  function leftRestart(d){
+    var btn = $("leftRestartBtn"), note = $("leftRestartNote"); if (!btn || !note) return;
+    var vid = restartVenueId(d);
+    api("/account/restart-quote", { venue_id: vid }).then(function(q){
+      var v = restartView(q);
+      if (!v){ btn.parentNode.style.display = "none"; note.textContent = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on."; return; }
+      if (v.label){ btn.textContent = v.label; btn.disabled = false; btn.onclick = function(){ restartTap(btn, note, vid, load); }; }
+      else btn.parentNode.style.display = "none";
+      note.textContent = v.note; note.classList.toggle("err", !!v.refused && !v.held);
+      if (/[?&]come-back=1(&|$)/.test(String(location.search || "")) && v.label){ try { $("leftCard").scrollIntoView({ block: "start" }); btn.focus(); } catch (e) {} }
+    });
+  }
+  /* Read only: what the members draw panel already loaded, written as rows. No second copy of the data. */
+  function paintLeftDraws(){
+    if (typeof leftState === "undefined" || !leftState) return;
+    var box = $("leftDrawRows");
+    if (box){
+      if (!mdReady){ box.innerHTML = '<p class="snote">Loading&hellip;</p>'; }
+      else if (!mdDraws.length){ box.innerHTML = '<p class="snote">No members draws were set up.</p>'; }
+      else box.innerHTML = mdDraws.map(function(dr){
+        var jp = dr.current_jackpot_cents != null ? ("Jackpot $" + toDollars(dr.current_jackpot_cents)) : "No jackpot set";
+        var lastT = dr.last_drawn_at || dr.last_drawn_date || null;
+        var last = lastT ? ("Last drawn " + (fmtDay(lastT) || lastT)) : "Never drawn";
+        return '<div class="ldrow"><b>' + esc(dr.name || "Members draw") + '</b><small>' + esc(jp) + ' &middot; ' + esc(last) + '</small></div>';
+      }).join("");
+    }
+    var c = $("leftMembersCount"), src = $("mdCount"), dl = $("leftMembersCsv");
+    if (c && src) c.textContent = src.textContent;
+    if (dl) dl.hidden = !(src && / in your list\./.test(src.textContent));
+  }
+  /* The members list as a CSV (number, first name, surname): the venue's own list, read with its own login and paged,
+     ordered, until a page comes back EMPTY (CLAUDE.md: never stop on a short page). */
+  function downloadMembers(){
+    var vid = mdCurrent || pageVenueId; if (!vid){ showMsg("Pick a venue first."); return; }
+    var client = VP.getClient(), btn = $("leftMembersCsv"), rows = [], PAGE = 1000;
+    btn.disabled = true;
+    client.from("vp_member_rosters").select("id").eq("venue_id", vid).then(function(rr){
+      var ids = ((rr && rr.data) || []).map(function(x){ return x.id; });
+      if (!ids.length) return [];
+      function page(from){
+        return client.from("vp_members").select("number,first_name,last_name").in("roster_id", ids)
+          .order("number", { ascending: true }).order("id", { ascending: true }).range(from, from + PAGE - 1).then(function(r){
+            if (r && r.error) throw r.error;
+            var got = (r && r.data) || [];
+            if (!got.length) return rows;
+            rows = rows.concat(got);
+            return page(from + got.length);
+          });
+      }
+      return page(0);
+    }).then(function(all){
+      btn.disabled = false;
+      if (!all.length){ showMsg("There is nobody on your members list."); return; }
+      var q = function(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var csv = "Member number,First name,Surname\n" + all.map(function(m){ return [m.number, m.first_name, m.last_name].map(q).join(","); }).join("\n") + "\n";
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = "members-list.csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }).catch(function(){ btn.disabled = false; showMsg("Could not download your members list just now. Please try again."); });
+  }
+  if ($("leftMembersCsv")) $("leftMembersCsv").addEventListener("click", downloadMembers);
+
   function load(){
     return api("/account/summary", {}).then(function(d){
       if (d.error){
@@ -1710,14 +2024,15 @@
       $("loading").style.display = "none";
       $("content").style.display = "";
       // The two plans reduce differently and the page has to say which one you are on.
-      var _l=$("lede");
-      /* "Reductions apply from your next renewal" read as "deductions" (Dean, 19 Oct 2026). Say what
-         happens in plain words: adding is immediate, lowering waits for the renewal. */
-      if(_l) _l.textContent = "Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away. " +
-        (d.plan === "annual"
-          ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
-          : "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short.");
+      /* The owner's intro under "Your account" was cut (Dean, 5 Nov 2026, INBOX item 35). What it said about adding and
+         lowering players is said where it matters, under Your venues (players-note). */
       render(d);
+      applyStanding(d);
+      /* Back from the restart's card page (Stripe's Done): the venue comes on when Stripe tells the Worker, a moment later. */
+      if (!load._restartSaid && /[?&]restarted=1(&|$)/.test(String(location.search || ""))){
+        load._restartSaid = true;
+        showMsg(d.standing && d.standing.state === "active" ? "Welcome back. Your games are on again." : "Thanks, your card is in. Your games come back on in a moment: reload this page to see it.", true);
+      }
       renderOtherAccounts(d.other_accounts || []);
       mountAcctPick(d.venues || []);
     }).catch(function(){
@@ -1951,10 +2266,12 @@
     if (!hosts.length){ wrap.innerHTML = '<p class="note" style="margin:0 0 6px">' + (at ? ("Just you so far at " + esc(at.name) + ". Add a host below and they can run games there.") : "Just you so far, and you can host every venue.") + '</p>'; return; }
     hosts.forEach(function(h){
       var names = (h.venue_ids || []).map(function(id){ return vmap[id]; }).filter(Boolean);
-      var scope = (venues.length && names.length >= venues.length) ? "All venues"
+      /* "All venues" only when there IS more than one (Dean, 5 Nov 2026, INBOX item 21c). With one venue the name says it. */
+      var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues"
                 : (names.length ? names.join(", ") : "No venues");
       var roleWord = h.is_owner ? "Owner" : (h.role === "manager" ? "Manager" : "Host");
-      var sub = roleWord + " · " + scope + (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : "");
+      /* The owner and managers get the full mobile from the Worker (INBOX items 21b, 54); the last three digits only as a fallback. */
+      var sub = roleWord + " · " + scope + (h.mobile ? " · " + h.mobile : (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : ""));
       // A full-access login (the owner's, or one HQ set up) is owner-only, and even the owner
       // cannot delete it from here, so do not draw buttons that will only ever refuse.
       var locked = h.is_owner || h.full_access;
@@ -2512,7 +2829,27 @@
   function setTvLinks(slug){
     $("tvLink").textContent = "venueplay.com.au/tv";   // bare (Dean, 5 Nov 2026): venues type the screen code
     $("screenPreview").href = tvHref(slug);
+    paintScreenCard();
   }
+  /* The Your screen card: the venue's screen code, read the way the console reads it (VP.venueJoinCode). */
+  var scrSeq = 0;
+  function paintScreenCard(){
+    var code = $("scrCode"), fv = $("scrForVenue"); if (!code) return;
+    var v = screenCurrent || null, id = (v && v.id) || pageVenueId, mine = ++scrSeq;
+    if (fv) fv.textContent = (screenVenues && screenVenues.length > 1 && v && v.name) ? v.name : "";
+    if (!id || !window.VP || !VP.venueJoinCode){ code.textContent = "Shown on your host console"; return; }
+    VP.venueJoinCode(id).then(function(c){
+      if (mine !== scrSeq) return;
+      code.textContent = c || "Shown on your host console";
+      var b = document.querySelector('.scrcopy[data-copy="scrCode"]'); if (b) b.hidden = !c;
+    });
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest ? e.target.closest(".scrcopy") : null; if (!b) return;
+    var t = ($(b.getAttribute("data-copy")) || {}).textContent || "";
+    function done(ok){ var was = "Copy"; b.textContent = ok ? "Copied" : "Copy failed"; setTimeout(function(){ b.textContent = was; }, 1800); }
+    try { navigator.clipboard.writeText(t).then(function(){ done(true); }, function(){ done(false); }); } catch (err) { done(false); }
+  });
   /* The venue rows this page needs beyond the billing summary: the slug (the venue link), the state
      and the permits (the draws permits). Read from vp_venues under the login's own RLS, the way
      vp-session reads the venue list; the summary carries none of these. Throws on a failed read, so
@@ -2641,7 +2978,8 @@
       var row = document.querySelector("#rfList .drow .dn");
       var nm = row && row.querySelector("b") ? row.querySelector("b").textContent.trim() : "";
       var when = row && row.querySelector("small") ? row.querySelector("small").textContent.trim() : "";
-      rf.textContent = rfRows > 1 ? (rfRows + " raffles") : (nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet");
+      /* "Not on the TV yet" read like a fault (Dean, 5 Nov 2026, INBOX item 21d). Say what is set, plainly. */
+      rf.textContent = rfRows > 1 ? (rfRows + " raffles") : (nm ? (nm + (when ? ", " + when : "")) : "No raffle routine yet");
     }
     if (md){
       var n = document.querySelectorAll("#mdList .drow").length;
@@ -2663,7 +3001,7 @@
     accOpen(/^(raffles|members|permits|winners)$/.test(had || "") ? had : "raffles", false);
     for (var i = 0; i < heads.length; i++){
       (function(h){
-        var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), true); };
+        var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), false); };
         h.addEventListener("click", go);
         h.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); go(); } });
       })(heads[i]);
@@ -2683,12 +3021,25 @@
   /* Open one tab: its button lit, its panel shown, every other hidden. The billing intro at the top of the page
      (#lede, while it carries "billonly") shows on the Billing tab only (Dean, 5 Nov 2026); the venue drop-down
      above the tabs belongs to every tab and is left alone. */
+  /* The single venue's Game settings frame loads the first time the tab is open, and takes the height the page inside
+     tells it (settings.html posts vpSettingsHeight, same origin only), so it never scrolls inside the page. */
+  function paintSettingsFrame(){
+    var fr = document.querySelector("#playerData iframe.setframe"), tab = $("tp-settings");
+    if (!fr || !tab || !tab.classList.contains("on")) return;
+    if (!fr.getAttribute("src")) fr.setAttribute("src", fr.getAttribute("data-src"));
+  }
+  window.addEventListener("message", function(e){
+    if (e.origin !== location.origin || !e.data || typeof e.data.vpSettingsHeight !== "number") return;
+    var fr = document.querySelector("#playerData iframe.setframe");
+    if (fr && e.source === fr.contentWindow) fr.style.height = Math.max(200, Math.min(6000, e.data.vpSettingsHeight)) + "px";
+  });
   function showTab(id){
     var t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
     for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a].getAttribute('data-tab')===id);
     for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
-    var l=$("lede"); if(l) l.hidden = (id!=="billing" && l.classList.contains("billonly"));
+    var l=$("lede"); if(l) l.hidden = !l.textContent || (id!=="billing" && l.classList.contains("billonly"));
     try { document.body.setAttribute("data-tab", id); } catch (e) {}
+    if (id === "settings" && typeof paintSettingsFrame === "function") paintSettingsFrame();
   }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.
@@ -3085,17 +3436,19 @@
           mdReady = true;
           renderDrawPicker();
           fillMembersDraw(mdDraw);
+          paintLeftDraws();
         }
         return client.from("vp_member_rosters").select("id").eq("venue_id", venueId).then(function(rr){
           if (stale()) return;
           if (readFailed(rr)){ mdCountFailed(venueId); return; }
           var ids = (rr.data || []).map(function(x){ return x.id; });
-          if (!ids.length){ $("mdCount").textContent = "No members yet."; return; }
+          if (!ids.length){ $("mdCount").textContent = "No members yet."; paintLeftDraws(); return; }
           return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
             if (stale()) return;
             if (readFailed(rc) || typeof rc.count !== "number"){ mdCountFailed(venueId); return; }
             var n = rc.count;
             $("mdCount").textContent = n ? (n + " member" + (n===1?"":"s") + " in your list.") : "No members yet.";
+            paintLeftDraws();
           });
         });
       }).catch(function(){ if (!stale()) mdCountFailed(venueId); });
@@ -3333,7 +3686,7 @@
     if (!managers.length){ box.innerHTML = '<p class="note" style="margin:0 0 8px">No managers yet.</p>'; return; }
     managers.forEach(function(m){
       var names = (m.venue_ids||[]).map(function(id){ return vmap[id]; }).filter(Boolean);
-      var scope = (names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
+      var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
       var p = m.permissions || {};
       var row = document.createElement("div"); row.className = "venue"; row.style.flexWrap = "wrap";
       row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + '</small></div>' +

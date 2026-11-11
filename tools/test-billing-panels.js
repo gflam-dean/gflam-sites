@@ -70,7 +70,9 @@ var NAMES = [
   // 3 Nov 2026 (Dean): ONE venue drop-down moves every panel; prizes said as cash and other, apart
   'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines',
   // 6 Nov 2026 (Dean): one venue per tab, outside Billing
-  'showOnlyPageVenue'
+  'showOnlyPageVenue',
+  // 5 Nov 2026 (INBOX item 33): the members panel also paints the read-only view of an account that has left
+  'paintLeftDraws'
 ];
 var SRC = '', MISSING = [];
 /* ...and the two page variables those read, lifted as they are written, never restated here. */

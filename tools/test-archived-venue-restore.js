@@ -270,10 +270,30 @@ chain = chain.then(function () {
       ok('lone archived venue is kept', ctx.currentVenueId === 'A', 'got ' + ctx.currentVenueId);
       b.VP.suspensionBanner(ctx);
       var banner = b.painted.map(function (el) { return el.innerHTML || ''; }).join(' ');
-      ok('and the banner says archived rather than "on hold"',
-         /archived/i.test(banner) && !/on hold/i.test(banner),
+      // Plain words since 5 Nov 2026 (INBOX item 54): "closed", never "archived" (our word) or "on hold".
+      ok('and the banner says the account is closed rather than "on hold"',
+         /account is closed/i.test(banner) && !/on hold/i.test(banner) && !/archived/i.test(banner),
          JSON.stringify(banner.slice(0, 110)));
     });
+});
+
+/* 6b. EACH STATE IN ITS OWN WORDS (Dean, 5 Nov 2026, INBOX item 54 answer 5). The bar used to tell a paused prospect
+   and a cancelled venue that their games were "on hold for the moment" and "we will sort it out". */
+[['free_month_ended', 'owner', /free month has ended, so your games are paused/, /Add your card/],
+ ['free_month_ended', 'host', /free month has ended, so games are paused here/, /Ask the venue owner or a manager/],
+ ['cancelled', 'owner', /subscription has ended, so its games are off/, /start it again/],
+ ['manual', 'owner', /switched off for now/, /we will sort it out/]].forEach(function (c) {
+  chain = chain.then(function () {
+    return run('the bar for ' + c[0] + ' (' + c[1] + ')',
+      { staff: ['A'], venues: { A: A_ARCH }, stored: 'A' },
+      function (ctx, b) {
+        b.VP.suspensionBanner({ venue: { id: 'A', status: 'suspended', suspended_reason: c[0] }, role: c[1] });
+        var banner = b.painted.map(function (el) { return el.innerHTML || ''; }).join(' ');
+        ok('the bar for ' + c[0] + ' (' + c[1] + ') says what happened and what to do, never "on hold"',
+           c[2].test(banner) && c[3].test(banner) && !/on hold/i.test(banner) && !/[\u2014\u2013]/.test(banner),
+           JSON.stringify(banner.slice(0, 160)));
+      });
+  });
 });
 
 /* 7. A genuinely suspended venue must NOT be swapped away. Nonpayment is a real problem

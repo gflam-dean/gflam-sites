@@ -517,8 +517,8 @@ check('billing\'s dialog asks the Worker for the screen and draws the numbers an
 check('the hand-over is the main button for closing, the keep plan only from the Worker\'s words, Cancel never hidden',
       /var closing = pick\.value === "closing", kp = SCREEN && SCREEN\.keep_plan;/.test(DLG2) && /mainBtn\.innerHTML = "Hand the account to the new owner"/.test(DLG2)
       && /'<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue<\/button>'/.test(DLG2) && !/id="whyGo"[^>]*hidden/.test(DLG2) && !/goBtn\.hidden/.test(DLG2));
-check('billing\'s dialog: the 90-day line, no price words, no members list download',
-      DLG2.indexOf("'<p class=\"cxback\">Change your mind? Come back within 90 days and we\\u2019ll sort your plan out.</p>'") !== -1 && DLG2c.indexOf('keep your current plan and price') === -1 && !/\$\d/.test(DLG2c) && !/download|export/i.test(DLG2c));
+check('billing\'s dialog: the 90-day line keeps their plan and price (Dean, INBOX 142; restart-90day ships with it), no price figures, no members list download',
+      DLG2.indexOf("'<p class=\"cxback\">Change your mind within 90 days and you keep your current plan and price.</p>'") !== -1 && DLG2c.indexOf('sort your plan out') === -1 && !/\$\d/.test(DLG2c) && !/download|export/i.test(DLG2c));
 check('billing: Keep the basics posts /account/keep-request with their reason and note, never the cancel',
       /api\("\/account\/keep-request", \{ venue_id:v\.id, reason:pick\.value \|\| null, reason_detail:\(more\.value \|\| ""\)\.trim\(\) \|\| null \}\)/.test(DLG2));
 check('the hand-over posts to /account/transfer-request with the new owner',

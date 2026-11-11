@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Nov 2026, 10:30 · 4872569f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 12:11 · ce2dc167';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -579,7 +579,9 @@ async function sweepRetention(env) {
          20 Sep 2026) left a live customer one failed card away from this list. A venue
          suspended for non-payment or by hand is NOT a closed account, whatever date it
          carries, so the reason has to say closed as well. */
-      + '&suspended_reason=in.(ended,cancelled,archived,archived_cancelling)'
+      /* free_month_ended joined 5 Nov 2026 (INBOX item 33): a prospect paused for want of a card has left
+         too, and its pause now stamps closed_at. A card before the 90 days clears closed_at. */
+      + '&suspended_reason=in.(ended,cancelled,archived,archived_cancelling,free_month_ended)'
       + '&select=id,name,closed_at&limit=200');
     if (!venues || !venues.length) return { venues: 0, players: 0, captures: 0 };
 

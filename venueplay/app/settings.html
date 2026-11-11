@@ -13,6 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script>/* Opened inside Your account > Game settings (embed=1, INBOX item 34): no header, no title, the account page's own frame. */
+if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className += " embed";</script>
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -44,13 +46,15 @@
      page: a section heading, then its cards, 12px between cards, 32px between sections, 20px inside
      every card, and every row the same height and the same left edge. */
   .wrap{max-width:720px;margin:0 auto;padding:24px 22px 64px}
-  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff;line-height:1.04;margin-bottom:6px}
+  /* THE SAME SCALE AS YOUR ACCOUNT (Dean, 5 Nov 2026, INBOX item 21f: "venue settings looks much bigger than everything
+     else"). The title, section labels, cards, rows, the code and the Save button now use billing.html's sizes. */
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:26px;color:#fff;line-height:1.04;margin-bottom:6px}
   .authsub{color:var(--muted);font-size:13px;margin-bottom:28px;line-height:1.5}
-  .sec{margin-top:32px}
+  .sec{margin-top:26px}
   .sec:first-of-type{margin-top:0}
   /* The section label every console page uses (Your account's .label): mono, quiet, uppercase (round 3 U, 4 Nov 2026). */
   .sechead{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:400;text-transform:none;font-size:11px;color:var(--muted);margin:0 0 10px 2px}
-  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:20px;margin-bottom:12px}
+  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:16px 18px;margin-bottom:10px}
   .card:last-child{margin-bottom:0}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin-bottom:6px}
   .sublbl{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
@@ -65,7 +69,7 @@
   @media(max-width:520px){ .bar{gap:10px 12px} .hactions{flex:1 1 100%;justify-content:flex-end} }
   .link:hover{color:var(--pink)}
   .btn{border:none;border-radius:12px;padding:13px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
-  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);width:100%;text-transform:uppercase;letter-spacing:.04em}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 6px 16px rgba(255,31,142,.28);font-size:13.5px;padding:11px 20px;border-radius:11px}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .savebar{margin-top:16px}
@@ -73,11 +77,11 @@
   .seg .opt{flex:1;padding:11px 8px;border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:10px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;text-align:center;transition:.15s}
   .seg .opt.on{background:var(--pink);color:#fff;border-color:transparent}
-  .row{display:flex;align-items:center;gap:16px;padding:14px 0;border-top:1px solid var(--line-2)}
+  .row{display:flex;align-items:center;gap:16px;padding:11px 0;border-top:1px solid var(--line-2)}
   .row .t{flex:1;min-width:0}
   .row .t .n{font-weight:600;font-size:14px;color:var(--text)}
   .row .t .d{font-size:12px;color:var(--faint);margin-top:2px;line-height:1.45}
-  .codeval{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;letter-spacing:.18em;font-size:22px;color:#fff;font-weight:700}
+  .codeval{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;letter-spacing:.16em;font-size:19px;color:#fff;font-weight:700}
   .sw{width:46px;height:27px;border-radius:20px;background:var(--ink-3);border:1px solid var(--line);position:relative;cursor:pointer;transition:.15s;flex:none}
   .sw::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--faint);transition:.15s}
   .sw.on{background:rgba(255,31,142,.25);border-color:var(--pink)}
@@ -92,6 +96,10 @@
   .msg.warn{color:var(--gold);font-weight:600}
   .warn{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--roll);line-height:1.5;margin-bottom:16px}
   .hidden{display:none!important}
+  /* EMBEDDED in Your account (embed=1): the account page already has the header, the title and the venue. */
+  .embed header,.embed #vTitle,.embed #vSub{display:none!important}
+  .embed body{background:var(--ink);min-height:0}
+  .embed .wrap{max-width:none;padding:0 0 8px}
   /* Phones: a switch you have to hit with a thumb, and a button you cannot miss. */
   @media(max-width:640px){
     .wrap{padding:20px 16px 56px}
@@ -161,7 +169,7 @@
       <h2 class="sechead">On the big screen</h2>
       <div class="card owneronly">
         <div class="lbl">Name display on the TV</div>
-        <div class="sublbl">How winner and member names appear on the big screen.</div>
+        
         <div class="seg" id="nameSeg">
           <div class="opt" data-nd="abbrev_last">John S</div>
           <div class="opt" data-nd="abbrev_first">J Smith</div>
@@ -185,7 +193,7 @@
 
       <div class="card mktrow owneronly">
         <div class="lbl">Marketing opt-in</div>
-        <div class="sublbl" style="margin-bottom:4px">Whether the join screen asks the player to opt in to your venue's marketing.</div>
+        
         <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Off unless you turn it on. The tick is always shown unticked, and the player must tick it themselves.</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
         <!-- Consent to be contacted, with no way to contact them, is not consent to anything. The
              Worker refuses to record it, so without this warning a venue would leave the tick on
@@ -241,6 +249,25 @@
   "use strict";
   function $(id){ return document.getElementById(id); }
   function qp(k){ var m=new RegExp("[?&]"+k+"=([^&]+)").exec(location.search); return m?decodeURIComponent(m[1]):""; }
+  /* EMBEDDED in Your account > Game settings (INBOX item 34): leaving goes to the whole window, and the page tells
+     the account page how tall it is so the frame never scrolls on its own. Same origin only. */
+  var EMBED = qp("embed")==="1";
+  function nav(u){ try{ (EMBED && window.top ? window.top : window).location.href = u; }catch(e){ location.href = u; } }
+  function tellHeight(){
+    if(!EMBED || !window.parent || window.parent===window) return;
+    var w = document.querySelector(".wrap"); if(!w) return;
+    // The content's own bottom, not the document's: scrollHeight never drops below the frame, so it could only grow.
+    try{ window.parent.postMessage({ vpSettingsHeight: Math.ceil(w.getBoundingClientRect().bottom + window.scrollY) + 4 }, location.origin); }catch(e){}
+  }
+  if(EMBED){
+    if(window.ResizeObserver){ try{ new ResizeObserver(tellHeight).observe(document.body); }catch(e){} }
+    window.addEventListener("load", tellHeight);
+    // A link inside the frame (the permits note's "Your account, Draws") opens in the whole window, never inside the frame.
+    document.addEventListener("click", function(e){
+      var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+      if (a && !a.getAttribute("target")) a.setAttribute("target", "_top");
+    }, true);
+  }
 
   var TOGGLES=["collect_first_name","collect_last_name","collect_postcode","collect_email","collect_mobile","collect_marketing_optin"];
   var DEFAULTS={ collect_first_name:true, collect_last_name:false, collect_postcode:false, collect_email:false, collect_mobile:false, collect_marketing_optin:false };
@@ -265,13 +292,13 @@
   // Manager/owner (or admin). If a ?venue= is passed (from HQ), switch to it first.
   var want=qp("venue");
   VP.ready().then(function(ctx){
-    if(!ctx.authed){ location.href="index.html"; return; }
+    if(!ctx.authed){ nav("index.html"); return; }
     if(want && want!==ctx.currentVenueId){ return VP.setCurrentVenue(want); }
     return ctx;
   }).then(function(ctx){
     if(!ctx) return;
     var canEdit = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
-    if(!canEdit){ location.href=VP.homeHref(ctx); return; }
+    if(!canEdit){ nav(VP.homeHref(ctx)); return; }
     venueId=ctx.currentVenueId;
     if(!venueId){ $("vSub").textContent="No venue selected."; return; }
     $("backLink").href = ctx.isAdmin ? "hq.html" : "index.html";
@@ -286,6 +313,7 @@
     paintPermits(ctx);
     loadTriviaShow();
     $("body").classList.remove("hidden");
+    tellHeight();
   });
 
   /* ONE VENUE DROP-DOWN, AND THE GROUP (Dean, 3 Nov 2026). The venues this login may change settings for: an
@@ -307,7 +335,7 @@
       groupVenues=settingsVenues(ctx, vs);
       if(window.VPVenuePick){
         VPVenuePick.mount($("setPick"), { venues:groupVenues, value:venueId, label:"Venue",
-          onChange:function(id, name){ VPVenuePick.set(id, name); location.href="settings.html?venue="+encodeURIComponent(id); return true; } });
+          onChange:function(id, name){ VPVenuePick.set(id, name); location.href="settings.html?venue="+encodeURIComponent(id)+(EMBED?"&embed=1":""); return true; } });
       }
       var many=groupVenues.length>1, card=$("scopeCard");
       if(card) card.classList.toggle("hidden", !many);

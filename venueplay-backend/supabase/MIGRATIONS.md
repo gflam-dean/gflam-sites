@@ -613,6 +613,27 @@ or grant changes, so RLS-BASELINE.json does not change. Either order with the bi
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50).
 Read-back and rollback in the file.
 
+`venueplay-160-left-accounts-90-day-clock.sql` (Dean, 5 Nov 2026, INBOX item 33, the account after a venue leaves): starts
+the 90-day retention clock (`vp_venues.closed_at`) for prospects that had ALREADY left by cancelling or by being paused when
+their free month ran out with no card, from the moment they left (`vp_prospects.cancelled_at` or `paused_at`), never from
+today and never for a venue that is back on. The Worker change on the same branch stamps it for new ones, clears it when a
+card brings a paused prospect back, and the sweep now includes `free_month_ended`. Data only: no table, column, policy or
+grant, so RLS-BASELINE.json does not change. Either order with the Workers. NUMBER: 152 to 154 are on other branches and
+tonight's agents take 155 onwards, so 160 (renumber at merge if taken). Branch `fix/account-review-8nov`. NOT RUN.
+Read-back and rollback in the file. Dean, 5 Nov 2026 (INBOX item 54): player details deleted after 90 days, the venue's OWN details
+kept and hidden, never deleted; the file now also re-comments `player_data_purged_at` as the HELD marker the rejoin flow will read.
+
+`venueplay-164-host-updates-optin.sql` (Dean, 5 Nov 2026, INBOX item 21a, host sign-in asks for an email for product
+updates): one new table, `vp_host_updates_optin`, one row per login (auth_user_id): email, opted_in (default false),
+consent_at, consent_text (the exact tick wording), source ('host-sign-in'), asked_at (so a host who skips is asked at most
+once every 30 days) and updated_at. A check keeps an email only with a tick. RLS on, no policies, revoked from anon and
+authenticated: only the billing Worker's service role reaches it. Unsubscribes stay in `vp_unsubscribes`. RLS-BASELINE.json
+CHANGES (one new table): after it is run, re-dump it with `python3 venueplay-backend/tools/dump-rls-baseline.py` and
+commit (NEEDS DEAN). Either order with the billing Worker: before it runs, /account/updates-ask answers {ask:false} and the
+console shows nothing. NUMBER: 152 to 154 are on other branches, tonight's agents take 155 onwards and 160 is on this
+branch, so 164 (renumber at merge if taken). Branch `fix/host-updates-optin-8nov`. NOT RUN. Read-back and rollback in the file.
+ NUMBER CLASH NOTE: first written as 161, renumbered 164 because 161 is the venue rating (fix/venue-rating-8nov).
+
 `venueplay-162-help-faq-offer-grace.sql` (Dean, 5 Nov 2026, THE 5-DAY OFFER GRACE): words only. The help FAQ's "Billing and
 players" answer (vp_help_faq, id d3a64ff4-...) now says a free month that ends with no card pauses the games, and a card
 switches them back on. The 5-day grace is NOT announced (Dean, 5 Nov 2026, builds INBOX 55c; changed on fix/self-serve-restart-10nov). Guarded: it changes the

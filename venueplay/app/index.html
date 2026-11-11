@@ -768,6 +768,7 @@
 <script src="vp-tvpaired.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
+<script src="vp-updates-optin.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="vp-permits.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -876,6 +877,10 @@
   /* ?guide=1 (the welcome emails' "Open your setup guide"): a guide closed earlier on this device opens
      again for a new venue. Read once at load, because signing in can tidy the address bar. */
   window.__vpWantGuide = /[?&]guide=1(&|$)/.test(window.location.search||"");
+  /* ?come-back=1 (the leaving emails' "Come back" link, the self-serve restart, INBOX 54.3): once signed in, the
+     venue's owner goes to Your account, where the one-tap restart is. Read at load, because signing in can tidy the
+     address bar. ?venue= rides along so a group lands on the venue the email named. */
+  window.__vpWantComeBack = /[?&]come-back=1(&|$)/.test(window.location.search||"") ? String(window.location.search||"") : "";
   // ---- read ?tv=CODE from the URL and remember the pairing ----
   (function(){
     var m=/[?&]tv=([^&]+)/.exec(window.location.search);
@@ -993,6 +998,10 @@
          Workers and the database refuse it all of them. So it goes to its own page instead of
          being shown a console that can only say no. Decided by VP.homeHref, in one place. */
       try{ if(VP.homeHref && VP.homeHref(ctx)==="marketing.html"){ window.location.href="marketing.html"; return; } }catch(e){}   // never let a routing nicety stop a host reaching their games
+      if(window.__vpWantComeBack && (ctx.role==="owner" || ctx.role==="manager")){
+        var cbv=(window.__vpWantComeBack.match(/[?&]venue=([0-9a-fA-F-]{36})/)||[])[1];
+        window.location.href="billing.html?come-back=1"+(cbv ? "&venue="+cbv : ""); return;
+      }
       $("headerTag").textContent="";
       $("hactions").style.display="flex"; // owner can reach their account/hosts from anywhere
       greetOnce(ctx);
@@ -1635,6 +1644,10 @@
     }
     /* A VENUE SET UP FOR A PROSPECT ticks section 6 before its first game: one card in place of the game
        picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
+    /* PRODUCT UPDATES BY EMAIL (Dean, 5 Nov 2026, INBOX item 21a): after their name and mobile and the venue pick,
+       a staff login (never HQ View as) may be offered a card at the foot of the screen, at most once a month, when
+       the billing Worker says so. It never blocks the console, and it asks once per page load. */
+    if(window.VPUpdatesOptin && VPUpdatesOptin.wants(__ctx) && window.VP && VP.getClient){ try{ VPUpdatesOptin.maybe(__ctx, { client:VP.getClient() }); }catch(e){} }
     if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
     if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
     /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new

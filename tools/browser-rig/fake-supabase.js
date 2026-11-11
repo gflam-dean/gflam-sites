@@ -68,9 +68,10 @@
         return 0;
       });
     }
+    var total = rows.length;   // count:'exact' is the whole match, before the range, as PostgREST answers it
     if (this.off) rows = rows.slice(this.off);
     if (this.lim != null) rows = rows.slice(0, this.lim);
-    return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: rows.length });
+    return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: (this.off || this.lim != null) ? total : rows.length });
   };
   function session() {
     return SIGNED_IN ? { access_token: 'fake-token', user: { id: window.__FAKE_UID, email: 'host@test.local', phone: PHONE, user_metadata: META } } : null;

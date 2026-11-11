@@ -118,8 +118,9 @@ try:
                 ok('%d: the tabs sit in no more than two rows' % w, 1 <= m.get('rows', 0) <= 2, m.get('rows'))
             want = (tab == 'billing')
             ok('%d %s: the plan summary is %s' % (w, tab, 'shown' if want else 'not shown'), m.get('summary') is want, m.get('summary'))
-            ok('%d %s: the billing intro ("Your plan, venues, hosts and next payment") is %s' % (w, tab, 'shown' if want else 'not shown'),
-               m.get('intro') is want and (not want or 'next payment' in m.get('introText', '')), (m.get('intro'), m.get('introText', '')[:60]))
+            # 5 Nov 2026, INBOX item 35: the description paragraph under "Your account" is cut, on every tab.
+            ok('%d %s: no description paragraph under "Your account" (Dean: the heading is self-explanatory)' % (w, tab),
+               m.get('intro') is False, (m.get('intro'), m.get('introText', '')[:60]))
             # Billing alone is about the group (Dean, 6 Nov 2026): the drop-down gives way there to "You're looking at the group".
             ok('%d %s: %s' % (w, tab, 'the drop-down gives way to "You\'re looking at the group"' if tab == 'billing' else 'the venue drop-down above the tabs is still there'),
                (m.get('pick') is False and m.get('group') is True) if tab == 'billing' else (m.get('pick') is True and m.get('group') is False), [m.get('pick'), m.get('group')])

@@ -208,7 +208,8 @@
     ".vpp-field input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;min-height:42px;color-scheme:dark}" +
     ".vpp-field input[type=date]::-webkit-date-and-time-value{text-align:left}" +
     ".vpp-save{border:none;border-radius:12px;padding:11px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s;" +
-    "background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);text-transform:uppercase;letter-spacing:.04em}" +
+    /* Sentence case like every other button on Your account and Game settings (INBOX item 21f/g, 5 Nov 2026). */
+    "background:var(--pink);color:#fff;box-shadow:0 6px 16px rgba(255,31,142,.28)}" +
     ".vpp-save:hover{background:var(--pink-deep)}.vpp-save:disabled{opacity:.5;cursor:not-allowed}" +
     ".vpp-notneeded{font-size:12px;color:var(--gold);margin:0 0 12px;line-height:1.5}" +
     ".vpp-clear{margin-left:10px;background:none;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 14px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer}" +

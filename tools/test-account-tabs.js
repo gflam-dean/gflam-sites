@@ -50,13 +50,16 @@ var ledeTag = (HTML.match(/<p [^>]*id="lede"[^>]*>/) || [''])[0];
 
 check('the page has its seven tabs, in order', TABS.map(function (t) { return t.id; }).join(',') === 'billing,people,nights,screen,draws,marketing,settings', TABS);
 check('every tab has its own panel (tp-<tab>)', TABS.every(function (t) { return PANELS.indexOf('tp-' + t.id) >= 0; }) && PANELS.length === TABS.length, PANELS);
-check('the owner\'s billing intro is marked billing-only in the markup', /class="[^"]*\bbillonly\b/.test(ledeTag), ledeTag);
+/* 5 Nov 2026, INBOX item 35: the owner's intro under "Your account" is cut. The paragraph stays, empty and hidden, for a
+   manager's line (what the owner has switched on for them). */
+var ledeInner = HTML.slice(HTML.indexOf(ledeTag) + ledeTag.length, HTML.indexOf('</p>', HTML.indexOf(ledeTag)));
+check('the owner\'s intro under "Your account" is gone: the paragraph is empty and starts hidden', !!ledeTag && /\bhidden\b/.test(ledeTag) && ledeInner.trim() === '', [ledeTag, ledeInner]);
 
 /* A fake DOM: elements with a classList, attributes and hidden. */
 function El(id, attrs) {
   var cls = {};
   var e = {
-    id: id, hidden: false, attrs: attrs || {},
+    id: id, hidden: false, attrs: attrs || {}, textContent: '',
     getAttribute: function (k) { return this.attrs.hasOwnProperty(k) ? this.attrs[k] : null; },
     classList: {
       add: function (c) { cls[c] = true; }, remove: function (c) { delete cls[c]; },
@@ -102,13 +105,14 @@ if (src) {
     showTab(t.id);
     var s = state();
     check(t.label + ': its button is the one lit, and its panel the one shown', s.on.join() === t.id && s.shown.join() === 'tp-' + t.id, s);
-    check(t.label + ': the billing intro is ' + (t.id === 'billing' ? 'shown' : 'hidden'), s.ledeHidden === (t.id !== 'billing'), s);
+    check(t.label + ': no owner intro under the heading (item 35)', s.ledeHidden === true, s);
     check(t.label + ': the venue drop-down above the tabs is left as it was', s.pickHidden === false, s);
   });
   showTab('people'); showTab('billing');
-  check('back to Billing from another tab: the intro comes back', state().ledeHidden === false, state());
+  check('back to Billing from another tab: still no owner intro', state().ledeHidden === true, state());
 
-  build('');   // a manager: gateSections takes "billonly" off their intro
+  build('');   // a manager: gateSections takes "billonly" off their intro and writes what they can do
+  DOM.byId.lede.textContent = 'Set up your screen for your venues.';
   ['people', 'screen', 'draws', 'marketing', 'billing'].forEach(function (id) {
     showTab(id);
     check('a manager\'s intro (no billonly) stays on the ' + id + ' tab', state().ledeHidden === false, state());

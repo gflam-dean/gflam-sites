@@ -115,6 +115,10 @@
   "checks": 178,
   "counted_by": "total"
  },
+ "tools/account-review-in-chrome.test.py": {
+  "checks": 92,
+  "counted_by": "lines"
+ },
  "tools/account-structure-in-chrome.test.py": {
   "checks": 71,
   "counted_by": "lines"
@@ -451,8 +455,16 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/test-account-people-mobiles.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
  "tools/test-account-ready.js": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-account-standing.js": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/test-account-tabs.js": {
@@ -480,7 +492,7 @@
   "counted_by": "lines"
  },
  "tools/test-archived-venue-restore.js": {
-  "checks": 14,
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/test-audit-search.js": {
@@ -673,6 +685,10 @@
  },
  "tools/test-help-triage-truth.js": {
   "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-host-updates-optin.js": {
+  "checks": 58,
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {
@@ -916,7 +932,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 80,
+  "checks": 97,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1045,6 +1061,10 @@
  },
  "tools/test-screens-14-oct.js": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-self-serve-restart.js": {
+  "checks": 143,
   "counted_by": "lines"
  },
  "tools/test-session-lifecycle-client.js": {
