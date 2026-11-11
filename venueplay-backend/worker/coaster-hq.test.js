@@ -309,7 +309,9 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   var mr = await vprMonthlySweep(ENV, T, { anyTime: true });
   var mTargets = auditOf('monthly_report_sent').concat(auditOf('monthly_report_skipped')).map(function (a) { return a.target; });
   check('the monthly report email, run at any time: it went through every active venueplay venue and only those (' + DB.vp_venues.filter(function (v) { return v.status === 'active'; }).length + '), never a coaster id, never reading the coaster tables',
-    mr && (mr.sent + mr.skipped) === DB.vp_venues.filter(function (v) { return v.status === 'active'; }).length && mTargets.length >= 1 && mTargets.every(function (t) { return t.indexOf('month-report:' + cv.id + ':') === 0; }) &&
+    /* Counted from the audit rows, not this call's own tally: a scheduler run inside Dean's send window (the first
+       7 weekdays, 9 to 12 or 2 to 5) has already done this month's reports, and then this call has nothing left. */
+    mr && !mr.off && mTargets.filter(function (t, i) { return mTargets.indexOf(t) === i; }).length === DB.vp_venues.filter(function (v) { return v.status === 'active'; }).length && mTargets.length >= 1 && mTargets.every(function (t) { return t.indexOf('month-report:' + cv.id + ':') === 0; }) &&
     coasterReads().length === 0 && sent.slice(sentBefore).every(function (m) { return !COASTER_WORDS.test(JSON.stringify(m)); }), [mr, mTargets, coasterReads().length]);
   LOG = [];
   var quietList = await call('/autopilot/prospects/quiet', undefined, AP, 'GET');
@@ -330,7 +332,10 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   while ((m = rx.exec(SRC))) cuts.push({ name: m[1], at: m.index });
   var tops = [], rxTop = /^(?:async\s+function|function|const|let|var|class|export)\b/mg, mt;
   while ((mt = rxTop.exec(SRC))) tops.push(mt.index);
-  function bodyOf(c) { var end = SRC.length; for (var t = 0; t < tops.length; t++) if (tops[t] > c.at) { end = tops[t]; break; } return SRC.slice(c.at, end); }
+  /* Comments are words, not reads: a section's opening comment that NAMES the coaster tables lands at the end of the
+     function before it, so bodies are read without their comments. */
+  function bodyOf(c) { var end = SRC.length; for (var t = 0; t < tops.length; t++) if (tops[t] > c.at) { end = tops[t]; break; }
+    return SRC.slice(c.at, end).replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:'"\\])\/\/[^\n]*/g, '$1'); }
   var FN = {}; cuts.forEach(function (c) { FN[c.name] = bodyOf(c); });
   var si = SRC.indexOf('  async scheduled(event, env, ctx) {'), se = SRC.indexOf('\n  },\n};', si);
   FN['(the nightly scheduled handler)'] = si >= 0 && se > si ? SRC.slice(si, se) : '';

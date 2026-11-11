@@ -50,7 +50,7 @@ pass('/gflamx is not the gflam link', VO.isGflam('/gflamx') === false && VO.isGf
 /* The drink coaster's "From a venue? Click here" (Dean, 4 Nov 2026, /live-here-now v2): the same rule. */
 var co = VO.forPath('/coaster', utc(2026, 11, 4, 2));
 pass('/coaster on 4 November shows the November row and its code (today\'s offer, never the home page)', co.key === 'nov' && co.row.code === 'OFFER-NOV-2026', co);
-pass('/coaster/ in December shows December', VO.forPath('/coaster/', utc(2026, 12, 3)).key === 'dec');
+pass('/coaster/ in December shows exactly what /gflam/ shows that day (the same month rule, INBOX 159 included)', VO.forPath('/coaster/', utc(2026, 12, 3)).key === VO.forPath('/gflam/', utc(2026, 12, 3)).key && !!VO.forPath('/coaster/', utc(2026, 12, 3)).row);
 pass('/coaster past the last row shows an ENDED row', VO.forPath('/coaster', utc(2027, 4, 4)).row.ended === true);
 pass('/coasterx is not the coaster link', VO.isCoaster('/coasterx') === false && VO.isCoaster('/coaster') === true);
 
