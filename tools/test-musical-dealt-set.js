@@ -57,6 +57,7 @@ function cardTitles(){ var t=[]; DB.vp_cards.forEach(function(c){ (c.cells||[]).
        titles.length > 0 && titles.every(function(t){ return pubTitles[t]; }), titles.filter(function(t){ return !pubTitles[t]; }).slice(0, 3).join(', '));
   show('the game is NOT played off the older playlist', !DB.vp_games.some(function(g){ return g.config && g.config.playlist_id === OLD_PL; }));
   show('from_paper is false (no printed cards): the console keeps the playlist it showed', r.body.from_paper === false, String(r.body.from_paper));
+  show('the stored playlist was right first time: the deal-time guard had nothing to catch (no mismatch logged)', !DB.vp_admin_audit.some(function(a){ return a.action === 'musical_playlist_mismatch'; }), JSON.stringify(DB.vp_admin_audit).slice(0, 160));
 
   print('\nSurprise Mix twice: two draws, two sets');
   reset();
