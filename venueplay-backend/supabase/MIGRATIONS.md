@@ -636,8 +636,11 @@ branch, so 164 (renumber at merge if taken). Branch `fix/host-updates-optin-8nov
 
 `venueplay-162-help-faq-offer-grace.sql` (Dean, 5 Nov 2026, THE 5-DAY OFFER GRACE): words only. The help FAQ's "Billing and
 players" answer (vp_help_faq, id d3a64ff4-...) now says a free month that ends with no card pauses the games, and a card
-switches them back on. The 5-day grace is NOT announced (Dean, 5 Nov 2026, builds INBOX 55c; changed on fix/self-serve-restart-10nov). Guarded: it changes the
-row only if the answer is still migration 106's, so an HQ edit is never overwritten. The grace itself needs NO column or table
+switches them back on. The 5-day grace is NOT announced (Dean, 5 Nov 2026, builds INBOX 55c; changed on fix/self-serve-restart-10nov).
+REWRITTEN 11 Nov 2026 (INBOX 246, fix/migration-162-15nov): the first version guarded on migration 106's words, but 113 had
+rewritten the answer on 22 Oct, so it would have been a silent no-op. It now guards on 113's words (the live words, read back
+11 Nov), APPENDS Dean's approved sentence, and a DO block RAISES if the live answer is neither 113's words nor the finished
+words. Running it twice appends once. check-migrations-live.py now compares a guarded update's guard with the live row. The grace itself needs NO column or table
 (the Worker counts five days from vp_prospects.free_month_ends_at, migration 127), and no Worker waits for this file. No
 policy or grant changes, so RLS-BASELINE.json does not change. NUMBER: 162 given by the main session (153 live-here-now, 155
 security, 160 account-review, 161 venue rating). Branch `fix/offer-grace-10nov`. NOT RUN. Read-back and rollback in the file.

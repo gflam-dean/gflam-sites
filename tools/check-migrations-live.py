@@ -24,6 +24,13 @@ read-only, whether each thing is there:
 Only GETs, with the service key from ~/.gflam-migrate.env (NEW_SUPABASE_URL, NEW_SERVICE_KEY).
 The key is read into memory and sent as a header; it is never printed, logged or written.
 
+A GUARDED data update ("update T set C = '<new>' where id = '<row>' and C = '<old>'", INBOX 246,
+11 Nov 2026) has its guard compared with the live row: GET /rest/v1/T?select=C&id=eq.<row>. The
+live words equal the guard (it will change the row) or equal what it sets (already run): green.
+Anything else is RED "Migration NNN guard no longer matches live: rewrite it", because such a
+migration would change nothing and say nothing. The first 162 was exactly that: it guarded on
+106's words after 113 had rewritten the row.
+
 A missing table (PGRST205) or column (42703) is RED: "Migration NNN is not live yet: Dean runs
 it first". An answer that is neither yes nor a clear no (no key, no network, a 500) is RED too,
 because "could not ask" is not "it is there". A migration that only changes policies, indexes,
@@ -200,6 +207,97 @@ def parse(sql):
     return out
 
 
+def _lits(sql):
+    """Comments out; every quoted literal swapped for a token __LITn__, the literal kept (with ''
+    undone) in a list. So a statement can be read for its shape without a word inside a string
+    (a 'where' in an answer) ever being read as SQL, and the literal is still there to compare."""
+    out, lits, i, n = [], [], 0, len(sql)
+    while i < n:
+        if sql[i:i + 2] == '--':
+            j = sql.find('\n', i)
+            i = n if j < 0 else j
+            continue
+        if sql.startswith('/*', i):
+            j = sql.find('*/', i + 2)
+            i = n if j < 0 else j + 2
+            out.append(' ')
+            continue
+        if sql[i] == "'":
+            j, buf = i + 1, []
+            while j < n:
+                if sql[j] == "'" and j + 1 < n and sql[j + 1] == "'":
+                    buf.append("'")
+                    j += 2
+                    continue
+                if sql[j] == "'":
+                    break
+                buf.append(sql[j])
+                j += 1
+            out.append(' __LIT%d__ ' % len(lits))
+            lits.append(''.join(buf))
+            i = j + 1
+            continue
+        out.append(sql[i])
+        i += 1
+    return ''.join(out), lits
+
+
+def guards(sql):
+    """Every GUARDED data update: "update T set C = '<new>' ... where id = '<row>' and C2 = '<old>' ...".
+    Returns [{'table', 'key': (col, value), 'guard': {col: old}, 'sets': {col: new literal}}].
+    The guard is every "col = 'literal'" in the where clause other than the row key (id). A migration
+    like this only changes the row while the live words are still the guard's words; if someone
+    rewrote that row since (migration 113 did, for 162), it silently changes nothing. INBOX 246."""
+    s, lits = _lits(sql)
+    lit = lambda tok: lits[int(tok)]
+    out = []
+    for m in re.finditer(r'\bupdate\s+(?:only\s+)?(' + IDENT + r')\s+(?:as\s+)?(?:\w+\s+)?set\b(.*?)\bwhere\b(.*?)(?:;|\bend\s+if\b|$)',
+                         s, re.I | re.S):
+        schema, table = _name(m.group(1))
+        if schema != 'public':
+            continue
+        sets = dict((a.group(1).lower(), lit(a.group(2))) for a in
+                    re.finditer(r'(?:^|,)\s*"?(\w+)"?\s*=\s*__LIT(\d+)__\s*(?=,|$)', m.group(2).strip(), re.S))
+        conds = dict((a.group(1).lower(), lit(a.group(2))) for a in
+                     re.finditer(r'(?:^|\band\b)\s*(?:\w+\.)?"?(\w+)"?\s*=\s*__LIT(\d+)__', m.group(3).strip(), re.I))
+        if 'id' not in conds or len(conds) < 2:
+            continue
+        out.append({'table': table, 'key': ('id', conds.pop('id')), 'guard': conds, 'sets': sets})
+    return out
+
+
+def check_guards(gs, get):
+    """[(what, verdict, detail)] for each guarded update: read the row (GET, select the guard columns,
+    id=eq.<row>) and compare. 'matches' (the guard is the live words: it will change the row),
+    'applied' (the live words are already what it sets), 'stale' (neither: it would change nothing),
+    'unknown' (no clear answer)."""
+    res = []
+    for g in gs:
+        cols = sorted(g['guard'])
+        path = '%s?select=%s&%s=eq.%s' % (g['table'], ','.join(cols), g['key'][0], urllib.parse.quote(g['key'][1], safe=''))
+        what = 'guard on %s %s' % (g['table'], g['key'][1])
+        st, body = get(path)
+        try:
+            rows = json.loads(body) if st == 200 else None
+        except Exception:
+            rows = None
+        if not isinstance(rows, list):
+            res.append((what, 'unknown', 'HTTP %s %s' % (st, _code(body))))
+            continue
+        if not rows:
+            res.append((what, 'stale', 'no live row %s' % g['key'][1]))
+            continue
+        row = rows[0]
+        if all(row.get(c) == g['guard'][c] for c in cols):
+            res.append((what, 'matches', ''))
+        elif all(c in g['sets'] and row.get(c) == g['sets'][c] for c in cols):
+            res.append((what, 'applied', ''))
+        else:
+            diff = [c for c in cols if row.get(c) != g['guard'][c]]
+            res.append((what, 'stale', 'live %s is not the words the guard expects' % ', '.join(diff)))
+    return res
+
+
 def plan(parsed):
     """[(what, kind, path)]: kind 'rest' (a GET of /rest/v1/<path>), 'rows' (the same, must have a row)
     or 'rpc' (the name must be a /rpc/ path in the schema document). A column of a table this same
@@ -337,6 +435,28 @@ def judge(root, migrations, get):
         p = parse(sql)
         asks = plan(p)
         side = []
+        gs = guards(sql)
+        if gs:
+            if not get:
+                out.append((num, False, 'Migration %03d cannot be checked: NEW_SUPABASE_URL and NEW_SERVICE_KEY are not '
+                            'both in ~/.gflam-migrate.env, so nobody can say its guard matches live' % num))
+                continue
+            gres = check_guards(gs, get)
+            stale = [w + (' (%s)' % d if d else '') for w, v, d in gres if v == 'stale']
+            gunk = [w + ' (%s)' % d for w, v, d in gres if v == 'unknown']
+            if stale:
+                out.append((num, False, 'Migration %03d guard no longer matches live: rewrite it. %s'
+                            % (num, ', '.join(stale[:3]))))
+                continue
+            if gunk:
+                out.append((num, False, 'Migration %03d guard could not be compared with live (the database did not '
+                            'answer): %s' % (num, ', '.join(gunk[:3]))))
+                continue
+            gline = '; '.join('%s %s' % (w, 'matches live' if v == 'matches' else 'already applied live') for w, v, _ in gres)
+            if not asks:
+                out.append((num, True, 'Migration %03d data change: %s' % (num, gline[:220])))
+                continue
+            side.append(gline[:160])
         if p['outside']:
             side.append('%s cannot be probed (not in the public schema)' % ', '.join(p['outside'][:3]))
         if p['unseen']:

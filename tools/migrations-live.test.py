@@ -130,8 +130,88 @@ n, good, line = judge_sql('drop policy if exists p on vp_venues;\ncreate policy 
                           'create index if not exists i on vp_venues (name);', live)
 ok('policy and index only: "cannot be probed (policy/index only)", not failed',
    good and 'cannot be probed (policy/index only)' in line, line)
-n, good, line = judge_sql(real(162), live, 162)
-ok('a data-only update: "cannot be probed (data change only", not failed', good and 'cannot be probed (data change only' in line, line)
+n, good, line = judge_sql("update public.vp_venues set name = 'x' where name = 'y';", live)
+ok('a data-only update with no row guard: "cannot be probed (data change only", not failed',
+   good and 'cannot be probed (data change only' in line, line)
+
+print('\nA guarded data update is compared with the live row (INBOX 246)')
+
+
+class FakeRows:
+    """{table: {id: {col: value}}}: answers GET T?select=a,b&id=eq.X the way PostgREST does."""
+    def __init__(self, data, broken=False):
+        self.data, self.broken, self.asked = data, broken, []
+
+    def __call__(self, path, accept='application/json'):
+        self.asked.append(path)
+        if self.broken:
+            return 500, b'{"message":"upstream"}'
+        table, _, query = path.partition('?')
+        if table not in self.data:
+            return 404, b'{"code":"PGRST205"}'
+        q = dict(kv.split('=', 1) for kv in query.split('&') if '=' in kv)
+        rid = cml.urllib.parse.unquote(q.get('id', '')[3:])
+        sel = q.get('select', '').split(',')
+        row = self.data[table].get(rid)
+        return 200, json.dumps([dict((c, row.get(c)) for c in sel)] if row else []).encode()
+
+
+import re as _re
+FAQ = 'd3a64ff4-0b24-5073-be9a-32f85519ec1b'
+SENTENCE = ('If your free month ends with no card on your account, your games pause. Your TV keeps showing your ads '
+            'and nothing is lost. Adding a card switches everything back on.')
+w113 = cml.guards(real(113))
+W113 = [g for g in w113 if g['key'][1] == FAQ][0]['sets']['answer']
+W106 = [g for g in w113 if g['key'][1] == FAQ][0]['guard']['answer']
+g162 = cml.guards(real(162))
+ok('162 is read as ONE guarded update of vp_help_faq %s, guarded on answer' % FAQ[:8],
+   len(g162) == 1 and g162[0]['table'] == 'vp_help_faq' and g162[0]['key'] == ('id', FAQ)
+   and list(g162[0]['guard']) == ['answer'], g162)
+ok("162's guard is migration 113's words (the live words), not 106's",
+   g162 and g162[0]['guard']['answer'] == W113 and W113 != W106, g162 and g162[0]['guard']['answer'][:80])
+ok("162 sets 113's words plus Dean's sentence, appended once at the end, and the grace is not in it",
+   g162 and g162[0]['sets']['answer'] == W113 + ' ' + SENTENCE and g162[0]['sets']['answer'].count(SENTENCE) == 1
+   and not _re.search(r'grace|5[- ]day|five days', g162[0]['sets']['answer'], _re.I), g162 and g162[0]['sets'])
+
+
+def run162(answer):
+    """Postgres-free run of 162 against one row: the update (only on the guard's exact words), then the
+    DO block's check (raises unless the row now holds the new words). (answer after, raised)."""
+    g = g162[0]
+    if answer == g['guard']['answer']:
+        answer = g['sets']['answer']
+    s, lits = cml._lits(real(162))
+    do = _re.search(r'\bdo\s+\$\$(.*?)\$\$', s, _re.S | _re.I)
+    want = [lits[int(t)] for t in _re.findall(r'and\s+answer\s*=\s*__LIT(\d+)__', do.group(1))] if do else []
+    raised = not (want and answer == want[0])
+    return answer, raised and 'raise exception' in (do.group(1) if do else '')
+
+
+a1, r1 = run162(W113)
+a2, r2 = run162(a1)
+ok('run against the live words (113): the sentence is appended, no raise', a1 == W113 + ' ' + SENTENCE and not r1, (a1[-80:], r1))
+ok('run twice: still appended once, no raise', a2 == a1 and a2.count(SENTENCE) == 1 and not r2, (a2.count(SENTENCE), r2))
+a3, r3 = run162(W106)
+ok("run against words HQ or another migration changed (106's): nothing changes and it RAISES", a3 == W106 and r3, r3)
+
+n, good, line = judge_sql(real(162), FakeRows({'vp_help_faq': {FAQ: {'answer': W113}}}), 162)
+ok('162 against a live row holding 113\'s words: green, "matches live"', good and 'matches live' in line, line)
+n, good, line = judge_sql(real(162), FakeRows({'vp_help_faq': {FAQ: {'answer': W113 + ' ' + SENTENCE}}}), 162)
+ok('162 against a live row it has already changed: green, "already applied live"', good and 'already applied live' in line, line)
+old162 = real(162).replace(W113.replace("'", "''") + "';", W106.replace("'", "''") + "';", 1)
+n, good, line = judge_sql(old162, FakeRows({'vp_help_faq': {FAQ: {'answer': W113}}}), 162)
+ok('THE FIRST 162 (guarded on 106\'s words) against the live 113 row: RED "Migration 162 guard no longer matches live: rewrite it"',
+   not good and line.startswith('Migration 162 guard no longer matches live: rewrite it'), line)
+n, good, line = judge_sql(real(162), FakeRows({'vp_help_faq': {}}), 162)
+ok('a guarded update whose row is gone: RED', not good and 'guard no longer matches live' in line, line)
+n, good, line = judge_sql(real(162), FakeRows({}, broken=True), 162)
+ok('a database that answers 500 on the guard: RED, never green', not good and 'could not be compared' in line, line)
+n, good, line = judge_sql(real(162), None, 162)
+ok('no key: a guarded update is RED, says why', not good and 'NEW_SERVICE_KEY' in line, line)
+fk = FakeRows({'vp_help_faq': {FAQ: {'answer': W113}}})
+judge_sql(real(162), fk, 162)
+ok('the guard is asked with one read-only select of the guard column by id', fk.asked == [
+   'vp_help_faq?select=answer&id=eq.' + FAQ], fk.asked)
 n, good, line = judge_sql('-- live-probe: vp_venues?select=id&limit=1\nupdate vp_venues set name = name;', live)
 ok('a documented live-probe that finds a row: green', good and 'probe vp_venues' in line, line)
 n, good, line = judge_sql('-- live-probe: vp_help_blocklist?select=id&limit=1\ninsert into vp_help_blocklist (kind) values (1);', live)
@@ -198,7 +278,7 @@ ok('the gate (D55, the local half the pre-push hook runs) runs it and is red unl
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 27
+EXPECTED = 40
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
