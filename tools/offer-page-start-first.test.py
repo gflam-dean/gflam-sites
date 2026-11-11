@@ -295,6 +295,14 @@ ok('note 8: a hidden field really disappears (.field is a flex box, so [hidden] 
 ok('note 9: no line treats a host as a cost ("hired trivia host", "no host to hire", "nobody needs a mic voice"), and "Whoever\'s on shift can host" is there',
    not re.search(r'hired trivia host|host to hire|needs a mic voice|replaces the paper bingo books and the', VIS, re.I) and "Whoever's on shift can host" in VIS,
    re.findall(r'.{30}(?:hired|host to hire|mic voice).{20}', VIS)[:2])
+# note 9 on the home page too (INBOX 213, 11 Nov 2026: never knock hosts; index.html had both lines left)
+IVIS = re.sub(r'<script.*?</script>|<style.*?</style>|<!--.*?-->', ' ', IDX[IDX.index('<body'):], flags=re.S)
+IVIS = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', re.sub(r'</?(?:span|b|i|em|strong)\b[^>]*>', '', IVIS))).replace('&rsquo;', "'").replace('&#39;', "'")
+HOST_COST = r'hired (?:trivia )?host|host to hire|no host needed to run|needs a mic voice|replaces the paper bingo books and the|paying a trivia host|instead of a host|save on a host'
+ok('note 9 on the home page: no line treats a trivia host as a cost, and the strip says "One screen runs your trivia, musical bingo, bingo and raffles."',
+   not re.search(HOST_COST, IVIS, re.I) and 'One screen runs your trivia, musical bingo, bingo and raffles.' in IVIS
+   and "Whoever's on shift presses go. Calls, cards and winner checks are handled for you." in IVIS,
+   re.findall(r'.{30}(?:' + HOST_COST + r').{20}', IVIS, re.I)[:2])
 # note 11, 12, 13
 ok('note 11: "your usual crowd", not "your usual max"', 'on your usual crowd' in VIS and 'usual max' not in VIS)
 ok('note 12: "Samsung and LG TV apps are coming soon" in what you get and in the "What do I need" answer', VIS.count('Samsung and LG TV apps are coming soon.') == 2)
