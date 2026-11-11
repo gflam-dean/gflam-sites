@@ -11,6 +11,10 @@ the rig's fake database only; nothing is sent anywhere.
      that button carries the same month on.
   3. Never signed in: Dean's words with no date ("We'll switch it off and stop the reminders.").
 Read as a venue reads it (innerText), at desktop and phone width; no script errors.
+  4. (INBOX 235, a live fault: Bodalla Pub's cancel reached nobody) every cancel and every "Keep my free month going"
+     through the page tells us: the Worker hands the fake Resend one "CANCELLED VENUE: <name> (free month)" or
+     "CANCEL UNDONE: <name> (free month)" email for EACH address on VPA_CANCEL_ALERTS and writes a venue_cancel_alert
+     audit row. Recipients are compared with the Worker's own list, never printed.
 
 The end dates are FIXED (2099), never worked out from today's clock.
 
@@ -71,6 +75,23 @@ READ = ('JSON.stringify({head:document.getElementById("head").textContent, lede:
         'errs:(window.__errs||[]).length, wide:document.documentElement.scrollWidth>window.innerWidth})')
 
 
+def alert_list():
+    """VPA_CANCEL_ALERTS as the Worker has it, read off the source (compared, never printed)."""
+    src = open(os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js'), encoding='utf-8').read()
+    return sorted(re.findall(r"'([^']+)'", re.search(r'const VPA_CANCEL_ALERTS = \[([^\]]*)\];', src).group(1)))
+
+
+def alerts_since(S, n0, kind, name):
+    """The fake Resend's emails after the first n0 whose subject is '<kind>: <name> (free month)'; -> (count, to both?)."""
+    ms = [m for m in (S.W.sent() or [])[n0:] if str(m.get('subject', '')).endswith(kind + ': ' + name + ' (free month)')]
+    to = sorted((m.get('to') or [''])[0] for m in ms)
+    return len(ms), to == alert_list()
+
+
+def audit_alerts(S, vid):
+    return [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'venue_cancel_alert' and a.get('target') == 'venue:' + vid]
+
+
 def page(fid):
     return '/prospect/cancel/index.html?f=%s&t=%s' % (fid, token(fid))
 
@@ -99,6 +120,8 @@ def main():
         # 2. The button: cancelled, still on until 20 November, and "Keep my free month going" carries it on.
         tid, sid = S.open(page('fb'), 390, 844, True)
         S.until(sid, 'document.getElementById("head").textContent.indexOf("Test Bravo")!==-1', 20)
+        n0 = len(S.W.sent() or [])
+        ok('CONTROL: VPA_CANCEL_ALERTS names two addresses and opening the page sent us nothing', len(alert_list()) == 2 and not audit_alerts(S, BRAVO), len(alert_list()))
         S.js(sid, 'document.getElementById("go").click()')
         done = S.until(sid, 'document.getElementById("head").textContent==="All done"', 20)
         d = S.json(sid, READ, {})
@@ -108,7 +131,12 @@ def main():
         pr = [p for p in S.W.table('vp_prospects') if p['venue_id'] == BRAVO][0]
         vb = [v for v in S.W.table('vp_venues') if v['id'] == BRAVO][0]
         ok('the Worker recorded the cancel and kept the venue ON', bool(pr.get('cancelled_at')) and vb.get('status') == 'active', [pr.get('cancelled_at'), vb.get('status')])
+        c, both = alerts_since(S, n0, 'CANCELLED VENUE', 'Test Bravo')
+        ok('INBOX 235: the cancel told us: "CANCELLED VENUE: Test Bravo (free month)" to both addresses, nothing to anyone else', c == 2 and both and len((S.W.sent() or [])[n0:]) == 2, [c, both])
+        aa = audit_alerts(S, BRAVO)
+        ok('INBOX 235: and a venue_cancel_alert audit row, sent', len(aa) == 1 and (aa[0].get('detail') or {}).get('outcome') == 'sent', [len(aa)])
         if SHOTS: S.shot(sid, os.path.join(SHOTS, 'trial-cancel-done-390.png'), True)
+        n1 = len(S.W.sent() or [])
         S.js(sid, 'document.getElementById("resume").click()')
         back = S.until(sid, 'document.getElementById("head").textContent==="Welcome back"', 20)
         d = S.json(sid, READ, {})
@@ -116,6 +144,8 @@ def main():
            d.get('lede') == 'Your free month at Test Bravo carries on until 20 November. We’ll remind you before it ends.' and d.get('resume') == '', d.get('lede'))
         pr = [p for p in S.W.table('vp_prospects') if p['venue_id'] == BRAVO][0]
         ok('the cancel is undone in the Worker, the end date unchanged', not pr.get('cancelled_at') and pr.get('free_month_ends_at') == '2099-11-20T13:59:59.000Z', pr)
+        c, both = alerts_since(S, n1, 'CANCEL UNDONE', 'Test Bravo')
+        ok('INBOX 235: "Keep my free month going" told us too: "CANCEL UNDONE: Test Bravo (free month)" to both', c == 2 and both and len(audit_alerts(S, BRAVO)) == 2, [c, both])
         ok('no script errors', S.js(sid, '(window.__errs||[]).length') == 0, S.js(sid, 'JSON.stringify(window.__errs||[])'))
         S.close_tab(tid)
 
@@ -125,6 +155,14 @@ def main():
         d = S.json(sid, READ, {})
         ok('never signed in: Dean\'s words with no date', d.get('lede') == DEAN_NOW, d.get('lede'))
         ok('never signed in: no 90-day line either', '90 days' not in d.get('all', ''))
+        # 4. The Bodalla case through the page: never signed in, the button, and we hear about it.
+        n2 = len(S.W.sent() or [])
+        S.js(sid, 'document.getElementById("go").click()')
+        S.until(sid, 'document.getElementById("head").textContent==="All done"', 20)
+        c, both = alerts_since(S, n2, 'CANCELLED VENUE', 'Test Bravo Two')
+        vf = [v for v in S.W.table('vp_venues') if v['id'] == FRESH][0]
+        ok('INBOX 235, the Bodalla case: never signed in, cancelled on the page, switched off, and both addresses told', c == 2 and both and vf.get('status') == 'suspended'
+           and len(audit_alerts(S, FRESH)) == 1, [c, both, vf.get('status')])
         S.close_tab(tid)
     finally:
         S.close()

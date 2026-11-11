@@ -1159,6 +1159,10 @@
   "checks": 80,
   "counted_by": "lines"
  },
+ "tools/test-trial-cancel-alert.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/test-trial-cancel.js": {
   "checks": 53,
   "counted_by": "lines"
@@ -1352,7 +1356,7 @@
   "counted_by": "lines"
  },
  "tools/trial-cancel-page-in-chrome.test.py": {
-  "checks": 21,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/trivia-demo-phone-in-chrome.test.py": {
