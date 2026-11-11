@@ -66,10 +66,10 @@ show('the one-draw chips are Usual, then the looks', /data-once="">Usual<\/butto
 show('the help words no longer offer "the draw you have today"', !/the draw you have today/.test(RH) && !/the draw you have today/.test(MH));
 show('the raffle console starts on the ticket roll', /drawStyle:"ticket", drawTime:"normal"/.test(RH));
 show('the members console starts on the flip board', /drawStyle:"flip", drawTime:"normal"/.test(MH));
-show('the raffle console reads a saved look through VPDrawStyle.usual("raffle", ...)', /if\(window\.VPDrawStyle\) G\.drawStyle=VPDrawStyle\.usual\("raffle", p\.draw_style\)/.test(fnBody(RH, 'applyRafflePrefs')), fnBody(RH, 'applyRafflePrefs').length);
+show('the raffle console reads a saved look through VPDrawStyle.usual("raffle", ...)', /if\(typeof VPDrawStyle!=="undefined"\) G\.drawStyle=VPDrawStyle\.usual\("raffle", p\.draw_style\)/.test(fnBody(RH, 'applyRafflePrefs')), fnBody(RH, 'applyRafflePrefs').length);
 show('the members console reads a saved look through VPDrawStyle.usual("members", ...)', /G\.drawStyle=VPDrawStyle\.usual\("members", p\.draw_style\)/.test(fnBody(MH, 'applyMembersPrefs')), fnBody(MH, 'applyMembersPrefs').length);
-show('the raffle draw\'s look is VPDrawStyle.lookFor("raffle", usual, one draw)', /if\(!window\.VPDrawStyle\) return ""; return VPDrawStyle\.lookFor\("raffle", G\.drawStyle, G\.styleOnce\)/.test(fnBody(RH, 'lookNow')), fnBody(RH, 'lookNow'));
-show('the members draw\'s look is VPDrawStyle.lookFor("members", usual, one draw)', /var look=window\.VPDrawStyle \? VPDrawStyle\.lookFor\("members", G\.drawStyle, G\.styleOnce\) : ""/.test(MH));
+show('the raffle draw\'s look is VPDrawStyle.lookFor("raffle", usual, one draw)', /if\(typeof VPDrawStyle==="undefined"\) return ""; return VPDrawStyle\.lookFor\("raffle", G\.drawStyle, G\.styleOnce\)/.test(fnBody(RH, 'lookNow')), fnBody(RH, 'lookNow'));
+show('the members draw\'s look is VPDrawStyle.lookFor("members", usual, one draw)', /var look=\(typeof VPDrawStyle!=="undefined"\) \? VPDrawStyle\.lookFor\("members", G\.drawStyle, G\.styleOnce\) : ""/.test(MH));
 show('neither console turns a one-draw choice into the old draw ("classic" ? "")', !/"classic" \? ""/.test(RH) && !/"classic" \? ""/.test(MH));
 show('the draw time chips always show (every look has a draw time now)', !/show\("timeField", !!G\.drawStyle\)/.test(RH) && !/\$\("timeField"\)\.classList\.toggle\("hidden", !G\.drawStyle\)/.test(MH));
 show('several winning tickets in one raffle draw still keep the classic multi-ticket draw (the looks draw one number)', /!\(G\.winnersCount>1\)/.test(RH));

@@ -861,7 +861,7 @@
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
-    var look=window.VPDrawStyle ? VPDrawStyle.lookFor("members", G.drawStyle, G.styleOnce) : "", styled=(look==="flip" || look==="race");   // never the old draw (INBOX 284)
+    var look=(typeof VPDrawStyle!=="undefined") ? VPDrawStyle.lookFor("members", G.drawStyle, G.styleOnce) : "", styled=(look==="flip" || look==="race");   // never the old draw (INBOX 284)
     /* A new look builds for the intro plus the draw time (short 6, normal 9, long 12); the old draw's own length is only a fallback. */
     var len=styled ? Math.round((VPDrawStyle.secs(G.drawTime)+VPDrawStyle.INTRO)*1000) : Math.max(2000, ((d.draw_length_seconds||4))*1000);
     var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
@@ -1265,7 +1265,7 @@
   $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
   renderOnce();
   function applyMembersPrefs(p){
-    if(p && typeof p.draw_style==="string" && window.VPDrawStyle) G.drawStyle=VPDrawStyle.usual("members", p.draw_style), G.lookSet=true;   // a stored "" (the old "As now") is the flip board (INBOX 284)
+    if(p && typeof p.draw_style==="string" && typeof VPDrawStyle!=="undefined") G.drawStyle=VPDrawStyle.usual("members", p.draw_style), G.lookSet=true;   // a stored "" (the old "As now") is the flip board (INBOX 284)
     if(p && typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
     renderLook();
     if(!p || !p.draw_id || G.round || G.busy) return;
