@@ -98,6 +98,8 @@
     if (p.free_month_ends_at) {
       var d = when(p.free_month_ends_at);
       if (st === "paused") return "Ended " + d + ", paused " + when(p.paused_at);
+      /* Cancelled part way through: it stays on to the end date, then switches off (INBOX 191). */
+      if (st === "cancelled" && p.on_until) return "Cancelled " + when(p.cancelled_at) + ", on until " + when(p.on_until);
       if (st === "free_month" && p.days_left != null && p.days_left > 0) return d + " (" + daysLeftText(p.days_left) + ")";
       return (Date.parse(p.free_month_ends_at) < Date.now() ? "Ended " : "") + d;
     }

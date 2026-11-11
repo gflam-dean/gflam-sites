@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 12:11 · 46707b5b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 14:40 · 8c06e0c8';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4730,7 +4730,8 @@ function vpaProspectStatus(r, cardOn, lastSignInMs, nowMs) {
     /* THE 5-DAY OFFER GRACE: when a paused prospect's offer price stops being kept (null: no offer, or not paused). */
     offer_kept_until: r.paused_at && vpaProspectOfferRate(r) && isFinite(vpaOfferGraceEnd(r)) ? new Date(vpaOfferGraceEnd(r)).toISOString() : null };
   if (cardOn) return Object.assign(base, { status: 'card_added' });
-  if (r.cancelled_at) return Object.assign(base, { status: 'cancelled' });
+  /* Cancelled in its free month: still on until the end date (INBOX 191.1), and HQ says so. */
+  if (r.cancelled_at) { const k = vpaTrialKeepsUntil(r, nowMs); return Object.assign(base, { status: 'cancelled', on_until: isFinite(k) ? new Date(k).toISOString() : null }); }
   if (r.paused_at) return Object.assign(base, { status: 'paused' });
   if (!r.first_signin_at && lastSignInMs == null) return Object.assign(base, { status: 'not_signed_in' });
   const endMs = Date.parse(r.free_month_ends_at || '') || (r.first_signin_at ? vpaFreeMonthEnd(Date.parse(r.first_signin_at)) : NaN);
@@ -5015,6 +5016,108 @@ function vpaProspectOfferRate(prow) {
   const r = Number(prow && prow.offer_rate);
   return r > 0 && r < VPA_STANDARD_RATE ? r : 0;
 }
+/* ========================================================================
+ * THE TRIAL CANCEL RULES (Dean, 11 Nov 2026, INBOX 191)
+ *   1. A venue that cancels DURING its free month keeps full access until the free month's end date (like a paid
+ *      venue keeps its paid month), then switches off. The reminders stop at once (the sweep skips cancelled_at).
+ *   2. The cancel screens say so: "...You can keep using venueplay until 20 November, then we'll switch it off and
+ *      stop the reminders." (vpaTrialCancelText; the same words on the cancel page and the account page.)
+ *   3. NO SECOND FREE MONTH, EVER. Back after the end date: a paid plan from day one (card needed; the card link's
+ *      Checkout has no trial once vpaProspectMonthOver). Back BEFORE it: the same free month carries on
+ *      (vpaProspectTrialResume clears cancelled_at; a card added in the month does the same).
+ *   4. The offer rate they signed up on holds only if they come back inside THAT offer's period (its code's month,
+ *      vpaProspectOfferPeriodEnd); after it, the standard rate (venue-comeback-pricing; the leeway is never published).
+ *   5. The 90-day "keep your current plan" line is for PAID venues only; a trial cancel follows 3 and 4.
+ *   6. A venue that cancels BEFORE anyone has signed in has no free month to keep: it switches off at once, and if it
+ *      comes back later it gets its free month then (it never used one).
+ * The switch-off at the end date is the hourly sweep (vpaProspectTrialSwitchOff). No new column: a cancelled row
+ * whose month has started and ended, with its venue still on and no card, is one that is due.
+ * ======================================================================== */
+/* "20 November": Dean's plain date, Brisbane. */
+function vpaPlainDateWords(ms) {
+  const d = new Date(ms + VPA_BNE_MS);
+  return d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
+}
+/* The free month's end, while a cancel KEEPS access to it: the month has started, is not paused and has not ended.
+   NaN otherwise (never signed in, paused, or over), which is "switch off now". */
+function vpaTrialKeepsUntil(prow, nowMs) {
+  if (!prow || prow.paused_at || !prow.first_signin_at) return NaN;
+  const end = vpaProspectMonthEndMs(prow);
+  return isFinite(end) && nowMs <= end ? end : NaN;
+}
+/* The cancel screen's words (rule 2). No dashes, lowercase venueplay. */
+function vpaTrialCancelText(prow, nowMs) {
+  const head = 'No problem at all, and thanks for having a look. There’s no card on your account, so nothing has been charged and nothing will be.';
+  const keep = vpaTrialKeepsUntil(prow, nowMs);
+  return isFinite(keep)
+    ? head + ' You can keep using venueplay until ' + vpaPlainDateWords(keep) + ', then we’ll switch it off and stop the reminders.'
+    : head + ' We’ll switch it off and stop the reminders.';
+}
+/* The words once it is done. keepMs: the end date while they still have access, else NaN (switched off). */
+function vpaTrialCancelledText(name, keepMs) {
+  return isFinite(keepMs)
+    ? 'venueplay for ' + name + ' is cancelled and nothing was ever charged. You can keep using it until ' + vpaPlainDateWords(keepMs) + ', then we’ll switch it off. You won’t get any more reminders.'
+    : 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.';
+}
+/* THE OFFER'S PERIOD (rule 4): the last moment of the month their offer code belongs to (vpaOfferStartDeadlineMs).
+   With no dated code recorded, the Brisbane calendar month their free month started in (or they cancelled in), as
+   the offers run a month at a time. NaN: nothing to go on. */
+function vpaProspectOfferPeriodEnd(prow, codeEndMs) {
+  if (isFinite(codeEndMs)) return codeEndMs;
+  const from = Date.parse((prow && (prow.first_signin_at || prow.cancelled_at)) || '');
+  if (!isFinite(from)) return NaN;
+  const d = new Date(from + VPA_BNE_MS);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) - VPA_BNE_MS - 1;
+}
+/* CANCEL A FREE MONTH (rules 1 and 6), for the cancel link and the account page. Writes cancelled_at (which stops
+   the reminders) and, only when there is no month to keep, switches the venue off now. -> { keepMs } */
+async function vpaProspectTrialCancel(env, prow, venue, nowMs) {
+  const at = new Date(nowMs).toISOString();
+  const keepMs = vpaTrialKeepsUntil(prow, nowMs);
+  await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
+  if (!isFinite(keepMs) && venue && venue.status === 'active') {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venue.id), { method: 'PATCH', headers: vpaHeaders(env),
+      /* closed_at starts the 90-day clock, the same as a paid venue's cancellation (INBOX item 33, 5 Nov 2026). */
+      body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled', closed_at: at }) });
+  }
+  return { keepMs: keepMs };
+}
+/* BACK BEFORE THE END DATE (rule 3): the same free month carries on, reminders and all. Only while the venue is still
+   on and the month has not ended; anything later is a paid restart. -> true when it carried on. */
+async function vpaProspectTrialResume(env, prow, venue, nowMs, actorLabel) {
+  if (!prow || !prow.cancelled_at || !venue || venue.status !== 'active') return false;
+  if (!isFinite(vpaTrialKeepsUntil(prow, nowMs))) return false;
+  await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(prow.venue_id) + '&cancelled_at=not.is.null', { cancelled_at: null });
+  await vpaAudit(env, { actorId: null, label: actorLabel || 'the venue' }, 'prospect_cancel_undone', 'venue:' + venue.id,
+    { name: venue.name || null, free_month_ends_at: prow.free_month_ends_at || null });
+  return true;
+}
+/* THE SWITCH-OFF AT THE END DATE (rule 1), from the hourly sweep. Cancelled rows whose month has ended in the last
+   VPB_RETENTION_DAYS (older ones are past the 90 days anyway), venue still on, no card: off now, the 90-day clock
+   starting now. Filtered on status=active, so a second run changes nothing. */
+async function vpaProspectTrialSwitchOff(env, nowMs) {
+  const out = [];
+  let rows;
+  const now = new Date(nowMs).toISOString(), floor = new Date(nowMs - 90 * 86400000).toISOString();
+  try {
+    rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null&first_signin_at=not.is.null' +
+      '&and=' + encodeURIComponent('(free_month_ends_at.lt."' + now + '",free_month_ends_at.gt."' + floor + '")') + '&select=*&order=venue_id.asc');
+  } catch (e) { return out; }
+  for (const p of rows || []) {
+    if (!(nowMs > vpaProspectMonthEndMs(p))) continue;
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id&limit=1');
+    const v = vr && vr[0];
+    if (!v || v.status !== 'active') continue;
+    const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
+    if (vpaProspectSignedUp(v, fr && fr[0])) continue;   // a card (or comp, invoice, group) since: theirs to keep
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id) + '&status=eq.active',
+      { status: 'suspended', suspended_reason: 'cancelled', closed_at: now });
+    await vpaAudit(env, { actorId: null, label: 'automatic (free month ended after a cancel)' }, 'prospect_switched_off', 'venue:' + v.id,
+      { name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
+    out.push(v.id);
+  }
+  return out;
+}
 /* Which reminder goes on which Brisbane day, from the first sign-in: [{ day: 3, date: '2026-11-02' }, ...]. */
 function vpaReminderPlan(firstMs) {
   const start = vpaBneDay(firstMs), out = [];
@@ -5080,7 +5183,7 @@ function vpaInSendWindow(ms, state) { return vpaSendAllowedAt(state, ms) === Mat
    (vpaOfferGraceEnd). Once the month is over (paused, or past its end) and the grace has run out, it is the
    standard rate. Not a prospect, or a prospect inside a month set up at no offer: as before, whatever is open now.
    nowMs: the moment of the card-add (Date.now() when not given), so the suite can walk the days. */
-function vpaProspectPrice(env, prow, nowMs, notStartedCode) {
+function vpaProspectPrice(env, prow, nowMs, notStartedCode, offerEndMs) {
   const now = nowMs == null ? Date.now() : nowMs;
   /* NOT SIGNED IN YET (Dean, 7 Nov 2026): no rate is decided until the first sign-in, so a card added before one is
      priced from their offer's date at this moment. An offer_rate the old setup wrote is not theirs yet and is ignored.
@@ -5090,14 +5193,15 @@ function vpaProspectPrice(env, prow, nowMs, notStartedCode) {
     return { founding: r0 < VPA_STANDARD_RATE, rate: r0 };
   }
   const offer = vpaProspectOfferRate(prow);
-  /* CANCELLED, BACK WITHIN 90 DAYS (Dean, 10 Nov 2026, INBOX 142; the free-month cancel page says "Change your mind
-     within 90 days and you keep your current plan and price"): a prospect who pressed Cancel keeps the rate they were
-     set up on for 90 days from that moment, wherever their free month got to. With the self-serve restart switched on
-     (VPB_SELF_RESTART), like the rest of the restart. A pause (no card when the month ended) is not a cancel: the
-     5-day grace below still applies to it. */
+  /* A FREE MONTH THAT WAS CANCELLED (Dean, 11 Nov 2026, INBOX 191.4; this replaces 10 Nov's 90 days, which are for
+     PAID venues only, 191.5). Back inside the month: the same month carries on at its rate (below, as before). Back
+     after it: the offer rate holds only inside THAT offer's period (offerEndMs, the end of their code's month, from
+     vpaProspectPriceNow; vpaProspectOfferPeriodEnd), else the standard rate. No 5-day grace: that is for a pause. */
   const cxMs = Date.parse((prow && prow.cancelled_at) || '');
-  if (offer && vpbRestartOn(env) && isFinite(cxMs) && now < cxMs + VPB_RETENTION_DAYS * 86400000) {
-    return { founding: true, rate: offer, kept: true };
+  if (prow && prow.first_signin_at && isFinite(cxMs) && vpaProspectMonthOver(prow, now)) {
+    const periodEnd = vpaProspectOfferPeriodEnd(prow, offerEndMs);
+    if (offer && isFinite(periodEnd) && now <= periodEnd) return { founding: true, rate: offer, kept: true };
+    return { founding: false, rate: VPA_STANDARD_RATE, grace: false, kept: false };
   }
   if (vpaProspectMonthOver(prow, now)) {
     const graceEnd = vpaOfferGraceEnd(prow);
@@ -5132,6 +5236,9 @@ async function vpaProspectPatch(env, venueId, patch) {
    row is read back so a racing writer's values are the ones used. */
 async function vpaProspectStartMonth(env, prow, atMs) {
   if (!prow || prow.first_signin_at) return prow;
+  /* CANCELLED BEFORE ANY SIGN-IN (INBOX 191.6): the venue is off, so signing in to look starts nothing. Their free
+     month is still unused, and starts when they come back (vpbRestartRun, kind prospect_fresh). */
+  if (prow.cancelled_at) return prow;
   const first = new Date(atMs).toISOString(), ends = new Date(vpaFreeMonthEnd(atMs)).toISOString();
   const code = await vpaProspectOfferCode(env, prow.venue_id);
   const rate = vpaOfferRateAt(env, code, atMs);
@@ -5151,6 +5258,8 @@ async function vpaProspectStartMonth(env, prow, atMs) {
 /* The price of a card added now, for a prospect row: one not signed in yet is priced from their offer's date. */
 async function vpaProspectPriceNow(env, prow, nowMs) {
   if (prow && !prow.first_signin_at && !prow.paused_at) return vpaProspectPrice(env, prow, nowMs, await vpaProspectOfferCode(env, prow.venue_id));
+  /* A cancelled free month: its offer's period decides the rate after the month (INBOX 191.4). */
+  if (prow && prow.cancelled_at) return vpaProspectPrice(env, prow, nowMs, undefined, vpaOfferStartDeadlineMs(await vpaProspectOfferCode(env, prow.venue_id)));
   return vpaProspectPrice(env, prow, nowMs);
 }
 /* POST /account/prospect-start { venue_id }   (the venue's owner or a manager; never HQ View as) */
@@ -5165,6 +5274,7 @@ async function vpbProspectStart(request, env, json) {
   let prow = await vpaProspectRowFor(env, 'venue_id', venueId);
   if (!prow || !('first_signin_at' in prow)) return json({ ok: true, prospect: false });
   prow = await vpaProspectStartMonth(env, prow, Date.now());
+  if (!prow.first_signin_at) return json({ ok: true, prospect: true, cancelled: !!prow.cancelled_at, first_signin_at: null });   // INBOX 191.6
   const price = await vpaProspectPriceNow(env, prow);
   return json({ ok: true, prospect: true, first_signin_at: prow.first_signin_at, free_month_ends_at: prow.free_month_ends_at,
     ends_words: vpaBneDateWords(Date.parse(prow.free_month_ends_at)), rate: price.rate, card_choice: prow.card_choice || null,
@@ -5257,10 +5367,27 @@ async function vpaProspectCancel(request, env, json) {
   const v = vr && vr[0];
   if (!prow || !v) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
   const name = vpaEsc(v.name || 'your venue');
-  if (prow.cancelled_at) return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.');
+  /* THE TRIAL CANCEL RULES (INBOX 191): the moment, read once, so the words and the write agree. */
+  const nowMs = Date.now();
+  if (prow.cancelled_at) {
+    /* BACK BEFORE THE END DATE (191.3): "Keep my free month" on the done page carries the same month on. */
+    if (request.method === 'POST' && postedForm.action === 'resume') {
+      if (await vpaProspectTrialResume(env, prow, v, nowMs, 'the venue (cancel link)')) {
+        const endW = vpaPlainDateWords(vpaProspectMonthEndMs(prow));
+        const txt = 'Your free month at ' + (v.name || 'your venue') + ' carries on until ' + endW + '. We\u2019ll remind you before it ends.';
+        return asJson && json ? json({ ok: true, state: 'resumed', title: 'Welcome back', text: txt, foot: FOOT }) : page('Welcome back', vpaEsc(txt));
+      }
+    }
+    /* Still inside the month and still on: they keep it to the end date, and may carry on. */
+    const keepMs = v.status === 'active' ? vpaTrialKeepsUntil(prow, nowMs) : NaN;
+    if (asJson && json) return json({ ok: true, state: 'done', title: 'All done', text: plain(vpaTrialCancelledText(v.name || 'your venue', keepMs)), foot: FOOT,
+      resume: isFinite(keepMs) ? { label: 'Keep my free month going' } : null });
+    return page('All done', vpaTrialCancelledText(name, keepMs), isFinite(keepMs) ? '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) +
+      '"><input type="hidden" name="t" value="' + vpaEsc(t) + '"><input type="hidden" name="action" value="resume"><button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Keep my free month going</button></form>' : '');
+  }
   if (request.method !== 'POST') {
     if (asJson) screen = await vpaCancelScreen(env, v);
-    return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
+    return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', vpaTrialCancelText(prow, nowMs),
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
       /* WHY (Dean, 10 Nov 2026): the same seven as billing.html, optional, never in the way of the button. */
       '<label for="whyPick" style="display:block;font-size:15px;font-weight:700;margin:0 0 6px">Before you go, what\u2019s the main reason? (optional)</label>' +
@@ -5290,25 +5417,35 @@ async function vpaProspectCancel(request, env, json) {
       text: 'We have your request to hand ' + (v.name || 'your venue') + ' to its new owner. We will contact you and them to move it across. Nothing has been cancelled.', foot: FOOT })
       : page('Thanks, we\u2019ll be in touch', 'We have your request to hand ' + name + ' to its new owner. Nothing has been cancelled.');
   }
-  const at = new Date().toISOString();
-  await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
-  if (v.status === 'active') {
-    await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id), { method: 'PATCH', headers: vpaHeaders(env),
-      /* closed_at starts the 90-day clock, the same as a paid venue's cancellation (INBOX item 33, 5 Nov 2026).
-         It never used to, so a prospect who cancelled kept their players on file for ever. */
-      body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled', closed_at: at }) });
+  /* A "Keep my free month going" that arrives when nothing is cancelled (a second tap, an old tab) never cancels. */
+  if (postedForm.action === 'resume') {
+    const txt = 'venueplay for ' + (v.name || 'your venue') + ' is not cancelled, so there is nothing to undo.';
+    return asJson && json ? json({ ok: true, state: 'resumed', title: 'Nothing to undo', text: txt, foot: FOOT }) : page('Nothing to undo', vpaEsc(txt));
   }
+  /* INBOX 191: inside a started free month they keep it to the end date (the sweep switches it off then); before any
+     sign-in there is nothing to keep, so it goes off now. Either way the reminders stop (cancelled_at). */
+  const tc = await vpaProspectTrialCancel(env, prow, v, nowMs);
   /* WHY, RECORDED THE SAME WAY AS A PAID CANCEL (Dean, 10 Nov 2026): reason key, the exact label the page
      showed, and their note, in the audit row's detail. Optional: none given is null, and the cancel above
      has already happened whatever they said. */
   await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name,
-    reason: postedWhy.reason, reason_label: postedWhy.reason ? VPA_CANCEL_REASONS[postedWhy.reason] : null, reason_detail: postedWhy.reasonDetail });
-  return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
+    reason: postedWhy.reason, reason_label: postedWhy.reason ? VPA_CANCEL_REASONS[postedWhy.reason] : null, reason_detail: postedWhy.reasonDetail,
+    keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null });
+  if (asJson && json) return json({ ok: true, state: 'done', title: 'All done', text: plain(vpaTrialCancelledText(v.name || 'your venue', tc.keepMs)), foot: FOOT,
+    resume: isFinite(tc.keepMs) ? { label: 'Keep my free month going' } : null });
+  return page('All done', vpaTrialCancelledText(name, tc.keepMs) + (isFinite(tc.keepMs) ? '' : ' If you change your mind, just call us.'));
 }
 /* A card has come in (the Checkout webhook, or the sweep noticing): reminders stop by themselves (the
    sweep reads the card), and a venue the free month had paused comes straight back on. */
 async function vpaProspectCardAdded(env, foundingId) {
   const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
+  /* CANCELLED IN THE MONTH, STILL ON, AND NOW A CARD (INBOX 191.3): they came back before the end date, so the cancel
+     is undone and the same free month carries on (Checkout's trial ends with it). The venue was never switched off. */
+  if (prow && !prow.paused_at && prow.cancelled_at) {
+    const cv0 = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(prow.venue_id) + '&select=id,name,status,suspended_reason&limit=1');
+    const on0 = cv0 && cv0[0];
+    if (on0 && on0.status === 'active') { await vpaProspectTrialResume(env, prow, on0, Date.now(), 'stripe (card added)'); return false; }
+  }
   /* A PROSPECT WHO CANCELLED IN THEIR MONTH and has now added a card (the self-serve restart, INBOX 54.3, behind
      VPB_SELF_RESTART): the cancel link switched them off as 'cancelled', and their card brings them back the same
      way a paused one comes back. Filtered, so only that switch-off is undone, once. */
@@ -5390,6 +5527,9 @@ async function vpaRenderProspectReminder(env, o) {
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
 async function vpaProspectReminderSweep(env, nowMs) {
   const out = { started: 0, sent: [], paused: [], stopped: 0 };
+  /* A free month cancelled part way switches off at its end date (INBOX 191.1). First, and on its own read, so a
+     missing migration 127 below cannot hold it. */
+  out.switched_off = await vpaProspectTrialSwitchOff(env, nowMs).catch(() => []);
   let unsub;   // vp_unsubscribes, read the first time a reminder is due (undefined: not read yet; null: could not be read)
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }
@@ -12146,6 +12286,20 @@ async function vpbAccountSummary(request, env, json) {
       left: v.status === 'suspended' && VPB_RESTART_REASONS.indexOf(String(v.suspended_reason || '')) !== -1,
     };
   });
+  /* A VENUE IN ITS FREE MONTH (INBOX 191): the cancel dialog's words and, once cancelled, the date it stays on to, so
+     the page says the trial rules and never "the end of your paid period". Only for an account with no card. */
+  if (!vpaProspectSignedUp(null, o.account) && venues.length) {
+    let prs = [];
+    try { prs = await vpaSelect(env, 'vp_prospects', 'venue_id=in.(' + venues.map((v) => encodeURIComponent(v.id)).join(',') + ')&select=*'); } catch (_) { prs = []; }
+    const nowT = Date.now();
+    venues.forEach((v) => {
+      const pr = (prs || []).filter((p) => p && p.venue_id === v.id && ('first_signin_at' in p))[0];
+      if (!pr || pr.paused_at) return;
+      const keep = vpaTrialKeepsUntil(pr, nowT);
+      v.trial = { cancel_text: vpaTrialCancelText(pr, nowT), cancelled: !!pr.cancelled_at,
+        ends_words: isFinite(keep) ? vpaPlainDateWords(keep) : null };
+    });
+  }
   /* THE DISCOUNT WAS ON THE SUBSCRIPTION ALL ALONG AND THIS NEVER READ IT.
 
      A venue with a coupon was shown players x rate, the full price, on the one screen it
@@ -14304,6 +14458,33 @@ async function vpaLastDaySweep(env) {
   return { checked: venues.length, sent: sent, why: why };
 }
 
+/* THE ACCOUNT PAGE'S HALF OF THE TRIAL CANCEL RULES (INBOX 191). Cancel: cancelled_at (reminders stop), the venue
+   kept on to the free month's end (or off now, never signed in). Undo ("Keep my free month going"): the same month
+   carries on while it lasts; after it, coming back is the paid restart, so this says so. */
+async function vpbTrialCancelVenue(env, o, venue, prow, undo, why, json) {
+  const nowMs = Date.now();
+  const name = venue.name || 'your venue';
+  if (undo) {
+    if (!prow.cancelled_at) return json({ ok: true, cancelling: false, trial: true });
+    if (await vpaProspectTrialResume(env, prow, venue, nowMs, (o.adminActor && o.adminActor.label) || 'owner (Your account)')) {
+      return json({ ok: true, cancelling: false, trial: true, text: 'Your free month at ' + name + ' carries on until ' + vpaPlainDateWords(vpaProspectMonthEndMs(prow)) + '.' });
+    }
+    return json({ error: 'Your free month has ended, so coming back is on a paid plan. Add your card to come back.' }, 409);
+  }
+  if (prow.cancelled_at) {
+    const k0 = venue.status === 'active' ? vpaTrialKeepsUntil(prow, nowMs) : NaN;
+    return json({ ok: true, cancelling: true, trial: true, already: true, text: vpaTrialCancelledText(name, k0) });
+  }
+  const tc = await vpaProspectTrialCancel(env, prow, venue, nowMs);
+  await vpaInsert(env, 'vp_admin_audit', Object.assign({}, vpbActorFields(o), { action: 'prospect_cancelled', target: 'venue:' + venue.id,
+    detail: { name: venue.name || null, via: 'account', actor_user: o.authUserId, reason: why.reason,
+      reason_label: why.reason ? VPA_CANCEL_REASONS[why.reason] : null, reason_detail: why.reasonDetail,
+      keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null } }), false).catch(() => {});
+  return json({ ok: true, cancelling: true, trial: true, switched_off: !isFinite(tc.keepMs),
+    keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null,
+    ends: isFinite(tc.keepMs) ? vpaPlainDateWords(tc.keepMs) : null, text: vpaTrialCancelledText(name, tc.keepMs) });
+}
+
 async function vpbCancelVenue(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -14318,6 +14499,13 @@ async function vpbCancelVenue(request, env, json) {
   const _why = vpaCancelReasonOf(b, undo), reason = _why.reason, reasonDetail = _why.reasonDetail;
   const venue = o.venues.filter((v) => v.id === venueId)[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
+
+  /* A FREE MONTH, CANCELLED FROM YOUR ACCOUNT (Dean, 11 Nov 2026, INBOX 191): the same trial rules as the cancel
+     link, never cancel_at_period_end (there is no paid period, and nothing would ever have switched it off). */
+  if (!vpaProspectSignedUp(venue, o.account)) {
+    const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
+    if (prow && ('first_signin_at' in prow)) return await vpbTrialCancelVenue(env, o, venue, prow, undo, _why, json);
+  }
 
   const foundingId = o.account.id;
   /* AN UNDO HAS TO PUT THEM BACK ON.
@@ -14611,7 +14799,13 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
 
   /* A PROSPECT WHO NEVER ADDED A CARD: their own signed card link, priced by the prospect rules. */
   if (prow && !o.account.stripe_subscription_id && !o.account.stripe_customer_id) {
-    const pp = vpaProspectPrice(env, prow, nowMs);
+    const pp = await vpaProspectPriceNow(env, prow, nowMs);
+    /* CANCELLED BEFORE ANYONE SIGNED IN (INBOX 191.6): they never used their free month, so coming back starts it,
+       with no card, the same as a first sign-in would have. */
+    if (prow.cancelled_at && !prow.first_signin_at && !prow.paused_at) {
+      return Object.assign(base, { kind: 'prospect_fresh', mode: 'confirm', rate: pp.rate, offer: !!pp.founding, today_cents: 0,
+        monthly_cents: Math.round(pp.rate * 100) * players });
+    }
     return Object.assign(base, { kind: 'prospect', mode: 'card', rate: pp.rate, offer: !!pp.founding, grace: !!pp.grace,
       grace_ends_at: pp.grace_ends_at || null, today_cents: 0, monthly_cents: Math.round(pp.rate * 100) * players });
   }
@@ -14706,7 +14900,7 @@ function vpbRestartPublic(p) {
       next_bill_at: p.next_bill_at, next_bill_words: p.next_bill_words, trialing: p.trialing });
   }
   /* The rate is said (it is what they pay); the leeway behind it is never announced (Dean, INBOX 55c): no keep-by date. */
-  if (p.kind === 'new_sub' || p.kind === 'prospect') out.offer = !!p.offer;
+  if (p.kind === 'new_sub' || p.kind === 'prospect' || p.kind === 'prospect_fresh') out.offer = !!p.offer;
   if (p.kind === 'new_sub') { out.kept_previous = !!p.kept_previous; if (p.coupon) out.discount_kept = true; }
   if (p.card) out.card = { brand: p.card.brand, last4: p.card.last4 };
   return out;
@@ -14732,7 +14926,7 @@ async function vpbRestartQuote(request, env, json) {
   const p = await vpbRestartPlan(env, g.o, g.venueId, Date.now());
   if (p.refuse) return json(Object.assign({ ok: false, available: true, can_restart: false }, await vpbRestartRefusal(env, g.o, p.refuse)), 200);
   if (p.already) return json({ ok: true, available: true, can_restart: false, already: true });
-  if (p.kind !== 'prospect') { const og = vpbOwnerOnly(g.o, json); if (og) return json({ ok: false, available: true, can_restart: false, error: 'Only the account owner can restart billing.' }, 200); }
+  if (p.kind !== 'prospect' && p.kind !== 'prospect_fresh') { const og = vpbOwnerOnly(g.o, json); if (og) return json({ ok: false, available: true, can_restart: false, error: 'Only the account owner can restart billing.' }, 200); }
   return json(vpbRestartPublic(p));
 }
 
@@ -14807,6 +15001,17 @@ async function vpbRestartRun(env, o, venueId, nowMs, json) {
     const url = await vpaCardLink(env, o.account.id);
     if (!url) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
     return json({ ok: true, mode: 'card', card_url: url, kind: 'prospect' });
+  }
+  /* Their unused free month, started now (INBOX 191.6): back on, the cancel cleared, the month from today. */
+  if (p.kind === 'prospect_fresh') {
+    await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(p.venue.id) + '&first_signin_at=is.null', { cancelled_at: null });
+    await vpbRestartSwitchOn(env, o.account.id, p.venue.id, 'prospect_fresh', null);
+    const pr = await vpaProspectStartMonth(env, Object.assign({}, p.prow, { cancelled_at: null }), nowMs);
+    await vpaInsert(env, 'vp_admin_audit', Object.assign({}, vpbActorFields(o), { action: 'venue_restarted', target: 'venue:' + p.venue.id,
+      detail: { name: p.venue.name || null, kind: 'prospect_fresh', actor_user: o.authUserId, left_at: new Date(p.clockMs).toISOString(),
+        free_month_ends_at: (pr && pr.free_month_ends_at) || null } }), false).catch(() => {});
+    return json({ ok: true, restarted: true, kind: 'prospect_fresh',
+      ends_words: pr && pr.free_month_ends_at ? vpaPlainDateWords(Date.parse(pr.free_month_ends_at)) : null });
   }
   { const og = vpbOwnerOnly(o, json); if (og) return og; }   // money on a card already held: the owner only
 

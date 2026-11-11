@@ -486,14 +486,17 @@ function newSubs() { return ST.created.length; }
   var tok = await vpaProspectCancelToken(ENV, PC.v.founding_id);
   await withClock(at(1, 10), function () { return vpaProspectCancel({ method: 'POST', url: 'https://api.example/prospect/cancel', headers: { get: function () { return null; } },
     text: function () { return Promise.resolve('f=' + PC.v.founding_id + '&t=' + tok); } }, ENV, null); });
-  check('set up: a prospect who cancelled in their month is off as "cancelled", clock running', PC.v.status === 'suspended' && PC.v.suspended_reason === 'cancelled' && !!PC.v.closed_at);
+  /* Since 11 Nov 2026 (Dean, INBOX 191.1) a cancel inside the free month keeps it on to the end date. The switch-off
+     after it, the paid comeback and the no-second-month rule are tools/test-trial-cancel.js. */
+  check('set up: a prospect who cancelled in their month keeps it on to the end date (INBOX 191.1): still on, no clock yet', PC.v.status === 'active' && !PC.v.closed_at && !!PC.row().cancelled_at);
   var pcq = await withClock(at(1, 12), function () { return call('/account/restart-quote', { venue_id: PC.v.id }, AS(PC.login, PC.v.id)); });
-  check('a cancelled prospect: the quote is their card link', pcq.body.kind === 'prospect' && pcq.body.mode === 'card', pcq.body);
+  check('a cancelled prospect still inside its month: nothing to restart, it is still on', pcq.body.already === true, pcq.body);
   var pcc = await checkoutAt(PC, at(1, 12));
   check('its Checkout keeps their offer and a trial, on the card page\'s existing rule (the month\'s end, or Stripe\'s 3-day floor)', pcc.offer && Number(pcc.trial) === Math.max(Math.floor(MONTH_END / 1000), Math.floor(at(1, 12) / 1000) + 3 * 86400), [pcc.trial, Math.floor(MONTH_END / 1000)]);
   PC.founding().stripe_subscription_id = 'sub_pc';
   await withClock(at(1, 12, 5), function () { return vpaProspectCardAdded(ENV, PC.v.founding_id); });
-  check('the card lands: a cancelled prospect is back on too, once', PC.v.status === 'active' && PC.v.closed_at === null && DB.vp_admin_audit.filter(function (x) { return x.action === 'prospect_restarted'; }).length === 1);
+  check('the card lands inside the month: the cancel is undone and the same free month carries on (INBOX 191.3)', PC.v.status === 'active' && !PC.v.closed_at && !PC.row().cancelled_at &&
+    DB.vp_admin_audit.filter(function (x) { return x.action === 'prospect_cancel_undone'; }).length === 1);
 
   section('7. Tamper-proof and refused cases');
   var T = paidLeft({ name: 'Target Hotel' });
@@ -647,18 +650,19 @@ function newSubs() { return ST.created.length; }
   var k9 = await withClock(at2(2027, 2, 15, 10, 0), function () { return call('/account/cancel-venue', { venue_id: K9.vid, undo: true }, AS(K9.owner, K9.vid)); });
   check('HQ\'s Reactivate (the owner\'s "Keep this venue" on day 75) goes through the same plan: the previous rate',
     k9.status === 200 && K9.v.status === 'active' && ST.created[0] && ST.created[0].form['items[0][price]'] === 'price_F_M', [k9.body, ST.created[0] && ST.created[0].form]);
-  /* A free-month venue that pressed Cancel keeps the rate it was set up on for 90 days from the press. */
+  /* A free-month venue that pressed Cancel: since 11 Nov 2026 (Dean, INBOX 191.4, 191.5) the 90 days are for PAID venues only;
+     after its month, the rate it was set up on holds only inside that offer's period. */
   var CX = Date.parse('2026-11-12T00:00:00.000Z'), PR = { offer_rate: 2.5, cancelled_at: new Date(CX).toISOString(), paused_at: null,
     first_signin_at: '2026-11-01T00:00:00.000Z', free_month_ends_at: '2026-12-01T13:59:59.000Z' };
   ENV.VPB_SELF_RESTART = '1';
   var pp1 = vpaProspectPrice(ENV, PR, CX + 60 * DAY), pp2 = vpaProspectPrice(ENV, PR, CX + 90 * DAY);
-  check('a cancelled free-month venue back on day 60: the $2.50 it was set up on, long after its month and any grace',
-    pp1.founding === true && pp1.rate === 2.5 && pp1.kept === true, pp1);
-  check('and at 90 days to the instant: the standard rule again', pp2.rate === 3 && !pp2.kept, pp2);
+  check('a cancelled free-month venue back on day 60, after its offer\'s month: the standard rate (INBOX 191.4; no 90 days for a trial)',
+    pp1.founding === false && pp1.rate === 3 && !pp1.kept, pp1);
+  check('and at 90 days: the standard rate too', pp2.rate === 3 && !pp2.kept, pp2);
   var PZ = { offer_rate: 2.5, cancelled_at: null, paused_at: '2026-12-01T14:00:00.000Z', first_signin_at: '2026-11-01T00:00:00.000Z', free_month_ends_at: '2026-12-01T13:59:59.000Z' };
   check('a PAUSED prospect (never pressed Cancel) is not covered: past its grace, the standard rate', vpaProspectPrice(ENV, PZ, Date.parse('2027-01-10T00:00:00.000Z')).rate === 3);
   ENV.VPB_SELF_RESTART = '';
-  check('with the restart switched off, a cancelled prospect is priced exactly as before', !vpaProspectPrice(ENV, PR, CX + 60 * DAY).kept && vpaProspectPrice(ENV, PR, CX + 60 * DAY).rate === 3);
+  check('with the restart switched off, the same trial rule (it is the rule, not a switch)', !vpaProspectPrice(ENV, PR, CX + 60 * DAY).kept && vpaProspectPrice(ENV, PR, CX + 60 * DAY).rate === 3);
 
   print(''); print('PASS ' + ran + ' checks');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
