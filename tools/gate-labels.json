@@ -461,6 +461,7 @@
   "tv-endshow-in-chrome.test.py",
   "tv-first-slide-in-chrome.test.py",
   "tv-landing-in-chrome.test.py",
+  "tv-logo-align-in-chrome.test.py",
   "tv-logo-centre-in-chrome.test.py",
   "tv-logo-in-chrome.test.py",
   "tv-logo.test.js",

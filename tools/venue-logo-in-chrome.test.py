@@ -190,7 +190,7 @@ MEASURE = r'''(function(){
   var tc=document.querySelectorAll(".tv-corner, #tvCorner");
   for(var j=0;j<tc.length;j++){ var kids=tc[j].children; for(var q=0;q<kids.length;q++){ if(vis(kids[q])) corners.push({id:"corner>"+(kids[q].className||kids[q].tagName), r:R(kids[q])}); } }
   return JSON.stringify({ready:true, src:lg.getAttribute("src"), nat:[lg.naturalWidth,lg.naturalHeight], logo:R(lg), want:want,
-                         inset:VPVenueLogo.limits("tv", innerWidth, innerHeight).inset, wall:wall, corners:corners, W:innerWidth, H:innerHeight});
+                         inset:VPVenueLogo.limits("tv", innerWidth, innerHeight).inset, insetX:VPVenueLogo.limits("tv", innerWidth, innerHeight).insetX, wall:wall, corners:corners, W:innerWidth, H:innerHeight});
 })()'''
 
 def colour_at(sid, x, y):
@@ -226,7 +226,9 @@ def tv(label, path, w, h, settle, shapes):
             pad = ask(sid, 'parseFloat(getComputedStyle(document.getElementById("venueLogo")).paddingLeft)||0') or 0
             ok(tag + ': painted at the shared box, %dx%d' % (want['w'], want['h']),
                abs(L['w'] - 2 * pad - want['w']) <= 1 and abs(L['h'] - 2 * pad - want['h']) <= 1, (L, want, pad))
-            ok(tag + ': in the top-left corner, %dpx in' % m['inset'], abs(L['l'] - m['inset']) <= 1 and abs(L['t'] - m['inset']) <= 1, L)
+            # 12 Nov 2026 (INBOX 200): in from the left by the venueplay mark's own 2.4cqw, down by the old inset
+            ok(tag + ': in the top-left corner, %dpx down and %.0fpx in (the venueplay mark\'s distance from the right)' % (m['inset'], m.get('insetX') or 0),
+               m.get('insetX') is not None and abs(L['l'] - m['insetX']) <= 1 and abs(L['t'] - m['inset']) <= 1, L)
             over = [x['id'] for x in m['wall'] if hits(L, x['r'])]
             ok(tag + ': nothing on the wall is under it (%d pieces of the wall checked)' % len(m['wall']), m['wall'] and not over, over or 'no wall measured')
             over = [x['id'] for x in m['corners'] if hits(L, x['r'])]

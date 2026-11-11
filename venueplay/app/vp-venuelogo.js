@@ -41,7 +41,8 @@
     maxW: 0.15,      /* a wordmark stops at 15% of the width: 288px at 1920 */
     maxH: 0.13,      /* nothing taller than 13% of the height: 140px at 1080 */
     minH: 0.035,     /* a wordmark is at least 3.5% of the height tall (38px at 1080) */
-    inset: 0.012     /* in from the corner: 23px at 1920, never under 14px */
+    inset: 0.012,    /* down from the top: 23px at 1920, never under 14px */
+    edge: 0.024      /* in from the left edge: 2.4% of the width, exactly the venueplay mark's right:2.4cqw top right */
   };
   var PHONE = { side: 56, maxW: 170, maxWvw: 0.5, maxH: 60, minH: 28 };   /* a square logo 56px (it was 30); a 4:1 wordmark 112 x 28 */
 
@@ -66,7 +67,7 @@
     }
     W = W || 1920; H = H || 1080;
     return { side: TV.side * W, maxW: TV.maxW * W, maxH: TV.maxH * H, minH: TV.minH * H,
-             inset: Math.max(14, Math.round(TV.inset * W)) };
+             inset: Math.max(14, Math.round(TV.inset * W)), insetX: TV.edge * W };
   }
 
   function size(img, kind) {
@@ -78,7 +79,7 @@
     s.width = b.w + "px"; s.height = b.h + "px";
     s.maxWidth = b.w + "px"; s.maxHeight = b.h + "px";
     s.objectFit = "contain";
-    if (kind !== "phone") { s.top = L.inset + "px"; s.left = L.inset + "px"; }
+    if (kind !== "phone") { s.top = L.inset + "px"; s.left = L.insetX + "px"; }   /* the same distance in as the venueplay mark (12 Nov 2026) */
     try { if (w.VP_FIT) w.VP_FIT(); } catch (e) {}
     sized(img);
     return b;
@@ -305,12 +306,40 @@
           /* A WIDE WORDMARK TOO (Dean, 3 Nov 2026: both corner logos and the game's title on ONE line). A short
              wordmark's middle sits about 10px above the venueplay mark's, so the corner lifts to it; never so
              far that the mark would rise above the wordmark's own top edge. */
-          else { var lift = Math.max(dy, a.top - (mk.top - cur)); want = Math.round(lift * 10) / 10; }
+          /* 12 Nov 2026 (Dean, Caz Reitop's 7.7:1 wordmark): EXACTLY on its middle, whatever its height; the only
+             limit is the top of the screen. */
+          else { var lift = Math.max(dy, 4 - (mk.top - cur)); want = Math.round(lift * 10) / 10; }
         }
       }
+      if (!(has && img)) alignName(corner);
       if (Math.abs(want - cur) < 0.05) return;
       corner.style.transform = want ? "translateY(" + want + "px)" : "";
       if (want) corner.setAttribute("data-drop", String(want)); else corner.removeAttribute("data-drop");
+    } catch (e) {}
+  }
+  /* NO LOGO: THE VENUE'S NAME IS WHERE THE LOGO WOULD BE, ON THE SAME LINE (Dean, 11 Nov 2026: "the venue's logo must
+     line up with the venueplay logo: same vertical centre line and the same distance in from the edge"). The name
+     (.venuename-left, #venueNameTag, on tv.html and the four game screens) sits 2.4cqw in from the left in CSS, the
+     mark's own distance from the right; here its top is set so its middle is the mark's middle, measured as drawn
+     (the two are in different fonts, so no CSS number can promise it). Again whenever the name changes size
+     (shown, renamed), the screen resizes, the fonts land or the start show ends. */
+  function alignName(corner) {
+    try {
+      var el = d.getElementById("venueNameTag");
+      if (!corner || !el || !el.classList || !el.classList.contains("venuename-left")) return;
+      if (!el.__vpNameWired) {
+        el.__vpNameWired = true;
+        var again = function () { alignName(corner); };
+        watch(null, again);
+        try { if (w.ResizeObserver) new w.ResizeObserver(again).observe(el); } catch (e) {}
+      }
+      var r = el.getBoundingClientRect(); if (!r.height) return;   /* not on screen (a logo, or the ads) */
+      var mk = markBox(corner); if (!mk) return;
+      var cur = parseFloat(corner.getAttribute("data-drop")) || 0;
+      var mid = mk.top + mk.height / 2 - cur;
+      var top = parseFloat(w.getComputedStyle(el).top) || 0;
+      var want = Math.round((top + mid - (r.top + r.height / 2)) * 10) / 10;
+      if (Math.abs(want - top) >= 0.05) el.style.top = want + "px";
     } catch (e) {}
   }
   /* MEASURE AGAIN WHEN THE PICTURE CHANGES UNDER IT (2 Nov 2026, the trivia demo: the wordmark sat ~90px
@@ -349,5 +378,5 @@
     el.classList.remove("hidden");
   }
 
-  w.VPVenueLogo = { alignMark: alignMark, markBox: markBox, headerName: headerName, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { alignMark: alignMark, alignName: alignName, markBox: markBox, headerName: headerName, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);
