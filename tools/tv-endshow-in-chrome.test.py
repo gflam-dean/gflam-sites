@@ -160,8 +160,9 @@ def demos():
         _, d = r.open('/tv?demo=1&endshow=1', width=1920, height=1080)
         ok('bingo demo: the game ends and the show plays', r.until(d, 'window.VPEndShow && VPEndShow.playing()', 60) is True, r.ask(d, STATS))
         s = r.ask(d, SHOWN) or {}
-        ok('bingo demo: the phone winner by name: WE HAVE A WINNER, JESS, One line · $50 bar tab',
-           s.get('eye') == 'WE HAVE A WINNER' and s.get('big') == 'JESS' and s.get('sub') == 'One line ' + DOT + ' $50 bar tab' and s.get('venue') == 'TUGUN BOWLS CLUB', s)
+        # the demo phone's own player and prize since 12 Nov 2026 (INBOX 281: the TV and phone share one script)
+        ok('bingo demo: the phone winner by name: WE HAVE A WINNER, ANN, One line · Meat tray',
+           s.get('eye') == 'WE HAVE A WINNER' and s.get('big') == 'ANN' and s.get('sub') == 'One line ' + DOT + ' Meat tray' and s.get('venue') == 'TUGUN BOWLS CLUB', s)
         time.sleep(1.4); shot(r, d, 'endshow-2-bingo-demo')
 
         print('\n3. MUSICAL BINGO (demo)')

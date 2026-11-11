@@ -2609,7 +2609,11 @@ block (all classes prefixed .vpa-)
         '</div>' +
       '</div>',
 
-    /* ---------- Player phone (light results view) ---------- */
+    /* ---------- Player phone ----------
+       NOT A DRAWING OF NUMBERS ANY MORE (Dean, 12 Nov 2026: the draw demos must be what is live). This tile showed
+       three winning tickets (087, 042, 131) on a phone screen that does not exist: a raffle has no player app, the
+       paper ticket is checked against the big screen. So it says that, the way the members draw and screen ads
+       tiles do, and the numbers live where they really are, on the TV (/app/raffle/screen?demo=1). */
     player:
       '<div class="vp-phoneframe">' +
         '<div class="vps-phone">' +
@@ -2620,23 +2624,13 @@ block (all classes prefixed .vpa-)
             '</span>' +
             '<span class="vps-v">Tugun Bowls</span>' +
           '</div>' +
-          '<div class="vpr-p-note">Raffle in progress. <b>Check your paper ticket</b> against the numbers below</div>' +
-          '<div class="vpr-p-winlbl">Winning tickets</div>' +
-          '<div class="vpr-p-wins">' +
-            '<div class="vpr-p-win">' +
-              '<span class="vpr-p-place">1st</span>' +
-              '<span class="vpr-p-num">087</span>' +
-            '</div>' +
-            '<div class="vpr-p-win">' +
-              '<span class="vpr-p-place">2nd</span>' +
-              '<span class="vpr-p-num">042</span>' +
-            '</div>' +
-            '<div class="vpr-p-win">' +
-              '<span class="vpr-p-place">3rd</span>' +
-              '<span class="vpr-p-num">131</span>' +
-            '</div>' +
+          '<div class="vpd-skip">' +
+            '<span class="vpd-skip-ico">' +
+              '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2" stroke="#FF1F8E" stroke-width="1.8"></rect><path d="M8 20h8M12 17v3" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round"></path></svg>' +
+            '</span>' +
+            '<div class="vpd-skip-h">Raffles run on the big screen</div>' +
+            '<div class="vpd-skip-s">Nothing to do on players\' phones, just check your paper ticket against the screen.</div>' +
           '</div>' +
-          '<div class="vpr-p-foot">You are watching from your phone.<br>Hold a winning ticket? See the host to claim.</div>' +
         '</div>' +
       '</div>'
   };

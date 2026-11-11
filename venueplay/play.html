@@ -529,6 +529,7 @@
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared with the demo TV /tv?demo=1 (12 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>   <!-- the venue's ad under the lobby (6 Nov 2026) -->
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
@@ -2626,30 +2627,35 @@
         lg.src=src; lg.classList.remove("hidden");
         try{ VPVenueLogo.fit(lg,"phone"); }catch(e){}
         try{ VPVenueLogo.headerName($("hdrVenueName"), src, "Tugun Bowls Club"); }catch(e){} })();
-      var CELLS=[[5,null,23,null,42,null,64,null,88],
-                 [null,13,null,31,null,53,null,71,90],
-                 [7,null,26,null,45,null,69,77,null]];
-      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53], called=[], timers=[];
+      /* ON THE TV'S CLOCK (Dean, 12 Nov 2026: "the demo TV calls different numbers from what the demo phone shows").
+         The balls, the ticket, the times and the clock are /app/vp-demo-clock.js (BINGO), shared with the demo TV
+         (tv.html ?demo=1), from the one start the sales page puts on both frames (?t0=). This phone used to run its
+         own setTimeout chain, its first ball at 2.6 s against the TV's 5.4 s, and a ticket that never completed. Now
+         each ball lands on both at the same moment, and this ticket's top line completes on the last ball, so the
+         TV's claim and win are this player's. No timer here. */
+      var C=VPDemoClock.BINGO, BALLS=C.BALLS, steps=[];
+      P.name=C.PLAYER; P.pid="demo";
       function d(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      function run(){
-        called=[]; timers.forEach(clearTimeout); timers=[];
-        P.won=false; P.ended=false; P.claimPending=false;
-        timers.push(setTimeout(function(){
-          d({ t:"cards", cards:[{ cardNo:1, cells:CELLS }], pattern:"one", prize:"$50 bar tab" });
-        }, 300));
-        BALLS.forEach(function(n,i){
-          timers.push(setTimeout(function(){
-            called.push(n);
-            d({ t:"ball", number:n, called:called.slice(), active:true });
-          }, 2600 + i*2100));
-        });
-        /* THE SAME LAP AS THE WALL. tv.html's demo runs 2600 + 12*2100 + 14000 ms a lap and
-           this ran 9000 at the end, so the two drifted five seconds further apart every lap
-           and the phone was daubing balls the wall had not called. Dean, 22 Sep 2026: "the tv
-           and phone seem to be unsynced". One number, copied from tv.html; change both. */
-        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
-      }
-      run();
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+      at(0, function(){
+        /* A new lap: last lap's win goes, the same ticket is dealt again. */
+        P.won=false; P.ended=false; P.claimPending=false; P.claimAt=0; P.wonCardNo=0; P.cards=[];
+        $("bingoBtn").disabled=false; setMsg("","");
+        d({ t:"started", pattern:"one", prize:C.PRIZE });
+        d({ t:"cards", cards:[{ cardNo:C.CARD_NO, cells:C.TICKET }], pattern:"one", prize:C.PRIZE });
+      }, true, true);
+      BALLS.forEach(function(n,i){
+        var called=BALLS.slice(0, i+1);
+        at(C.ballAt(i), function(){ d({ t:"ball", number:n, called:called.slice(), active:true }); }, true);
+      });
+      /* The player calls BINGO as the wall shows the claim, and wins as the wall shows the win. The real button asks
+         the host; a demo has no host, so it shows the same two screens the real thing does. */
+      at(C.claimAt(), function(){
+        d({ t:"ball", number:BALLS[BALLS.length-1], called:BALLS.slice(), active:true });   // the card as it stands, for a phone that joins here
+        P.claimPending=true; P.claimAt=Date.now(); P.wonCardNo=C.CARD_NO; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
+      }, true);
+      at(C.winAt(), function(){ d({ t:"winner", pid:"demo", name:C.PLAYER, cardNo:C.CARD_NO, pattern:"one", prize:C.PRIZE, winners:[{ pid:"demo", name:C.PLAYER, cardNo:C.CARD_NO }] }); }, true);
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
       return;                       // never reaches goToCode/watchVenue, so nothing connects
     }
     /* ?code= as well as ?room= (UX audit 4.3): a code someone types into a link by hand is a code. */

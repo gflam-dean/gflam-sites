@@ -255,6 +255,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock (12 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (ticket roll, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
@@ -806,17 +807,35 @@
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
-      var LAST=[];
-      function to3(){ var n=Math.floor(Math.random()*899)+100; LAST.push(n); return n; }
-      at(0,     function(){ LAST=[]; m({ t:"drawing", numbers:[147], spinSecs:4, time:30, allowRedraw:true }); });
-      at(5200,  function(){ m({ t:"winner", numbers:[147], time:30, allowRedraw:true }); });
-      at(11000, function(){ m({ t:"claimed", numbers:[147] }); });
-      // A second draw, because a raffle night is several in a row and the wall has to reset.
-      at(14000, function(){ m({ t:"drawing", numbers:[to3(), to3()], spinSecs:4, time:30, allowRedraw:true }); });
-      at(19200, function(){ m({ t:"winner", numbers:LAST, time:30, allowRedraw:true }); });
-      at(25000, function(){ m({ t:"claimed", numbers:LAST }); });
-      at(29000, function(){ m({ t:"idle" }); });
+      /* THE NEW LOOK, ON THE ONE CLOCK (Dean, 12 Nov 2026: the draw demos were "not the new look"). This played the
+         old spinning tiles, the second draw with two random tickets (which the new looks never draw), on timers of
+         its own. Now it is the TICKET ROLL (/app/vp-drawstyle.js) the way a venue on the new look sees it: the host's
+         t:"drawing" with the look and the short draw time, t:"pick" with the server's ticket while the roll builds,
+         the winner, the claim; three prizes of one raffle. The tickets, prizes and times are /app/vp-demo-clock.js
+         (RAFFLE), and so is the clock, so the room TV on /see-a-night and "The big screen" over it are on the same
+         draw at the same moment. No timer here. */
+      var C=VPDemoClock.RAFFLE, steps=[];
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+      function base(i){ return { pad:C.PAD, min:C.MIN, max:C.MAX, prizeLabel:C.DRAWS[i].prize }; }
+      function msg(t, i, more){ var o=base(i); o.t=t; for(var k in more) o[k]=more[k]; return o; }
+      at(0, function(){
+        /* The console opening: the wall's "IT'S RAFFLE TIME" show, then the raffle's card with its prizes. */
+        m(msg("state", 0, {}));
+        m(msg("idle", 0, { raffle:C.NAME, prizes:C.DRAWS.map(function(d){ return d.prize; }) }));
+      }, true, true);
+      C.DRAWS.forEach(function(d, i){
+        var t=C.drawAt(i);
+        at(t, function(){
+          /* The drawn row is THIS lap's draws before this one: it starts empty again every lap (each "claimed" adds to
+             it, so without this it grew lap after lap), and a frame that joins part way through shows what it would
+             have, had it watched from the start. */
+          S.endDrawn=C.DRAWS.slice(0, i).map(function(x){ return { prize:x.prize, nums:[x.ticket] }; }); S.endPend=null;
+          m(msg("drawing", i, { style:"ticket", drawSecs:C.DRAW_SECS, raffle:C.NAME, prizeNo:i+1, prizeOf:C.DRAWS.length, spinSecs:C.WIN_AFTER/1000 }));
+        }, true);
+        at(t+C.PICK_AFTER, function(){ m(msg("pick", i, { numbers:[d.ticket] })); });
+        at(t+C.WIN_AFTER, function(){ m(msg("winner", i, { numbers:[d.ticket], time:C.CLAIM_SECS, allowRedraw:true })); }, true);
+        at(t+C.CLAIM_AFTER, function(){ m(msg("claimed", i, { numbers:[d.ticket] })); }, true);
+      });
 
       /* NO JOIN OR PAIRING CORNER ON A SALES PAGE: the code is one this browser invented, so
          scanning it leads to a room that does not exist. Watched, not hidden once, because the
@@ -846,14 +865,8 @@
         try{ new MutationObserver(hide).observe(document.body,{ childList:true, subtree:true }); }catch(e){}
       })();
 
-      var timers=[];
-      function run(){
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
-        timers.push(setTimeout(run, 34000));
-      }
-      run();
+      // A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap().
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 

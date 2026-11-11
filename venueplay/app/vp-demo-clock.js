@@ -24,7 +24,8 @@
      ctx              { base: the lap's start (ms since 1970), lap: which lap }. A question's clock is
                       base + its step + 12 s on both pages, so the two rings agree to the second.
 
-   The two scripts (trivia and musical bingo) are below too, so the timings exist in one place. */
+   The scripts (trivia, musical bingo, bingo, the raffle and the members draw) are below too, so the timings exist in
+   one place (12 Nov 2026: bingo, the raffle and the members draw joined; until then each kept its own timers). */
 (function(){
   "use strict";
   var LOADED=Date.now();
@@ -114,10 +115,17 @@
     endsAt:function(ctx, i){ return ctx.base+TRIVIA.qAt(i)+TRIVIA.LEFT*1000; }
   };
 
-  /* THE MUSICAL BINGO NIGHT. Five songs, one every 5.2 s, each named 2.6 s in; a claim, the win, a rest. */
+  /* THE MUSICAL BINGO NIGHT. Five songs, one every 5.2 s, each named 2.6 s in; a claim, the win, a rest.
+     NAMED AT REVEAL ON BOTH (Dean, 12 Nov 2026: "the demo phone lags behind the demo TV"). The wall used to be sent
+     reveal:false, which the wall reads as its "legacy" mode and names the song 0.85 s later on its OWN timer, while
+     the phone marked it 3.6 s in: the room saw the title on the TV and the phone caught up nearly three seconds
+     later, every song. Now the wall holds the title until this script's reveal (REVEAL) and the phone marks the
+     song at that same moment, so the TV names it and the card marks it together. */
   var MUSICAL={
     SONGS:[{ title:"Never Gonna Give You Up", artist:"Rick Astley" }, { title:"Dancing Queen", artist:"ABBA" }, { title:"Khe Sanh", artist:"Cold Chisel" }, { title:"Mr. Brightside", artist:"The Killers" }, { title:"The Horses", artist:"Daryl Braithwaite" }],
     GAP:5200, REVEAL:2600,
+    MARK:0,                  // the phone marks the song this long after the wall names it: 0, the same moment
+    revealAt:function(i){ return MUSICAL.songAt(i)+MUSICAL.REVEAL; },
     WIN_AFTER:2600, IDLE_AFTER:9000, LAP_AFTER:14000,   // after the claim
     first:function(){ return (window.VPSting && window.VPSting.on) ? 4200 : 1200; },
     songAt:function(i){ return MUSICAL.first()+i*MUSICAL.GAP; },
@@ -125,5 +133,62 @@
     lap:function(){ return MUSICAL.claimAt()+MUSICAL.LAP_AFTER; }
   };
 
-  window.VPDemoClock={ run:run, epoch:epoch, where:where, due:due, TRIVIA:TRIVIA, MUSICAL:MUSICAL };
+  /* THE BINGO NIGHT (Dean, 12 Nov 2026: "the demo TV calls different numbers from what the demo phone shows").
+     tv.html and play.html each ran their own setTimeout chain: the wall's first ball at 5.4 s (after the start-of-game
+     show), the phone's at 2.6 s, so the phone was a ball and a half AHEAD of the TV on every visit, and its laps were a
+     different length from the wall's so it drifted further every lap. And the phone's ticket never completed, so it
+     sat on "One to go!" while the wall gave the game to a "Jess" nobody saw. Now both read these balls, times and
+     ticket, on this clock: the same ball on the TV and the phone at the same moment, and the phone's top line
+     completes on the last ball, so the TV's claim and win are this phone's ("Ann", ticket 47).
+
+     The ticket is a legitimate 90-ball ticket: three rows of five, each column its own decade, ascending down the
+     column. Row one (7 13 31 53 88) completes on the twelfth ball, 53; rows two and three stay two short. */
+  var BINGO={
+    BALLS:[7,42,13,88,31,64,5,77,26,90,19,53],
+    TICKET:[[7,13,null,31,null,53,null,null,88],
+            [9,null,24,null,42,null,64,77,null],
+            [null,19,26,38,null,56,null,null,90]],
+    CARD_NO:47, PLAYER:"Ann", PRIZE:"Meat tray",   // a prize as a host types it; no dollar prize on a sales page (3 Nov 2026)
+    GAP:2100, STARTED:1200,
+    CLAIM_AFTER:1500, WIN_AFTER:2300, IDLE_AFTER:8100, LAP_AFTER:14000,   // after the last ball
+    /* The first ball waits for the start-of-game show (2 Nov 2026): "started" at 1.2 s, the show about 4 s. */
+    first:function(){ return (window.VPSting && window.VPSting.on) ? 5400 : 2600; },
+    ballAt:function(i){ return BINGO.first()+i*BINGO.GAP; },
+    lastBallAt:function(){ return BINGO.ballAt(BINGO.BALLS.length-1); },
+    claimAt:function(){ return BINGO.lastBallAt()+BINGO.CLAIM_AFTER; },
+    winAt:function(){ return BINGO.claimAt()+BINGO.WIN_AFTER; },
+    idleAt:function(){ return BINGO.claimAt()+BINGO.IDLE_AFTER; },
+    lap:function(){ return BINGO.lastBallAt()+BINGO.LAP_AFTER; }
+  };
+
+  /* THE DRAWS IN THE NEW LOOK (Dean, 12 Nov 2026: the raffle and members draw demos were "not the new look").
+     The demo walls play the draw as a venue on the new looks sees it: the TICKET ROLL for the raffle and the FLIP
+     BOARD for the members draw (/app/vp-drawstyle.js, live since 12 Nov), at the "short" draw time, each draw told
+     its winner the way the host's console tells it (t:"pick" while the build-up runs). On this clock too, so the
+     TV in the see-a-night room and "The big screen" over it show the same draw at the same moment.
+
+     The raffle: three prizes of the "Friday Meat Raffle", tickets 1 to 150, one winning ticket a prize (the numbers
+     the see-a-night host console shows: 087, 042, 131). The members draw: John S. (142) is drawn and is not there,
+     so the jackpot rolls over and grows ($1,240 to $1,320), then K. Whitely (206) is drawn and claims it. */
+  var DRAW_SECS=6, INTRO_MS=1200;   // VPDrawStyle.secs("short") and VPDrawStyle.INTRO: the build-up is 7.2 s
+  var RAFFLE={
+    NAME:"Friday Meat Raffle", MIN:1, MAX:150, PAD:3, DRAW_SECS:DRAW_SECS,
+    DRAWS:[{ ticket:87, prize:"Meat tray" }, { ticket:42, prize:"Seafood platter" }, { ticket:131, prize:"Bottle of red" }],
+    EVERY:16000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, CLAIM_AFTER:12500, CLAIM_SECS:30,
+    /* The first draw waits for the "IT'S RAFFLE TIME" show the wall plays when the console opens (vp-sting.js forDraw). */
+    first:function(){ return (window.VPSting && window.VPSting.on) ? 4400 : 400; },
+    drawAt:function(i){ return RAFFLE.first()+i*RAFFLE.EVERY; },
+    lap:function(){ return RAFFLE.drawAt(RAFFLE.DRAWS.length-1)+RAFFLE.CLAIM_AFTER+7500; }
+  };
+  var MEMBERS={
+    NAME:"Friday Members Jackpot", MIN:1, MAX:380, DRAW_SECS:DRAW_SECS, CLAIM_SECS:180,
+    START_CENTS:124000, GROW_CENTS:8000, RESET_CENTS:50000,
+    DRAWS:[{ number:142, name:"John S.", here:false }, { number:206, name:"K. Whitely", here:true }],
+    EVERY:20000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, RESULT_AFTER:13600,
+    first:function(){ return (window.VPSting && window.VPSting.on) ? 4400 : 400; },   // after "MEMBERS DRAW TIME"
+    drawAt:function(i){ return MEMBERS.first()+i*MEMBERS.EVERY; },
+    lap:function(){ return MEMBERS.drawAt(MEMBERS.DRAWS.length-1)+MEMBERS.RESULT_AFTER+9000; }
+  };
+
+  window.VPDemoClock={ run:run, epoch:epoch, where:where, due:due, TRIVIA:TRIVIA, MUSICAL:MUSICAL, BINGO:BINGO, RAFFLE:RAFFLE, MEMBERS:MEMBERS };
 })();
