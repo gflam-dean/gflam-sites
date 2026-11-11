@@ -170,7 +170,7 @@
     function buildItems(N) {
       st.N = N; st.items = [];
       for (var i = 0; i <= N + 3; i++) st.items.push({ no: randNo(), nm: "" });
-      st.items[N] = { no: members ? "?" : "?", nm: "" };
+      st.items[N] = { no: "?", nm: "" };
     }
     function fit() {
       var w = host.clientWidth || 1280, h = host.clientHeight || 720, s = Math.min(w / 1920, h / 1080);

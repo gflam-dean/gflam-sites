@@ -167,7 +167,7 @@ def run():
                     real = r.ask(s, MEASURE); bare = r.ask(s, BARE)
                     d = diff(real, bare)
                     ok(tag + ': the look is laid out exactly as on a bare page (no rule of the screen reaches into it)', not d, d[:4])
-                    g = json.loads(r.ask(s, GEOM + '(%s,%s)' % (json.dumps(style), json.dumps(mode))) or '{}')
+                    g = r.json(s, GEOM + '(%s,%s)' % (json.dumps(style), json.dumps(mode)), {}) or {}
                     W, H = g.get('W'), g.get('H')
                     words = [g.get(k) for k in ('prize', 'claim', 'clock', 'pno')]
                     ok(tag + ': every line of words is inside the screen', all(onscreen(x, W, H) for x in words), words)
