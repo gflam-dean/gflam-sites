@@ -1816,6 +1816,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_host_updates_optin": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_jag_games": {
    "enabled": true,
    "forced": false
