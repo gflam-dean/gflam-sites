@@ -3913,6 +3913,13 @@ def local_checks(which):
              'test-account-ready.js',
              'runs /start/begin and /start/verify on the billing Worker with a fake Mobile Message and Resend: ONE text from the venueplay sender to the mobile that passed the code in Dean\'s words, no link; ONE Welcome to venueplay email from hello@send.venueplay.com.au with one sign-in button (the text-code sign-in, their mobile filled in, no token), the sender address, the screen code and what to do first; an unlisted venue the same, a held one nothing; never twice (the same code, a second call, an audit that will not answer sends nothing); a provider down, no provider, an opted-out number or no email key never stops the done screen; a link typed as the venue name never reaches the text; what they typed is escaped in the email; the audit keeps the last 3 digits only; the email goes first so the text can say it was emailed too (check junk), two SMS parts at most; the email gives venueplay.com.au/go/{screen code} as the easy way back in', 28,
              'A venue that closed the tab at the bar with nothing in its inbox, or a sign-up texted and emailed twice'),
+            # D195: change my mobile, Edit mobile on a host, and HQ changes a venue login's mobile (Dean, 8 Nov 2026; INBOX 138),
+            # branch fix/change-mobile-9nov. No migration: Supabase Auth holds the phone, vp_admin_audit the record.
+            ('D195. A venue login changes its own mobile only after a code to the new number, and a host\'s or HQ\'s change is guarded and audited',
+             'test-change-mobile.js',
+             'Change my mobile asks Auth\'s phone change for the NEW number in the sign-in format and saves nothing until verifyOtp type phone_change passes, with a 30 second Send it again; never drawn for HQ View as; /account/host-mobile lets the owner, or a manager allowed to add hosts for a host, change a login that is staff on this account only, never their own, a full-access or venueplay staff login, or a number another login has, and a failed read changes nothing; /admin/login-mobile is HQ Owner only, on the venue named, the confirm naming the login; both audited with last three digits only', 78,
+             'A typo or a stranger\'s number put on a venue\'s login with no code, a manager taking over the owner\'s login, '
+             'one business changing a host\'s sign-in at another, or a mobile changed with nothing in the audit log'),
             # D115: the sign-in link in the prospect's own thread, and where the account email got to (Dean, 5 Nov 2026),
             # branch feature/signin-in-thread-6nov.
             ('D115. A prospect\'s sign-in link can go in their own email thread, and HQ shows where the account email got to',
