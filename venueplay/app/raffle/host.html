@@ -1097,7 +1097,11 @@
 
   // ---- draw button modes ----
   /* A prize said in the middle of a sentence: "the meat tray", but "the BBQ pack" keeps its capitals. */
-  function lower(p){ p=String(p||""); return /^[A-Z][a-z]/.test(p) ? p.charAt(0).toLowerCase()+p.slice(1) : p; }
+  /* "First up: the meat tray" reads as a sentence, so a prize typed "Meat tray" loses its capital M. A prize typed
+     "Meat Tray" came out "meat Tray" (live play on The Mini Bar, 12 Nov 2026, FINDINGS R1): only the first letter
+     was lowered. The prize is the venue's own words, so a name with any other capital in it (Meat Tray, Bottle
+     of VB) is shown exactly as they typed it; only a plain "Meat tray" is lowered. */
+  function lower(p){ p=String(p||""); return (/^[A-Z][a-z]/.test(p) && !/[A-Z]/.test(p.slice(1))) ? p.charAt(0).toLowerCase()+p.slice(1) : p; }
   function drawLabel(){
     if(G.lastWin){
       if(G.jackOn) return "Draw again";

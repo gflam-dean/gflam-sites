@@ -160,6 +160,18 @@ check('a raffle Draw does not pull a live quiz off the wall', navigatedTo === nu
 rc.handlers.forEach(function (h) { h({ payload: { t: 'mode', mode: 'raffle', claim: 1, force: 1 } }); });
 check('the host\'s own "Put the draw on the TV" does', !!navigatedTo && /\/app\/raffle\/screen\?venue=the-pub/.test(navigatedTo), navigatedTo);
 
+/* ---- "First up: the meat Tray" (FINDINGS R1): the raffle console's own lower(), lifted out of the page and run ---- */
+print('');
+print('The prize reads as the venue typed it');
+var HOST = readFile('venueplay/app/raffle/host.html');
+var LM = /\n  function lower\(p\)\{[^\n]*\}\n/.exec(HOST);
+check('the raffle console has its lower()', !!LM);
+var lower = LM ? (new Function(LM[0] + '; return lower;'))() : function (x) { return x; };
+check('"Meat Tray" (typed with two capitals) stays "Meat Tray", never "meat Tray"', lower('Meat Tray') === 'Meat Tray', lower('Meat Tray'));
+check('"Bottle of VB" keeps its VB and its B', lower('Bottle of VB') === 'Bottle of VB', lower('Bottle of VB'));
+check('a plain "Meat tray" reads "meat tray" mid-sentence, as before', lower('Meat tray') === 'meat tray', lower('Meat tray'));
+check('"VB slab" is left alone', lower('VB slab') === 'VB slab', lower('VB slab'));
+
 print('');
 var total = PASS + FAIL;
 if (FAIL) { print(PASS + ' of ' + total + ' checks passed'); throw new Error(FAIL + ' check(s) failed'); }
