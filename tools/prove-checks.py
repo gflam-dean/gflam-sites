@@ -6616,7 +6616,7 @@ MUTATIONS = [
      # The venue name stopped being an inline style on 5 Sep - it is a wrapped second
      # line inside .tv-corner now - so the old mutation had nothing to match. Mix the
      # units on the corner rule itself, which is what the check actually reads.
-     '.tv-corner{position:absolute;top:2cqw;right:2.4cqw;',
+     '.tv-corner{position:absolute;top:2cqw;right:1.2cqw;',
      '.tv-corner{position:absolute;top:2cqw;right:18px;',
      'a corner is pinned in two different units and only lines up at one screen width'),
 
@@ -9225,7 +9225,7 @@ MUTATIONS = [
      'el.id="venueLogo"; el.setAttribute("data-fit-avoid","");', 'el.id="venueLogo";',
      'the bigger logo on the bingo TV is painted over the wall instead of the wall moving out from under it'),
     ('venue-logo-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
-     '    if (kind !== "phone") { s.top = L.inset + "px"; s.left = L.inset + "px"; }\n', '',
+     '    if (kind !== "phone") { s.top = L.inset + "px"; s.left = L.insetX + "px"; }   /* the same distance in as the venueplay mark (12 Nov 2026) */\n', '',
      'the TV logo is sized for its shape but left jammed 14 pixels from the corner'),
     ('venue-logo-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '<script src="/app/vp-venuelogo.js"></script>\n', '',
@@ -15224,7 +15224,7 @@ MUTATIONS = [
      'corner.style.transform = want ? "translateY(" + want + "px)" : "";', 'corner.style.transform = "";',
      'the venueplay mark stays at the top while a square logo hangs 35px lower (as it was)'),
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
-     '          else { var lift = Math.max(dy, a.top - (mk.top - cur)); want = Math.round(lift * 10) / 10; }', '          else { want = 0; }',
+     '          else { var lift = Math.max(dy, 4 - (mk.top - cur)); want = Math.round(lift * 10) / 10; }', '          else { want = 0; }',
      'beside a wide wordmark the venueplay mark sits 10px off the line the logos and the title share'),
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
      'var cur = parseFloat(corner.getAttribute("data-drop")) || 0, want = 0;', 'var cur = parseFloat(corner.getAttribute("data-drop")) || 0, want = 12;',
@@ -15269,6 +15269,30 @@ MUTATIONS = [
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-tvgame.js',
      'mb = (w.VPVenueLogo && w.VPVenueLogo.markBox) ? w.VPVenueLogo.markBox(cn) : null;', 'mb = null;',
      'TRIVIA is lined up only once the show has ended, so it drops beside the mark after the show (one copy in /app/vp-tvgame.js since the musical new look)'),
+    # ---- 12 Nov 2026 (Dean, INBOX 200, Caz Reitop's 7.7:1 wordmark): the venue's logo, or its name, lines up with the
+    # venueplay mark: the same vertical centre line and the same distance in from the edge, whatever its shape.
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     's.left = L.insetX + "px"; }', 's.left = "14px"; }',
+     'the venue logo is left at the pages\' fallback 14px in, not the venueplay mark\'s distance from the right'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/tv.html',
+     '.tv-corner{position:absolute;top:2cqw;right:1.2cqw;', '.tv-corner{position:absolute;top:2cqw;right:2.4cqw;',
+     'the venueplay mark goes back to 46px in from the right while the venue logo is 23px in from the left (as it was)'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     '    edge: 0.012      /*', '    edge: 0.024      /*',
+     'the venue logo\'s distance in from the left is no longer the mark\'s right:1.2cqw'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     '          else { var lift = Math.max(dy, 4 - (mk.top - cur)); want = Math.round(lift * 10) / 10; }',
+     '          else { var lift = Math.max(dy, a.top - (mk.top - cur)); want = Math.round(lift * 10) / 10; }',
+     'beside a banner shorter than the mark, the mark stops at the banner\'s top and sits below its middle (as it was)'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     '      if (!(has && img)) alignName(corner);\n', '',
+     'a venue with no logo has its name 14px from the top, its middle well above the mark\'s (as it was)'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     '      if (Math.abs(wantL - left) >= 0.05) el.style.left = wantL + "px";', '      if (false) el.style.left = wantL + "px";',
+     'the venue name stays 14px in from the left while the mark sits 23px in from the right (as it was)'),
+    ('tv-logo-align-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
+     '      if (Math.abs(want - top) >= 0.05) el.style.top = want + "px";', '      if (false) el.style.top = want + "px";',
+     'the name is measured but never moved onto the mark\'s line'),
     # ---- 4 Nov 2026: a Google Play reviewer saw GO FULLSCREEN on the live venue screen inside the app.
     ('tv-landing-in-chrome.test.py', 'venueplay/tv.html',
      '  if(IN_APP){ try{ document.documentElement.classList.add("in-tvapp"); }catch(e){} }\n', '',

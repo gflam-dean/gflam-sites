@@ -1391,6 +1391,10 @@
   "checks": 53,
   "counted_by": "lines"
  },
+ "tools/tv-logo-align-in-chrome.test.py": {
+  "checks": 120,
+  "counted_by": "lines"
+ },
  "tools/tv-logo-centre-in-chrome.test.py": {
   "checks": 145,
   "counted_by": "lines"
