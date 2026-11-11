@@ -197,6 +197,8 @@
   .flagnote{margin-top:7px;font-size:12.5px;color:var(--muted);line-height:1.45}
   .flagnote b{color:var(--text)}
   #flagSongBtn.done{border-color:rgba(255,194,75,.5);color:var(--gold)}
+  .paperplay{margin-top:10px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .paperchg{background:none;border:0;padding:6px 2px;min-height:36px;color:#FF8CC6;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
   .clipwarn{margin-top:10px;font-size:12px;color:var(--roll);background:rgba(245,165,36,.1);border:1px solid rgba(245,165,36,.28);border-radius:9px;padding:9px 11px;line-height:1.45}
   .spotrow{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
   .spotrow .btn{flex:1;min-width:120px}
@@ -354,6 +356,7 @@
             <label>Paper cards <small style="color:var(--faint);font-weight:400">for regulars without a phone</small></label>
             <button type="button" class="btn ghost" id="paperPrintBtn" style="width:100%">Print paper cards</button>
             <small class="fieldnote" id="paperNote">Up to 10 a night, printed from the playlist above. A paper card counts as a player once it is played or checked, the same as a phone.</small>
+            <div class="paperplay hidden" id="paperPlayRow">Playing this game: <b id="paperPlayN">0 paper cards</b> <button type="button" class="paperchg" id="paperPlayChange">Change</button></div>
           </div>
           <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed
                until opened. The shared disclosure, VP.advanced in /app/vp-session.js. Never "Tonight". -->
@@ -1636,8 +1639,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function beginRound(btn, label){
     clearErrForAction();
     G.busy=true; if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    /* THE PAPER CARDS ARE ASKED ONCE (Dean, live play on The Mini Bar, 11 Nov 2026: he printed 4, then Start game asked
+       "Paper cards tonight?" all over again). The number printed is the number playing until the host changes it with
+       Change under Print paper cards; Start game and New game just use it. */
     openSession().then(function(){
-      return paperPrinted()>0 ? askPaperDeclared() : 0;
+      return paperPrinted()>0 ? paperPlaying() : 0;
     }).then(function(paperCount){
       bcast({ t:"mode", mode:"musical" });
       return apiPost("/host/game",{
@@ -1670,6 +1676,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       bcast({ t:"players", count:playerCount() });
       sendState();
       renderConsole();
+      landAtTop();
     }).catch(function(e){ if(!(e && e.cancelled)) hostError(e.message); }).then(function(){
       G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; } renderConsole();   // re-sync the button label to G.status (e.g. still 'lobby' after a cancelled/failed start)
     });
@@ -2258,7 +2265,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function paperRead(){ try{ return JSON.parse(localStorage.getItem(paperKey())||"{}")||{}; }catch(e){ return {}; } }
   function paperPrinted(){ return paperRead().musical|0; }
   function paperPrintedFrom(){ return String(paperRead().from||""); }   // the playlist the cards were printed from
-  function savePaperPrinted(n, from){ try{ localStorage.setItem(paperKey(), JSON.stringify({ musical:n, from:(from||"") })); }catch(e){} }
+  function savePaperPrinted(n, from){ try{ localStorage.setItem(paperKey(), JSON.stringify({ musical:n, from:(from||"") })); }catch(e){} }   // a new print: all of them play until changed
+  /* How many paper cards are in this game: what was printed, unless the host changed it (never more than printed). */
+  function paperPlaying(){
+    var o=paperRead(), n=o.musical|0;
+    var v=(typeof o.playing==="number" && o.playing>=0) ? (o.playing|0) : n;
+    return Math.max(0, Math.min(n, v));
+  }
+  function savePaperPlaying(v){ try{ var o=paperRead(); o.playing=Math.max(0, v|0); localStorage.setItem(paperKey(), JSON.stringify(o)); }catch(e){} }
+  /* AFTER START GAME THE CONSOLE IS AT THE TOP (Dean, 11 Nov 2026: after the paper cards pop-up it "loaded in a really
+     weird spot"). Start game sits at the bottom of a long setup screen and the live screen replaced it in place, so the
+     host landed halfway down the song list. The top is the room code and Now playing, what the TV is doing. */
+  function landAtTop(){ try{ window.scrollTo(0,0); }catch(e){} }
   /* What the Print modal says. It used to promise "printing again gives you the same cards", which
      was only true from the same playlist, and once the Worker replaces a set from another playlist
      it would have been a lie on the one screen the host reads before tapping Print. */
@@ -2290,6 +2308,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var n=G.sessionId ? paperPrinted() : 0;
     $("paperPrintBtn").textContent = n ? ("Print again ("+n+" printed tonight)") : "Print paper cards";
     $("paperNote").textContent = paperPrintedNote(n, n ? paperPrintedFrom() : "");
+    var pr=$("paperPlayRow");
+    if(pr){
+      pr.classList.toggle("hidden", !n);
+      if(n){ var k=paperPlaying(); $("paperPlayN").textContent=k+" paper card"+(k===1?"":"s"); }
+    }
     $("paperCheck").classList.toggle("hidden", !(n && G.status==="running"));
   }
   var _paperDone=null;
@@ -2308,12 +2331,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     paperClose(v);
   });
   $("paperCancel").addEventListener("click", function(){ paperClose(null); });
-  function askPaperDeclared(){
-    var n=paperPrinted();
-    return paperModal("Paper cards tonight",
+  /* Change: the one place the number playing is asked, and only when the host wants to change it. */
+  function changePaperPlaying(){
+    var n=paperPrinted(); if(!n) return Promise.resolve(null);
+    return paperModal("Paper cards this game",
       "You printed <b>"+n+"</b> paper card"+(n===1?"":"s")+". How many are being played this game?<br><small style=\"color:var(--muted)\">These count as players, the same as phones. Nobody playing on paper? Put 0.</small>",
-      n, n, "Start game").then(function(v){ if(v==null){ var e=new Error("cancelled"); e.cancelled=true; throw e; } return v; });
+      paperPlaying(), n, "Save").then(function(v){ if(v!=null){ savePaperPlaying(v); renderPaper(); } return v; });
   }
+  (function(){ var c=$("paperPlayChange"); if(c) c.addEventListener("click", function(){ if(!G.busy) changePaperPlaying(); }); })();
   $("paperPrintBtn").addEventListener("click", function(){
     if(!libLoaded || G.busy) return;
     var had=G.sessionId ? paperPrinted() : 0;
