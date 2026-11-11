@@ -314,8 +314,11 @@ def finished_win_leaves():
         ok('CONTROL: the TV shows the bingo winner', wall_is(r, tv, 'bingo:tvWin', 8), wall(r, tv))
         r.ask(tv, 'window.__shift=5*60*1000; true'); time.sleep(4)
         ok('five minutes on, the winner is still up', wall(r, tv) == 'bingo:tvWin', wall(r, tv))
-        r.ask(tv, 'window.__shift=11*60*1000; true')
-        ok('8b: ten minutes after the finished win, the TV goes back to the ads by itself', wall_is(r, tv, 'ads', 10), wall(r, tv))
+        # The bingo console is still open (as Dean's was): its 30 second heartbeat keeps arriving, so the TV's
+        # frozen-game reload never fires; only the finished win's own clock can take it down.
+        r.ask(tv, 'window.__shift=11*60*1000; window.__beat=setInterval(function(){ window.__say({t:"host_here"}); }, 500); true')
+        ok('8b: ten minutes after the finished win, the TV goes back to the ads by itself, console still open', wall_is(r, tv, 'ads', 10), wall(r, tv))
+        r.ask(tv, 'clearInterval(window.__beat); true')
         r.ask(tv, 'window.__shift=0; true')
         tsay({'t': 'mode', 'mode': 'bingo', 'caller': False}); time.sleep(1.5)
         ok('and a later mode:"bingo" does not paint the old winner back', wall(r, tv) != 'bingo:tvWin', wall(r, tv))
