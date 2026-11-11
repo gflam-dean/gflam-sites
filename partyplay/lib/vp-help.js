@@ -713,9 +713,7 @@
       var mi = el("button", "menuitem", "Help and contact"); mi.type = "button"; mi.id = "vphMenu";
       on(mi, "click", function () { try { menu.classList.add("hidden"); } catch (e) {} openPanel(); });
       var leave = doc.getElementById("leaveBtn");
-      /* above Leave game wherever it sits in the menu: the new-look sheets keep it in a list inside the sheet
-         (#menuList), and a page's helpFirst() then lifts Help to the top of that list (11 Nov 2026) */
-      if (leave && menu.contains(leave)) leave.parentNode.insertBefore(mi, leave); else menu.appendChild(mi);
+      if (leave && leave.parentNode === menu) menu.insertBefore(mi, leave); else menu.appendChild(mi);
     }
   }
   try {

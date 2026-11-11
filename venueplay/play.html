@@ -2462,6 +2462,7 @@
   if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel) menuPanel.classList.add("hidden"); }); }
   function helpFirst(){ var h=$("vphMenu"), l=$("menuList"); if(h && l && h.parentNode!==l){ h.innerHTML="<span>Help</span><span class=\"chev\">&#8250;</span>"; l.insertBefore(h, l.firstChild); } }
   helpFirst(); document.addEventListener("DOMContentLoaded", helpFirst); setTimeout(helpFirst, 0);
+  window.addEventListener("load", helpFirst);   /* vp-help.js mounts on DOMContentLoaded AFTER the listener above, so Help is lifted again once the page has loaded */
   var hlChk=$("hlChk");
   if(hlChk){ hlChk.checked=_hl; hlChk.addEventListener("change", function(){ _hl=!!hlChk.checked; try{ localStorage.setItem("vp-bhl", _hl?"1":"0"); }catch(e){} if(P.cards.length) paintCards(); }); }
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
