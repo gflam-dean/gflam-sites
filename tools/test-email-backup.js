@@ -143,9 +143,9 @@ var WN = 0, AMIT_PHONE = '', AMIT_PH = '';
   check('no link was made for a login with no email, a banned one, or one off every venue', DB.vp_signin_links.filter(function (x) { return [U(3), U(4), U(5)].indexOf(x.auth_user_id) >= 0; }).length === 0);
 
   wd();
-  DB.vp_prospects = [{ venue_id: V1, auth_user_id: AMIT, email: 'amit@caz.example', created_at: new Date(Date.now() - 40 * 86400000).toISOString() }];
+  DB.vp_prospects = [{ venue_id: V1, auth_user_id: AMIT, email: 'amit@caz.example', created_at: new Date(Date.now() - 100 * 86400000).toISOString() }];   // past the 90 days (VPA_LINK_DAYS, 10 Nov 2026)
   var ended = await post({ mobile: AMIT_PHONE });
-  check('a prospect whose 30 days are over: still the same answer, no link (and no sales ticket for a stranger to cause)', JSON.stringify(ended.body) === SAME && sent.length === 0 && (DB.vp_help_tickets || []).length === 0, [ended, sent.length]);
+  check('a prospect whose 90 days are over: still the same answer, no link (and no sales ticket for a stranger to cause)', JSON.stringify(ended.body) === SAME && sent.length === 0 && (DB.vp_help_tickets || []).length === 0, [ended, sent.length]);
 
   section('3. The same minimum time on every answer');
   wd();

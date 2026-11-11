@@ -41,8 +41,9 @@ pass("and it starts hidden, so nobody is pushed off the text code", !!mark && /c
 var SIGNIN_CARD = APP.slice(APP.indexOf('id="vSignIn"'), APP.indexOf('id="vAdmin"'));
 pass("there is NO email box on the sign-in screen: nothing an address could be typed into",
      !/type="email"/.test(SIGNIN_CARD) && !/id="emailIn"/.test(SIGNIN_CARD) && !/id="stepEmail"/.test(SIGNIN_CARD) && !/autocomplete="email"/.test(SIGNIN_CARD));
+/* A PHONE code with shouldCreateUser:false (a short link for an existing login only, 12 Nov) is not an email code. */
 pass("the page never asks Auth for an email code or an email verify at all",
-     !/signInWithOtp\(\s*\{\s*email/.test(SIGNIN) && !/type:\s*"email"/.test(SIGNIN) && !/shouldCreateUser/.test(SIGNIN) && !/emailOtp|EMAIL=/.test(SIGNIN));
+     !/signInWithOtp\(\s*\{\s*email/.test(SIGNIN) && !/type:\s*"email"/.test(SIGNIN) && !/email\s*:[^}]*options\s*:\s*\{\s*shouldCreateUser/.test(SIGNIN) && !/emailOtp|EMAIL=/.test(SIGNIN));
 pass("no masked address and no support phone on that screen", !/\u2022|j•••|07 5228/.test(SIGNIN_CARD));
 
 /* ---- a fake page ---- */

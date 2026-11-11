@@ -231,9 +231,9 @@ section('3w. Our link filled in their mobile: a DIFFERENT number sends no code (
    which makes a new login for it and lands on "This login is not linked to a venue yet". */
 function flowRun(hash, ssInit) {
   var R = { otps: [], posts: [] }, els = {};
-  ['stepMobile', 'stepCode', 'emailAlt', 'stepEmail', 'authSub', 'emailIn', 'mobileIn', 'mobileErr', 'sentTo', 'otpIn', 'notMine', 'notMineBtn', 'wrongNum', 'sendCodeBtn'].forEach(function (id) {
+  ['stepMobile', 'stepCode', 'emailAlt', 'emailAltMsg', 'stepEmail', 'authSub', 'emailIn', 'mobileIn', 'mobileErr', 'sentTo', 'otpIn', 'notMine', 'notMineBtn', 'wrongNum', 'sendCodeBtn'].forEach(function (id) {
     els[id] = new El(id); els[id].focus = function () {}; });
-  ['stepCode', 'emailAlt', 'stepEmail', 'notMine', 'wrongNum'].forEach(function (id) { els[id].classList.add('hidden'); });
+  ['stepCode', 'emailAlt', 'emailAltMsg', 'stepEmail', 'notMine', 'wrongNum'].forEach(function (id) { els[id].classList.add('hidden'); });
   els.sendCodeBtn.textContent = 'Send code';
   var SS = store(); Object.keys(ssInit || {}).forEach(function (k) { SS.setItem(k, ssInit[k]); });
   var client = { auth: { signInWithOtp: function (o) { R.otps.push(o); return Promise.resolve({ error: null }); } } };
