@@ -98,6 +98,7 @@
   "cancel-emails.test.js",
   "check-tv-watchdog.py",
   "check-venue-scoping.py",
+  "clip-fade-in-chrome.test.py",
   "closed venues lose their player details, and nobody else does (40 checks)",
   "connected-word-in-chrome.test.py",
   "consent-split-in-chrome.test.py",

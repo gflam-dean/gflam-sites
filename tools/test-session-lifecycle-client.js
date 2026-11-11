@@ -196,7 +196,8 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   var timers = [], warned = 0, paused = true, ct = 0;
   var clipAudio = { crossOrigin: '', src: '', paused: true, currentTime: 0, volume: 1, getAttribute: function () { return clipAudio.src; }, play: function () { return { then: function () { return { catch: function () {} }; } }; } };
   var _ac2 = null; function setTimeout(f, ms) { timers.push([f, ms]); } function audioOk() {} function audioBlocked() { warned++; } function buildBoost() {}
-  eval(lift(MSCREEN, 'playClip', 'musical/screen.html'));
+  var _clipFade = null, _hostPaused = false;   // no /app/vp-fade.js here: the clip plays as it always did (INBOX 260 moved the start into startClip)
+  eval(['playClip', 'startClip'].map(function (n) { return lift(MSCREEN, n, 'musical/screen.html'); }).join('\n'));
   playClip('https://x/a.m4a');
   var t = timers.filter(function (x) { return x[1] === 3000; })[0];
   ok('a clip is looked at again after three seconds', !!t, JSON.stringify(timers.map(function (x) { return x[1]; })));
