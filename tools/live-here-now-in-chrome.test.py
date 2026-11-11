@@ -8,9 +8,15 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
 
   - /here (the short address on the coaster) and /live answer 301 to /live-here-now
   - FIRST NAME first ("Nice one, Sam"), one box, nothing else asked; an empty name is refused
-  - "Where are you playing?": three letters finds the pub (name, then suburb and postcode or state);
-    two letters asks for more; not listed opens "Type your venue's name", kept as a lead, still a board;
-    "Just play, no board" plays without one; the next scan offers the same venue first
+  - "Where are you playing?": three letters finds the pub (name, then suburb and postcode or state)
+    from OUR WHOLE VENUE LIST (INBOX 229/232), each pick saying plainly whether it is on venueplay
+    ("On venueplay", "Game on now") or "Not on venueplay yet"; two letters asks for more; nothing
+    typed ever makes a board: "Can't find your venue? Add it" sends name, suburb, state and website
+    to HQ's review list and the round plays with no board; "Just play, no board" plays without one;
+    the next scan offers the same venue first
+  - the venue's own sign-up at the end (INBOX 232): only where the Worker says it is switched on, the
+    phones' one tick unticked ("Send me offers from The Mini Bar. I'm 18 or over."), its consent
+    version sent with it; never at a venue that is not on venueplay
   - the new look: the answers in the TV's full colours, the right one turns GREEN and says so, a
     wrong pick is outlined in its own colour and tagged; "Correct! +145" once the Worker answers;
     a second tap changes nothing
@@ -24,10 +30,10 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
     follows ?v=<slug> as before
   - the hour's five: the same on two phones in an hour, different the next; Play again and a rescan
     never repeat; storage blocked (private mode) still plays
-  - at 320, 375, 390, 430 and 1280 wide: no sideways scroll, nothing off the screen or cut off in its
+  - at 320, 375, 390, 430 and 1440 wide: no sideways scroll, nothing off the screen or cut off in its
     box, buttons a thumb can hit, and no visible text under 15px, on every screen
 
-THE GAME WORKER IS A STAND-IN HERE: a small local server answering the five /coaster routes in their
+THE GAME WORKER IS A STAND-IN HERE: a small local server answering the six /coaster routes in their
 real shapes, pointed at through window.VP_GAME_API. The Worker's own behaviour (the search, scoring
 by triviaAnswerPoints, first names only, the boards) is run against the shipped Worker by
 venueplay-backend/worker/coaster-round.test.js; the page's own logic by coaster-page.test.js.
@@ -83,6 +89,7 @@ HOUR = 491234          # a fixed hour (Sep 2026), never this machine's clock
 T0 = HOUR * 3600000 + 20 * 60000
 MINI = 'v:11111111-1111-4111-8111-111111111111'
 TUGUN = 'c:44444444-4444-4444-8444-444444444444'
+BODALLA = 'l:107'
 
 
 # ---------------------------------------------------------------------------------------------
@@ -90,10 +97,14 @@ TUGUN = 'c:44444444-4444-4444-8444-444444444444'
 # ---------------------------------------------------------------------------------------------
 FAKE = {'off': False, 'rounds': {}, 'codes': {}, 'log': [], 'n': 0}
 PLACES = [
-    {'place': MINI, 'name': 'The Mini Bar', 'suburb': '', 'postcode': '2485', 'state': 'NSW'},
-    {'place': TUGUN, 'name': 'Tugun Tavern', 'suburb': 'Tugun', 'postcode': '4224', 'state': 'QLD'},
-    {'place': 'v:77777777-7777-4777-8777-777777777771', 'name': 'Royal Hotel', 'suburb': '', 'postcode': '2000', 'state': 'NSW'},
+    {'place': MINI, 'name': 'The Mini Bar', 'suburb': '', 'postcode': '2485', 'state': 'NSW', 'on': True},
+    {'place': TUGUN, 'name': 'Tugun Tavern', 'suburb': 'Tugun', 'postcode': '4224', 'state': 'QLD', 'on': False},
+    {'place': 'v:77777777-7777-4777-8777-777777777771', 'name': 'Royal Hotel', 'suburb': '', 'postcode': '2000', 'state': 'NSW', 'on': True, 'live': True},
+    {'place': 'l:101', 'name': 'Royal Hotel', 'suburb': 'Bowral', 'postcode': '', 'state': 'NSW', 'on': False},
+    {'place': 'l:103', 'name': 'Royal Oak Tavern', 'suburb': 'Ballarat', 'postcode': '', 'state': 'VIC', 'on': False},
+    {'place': BODALLA, 'name': 'Bodalla Pub', 'suburb': 'Bodalla', 'postcode': '', 'state': 'NSW', 'on': False},
 ]
+OPTIN = {MINI: {'email': True, 'mobile': False, 'marketing_optin': True}}   # the venue HQ switched the sign-up on for
 NAMES = dict((p['place'], p['name']) for p in PLACES)
 
 
@@ -151,9 +162,14 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
         if FAKE['off']:
             return self.send(503, {'off': True})
         if self.path == '/coaster/lead':
-            place = 'c:66666666-6666-4666-8666-%012d' % (len(NAMES) + 1)
-            NAMES[place] = b.get('name', '')
-            return self.send(200, {'ok': True, 'place': place, 'name': b.get('name', '')})
+            if not b.get('suburb') or b.get('state') not in ('QLD', 'NSW', 'VIC', 'SA', 'WA', 'TAS', 'NT', 'ACT'):
+                return self.send(400, {'error': 'Type the suburb or town.', 'field': 'suburb'})
+            return self.send(200, {'ok': True, 'added': True})
+        if self.path == '/coaster/optin':
+            r = FAKE['rounds'].get(b.get('play'))
+            if not r or b.get('token') != r['token']:
+                return self.send(403, {'error': 'That round is not yours.'})
+            return self.send(200, {'ok': True, 'stored': r['place'] in OPTIN})
         if self.path == '/coaster/start':
             first = (b.get('name') or '').split(' ')[0][:14]
             if not first:
@@ -172,8 +188,11 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
                  'points': 0, 'correct': 0, 'ms': 0, 'done': False}
             FAKE['rounds'][rid] = r
             FAKE['codes'][code] = {'place': place, 'qids': qids}
-            return self.send(200, {'ok': True, 'play': rid, 'token': r['token'], 'code': code, 'place': place, 'name': r['name'],
-                                   'venue': {'name': NAMES.get(place, ''), 'suburb': '', 'logo_url': ''}, 'qids': qids, 'base': 100})
+            out = {'ok': True, 'play': rid, 'token': r['token'], 'code': code, 'place': place, 'name': r['name'],
+                   'venue': {'name': NAMES.get(place, ''), 'suburb': '', 'logo_url': '', 'on': place.startswith('v:')}, 'qids': qids, 'base': 100}
+            if place in OPTIN:
+                out['optin'] = OPTIN[place]
+            return self.send(200, out)
         if self.path == '/coaster/answer':
             r = FAKE['rounds'].get(b.get('play'))
             if not r or b.get('token') != r['token']:
@@ -314,6 +333,9 @@ STATE = r'''(function(){
     leadVal:(document.getElementById("leadIn")||{}).value||"", nameVal:(document.getElementById("nameIn")||{}).value||"",
     kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
     sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
+    optin:shown("optinCard"), optinHead:txt("optinHead"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"),
+    optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked, optinOk:shown("optinOk")?txt("optinOk"):"",
+    leadDone:shown("leadDone")?txt("leadDone"):"", notListed:shown("notListed"),
     tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
     next:document.getElementById("joinGame").getAttribute("href"), owner:document.getElementById("ownerLink").getAttribute("href"),
     ownerText:txt("ownerLink"), inputs:Array.prototype.filter.call(document.querySelectorAll("input"),function(i){return i.offsetParent!==null;}).length,
@@ -506,12 +528,22 @@ def main():
               not any(x[1] == '/coaster/venues' for x in FAKE['log']), s.get('hint'))
         t.type_into('whereIn', 'min')
         s = wait(t, lambda s: bool(s.get('picks')))
-        check('three letters finds The Mini Bar, with its postcode and state', [p['text'] for p in s.get('picks', [])] == ['The Mini Bar2485 NSW'], s.get('picks'))
+        check('three letters finds The Mini Bar, with its postcode and state, and says it is "On venueplay"', [p['text'] for p in s.get('picks', [])] == ['The Mini Bar2485 NSWOn venueplay'], s.get('picks'))
         check('each pick is a thumb-sized button (56 px or taller)', all(p['h'] >= 56 for p in s.get('picks', [])), s.get('picks'))
         t.shot('lhn-where-375.png')
         t.type_into('whereIn', 'tug')
         s = wait(t, lambda s: any('Tugun Tavern' in p['text'] for p in s.get('picks', [])))
-        check('a coaster venue shows its suburb and postcode: "Tugun Tavern / Tugun 4224"', any(p['text'] == 'Tugun TavernTugun 4224' for p in s.get('picks', [])), s.get('picks'))
+        check('a coaster venue shows its suburb and postcode and says plainly "Not on venueplay yet"', any(p['text'] == 'Tugun TavernTugun 4224Not on venueplay yet' for p in s.get('picks', [])), s.get('picks'))
+        t.type_into('whereIn', 'roy')
+        s = wait(t, lambda s: len(s.get('picks', [])) == 3)
+        check('our whole list: a venueplay venue with a game open reads "Game on now"; the same name on our list reads "Not on venueplay yet", with suburb and state, no postcode',
+              [p['text'] for p in s.get('picks', [])] == ['Royal Hotel2000 NSWGame on now', 'Royal HotelBowral NSWNot on venueplay yet', 'Royal Oak TavernBallarat VICNot on venueplay yet'], s.get('picks'))
+        word = t.js('(function(){var o=document.querySelector("#picks .pick .on"),f=document.querySelector("#picks .pick .off");'
+                    'return JSON.stringify([o&&getComputedStyle(o).color,f&&getComputedStyle(f).color,o&&parseFloat(getComputedStyle(o).fontSize)]);})()')
+        word = waits.as_json(word, [], 'WORD')
+        check('"On venueplay" is green; "Not on venueplay yet" is muted grey, never the green; both 15px or more, in words, no dot',
+              word and word[0] == GREEN and word[1] != GREEN and word[2] >= 15 and 'dot' not in HTML.split('.pick .on')[1][:80], word)
+        t.shot('lhn-typeahead-375.png')
         where_step(t, 'min', 'The Mini Bar')
         s = wait_question(t)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
@@ -547,6 +579,21 @@ def main():
         check('the board, Tonight selected, with Sam\'s row marked "(you)"',
               s.get('board') and s.get('tabNight') == 'true' and len(s.get('rows', [])) == 1 and s['rows'][0]['you'] and 'Sam (you)' in s['rows'][0]['text'], s.get('rows'))
         check('"Challenge your mates" is offered', s.get('challenge') is True)
+        check('the venue\'s own sign-up is offered (HQ switched it on): "Hear from The Mini Bar", the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
+              s.get('optin') and s.get('optinHead') == 'Hear from The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and
+              s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('optin'), s.get('optinHead'), s.get('optinTick'), s.get('optinTicked')))
+        t.shot('lhn-optin-375.png')
+        t.tap_id('optinBtn')
+        s = wait(t, lambda s: 'Type your email' in (t.js('document.getElementById("optinErr").textContent') or ''), 3)
+        check('Sign me up with no email asks for one and sends nothing', not any(x[1] == '/coaster/optin' for x in FAKE['log']))
+        t.type_into('optinEmail', 'sam@example.com')
+        t.tap_id('xOptin')
+        t.tap_id('optinBtn')
+        s = wait(t, lambda s: bool(s.get('optinOk')))
+        sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
+        check('ticked and sent: the email, the tick and the consent words\' version (vpc-2-6nov), with the round\'s secret, then "Thanks. You are on The Mini Bar\'s list."',
+              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-2-6nov' and
+              sent[0].get('token', '').startswith('tok') and s.get('optinOk') == "Thanks. You are on The Mini Bar's list.", (sent, s.get('optinOk')))
         check('"From a venue? Click here" goes to /coaster (today\'s offer), never the home page',
               s.get('owner') == '/coaster' and s.get('ownerText') == 'From a venue? Click here', (s.get('owner'), s.get('ownerText')))
         check('"Game on the TV? Join it" goes to /play when the coaster names no venue', s.get('next') == '/play', s.get('next'))
@@ -593,22 +640,52 @@ def main():
         check('and the same board: Mia is on it with Sam', any('Mia (you)' in x['text'] for x in s.get('rows', [])) and any('Sam' in x['text'] for x in s.get('rows', [])), s.get('rows'))
         tm.close()
 
-        print('\nNOT LISTED, AND JUST PLAY')
+        print('\nNOT ON OUR LIST: "CAN\'T FIND YOUR VENUE? ADD IT", AND JUST PLAY')
         clear_storage(b, base)
         tn = Tab(b, base, api)
         tn.go('/live-here-now')
         name_step(tn, 'Kai')
         wait(tn, lambda s: s.get('view') == 'vWhere')
         tn.type_into('whereIn', 'Duck and Drake')
+        s = wait(tn, lambda s: 'No venue by that name' in s.get('hint', ''))
+        check('a venue that is not on our list says so, and nothing typed becomes a pick or a board', 'No venue by that name on our list' in s.get('hint', '') and not s.get('picks')
+              and not s.get('leadOpen') and s.get('notListed'), (s.get('hint'), s.get('leadOpen')))
+        tn.shot('lhn-notfound-375.png')
+        tn.tap_id('notListed')
         s = wait(tn, lambda s: s.get('leadOpen'))
-        check('a pub that is not on venueplay says so and opens "Your venue\'s name", filled in',
-              'Nothing by that name' in s.get('hint', '') and s.get('leadOpen') and s.get('leadVal') == 'Duck and Drake', (s.get('hint'), s.get('leadVal')))
+        check('"Can\'t find your venue? Add it" opens the short form, the name already filled in', s.get('leadOpen') and s.get('leadVal') == 'Duck and Drake', s.get('leadVal'))
+        n_lead = len([x for x in FAKE['log'] if x[1] == '/coaster/lead'])
         tn.tap_id('leadBtn')
-        s = wait_question(tn)
+        time.sleep(0.4)
+        err = tn.js('document.getElementById("leadErr").textContent')
+        check('no suburb: the form says so and sends nothing', err == 'Type the suburb or town.' and len([x for x in FAKE['log'] if x[1] == '/coaster/lead']) == n_lead, err)
+        tn.type_into('leadSuburb', 'Fitzroy')
+        tn.js('(function(){var s=document.getElementById("leadState");s.value="VIC";s.dispatchEvent(new Event("change"));})()')
+        tn.type_into('leadSite', 'duckanddrake.com.au')
+        tn.shot('lhn-addit-375.png')
+        tn.tap_id('leadBtn')
+        s = wait(tn, lambda s: bool(s.get('leadDone')), 4)
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
-        check('Play here keeps it as a lead for Dean and plays on its own board, named in the header',
-              lead and lead[-1] == {'name': 'Duck and Drake'} and s.get('hdr') == 'Duck and Drake', (lead, s.get('hdr')))
+        check('Add it sends the name, suburb, state and website for HQ to review, and says thanks',
+              lead and lead[-1] == {'name': 'Duck and Drake', 'suburb': 'Fitzroy', 'state': 'VIC', 'website': 'duckanddrake.com.au'} and
+              s.get('leadDone') == 'Duck and Drake Thanks. We will check it and add it to the list.', (lead[-1:], s.get('leadDone')))
+        tn.shot('lhn-added-375.png')
+        s = wait_question(tn)
+        starts = [x for x in FAKE['log'] if x[1] == '/coaster/start']
+        check('then the round plays with NO board (nothing typed ever makes one) and the header stays "60-second trivia"',
+              s.get('id') and s.get('hdr') == '60-second trivia' and not [x for x in starts if x[2].get('name') == 'Kai'], (s.get('hdr'), starts[-1:]))
+        _, s, _ = play_round(tn, [True, False, True, True, False])
+        check('...and ends without a board, a challenge or a sign-up', s.get('view') == 'score' and not s.get('board') and not s.get('challenge') and not s.get('optin'), s.get('view'))
         tn.close()
+        clear_storage(b, base)
+        tq = Tab(b, base, api)
+        tq.go('/live-here-now')
+        name_step(tq, 'Ivy')
+        where_step(tq, 'bodalla', 'Bodalla Pub')
+        _, s, _ = play_round(tq, [True, True, False, False, False])
+        st_b = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start'][-1]
+        check('a venue on our list (not on venueplay) has its own board, and never a sign-up box', st_b.get('place') == BODALLA and s.get('board') and not s.get('optin'), (st_b, s.get('optin')))
+        tq.close()
         clear_storage(b, base)
         ts = Tab(b, base, api)
         ts.go('/live-here-now')
@@ -630,9 +707,9 @@ def main():
         name_step(to, 'Ava')
         s = wait(to, lambda s: s.get('view') == 'vWhere')
         to.type_into('whereIn', 'mini')
-        s = wait(to, lambda s: s.get('leadOpen'))
-        check('the search down says so and offers to type the venue', 'having a rest' in s.get('hint', '') and s.get('leadOpen'), s.get('hint'))
-        to.tap_id('leadBtn')
+        s = wait(to, lambda s: 'having a rest' in s.get('hint', ''))
+        check('the search down says so and offers to just play', 'having a rest' in s.get('hint', '') and 'just play' in s.get('hint', '') and not s.get('leadOpen'), s.get('hint'))
+        to.tap_id('skipWhere')
         ids_off, s, seen = play_round(to, [True, False, True, True, False])
         check('the round still plays, the v1 way: "Correct!" with no points', len(ids_off) == 5 and seen[0]['after'].get('verdict') == 'Correct!', seen and seen[0]['after'].get('verdict'))
         check('the end: "3 of 5", "Done in N seconds. ... Beat the table?", no board, no challenge',
@@ -687,7 +764,7 @@ def main():
         print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1280 WIDE')
         LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
         others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
-        for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1280, 800, False)):
+        for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1440, 900, False)):
             clear_storage(b, base, seen=others)
             tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
@@ -700,12 +777,23 @@ def main():
             wait(tf, lambda s: s.get('view') == 'vWhere')
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
-            wait(tf, lambda s: bool(s.get('picks')))
-            tf.tap_id('notListed')
+            wait(tf, lambda s: len(s.get('picks', [])) == 3)
             f = waits.as_json(tf.js(FIT), {}, "FIT")
-            check('%d px, where are you playing (picks and the typed-name box open): the same' % w,
+            check('%d px, the type-ahead picks with their on/not on venueplay words: the same' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
-            tf.shot('lhn-where-%d.png' % w)
+            tf.shot('lhn-typeahead-%d.png' % w)
+            tf.type_into('whereIn', 'Duck and Drake')
+            wait(tf, lambda s: 'No venue by that name' in s.get('hint', ''))
+            tf.shot('lhn-notfound-%d.png' % w)
+            tf.tap_id('notListed')
+            wait(tf, lambda s: s.get('leadOpen'))
+            tf.type_into('leadSuburb', 'Fitzroy')
+            tf.js('(function(){var s=document.getElementById("leadState");s.value="VIC";})()')
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
+            check('%d px, "Add your venue" (the short form open): the same' % w,
+                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            tf.js('window.scrollTo(0, 0)')
+            tf.shot('lhn-addit-%d.png' % w)
             where_step(tf, 'min', 'The Mini Bar')
             s = wait_question(tf)
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))
@@ -718,9 +806,12 @@ def main():
             _, s, _ = play_round(tf, [True, False, True, True, False])
             time.sleep(0.4)
             f = waits.as_json(tf.js(FIT), {}, "FIT")
-            check('%d px, the end with the board: "3 of 5", the same' % w,
-                  s.get('scoreN') == '3 of 5' and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), f))
+            check('%d px, the end with the board and the venue\'s sign-up: "3 of 5", the same' % w,
+                  s.get('scoreN') == '3 of 5' and s.get('optin') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('optin'), f))
             tf.shot('lhn-score-%d.png' % w)
+            tf.js('(function(){var e=document.getElementById("optinCard");if(e)e.scrollIntoView({block:"center"});})()')
+            time.sleep(0.2)
+            tf.shot('lhn-optin-%d.png' % w)
             tf.close()
     finally:
         b.close()
