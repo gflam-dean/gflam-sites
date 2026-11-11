@@ -16069,7 +16069,7 @@ MUTATIONS = [
      'return VP_DEMO ? ORIGIN+"/play?demo=1" : ORIGIN+"/play?room="+code;', 'return ORIGIN+"/play?room="+code;',
      'a prospect scanning the demo QR is sent to a room that does not exist'),
     ('reconnect-layout-in-chrome.test.py', 'venueplay/tv.html',
-     'm({t:"winner", name:"Jess", cardNo:47, prize:"$50 bar tab"});', 'm({t:"winner", name:"Jess", prize:"$50 bar tab"});',
+     'm({t:"winner", name:C.PLAYER, cardNo:C.CARD_NO, prize:C.PRIZE});', 'm({t:"winner", name:C.PLAYER, prize:C.PRIZE});',
      'the demo winner screen says Card #000'),
     # 3 Nov 2026: the live gate was red on main with "charge.toUpperCase is read but Stripe never
     # sends it", a .replace(/^./, (ch) => ch.toUpperCase()) in the monthly venue report. The

@@ -32,6 +32,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 _spec = importlib.util.spec_from_file_location('nl', os.path.join(ROOT, 'tools', 'trivia-newlook-in-chrome.test.py'))
 NL = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(NL)   # its Site (this checkout, no network) and Chrome driver
+# This suite drives a real Chrome through that driver (tools/browser-rig underneath), so gatelib.uses_chrome counts it:
+# --skip-chrome skips it and a Chrome run takes the heavy lock.
 VL = NL.VL
 SHOTS = os.environ.get('VP_SHOTS', '')
 LAPS = float(os.environ.get('VP_DEMO_LAPS', '1') or 1)
@@ -53,12 +55,16 @@ READ = r'''function(d, kind){
   if(kind==="trivia-tv"){ o.q = on("tvQ") ? tx("tvQText") : on("tvReveal") ? tx("tvRevQText") : ""; }
   if(kind==="trivia-phone"){ o.q = on("vQ") || on("vRes") || on("vReveal") ? tx("pqText") : ""; o.view=([].filter.call(d.querySelectorAll(".view"), function(v){ return !v.classList.contains("hidden"); })[0]||{}).id||""; }
   if(kind==="bingo-tv"){ var br=d.getElementById("ballReveal"), rest=d.querySelector("#tvRun .cbnum"); o.ball = (br && !br.classList.contains("hidden")) ? tx("brBall") : (rest && on("tvRun") ? (rest.textContent||"").trim() : ""); o.claim = (d.body.innerText||"").indexOf("Ann")>=0 && /checking|claim|BINGO/i.test(d.body.innerText||""); }
-  if(kind==="bingo-phone"){ o.ball = on("hdrBall") ? tx("hdrBallNum") : ""; o.view=([].filter.call(d.querySelectorAll(".view"), function(v){ return !v.classList.contains("hidden"); })[0]||{}).id||""; }
-  if(kind==="musical-tv"){ var m=/(\d+) songs? played/.exec(d.body.innerText||""); o.played = m ? +m[1] : 0; o.now = on("tvNow") && on("tvRun") ? tx("tvNowTitle") : ""; }
+  if(kind==="bingo-phone"){ var lc=d.querySelector(".lcring .lcnum"); o.ball = lc && lc.offsetParent!==null ? (lc.textContent||"").trim() : (on("hdrBall") ? tx("hdrBallNum") : ""); o.view=([].filter.call(d.querySelectorAll(".view"), function(v){ return !v.classList.contains("hidden"); })[0]||{}).id||""; }
+  if(kind==="musical-tv"){ var it=d.body.innerText||"", m=/(\d+) songs? played/i.exec(it); o.played = m ? +m[1] : 0; o.run = on("tvRun") && !/First song coming up/i.test(it);
+    o.now = o.run && o.played>0 && on("tvNow") && !on("tvListen") ? tx("tvNowTitle") : ""; }
   if(kind==="musical-phone"){ var SONGS=["Never Gonna Give You Up","Dancing Queen","Khe Sanh","Mr. Brightside","The Horses"];
     o.marked=[].filter.call(d.querySelectorAll(".cc.daub"), function(c){ return SONGS.indexOf((c.textContent||"").replace(/\s+/g," ").trim())>=0; }).map(function(c){ return (c.textContent||"").replace(/\s+/g," ").trim(); }); }
-  if(kind==="draw-tv"){ o.ticket=!!d.querySelector(".vpds-ticket"); o.flip=!!d.querySelector(".vpds-flip"); o.stage=!!d.querySelector("#tvStyle:not(.hidden) .vpds-stage, #tvStyle:not(.hidden) .vpds-world");
-    o.old = on("tvDraw") || on("tvSpin"); }
+  /* The live new-look stages (vp-drawstyle.js): the ticket roll is a .vpds-raffle stage of .vpds-tk tickets, the flip
+     board a .vpds-members stage with its .vpds-board. The old look is the raffle's spinning-tile layer (tvDraw) or the
+     members wall's old drawing layer. */
+  if(kind==="draw-tv"){ var st=on("tvStyle"); o.ticket=st && !!d.querySelector("#tvStyle .vpds-raffle .vpds-tk"); o.flip=st && !!d.querySelector("#tvStyle .vpds-members .vpds-board"); o.stage=st && !!d.querySelector("#tvStyle .vpds-stage");
+    o.old = on("tvDraw") || on("tvDrawing"); }
   return o; }'''
 
 HOME = {'tv': 'document.getElementById("h2Tv")', 'phone': 'document.getElementById("h2Phone")'}
@@ -147,6 +153,7 @@ def judge(tag, mode, S):
         ok('%s bingo: the phone reaches its own win (the TV gives the game to the phone beside it)' % tag, any(s['ph'].get('view') in ('vWon', 'vWin') or s['ph'].get('view', '').lower().find('won') >= 0 for s in S),
            sorted(set(s['ph'].get('view') for s in S)))
     elif mode == 'musical':
+        S = [s for s in S if s['tv'].get('run')]   # while the TV is on the songs (not its lobby, the claim or the win)
         flags = [s['tv'].get('played', 0) != len(s['ph'].get('marked') or []) for s in S]
         ok('%s musical bingo: the songs the TV has named are the songs the phone has marked, at every sample (%d)' % (tag, len(S)), len(S) >= 20 and not runs_of_two(flags),
            [(s['tv'].get('played'), s['tv'].get('now'), s['ph'].get('marked')) for s, f in zip(S, flags) if f][:4])
@@ -222,10 +229,13 @@ def main():
     widths = [int(x) for x in (os.environ.get('VP_DEMO_WIDTHS') or '').split(',') if x.strip()]
     B = VL.Browser()
     try:
-        for w in (widths or [1440]):
-            home(B, base, w, 900 if w > 500 else 812)
-        for w in (widths or [375]):
-            see_a_night(B, base, w, 900 if w > 500 else 812)
+        pages = (os.environ.get('VP_DEMO_PAGES') or 'home,san').split(',')   # the report run splits the pages over parallel runs
+        if 'home' in pages:
+            for w in (widths or [1440]):
+                home(B, base, w, 900 if w > 500 else 812)
+        if 'san' in pages:
+            for w in (widths or [375]):
+                see_a_night(B, base, w, 900 if w > 500 else 812)
     finally:
         B.close(); srv.shutdown()
     print('')
