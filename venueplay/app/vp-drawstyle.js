@@ -27,6 +27,21 @@
   var INTRO = 1.2, WIN = 7.0, K = 4;
   var STYLES = { ticket: 1, flip: 1, race: 1 };
   function secs(key) { return LEN[key] || LEN.normal; }
+  /* EVERY VENUE ON THE NEW LOOKS (Dean, 12 Nov 2026, INBOX 284): the usual look is the ticket roll for a raffle and the flip board for
+     a members draw, unless the venue chose the race plate. Anything else stored ('' from the old "As now", 'now', 'as_is', 'classic',
+     the other game's look) is the default, never the old draw. ONE rule for both consoles; migration 191 writes the same into every
+     venue's saved settings. tools/test-draw-looks-switch.js */
+  var DEFAULT_LOOK = { raffle: "ticket", members: "flip" };
+  var CHOICES = { raffle: { ticket: 1, race: 1 }, members: { flip: 1, race: 1 } };
+  function usual(mode, stored) {
+    var m = mode === "members" ? "members" : "raffle";
+    return (typeof stored === "string" && CHOICES[m].hasOwnProperty(stored)) ? stored : DEFAULT_LOOK[m];
+  }
+  /* the look for one draw: a real look for this game wins; anything else ("Usual", an old "classic") is the usual look */
+  function lookFor(mode, usualLook, once) {
+    var m = mode === "members" ? "members" : "raffle";
+    return (typeof once === "string" && CHOICES[m].hasOwnProperty(once)) ? once : usual(m, usualLook);
+  }
   function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
   function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
   function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -441,5 +456,5 @@
     }
   }
 
-  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, claimLine: claimLine, pad: pad, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
+  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
 })(typeof window !== "undefined" ? window : this);
