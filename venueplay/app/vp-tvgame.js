@@ -37,7 +37,7 @@
     ".layer.join .joinurl .jor{color:#8A8A95}\n" +
     ".layer.join .joinurl b{font-weight:800}\n" +
     ".layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);border-radius:1.15cqw;background:#1A1A1F}\n" +
-    ".layer.join .codelbl{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.67cqw;color:#8A8A95;margin-right:2.4cqw}\n" +
+    ".layer.join .codelbl{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:none;font-size:1.67cqw;color:#8A8A95;margin-right:2.4cqw}\n" +
     ".layer.join .codeval{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:7.8cqw;line-height:1;color:#fff;letter-spacing:.06em;background:none;border:none;padding:0;border-radius:0}\n" +
     ".layer.join .jsub{position:absolute;left:0;right:0;top:46cqw;margin:0;text-align:center}\n" +
     ".layer.join.ready .jsub{display:none}\n" +

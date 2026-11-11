@@ -40,7 +40,7 @@
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
-  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:11px;color:var(--pink)}
   .btn{border:none;border-radius:10px;padding:11px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s}
   .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
@@ -76,7 +76,7 @@
   .titlerow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:3px}
   .h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:22px}
   .subh{color:var(--muted);font-size:13px;margin-bottom:20px}
-  .lblk{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;color:var(--faint);margin:26px 0 11px}
+  .lblk{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin:26px 0 11px}
   .rowbetween{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .rowbetween .sp{margin-left:auto}
   .note{font-size:12px;color:var(--muted);margin-top:11px;line-height:1.5}
@@ -93,7 +93,7 @@
   .stats{display:grid;gap:12px;margin-bottom:20px;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr}
   @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
   .scard{background:linear-gradient(180deg,#141416,#0e0e10);border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;justify-content:space-between}
-  .scard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .scard .k{font-size:10.5px;text-transform:none;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .scard .v{font-family:'Anton',sans-serif;font-size:32px;color:#fff;line-height:1;margin-top:8px}
   .scard .v.g{color:var(--gold)}
   .scard .d{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -107,7 +107,7 @@
   .panel.pad{padding:18px}
   .tscroll{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
-  th{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10px;color:var(--faint);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+  th{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10px;color:var(--faint);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap}
   td{padding:12px 14px;border-bottom:1px solid var(--line-2);vertical-align:middle}
   tr:last-child td{border-bottom:none}
   td .vn{font-weight:700;color:#fff}
@@ -119,7 +119,7 @@
   .detail td{background:rgba(255,255,255,.02);font-size:12.5px;color:var(--muted);padding:14px 16px}
   .detail td b{color:var(--text)}
 
-  .badge{font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+  .badge{font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;padding:3px 9px;border-radius:20px;text-transform:none;white-space:nowrap}
   .badge.live{background:rgba(53,208,127,.14);color:var(--win)}
   .badge.idle{background:rgba(154,154,164,.12);color:var(--muted)}
   .badge.gold{background:rgba(255,194,75,.14);color:var(--gold)}
@@ -158,7 +158,7 @@
   @media (max-width:600px){.scrrow{flex-direction:column;align-items:stretch}.scrrow select{width:100%}}
 
   .empty{color:var(--faint);font-size:13px;padding:22px;text-align:center;background:var(--ink-2);border:1px dashed var(--line);border-radius:14px}
-  .srole{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px}
+  .srole{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:10px;text-transform:none;padding:3px 10px;border-radius:20px}
   .srole.owner{background:rgba(255,31,142,.14);color:var(--pink)}
   .srole.accounts{background:rgba(255,194,75,.14);color:var(--gold)}
   .srole.staff{background:rgba(154,154,164,.12);color:var(--muted)}
@@ -204,8 +204,7 @@
      so "The Jolly Jess" rendered as a tiny uppercase mono label identical to the date line
      above it. A descendant selector that reaches further than the element it was written for
      is the CSS version of the same fault this repo keeps finding in code. */
-  .cxnote > b{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 4px}
+  .cxnote > b{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;text-transform:none;color:var(--faint);font-weight:400;margin:0 0 4px}
   .cxnote.bad{border-color:rgba(255,107,107,.45)}
   .hqwho{color:#fff;font-weight:700}
   .hqid{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--faint)}
@@ -268,7 +267,7 @@
   .gchev{color:var(--muted);font-size:12px;width:14px;flex:none;margin-top:4px}
   .gmain{flex:1;min-width:0}
   .gmain .gm{overflow:hidden;text-overflow:ellipsis}
-  .gkind{font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-left:6px}
+  .gkind{font-family:'Hanken Grotesk',sans-serif;font-size:10px;font-weight:700;text-transform:none;color:var(--faint);margin-left:6px}
   .gbadges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
   .gbody{padding:12px 16px 16px}
   .gvtable{min-width:520px}
@@ -1298,8 +1297,8 @@
 
   /* ================= LIVE NOW ================= */
   function agoLabel(iso){
-    if(!iso) return "—";
-    var t=new Date(iso).getTime(); if(isNaN(t)) return "—";
+    if(!iso) return "-";
+    var t=new Date(iso).getTime(); if(isNaN(t)) return "-";
     var s=Math.max(0,Math.floor((Date.now()-t)/1000));
     if(s<60) return "just now";
     var m=Math.floor(s/60); if(m<60) return m+" min ago";
@@ -3653,8 +3652,8 @@
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+(hasDisc?' <span class="badge gold">Disc</span>':'')+'</td>'+
         '<td>'+(v&&v.group_id?'<span class="badge grouped">Grouped</span>':'<span class="badge indep">Independent</span>')+'</td>'+
-        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"—")+'</td>'+
-        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"—")+'</td>'+
+        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"-")+'</td>'+
+        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"-")+'</td>'+
         '<td>'+overCell+'</td>'+
         '<td class="money" style="text-align:right">'+est+'</td>'+
         '<td class="actcell"><button class="mini" data-bdet="'+esc(u.venue_id)+'">Details</button></td>';
@@ -4080,9 +4079,9 @@
       var est= rate!=null ? aud(over*rate) : '<span style="color:var(--faint)">Worker</span>';
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+'</td>'+
-        '<td class="num">'+(u.nights!=null?u.nights:(u.sessions_count!=null?u.sessions_count:"—"))+'</td>'+
-        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"—")+'</td>'+
-        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"—")+'</td>'+
+        '<td class="num">'+(u.nights!=null?u.nights:(u.sessions_count!=null?u.sessions_count:"-"))+'</td>'+
+        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"-")+'</td>'+
+        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"-")+'</td>'+
         '<td>'+(over>0?'<span class="badge gold">+'+over+'</span>':'<span style="color:var(--muted)">None</span>')+'</td>'+
         '<td class="money" style="text-align:right">'+est+'</td>';
       b.appendChild(tr);

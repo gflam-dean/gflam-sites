@@ -193,7 +193,7 @@
      copy of that stylesheet. The two option buttons share their width AND their height, so a
      longer label never makes one button taller than the other (Dean, 24 Oct 2026). */
   var CSS = ".vpp-card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:20px;margin:0 0 16px}" +
-    ".vpp-lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin:0 0 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}" +
+    ".vpp-lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin:0 0 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}" +
     ".vpp-status{font-size:10.5px;letter-spacing:.14em;color:var(--faint)}.vpp-status.on{color:var(--win)}" +
     ".vpp-sub{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5}" +
     ".vpp-seg{display:flex;gap:8px;margin:0 0 12px;align-items:stretch}" +

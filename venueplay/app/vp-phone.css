@@ -39,8 +39,7 @@
 .vlogo{display:block;margin:0;height:56px;max-width:170px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
 .pfoot{padding:22px 16px max(10px, env(safe-area-inset-bottom, 0px));text-align:center}   /* low, just above the home bar */
 .pfoot svg{display:inline-block;width:132px;height:auto;color:#fff}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-.dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+.dot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
 .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
 /* the menu button, top right */
 /* 44px (tap size, design review 6 Nov 2026); the header's lane (.ptop padding-right 66px) stops 8px short of it: 14 + 44 + 8. */
@@ -54,7 +53,7 @@
 
 /* 3. THE JOIN SCREENS */
 .vp-step{flex:1;display:flex;flex-direction:column;padding:18px 20px 16px;text-align:left}
-.vp-kicker{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;margin:0 0 6px}
+.vp-kicker{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-transform:none;color:#8A8A95;margin:0 0 6px}
 .vp-h{font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1.02;text-transform:uppercase;color:#fff;margin:0 0 10px}
 .vp-sub{font-family:'Manrope',sans-serif;font-weight:500;font-size:16px;line-height:1.45;color:#9A9AA4;margin:0}
 .vp-sub a{color:#fff;text-decoration:underline}
@@ -76,7 +75,7 @@
 .vp-in .vp-name{font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;line-height:1.2;color:#fff;margin:2px 0 14px;overflow-wrap:anywhere}
 .vp-tiles{display:flex;gap:8px;width:100%;justify-content:center}
 .vp-tiles > div{flex:1 1 0;max-width:50%;background:#1A1A1F;border-radius:14px;padding:10px 8px 12px;text-align:center}
-.vp-tiles .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95}
+.vp-tiles .k{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-transform:none;color:#8A8A95}
 .vp-tiles .v{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff;margin-top:3px}
 .vp-wait{font-family:'Manrope',sans-serif;font-weight:500;font-size:17px;line-height:1.45;color:#9A9AA4;margin-top:14px;max-width:22em}
 .vp-out{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 20px 8px}

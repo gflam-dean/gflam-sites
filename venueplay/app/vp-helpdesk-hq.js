@@ -713,8 +713,8 @@
         '<div class="stats hdstats" style="margin-top:14px">' +
           card("Tickets", R.total, R.total === 1 ? "1 ticket" : R.total + " tickets, " + hdEsc(j.from) + " to " + hdEsc(j.to)) +
           card("Closed", R.closed, R.total ? Math.round(100 * R.closed / R.total) + "% of them" : "&nbsp;") +
-          card("Average to close", R.avg_hours_to_close != null ? R.avg_hours_to_close + "h" : "&ndash;", R.avg_hours_to_close != null ? R.avg_hours_to_close + " hours to close on average" : "none closed yet") +
-          card("Longest", R.longest_hours_to_close != null ? R.longest_hours_to_close + "h" : "&ndash;", R.longest_ticket_no ? "ticket #" + R.longest_ticket_no : "&nbsp;") +
+          card("Average to close", R.avg_hours_to_close != null ? R.avg_hours_to_close + "h" : "-", R.avg_hours_to_close != null ? R.avg_hours_to_close + " hours to close on average" : "none closed yet") +
+          card("Longest", R.longest_hours_to_close != null ? R.longest_hours_to_close + "h" : "-", R.longest_ticket_no ? "ticket #" + R.longest_ticket_no : "&nbsp;") +
         "</div>" +
 
         '<div class="hdrep">' + table("By brand", R.by_brand, function (k) { return BR[k] || k; }) +
@@ -730,7 +730,7 @@
         .map(function (k) { return hdEsc(k) + " <b>" + r.by_step[k] + "</b>"; }).join("<br>");
       return '<tr><td><span class="badge hdbrand ' + (r.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[r.brand] || r.brand) + "</span></td>" +
         '<td class="vn">' + hdEsc(r.title) + '</td><td class="num">' + r.started + '</td><td class="num" style="color:var(--win)">' + r.solved +
-        '</td><td class="num">' + r.tickets + '</td><td class="num">' + r.left + '</td><td class="vt">' + (steps || "&ndash;") + "</td></tr>";
+        '</td><td class="num">' + r.tickets + '</td><td class="num">' + r.left + '</td><td class="vt">' + (steps || "-") + "</td></tr>";
     }).join("") : '<tr><td colspan="7" class="note">Nobody used the guided steps in these dates.</td></tr>';
     return '<div class="lblk">Guided steps: solved without a ticket</div><div class="panel" id="hdTriage"><div class="tscroll"><table><thead><tr><th>Brand</th><th>Issue</th>' +
       '<th>Picked it</th><th>Solved, no ticket</th><th>Sent a ticket</th><th>Left</th><th>Which step fixed it</th></tr></thead><tbody>' + body + "</tbody></table></div></div>";

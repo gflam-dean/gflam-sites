@@ -48,13 +48,12 @@
   .brand .div{width:1px;height:20px;background:var(--line)}
   .vlogo{display:block;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
   .vlogo.hidden{display:none}
-  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:11px;color:var(--pink)}
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .dot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
 
   .wrap{max-width:1100px;margin:0 auto;padding:22px}
-  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:12px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
   .note{font-size:12px;color:var(--faint);line-height:1.5}
 
   /* ---- auth / pair (centred cards) ---- */
@@ -109,7 +108,7 @@
   .skiplink:hover{color:var(--pink)}
   .demorow{display:flex;gap:10px;margin-top:18px}
   .demorow .btn{flex:1}
-  .demolbl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;font-weight:700;font-family:'Hanken Grotesk',sans-serif;margin-top:22px;margin-bottom:2px}
+  .demolbl{font-size:10.5px;color:var(--faint);text-transform:none;font-weight:700;font-family:'Hanken Grotesk',sans-serif;margin-top:22px;margin-bottom:2px}
 
   select,input.hostinput{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
     padding:10px 12px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:.15s}
@@ -136,25 +135,25 @@
     display:flex;flex-direction:column;justify-content:center;gap:3px}
   .pk:hover{color:#fff;border-color:var(--pink)}
   .pk.on{background:var(--pink);color:#0A0A0B;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
-  .pk .soon{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-top:2px}
+  .pk .soon{display:block;font-size:12px;font-weight:700;text-transform:none;color:var(--faint);margin-top:2px}
   .pk.on .soon{color:rgba(255,255,255,.75)}
   /* run the night */
 
   .soonbox{background:var(--ink-2);border:1px dashed var(--line);border-radius:14px;padding:28px 20px;text-align:center}
   .soonbox .st{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
   .soonbox .sd{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
-  .soonpill{display:inline-block;margin-top:14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:5px 13px;font-family:'Hanken Grotesk',sans-serif}
+  .soonpill{display:inline-block;margin-top:14px;font-size:11px;font-weight:700;text-transform:none;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:5px 13px;font-family:'Hanken Grotesk',sans-serif}
 
   .field{margin-bottom:14px}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:90px}
-  .stat .box .k{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .stat .box .k{font-size:12px;color:var(--faint);text-transform:none;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .box .v.g{color:var(--gold)}
 
   .lastball{background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px}
-  .lbeye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--faint)}
+  .lbeye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:12px;color:var(--faint)}
   .lbval{font-family:'Anton',sans-serif;font-size:54px;color:#fff;line-height:1;margin:6px 0}
   .prevballs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
   .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:6px;padding:3px 9px}
@@ -188,7 +187,7 @@
   .claimcard{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:8px}
   .claimcard .top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
   .claimcard .cn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px}
-  .vbadge{margin-left:auto;font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:4px 11px;border-radius:20px}
+  .vbadge{margin-left:auto;font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;text-transform:none;padding:4px 11px;border-radius:20px}
   .vbadge.valid{background:rgba(53,208,127,.14);color:var(--win)}
   /* a tie: more than one player called on the same number */
   .tiebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px;padding:13px 15px;
@@ -243,7 +242,7 @@
   .callerpick:has(input:checked){border-color:var(--pink);background:rgba(255,31,142,.1)}
   /* WINNER. The one button that matters most after the grid, so the biggest thing under it. */
   .callerwin{display:block;width:100%;min-height:60px;margin-top:12px;font-family:'Anton',sans-serif;font-size:26px;
-    font-weight:400;letter-spacing:.08em;text-transform:uppercase;border-radius:14px;touch-action:manipulation}
+    font-weight:400;text-transform:none;border-radius:14px;touch-action:manipulation}
   /* While a win is on the TV: what the room is seeing, and the one tap that closes it. The grid
      stays in view, dimmed and dead, so the book can be checked against it but not mis-tapped. */
   .callerwinbar{display:none;margin:0 0 12px;padding:14px;border-radius:14px;background:rgba(53,208,127,.1);border:1px solid rgba(53,208,127,.45)}
@@ -253,7 +252,7 @@
   .callerwinbar .cwmain{display:block;width:100%;min-height:64px;font-size:20px}
   .callerwinbar .cwprize{margin:4px 0 0}
   .callerwinbar .cwprize label{font-size:12px}
-  .callerwinbar .cwh{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .callerwinbar .cwh{font-size:11px;font-weight:700;text-transform:none;color:var(--muted)}
   .callerwinbar .cwt{font-family:'Anton',sans-serif;font-size:24px;line-height:1.15;color:#fff;margin:4px 0 6px;overflow-wrap:anywhere}
   .callerwinbar .cwn{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:10px}
   .callerwinbar .btn{min-height:52px}
@@ -619,7 +618,7 @@
           </div>
           <div class="lastball">
             <div class="lbeye">Last ball called</div>
-            <div class="lbval" id="lastBallVal">&ndash;</div>
+            <div class="lbval" id="lastBallVal">-</div>
             <div class="prevballs" id="livePrev"></div>
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
@@ -632,7 +631,7 @@
           <button class="btn pink big" id="nextBtn">Next number</button>
           <div id="callerBlock">
             <div class="callerhead">
-              <div class="cl" id="callerLast">&ndash;</div>
+              <div class="cl" id="callerLast">-</div>
               <div class="cs" id="callerSays">Tap each number as it is called.</div>
               <button type="button" class="btn ghost" id="callerUndoBtn" disabled>Undo last</button>
             </div>
@@ -2072,7 +2071,7 @@
     /* The biggest button on the screen has to say what the game is doing. It used to read "Next
        number" after Finish game (a tap only produced a toast) and while a claim sat waiting (a
        fumbled tap was refused, but the button did not say why). */
-    if(G.status==="running" && G.halt){ b.disabled=true; b.textContent="Stopped by the server: see the message"; }
+    if(G.status==="running" && G.halt){ b.disabled=true; b.textContent="The game stopped: see the message"; }
     else if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
     else if(G.status==="running" && G.claims.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Claim waiting"; }
     /* Not orange, and not "Announce the win". It read like the button that announces the win, so
@@ -2146,16 +2145,16 @@
   function serverRefused(r, what){
     var st=r && r.status, err=(r && r.json && r.json.error) || "";
     var msg = st===401 ? "You have been signed out (that happens after 4 hours). Sign in again, then reload this page: the game comes back where it was."
-            : st===403 ? (err || "The server will not run this game for the venue right now.")
-            : st===409 ? (err || "The server says this game is finished. Start a new game.")
-            : (err || ("The server refused ("+st+")."));
+            : st===403 ? (err || "venueplay will not run this game for the venue right now.")
+            : st===409 ? (err || "This game is finished. Start a new game.")
+            : (err || ("venueplay refused ("+st+")."));
     G.halt={ status:st, msg:msg, what:String(what||"") };
     showToast(msg); syncNextBtn(); setCoach(); saveGame();
   }
   /* THE TABLET FALLBACK SWITCH (19 Oct 2026) is a constant in /app/vp-draw.js, the same list as the
      Worker's. Nothing the server, a venue or a host sends can change it on this tablet. */
   function tabletMayStandIn(){ return window.VPDraw.standInAllowed((__ctx && __ctx.venue && __ctx.venue.au_state) || ""); }
-  var NO_STAND_IN="The server is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
+  var NO_STAND_IN="venueplay is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
   function openServerDraw(){
     G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy=G.caller ? "caller" : "";
     G.drawRefused=false;   // the server ANSWERED no: asking again for the tickets' sake is pointless
@@ -2177,7 +2176,7 @@
     if(G.caller){ G.drawMode="local"; saveGame(); return; }
     if(!tabletMayStandIn()) return;   // switched off for this venue's state: the server is asked again next tap
     G.drawMode="local"; G.drawWhy=String(why||"").slice(0,200);
-    showToast("Server not answering. Calling from this tablet for the rest of this game.");
+    showToast("venueplay is not answering. Calling from this tablet for the rest of this game.");
     saveGame();
   }
   /* Resolves {number} from the server, {wait:msg} when the server says the last ball is still
@@ -2402,7 +2401,7 @@
   function goTabletDeal(why){
     if(G.dealMode==="tablet") return;
     G.dealMode="tablet"; G.dealWhy=String(why||"").slice(0,200); G.dealSince=0;
-    showToast("Server not answering. Dealing tickets from this tablet for the rest of this game.");
+    showToast("venueplay is not answering. Dealing tickets from this tablet for the rest of this game.");
     dealOnTablet(); saveGame(); syncNextBtn(); setCoach();
   }
   // The outage path: the tablet's own strips, exactly as every night before 19 Oct 2026.
@@ -2523,7 +2522,7 @@
       var named=claimShown(c);
       claimRefuse(c);
       recordDecision(c, "rejected");
-      if(named || was==="tablet") showToast(c.name+"'s ticket was checked by the server: not a win yet.");
+      if(named || was==="tablet") showToast(c.name+"'s ticket was checked: not a win yet.");
     } else if(!claimShow(c)){
       claimRefuse(c); recordDecision(c, "rejected");
     }
@@ -3264,7 +3263,7 @@
     $("liveCount").textContent=(G.idx+1)+" of 90";
     $("livePattern").textContent=patName(G.pattern);
     $("livePlayers").textContent=playerCount();
-    $("lastBallVal").textContent = G.idx>=0 ? G.draw[G.idx] : "–";
+    $("lastBallVal").textContent = G.idx>=0 ? G.draw[G.idx] : "-";
     /* THE STRIP HOLDS ITS FULL HEIGHT FROM BALL ONE.
        It used to be empty on the first ball and one row tall on the second, so the prize line
        and the Next number button dropped down the screen the moment the second number landed.
@@ -3985,7 +3984,7 @@
       el.className="cg"+(G.called[n]?" on":"")+(n===cur?" cur":"");
       el.setAttribute("aria-pressed", G.called[n] ? "true" : "false");
     }
-    var cl=$("callerLast"); if(cl) cl.textContent = cur ? cur : "\u2013";
+    var cl=$("callerLast"); if(cl) cl.textContent = cur ? cur : "-";
     // The stat boxes are hidden on a real-balls night so the whole grid fits a Split View iPad, so the count and pattern live here.
     var cs=$("callerSays"); if(cs) cs.innerHTML = (cur ? ("<b>"+(G.idx+1)+"</b> of 90 called") : "Nothing called yet")+"<br>"+esc(patName(G.pattern)||"");
     var ub=$("callerUndoBtn"); if(ub){ ub.disabled=!cur || !!G.callerWin; ub.textContent = cur ? ("Undo "+cur) : "Undo last"; }

@@ -9,7 +9,7 @@
   "use strict";
   var CSS =
     ".prp{display:flex;flex-direction:column;gap:14px}" +
-    ".prp .eb{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:#FF1F8E}" +
+    ".prp .eb{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;font-size:12px;color:#FF1F8E}" +
     ".prp .q{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;line-height:1.25;color:#fff}" +
     ".prp .row{display:flex;gap:8px}" +
     ".prp input{flex:1;min-width:0;background:#17171A;border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:12px;padding:15px 14px;font:inherit;font-size:17px}" +

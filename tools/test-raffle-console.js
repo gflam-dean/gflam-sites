@@ -135,7 +135,7 @@ onRedraw(false);
 check('a redraw takes "Time is up" down too', errorShown() === '', errorShown());
 
 reset(); form();
-hostError('The game server did not answer. Check the venue wifi and try again.');
+hostError('venueplay did not answer. Check the venue wifi and try again.');
 revealServer({ seq: 3, tickets: [89], allow_redraw: true, time_to_present: 30 });
 onClaim();
 check('but Claim does NOT take down an unrelated error', /did not answer/.test(errorShown()), errorShown());

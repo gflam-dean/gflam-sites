@@ -34,9 +34,6 @@
       "height:26px;font:600 12px/1 'Hanken Grotesk',system-ui,-apple-system,sans-serif;letter-spacing:.02em;color:#FFD27A;" +
       "background:rgba(40,28,6,.94);border-bottom:1px solid rgba(255,176,32,.35);pointer-events:none;z-index:9}" +
     ".vp-connbar[hidden]{display:none}" +
-    ".vp-connbar i{width:7px;height:7px;border-radius:50%;background:#FFB020;box-shadow:0 0 8px #FFB020;animation:vpConnPulse 1.2s ease-in-out infinite}" +
-    "@keyframes vpConnPulse{0%,100%{opacity:1}50%{opacity:.35}}" +
-    "@media (prefers-reduced-motion: reduce){.vp-connbar i{animation:none}}" +
     "body.light .vp-connbar{background:rgba(255,244,222,.97);color:#8A5A00;border-bottom-color:rgba(176,112,0,.3)}";
 
   function isDown(text) { return /^\s*reconnecting/i.test(String(text || "")); }
@@ -60,10 +57,9 @@
     bar.setAttribute("role", "status");
     bar.setAttribute("aria-live", "polite");
     bar.hidden = true;
-    var i = d.createElement("i");
     var w = d.createElement("span");
     w.textContent = "Reconnecting…";
-    bar.appendChild(i); bar.appendChild(w);
+    bar.appendChild(w);
     top.appendChild(bar);
     function sync() {
       var t = String(text.textContent || "").trim();

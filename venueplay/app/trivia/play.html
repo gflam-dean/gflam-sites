@@ -44,7 +44,7 @@
 
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
   .psub{color:var(--muted);font-size:14px}
-  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .pnote{font-size:14px;color:var(--faint);margin-top:16px}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
@@ -58,7 +58,7 @@
   .btn.pink:active{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
-  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+  .cerr{color:var(--roll);font-size:14px;min-height:18px;margin-top:10px}
 
   /* THE QUESTION, NEW LOOK (Dean, 3 Nov 2026): one label line, the question left with the clock ring beside
      it, and the four answers in the TV's colours: coral, blue, amber, violet, as a coloured edge and a
@@ -122,7 +122,7 @@
   .pans.neutral.right .pl{color:#fff}
   .pans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}   /* your wrong pick: outlined in its colour */
   .pans.mine .pl{color:var(--c);text-shadow:none}
-  .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
+  .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;text-transform:none;padding:4px 8px;border-radius:6px}
   .pans.mine .tg{color:var(--c)}
   .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:14px 18px;display:flex;align-items:center;gap:12px}
   .pcard .rtag{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
@@ -141,7 +141,7 @@
      yellow rule for a winner only (yellow is for winning moments), then the points and the place. */
   .finalwrap{text-align:left;justify-content:flex-start;padding-top:28px}
   .finalwrap #finalEmoji{display:none}
-  .finalwrap .fk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .finalwrap .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-transform:none;color:var(--muted);margin-bottom:10px}
   .finalwrap.winner .fk{color:#FFD93D}
   .finalwrap #finalBig{font-family:'Anton',sans-serif;font-size:64px;line-height:.98;color:#fff!important;margin:0 0 14px}
   .finalwrap .frule{display:none;height:6px;background:#FFD93D;box-shadow:0 0 18px rgba(255,217,61,.55);margin:6px 0 18px}
@@ -1399,7 +1399,7 @@
       if(h){
         var vn=(P.venueName||"").trim();
         var n=document.createElement("p");
-        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
+        n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
         n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
           ", not to anyone else. You can play with just your name. ";
         var a=document.createElement("a");

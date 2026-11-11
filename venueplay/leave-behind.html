@@ -48,8 +48,7 @@
   .logo .div{width:1px;height:22px;background:#c9c9d0}
   .logo .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
     font-size:23px;letter-spacing:-0.03em;color:var(--ink);line-height:1}
-  .kicker{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--pink-deep);text-align:right;line-height:1.5}
+  .kicker{font-family:'Manrope',sans-serif;font-weight:700;font-size:10px;text-transform:none;color:var(--pink-deep);text-align:right;line-height:1.5}
 
   /* ---- headline ---- */
   .hero{margin-bottom:13px}
@@ -62,10 +61,8 @@
   /* ---- two column body ---- */
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
   .panel{border:1px solid var(--line);border-radius:12px;padding:13px 14px}
-  .panel h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;
-    letter-spacing:.11em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;
+  .panel h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;text-transform:none;color:var(--ink);margin-bottom:10px;
     display:flex;align-items:center;gap:8px}
-  .panel h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--pink)}
 
   /* games list */
   .games{list-style:none;display:flex;flex-direction:column;gap:8px}
@@ -92,14 +89,12 @@
   .offer .oh h2{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
     font-size:19px;letter-spacing:.01em;color:#fff}
   .offer .oh h2 span{color:var(--pink)}
-  .offer .badge{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--pink);
+  .offer .badge{font-family:'Manrope',sans-serif;font-weight:700;font-size:10px;text-transform:none;color:var(--ink);background:var(--pink);
     border-radius:999px;padding:5px 11px}
   .offer .ogrid{display:grid;grid-template-columns:auto auto 1fr;gap:0 20px;align-items:stretch}
   .price{display:flex;flex-direction:column;justify-content:center;padding-right:20px;
     border-right:1px solid rgba(255,255,255,.14)}
-  .price .lbl{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;
-    letter-spacing:.13em;text-transform:uppercase;color:#B9B9C2;margin-bottom:3px}
+  .price .lbl{font-family:'Manrope',sans-serif;font-weight:500;font-size:9px;text-transform:none;color:#B9B9C2;margin-bottom:3px}
   .price .amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;color:#fff;line-height:1}
   .price .amt span{font-size:12px;color:var(--pink);font-weight:700}
   .price .sub{font-size:10px;color:#9A9AA4;margin-top:3px}
@@ -111,8 +106,7 @@
 
   /* ---- how a night runs ---- */
   .start{margin-bottom:auto}
-  .start h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;
-    letter-spacing:.11em;text-transform:uppercase;color:var(--ink);margin-bottom:11px}
+  .start h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;text-transform:none;color:var(--ink);margin-bottom:11px}
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
   .step{border:1px solid var(--line);border-radius:11px;padding:12px 13px;position:relative}
   .step .num{font-family:'Anton',sans-serif;font-size:20px;color:var(--pink);line-height:1;margin-bottom:6px}
@@ -124,8 +118,7 @@
   .foot{margin-top:14px;border-top:1px solid var(--line);padding-top:11px;
     display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
   .contact{display:flex;flex-direction:column;gap:3px}
-  .contact .cl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9px;
-    letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
+  .contact .cl{font-family:'Manrope',sans-serif;font-weight:700;font-size:9px;text-transform:none;color:var(--pink-deep)}
   .contact .cv{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:var(--ink);line-height:1.15}
   .contact .cv2{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;color:var(--text)}
   .built{font-size:10px;color:var(--muted);text-align:right;max-width:74mm;line-height:1.45}
@@ -180,7 +173,7 @@
   <div class="cols">
 
     <div class="panel">
-      <h2><span class="dot"></span>Everything a bowlo runs</h2>
+      <h2>Everything a bowlo runs</h2>
       <ul class="games">
         <li class="lead"><div class="row"><span class="gname">Members / badge draw</span><span class="gtext">Runs itself on the big screen and pulls members in on draw night.</span></div></li>
         <li class="lead"><div class="row"><span class="gname">Raffles / meat trays</span><span class="gtext">Sell and draw your meat trays and raffles live on the TV.</span></div></li>
@@ -191,7 +184,7 @@
     </div>
 
     <div class="panel">
-      <h2><span class="dot"></span>Why clubs love it</h2>
+      <h2>Why clubs love it</h2>
       <ul class="bens">
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Draws and raffles run themselves</strong> on the big screen, no fiddly gear on the night.</div></li>
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Members join by phone</strong>, scan a code and play, no app and no account.</div></li>

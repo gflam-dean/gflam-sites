@@ -39,7 +39,7 @@
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
   .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
   .brand .div{width:1px;height:16px;background:var(--line)}
-  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .venue{font-size:14px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
   .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
@@ -56,7 +56,7 @@
 
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
   .psub{color:var(--muted);font-size:14px}
-  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .pnote{font-size:14px;color:var(--faint);margin-top:16px}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
@@ -74,12 +74,12 @@
   .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:active{background:var(--pink-deep)}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
-  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+  .cerr{color:var(--roll);font-size:14px;min-height:18px;margin-top:10px}
 
   /* card view */
   .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
   .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
-  .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
+  .cardpat{font-size:14px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
   .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
   .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,3.8vw,20px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;transition:.12s}
   .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
@@ -92,7 +92,7 @@
   .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
   .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
   .czbtn.fs{font-size:13px;min-width:0}
-  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint)}
+  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;text-transform:none;letter-spacing:0;color:var(--faint)}
   .pmsg{font-size:14px;color:var(--muted);text-align:center;margin:16px 0;min-height:40px;line-height:1.45}
   /* A stage win (a line, two lines) while the game plays on. Pinned above the tickets so the
      next ball cannot wipe it: this is the player's proof for the host until the game ends. */
@@ -114,7 +114,7 @@
 
   /* ticket count picker */
   .cardpick{margin-top:16px}
-  .cplabel{font-size:13px;color:var(--muted);margin-bottom:9px}
+  .cplabel{font-size:14px;color:var(--muted);margin-bottom:9px}
   .cprow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
   .cpbtn{width:50px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;cursor:pointer;transition:.12s}
@@ -128,7 +128,7 @@
      says what is outstanding, which is what the board behind a caller does in a real hall. */
   .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,194,75,.75)}
   body.light .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,31,142,.55)}
-  .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
+  .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--faint);text-transform:none;letter-spacing:0;margin-bottom:6px;text-align:left}
   .ticket .tklabel.tkdone{color:var(--win)}   /* this ticket has the pattern: press BINGO */
 
   /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
@@ -140,12 +140,12 @@
   #cardStack.lay-pages{overflow-x:auto}
   .pagetabs{display:flex;gap:7px;margin-bottom:10px}
   .pagetab{flex:1;min-height:44px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
-    color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;
-    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative}
+    color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;
+    letter-spacing:0;text-transform:none;cursor:pointer;transition:.15s;position:relative}
   .pagetab.on{background:var(--ink-2);color:var(--text);border-color:rgba(255,255,255,.22)}
   .pagetab.has{border-color:var(--gold);color:var(--gold)}
   /* Paid, more than one ticket: how many called numbers are still unmarked on that page. */
-  .pagetab .pcount{display:none;margin-left:6px;font-size:11px;font-weight:800;color:#12101a;
+  .pagetab .pcount{display:none;margin-left:6px;font-size:14px;font-weight:800;color:#12101a;
     background:var(--gold);border-radius:9px;padding:1px 6px;vertical-align:middle}
   .pagetab.owed .pcount{display:inline-block}
   .pagetab.has:after{content:"";position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;
@@ -188,7 +188,7 @@
   .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
   .card9 .cc.daub.justcalled{box-shadow:inset 0 0 0 2px rgba(255,194,75,.9);color:#fff}
 
-  .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+  .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:18px}
   .lcrow{display:flex;align-items:flex-end;justify-content:center;gap:14px}
   .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:52px;line-height:1;letter-spacing:.01em}
@@ -196,7 +196,7 @@
   .lcprev{font-family:'Anton',sans-serif;color:var(--faint);font-size:24px;line-height:1.1;padding-bottom:3px}
   .lcprev + .lcprev{font-size:30px;color:var(--muted)}
   body.light .lcnum{color:var(--pink-deep)}
-  .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
+  .lcsub{display:block;font-size:14px;color:var(--faint);margin-top:4px;text-transform:none;letter-spacing:0}
   /* menu (top-right of the bar): Easy mode + Leave game */
   /* The called number lives in the sticky header, hard left, so a player never has to scroll
      back up to see what was just called. The big one in the card view scrolls away; this does not. */
@@ -204,7 +204,7 @@
     gap:1px;min-width:46px;padding:4px 8px;border-radius:10px;background:rgba(255,194,75,.12);
     border:1px solid rgba(255,194,75,.34)}
   .hdrball b{font-family:'Anton',sans-serif;font-size:22px;line-height:1;color:var(--gold)}
-  .hdrball span{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--faint);letter-spacing:.02em}
+  .hdrball span{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--faint);letter-spacing:0}
   body.light .hdrball{ background:rgba(255,31,142,.10); border-color:rgba(255,31,142,.35) }
   body.light .hdrball b{ color:var(--pink-deep) }
   .menubtn{position:absolute;top:9px;right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
@@ -212,10 +212,10 @@
   .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
   .menuitem span{display:flex;flex-direction:column;gap:2px}
-  .menuitem small{color:var(--faint);font-size:11.5px}
+  .menuitem small{color:var(--faint);font-size:14px}
   .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
   .menuitem select{flex:none;background:var(--ink-3);color:var(--text);border:1px solid var(--line);
-    border-radius:8px;padding:7px 9px;font-family:'Manrope',sans-serif;font-size:13px;max-width:47%}
+    border-radius:8px;padding:7px 9px;font-family:'Manrope',sans-serif;font-size:14px;max-width:47%}
   .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
 
   /* light mode (menu toggle) */
@@ -242,7 +242,7 @@
   body.light .pagetab.has:after{ background:var(--pink); box-shadow:0 0 7px rgba(255,31,142,.6) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
-  .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
+  .sharenote{margin-top:12px;font-size:14px;color:var(--muted);line-height:1.45}
   .sharenote b{color:var(--text)}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
   @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
@@ -1592,7 +1592,7 @@
         var vn=(P.venueName||"").trim();
         var n=document.createElement("p");
         n.className="collectnote";
-        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
+        n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
         n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
           ", not to anyone else. You can play with just your name. ";
         var a=document.createElement("a");

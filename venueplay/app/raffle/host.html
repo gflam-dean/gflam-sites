@@ -212,7 +212,7 @@
       <div class="big">Sign in to run a raffle</div>
       <div class="sub" id="signinSub">You need your venue host login to draw a raffle.</div>
       <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
-      <p class="note" style="margin-top:14px">The draw runs on the venueplay server so every winning ticket is fair and logged. Your saved prizes load from your venue automatically.</p>
+      <p class="note" style="margin-top:14px">The draw runs on venueplay so every winning ticket is fair and logged. Your saved prizes load from your venue automatically.</p>
     </div>
   </div>
 
@@ -459,7 +459,7 @@
       var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
       if(_ac) _opts.signal=_ac.signal;
       return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
-        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+        function(e){ clearTimeout(_to); var te=new Error("venueplay did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
     }).then(readApi); }
 
   // Sign every host broadcast (migrations 38/49) so a forged raffle draw/winner is dropped in enforce mode.

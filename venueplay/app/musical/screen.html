@@ -60,8 +60,7 @@
      The comment above tvStatus records the same class of fault the other way round:
      an element that could never be SEEN because of a conflicting style. */
   .tv-status[hidden]{display:none}
-  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .sdot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
 
   .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:clamp(14px,2.2cqw,28px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
@@ -135,7 +134,7 @@
   #tvRun .pboard{flex-shrink:0}
   .ptok{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,2.4cqw,26px);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:20px;padding:.6cqw 1.6cqw;white-space:nowrap;max-width:44cqw;overflow:hidden;text-overflow:ellipsis}
   .ptok.new{background:rgba(255,31,142,.16);border-color:var(--pink);color:#fff;box-shadow:0 0 14px rgba(255,31,142,.3)}
-  .pblabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.18em;
+  .pblabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;
     font-size:clamp(9px,1.5cqw,15px);color:var(--muted);margin-top:2cqw}
 
   /* join corner (running only) */
