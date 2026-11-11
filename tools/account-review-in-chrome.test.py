@@ -69,7 +69,7 @@ for key, want_tabs in [('alpha', ALL), ('echo', ALL), ('bravo', LEFT), ('charlie
         tid, sid = S.open('/app/billing.html#screen', 375, 812, True)   # the last tab "remembered" is Screen
         S.until(sid, UP, 25)
         time.sleep(1.5)
-        st = json.loads(S.js(sid, STATE) or '{}')
+        st = S.json(sid, STATE, {})
         ok('%s: the tabs shown are %s' % (key, ','.join(want_tabs)), st.get('tabs') == want_tabs, st.get('tabs'))
         if want_tabs == LEFT:
             ok('%s: it opens on Billing, not the Screen tab it was asked for' % key, st.get('on') == 'billing', st.get('on'))
@@ -94,7 +94,7 @@ for key, want_tabs in [('alpha', ALL), ('echo', ALL), ('bravo', LEFT), ('charlie
         ok('%s: no description paragraph under "Your account"' % key, st.get('lede') is False, st.get('lede'))
         for t in want_tabs:
             tab(S, sid, t, 1.2 if t == 'settings' else 0.5)
-            m = json.loads(S.js(sid, STATE) or '{}')
+            m = S.json(sid, STATE, {})
             ok('%s %s: nothing scrolls sideways at 375 (%s <= %s)' % (key, t, m.get('sw'), m.get('cw')), isinstance(m.get('sw'), int) and m['sw'] <= m.get('cw', 0), m)
         if key in ('alpha', 'foxtrot'):
             tab(S, sid, 'settings', 2.0)
@@ -116,14 +116,14 @@ for key, want_tabs in [('alpha', ALL), ('echo', ALL), ('bravo', LEFT), ('charlie
             ok('alpha: the owner sees each host\'s full mobile', '0400 111 222' in p and '0400 333 444' in p and 'mobile ending' not in p, p[:300])
             ok('alpha: one venue: never "All venues"', 'All venues' not in S.js(sid, 'document.getElementById("tp-people").innerText'), p[:200])
             tab(S, sid, 'draws', 1.0)
-            f = json.loads(S.js(sid, 'JSON.stringify({open:[].map.call(document.querySelectorAll("#tp-draws .acchead"),function(h){return h.classList.contains("open")}),bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return b.offsetParent!==null}),sums:[].map.call(document.querySelectorAll("#tp-draws .accsum"),function(s){return s.textContent}),txt:document.getElementById("tp-draws").innerText})') or '{}')
+            f = S.json(sid, 'JSON.stringify({open:[].map.call(document.querySelectorAll("#tp-draws .acchead"),function(h){return h.classList.contains("open")}),bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return b.offsetParent!==null}),sums:[].map.call(document.querySelectorAll("#tp-draws .accsum"),function(s){return s.textContent}),txt:document.getElementById("tp-draws").innerText})', {})
             # Since 6 Nov 2026 (Dean) "Who won what" is a fourth fold at the bottom; it is a record, not a setting, so the
             # one-line summary is asked of the three setting folds.
             ok('alpha: every Draws fold starts closed', f.get('open') == [False, False, False, False] and f.get('bodies') == [False, False, False, False], f.get('open'))
             ok('alpha: each setting fold heading carries a one-line summary', len(f.get('sums') or []) == 4 and all(s.strip() for s in (f.get('sums') or [])[:3]), f.get('sums'))
             ok('alpha: "Not on the TV yet" is gone', 'Not on the TV yet' not in f.get('txt', ''), f.get('sums'))
             tab(S, sid, 'screen', 1.5)
-            sc = json.loads(S.js(sid, 'JSON.stringify({url:document.getElementById("scrUrl").textContent,code:document.getElementById("scrCode").textContent,copies:[].filter.call(document.querySelectorAll("#screenCard .scrcopy"),function(b){return b.offsetParent&&b.getBoundingClientRect().height>=44}).length})') or '{}')
+            sc = S.json(sid, 'JSON.stringify({url:document.getElementById("scrUrl").textContent,code:document.getElementById("scrCode").textContent,copies:[].filter.call(document.querySelectorAll("#screenCard .scrcopy"),function(b){return b.offsetParent&&b.getBoundingClientRect().height>=44}).length})', {})
             ok('alpha: Your screen says venueplay.com.au/tv and the screen code TALPHA', sc.get('url') == 'venueplay.com.au/tv' and sc.get('code') == 'TALPHA', sc)
             ok('alpha: each line has a Copy button a finger can hit (44px)', sc.get('copies') == 2, sc)
         errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
