@@ -25,6 +25,10 @@
   var PHONE = ("phone" in T) ? String(T.phone || "") : "61400000001";
   if (PST.get("phone") !== null) PHONE = PST.get("phone");
   var PENDING = "", META = { name: "Test Host" };
+  /* meta (11 Nov 2026, tools/welcome-name-in-chrome.test.py): the login's user_metadata, e.g. { vp_details_due: true }
+     for a new prospect login. smsSignIn: a right text code (123456) at the sign-in page signs this tab in, as Auth does. */
+  if (T.meta && typeof T.meta === "object") META = JSON.parse(JSON.stringify(T.meta));
+  if (PST.get("meta") !== null) { try { META = JSON.parse(PST.get("meta")); } catch (e) {} }
   var CALLS = window.__FAKE_AUTH_CALLS = [];
   function Query(table) { this.t = table; this.f = []; this.one = false; this.lim = null; this.write = false; this.ord = null; }
   Query.prototype.select = function () { return this; };
@@ -88,7 +92,7 @@
         updateUser: function (a) {
           CALLS.push({ fn: "updateUser", args: a });
           if (a && a.phone === "+61400000009") return Promise.resolve({ data: null, error: { message: "Phone number already registered by another user", code: "phone_exists" } });
-          if (a && a.data) { for (var k in a.data) META[k] = a.data[k]; }
+          if (a && a.data) { for (var k in a.data) META[k] = a.data[k]; PST.set("meta", JSON.stringify(META)); }
           if (a && a.phone) PENDING = a.phone;
           return Promise.resolve({ data: { user: session() && session().user }, error: null });
         },
@@ -102,8 +106,15 @@
             if (a.phone === PENDING && a.token === "123456") { PHONE = PENDING.replace("+", ""); PST.set("phone", PHONE); return Promise.resolve({ data: { user: session().user }, error: null }); }
             return Promise.resolve({ data: { user: null }, error: { message: "Token has expired or is invalid" } });
           }
+          if (T.smsSignIn && a && a.type === "sms") {
+            if (a.token !== "123456") return Promise.resolve({ data: {}, error: { message: "Token has expired or is invalid" } });
+            SIGNED_IN = true; PST.set("in", "1"); if (a.phone) { PHONE = String(a.phone).replace("+", ""); PST.set("phone", PHONE); }
+            return Promise.resolve({ data: { session: session(), user: session().user }, error: null });
+          }
           return Promise.resolve({ data: {}, error: null });
-        }
+        },
+        /* A fresh session carries what the server wrote on the login since (vp-about-you.js after the details are in). */
+        refreshSession: function () { CALLS.push({ fn: "refreshSession" }); var s = session(); if (s && T.metaAfterRefresh) { for (var k in T.metaAfterRefresh) META[k] = T.metaAfterRefresh[k]; PST.set("meta", JSON.stringify(META)); } return Promise.resolve({ data: { session: session() }, error: null }); }
       },
       /* Any query method this stand-in does not model (gte, lt, not, or, csv...) chains and filters
          nothing, so an admin page that narrows a read differently still gets its rows rather than a

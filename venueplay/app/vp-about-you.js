@@ -72,10 +72,18 @@
     return /^(manager|owner|host)$/i.test(n) ? "" : n;
   }
 
-  /* Who sees it: a venue login, signed in, with no mobile on it, that has not said "carry on" this sign-in. */
+  /* A NEW prospect login that has not saved its own name and mobile yet (Dean, 11 Nov 2026, INBOX 243/248): the
+     billing Worker marks it vp_details_due at setup and vp_details_at once /account/my-name has both. Its mobile may
+     already be on the login (from the setup, or the short link), so it is asked for its NAME only, pre-filled. */
+  function detailsDue(ctx) {
+    var m = (ctx && ctx.user && ctx.user.user_metadata) || {};
+    return m.vp_details_due === true && !m.vp_details_at;
+  }
+  /* Who sees it: a venue login, signed in, with no mobile on it (or a new prospect login whose details are not in
+     yet), that has not said "carry on" this sign-in. */
   function wants(ctx, storage, shift) {
     if (!ctx || !ctx.authed || ctx.isAdmin || ctx.scope !== "staff" || !ctx.user || !ctx.user.id) return false;
-    if (ctx.user.phone) return false;
+    if (ctx.user.phone && !detailsDue(ctx)) return false;
     var later = null; try { later = (storage || root.localStorage).getItem(LATER + ctx.user.id); } catch (e) {}
     return later === null || later !== "shift:" + shiftNow(shift);
   }
@@ -115,7 +123,15 @@
       return client.auth.getSession().then(function (r) {
         var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
         return fetchFn(BILLING_API + "/account/my-name", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
-          body: JSON.stringify({ name: name }) }).then(function (res) { return res.json().catch(function () { return {}; }); });
+          body: JSON.stringify({ name: name }) }).then(function (res) { return res.json().catch(function () { return {}; }); })
+          .then(function (j) {
+            /* The Worker wrote vp_details_at on the login: a fresh session carries it, so a reload in this sign-in does
+               not show the welcome screen again (the stored session's user is the one from the sign-in). */
+            if (j && j.details_done && typeof client.auth.refreshSession === "function") {
+              try { return Promise.resolve(client.auth.refreshSession()).then(function () { return j; }, function () { return j; }); } catch (e) { return j; }
+            }
+            return j;
+          });
       }).catch(function () { return { error: "offline" }; });
     }
 
@@ -127,8 +143,12 @@
     logoRow(doc, el, box);
     var title = el("h1", "margin:0 0 10px;font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;font-size:32px;line-height:1.05;color:#FFFFFF;text-align:center", "You're in");
     title.id = "vpAyTitle";
+    /* THE MOBILE IS ALREADY ON THE LOGIN (a new prospect whose number came with the setup, or who signed in by text
+       code from the short link): only their name, pre-filled, to confirm (Dean, 11 Nov 2026, INBOX 248). */
+    var haveMobile = !!(ctx && ctx.user && ctx.user.phone);
     var sub = el("p", "margin:0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted + ";text-align:center",
-      "Welcome to venueplay" + (v.name ? " at " + v.name : "") + ". Two quick things, then you're done: your name, and the mobile you'll sign in with from now on.");
+      haveMobile ? "Welcome to venueplay" + (v.name ? " at " + v.name : "") + ". Just check your name, then you're done."
+        : "Welcome to venueplay" + (v.name ? " at " + v.name : "") + ". Two quick things, then you're done: your name, and the mobile you'll sign in with from now on.");
     sub.id = "vpAySub";
     box.appendChild(title); box.appendChild(sub);
     var card = el("div", "background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:22px 20px");
@@ -143,6 +163,15 @@
     var send = el("button", BTN_PINK, "Text me a code"); send.id = "vpAySend"; send.setAttribute("type", "button");
     var why = el("p", "margin:12px 0 0;font-size:13px;line-height:1.5;color:" + C.faint, "We text a code to check it's yours. It only goes on your login once you type that code in.");
     form.appendChild(nl); form.appendChild(name); form.appendChild(ml); form.appendChild(mobile); form.appendChild(send); form.appendChild(why);
+    var mobileNote = null;
+    if (haveMobile) {
+      ml.style.display = "none"; mobile.style.display = "none"; mobile.value = mobileShow(ctx.user.phone);
+      mobileNote = el("p", "margin:0 0 16px;font-size:14px;line-height:1.5;color:" + C.muted, "You'll sign in with " + mobileShow(ctx.user.phone) + ". We'll text you a code each time.");
+      mobileNote.id = "vpAyMobileNote";
+      form.insertBefore(mobileNote, send);
+      send.textContent = "That's me"; send.id = "vpAyName1";
+      why.style.display = "none";
+    }
 
     var codeWrap = el("div", "display:none"); codeWrap.id = "vpAyCodeWrap"; card.appendChild(codeWrap);
     var cl = el("label", LABEL, "The 6-digit code we texted you"); cl.setAttribute("for", "vpAyCode");
@@ -206,7 +235,9 @@
         if (!r || r.error || !u || !u.phone) { msg.textContent = "That code didn't match. Check the text and try again."; return false; }
         if (ctx.user) ctx.user.phone = String(u.phone);
         var n = cleanName(name.value);
-        return saveName(n).then(function () { showDone(String(u.phone), n); return true; });
+        return saveName(n).then(function (sr) {
+          if (sr && sr.details_done) { try { ctx.user.user_metadata = Object.assign({}, ctx.user.user_metadata || {}, { full_name: n, vp_details_at: new Date().toISOString() }); } catch (e) {} }
+          showDone(String(u.phone), n); return true; });
       }, function () { verifying = false; verify.disabled = false; verify.textContent = "Confirm"; msg.textContent = "That code didn't match. Check the text and try again."; return false; });
     }
     function showDone(phone, n) {
@@ -224,19 +255,32 @@
       return saveName(n).then(function () { finish("later"); return true; });
     }
 
-    send.addEventListener("click", ask);
+    function nameOnly() {
+      var n = cleanName(name.value);
+      if (!n) { msg.textContent = "Pop your name in first."; return Promise.resolve(false); }
+      if (sending) return Promise.resolve(false);
+      sending = true; send.disabled = true; send.textContent = "Saving..."; msg.textContent = "";
+      return saveName(n).then(function (r) {
+        sending = false; send.disabled = false; send.textContent = "That's me";
+        if (!r || r.error || !r.ok) { msg.textContent = "That didn't save just now. Try again."; return false; }
+        try { ctx.user.user_metadata = Object.assign({}, ctx.user.user_metadata || {}, { full_name: n, vp_details_at: new Date().toISOString() }); } catch (e) {}
+        showDone(String(ctx.user.phone), n);
+        return true;
+      });
+    }
+    send.addEventListener("click", haveMobile ? nameOnly : ask);
     verify.addEventListener("click", confirmCode);
     again.addEventListener("click", function () { pending = ""; codeWrap.style.display = "none"; form.style.display = "block"; code.value = ""; msg.textContent = ""; try { mobile.focus(); } catch (e) {} });
     later.addEventListener("click", carryOn);
     other.addEventListener("click", function () { mobile.value = ""; msg.textContent = ""; takenWrap.style.display = "none"; try { mobile.focus(); } catch (e) {} });
     takenLater.addEventListener("click", carryOn);
     mobile.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ask(); } });
-    name.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); try { mobile.focus(); } catch (x) {} } });
+    name.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); if (haveMobile) { nameOnly(); return; } try { mobile.focus(); } catch (x) {} } });
     code.addEventListener("input", function () { code.value = String(code.value || "").replace(/\D/g, "").slice(0, 6); msg.textContent = ""; });
     code.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); confirmCode(); } });
-    try { (name.value ? mobile : name).focus(); } catch (e) {}
+    try { (name.value && !haveMobile ? mobile : name).focus(); } catch (e) {}
 
-    return { el: shell, ask: ask, confirmCode: confirmCode, carryOn: carryOn };
+    return { el: shell, ask: haveMobile ? nameOnly : ask, nameOnly: nameOnly, confirmCode: confirmCode, carryOn: carryOn };
   }
 
   /* ========================================================================================================
@@ -329,5 +373,5 @@
     return { el: shell, ask: ask, notNow: notNow };
   }
 
-  root.VPAboutYou = { open: open, wants: wants, wantsEmail: wantsEmail, openEmail: openEmail, cleanEmail: cleanEmail, LATER_EMAIL: LATER_EMAIL, mobileE164: mobileE164, mobileShow: mobileShow, cleanName: cleanName, LATER: LATER };
+  root.VPAboutYou = { open: open, wants: wants, detailsDue: detailsDue, wantsEmail: wantsEmail, openEmail: openEmail, cleanEmail: cleanEmail, LATER_EMAIL: LATER_EMAIL, mobileE164: mobileE164, mobileShow: mobileShow, cleanName: cleanName, LATER: LATER };
 })(typeof window !== "undefined" ? window : this);

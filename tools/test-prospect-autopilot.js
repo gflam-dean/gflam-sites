@@ -135,8 +135,8 @@ var AP = { 'X-Autopilot-Key': KEY };
   var t0 = Date.now();
   r = await call('/autopilot/prospect', CENTRE, AP);
   var v = DB.vp_venues[0] || {}, m = sent[0] || {}, row = DB.vp_prospect_welcomes[0] || {};
-  check('200: one venue, one account record, one login, the contact its manager', r.status === 200 && r.body.ok && DB.vp_venues.length === 1 && DB.venueplay_founding.length === 1 && AUTH.length === 1 &&
-    DB.vp_venue_staff.length === 1 && DB.vp_venue_staff[0].role === 'manager' && DB.vp_venue_staff[0].auth_user_id === AUTH[0].id && DB.vp_venue_staff[0].display_name === 'Rowan', r.body);
+  check('200: one venue, one account record, one login, the contact its account holder (owner; Dean, 11 Nov 2026, INBOX 242)', r.status === 200 && r.body.ok && DB.vp_venues.length === 1 && DB.venueplay_founding.length === 1 && AUTH.length === 1 &&
+    DB.vp_venue_staff.length === 1 && DB.vp_venue_staff[0].role === 'owner' && DB.vp_venue_staff[0].auth_user_id === AUTH[0].id && DB.vp_venue_staff[0].display_name === 'Rowan', r.body);
   check('the login is NEW, with their email (lower case) and their mobile', AUTH[0].email === 'manager@testcharlie.example' && AUTH[0].phone === '61400111222', AUTH[0]);
   check('the venue is held for the Terms tick exactly as HQ\'s prospects are (terms_required, nothing ticked for them)', v.terms_required === true && v.compliance_accepted_at === null && v.au_state === 'QLD', v);
   check('both slides on their screen, written through the one recorded write, named as the autopilot', r.body.slides === 2 && STORE.length === 2 && SCREEN_ACTORS.length === 1 &&

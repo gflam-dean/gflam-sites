@@ -510,6 +510,7 @@
   "wizard-v2-in-chrome.test.py",
   "Change my mobile asks Auth's phone change for the NEW number in the sign-in format and saves nothing until verifyOtp type phone_change passes, with a 30 second Send it again; never drawn for HQ View as; /account/host-mobile lets the owner, or a manager allowed to add hosts for a host, change a login that is staff on this account only, never their own, a full-access or venueplay staff login, or a number another login has, and a failed read changes nothing; /admin/login-mobile is HQ Owner only, on the venue named, the confirm naming the login; both audited with last three digits only",
   "account-review-in-chrome.test.py",
-  "an archived venue is not restored, and an explicit choice still works (19 checks)"
+  "an archived venue is not restored, and an explicit choice still works (19 checks)",
+  "runs the billing Worker with a fake Resend, Mobile Message, Auth and clock as a new prospect: a tap signs in without burning the link, \"carry on\" with no mobile keeps it, name + mobile saved retire every unused link and copy the name and verified mobile onto the account holder record (first time only, existing accounts untouched), the link again is the normal sign-in, a link past 90 days the same; the short link stays open after a text-code sign-in until the name is confirmed; the account email's login is the owner; the welcome screen asks only the name when the mobile is on the login; the People tab says Account holder"
  ]
 }

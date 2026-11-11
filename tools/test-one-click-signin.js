@@ -447,7 +447,10 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   var t2 = await freshLink(undefined, v.id, login.id);
   check('a second link for the same login is a different token', t2 !== token && /^[A-Za-z0-9_-]{43}$/.test(t2));
 
-  section('1b. POST /auth/one-click signs in ONCE');
+  section('1b. POST /auth/one-click signs in ONCE (a login whose details are in: a mobile on it)');
+  /* Since Dean, 11 Nov 2026 (INBOX 248) a link keeps working until its login has a mobile and (a new prospect) its name
+     saved; that is tools/test-welcome-details.js. Here the login has its mobile, so it is the one-use link it always was. */
+  login.phone = '61452510904';
   GEN.length = 0; PATCHES.length = 0;
   var ok = await vpaHandleOneClick(click(token), ENV, J);
   var used = DB.vp_signin_links.filter(function (x) { return x.token_hash === row.token_hash; })[0];

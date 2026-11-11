@@ -288,7 +288,14 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
     row.used_at === null && Math.abs(Date.parse(row.expires_at) - Date.now() - 90 * 86400000) < 60000 && JSON.stringify(DB).indexOf(fresh) === -1, row);
   var ok = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
   var twice = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
-  check('the new link signs in once, like the first', ok.status === 200 && ok.body.ok === true && ok.body.venue_id === V1 && twice.status === 410, [ok, twice]);
+  /* THE LINK WORKS UNTIL THEIR DETAILS ARE IN (Dean, 11 Nov 2026, INBOX 248): Amit has no mobile yet, so a click does not
+     burn it. With a mobile on the login it is one use, like the first. */
+  check('the new link signs in, and keeps working while Amit has no mobile (Dean, 11 Nov 2026, INBOX 248)', ok.status === 200 && ok.body.ok === true && ok.body.venue_id === V1 && twice.status === 200, [ok, twice]);
+  tbl('auth').filter(function (x) { return x.id === AMIT; })[0].phone = '61452510904';
+  var once = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
+  var spentNow = await vpaHandleOneClick(pub('/auth/one-click', { t: fresh }), ENV, J);
+  tbl('auth').filter(function (x) { return x.id === AMIT; })[0].phone = '';
+  check('...and with a mobile on the login it signs in once, like the first', once.status === 200 && spentNow.status === 410, [once, spentNow]);
   check('an audit row records it, with no token in it', DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_resent' && a.target === 'auth_user:' + AMIT; }) && JSON.stringify(DB.vp_admin_audit).indexOf(fresh) === -1);
 
   world();

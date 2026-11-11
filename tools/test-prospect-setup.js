@@ -284,7 +284,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   var a0 = AUTH_POSTS[0] || {};
   check('ONE login carrying the EMAIL (confirmed, so the email code finds it) AND the mobile', AUTH_POSTS.length === 1 && a0.email === 'cazreitop@gmail.com' && a0.email_confirm === true &&
     a0.phone === '+61452510904' && a0.phone_confirm === true, a0);
-  check('linked to the venue as its manager, under their first name', st.role === 'manager' && st.auth_user_id === AUTH[0].id && st.display_name === 'Amit', st);
+  check('linked to the venue as its account holder (owner; Dean, 11 Nov 2026, INBOX 242: it was manager), under their first name', st.role === 'owner' && st.auth_user_id === AUTH[0].id && st.display_name === 'Amit', st);
   check('the response says which login was made', r.body.login && r.body.login.email === 'cazreitop@gmail.com' && r.body.login.mobile === '0452 510 904', r.body.login);
   var scr = DB.vp_venue_screen[0] || {};
   check('both slides uploaded to the ad bucket, in THIS venue\'s folder, as PNG and JPEG', STORE.length === 2 && STORE.every(function (s) { return s.url.indexOf('/storage/v1/object/venue-ads/' + v.id + '/') !== -1; }) &&
@@ -310,7 +310,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     again.status === 409 && /already set up/.test(again.body.error) && DB.vp_venues.length === 1 && DB.venueplay_founding.length === 1 && sent.length === 1 && AUTH_POSTS.length === 1, again.body);
 
   section('2. The price: the card link (now in the app, POST /account/card-link) opens Checkout on the founding monthly price, for their crowd');
-  var mgr = (DB.vp_venue_staff.filter(function (x) { return x.venue_id === v.id && x.role === 'manager'; })[0] || {}).auth_user_id;
+  var mgr = (DB.vp_venue_staff.filter(function (x) { return x.venue_id === v.id && x.role === 'owner'; })[0] || {}).auth_user_id;
   var cl = await vpbCardLink(as(mgr, { venue_id: v.id }), ENV, J);
   var cardHref = (cl.body && cl.body.card_url) || '';
   check('their manager asks for the card link: THIS account record, no card yet, the rate and the crowd', cl.status === 200 && cl.body.has_card === false && cardHref.indexOf('https://www.venueplay.com.au/add-card?f=' + encodeURIComponent(f.id) + '&t=') === 0 &&

@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 17:28 · 0eec1167';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 17:31 · ea7bbbb9';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2399,8 +2399,12 @@ function vpaProspectWebsite(raw) {
    that already exists, or giving that login this venue, would hand whoever owns the typed address
    somebody else's account. vpaHandleProspect refuses an email that already signs in before anything
    is created; a mobile that already signs in is simply left off. Returns { id, mobile }. */
+/* vp_details_due (Dean, 11 Nov 2026, INBOX 243/248): a NEW prospect login has not yet put in its own name and
+   mobile. Its first sign-in shows the welcome screen (vp-about-you.js: name, pre-filled, and the mobile if the login
+   has none), and its emailed link keeps working until both are saved (vpaDetailsPending). Logins made before
+   this carry no flag, so nothing changes for them. */
 async function vpaProspectLogin(env, email, phone, venueName) {
-  const meta = { venue: venueName };
+  const meta = { venue: venueName, vp_details_due: true };
   const u = await vpaAuthCreateUser(env, phone
     ? { email: email, email_confirm: true, phone: phone, phone_confirm: true, user_metadata: meta }
     : { email: email, email_confirm: true, user_metadata: meta });
@@ -3509,13 +3513,15 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   await vpaInsert(env, 'vp_venue_settings', { venue_id: venue.id }, false);
   await vpaInsert(env, 'vp_screens', { venue_id: venue.id, name: 'Main screen' }, false);
 
-  // 3. The login, as the venue's manager (every self-serve and HQ venue's first login is one).
+  /* 3. The login. THE PERSON WHO SIGNS IN WITH THE ACCOUNT EMAIL IS THE ACCOUNT HOLDER (Dean, 11 Nov 2026, INBOX 242:
+     Bodalla's People tab said "Paul, Manager"). A prospect's login is the account email's own, so it is the
+     venue's OWNER row (it was 'manager' until 11 Nov; existing prospect accounts keep the row they have). */
   let login = null;
   try {
     login = sameLogin ? { id: byEmail.id, mobile: true, existing: true } : await vpaProspectLogin(env, email, phoneTaken ? null : phone, name);
     if (phoneTaken) warnings.push('This mobile already has a venueplay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.');
-    await vpaInsert(env, 'vp_venue_staff', { venue_id: venue.id, auth_user_id: login.id, role: 'manager',
-      display_name: firstName || 'Manager' }, false);
+    await vpaInsert(env, 'vp_venue_staff', { venue_id: venue.id, auth_user_id: login.id, role: 'owner',
+      display_name: firstName || 'Owner' }, false);
   } catch (e) {
     login = null;
     warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Send them a new sign-in link (HQ > Prospects).');
@@ -6136,8 +6142,10 @@ async function vpaShortLookup(request, env, code) {
   const row = pr[0];
   const user = await vpaAuthGetUser(env, row.auth_user_id);
   if (!user) return { state: 'none' };
-  /* Claimed: their free month has started (the first sign-in) or Auth has seen a sign-in on the login. */
-  if (row.first_signin_at || user.last_sign_in_at) return { state: 'claimed', row: row, user: user };
+  /* Claimed: their free month has started (the first sign-in) or Auth has seen a sign-in on the login, AND their
+     details are in (Dean, 11 Nov 2026, INBOX 248: the link works until they have signed in and saved their name and
+     mobile; vpaDetailsPending). Until then it still opens the sign-in with their mobile filled in. */
+  if ((row.first_signin_at || user.last_sign_in_at) && !vpaDetailsPending(user)) return { state: 'claimed', row: row, user: user };
   const from = vpaProspectWindowFromMs(row);
   if (!isFinite(from) || from + VPA_PROSPECT_LINK_DAYS * 86400000 <= Date.now()) return { state: 'ended', row: row, user: user };
   return { state: 'unclaimed', row: row, user: user };
@@ -6211,6 +6219,15 @@ async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expire
     throw e;
   }
 }
+/* HAS THIS LOGIN PUT IN ITS OWN DETAILS? (Dean, 11 Nov 2026, INBOX 243/248.) Not yet when it has no mobile, or when it
+   is a new prospect login (vp_details_due, set at setup) that has not saved its name and mobile on the welcome
+   screen (vp_details_at, set by vpbMyName). While that is so, the emailed link keeps working (a click does not burn
+   it) and the short link still counts as unclaimed. */
+function vpaDetailsPending(user) {
+  if (!user) return false;
+  const m = user.user_metadata || {};
+  return !user.phone || (m.vp_details_due === true && !m.vp_details_at);
+}
 /* The email's main button. With a token it signs them in. Without one (migration 123 missing) it opens the
    same page with no token, which offers to email them a link (POST /auth/one-click/resend). NEVER the
    email-code sign-in (Dean, 29 Oct 2026: "it's got to be phone number"). Their own address rides in the
@@ -6232,16 +6249,32 @@ async function vpaHandleOneClick(request, env, json) {
   if (token.length === VPA_SHORT_LEN) return json(GONE, 410);
   const hash = await vpaSigninTokenHash(token);
   const nowIso = new Date().toISOString();
+  const live = 'token_hash=eq.' + hash + '&used_at=is.null&expires_at=gt.' + encodeURIComponent(nowIso);
+  /* THE LINK KEEPS WORKING UNTIL THEIR DETAILS ARE IN (Dean, 11 Nov 2026, INBOX 248: "the emailed account link keeps
+     working UNTIL the person signs in AND puts in their details (name + mobile) ... a click that does not finish the
+     details does NOT burn the link"). So the link is READ first: while its login's details are not done
+     (vpaDetailsPending) a click signs in and leaves it unused, inside its 90 days; saving the details
+     (vpbMyName) retires it. A login whose details are done gets the one-use link it always had: ONE conditional
+     UPDATE, "used_at is null" re-checked under the row lock, so two clicks at once give one sign-in. */
   let rows = null;
   try {
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?token_hash=eq.' + hash + '&used_at=is.null&expires_at=gt.' + encodeURIComponent(nowIso) + '&select=auth_user_id,venue_id', {
-      method: 'PATCH',
-      headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
-      body: JSON.stringify({ used_at: nowIso }),
-    });
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?' + live + '&select=auth_user_id,venue_id&limit=2', { headers: vpaHeaders(env) });
     if (res.ok) rows = await res.json().catch(() => null);
   } catch (_) { rows = null; }
   if (!Array.isArray(rows) || rows.length !== 1) return json(GONE, 410);
+  const owner = await vpaAuthGetUser(env, rows[0].auth_user_id);
+  if (!owner || !vpaDetailsPending(owner)) {
+    rows = null;
+    try {
+      const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?' + live + '&select=auth_user_id,venue_id', {
+        method: 'PATCH',
+        headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+        body: JSON.stringify({ used_at: nowIso }),
+      });
+      if (res.ok) rows = await res.json().catch(() => null);
+    } catch (_) { rows = null; }
+    if (!Array.isArray(rows) || rows.length !== 1) return json(GONE, 410);
+  }
   const link = rows[0];
   /* THEY ACTED ON THE EMAIL (Dean, 4 Nov 2026): a tap on the link is recorded against the venue, no token in
      it, so the follow-ups stop at send time even if the sign-in that follows the tap never completes. */
@@ -6250,7 +6283,7 @@ async function vpaHandleOneClick(request, env, json) {
   const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(link.auth_user_id) +
     '&venue_id=eq.' + encodeURIComponent(link.venue_id) + '&select=role&limit=1');
   if (!staff || staff.length !== 1) return json(GONE, 410);
-  const user = await vpaAuthGetUser(env, link.auth_user_id);
+  const user = (owner && owner.id === link.auth_user_id) ? owner : await vpaAuthGetUser(env, link.auth_user_id);
   const email = user && user.email ? String(user.email).trim().toLowerCase() : '';
   if (!email || (user.banned_until && Date.parse(user.banned_until) > Date.now())) return json(GONE, 410);
   let d = null;
@@ -6789,7 +6822,50 @@ async function vpbMyName(request, env, json) {
   const up = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_staff?auth_user_id=eq.' + encodeURIComponent(payload.sub), {
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ display_name: name }) });
   if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
-  return json({ ok: true, name: name });
+  const done = await vpbDetailsDone(env, String(payload.sub), name).catch(() => false);
+  return json({ ok: true, name: name, details_done: !!done });
+}
+/* THEIR DETAILS ARE IN (Dean, 11 Nov 2026, INBOX 242/243/248). Called once the name is saved. Only when the login now
+   has a mobile (Auth's own verified phone change, or the text-code sign-in) do the details count as done:
+     - the login: full_name, and vp_details_at (now), so the welcome screen is not shown again;
+     - THE EMAILED LINK STOPS: every unused sign-in link for this login is retired, so from now on it is the normal
+       sign-in, a text code to that mobile (the short link reads vpaDetailsPending and is claimed from now too);
+     - the ACCOUNT HOLDER record: a NEW prospect login (vp_details_due, set at setup) whose email is its account's
+       email gets its name and verified mobile copied onto that account (venueplay_founding contact_name, mobile),
+       the first time only. Existing logins carry no vp_details_due, so their account records are never touched.
+   "Carry on for now" (no mobile yet) saves the name only: the link keeps working. Best effort: a failure here never
+   un-saves the name. Returns true when the details were done by this call or already. */
+async function vpbDetailsDone(env, uid, name) {
+  const user = await vpaAuthGetUser(env, uid);
+  if (!user || !user.phone) return false;
+  const meta = user.user_metadata || {};
+  const first = !meta.vp_details_at;
+  if (first || meta.full_name !== name) {
+    try { await vpaAuthUpdateUser(env, uid, { user_metadata: Object.assign({}, meta, { full_name: name, vp_details_at: meta.vp_details_at || new Date().toISOString() }) }); }
+    catch (e) { return false; }
+  }
+  try {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(uid) + '&used_at=is.null', {
+      method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+  } catch (_) {}
+  if (first && meta.vp_details_due === true) {
+    const email = String(user.email || '').trim().toLowerCase();
+    const local = vpaShortLocal('+' + String(user.phone).replace(/\D/g, ''));
+    const mine = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(uid) + '&role=eq.owner&select=venue_id&limit=50');
+    const ids = (mine || []).map((r) => r.venue_id).filter(Boolean);
+    const vs = ids.length ? await vpaSelect(env, 'vp_venues', 'id=in.(' + ids.map(encodeURIComponent).join(',') + ')&select=id,founding_id&limit=50') : [];
+    const fids = Array.from(new Set((vs || []).map((v) => v.founding_id).filter(Boolean)));
+    for (const fid of fids) {
+      try {
+        const f = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,contact_email&limit=1')) || [])[0];
+        if (!f || !email || String(f.contact_email || '').trim().toLowerCase() !== email) continue;
+        await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid), { contact_name: name, mobile: local });
+        await vpaAudit(env, { actorId: null, label: 'self (welcome screen)', role: null }, 'account_holder_details', 'founding:' + fid,
+          { name: name, mobile_last3: local.slice(-3) }).catch(() => null);
+      } catch (_) {}
+    }
+  }
+  return true;
 }
 
 /* ===========================================================================
