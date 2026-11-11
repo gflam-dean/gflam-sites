@@ -604,6 +604,6 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   /* A login that is not a prospect's gets the ordinary 90 days too: tools/test-phone-signin.js section 3a. */
   delete ENV.PROSPECT_SMS_ON; delete ENV.CLICKSEND_USERNAME; delete ENV.CLICKSEND_API_KEY;
 
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

@@ -89,4 +89,4 @@ check('trivia: "Tonight\'s prize" with the usual prizes as buttons', /id="trivia
 var tp = between(BLD, 'function topicParam', 'function defaultName');
 check('the builder takes ?topic= safely (a broken one ignored, no markup, 60 characters) and types it into the topic search', /try\{/.test(tp) && /replace\(\/\[<>\]\/g,""\)/.test(tp) && /slice\(0,60\)/.test(tp) && /\$\("searchQ"\)\.value=topic;/.test(BLD));
 
-print(''); print(bad ? ('FAIL ' + bad + ' of ' + ran) : ('PASS ' + ran + ' checks'));
+print(''); print(bad ? ('FAIL ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));

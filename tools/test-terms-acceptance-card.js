@@ -272,6 +272,6 @@ function body(o) { var b = {}; for (var k in ACC) b[k] = ACC[k]; for (var k2 in 
     ce && eff && ce[1] === eff[1] && VPA_TERMS_EFFECTIVE === eff[1], [ce && ce[1], VPA_TERMS_EFFECTIVE, eff && eff[1]]);
 
   if (bad) throw new Error('terms acceptance card: ' + bad + ' of ' + ran + ' failed');
-  print('PASS ' + ran + ' checks');
+  print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

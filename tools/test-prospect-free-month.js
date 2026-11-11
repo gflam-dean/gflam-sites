@@ -505,6 +505,6 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('the venue\'s state comes from au_state, else its postcode', vpaSendState({ au_state: 'wa' }) === 'WA' && vpaSendState({ postcode: '2000' }) === 'NSW' && vpaSendState({}) === null);
 
   if (badCount()) throw new Error('prospect free month: ' + badCount() + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

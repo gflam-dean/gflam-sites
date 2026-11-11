@@ -143,4 +143,4 @@ async function draw(venueId, caller) {
 for (var i = 0; i < 400 && !finished; i++) drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('SA and NT number bingo, game Worker: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

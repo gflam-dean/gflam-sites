@@ -664,6 +664,6 @@ function newSubs() { return ST.created.length; }
   ENV.VPB_SELF_RESTART = '';
   check('with the restart switched off, the same trial rule (it is the rule, not a switch)', !vpaProspectPrice(ENV, PR, CX + 60 * DAY).kept && vpaProspectPrice(ENV, PR, CX + 60 * DAY).rate === 3);
 
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

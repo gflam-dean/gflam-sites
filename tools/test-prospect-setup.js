@@ -460,6 +460,6 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('SA pub: switched off, with the way to switch it on (a not-for-profit runs it)', /only a not-for-profit organisation may run number bingo, so it is switched off for pubs/.test(vpaProspectBingo('SA', 'for_profit').text));
 
   if (bad) throw new Error('prospect setup: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

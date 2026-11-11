@@ -151,4 +151,4 @@ check('index.html has a "My email" header button that reopens it in edit mode, s
   /id="myEmailBtn"[^>]*>My email</.test(INDEX) && /VPAboutYou\.openEmail\(__ctx, \{ client:VP\.getClient\(\), edit:true/.test(INDEX) && /me\.style\.display = \(__ctx && __ctx\.authed && !__ctx\.isAdmin && __ctx\.scope==="staff" && __ctx\.user && __ctx\.user\.phone\)/.test(INDEX));
 
 if (bad) throw new Error('email step: ' + bad + ' of ' + ran + ' failed');
-print(''); print('PASS ' + ran + ' checks');
+print(''); print('ALL ' + ran + ' CHECKS PASSED');

@@ -70,4 +70,4 @@ show('the closed venue drops out and the other is entered directly', arch.paired
 VENUES[1].status = 'active';
 
 if (bad) throw new Error('venue picker: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

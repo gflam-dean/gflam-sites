@@ -138,5 +138,5 @@ show('nothing on the reveal pulses for ever', !/vpGlow[^;}]*infinite|vpRevIn[^;}
 var RM = /@media \(prefers-reduced-motion:reduce\)\{\.vp-revmark,\.vp-revtick,#tvRevAnswers \.ans\.correct\{animation:none\}\}/.test(CSS);
 show('prefers-reduced-motion: the disc, the tick and the glow do not move at all', RM);
 
-print('\n' + (ran - bad) + '/' + ran + ' passed');
+print('\n' + (bad ? ((ran - bad) + ' of ' + ran + ' checks passed') : ('ALL ' + ran + ' CHECKS PASSED')));
 if (bad) throw new Error(bad + ' failed');

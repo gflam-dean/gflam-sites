@@ -118,8 +118,9 @@ var NOW = Math.floor(Date.now() / 1000), DAY = 86400;
 function trialDays() { return sent ? Math.round((Number(sent['subscription_data[trial_end]']) - NOW) / DAY) : null; }
 function iso(daysAgo) { return new Date(Date.now() - daysAgo * 86400000).toISOString(); }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -282,7 +283,7 @@ var m4 = signup({ email: 'pat@theoldpub.com.au', mobile: '0400000000',
                             stripe_subscription_id: null }] });
 check('their own email, left and back inside a year: three days', trialDays() === 3, trialDays());
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+if (fails) { print('FAILED ' + fails + ' so far'); }
 /* THE SAME PERSON, TYPED WITH A CAPITAL. A phone keyboard capitalises the first letter of an
    email. The account is stored as it was first typed, and the second signup must still be seen. */
 print('one address however it is typed');
@@ -310,3 +311,4 @@ check('returning venue: three days, and the email is told three days', trialDays
   [trialDays(), sent['metadata[trial_end]'], sent['metadata[returning]']]);
 
 if (fails) { throw new Error('checkout: ' + fails + ' failed'); }
+print('ALL ' + ran + ' CHECKS PASSED');

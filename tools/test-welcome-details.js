@@ -298,5 +298,5 @@ function ayOpen(user, answer) {
 
   print('');
   if (bad) throw new Error('welcome details: ' + bad + ' of ' + ran + ' failed');
-  print('PASS ' + ran + ' checks');
+  print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.stack || e)); throw e; });

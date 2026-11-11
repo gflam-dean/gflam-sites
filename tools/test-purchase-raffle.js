@@ -283,4 +283,4 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('purchase raffle: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

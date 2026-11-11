@@ -129,4 +129,4 @@ PAGES.forEach(function (p) {
 show('the three pages\' gatherCapture are the same text', bodies.length === 3 && bodies[0] === bodies[1] && bodies[1] === bodies[2]);
 
 if (bad) throw new Error('consent one tick: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

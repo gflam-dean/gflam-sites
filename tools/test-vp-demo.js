@@ -138,4 +138,4 @@ check('  and its host console QR into a <canvas> (#hostQr)', drawn['venueplay/ap
 check('every QR the TV, trivia and musical bingo screens draw by id is a <canvas> too (' + Object.keys(drawn).length + ' found)', Object.keys(drawn).length >= 8 && notCanvas.length === 0, notCanvas);
 
 print('');
-print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('All ' + ran + ' checks passed'));
+print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));

@@ -312,6 +312,6 @@ if (!VPB_HOST_UPDATES_CONSENT) throw new Error('cannot find VPB_HOST_UPDATES_CON
   check('HQ View as is never asked', R4.order.indexOf('updates') === -1 && R4.order.indexOf('pair') !== -1, R4.order);
 
   if (bad) throw new Error('host updates opt-in: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

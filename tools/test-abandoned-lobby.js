@@ -12,8 +12,9 @@
 */
 var TV = readFile('venueplay/tv.html');
 var CONSOLE = readFile('venueplay/app/index.html');
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -67,5 +68,5 @@ check('and is well under the long one', m && (+m[1] * 60000) < 90 * 60 * 1000, m
 /* 5. The long window is untouched. A live game losing the wall is far worse than a dead code. */
 check('a running game still gets its ninety minutes', /HOST_SILENCE_MS=90\*60\*1000/.test(TV));
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('abandoned lobby: ' + fails + ' failed'); }

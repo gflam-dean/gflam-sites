@@ -288,4 +288,4 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('SA and NT number bingo: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

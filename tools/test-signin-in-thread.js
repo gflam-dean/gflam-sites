@@ -373,6 +373,6 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   check('HQ > Prospects has a Delivery line from the Worker\'s words', /\(p\.delivery && p\.delivery\.words \? '<div><span class="k">Delivery<\/span>/.test(src) && /prEsc\(p\.delivery\.words\)/.test(src));
 
   if (bad) throw new Error('signin in thread: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

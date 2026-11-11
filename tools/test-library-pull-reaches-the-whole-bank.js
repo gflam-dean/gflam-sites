@@ -60,7 +60,6 @@ function reads(table) { return LOG.filter(function (l) { return l.indexOf('GET '
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('library pull: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
 
 /* Appended 22 Sep 2026: a picture link is https or it is nothing, on ADD as well as edit. */
 (function () {
@@ -71,5 +70,5 @@ print('PASS ' + ran + ' checks');
   show('a plain http picture link is dropped on add, as the edit route always did', !!bad1 && bad1.image_url === null, JSON.stringify(bad1));
   show('a javascript: link never reaches a phone', !!bad2 && bad2.image_url === null, JSON.stringify(bad2));
   if (bad) throw new Error('picture links: failed');
-  print('PASS picture links');
 })();
+print('ALL ' + ran + ' CHECKS PASSED');

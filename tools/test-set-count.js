@@ -95,5 +95,5 @@ retagSetCount(ENV, 'set-1').then(function () {
   print('');
   print(PASS + ' passed, ' + FAIL + ' failed');
   if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-  print('PASS');
+  print('ALL ' + PASS + ' CHECKS PASSED');
 }).catch(function (e) { print('ERROR ' + e); throw e; });

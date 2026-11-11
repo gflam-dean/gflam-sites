@@ -65,4 +65,4 @@ venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); r
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('paper flag: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

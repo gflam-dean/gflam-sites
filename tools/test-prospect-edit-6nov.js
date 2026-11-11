@@ -453,6 +453,6 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
 
   print('');
   if (bad) throw new Error('prospect edit 6 Nov: ' + bad + ' of ' + ran + ' failed');
-  print('PASS ' + ran + ' checks');
+  print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

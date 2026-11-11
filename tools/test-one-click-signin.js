@@ -616,6 +616,6 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
     /Tap the button below and we'll email cazreitop@gmail\.com a link that opens your account\./.test(t3) && !/email you a code/.test(t3), L2);
 
   if (bad) throw new Error('one-click sign-in: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

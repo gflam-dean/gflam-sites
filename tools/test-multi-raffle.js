@@ -220,4 +220,4 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('multi-raffle: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

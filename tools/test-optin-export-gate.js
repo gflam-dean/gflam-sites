@@ -21,8 +21,9 @@ var SQL = readFile('venueplay-backend/supabase/venueplay-82-optin-gate-bar-loung
    looksLikeVenue swept up an `await vpaSelect(...)` in between, which cannot run outside an
    async function, so the harness blew up before testing anything. */
 var block = /const VPA_VENUE_WORDS_LOOSE = [\s\S]*?const FREE_MAILBOX_RE = [^\n]*;/.exec(SRC);
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -108,5 +109,5 @@ if (decide) {
     d({ venues: [] }, G.VENUE_RE, false) === false);
 }
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('optin export gate: ' + fails + ' failed'); }

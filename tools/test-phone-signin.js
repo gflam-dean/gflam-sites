@@ -438,6 +438,6 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
     vpaOneClickUrl('https://x', null, '') === 'https://x/app/go');
 
   if (bad) throw new Error('phone sign-in: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

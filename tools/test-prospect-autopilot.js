@@ -201,6 +201,6 @@ var AP = { 'X-Autopilot-Key': KEY };
   check('the autopilot key does not open HQ\'s route (401, nothing made)', r.status === 401 && nothingMade(), r);
 
   if (bad) throw new Error('prospect autopilot: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

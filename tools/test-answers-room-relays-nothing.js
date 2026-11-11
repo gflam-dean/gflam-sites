@@ -48,4 +48,4 @@ async function join(room, name, role) { var url = 'https://room/ws?role=' + role
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('answers room: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

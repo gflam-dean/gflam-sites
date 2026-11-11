@@ -91,8 +91,9 @@ function charges() { return calls.filter(function (c) { return /invoiceitems/.te
 function credits() { return calls.filter(function (c) { return /balance_transactions/.test(c.path); }); }
 function quantities() { return calls.filter(function (c) { return /subscription_items/.test(c.path); }); }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, good, saw) {
+  ran++;
   if (good) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -209,5 +210,5 @@ check('free_month_at cannot be read: the add is charged and promises no undo', f
 var f5 = run({ current: 110, lastUp: { action: 'venue_added', created_at: minutesAgo(10), detail: { name: 'Deepwater Hotel', players: 110, billing: { kind: 'charge', cents: 27500, item: 'ii_new' } } } }, { venue_id: 'v1', players: 80 }, ON);
 check('a new pub lowered 10 minutes after it was added: no players_increased row, so an ordinary reduction, nothing deleted', deletes.length === 0 && f5 && f5.applied === 'next_renewal', [deletes, f5]);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('players timing: ' + fails + ' failed'); }

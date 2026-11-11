@@ -61,4 +61,4 @@ check('no header, no secret, or a header with no timestamp: refused',
 check('a timestamp that is not a number is refused', verify(BODY, sign(SECRET, 'soon', BODY), SECRET) === false);
 
 if (fails) throw new Error('stripe signature: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

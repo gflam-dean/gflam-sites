@@ -87,4 +87,4 @@ function names(o) { return (o.venues || []).map(function (v) { return v.name; })
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('two accounts: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

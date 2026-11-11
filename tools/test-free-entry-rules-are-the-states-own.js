@@ -102,4 +102,4 @@ var actBin = G.assess({ state: 'ACT', entityType: 'for_profit', format: 'bingo90
 check('ACT: ordinary bingo is back on the phone (Anisimoff, 8 Oct 2026: "not specifically prohibited")', actBin.paper === false && !/paper/i.test(actBin.warnings.join(' ')), actBin.warnings);
 
 if (fails) throw new Error('free entry rules: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

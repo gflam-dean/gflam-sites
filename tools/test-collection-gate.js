@@ -24,8 +24,9 @@ console = { log: function () {} };
 var EVERYTHING = { first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com',
                    mobile: '0400000000', postcode: '4220', marketing_optin: true };
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -111,5 +112,5 @@ check('settings unreadable: so nothing sensitive is kept',
     return r.email === undefined && r.mobile === undefined && r.marketing_optin === undefined; })());
 check('it really asks vp_venue_settings', asked.indexOf('vp_venue_settings') !== -1, asked);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('collection gate: ' + fails + ' failed'); }

@@ -119,4 +119,4 @@ function reveal(qseq) { return { t: 'reveal', qseq: qseq, correctIndex: 1, optio
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('nobody answered: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

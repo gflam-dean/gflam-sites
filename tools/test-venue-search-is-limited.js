@@ -27,4 +27,4 @@ function ask(ip) { return handleVenueLike({ url: 'https://w/venues/like?slug=the
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('venue search: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

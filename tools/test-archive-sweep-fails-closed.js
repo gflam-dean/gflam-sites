@@ -157,4 +157,4 @@ check('a venue that really is quiet IS still archived',
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+print('ALL ' + PASS + ' CHECKS PASSED');

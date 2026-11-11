@@ -28,8 +28,8 @@ function ppFile(rel) {
  *
  * Run: jsc lib/pp-admin-auth.test.js        (from the partyplay folder)
  */
-var bad = 0;
-function pass(n, c){ print((c ? "  ok   " : "  FAIL ") + n); if(!c) bad++; }
+var bad = 0, checksRan = 0;
+function pass(n, c){ checksRan++; print((c ? "  ok   " : "  FAIL ") + n); if(!c) bad++; }
 
 /* ---- the page, exactly as it ships ---------------------------------------- */
 /* Find admin.html wherever this suite is run from. The release check runs it with a
@@ -119,5 +119,5 @@ __api("/admin/staff").then(function(j){
       pass("  the user is told the sign-in ran out", /sign in again/i.test(globalThis.__asked || ""));
     });
 }).then(function(){
-  print(bad ? ("FAILED " + bad + " CHECKS") : ("ALL 9 CHECKS PASSED  (" + usedPath + ")"));
+  print(bad ? ("FAILED " + bad + " CHECKS") : ("ALL " + checksRan + " CHECKS PASSED"));
 }).catch(function(e){ print("HARNESS ERROR: " + (e && e.message)); });

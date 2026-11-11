@@ -366,6 +366,6 @@ async function newProspect(name, offerOpen) {
     !/The offer price you were set up on ended with your free month/.test(SES) && SES.indexOf("r === 'free_month_ended'") > 0 && !/5 days/.test(SES.slice(SES.indexOf("r === 'free_month_ended'"), SES.indexOf("r === 'free_month_ended'") + 1500)));
 
   if (badCount()) throw new Error('offer grace: ' + badCount() + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

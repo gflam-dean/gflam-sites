@@ -258,6 +258,6 @@ function plainOf(m) { return String((m && m.html) || '').replace(/<[^>]+>/g, ' '
 
   print('');
   if (bad) throw new Error('trial cancel alert: ' + bad + ' of ' + ran + ' failed');
-  print('PASS ' + ran + ' checks');
+  print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

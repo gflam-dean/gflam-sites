@@ -125,4 +125,4 @@ function exp(user, venueId, headers) { return vpbPurchaseRaffleExport(as(user, {
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('purchase raffle HQ: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

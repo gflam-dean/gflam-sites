@@ -195,5 +195,5 @@ async function judge(label, ann, away, within) {
   print(PASS + ' passed, ' + FAIL + ' failed');
   if (VPROOM_FILE) { print('(BEFORE picture, ' + VPROOM_FILE + ': not judged)'); return; }
   if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-  print('PASS');
+  print('ALL ' + PASS + ' CHECKS PASSED');
 })().catch(function (e) { print('RIG ERROR ' + e + '\n' + (e && e.stack)); throw e; });

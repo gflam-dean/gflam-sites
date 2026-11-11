@@ -59,4 +59,4 @@ async function run(session) { try { await vpaProvisionFromCheckout(ENV, session)
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('welcome once: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

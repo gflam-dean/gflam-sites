@@ -151,4 +151,4 @@ var DECIDE = new Function('g', HOSTPAGE.slice(a, bEnd) + '\nreturn { stillLive: 
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('draw records: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

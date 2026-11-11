@@ -61,4 +61,4 @@ function keys() { return DB.vp_venue_signing_keys.map(function (k) { return k.ve
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('removed host: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

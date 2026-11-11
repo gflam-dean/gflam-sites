@@ -368,4 +368,4 @@ else {
 }
 
 if (bad) throw new Error('age gate: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

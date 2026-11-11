@@ -361,4 +361,4 @@ var finished = false;
 drainMicrotasks();
 if (!finished) { print('FAIL the Worker half never finished'); fails++; }
 if (fails) throw new Error('terms: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

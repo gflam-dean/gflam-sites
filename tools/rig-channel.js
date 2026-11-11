@@ -149,7 +149,7 @@ var RIG = (function (G) {
   function done(what) {
     if (uncaught.length) print('  (timers threw: ' + uncaught.slice(0, 3).join(' | ') + ')');
     if (fails) throw new Error(what + ': ' + fails + ' of ' + ran + ' failed');
-    print('PASS ' + ran + ' checks');
+    print('ALL ' + ran + ' CHECKS PASSED');
   }
   return { advance: advance, now: function () { return NOW; }, pending: function () { return timers.filter(function (t) { return !t.every; }).length; },
            makeClient: makeClient, loadHelper: loadHelper, lift: lift, braceEnd: braceEnd, loadsScript: loadsScript,

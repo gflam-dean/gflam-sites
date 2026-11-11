@@ -29,8 +29,9 @@ console = { log: function () {} };
 /* The Worker's const is not visible out here, so read the same literal from the same file. */
 var VPA_CANCEL_REASONS = (0, eval)('(' + /const VPA_CANCEL_REASONS = (\{[\s\S]*?\n\});/.exec(src)[1] + ')');
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -527,4 +528,4 @@ check('the hand-over posts to /account/transfer-request with the new owner',
       /api\("\/account\/transfer-request", \{ venue_id:v\.id, new_name:val\("nwName"\), new_email:val\("nwEmail"\), new_mobile:val\("nwMobile"\) \}\)/.test(DLG2));
 
 if (fails) { throw new Error('cancel reason: ' + fails + ' failed'); }
-print('PASS');
+print('ALL ' + ran + ' CHECKS PASSED');

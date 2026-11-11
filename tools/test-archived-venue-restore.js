@@ -338,4 +338,5 @@ chain.then(function () {
   print('');
   print(PASS + ' passed, ' + FAIL + ' failed');
   if (FAIL) throw new Error(FAIL + ' check(s) failed');
+  print('ALL ' + PASS + ' CHECKS PASSED');
 });

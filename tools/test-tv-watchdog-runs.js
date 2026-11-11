@@ -86,4 +86,4 @@ var h = world({ tvMode: 'bingo' }); h.lastHost = h.now; h.tick(4 * 3600000 + 300
 show('but never while a game is on', h.reloads.length === 0);
 
 if (bad) throw new Error('tv watchdog: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

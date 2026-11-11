@@ -133,4 +133,4 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });
 drainMicrotasks();
 if (bad) throw new Error('no players: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

@@ -207,6 +207,6 @@ function checks() { return DB.vp_admin_audit.filter(function (a) { return a.acti
   check('moving within a state that allows it leaves paid entry alone', r.status === 200 && vrow(NSWV).paid_entry_enabled === true, vrow(NSWV));
 
   if (bad) throw new Error('legal gaps 28 Oct: ' + bad + ' of ' + ran + ' failed');
-  print('PASS ' + ran + ' checks');
+  print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

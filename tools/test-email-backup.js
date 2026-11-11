@@ -189,6 +189,6 @@ var WN = 0, AMIT_PHONE = '', AMIT_PH = '';
   check('the route is wired in the router', /path === '\/auth\/email-backup' && typeof vpaEmailBackup === 'function'/.test(SRC));
 
   if (bad) throw new Error('email backup: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

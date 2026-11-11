@@ -348,4 +348,4 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('permits and compliance tick: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

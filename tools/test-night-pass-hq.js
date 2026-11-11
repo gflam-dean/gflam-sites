@@ -127,4 +127,4 @@ function hoursLeft() { return (Date.parse(venue().night_pass_until) - Date.now()
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('night pass HQ: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

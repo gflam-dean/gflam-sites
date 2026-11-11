@@ -202,4 +202,4 @@ w = lastWrap();
 check('Queensland non-profit paid raffle: the OLGR block is shown and the button is the old one (existing behaviour)', /OLGR approval/.test(w.innerHTML) && /I understand, start the game/.test(w.innerHTML), w.innerHTML.slice(0, 300));
 
 if (fails) throw new Error('gaming rules (letters): ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

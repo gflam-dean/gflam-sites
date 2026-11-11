@@ -65,4 +65,4 @@ function pts(pid) { return DB.vp_trivia_answers.filter(function (a) { return a.p
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('added time: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

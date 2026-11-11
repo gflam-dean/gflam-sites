@@ -154,4 +154,4 @@ check('a trivia screen that hears mode:musical on the venue channel goes to MUSI
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+print('ALL ' + PASS + ' CHECKS PASSED');

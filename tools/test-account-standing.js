@@ -92,4 +92,4 @@ var k4 = summary().body.standing;
 check('an active account has no date', k4 && k4.kept_until === null && k4.games === true, k4);
 
 if (bad) throw new Error('account standing: ' + bad + ' of ' + ran + ' failed');
-print(''); print('PASS ' + ran + ' checks');
+print(''); print('ALL ' + ran + ' CHECKS PASSED');

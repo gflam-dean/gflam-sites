@@ -100,4 +100,4 @@ async function strip() { var r = await vpbTrustedLogosRoute(ENV, J); return ((r.
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('logo on site HQ: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

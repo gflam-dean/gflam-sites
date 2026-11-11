@@ -58,8 +58,9 @@ function run(opts) {
   drainMicrotasks();
   return out;
 }
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -169,5 +170,5 @@ var r4 = run({ venues: [{ id: 'v1', name: 'X', closed_at: '2026-01-01T00:00:00Z'
 check('a failed write stops the sweep and reports it', !!r4.error && !r4.threw, r4);
 check('and does NOT claim it purged anything', r4.venues === undefined, r4);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('retention: ' + fails + ' failed'); }

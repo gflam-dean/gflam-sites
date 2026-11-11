@@ -145,4 +145,4 @@ if (onMsgSrc && onPhoneSrc) {
 }
 
 if (fails) throw new Error('phone impersonation: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

@@ -76,8 +76,9 @@ function person(email) {
            mobile: null, postcode: null, opted_in_at: '2026-09-17T00:00:00Z' };
 }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -116,5 +117,5 @@ check('and it reports 0 rather than a broken number', r5.held_unverified === 0, 
 var r6 = run({ visible: [person('a@x.com'), person('a@x.com'), person('b@x.com')] });
 check('the same punter across many nights is listed once', r6.count === 2, r6.count);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('held back: ' + fails + ' failed'); }

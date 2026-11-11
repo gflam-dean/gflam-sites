@@ -11,8 +11,9 @@
    Run:  jsc tools/test-manager-perms-scope.js
 */
 var SRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -83,5 +84,5 @@ check('a failed permissions read is a 503 refusal, never null (null means owner)
 
 check('no venues: the lookup is not run at all', run([], [{ permissions: { advertising: false } }]) === null && asked.length === 0, asked);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('perms scope: ' + fails + ' failed'); }

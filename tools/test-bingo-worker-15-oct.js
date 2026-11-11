@@ -218,4 +218,4 @@ async function billed(sid) { return countPlayersWhoPlayed(DB.vp_players.filter(f
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('bingo worker 15 Oct: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

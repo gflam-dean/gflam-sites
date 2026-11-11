@@ -67,8 +67,9 @@ function deliver() {
   return err ? { threw: String(err.message || err) } : (out ? { status: out.status } : { pending: true });
 }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -105,4 +106,4 @@ var o1 = deliver();
 check('one delivery, handled once, 200', o1.status === 200 && provisioned === 1 && !!events.evt_1.completed_at, [o1, provisioned]);
 
 if (fails) { throw new Error('webhook retry: ' + fails + ' failed'); }
-print('PASS');
+print('ALL ' + ran + ' CHECKS PASSED');

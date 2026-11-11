@@ -8,8 +8,8 @@
 
    Run: jsc venueplay-backend/app/trivia/trivia-night.test.js   (from the repo root)
 */
-var bad = 0;
-function pass(n, c, why){ print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
+var bad = 0, checksRan = 0;
+function pass(n, c, why){ checksRan++; print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
 
 function firstReadable(paths, min){
   for (var i = 0; i < paths.length; i++){
@@ -355,5 +355,5 @@ print("15. A REFUSAL STAYS UP UNTIL THE HOST ACTS (live audit, 19 Oct 2026: 'Tri
 })();
 
 print("");
-print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");
+print(bad ? ("  " + bad + " FAILED") : ("ALL " + checksRan + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

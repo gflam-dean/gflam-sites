@@ -20,9 +20,11 @@ H = ['-H', 'apikey: ' + ENV['NEW_SERVICE_KEY'], '-H', 'Authorization: Bearer ' +
 TOOL = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'purge-closed-player-data.py')
 
 bad = [0]
+ran = [0]
 
 
 def ok(name, cond, extra=''):
+    ran[0] += 1
     print(('  ok   ' if cond else '  FAIL ') + name + ('   ' + str(extra) if extra else ''))
     if not cond:
         bad[0] += 1
@@ -171,5 +173,5 @@ finally:
     la = sb('GET', 'venueplay_founding?venue_name=like.PURGETEST*&select=id')
     ok('no test venue or account left behind', not left and not la, (left, la))
 
-print(('  %d FAILED' % bad[0]) if bad[0] else '  ALL CHECKS PASSED')
+print(('  %d FAILED' % bad[0]) if bad[0] else ('ALL %d CHECKS PASSED' % ran[0]))
 sys.exit(1 if bad[0] else 0)

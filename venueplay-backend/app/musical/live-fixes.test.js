@@ -12,8 +12,8 @@
 
    Run: jsc venueplay-backend/app/musical/live-fixes.test.js
 */
-var bad = 0;
-function pass(n, c, why){ print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
+var bad = 0, checksRan = 0;
+function pass(n, c, why){ checksRan++; print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
 
 function read(paths, min){
   for (var i = 0; i < paths.length; i++){
@@ -216,5 +216,5 @@ pass("a player who missed a song can catch up",
      /function\s+renderPlayedSheet/.test(playSrc) && /markMissed/.test(playSrc),
      "someone back from the bar has no way to see what went by");
 
-print(bad ? ("  " + bad + " FAILED") : "ALL CHECKS PASSED");
+print(bad ? ("  " + bad + " FAILED") : ("ALL " + checksRan + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

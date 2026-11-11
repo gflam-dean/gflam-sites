@@ -64,8 +64,9 @@ function settle(p) {
   return out;
 }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -144,5 +145,5 @@ settle(vpaOptinCsv(ENV, VENUES));
 check('the export asks for a total order, not just opted_in_at',
       /order=opted_in_at\.desc%2Cemail\.asc|order=opted_in_at\.desc,email\.asc/.test(sawUrl), sawUrl.slice(0, 260));
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('optin fails closed: ' + fails + ' failed'); }

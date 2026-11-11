@@ -110,4 +110,4 @@ async function drainAll() { for (var i = 0; i < 40; i++) { await Promise.resolve
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('key rotation: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

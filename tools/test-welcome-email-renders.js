@@ -222,4 +222,4 @@ check('it points at the in-app guide for this venue in one line and ends with th
 
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+print('ALL ' + PASS + ' CHECKS PASSED');

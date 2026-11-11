@@ -179,7 +179,7 @@ function shown(d, name) { var p = byName(d, name); return p ? { status: p.status
   check('the pane head explains the red flag and that nothing is sent', /From day 21 of a free month, a venue that has not played the games it picked at setup \(or any game, if it did not say\) is flagged in red; nothing is sent to them\./.test(T.listHtml({ prospects: [clean], day21_day: 21 })));
   check('no em or en dash in the pane', !/[—–]/.test(PANE));
 
-  print(''); print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('PASS ' + ran + ' checks'));
+  print(''); print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error(bad + ' failed');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); });
 drainMicrotasks();

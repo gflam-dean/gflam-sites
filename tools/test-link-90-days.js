@@ -297,6 +297,6 @@ var VPA_LINK_DAYS = constOf(WSRC, 'VPA_LINK_DAYS'), VPB_RETENTION_DAYS = constOf
   /* The 4 hour host sign-out is NOT this link and does not move (compliance): tools/test-one-click-signin.js runs enforceShift. */
 
   if (bad) throw new Error('link 90 days: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

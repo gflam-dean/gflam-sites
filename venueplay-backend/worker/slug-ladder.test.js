@@ -11,8 +11,8 @@
 
    Run: jsc venueplay-backend/worker/slug-ladder.test.js
 */
-var bad = 0;
-function pass(n, c, extra){ print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }
+var bad = 0, checksRan = 0;
+function pass(n, c, extra){ checksRan++; print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }
 
 var CANDIDATES = [
   "venueplay-backend/worker/venueplay-api-FULL.js",
@@ -92,5 +92,5 @@ pass("it never returns a name it was told is taken",
      ["royal-hotel", "royal-hotel-2026", "royal-hotel-2026-2"]
        .indexOf(run("royal-hotel", "2026", ["royal-hotel", "royal-hotel-2026", "royal-hotel-2026-2"])) === -1);
 
-print(bad ? ("  " + bad + " FAILED") : "ALL CHECKS PASSED");
+print(bad ? ("  " + bad + " FAILED") : ("ALL " + checksRan + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

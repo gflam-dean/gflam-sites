@@ -103,7 +103,7 @@ function termsFirst(r) { return r && r.status === 403 && r.body && r.body.code =
   show('any other database fault is an error, never a silent pass', g2.status === 502, JSON.stringify(g2));
   MIG = 'ran';
 
-  print(''); print(bad ? (bad + ' FAILED of ' + ran) : ('PASS ' + ran + ' checks'));
+  print(''); print(bad ? (bad + ' FAILED of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('prospect terms-first game gate: ' + bad + ' failed');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack)); throw e; });
 drainMicrotasks();

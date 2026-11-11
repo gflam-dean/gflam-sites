@@ -63,4 +63,4 @@ function seqsOf(gameId) { var g = DB.vp_games.filter(function (x) { return x.id 
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); bad++; }
 if (bad) throw new Error('no-repeat: ' + bad + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

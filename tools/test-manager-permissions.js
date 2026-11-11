@@ -18,8 +18,9 @@ var SRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
    all: if a third appears and is written the old way, this goes red rather than testing two
    and cheerfully ignoring it. */
 var blocks = SRC.match(/const permissions = \{[\s\S]*?\n  \};/g) || [];
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -58,5 +59,5 @@ blocks.forEach(function (b, i) {
 var exportLine = /\|\| !!\(o\.perms && o\.perms\.players_optin === true\)/.test(SRC);
 check('the export route requires players_optin === true, matching what is stored', exportLine);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('manager permissions: ' + fails + ' failed'); }

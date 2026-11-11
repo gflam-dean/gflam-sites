@@ -190,5 +190,5 @@ function check(name, cond, saw) {
   print('');
   print(PASS + ' passed, ' + FAIL + ' failed');
   if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-  print('PASS');
+  print('ALL ' + PASS + ' CHECKS PASSED');
 })().catch(function (e) { print('RIG ERROR ' + e + '\n' + (e && e.stack)); throw e; });

@@ -100,4 +100,4 @@ async function call(fn, body) { var r = await fn(REQ(body), ENV, J); return r; }
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('remove a player: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

@@ -634,5 +634,5 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
     check(p[0] + ' loads it and opens ' + p[1] + '\'s own setup, the first time only', loads && calls.length === 1 && calls[0] === 'VPGameSetup.firstOpen("' + p[1] + '"', calls);
   });
 
-  print(''); print(bad ? ('FAIL ' + bad + ' of ' + ran) : ('PASS ' + ran + ' checks'));
+  print(''); print(bad ? ('FAIL ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { print('CRASH ' + e + '\n' + (e && e.stack)); bad++; });

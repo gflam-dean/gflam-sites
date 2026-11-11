@@ -679,6 +679,6 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   check('Open musical bingo (its own step, offered as musical bingo, never as bingo) opens that console for their venue', OPENED[OPENED.length - 1] === '/app/musical/host.html?venue=caz-reitop-s-dirty-secrets' && /Open musical bingo/.test(T(PMu, 'vpFrMusical')), OPENED);
 
   if (bad) throw new Error('prospect welcome v2: ' + bad + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

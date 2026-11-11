@@ -210,4 +210,4 @@ check('an unknown hostname fails towards counting', run(PERSON, { hostname: '' }
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+print('ALL ' + PASS + ' CHECKS PASSED');

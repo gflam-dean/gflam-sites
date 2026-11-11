@@ -148,4 +148,4 @@ var GOOD = { label: 'Mia from the agency', mobile: '0412 000 111', email: 'Mia@A
 drainMicrotasks();
 if (!finished) { print('  FAIL the test did not run to the end'); fails++; }
 if (fails) throw new Error('marketing login: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

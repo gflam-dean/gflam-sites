@@ -28,10 +28,12 @@ MIG = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'venueplay-114-screen-
 API = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js')
 BASE = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'RLS-BASELINE.json')
 fails = 0
+ran = 0
 
 
 def check(name, ok, saw=None):
-    global fails
+    global fails, ran
+    ran += 1
     print(('  ok   ' if ok else '  FAIL ') + name + ('' if ok or saw is None else '   saw: ' + str(saw)[:300]))
     if not ok:
         fails += 1
@@ -223,5 +225,5 @@ for f in ('vp_venue_screen_capture()', 'vp_screen_history_check()'):
           b['security_definer_functions'].get(f))
 
 print('')
-print(('%d FAILED' % fails) if fails else 'ALL CHECKS PASSED')
+print(('%d FAILED' % fails) if fails else ('ALL %d CHECKS PASSED' % ran))
 sys.exit(1 if fails else 0)

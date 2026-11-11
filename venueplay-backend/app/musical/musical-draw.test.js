@@ -11,8 +11,8 @@
 
    Run: jsc venueplay-backend/app/musical/musical-draw.test.js
 */
-var bad = 0;
-function pass(n, c, extra){ print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }
+var bad = 0, checksRan = 0;
+function pass(n, c, extra){ checksRan++; print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }
 
 var CANDIDATES = [
   "venueplay/app/musical/host.html",
@@ -166,5 +166,5 @@ for (var p = 0; p < packs.length; p++){
   pass("and no song twice", Object.keys(ids).length === mix.length);
 })();
 
-print(bad ? ("  " + bad + " FAILED") : "ALL " + "CHECKS PASSED");
+print(bad ? ("  " + bad + " FAILED") : ("ALL " + checksRan + " CHECKS PASSED"));
 if (bad) throw new Error(bad + " failed");

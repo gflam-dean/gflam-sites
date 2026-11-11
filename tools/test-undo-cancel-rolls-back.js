@@ -51,8 +51,9 @@ function press(undo) {
   return out;
 }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -93,4 +94,4 @@ press(true);
 check('still suspended for non-payment', row.status === 'suspended' && row.suspended_reason === 'nonpayment', row);
 
 if (fails) { throw new Error('undo cancel: ' + fails + ' failed'); }
-print('PASS');
+print('ALL ' + ran + ' CHECKS PASSED');

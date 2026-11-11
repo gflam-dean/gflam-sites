@@ -358,6 +358,6 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
     qN2.offer_open === false && qN2.offer_words === '' && qD2.offer_open === false && qD2.offer_words === '', [qN2.offer_open, qD2.offer_open]);
 
   if (badCount()) throw new Error('offer start deadline: ' + badCount() + ' of ' + ran + ' failed');
-  print(''); print('PASS ' + ran + ' checks');
+  print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

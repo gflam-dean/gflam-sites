@@ -88,4 +88,4 @@ check('a plain manual suspension does NOT start the clock: it is short and rever
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+print('ALL ' + PASS + ' CHECKS PASSED');

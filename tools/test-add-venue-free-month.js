@@ -85,8 +85,9 @@ function run(opts) {
 function credits() { return calls.filter(function (c) { return /balance_transactions/.test(c.path); }); }
 function charges() { return calls.filter(function (c) { return /invoiceitems/.test(c.path); }); }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) { print('  ok   ' + name); }
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -219,7 +220,7 @@ check('existing venue has no postcode: treated as the same venue, not duplicated
 var rH = run({ players: 50, plan: 'monthly', postcode: '4220', sameName: [] });
 check('no clash: added as a new venue with no forceNew', rH.ok === true && provisioned[0].forceNew === false, provisioned);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+if (fails) { print('FAILED ' + fails + ' so far'); }
 /* ---------------------------------------------------------------------------
    TWO ROYAL HOTELS ON ONE DAY. The setup charge's Stripe idempotency key used to be the name,
    the player count and the renewal date, so the second one's charge was replayed from the
@@ -356,6 +357,6 @@ var c10 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodE
 check('switch on, credit refused: logged loudly and the page is not told they got one', LOGS.some(function (l) { return /FREE MONTH CREDIT FAILED/.test(l); }) && c10.free_month_cents === 0, [LOGS, c10]);
 check('switch on, credit refused: the venue row still records the free month, with nothing credited', patched.some(function (p) { return !!p.body.free_month_at && p.body.free_month_cents === 0; }), patched);
 unpin();
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 
 if (fails) { throw new Error('add-venue free month: ' + fails + ' failed'); }

@@ -93,4 +93,4 @@ networkUp = true; advance(60 * 1000);
 check('the network returns and so does the screen', gameChannelsDeafSince === 0 && channels.filter(function (c) { return !c.removed; }).length === 4);
 
 if (fails) throw new Error('tv flap: ' + fails + ' of ' + ran + ' failed');
-print('PASS ' + ran + ' checks');
+print('ALL ' + ran + ' CHECKS PASSED');

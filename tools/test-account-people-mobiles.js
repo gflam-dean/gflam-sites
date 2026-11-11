@@ -61,4 +61,4 @@ check('vpaShowMobile: 61400111222, +61400111222 and 0400111222 all read 0400 111
 check('vpaShowMobile does not guess at a number that is not an Australian mobile (a landline stays digits)', vpaShowMobile('61752283667') === '61752283667', vpaShowMobile('61752283667'));
 
 if (bad) throw new Error('people mobiles: ' + bad + ' of ' + ran + ' failed');
-print(''); print('PASS ' + ran + ' checks');
+print(''); print('ALL ' + ran + ' CHECKS PASSED');

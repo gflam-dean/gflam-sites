@@ -129,5 +129,5 @@ show('the reveal sets the same box from the same text', SCREEN.indexOf('rq.class
 show('both screens hold the question in a .qtext element',
   SCREEN.indexOf('<div class="qtext" id="tvQText">') > 0 && SCREEN.indexOf('<div class="qtext" id="tvRevQText">') > 0);
 
-print('\n' + (ran - bad) + '/' + ran + ' passed');
+print('\n' + (bad ? ((ran - bad) + ' of ' + ran + ' checks passed') : ('ALL ' + ran + ' CHECKS PASSED')));
 if (bad) throw new Error(bad + ' failed');

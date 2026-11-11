@@ -67,8 +67,9 @@ function venue(email, name) {
            postcode: '4220', created_at: '2026-08-01T00:00:00Z', status: 'card_on_file' };
 }
 
-var fails = 0;
+var fails = 0, ran = 0;
 function check(name, ok, saw) {
+  ran++;
   if (ok) print('  ok   ' + name);
   else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw))); fails++; }
 }
@@ -128,5 +129,5 @@ check('and it took more than one page to know that',
       asked.filter(function (u) { return /vp_unsubscribes/.test(String(u)); }).length >= 2,
       asked.filter(function (u) { return /vp_unsubscribes/.test(String(u)); }).length);
 
-print(fails ? ('FAILED ' + fails) : 'PASS');
+print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('unsubscribe: ' + fails + ' failed'); }
