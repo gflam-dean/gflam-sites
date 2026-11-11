@@ -132,7 +132,7 @@
   "counted_by": "lines"
  },
  "tools/ai-look-cleanup.test.py": {
-  "checks": 19,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/billing-words-in-chrome.test.py": {
@@ -231,6 +231,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/host-quiet-in-chrome.test.py": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -304,7 +308,7 @@
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
-  "checks": 76,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
@@ -616,7 +620,7 @@
   "counted_by": "lines"
  },
  "tools/test-drawstyle.js": {
-  "checks": 65,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/test-early-bingo-restore.js": {
@@ -1128,7 +1132,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-acceptance-card.js": {
-  "checks": 56,
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
@@ -1379,6 +1383,10 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/tv-drawstyle-real-pages-in-chrome.test.py": {
+  "checks": 104,
+  "counted_by": "lines"
+ },
  "tools/tv-endshow-in-chrome.test.py": {
   "checks": 84,
   "counted_by": "lines"
@@ -1389,6 +1397,10 @@
  },
  "tools/tv-landing-in-chrome.test.py": {
   "checks": 53,
+  "counted_by": "lines"
+ },
+ "tools/tv-logo-align-in-chrome.test.py": {
+  "checks": 120,
   "counted_by": "lines"
  },
  "tools/tv-logo-centre-in-chrome.test.py": {

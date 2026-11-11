@@ -279,7 +279,7 @@
     .callerhead{gap:8px}
   }
 
-  .pairedchip{font-size:11px;color:var(--win);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .pairedchip{font-size:11px;color:var(--roll);font-weight:700;font-family:'Hanken Grotesk',sans-serif}   /* empty while all is well: it only ever names a drop (Dean, 11 Nov 2026) */
   /* THE SCREEN CODE, WHERE THE HOST CAN READ IT OFF THE IPAD.
      The venue TV asks for "the six characters on your host console" when it
      lands on a name that matches more than one venue, or none. This element
@@ -509,7 +509,7 @@
       </div>
     </div>
     <div class="lbl">
-      Venue screen <span class="pairedchip" id="pairedChip">&middot; connecting</span>
+      Venue screen <span class="pairedchip" id="pairedChip"></span>
       <span class="screencode"><i>Screen code</i><b id="roomCode">------</b></span>
     </div>
 
@@ -973,8 +973,10 @@
       if(imp && imp.id && ctx.currentVenueId===imp.id){
         // Impersonating a venue from VenuePlay HQ: show the console for that venue.
         showImpBanner(imp.name);
-        $("headerTag").textContent="Bingo";
-        $("statusText").textContent="venueplay Admin · "+(imp.name||"venue");
+        /* the plain console label, never "Bingo" (Dean, 11 Nov 2026, INBOX 193: bingo is never first) */
+        var hqTag=$("headerTag"); hqTag.textContent="Play";
+        HQ_LABEL="venueplay Admin · "+(imp.name||"venue");
+        $("statusText").textContent=HQ_LABEL;
         $("who").style.display="flex";
         $("hactions").style.display="flex";
         greetOnce(ctx);
@@ -1292,7 +1294,7 @@
     }).catch(function(){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; });
   });
   // demo bypass shortcuts removed 2026-07-29: no Skip for demo, no role shortcuts. A text code, or the same login's code by email
-  $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
+  $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; HQ_LABEL=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
   // A night running in another console (trivia, musical bingo, raffle) leaves a fresh recovery
   // pointer in localStorage. Signing out closes the session, which finishes those games. The host
@@ -4342,7 +4344,7 @@
   // ---- incoming ----
   var _lastHelloReplay=0;
   function tvHere(m){
-    $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; $("pairedChip").innerHTML="&middot; connected";
+    connQuiet("tv");
     // a freshly (re)loaded TV announces itself with hello:true. Re-announce the host
     // (hides the pair QR even if the TV missed our first host_here) and, if a game is
     // live, replay the current state so the screen catches up instead of showing ads.
@@ -4537,12 +4539,22 @@
   }
 
   // ================= CONNECT =================
+  /* CONNECTED SAYS NOTHING (Dean, 7 and 11 Nov 2026, INBOX 194: "We only ever need to know if there's an
+     error"). No "Connected", no "Ready", no "· connected" chip and no dot: the header keeps only HQ View as's
+     own label, and the chip stays empty. A real drop still says "Reconnecting" in both places. */
+  var HQ_LABEL="";
+  function connQuiet(state){
+    $("statusDot").classList.add("on");
+    $("statusText").textContent=HQ_LABEL; $("statusText").setAttribute("data-conn", state||"up");
+    $("pairedChip").textContent="";
+  }
   function connect(code){
     /* The last venue's channel is hung up when the host moves to another venue, or its phones
        go on reaching this console. */
     if(ch && G.code && G.code!==code){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
     G.code=code;
-    $("headerTag").textContent="Bingo";
+    /* No "Bingo" tag here (Dean, 11 Nov 2026, INBOX 193): pairing is not a game. The picker names the
+       screen "Play" and selectGame names the game, so the header is always one or the other. */
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
     // before we subscribe, so the draw, called set, roster and cards all survive.
     /* ...unless another tab on this tablet is running it (15 Oct 2026). A saved lobby or game is
@@ -4579,8 +4591,7 @@
               subscribed=true;
               send({ t:"host_here" });
               flushQueue();
-              $("statusDot").classList.add("on"); $("statusText").textContent="Ready"; try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[venueplay] transport: "+"room");}catch(e){};
-              $("pairedChip").innerHTML="&middot; ready";
+              connQuiet(); try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[venueplay] transport: "+"room");}catch(e){};
               reassertToTv();
               if(gameOpenHere()) send({ t:"rollcall" });   // a console in setup has nobody to call back (14 Oct)
               /* ONE EAR ON THE OLD ROAD. A TV or phones still on Supabase (open since before the
@@ -4600,7 +4611,7 @@
               }
             } else {
               subscribed=false;
-              $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+              $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; $("pairedChip").textContent="Reconnecting...";
             }
           }
         });
@@ -4617,8 +4628,7 @@
         send({ t:"host_here" });   // announce to the TV; it replies with tv_here
         flushQueue();
         // the TV runs on its own screen; the host console is ready to go regardless
-        $("statusDot").classList.add("on"); $("statusText").textContent="Ready";
-        $("pairedChip").innerHTML="&middot; ready";
+        connQuiet();
         reassertToTv();
         // roll call: ask every joined phone to re-announce so we rebuild seats and
         // re-deal the current card. players answer with a join; we answer that join with
@@ -4637,7 +4647,7 @@
            trivia and raffle have had this line for a while; bingo did not. */
         subscribed=false;
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
-        $("pairedChip").innerHTML="&middot; reconnecting";
+        $("pairedChip").textContent="Reconnecting...";
       }
     });
     }
@@ -4868,7 +4878,7 @@
          chip, the screen code, and the called board. Re-applied after every render because
          renderConsole is written for a console that IS connected. */
       function dress(){
-        var chip=$("pairedChip"); if(chip) chip.textContent="\u00b7 connected";
+        var chip=$("pairedChip"); if(chip) chip.textContent="";
         var rc=$("roomCode"); if(rc) rc.textContent=G.code;
         updateBoard();
       }

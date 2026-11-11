@@ -1260,33 +1260,33 @@
     var TEXT = "margin:0 0 14px;font-size:15px;line-height:1.55;color:#C9C9D1";
     var LINK = "color:#FF8CC6;font-weight:700;text-decoration:underline";
     card.appendChild(termsEl("p", EYEBROW, block ? "Before your first game" : "Updated Terms"));
-    var read = termsEl("a", LINK, "Read section 6 of the Terms");
+    var read = termsEl("a", LINK, "Read the Terms");
     read.setAttribute("href", "/terms"); read.setAttribute("target", "_blank"); read.setAttribute("rel", "noopener");
     if (mode === "block-host") {
       card.appendChild(termsEl("h2", TITLE, "Games start here once the owner or a manager ticks one box"));
       card.appendChild(termsEl("p", TEXT, "Before the first game at " + name + ", the owner or a manager needs to confirm the venue runs its own games under the gaming laws that apply to it. They will see it the next time they sign in. The TV keeps showing your ads in the meantime."));
       card.appendChild(read);
     } else if (mode === "block-hq") {
-      card.appendChild(termsEl("h2", TITLE, name + " has not ticked section 6 yet, so its games cannot start"));
-      card.appendChild(termsEl("p", TEXT, "It was set up for a prospect. Only the venue's owner or a manager can tick it, at their own sign-in; HQ View as cannot do it for them. Their TV keeps showing their ads."));
+      card.appendChild(termsEl("h2", TITLE, name + " hasn't accepted the Terms yet, so games can't start"));
+      card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept them when they sign in. Their TV keeps showing their ads."));
       card.appendChild(read);
     } else if (mode === "host") {
       card.appendChild(termsEl("h2", TITLE, "Your venue owner needs to accept the updated Terms"));
-      card.appendChild(termsEl("p", TEXT, "Section 6 of the Terms needs a tick from the owner or a manager of " + name +
-        ". They will be asked the next time they sign in. Your games run as normal in the meantime."));
+      card.appendChild(termsEl("p", TEXT, "The owner or a manager of " + name +
+        " needs to accept them. They will be asked the next time they sign in. Your games run as normal in the meantime."));
       card.appendChild(read);
     } else if (mode === "hq") {
-      card.appendChild(termsEl("h2", TITLE, name + " has not accepted section 6 of the Terms"));
-      card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept it, at their own sign-in. HQ View as cannot accept it for them. Their games run as normal."));
+      card.appendChild(termsEl("h2", TITLE, name + " hasn't accepted the updated Terms yet"));
+      card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept them when they sign in. Their games run as normal."));
       card.appendChild(read);
     } else {
       if (block) {
         card.appendChild(termsEl("h2", TITLE, "One tick and your games are ready, " + name));
-        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and venueplay supplies the software. Tick it once and every game is ready to start. Your TV keeps showing your ads either way."));
+        card.appendChild(termsEl("p", TEXT, "Our Terms say who is responsible for the games you run: your venue runs every game, and venueplay supplies the software. Tick once and every game is ready to start. Your TV keeps showing your ads either way."));
       } else {
         card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
-        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and venueplay supplies the software. We have no record of " +
-          name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
+        card.appendChild(termsEl("p", TEXT, "Our Terms say who is responsible for the games you run: your venue runs every game, and venueplay supplies the software. We have no record of " +
+          name + " accepting them, so we are asking once. Nothing else changes, and your games run as normal."));
       }
       var rp = termsEl("p", "margin:0 0 16px;font-size:14.5px"); rp.appendChild(read); card.appendChild(rp);
       var tickRow = termsEl("label", "display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:rgba(255,255,255,.04);" +
@@ -1295,7 +1295,7 @@
       tick.setAttribute("type", "checkbox"); tick.id = "vpTermsTick";
       tickRow.appendChild(tick);
       tickRow.appendChild(termsEl("span", "font-size:14.5px;line-height:1.5;color:#E7E7EC",
-        "I accept section 6 of the Terms (effective " + TERMS_EFFECTIVE + ") for " + name + ". " + TERMS_TICK));
+        "I accept the Terms (effective " + TERMS_EFFECTIVE + ") for " + name + ". " + TERMS_TICK));
       card.appendChild(tickRow);
       var nameLbl = termsEl("label", "display:block;font-size:13px;font-weight:700;color:#C9C9D1;margin:0 0 6px", "Your name");
       nameLbl.setAttribute("for", "vpTermsBy");
@@ -1322,7 +1322,7 @@
   }
   function termsAccept(ctx, card, tick, by, go, msg, block) {
     var v = ctx.venue, who = String(by.value || "").trim();
-    if (!tick.checked) { msg.textContent = "Tick the box to accept section 6 of the Terms."; return Promise.resolve(false); }
+    if (!tick.checked) { msg.textContent = "Tick the box to accept the Terms."; return Promise.resolve(false); }
     if (!who) { msg.textContent = "Enter your name, so the record says who accepted it."; return Promise.resolve(false); }
     go.disabled = true; msg.textContent = "";
     var c; try { c = getClient(); } catch (e) { go.disabled = false; msg.textContent = "Could not reach venueplay. Check your connection and try again."; return Promise.resolve(false); }
@@ -1340,7 +1340,7 @@
       card.setAttribute("data-mode", "done");
       card.appendChild(termsEl("p", "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2BD47D;font-weight:800", "Accepted"));
       card.appendChild(termsEl("p", "margin:0 0 14px;font-size:15px;line-height:1.55;color:#E7E7EC",
-        "Thank you. Section 6 of the Terms is recorded as accepted for " + String(v.name || "your venue") + " by " + v.compliance_accepted_by + "."));
+        "Thank you. The Terms are recorded as accepted for " + String(v.name || "your venue") + " by " + v.compliance_accepted_by + "."));
       /* A held console (termsGate) stopped its boot to show this card, so the way on is a fresh load,
          which now finds the record and starts as normal. Anywhere else Done just takes the card away. */
       var done = termsEl("button", "display:inline-block;min-height:44px;padding:11px 22px;border-radius:10px;border:none;" +
@@ -1370,7 +1370,12 @@
     if (typeof document === "undefined" || !document.body) return false;
     var wrap = document.querySelector ? document.querySelector(".wrap") : null;
     var kids = wrap ? Array.prototype.slice.call(wrap.children || []) : [];
-    if (!termsBlocking(ctx)) {
+    /* HQ VIEW AS IS NEVER HELD (Dean, 11 Nov 2026, INBOX 193: Revolver Upstairs showed the card over a blank
+       page). HQ cannot accept for the venue, and the game Worker refuses every game there anyway, so HQ gets
+       the card on top and the venue's console below it, to check their setup. */
+    var hqLook = termsBlocking(ctx) && termsMode(ctx) === "hq";
+    if (!termsBlocking(ctx) || hqLook) {
+      if (hqLook) termsCard(ctx);
       kids.forEach(function (k) {
         if (k.getAttribute && k.getAttribute("data-vp-terms-held") === "1") {
           k.style.display = k.getAttribute("data-vp-terms-display") || "";

@@ -480,7 +480,7 @@
       }
       if (accepted()) {
         body.appendChild(el("p", "margin:0;font-size:15px;line-height:1.55;color:" + C.ok + ";font-weight:700",
-          "Done. Section 6 of the Terms is accepted for " + (v.name || "your venue") + (v.compliance_accepted_by ? " by " + v.compliance_accepted_by : "") + "."));
+          "Done. The Terms are accepted for " + (v.name || "your venue") + (v.compliance_accepted_by ? " by " + v.compliance_accepted_by : "") + "."));
         done(); return;
       }
       body.appendChild(el("p", TEXT, "One tick, once. It confirms your venue runs its own games under the gaming laws that apply to it. venueplay supplies the software."));

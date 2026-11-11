@@ -438,7 +438,7 @@ def host():
     try:
         V1 = S.W.info['venue']
         tid, sid = S.open('/app/trivia/host.html?venue=' + V1, 1280, 900, False)
-        S.until(sid, 'document.getElementById("statusText").textContent==="Signed in"', 25)
+        S.until(sid, '!!document.getElementById("statusText").getAttribute("data-conn")', 25)
         SEG = '(function(){var r=document.getElementById("buzzerRow"), g=document.getElementById("cfgBuzzer"); if(!r||!g) return null; var b=r.getBoundingClientRect();' \
               'return {label:r.innerText, h:b.height, on:[].filter.call(r.querySelectorAll(".seg button"),function(x){return x.classList.contains("on");}).map(function(x){return x.textContent;}).join(),' \
               'vis:b.width>0&&b.height>0&&getComputedStyle(r).display!=="none", top:b.top};})()'
@@ -464,14 +464,14 @@ def host():
         time.sleep(0.5)
         S.close_tab(tid)
         tid, sid = S.open('/app/trivia/host.html?venue=' + V1, 1280, 900, False)
-        S.until(sid, 'document.getElementById("statusText").textContent==="Signed in"', 25)
+        S.until(sid, '!!document.getElementById("statusText").getAttribute("data-conn")', 25)
         time.sleep(1.5)
         b = S.js(sid, SEG)
         b = json.loads(b) if isinstance(b, str) else b
         ok('switched On, on this device: still so when the console is opened again', bool(b) and b['on'] == 'On,This device', b)
         S.close_tab(tid)
         tid, sid = S.open('/app/trivia/host.html?venue=' + V1, 390, 844, True)
-        S.until(sid, 'document.getElementById("statusText").textContent==="Signed in" || /TV/.test(document.getElementById("statusText").textContent)', 25)
+        S.until(sid, '!!document.getElementById("statusText").getAttribute("data-conn")', 25)
         time.sleep(1)
         P = S.js(sid, '(function(){function R(s){var e=document.querySelector(s);if(!e)return null;var b=e.getBoundingClientRect();return [b.left,b.top,b.right,b.bottom];}'
                       'return {brand:R(".bar>.brand"), who:R(".bar>.who"), nav:R(".bar>.vp-navlink"), end:R("#toAdsBtn"), W:innerWidth};})()')

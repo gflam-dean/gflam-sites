@@ -87,7 +87,9 @@ print('3. A connection light is a word, never a dot')
 hidden = {'app/index.html': r'\.dot\{display:none\}', 'app/musical/host.html': r'\.dot\{display:none\}',
           'app/trivia/host.html': r'\.dot\{display:none\}', 'app/vp-phone.css': r'\.dot\{display:none\}',
           'app/purchase-raffle/index.html': r'\.dot\{display:none\}',
-          'app/musical/screen.html': r'\.sdot\{display:none\}', 'app/trivia/screen.html': r'\.sdot\{display:none\}'}
+          'app/musical/screen.html': r'\.sdot\{display:none\}', 'app/trivia/screen.html': r'\.sdot\{display:none\}',
+          'tv.html': r'\.sdot\{display:none\}', 'app/members/screen.html': r'\.sdot\{display:none\}', 'app/raffle/screen.html': r'\.sdot\{display:none\}',
+          'app/members/host.html': r'#statusDot\{display:none\}', 'app/raffle/host.html': r'#statusDot\{display:none\}'}
 for p, rx in hidden.items():
     ok('%s hides the status dot' % p, re.search(rx, rd(p)))
 CB = rd('app/vp-connbar.js')
@@ -108,7 +110,15 @@ OLD = ['No app, no login, no host to hire', 'no run sheet, no rehearsal', 'Dead 
 for name in ('index.html', 'nsw.html'):
     t = rd(name)
     ok('%s has none of the %d old rhythm / filler lines' % (name, len(OLD)), not [o for o in OLD if o in t], [o for o in OLD if o in t])
-ok('the replacement lines are in', all(s in IDX for s in ('No app to download and no host to hire.', 'No tech in the room and no run sheet.', '>How it works<')))
+ok('the replacement lines are in', all(s in IDX for s in ('No app to download. Run it yourself, or hand it to your trivia host.', 'No tech in the room and no run sheet.', '>How it works<')))
+HOSTLINE = 'Got a trivia host? They can run your night on venueplay too: the questions, the scoring and the TV, all from their phone.'
+for name in ('index.html', 'nsw.html'):
+    t = rd(name)
+    m = re.search(r'<p class="lede">.*?</p>\s*<!--[^>]*-->\s*<p class="h2-host">([^<]*)</p>', t, re.S)
+    ok('%s: the one host-friendly line sits right under the hero\'s words (INBOX 206), once, in the muted line type' % name,
+       bool(m) and m.group(1) == HOSTLINE and t.count('class="h2-host"') == 1 and re.search(r"\.h2-host\{[^}]*color:var\(--muted\)", t) is not None
+       and '.h2-copy .h2-host{order:5;' in t, m.group(1) if m else None)
+ok('the hero never treats a trivia host as a cost (Dean, 11 Nov 2026, INBOX 205: "no host to hire" is gone)', not re.search(r'host to hire', IDX, re.I), re.findall(r'.{30}host to hire.{10}', IDX)[:2])
 
 print('\n%d of %d checks passed' % (passed, passed + failed))
 sys.exit(1 if failed else 0)

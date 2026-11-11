@@ -64,48 +64,51 @@
 
   var CSS = [
     ".vpds{position:absolute;inset:0;overflow:hidden;background:#0A0A0B}",
-    ".vpds-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;color:#fff;font-family:'Hanken Grotesk','Manrope',sans-serif}",
+    /* SELF-CONTAINED (INBOX 207, 11 Nov 2026): every class here is vpds- and every box sets its own sizing, so no rule of the page
+       that shows the look (a screen's own .body, its text-align, its box-sizing) can reach into it. tools/tv-drawstyle-real-pages-in-chrome.test.py */
+    ".vpds *,.vpds *:before,.vpds *:after{box-sizing:border-box;margin:0;padding:0}",
+    ".vpds-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;color:#fff;font-family:'Hanken Grotesk','Manrope',sans-serif;text-align:left;line-height:normal;letter-spacing:normal;text-transform:none;font-style:normal;font-weight:400;white-space:normal}",
     ".vpds-world{position:absolute;inset:0;transform-origin:960px 520px}",
     ".vpds-prize{position:absolute;left:0;right:0;text-align:center;font:400 120px/1 Anton,sans-serif;color:#fff}",
     ".vpds-claim{position:absolute;left:0;right:0;opacity:0;text-align:center;font:700 100px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;color:#fff}",
     ".vpds-pno{position:absolute;left:0;right:0;top:118px;text-align:center;font:700 40px/1 'Hanken Grotesk',sans-serif;color:#C9C9D1;z-index:2}",
     ".vpds-drawn{position:absolute;left:0;right:0;bottom:14px;text-align:center;white-space:nowrap;font:700 30px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
     ".vpds-drawn span{display:inline-block;margin:0 6px;padding:8px 18px;border-radius:10px;background:#1F1F24;border:2px solid #34343C;color:#fff;font:400 44px/1 Anton,sans-serif;letter-spacing:1px;vertical-align:middle}",
-    ".vpds-drawn span.new{border-color:#FF1F8E}",
+    ".vpds-drawn span.vpds-new{border-color:#FF1F8E}",
     ".vpds-clock{position:absolute;left:0;right:0;bottom:34px;text-align:center;font:700 44px/1 'Hanken Grotesk',sans-serif;color:#FFD93D;opacity:0}",
     /* ticket roll */
     ".vpds-strip{position:absolute;left:0;top:0;width:1920px;height:1080px}",
     ".vpds-it{position:absolute;top:0;left:0;will-change:transform}",
     ".vpds-tk{width:600px;height:320px;background:#F1EDE6;border-left:3px dashed rgba(10,10,11,.28);box-sizing:border-box;display:flex;color:#0A0A0B}",
-    ".vpds-tk .body{position:relative;flex:1;padding:26px 34px 0 38px;box-sizing:border-box;min-width:0}",
-    ".vpds-tk .body:before{content:'';position:absolute;top:14px;right:12px;bottom:14px;left:16px;border:3px solid #FF1F8E;border-radius:4px}",
-    ".vpds-tk .vn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-tk .rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-tk .lb{position:relative;font:600 20px/1.1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:3px}",
-    ".vpds-tk .no{position:relative;font:400 150px/1 Anton,sans-serif;margin-top:4px;letter-spacing:2px;white-space:nowrap}",
-    ".vpds-tk .stub{position:relative;width:150px;border-left:3px dashed rgba(10,10,11,.34);display:flex;align-items:center;justify-content:center}",
-    ".vpds-tk .stub:before,.vpds-tk .stub:after{content:'';position:absolute;left:-15px;width:26px;height:26px;border-radius:50%;background:#0A0A0B}",
-    ".vpds-tk .stub:before{top:-13px}.vpds-tk .stub:after{bottom:-13px}",
-    ".vpds-tk .sno{transform:rotate(-90deg);font:400 66px/1 Anton,sans-serif;white-space:nowrap}",
-    ".vpds-tk .sl{position:absolute;top:20px;left:8px;right:8px;text-align:center;font:700 16px/1.25 'Hanken Grotesk',sans-serif;color:#55555E;overflow:hidden}",
-    ".vpds-tk .sl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#0A0A0B}",
-    ".vpds-tk .sl i{display:block;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#C70F69}",
+    ".vpds-tk .vpds-ticket-body{position:relative;flex:1;padding:26px 34px 0 38px;box-sizing:border-box;min-width:0}",
+    ".vpds-tk .vpds-ticket-body:before{content:'';position:absolute;top:14px;right:12px;bottom:14px;left:16px;border:3px solid #FF1F8E;border-radius:4px}",
+    ".vpds-tk .vpds-vn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-tk .vpds-rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-tk .vpds-lb{position:relative;font:600 20px/1.1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:3px}",
+    ".vpds-tk .vpds-no{position:relative;font:400 150px/1 Anton,sans-serif;margin-top:4px;letter-spacing:2px;white-space:nowrap}",
+    ".vpds-tk .vpds-stub{position:relative;width:150px;border-left:3px dashed rgba(10,10,11,.34);display:flex;align-items:center;justify-content:center}",
+    ".vpds-tk .vpds-stub:before,.vpds-tk .vpds-stub:after{content:'';position:absolute;left:-15px;width:26px;height:26px;border-radius:50%;background:#0A0A0B}",
+    ".vpds-tk .vpds-stub:before{top:-13px}.vpds-tk .vpds-stub:after{bottom:-13px}",
+    ".vpds-tk .vpds-sno{transform:rotate(-90deg);font:400 66px/1 Anton,sans-serif;white-space:nowrap}",
+    ".vpds-tk .vpds-sl{position:absolute;top:20px;left:8px;right:8px;text-align:center;font:700 16px/1.25 'Hanken Grotesk',sans-serif;color:#55555E;overflow:hidden}",
+    ".vpds-tk .vpds-sl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#0A0A0B}",
+    ".vpds-tk .vpds-sl i{display:block;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#C70F69}",
     ".vpds-cd{width:560px;height:353px;border-radius:26px;background:#1B1B20;border:2px solid #34343C;box-sizing:border-box;position:relative;overflow:hidden;color:#fff}",
     ".vpds-cd img{position:absolute;left:30px;top:24px;height:74px;max-width:250px;object-fit:contain;object-position:left top}",
-    ".vpds-cd .ml{position:absolute;right:30px;top:36px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
-    ".vpds-cd .vt{position:absolute;left:30px;top:34px;max-width:300px;font:800 30px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-cd .dnm{position:absolute;left:30px;right:30px;top:94px;font:700 28px/1.1 'Hanken Grotesk',sans-serif;color:#FF6BB8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-cd .nm{position:absolute;left:32px;right:32px;top:128px;font:700 46px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden}",
-    ".vpds-cd .no{position:absolute;left:30px;bottom:16px;font:400 150px/1 Anton,sans-serif;letter-spacing:2px;white-space:nowrap}",
-    ".vpds-cd .band{position:absolute;left:0;right:0;bottom:0;height:12px;background:#FF1F8E}",
+    ".vpds-cd .vpds-ml{position:absolute;right:30px;top:36px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
+    ".vpds-cd .vpds-vt{position:absolute;left:30px;top:34px;max-width:300px;font:800 30px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-cd .vpds-dnm{position:absolute;left:30px;right:30px;top:94px;font:700 28px/1.1 'Hanken Grotesk',sans-serif;color:#FF6BB8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-cd .vpds-nm{position:absolute;left:32px;right:32px;top:128px;font:700 46px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden}",
+    ".vpds-cd .vpds-no{position:absolute;left:30px;bottom:16px;font:400 150px/1 Anton,sans-serif;letter-spacing:2px;white-space:nowrap}",
+    ".vpds-cd .vpds-band{position:absolute;left:0;right:0;bottom:0;height:12px;background:#FF1F8E}",
     /* flip board */
     ".vpds-board{position:absolute;left:50%;background:#121215;border:2px solid #26262C;border-radius:16px;box-sizing:border-box;transform:translateX(-50%)}",
     ".vpds-screw{position:absolute;width:18px;height:18px;border-radius:50%;background:#2B2B32;border:1px solid #34343C}",
     ".vpds-row{position:absolute;display:flex}",
     ".vpds-m{position:relative;perspective:1600px;flex:none}",
     ".vpds-h{position:absolute;left:0;right:0;overflow:hidden;background:#1F1F24;-webkit-backface-visibility:hidden;backface-visibility:hidden}",
-    ".vpds-h.t{top:0;border-radius:9px 9px 0 0;transform-origin:50% 100%}",
-    ".vpds-h.b{background:#1B1B1F;border-radius:0 0 9px 9px;transform-origin:50% 0}",
+    ".vpds-h.vpds-ht{top:0;border-radius:9px 9px 0 0;transform-origin:50% 100%}",
+    ".vpds-h.vpds-hb{background:#1B1B1F;border-radius:0 0 9px 9px;transform-origin:50% 0}",
     ".vpds-ch{position:absolute;left:0;right:0;text-align:center;color:#F2EEE7;white-space:pre}",
     ".vpds-sh{position:absolute;top:0;right:0;bottom:0;left:0;background:#000;opacity:0}",
     ".vpds-pin{position:absolute;width:8px;background:#3A3A42;border-radius:2px;z-index:3}",
@@ -118,9 +121,9 @@
     ".vpds-plate{top:116px;height:380px;background:#FFFFFF;overflow:hidden}",
     ".vpds-reel{position:absolute;top:0;right:0;bottom:0;left:0}",
     ".vpds-ri{position:absolute;left:0;right:0;height:380px;color:#0A0A0B;will-change:transform}",
-    ".vpds-ri .no{position:absolute;top:0;line-height:380px;font-family:Anton,sans-serif;font-weight:400;letter-spacing:4px;white-space:nowrap}",
-    ".vpds-raffle .vpds-ri .no{left:0;right:0;text-align:center}",
-    ".vpds-members .vpds-ri .no{left:110px}",
+    ".vpds-ri .vpds-no{position:absolute;top:0;line-height:380px;font-family:Anton,sans-serif;font-weight:400;letter-spacing:4px;white-space:nowrap}",
+    ".vpds-raffle .vpds-ri .vpds-no{left:0;right:0;text-align:center}",
+    ".vpds-members .vpds-ri .vpds-no{left:110px}",
     ".vpds-wname{position:absolute;right:120px;top:0;font:400 180px/380px Anton,sans-serif;color:#0A0A0B;opacity:0;white-space:nowrap}",
     ".vpds-bot{top:496px;height:150px;background:#1A1A1F}",
     ".vpds-bot>.vpds-claim{position:absolute;left:110px;right:auto;top:0;line-height:150px;text-align:left}"
@@ -167,7 +170,7 @@
     function buildItems(N) {
       st.N = N; st.items = [];
       for (var i = 0; i <= N + 3; i++) st.items.push({ no: randNo(), nm: "" });
-      st.items[N] = { no: members ? "?" : "?", nm: "" };
+      st.items[N] = { no: "?", nm: "" };
     }
     function fit() {
       var w = host.clientWidth || 1280, h = host.clientHeight || 720, s = Math.min(w / 1920, h / 1080);
@@ -203,7 +206,7 @@
       if (key !== drawnKey) {
         drawnKey = key; drawnEl.innerHTML = "";
         if (list.length) { var lb = el("b", "", drawnEl); lb.style.cssText = "margin-right:10px;font-weight:700"; lb.textContent = "Drawn"; }
-        for (var i = 0; i < list.length; i++) { var c = el("span", showNew && i === list.length - 1 ? "new" : "", drawnEl); c.textContent = list[i]; }
+        for (var i = 0; i < list.length; i++) { var c = el("span", showNew && i === list.length - 1 ? "vpds-new" : "", drawnEl); c.textContent = list[i]; }
       }
       drawnEl.style.opacity = list.length ? 1 : 0;
       if (showNew) { var last = drawnEl.lastChild; if (last && last.className) last.style.opacity = ease.out(seg(t, R + 1.0, R + 1.5)); }
@@ -261,19 +264,19 @@
       for (k = 0; k < POOL; k++) {
         var d = el("div", "vpds-it", strip);
         if (members) {
-          d.innerHTML = '<div class="vpds-cd"><img alt="" style="display:none"><div class="vt"></div><div class="ml">Members draw</div><div class="dnm"></div><div class="nm"></div><div class="no"></div><div class="band"></div></div>';
-          var im = d.querySelector("img"); if (logo) { im.src = logo; im.style.display = ""; } else d.querySelector(".vt").textContent = vname;
-          d.querySelector(".dnm").textContent = o.name || ""; d.querySelector(".ml").style.top = logo ? "36px" : "40px";
-          if (o.name) d.querySelector(".ml").style.display = "none";
-          d.querySelector(".no").style.fontSize = Math.min(150, Math.round(150 * 4 / Math.max(4, n))) + "px";
+          d.innerHTML = '<div class="vpds-cd"><img alt="" style="display:none"><div class="vpds-vt"></div><div class="vpds-ml">Members draw</div><div class="vpds-dnm"></div><div class="vpds-nm"></div><div class="vpds-no"></div><div class="vpds-band"></div></div>';
+          var im = d.querySelector("img"); if (logo) { im.src = logo; im.style.display = ""; } else d.querySelector(".vpds-vt").textContent = vname;
+          d.querySelector(".vpds-dnm").textContent = o.name || ""; d.querySelector(".vpds-ml").style.top = logo ? "36px" : "40px";
+          if (o.name) d.querySelector(".vpds-ml").style.display = "none";
+          d.querySelector(".vpds-no").style.fontSize = Math.min(150, Math.round(150 * 4 / Math.max(4, n))) + "px";
         } else {
-          d.innerHTML = '<div class="vpds-tk"><div class="body"><div class="vn"></div><div class="lb">Raffle ticket</div><div class="rn"></div><div class="no"></div></div><div class="stub"><div class="sl"><b></b><i></i></div><div class="sno"></div></div></div>';
-          d.querySelector(".vn").textContent = vname; d.querySelector(".rn").textContent = o.name || "";
-          d.querySelector(".sl b").textContent = vname; d.querySelector(".sl i").textContent = o.name || "";
-          if (!vname) d.querySelector(".vn").style.display = "none"; if (!o.name) d.querySelector(".rn").style.display = "none"; d.querySelector(".no").style.fontSize = numFs + "px";
-          d.querySelector(".sno").style.fontSize = Math.min(66, Math.round(66 * 4 / Math.max(4, n))) + "px";
+          d.innerHTML = '<div class="vpds-tk"><div class="vpds-ticket-body"><div class="vpds-vn"></div><div class="vpds-lb">Raffle ticket</div><div class="vpds-rn"></div><div class="vpds-no"></div></div><div class="vpds-stub"><div class="vpds-sl"><b></b><i></i></div><div class="vpds-sno"></div></div></div>';
+          d.querySelector(".vpds-vn").textContent = vname; d.querySelector(".vpds-rn").textContent = o.name || "";
+          d.querySelector(".vpds-sl b").textContent = vname; d.querySelector(".vpds-sl i").textContent = o.name || "";
+          if (!vname) d.querySelector(".vpds-vn").style.display = "none"; if (!o.name) d.querySelector(".vpds-rn").style.display = "none"; d.querySelector(".vpds-no").style.fontSize = numFs + "px";
+          d.querySelector(".vpds-sno").style.fontSize = Math.min(66, Math.round(66 * 4 / Math.max(4, n))) + "px";
         }
-        els.push({ d: d, idx: -1, key: "", no: d.querySelector(".no"), s: d.querySelector(".sno"), nm: d.querySelector(".nm"), card: d.firstChild });
+        els.push({ d: d, idx: -1, key: "", no: d.querySelector(".vpds-no"), s: d.querySelector(".vpds-sno"), nm: d.querySelector(".vpds-nm"), card: d.firstChild });
       }
       claimEl.style.top = (members ? 906 : 896) + "px"; clockEl.style.bottom = "12px"; clockEl.style.fontSize = "38px"; prizeEl.style.top = (members ? 810 : 768) + "px"; if (members) prizeEl.style.fontSize = "90px";
       v.after = function () {};
@@ -320,12 +323,12 @@
         var gap = Math.round(h * 0.012) + 2, hh = (h - gap) / 2;
         var m = el("div", "vpds-m", parent); if (parent.children.length > 1 && parent === row) m.style.marginLeft = g + "px"; m.style.width = w + "px"; m.style.height = h + "px";
         function mk(cls, top) {
-          var d = el("div", "vpds-h " + cls, m); d.style.height = hh + "px"; if (cls === "b") d.style.top = (hh + gap) + "px";
+          var d = el("div", "vpds-h " + cls, m); d.style.height = hh + "px"; if (cls === "vpds-hb") d.style.top = (hh + gap) + "px";
           var ch = el("div", "vpds-ch", d); ch.style.font = (anton ? 400 : 700) + " " + fs + "px/" + h + "px " + (anton ? "Anton" : "'Hanken Grotesk'") + ",sans-serif";
-          ch.style.height = h + "px"; ch.style.top = (cls === "b" ? -(hh + gap) : 0) + dy + "px"; el("div", "vpds-sh", d);
+          ch.style.height = h + "px"; ch.style.top = (cls === "vpds-hb" ? -(hh + gap) : 0) + dy + "px"; el("div", "vpds-sh", d);
           return { d: d, c: ch, s: d.lastChild };
         }
-        var sT = mk("t"), sB = mk("b"), fT = mk("t"), fB = mk("b");
+        var sT = mk("vpds-ht"), sB = mk("vpds-hb"), fT = mk("vpds-ht"), fB = mk("vpds-hb");
         [0, 1].forEach(function (q) { var p = el("div", "vpds-pin", m); p.style.height = Math.round(h * .06) + "px"; p.style.top = (hh + gap / 2 - h * .03) + "px"; p.style[q ? "right" : "left"] = "-3px"; });
         var last = [null, null];
         return { set: function (o2, n2, p, flut) {
@@ -406,7 +409,7 @@
       prizeEl.style.cssText = "position:static;display:inline;font:400 76px/100px Anton,sans-serif;text-align:left";
       var numFs = members ? Math.min(320, Math.floor(700 / (n * 0.47))) : Math.min(320, Math.floor(1300 / (n * 0.47)));
       for (var k = 0; k < POOL; k++) {
-        var d = el("div", "vpds-ri", reel), no = el("div", "no", d); no.style.fontSize = numFs + "px";
+        var d = el("div", "vpds-ri", reel), no = el("div", "vpds-no", d); no.style.fontSize = numFs + "px";
         els.push({ d: d, idx: -1, key: "", no: no });
       }
       v.after = function () {};

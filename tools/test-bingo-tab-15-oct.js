@@ -198,13 +198,15 @@ var NAMES = ['oneTabOn', 'oneTabKey', 'standingDown', 'rawSend', 'send', 'flushQ
              'oneTabNoticeOpts', 'restoreGame', 'restoreNightFields', 'freshPool', 'reassertToTv', 'openLobby', 'openLobbyClaimed',
              'cancelLobby', 'endGame', 'connect', 'selectGame', 'landAfterConnect',
              // SA/NT (22 Oct 2026): selectGame asks whether number bingo is hidden for this venue
-             'numberBingoOff'];
+             'numberBingoOff',
+             // 11 Nov 2026 (INBOX 194): a healthy connection is a quiet header, set in one place
+             'connQuiet'];
 var SRC = NAMES.map(function (n) { return lift(CONSOLE, n, 'index.html'); }).join('');
 var ROOM = [];   // every broadcast that left any tab: { tab, t }
 function makeConsole(name, win) {
   var els = {};
   function elem(id) {
-    if (!els[id]) els[id] = { id: id, value: '', textContent: '', innerHTML: '', style: {}, checked: false,
+    if (!els[id]) els[id] = { id: id, value: '', textContent: '', innerHTML: '', style: {}, checked: false, setAttribute: function () {},
       classList: { _c: {}, add: function (c) { this._c[c] = 1; }, remove: function (c) { delete this._c[c]; },
                    toggle: function (c, on) { if (on) this._c[c] = 1; else delete this._c[c]; }, contains: function (c) { return !!this._c[c]; } } };
     return els[id];
@@ -222,7 +224,7 @@ function makeConsole(name, win) {
     'var VP=null, VPRoom=null, VPChannel=null, _useRoom=false, _roomTried=false, _room=null, VP_GAME_API="x";' +
     'var ch=null, subscribed=false, sendQueue=[], currentGame="", _hostPicked=false, overageAcked=false, overageApproved=0;' +
     'var __ctx={ venue:{ id:"venue-1" } }; var GAME_PATHS={};' +
-    'var lobbiesOpened=0, menus=0, heard=[], nights=0;' +
+    'var lobbiesOpened=0, menus=0, heard=[], nights=0, HQ_LABEL="";' +
     'var client={ channel:function(){ var c={ handler:null, cb:null,' +
     '  on:function(a,b,h){ this.handler=h; return this; }, subscribe:function(cb){ this.cb=cb; return this; },' +
     '  send:function(m){ ROOM.push({ tab:name, t:m.payload.t, p:m.payload }); } }; return c; } };' +

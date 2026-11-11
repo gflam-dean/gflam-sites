@@ -83,8 +83,8 @@ show('the raffle and members TVs call it only when a look was chosen', /if\(S\.s
 show('the start show stays on by default for every game (on unless ?sting=0)', /var ON = !\/\[\?&\]sting=0/.test(readFile('venueplay/app/vp-sting.js')));
 
 print('\n== 6c. 11 Nov: names on the ticket, headings, prize counter, drawn row, one slant, fast, defaults ==');
-show('the ticket prints the venue, "Raffle ticket" and the raffle\'s own name, and repeats venue and name on the stub', /class="vn"><\/div><div class="lb">Raffle ticket<\/div><div class="rn"><\/div>/.test(MOD) && /\.sl b"\)\.textContent = vname; d\.querySelector\("\.sl i"\)\.textContent = o\.name/.test(MOD));
-show('the member card prints the venue, Members draw and the draw\'s own name', /class="vt"><\/div><div class="ml">Members draw<\/div><div class="dnm"><\/div>/.test(MOD) && /\.dnm"\)\.textContent = o\.name/.test(MOD));
+show('the ticket prints the venue, "Raffle ticket" and the raffle\'s own name, and repeats venue and name on the stub', /class="vpds-vn"><\/div><div class="vpds-lb">Raffle ticket<\/div><div class="vpds-rn"><\/div>/.test(MOD) && /\.vpds-sl b"\)\.textContent = vname; d\.querySelector\("\.vpds-sl i"\)\.textContent = o\.name/.test(MOD));
+show('the member card prints the venue, Members draw and the draw\'s own name', /class="vpds-vt"><\/div><div class="vpds-ml">Members draw<\/div><div class="vpds-dnm"><\/div>/.test(MOD) && /\.vpds-dnm"\)\.textContent = o\.name/.test(MOD));
 show('the raffle wall\'s heading is the raffle\'s own name (Raffle only when it has none)', /\$\("tvStyleTitle"\)\.textContent=S\.styleName \|\| "Raffle"/.test(RS) && /m\.raffle==="string"/.test(RS));
 show('the members wall\'s heading is the draw\'s own name', /\$\("styleTitle"\)\.textContent=state\.drawName \|\| "Members draw"/.test(MS));
 show('the host sends the raffle name and Prize n of m with a new-look draw', /m\.raffle=rt/.test(RH) && /m\.prizeNo=G\.prizeIdx\+1; m\.prizeOf=G\.prizes\.length/.test(RH));
@@ -95,6 +95,20 @@ show('race plate: ONE slant for every tier (the same two lines cut all four)', /
 show('fast is a draw time chip on both consoles', /data-dt="fast">Fast, 3 seconds/.test(RH) && /data-dt="fast">Fast, 3 seconds/.test(MH) && !/Skip draw|skipBtn/.test(RH + MH));
 show('a venue\'s usual look is set separately for raffles and members draws (own saved keys), changeable per draw', /p\.draw_style=G\.drawStyle/.test(RH) && /G\.lookSet/.test(MH) && /data-once="ticket">Ticket roll/.test(RH) && /data-once="flip">Flip board/.test(MH) && /styleOnce:null/.test(RH) && /styleOnce:null/.test(MH));
 show('"As now" is still the usual look until a venue changes it', /drawStyle:"", drawTime:"normal"/.test(RH) && /drawStyle:"", drawTime:"normal"/.test(MH));
+
+print('\n== 6d. 11 Nov (INBOX 207): the look keeps to its own names, so a TV page\'s CSS cannot reach into it ==');
+(function () {
+  var code = MOD.replace(/\/\*[\s\S]*?\*\//g, ''), bare = [];
+  (code.match(/class="[^"]*"/g) || []).forEach(function (m) { m.slice(7, -1).split(/\s+/).forEach(function (c) { if (c && !/^vpds-/.test(c)) bare.push(c); }); });
+  (code.match(/\bel\("[a-z]+", "[^"]*"/g) || []).forEach(function (m) { var c = m.split('", "')[1].replace(/"$/, ''); c.split(/\s+/).forEach(function (x) { if (x && !/^vpds-/.test(x)) bare.push(x); }); });
+  (code.match(/\bmk\("[^"]*"\)/g) || []).forEach(function (m) { var c = m.slice(4, -2); if (!/^vpds-/.test(c)) bare.push(c); });
+  (code.match(/querySelector(All)?\("[^"]*"\)/g) || []).forEach(function (m) { (m.match(/\.[A-Za-z][\w-]*/g) || []).forEach(function (x) { if (!/^\.vpds-/.test(x)) bare.push(x); }); });
+  var css = (code.split('var CSS = [')[1] || '').split('].join(')[0];
+  (css.match(/\.[A-Za-z][\w-]*/g) || []).forEach(function (x) { if (!/^\.vpds(-|$)/.test(x) && !/^\.\d/.test(x)) bare.push(x); });
+  show('every class the draw looks make, look up or style is vpds- (a screen\'s own .body once pulled the ticket\'s frame out)', bare.length === 0, bare.join(' '));
+  show('the ticket\'s inner part is vpds-ticket-body, and nothing is called "body"', /class="vpds-ticket-body"/.test(code) && !/class="body"/.test(code) && !/ \.body[{:]/.test(code));
+  show('the stage sets its own alignment and box sizing (a TV page\'s text-align and * rule cannot change it)', /\.vpds-stage\{[^"]*text-align:left/.test(code) && /"\.vpds \*,\.vpds \*:before,\.vpds \*:after\{box-sizing:border-box/.test(code));
+})();
 
 print('\n== 7. older TVs and the house words ==');
 show('the draw looks file is ES5 (no arrow, const, let, template string)', !/=>|\bconst |\blet |`/.test(MOD.replace(/\/\*[\s\S]*?\*\//g, '')));
