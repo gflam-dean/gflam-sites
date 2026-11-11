@@ -6,6 +6,8 @@ venueplay logo (top right): same vertical centre line and the same distance in f
 logo's shape". Before this, the venue logo sat 23px in from the left (1.2% of the width) while the venueplay
 mark sat 2.4cqw (46px) in from the right; a venue with no logo had its name 14px in and 14px down, its middle
 about 20px above the mark's; and a wordmark shorter than the mark could not have the mark lifted to its middle.
+Now the mark comes out to 1.2cqw, where the venue logo always was (moving the logo in to 2.4cqw instead put a
+square crest over the trivia question's column and vp-fit dropped the answers 2px on a long question).
 
 This opens the REAL tv.html in headless Chrome (tools/browser-rig/rig.py: the repo's pages, the real game
 Worker in jsc, supabase-js stood in), with the venue's own screen record, puts a bingo lobby on the wall (the

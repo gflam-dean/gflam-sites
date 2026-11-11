@@ -182,7 +182,7 @@ function inspect(label, m, win) {
   var want = V.box(2000, 2000, V.limits('tv', 1920, 1080));
   check(label + ': a square logo, once it arrives, is drawn ' + want.w + 'x' + want.h + ' by vp-venuelogo.js (not the old 56x56)',
         m.style.width === want.w + 'px' && m.style.height === want.h + 'px' && m.style.maxWidth === want.w + 'px' && m.style.maxHeight === want.h + 'px', m.style);
-  check(label + ': 23 pixels down from the top, and 2.4% in from the left (46.08px), the venueplay mark\'s own distance from the right, on a 1920 TV (12 Nov 2026)', m.style.top === '23px' && m.style.left === '46.08px', m.style);
+  check(label + ': 23 pixels down from the top, and 1.2% in from the left (23.04px), the venueplay mark\'s own distance from the right, on a 1920 TV (12 Nov 2026)', m.style.top === '23px' && m.style.left === '23.04px', m.style);
   check(label + ': and vp-fit is asked to move the wall at once, not on its next tick', win.fits > fitsBefore, [fitsBefore, win.fits]);
   m.arrive(1200, 300);
   var wide = V.box(1200, 300, V.limits('tv', 1920, 1080));

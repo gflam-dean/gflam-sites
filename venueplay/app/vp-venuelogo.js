@@ -42,7 +42,7 @@
     maxH: 0.13,      /* nothing taller than 13% of the height: 140px at 1080 */
     minH: 0.035,     /* a wordmark is at least 3.5% of the height tall (38px at 1080) */
     inset: 0.012,    /* down from the top: 23px at 1920, never under 14px */
-    edge: 0.024      /* in from the left edge: 2.4% of the width, exactly the venueplay mark's right:2.4cqw top right */
+    edge: 0.012      /* in from the left edge: 1.2% of the width (23px at 1920), and the venueplay mark is right:1.2cqw top right */
   };
   var PHONE = { side: 56, maxW: 170, maxWvw: 0.5, maxH: 60, minH: 28 };   /* a square logo 56px (it was 30); a 4:1 wordmark 112 x 28 */
 
@@ -319,10 +319,10 @@
   }
   /* NO LOGO: THE VENUE'S NAME IS WHERE THE LOGO WOULD BE, ON THE SAME LINE (Dean, 11 Nov 2026: "the venue's logo must
      line up with the venueplay logo: same vertical centre line and the same distance in from the edge"). The name
-     (.venuename-left, #venueNameTag, on tv.html and the four game screens) sits 2.4cqw in from the left in CSS, the
-     mark's own distance from the right; here its top is set so its middle is the mark's middle, measured as drawn
-     (the two are in different fonts, so no CSS number can promise it). Again whenever the name changes size
-     (shown, renamed), the screen resizes, the fonts land or the start show ends. */
+     (.venuename-left, #venueNameTag, on tv.html and the four game screens) is moved here, measured as drawn: in from
+     the left by the mark's own distance in from the right, and down so its middle is the mark's middle (the two are
+     in different fonts, so no CSS number can promise it; the CSS 14px/14px is only what shows without this file).
+     Again whenever the name changes size (shown, renamed), the screen resizes, the fonts land or the start show ends. */
   function alignName(corner) {
     try {
       var el = d.getElementById("venueNameTag");
@@ -337,9 +337,13 @@
       var mk = markBox(corner); if (!mk) return;
       var cur = parseFloat(corner.getAttribute("data-drop")) || 0;
       var mid = mk.top + mk.height / 2 - cur;
-      var top = parseFloat(w.getComputedStyle(el).top) || 0;
+      var cs = w.getComputedStyle(el), top = parseFloat(cs.top) || 0, left = parseFloat(cs.left) || 0;
       var want = Math.round((top + mid - (r.top + r.height / 2)) * 10) / 10;
       if (Math.abs(want - top) >= 0.05) el.style.top = want + "px";
+      var cp = corner.offsetParent || d.documentElement, np = el.offsetParent || d.documentElement;
+      var edge = cp.getBoundingClientRect().right - mk.right;            /* the mark's distance in from the right */
+      var wantL = Math.round((left + edge - (r.left - np.getBoundingClientRect().left)) * 100) / 100;
+      if (Math.abs(wantL - left) >= 0.05) el.style.left = wantL + "px";
     } catch (e) {}
   }
   /* MEASURE AGAIN WHEN THE PICTURE CHANGES UNDER IT (2 Nov 2026, the trivia demo: the wordmark sat ~90px

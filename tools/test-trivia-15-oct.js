@@ -731,7 +731,7 @@ print('\nPUNTERS RECKON: the plain venueplay corner, never "tv"');
   var body = PR.replace(/<!--[\s\S]*?-->/g, '');
   var m = /<div class="tv-corner-wrap">\s*<div class="tv-corner">\s*<span class="vn"><svg class="vp-wm"[^>]*data-vp-mark="wordmark"/.test(body);
   show('a. the board page carries the venueplay wordmark in the corner, from the one mark file', m);
-  show('b. in its own full-screen layer above the board', /\.tv-corner-wrap\{position:fixed;inset:0;container-type:inline-size;pointer-events:none;z-index:6\}/.test(body) && /\.tv-corner\{position:absolute;top:2cqw;right:2\.4cqw/.test(body));
+  show('b. in its own full-screen layer above the board', /\.tv-corner-wrap\{position:fixed;inset:0;container-type:inline-size;pointer-events:none;z-index:6\}/.test(body) && /\.tv-corner\{position:absolute;top:2cqw;right:1\.2cqw/.test(body));
   show('c. a live game never says tv in the corner', !/<div class="tv-corner">[\s\S]{0,4000}?>\s*tv\s*</.test(body.slice(body.indexOf('<div class="tv-corner-wrap">'), body.indexOf('<div class="tv-corner-wrap">') + 4000)));
 })();
 

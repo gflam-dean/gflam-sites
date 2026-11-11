@@ -226,7 +226,7 @@ def tv(label, path, w, h, settle, shapes):
             pad = ask(sid, 'parseFloat(getComputedStyle(document.getElementById("venueLogo")).paddingLeft)||0') or 0
             ok(tag + ': painted at the shared box, %dx%d' % (want['w'], want['h']),
                abs(L['w'] - 2 * pad - want['w']) <= 1 and abs(L['h'] - 2 * pad - want['h']) <= 1, (L, want, pad))
-            # 12 Nov 2026 (INBOX 200): in from the left by the venueplay mark's own 2.4cqw, down by the old inset
+            # 12 Nov 2026 (INBOX 200): in from the left by the venueplay mark's own 1.2cqw, down by the old inset
             ok(tag + ': in the top-left corner, %dpx down and %.0fpx in (the venueplay mark\'s distance from the right)' % (m['inset'], m.get('insetX') or 0),
                m.get('insetX') is not None and abs(L['l'] - m['insetX']) <= 1 and abs(L['t'] - m['inset']) <= 1, L)
             over = [x['id'] for x in m['wall'] if hits(L, x['r'])]
