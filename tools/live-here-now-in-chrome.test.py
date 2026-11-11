@@ -609,7 +609,7 @@ def main():
         ids2, s, _ = play_round(t, [True, True, True, True, False])
         check('Play again: five questions this phone has not seen, on the same board, no questions asked',
               len(set(ids2)) == 5 and not set(ids2) & set(ids1) and s.get('scoreN') == '4 of 5', (ids1, ids2, s.get('scoreN')))
-        check('and the board now has both rounds, the better one first', [x['text'].split(' ')[0] for x in s.get('rows', [])][:2] == ['1st', '2nd'] and s.get('place') == '1st tonight at The Mini Bar', s.get('rows'))
+        check('and the board now has both rounds, the better one first', [x['text'][:3] for x in s.get('rows', [])][:2] == ['1st', '2nd'] and s.get('rows')[0]['you'] and s.get('place') == '1st tonight at The Mini Bar', s.get('rows'))
         stored = t.js('localStorage.getItem("vp-lhn-seen")')
         check('the phone keeps every question it has shown', isinstance(stored, str) and set(ids1 + ids2) <= set(json.loads(stored)), stored)
         t.go('/live-here-now')
@@ -668,7 +668,7 @@ def main():
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
         check('Add it sends the name, suburb, state and website for HQ to review, and says thanks',
               lead and lead[-1] == {'name': 'Duck and Drake', 'suburb': 'Fitzroy', 'state': 'VIC', 'website': 'duckanddrake.com.au'} and
-              s.get('leadDone') == 'Duck and Drake Thanks. We will check it and add it to the list.', (lead[-1:], s.get('leadDone')))
+              s.get('leadDone') == 'Duck and DrakeThanks. We will check it and add it to the list.', (lead[-1:], s.get('leadDone')))
         tn.shot('lhn-added-375.png')
         s = wait_question(tn)
         starts = [x for x in FAKE['log'] if x[1] == '/coaster/start']
@@ -761,7 +761,7 @@ def main():
             check('%s links "Game on the TV? Join it" to %s' % (q, want), got == want, got)
             tv.close()
 
-        print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1280 WIDE')
+        print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1440 WIDE')
         LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
         others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
         for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1440, 900, False)):
