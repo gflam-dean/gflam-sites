@@ -58,6 +58,18 @@
     if (p.flag === "no_sign_in" && p.tel) return '<span class="badge roll prflag">Call them</span>';
     return "";
   }
+  /* DAY 21 (Dean, 10 Nov 2026, INBOX 129): from day 21 of their free month, the games they picked in the setup wizard
+     and have not played, in the Worker's words (vpaDay21Flag, house order, musical bingo never "bingo"): "Bingo not
+     played", "Picked trivia, bingo; played none", or with no wizard answer "No game played yet". HQ only: nothing is
+     sent to the venue. Shown beside the status chip in the list, and as a line on the venue's details. */
+  function day21Words(p) {
+    var w = p && p.day21 && p.day21.words ? String(p.day21.words) : "";
+    return w ? w.charAt(0).toUpperCase() + w.slice(1) : "";
+  }
+  function day21Html(p) {
+    var w = day21Words(p);
+    return w ? '<span class="badge prd21" data-pr-day21="1" title="Day ' + prEsc(p.day21.day) + ' of their free month">' + prEsc(w) + "</span>" : "";
+  }
   /* ---- where the prospect is: the Worker says which (p.status), this only words it ---- */
   var STATUS = {
     not_signed_in: { label: "Not signed in yet", cls: "prst-none", rank: 0 },
@@ -66,7 +78,7 @@
     card_added: { label: "Card added", cls: "prst-card", rank: 3 },
     cancelled: { label: "Cancelled", cls: "prst-cancel", rank: 4 }
   };
-  var FILTERS = ["all", "not_signed_in", "free_month", "last_days", "card_added", "paused", "cancelled"];
+  var FILTERS = ["all", "not_signed_in", "free_month", "last_days", "not_played", "card_added", "paused", "cancelled"];
   function statusOf(p) { return STATUS[p && p.status] ? p.status : "not_signed_in"; }
   function daysLeftText(n) {
     if (n == null) return "";
@@ -187,11 +199,13 @@
     var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
     return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + day21Html(p) + "</div>" +
       '<div class="prmore"' + (open ? "" : " hidden") + ">" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +
         ". No phone on file, so a follow-up email is drafted for Dean to approve.") + "</div>" : "") +
+      (day21Words(p) ? '<div class="prd21line" data-pr-day21line="1">' + prEsc("Day " + p.day21.day + " of their free month: " + p.day21.words +
+        ". Nothing has been sent to them about it.") + "</div>" : "") +
       (last ? '<div class="prlast" data-pr-last="1">' + prEsc(p.days_left === 1 ? "Last day of their free month, and no card yet." :
         p.days_left + " days left in their free month, and no card yet.") + "</div>" : "") +
       '<div class="prgrid">' +
@@ -224,6 +238,7 @@
       "Anyone who asked for a call is flagged Call requested, and anyone who has not signed in " + prEsc(d.follow_up_days) +
       " days after setup is flagged Call them when we have their phone number. With no number, a follow-up email is drafted for Dean to approve instead. Mark Called once you have rung them. The free month starts at their first sign-in;" +
       " its last " + prEsc(d.last_days || 3) + " days are highlighted." +
+      " From day " + prEsc(d.day21_day || 21) + " of a free month, a venue that has not played the games it picked at setup (or any game, if it did not say) is flagged in red; nothing is sent to them." +
       (d.free_month_ready === false ? " Free months are not recorded until migration 127 is run." : "") +
       (d.signed_up ? " " + prEsc(d.signed_up) + " earlier prospect" + (d.signed_up === 1 ? " has" : "s have") + " signed up." : "") + "</div>";
   }
@@ -253,9 +268,11 @@
   function matches(p, f) {
     if (f === "all") return true;
     if (f === "last_days") return statusOf(p) === "free_month" && !!p.last_days;
+    if (f === "not_played") return !!(p.day21 && p.day21.words);
     return statusOf(p) === f;
   }
-  function filterLabel(f) { return f === "all" ? "All statuses" : f === "last_days" ? "Last " + ((S.data && S.data.last_days) || 3) + " days of free month" : STATUS[f].label; }
+  function filterLabel(f) { return f === "all" ? "All statuses" : f === "last_days" ? "Last " + ((S.data && S.data.last_days) || 3) + " days of free month" :
+    f === "not_played" ? "Games not played by day " + ((S.data && S.data.day21_day) || 21) : STATUS[f].label; }
   function sorted(list, how) {
     var out = list.map(function (p, i) { return { p: p, i: i }; });
     var setup = function (x) { return Date.parse(x.p.created_at) || 0; };
@@ -359,6 +376,8 @@
       ".prcard.last3{border-left-color:var(--roll);box-shadow:inset 0 0 0 1px rgba(245,165,36,.35)}" +
       ".prheld{margin:0 0 14px;border-left:3px solid var(--pink)}.prheldrow{padding:10px 0;border-top:1px solid var(--line-2,rgba(255,255,255,.08))}" +
       ".prheldrow .prname{display:block}" +
+      ".badge.prd21{background:rgba(229,72,77,.12);color:#FF8A8E;border:1px solid rgba(229,72,77,.45);text-transform:none;letter-spacing:0;white-space:normal;text-align:left}" +
+      ".prd21line{margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(229,72,77,.10);color:#FF8A8E;font-weight:700;font-size:13px}" +
       ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
       "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}.practs > *{flex:1 1 auto}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";

@@ -76,6 +76,10 @@ class BillingWorker(object):
         """Run the REAL vpaProvisionFromCheckout on a Stripe checkout session, as the webhook does."""
         return self._send({'ask': 'provision', 'session': session})
 
+    def day21(self, now_ms):
+        """Run the REAL vpaProspectDay21Sweep once at now_ms, as the hourly trigger does (INBOX 129)."""
+        return self._send({'ask': 'day21', 'now': now_ms})
+
     def table(self, name):
         return self._send({'ask': 'db', 'table': name})['body']
 
