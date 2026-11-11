@@ -27,6 +27,12 @@
       "mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}" +
     "#trusted .track{display:flex;gap:48px;align-items:center;width:max-content;animation:vpTrustedScroll 45s linear infinite}" +
     "#trusted .marquee:hover .track{animation-play-state:paused}" +
+    /* Dean, 11 Nov 2026 (INBOX 231): the heading's "venueplay" is the logo kit's wordmark file, never
+       typed text, sitting on the heading's baseline (the file's baseline is 829 of its 1136 units
+       down, so the 307 below it hang under the line); and the strip sits a little lower. */
+    "#trusted .sec-head{margin-top:36px}" +
+    "#trusted .trusted-word{display:inline-block;height:1.1em;width:auto;vertical-align:-.297em;margin-left:-.02em}" +
+    "@media(max-width:600px){#trusted .sec-head{margin-top:22px}}" +
     "#trusted .trustedlogo{height:64px;width:auto;max-width:210px;object-fit:contain;opacity:.9;flex:none}" +
     "@keyframes vpTrustedScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
     "@media(prefers-reduced-motion:reduce){#trusted .track{animation:none;flex-wrap:wrap;justify-content:center;width:auto}" +
