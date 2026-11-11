@@ -195,6 +195,10 @@
   "checks": 56,
   "counted_by": "lines"
  },
+ "tools/draw-looks-snapshot.test.py": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 40,
   "counted_by": "lines"
@@ -277,6 +281,10 @@
  },
  "tools/logo-tools-in-chrome.test.py": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/migration-191-sim.test.py": {
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/migrations-live.test.py": {
@@ -653,6 +661,10 @@
  },
  "tools/test-double-points.js": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-draw-looks-switch.js": {
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {
