@@ -252,6 +252,8 @@
   "one email, one bill, and the promised free month (46 checks)",
   "one-answer.test.js",
   "one-game.test.js",
+  "one-phone-a-night.test.js",
+  "one-phone-one-name.test.js",
   "one-trip-draws.test.js",
   "only a FINISHED Stripe event is answered 200; a failed one is retried",
   "only the Mac's key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round; the pages show the Mac's recommendation and plain warnings, the Edit page's Postcode, Pub / Club and Login email boxes are checked and stored and handed to the Mac, and before migration 130 everything works as it did; each page has only the recommended button at the top (Edit when there is none), labelled Recommended, and all three at the bottom in the email's order, through the one form and the same signed links",

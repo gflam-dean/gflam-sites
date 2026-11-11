@@ -566,8 +566,8 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
      the row by device id), and a stale one is re-joined under the same device id exactly as this page's own
      would be. Only when a sibling page has BOTH a name and a token, i.e. this phone already joined through
      that game's join screen (and saw its details form and tick then): a name with no token is not a join. */
-  var SIBLING_KEYS=[["vp-tname-","vp-ttoken-","vp-tsess-"],["vp-name-","vp-token-",""]];
   function siblingIdentity(room){
+    var SIBLING_KEYS=[["vp-tname-","vp-ttoken-","vp-tsess-"],["vp-name-","vp-token-",""]];   // the other games' pages on this phone: name, token, night
     if(!room) return null;
     try{
       for(var i=0;i<SIBLING_KEYS.length;i++){

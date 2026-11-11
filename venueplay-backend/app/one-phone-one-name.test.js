@@ -137,7 +137,7 @@ function musicalPhone(init) {
   var ls = store(init), calls = { form: 0, stale: 0 };
   var P = { room: "", pid: "", name: "", joined: false, token: "", sessionId: "" };
   var el = function () { return { textContent: "", parentNode: { classList: { remove: function () {} } }, classList: { add: function () {}, remove: function () {} } }; };
-  var mp = pageScope(MPLAY, STORE_FNS, ["SIBLING_KEYS"],
+  var mp = pageScope(MPLAY, STORE_FNS, [],
     "var localStorage = env.ls, sessionStorage = store(), P = env.P, OWN_TOKEN_KEY = 'vp-mtoken-';\n" +
     "var $ = function () { return env.el(); }, randId = function () { return 'pid' + Math.random().toString(36).slice(2, 10); };\n" +
     "var checkStaleJoin = function () { env.calls.stale++; }, openChannel = function () {}, route = function () {};\n" +
@@ -180,7 +180,7 @@ function triviaPhone(init) {
   var ls = store(init), calls = { form: 0, wait: 0 };
   var P = { room: "", pid: "", name: "", joined: false, token: "", sessionId: "" };
   var el = function () { return { textContent: "", parentNode: { classList: { remove: function () {} } }, classList: { add: function () {}, remove: function () {} } }; };
-  var tp = pageScope(TPLAY, STORE_FNS, ["SIBLING_KEYS"],
+  var tp = pageScope(TPLAY, STORE_FNS, [],
     "var localStorage = env.ls, sessionStorage = store(), P = env.P, OWN_TOKEN_KEY = 'vp-ttoken-';\n" +
     "var $ = function () { return env.el(); }, randId = function () { return 'pid' + Math.random().toString(36).slice(2, 10); };\n" +
     "var prKeyFor = function () {}, ch = null, subscribed = false, window = {}, onMsg = function () {}, onChannelStatus = function () {};\n" +
