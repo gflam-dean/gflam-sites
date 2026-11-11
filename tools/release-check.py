@@ -3720,7 +3720,7 @@ def local_checks(which):
                 out, rc = 'could not run it: %s' % type(e).__name__, 1
             lines = out.splitlines()
             bad = [l.strip()[4:].strip() for l in lines if l.strip().startswith('FAIL')]
-            unseen = [l.strip() for l in lines if 'cannot be probed' in l]
+            unseen = [l.strip() for l in lines if 'cannot be probed (' in l]
             m = re.search(r'(\d+) of (\d+) checks passed', out)
             for u in unseen:
                 note('a migration REST cannot see', u[4:].strip()[:160])
