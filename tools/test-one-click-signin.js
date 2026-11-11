@@ -413,7 +413,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('the token itself is nowhere in the database (the link rows, the audit row, anything)', token.length === 43 && JSON.stringify(DB).indexOf(token) === -1);
   var life = Date.parse(row.expires_at) - Date.parse(row.created_at);
   var due = Date.parse(sent[0] && sent[0].scheduled_at);
-  check('it lasts 30 DAYS FROM SETUP (Dean, 4 Nov 2026), the moment every link resent to them ends at: not 14 days from when the email goes', Math.abs(life - 30 * 86400000) < 5000 &&
+  check('it lasts 90 DAYS FROM SETUP (Dean, 4 Nov 2026; 90 since 10 Nov, INBOX 154), the moment every link resent to them ends at: not 14 days from when the email goes', Math.abs(life - 90 * 86400000) < 5000 &&
     Date.parse(row.expires_at) > due + 14 * 86400000, [life, row.expires_at, sent[0] && sent[0].scheduled_at]);
   /* BEFORE MIGRATION 151 the table refuses a life over 15 days. Then the same link is made with 14 days, the
      welcome still goes, and HQ is told the number the link REALLY has (never a number that is not the real expiry). */
@@ -429,7 +429,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   var r151 = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);
   var row151 = DB.vp_signin_links[DB.vp_signin_links.length - 1] || {};
   check('before migration 151: the welcome still goes, with a 14 day link (from when it goes), and HQ is told to run 151', r151.status === 200 && r151.body.welcome_sent === true && DB.vp_signin_links.length === 1 &&
-    Math.abs(Date.parse(row151.expires_at) - Date.parse(row151.created_at) - (14 * 86400000 + 90 * 60000)) < 5000 && (r151.body.warnings || []).some(function (w) { return /14 days, not 30/.test(w) && /migration 151/.test(w); }), [r151.body.warnings, row151]);
+    Math.abs(Date.parse(row151.expires_at) - Date.parse(row151.created_at) - (14 * 86400000 + 90 * 60000)) < 5000 && (r151.body.warnings || []).some(function (w) { return /15 days, not 90/.test(w) && /migrations 151 and 185/.test(w); }), [r151.body.warnings, row151]);
   globalThis.fetch = strict;
   world();
   r = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);

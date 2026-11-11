@@ -101,7 +101,7 @@
           }
           return res.json().catch(function () { return {}; }).then(function (d) {
             rb.hidden = true;
-            /* THE 30 DAYS ARE OVER (Dean, 4 Nov 2026): no link by itself. Say so plainly, and that we will be in touch;
+            /* THE 90 DAYS ARE OVER (Dean, 4 Nov 2026; 90 since 10 Nov): no link by itself. Say so plainly, and that we will be in touch;
                the Worker has opened a sales ticket for Dean to choose. Only the holder of that venue's own link sees this. */
             if (d && d.ended) {
               rm.textContent = "That sign-in link has ended. We have let the venueplay team know and we will be in touch to get you going. Prefer to write? Email support@venueplay.com.au.";

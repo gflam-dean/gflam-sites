@@ -209,7 +209,7 @@ try:
     press(sid, QUIET, '[data-pr-signin]')
     S.until(sid, '!!document.getElementById("vpAskGo")', 5)
     t = page_text(sid)
-    ok('it asks first: by email to them AND by text to the mobile, a fresh 30 days', 'It goes by email to p1@pub.test and by text to 0412 999 888' in t and 'fresh 30 days' in t, t[-400:])
+    ok('it asks first: by email to them AND by text to the mobile, a fresh 90 days', 'It goes by email to p1@pub.test and by text to 0412 999 888' in t and 'fresh 90 days' in t, t[-400:])
     shot(sid, 'after-1440-send-ask', full=False)
     S.js(sid, 'document.getElementById("vpAskGo").click(); true')
     S.until(sid, '/The email went to p1@pub\\.test/.test(document.body.innerText)', 10)

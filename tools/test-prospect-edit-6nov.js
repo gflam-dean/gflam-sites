@@ -17,7 +17,7 @@
         address; refused when it is another login's, or when the login runs another venue
      7. the ONE send button's Worker half: email and text together (two live links ending together), outside
         9am to 8pm or on a Sunday the text is queued for the next allowed time and the hourly trigger sends it once;
-        texts off, no queue table (migration 152) and no mobile each say so; a fresh 30 days
+        texts off, no queue table (migration 152) and no mobile each say so; a fresh 90 days
      8. the pane: compact rows with a status chip that opens the details, Edit details, one send button
      9. hq.html's one send function: says email and text or email only, asks the Worker for both, shows its line;
         a welcome still booked is sent now instead of a second link
@@ -298,7 +298,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   check('a login that also runs another venue: its email is changed from their own account, not here (409, nothing changed)', r2v.status === 409 && /another venueplay venue/.test(r2v.body.error) && snap() === before6, r2v.body);
   DB.vp_venue_staff = DB.vp_venue_staff.filter(function (s) { return s.venue_id !== U(901); });
 
-  section('7. The one send button\'s Worker half: email and text together, a fresh 30 days');
+  section('7. The one send button\'s Worker half: email and text together, a fresh 90 days');
   ENV.PROSPECT_SMS_ON = 'on'; SMS.length = 0; sent.length = 0;
   CLOCK = bne(3, 12, 0);   // a Wednesday, noon Brisbane
   MIG175 = true;   // this section is the database after migration 175: one short link per prospect
@@ -309,8 +309,8 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var wbLinks = DB.vp_signin_links.filter(function (l) { return l.venue_id === wb.id && !l.used_at; });
   check('inside 9am to 8pm on a weekday: ONE press sends the email AND the text, now', tx.status === 200 && tx.body.text && tx.body.text.status === 'sent' && sent.length === 1 && SMS.length === 1 && SMS[0].body.messages[0].to === '+61455666777', [tx.body, SMS.length]);
   var wbRow = DB.vp_prospects.filter(function (r) { return r.venue_id === wb.id; })[0] || {};
-  var wbEnd = Date.parse(wbRow.link_from || wbRow.created_at) + 30 * DAY;
-  check('...their one short link, the email\'s and the text\'s the same, with NO sign-in token behind it, ending at their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
+  var wbEnd = Date.parse(wbRow.link_from || wbRow.created_at) + 90 * DAY;
+  check('...their one short link, the email\'s and the text\'s the same, with NO sign-in token behind it, ending at their ORIGINAL 90 days, never renewed by a resend (Dean, 6 Nov 2026)',
     wbLinks.length === 0 && Math.abs(Date.parse(tx.body.expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from &&
     (sent[0] && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}/.test(sent[0].html || '')), [wbLinks, wbRow.created_at]);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
@@ -407,8 +407,8 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var hOpen = T.cardHtml(pr);
   check('pressing the chip opens it (aria-expanded true, details shown); pressing again closes it',
     /aria-expanded="true"/.test(hOpen) && /<div class="prmore">/.test(hOpen) && (T.onClick({ target: tg }), /<div class="prmore" hidden>/.test(T.cardHtml(pr))), hOpen.slice(0, 500));
-  check('ONE send button, "Send their sign-in link again" (the same link, Dean 6 Nov 2026), and with no mobile it says "email only, add a mobile to text it too"; no second resend; and the separate "Start a fresh 30 days"',
-    /data-pr-signin="[^"]+">Send their sign-in link again<span class="prvia">the same link, email only, add a mobile to text it too<\/span><\/button>/.test(h) && /data-pr-fresh="[^"]+">Start a fresh 30 days<\/button>/.test(h) && !/data-pr-welcome|Resend their account email|Resend sign-in link/.test(h + PANE.replace(/\/\*[\s\S]*?\*\//g, '')), h);
+  check('ONE send button, "Send their sign-in link again" (the same link, Dean 6 Nov 2026), and with no mobile it says "email only, add a mobile to text it too"; no second resend; and the separate "Start a fresh 90 days"',
+    /data-pr-signin="[^"]+">Send their sign-in link again<span class="prvia">the same link, email only, add a mobile to text it too<\/span><\/button>/.test(h) && /data-pr-fresh="[^"]+">Start a fresh 90 days<\/button>/.test(h) && !/data-pr-welcome|Resend their account email|Resend sign-in link/.test(h + PANE.replace(/\/\*[\s\S]*?\*\//g, '')), h);
   var hm = T.cardHtml(Object.assign({}, pr, { mobile: '0412 345 678', phone: '0412 345 678', tel: 'tel:0412345678' }));
   check('with a mobile: "by email and text", a Call button that rings it, and the mobile under the name', /<span class="prvia">the same link, by email and text<\/span>/.test(hm) && /<a class="mini prcall" href="tel:0412345678">Call 0412 345 678<\/a>/.test(hm) && /<span class="prsub">Jo · 0412 345 678<\/span>/.test(hm), hm);
   check('Edit details, Called and View as are in the actions too', /data-pr-edit="[^"]+">Edit details</.test(h) && /data-pr-called=/.test(h) && /data-pr-viewas=/.test(h));

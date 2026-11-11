@@ -37,6 +37,12 @@
   /* expanded: the rows opened by their status chip (Dean, 4 Nov 2026: compact rows); editing: the row whose Edit details
      form is open; byId: every row the tab shows, for hq.html's one send button (it words the email and text from it). */
   var S = { data: null, held: [], ids: {}, byId: {}, open: null, editing: null, expanded: {}, loading: false, filter: "all", sort: "call" };
+  /* HOW LONG A SIGN-IN LINK LASTS (Dean, 10 Nov 2026, INBOX 154: 90 days, the same as player-data deletion). The
+     billing Worker's VPA_LINK_DAYS is the one number: /admin/prospects answers it as link_days and every HQ line
+     ("Start a fresh 90 days", its question and its answer) is written from linkDays(). LINK_DAYS is only what HQ
+     says before that list has arrived; test-link-90-days.js holds it equal to the Worker's. */
+  var LINK_DAYS = 90;
+  function linkDays() { var n = S.data && Number(S.data.link_days); return n > 0 ? n : LINK_DAYS; }
 
   function prEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -169,13 +175,13 @@
       : S.editing === p.venue_id ? editHtml(p)
       : (function () {
           /* ONE SEND BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same.
-             "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; a fresh
-             30 days. Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
+             "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; the same
+             link and end (only "Start a fresh 90 days" gives more time). Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
           var acts = (p.tel ? '<a class="mini prcall" href="' + prEsc(p.tel) + '">Call ' + prEsc(p.phone || p.mobile || "") + "</a>" : "") +
             (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send their sign-in link again' +
               '<span class="prvia">' + (p.mobile ? "the same link, by email and text" : "the same link, email only, add a mobile to text it too") + "</span></button>" : "") +
             /* Dean, 6 Nov 2026: the ONLY way to give them more time, kept apart and labelled so it is never pressed by mistake. */
-            (st === "not_signed_in" ? '<button type="button" class="mini" data-pr-fresh="' + prEsc(p.venue_id) + '">Start a fresh 30 days</button>' : "") +
+            (st === "not_signed_in" ? '<button type="button" class="mini" data-pr-fresh="' + prEsc(p.venue_id) + '">Start a fresh ' + linkDays() + ' days</button>' : "") +
             '<button type="button" class="mini" data-pr-edit="' + prEsc(p.venue_id) + '">Edit details</button>' +
             (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
             (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "");
@@ -464,7 +470,7 @@
     })();
   }
 
-  root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; }, get: function (id) { return S.byId[id] || null; },
+  root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; }, get: function (id) { return S.byId[id] || null; }, linkDays: linkDays,
     _t: { cardHtml: cardHtml, listHtml: listHtml, heldHtml: heldHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick, editHtml: editHtml } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);

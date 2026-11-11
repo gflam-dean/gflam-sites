@@ -740,3 +740,12 @@ function and RLS-BASELINE.json does not change. Either order with the Workers: b
 events_off (the account page says What's on is being switched on) and the game Worker asks again without the column (no
 events on the TV or phones). NUMBER: 177 (the coordinator's number, 6 Nov 2026; 176 and below are taken). Branch
 `feature/whats-on-12nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-185-signin-link-90-days.sql` (Dean, 10 Nov 2026, INBOX 154: every one-tap sign-in link lasts 90 days from issue,
+"because that's when we delete the data"): lifts `vp_signin_links_life` from 31 to 92 days (90, plus a day for a welcome
+booked ahead, plus one spare), and gives every link already issued and still unused (used_at is null; retired links carry
+used_at, so they stay dead) 90 days from its own created_at, unless those 90 days have already passed. The billing Worker's
+`VPA_LINK_DAYS` is the one number; a prospect's window is worked out from it on every read, so needs nothing here. No policy
+or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker is
+refused the 90 day row and makes a 30 day link, printing the days that link really has. NUMBER: 180 to 184 taken (183 was
+spoken for by an uncommitted link-life change), so 185. Branch `fix/link-90-days-15nov`. NOT RUN. Read-back and rollback in the file.
