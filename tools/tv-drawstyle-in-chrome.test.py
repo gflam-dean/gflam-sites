@@ -92,7 +92,7 @@ def ticket():
         ok('the prize is named', 'Meat tray' in (r.ask(s, STAGE_TEXT) or ''), r.ask(s, STAGE_TEXT))
         ok('the wall\'s heading is the raffle\'s own name, not the word Raffle', r.ask(s, 'document.getElementById("tvStyleTitle").textContent') == 'Sunday meats', r.ask(s, 'document.getElementById("tvStyleTitle").textContent'))
         ok('Prize 1 of 32 is said', 'Prize 1 of 32' in (r.ask(s, STAGE_TEXT) or ''), r.ask(s, STAGE_TEXT))
-        ok('every ticket carries Raffle ticket and the raffle\'s name, and the stub repeats venue and name', r.ask(s, '(function(){var t=document.querySelector("#tvStyleHost .vpds-tk");return !!t && /Raffle ticket/.test(t.textContent) && t.querySelector(".rn").textContent==="Sunday meats" && t.querySelector(".sl i").textContent==="Sunday meats";})()') is True)
+        ok('every ticket carries Raffle ticket and the raffle\'s name, and the stub repeats venue and name', r.ask(s, '(function(){var t=document.querySelector("#tvStyleHost .vpds-tk");return !!t && /Raffle ticket/.test(t.textContent) && t.querySelector(".vpds-rn").textContent==="Sunday meats" && t.querySelector(".vpds-sl i").textContent==="Sunday meats";})()') is True)
         time.sleep(8.5)
         t = r.ask(s, STAGE_T); w = r.ask(s, STAGE_WIN); time.sleep(1.2); t2 = r.ask(s, STAGE_T)
         ok('with no pick the roll HOLDS before its last move (never invents the winner)', 0 < t < w and abs(t2 - t) < 0.02, [t, t2, w])
