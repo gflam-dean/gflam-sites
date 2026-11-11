@@ -661,6 +661,8 @@ def main():
         check('no suburb: the form says so and sends nothing', err == 'Type the suburb or town.' and len([x for x in FAKE['log'] if x[1] == '/coaster/lead']) == n_lead, err)
         tn.type_into('leadSuburb', 'Fitzroy')
         tn.js('(function(){var s=document.getElementById("leadState");s.value="VIC";s.dispatchEvent(new Event("change"));})()')
+        err2 = tn.js('document.getElementById("leadErr").textContent')
+        check('once the suburb is typed, the "Type the suburb or town." line goes', err2 == '', err2)
         tn.type_into('leadSite', 'duckanddrake.com.au')
         tn.shot('lhn-addit-375.png')
         tn.js('(function(){var e=document.getElementById("leadBtn");if(e)e.scrollIntoView({block:"end"});})()')

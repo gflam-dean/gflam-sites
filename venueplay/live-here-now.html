@@ -680,6 +680,9 @@ var VPCoaster = (function () {
   /* "Can't find your venue? Add it" (INBOX 232): to HQ's review list as a possible new lead. Never a board:
      the player plays this round without one. */
   var LEAD_BOX = { name: 'leadIn', suburb: 'leadSuburb', state: 'leadState', website: 'leadSite' };
+  /* a stale "what is missing" line goes as soon as they fix it */
+  $('leadForm').addEventListener('input', function () { $('leadErr').textContent = ''; });
+  $('leadForm').addEventListener('change', function () { $('leadErr').textContent = ''; });
   $('leadForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var f = { name: $('leadIn').value.trim(), suburb: $('leadSuburb').value.trim(), state: $('leadState').value, website: $('leadSite').value.trim() };
