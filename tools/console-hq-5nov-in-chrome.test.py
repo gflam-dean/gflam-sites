@@ -230,16 +230,17 @@ try:
         f = S.json(sid, FOLDS, {})
         # Dean, 6 Nov 2026: "who won what" is a fold of its own at the BOTTOM, and an empty members draw says nothing.
         ok('%s: F. four folds: Raffles, Members draws, Permits, then Who won what at the bottom' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits', 'winners'] and all(x['shown'] for x in f.get('heads', [])), f)
-        ok('%s: F. only Raffles is open to start; the other bodies are folded away' % where,
-           [x['open'] for x in f.get('heads', [])] == [True, False, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False, False], f)
-        ok('%s: F. the headings say what is set: "Not on the TV yet" for the raffle, and nothing at all for no members draw' % where,
-           [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', ''], f)
+        ok('%s: F. every fold starts closed (Dean, INBOX item 21d)' % where,
+           [x['open'] for x in f.get('heads', [])] == [False, False, False, False] and [b['shown'] for b in f.get('bodies', [])] == [False, False, False, False], f)
+        # 5 Nov 2026, INBOX item 21d: "Not on the TV yet" read like a fault; an empty members draw still says nothing (6 Nov).
+        ok('%s: F. the headings say what is set: "No raffle routine yet" for the raffle, and nothing at all for no members draw' % where,
+           [x['sum'] for x in f.get('heads', [])][:2] == ['No raffle routine yet', ''], f)
         tall = f.get('h', 0)
         S.js(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').click(); true'); time.sleep(0.4)
         f2 = S.json(sid, FOLDS, {})
         ok('%s: F. opening Members draws closes Raffles: one fold open at a time' % where,
            [x['open'] for x in f2.get('heads', [])] == [False, True, False, False] and [b['shown'] for b in f2.get('bodies', [])] == [False, True, False, False], f2)
-        ok('%s: F. the open fold is remembered' % where, f2.get('remembered') == 'members', f2)
+        ok('%s: F. the open fold is not remembered, so the tab opens closed next time (INBOX item 21d)' % where, not f2.get('remembered'), f2)
         ok('%s: F. the Draws tab is a fraction of its old height with the rest folded (under 2,600px here, was over 11,000 on a phone)' % where, 0 < tall < 2600 and 0 < f2.get('h', 0) < 3200, [tall, f2.get('h')])
         shot(sid, 'draws-folded-%d' % w)
 
@@ -249,7 +250,7 @@ try:
         ok('%s: 10. after a reload the Draws tab is still the one open' % where,
            S.js(sid, 'document.getElementById("tp-draws").classList.contains("on") && document.querySelector(\'.tabs button[data-tab="draws"]\').classList.contains("on")') is True)
         f3 = S.json(sid, FOLDS, {})
-        ok('%s: F. and after the reload Members draws is still the open fold' % where, [x['open'] for x in f3.get('heads', [])] == [False, True, False, False], f3)
+        ok('%s: F. and after the reload every fold is closed again' % where, [x['open'] for x in f3.get('heads', [])] == [False, False, False, False], f3)
         S.js(sid, 'localStorage.removeItem("vpDrawsFold"); true')
         tab(sid, 'screen')
         S.js(sid, '[].forEach.call(document.querySelectorAll(".scard.fold.folded > .scardhead"),function(h){h.click();}); true')   # the cards fold (Dean, 6 Nov 2026)

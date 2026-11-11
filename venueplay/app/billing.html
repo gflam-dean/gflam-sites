@@ -1862,6 +1862,9 @@
     sec("Invoices & card").forEach(function(el){ hide(el, left && st.state === "paused_prospect" && d.has_subscription === false); });
     // Marketing: only the opt-in download. The venue link, the table signs and the pointer to Game settings go.
     sec("Your venue link").forEach(function(el){ hide(el, left); });
+    // Since the 6 Nov tidy the link and the signs are cards with ids, not .label sections (INBOX item 33: after leaving,
+    // Marketing is the opt-in download only).
+    hide($("mkLinkCard"), left); hide($("mkSignsCard"), left); hide($("mkPickWrap"), left);
     hide($("optinSignpost"), left);
     // Draws: the read-only block, and the folds (which are for setting draws up) hidden.
     var ld = $("leftDraws"); if (ld) ld.hidden = !left;
@@ -2997,8 +3000,9 @@
   (function initFolds(){
     var heads = document.querySelectorAll("#tp-draws .acchead");
     if (!heads.length) return;
-    var had = null; try { had = localStorage.getItem(ACC_KEY); } catch (e) {}
-    accOpen(/^(raffles|members|permits|winners)$/.test(had || "") ? had : "raffles", false);
+    /* EVERY FOLD STARTS CLOSED (Dean, 5 Nov 2026, INBOX item 21d): the headings and a one-line summary each, and a tap
+       opens one. The fold that was open last time is no longer reopened. */
+    accOpen("", false);
     for (var i = 0; i < heads.length; i++){
       (function(h){
         var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), false); };

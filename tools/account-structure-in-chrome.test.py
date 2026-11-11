@@ -93,7 +93,9 @@ def fill_permit(sid, wrap, kind, number='', holder='venue', npo='', authorised='
 CARD = r'''(function(){
   var w=document.getElementById("permitsWrap"), ref=document.getElementById("nameSeg").closest(".card"), out={kinds:[], cards:[]};
   var cs=function(e){var s=getComputedStyle(e);return {fs:s.fontSize, ls:s.letterSpacing, ff:s.fontFamily.split(",")[0], tt:s.textTransform, col:s.color, pad:s.padding, br:s.borderRadius, bg:s.backgroundColor};};
-  out.ref={lbl:cs(ref.querySelector(".lbl")), sub:cs(ref.querySelector(".sublbl")), card:cs(ref), seg:cs(ref.querySelector(".seg .opt"))};
+  /* The name card lost its description line (Dean, 5 Nov 2026, INBOX item 35: no line that repeats its heading), so the
+     description style to match is the page's own: the first card description still on the page. */
+  out.ref={lbl:cs(ref.querySelector(".lbl")), sub:cs(ref.querySelector(".sublbl")||document.querySelector(".card .sublbl")), card:cs(ref), seg:cs(ref.querySelector(".seg .opt"))};
   w.querySelectorAll(".permit").forEach(function(c){
     out.kinds.push(c.getAttribute("data-kind"));
     var lbl=c.querySelector(".lbl"), sub=c.querySelector(".sublbl"), opts=[].slice.call(c.querySelectorAll(".pholder .opt")), inp=c.querySelector(".pnumber");

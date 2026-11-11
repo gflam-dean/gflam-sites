@@ -117,8 +117,10 @@ for key, want_tabs in [('alpha', ALL), ('echo', ALL), ('bravo', LEFT), ('charlie
             ok('alpha: one venue: never "All venues"', 'All venues' not in S.js(sid, 'document.getElementById("tp-people").innerText'), p[:200])
             tab(S, sid, 'draws', 1.0)
             f = json.loads(S.js(sid, 'JSON.stringify({open:[].map.call(document.querySelectorAll("#tp-draws .acchead"),function(h){return h.classList.contains("open")}),bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return b.offsetParent!==null}),sums:[].map.call(document.querySelectorAll("#tp-draws .accsum"),function(s){return s.textContent}),txt:document.getElementById("tp-draws").innerText})') or '{}')
-            ok('alpha: every Draws fold starts closed', f.get('open') == [False, False, False] and f.get('bodies') == [False, False, False], f.get('open'))
-            ok('alpha: each fold heading carries a one-line summary', len(f.get('sums') or []) == 3 and all(s.strip() for s in f.get('sums') or []), f.get('sums'))
+            # Since 6 Nov 2026 (Dean) "Who won what" is a fourth fold at the bottom; it is a record, not a setting, so the
+            # one-line summary is asked of the three setting folds.
+            ok('alpha: every Draws fold starts closed', f.get('open') == [False, False, False, False] and f.get('bodies') == [False, False, False, False], f.get('open'))
+            ok('alpha: each setting fold heading carries a one-line summary', len(f.get('sums') or []) == 4 and all(s.strip() for s in (f.get('sums') or [])[:3]), f.get('sums'))
             ok('alpha: "Not on the TV yet" is gone', 'Not on the TV yet' not in f.get('txt', ''), f.get('sums'))
             tab(S, sid, 'screen', 1.5)
             sc = json.loads(S.js(sid, 'JSON.stringify({url:document.getElementById("scrUrl").textContent,code:document.getElementById("scrCode").textContent,copies:[].filter.call(document.querySelectorAll("#screenCard .scrcopy"),function(b){return b.offsetParent&&b.getBoundingClientRect().height>=44}).length})') or '{}')

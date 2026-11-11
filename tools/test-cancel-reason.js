@@ -238,7 +238,9 @@ var pBase = null;
 ['', 'reason=closing&reason_detail=' + encodeURIComponent('  Sold to\nnew owners  '), 'reason=constructor', 'reason_detail=just+a+note'].forEach(function (extra, i) {
   parm();
   var r = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json' + (extra ? '&' + extra : ''));
-  var shape = JSON.stringify([r && r.json, pVenue.status, pVenue.suspended_reason, !!pRow.cancelled_at, pFetch.map(function (c) { return c[0] + ' ' + c[1] + ' ' + c[2]; })]);
+  /* The clock read is masked: since fix/restart-90day-15nov the cancel PATCH carries closed_at (INBOX item 33), and two
+     cancels a millisecond apart are still the same cancel. */
+  var shape = JSON.stringify([r && r.json, pVenue.status, pVenue.suspended_reason, !!pRow.cancelled_at, pFetch.map(function (c) { return c[0] + ' ' + c[1] + ' ' + c[2]; })]).replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z/g, '<time>');
   if (i === 0) {
     pBase = shape;
     check('no reason: cancelled and switched off as before, and the reason is recorded as not given',
