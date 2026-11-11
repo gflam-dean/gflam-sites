@@ -4706,16 +4706,24 @@
     VPDrawRecord.download({ api:VP_GAME_API, venueId:(v && v.id) || "", getToken:vpHostToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
   });
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */
-  $("startBtn").addEventListener("click", function(){
+  $("startBtn").addEventListener("click", startClick);
+  function startClick(ev){
+    var ended = !!(ev && ev.__vpEnded);
+    if(ended && G.status==="lobby") return;   // a second tap's check came back after the first opened the lobby: never deal cards to an empty room
     /* DOUBLE TAP GUARD. openLobby() sets G.status="lobby" synchronously, and for a FREE game
        gateFor calls proceed() synchronously too with no modal to slow anybody down. So two
        quick taps used to land in startGame(): cards dealt to an empty room, the TV jumping
        ads to lobby to live before a single person could scan the QR, and no way back but
        "New game". The overlay guard in vp-gaming.js never engages on the free path because
        there is no overlay. Musical and trivia each set a busy flag; bingo had nothing. */
-    if(_startBusy) return;
-    _startBusy = true;
-    setTimeout(function(){ _startBusy = false; }, 1200);
+    if(!ended){
+      if(_startBusy) return;
+      _startBusy = true;
+      setTimeout(function(){ _startBusy = false; }, 1200);
+      /* THE ENDED CHECK FIRST (Dean, 11 Nov 2026, INBOX 236.1): before the one-tab question and the state rules, a venue
+         switched off since this page loaded gets its card and nothing else. A lobby already open carries on. */
+      if(G.status!=="lobby" && window.VP && VP.endedFirst){ VP.endedFirst(function(){ startClick({ __vpEnded:true }); }); return; }
+    }
     /* G.paidMode is "" for a free night and "single"/"sheet" when they are selling tickets, and
        it is set from the same dropdown the host just used, so it is the truth about THIS game. */
     /* A tab behind the live one asks the other tabs BEFORE the state gaming rules: it was putting up
@@ -4734,7 +4742,7 @@
       if(r && r.free){ var ps=$("paidSel"); if(ps){ ps.value=""; try{ ps.dispatchEvent(new Event("change")); }catch(e){} } G.paidMode=""; }
       if(G.status==="lobby") startGame(); else openLobby();
     }
-  });
+  }
   var _startBusy = false;
   /* FREE BINGO SHOWS ITS STATE'S RULES ONCE A NIGHT where a letter attaches conditions to it (state
      audit C9, 20 Oct 2026): VIC (s8.2.4A: no permit, entry free, printed tickets; Dean, 28 Oct 2026:

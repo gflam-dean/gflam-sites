@@ -151,6 +151,10 @@
   "checks": 107,
   "counted_by": "lines"
  },
+ "tools/cancelled-account-in-chrome.test.py": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
  "tools/connected-word-in-chrome.test.py": {
   "checks": 9,
   "counted_by": "lines"
@@ -504,7 +508,7 @@
   "counted_by": "lines"
  },
  "tools/test-archived-venue-restore.js": {
-  "checks": 18,
+  "checks": 19,
   "counted_by": "lines"
  },
  "tools/test-audit-search.js": {
@@ -604,7 +608,7 @@
   "counted_by": "lines"
  },
  "tools/test-console-status-area.js": {
-  "checks": 62,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-console-venue-from-link.js": {

@@ -908,6 +908,13 @@
   function gateFor(format, onProceed, opts) {
     var proceed = typeof onProceed === 'function' ? onProceed : function () {};
     opts = opts || {};
+    /* THE ENDED CHECK FIRST, BEFORE ANY PROMPT (INBOX 236.1): a switched-off venue gets its card and no state rules,
+       no "free game" question. VP.endedFirst re-reads the venue; it calls back only for a venue that is on. */
+    if (!opts._endedChecked && root.VP && typeof root.VP.endedFirst === 'function') {
+      var o2 = {}; for (var k in opts) o2[k] = opts[k]; o2._endedChecked = true;
+      root.VP.endedFirst(function () { gateFor(format, proceed, o2); });
+      return;
+    }
     try {
       if (!isGaming(format)) { proceed(); return; }
       var ctx = (root.VP && VP.getContext && VP.getContext()) || null;

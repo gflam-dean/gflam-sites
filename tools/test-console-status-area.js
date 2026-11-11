@@ -88,7 +88,7 @@ function boot(who) {
   var store = { vpCurrentVenue: 'JJ' }, sess = { vpVenueExplicit: 'JJ' };
   var db = { vp_platform_admins: who.admin ? [{ auth_user_id: 'u1', role: 'owner', label: 'HQ' }] : [],
              vp_venue_staff: (who.staff || []).map(function (id) { return { auth_user_id: 'u1', venue_id: id, role: who.role || 'owner' }; }),
-             vp_venues: [VENUES.JJ], vp_venue_settings: [] };
+             vp_venues: [who.venue || VENUES.JJ], vp_venue_settings: [] };
   var client = { auth: { getSession: function () { return Promise.resolve({ data: { session: { user: { id: 'u1' } } } }); } },
                  from: function (t) { return q((db[t] || []).slice()); } };
   var window = { location: { pathname: '/app/trivia/host.html', search: '' }, supabase: { createClient: function () { return client; } },
@@ -110,7 +110,7 @@ function boot(who) {
   var ctx = null;
   window.VP.ready().then(function (c) { ctx = c; });
   drainMicrotasks();
-  P.window = window; P.VP = window.VP; P.ctx = ctx; P.store = store;
+  P.window = window; P.VP = window.VP; P.ctx = ctx; P.store = store; P.db = db;
   return P;
 }
 function statusIds(P) {
@@ -238,8 +238,14 @@ ok('nonpayment, owner: an Update your card link to billing', np.pay && np.pay.hr
 var nh = card('nonpayment', 'host');
 ok('nonpayment, a host: no card link they cannot use, and told to ask the owner', !nh.pay && /Ask the venue owner/.test(nh.words), nh.words);
 var en = card('ended', 'owner'), ar = card('archived', 'owner');
-ok('ended: "This venue\'s subscription has ended"', /This venue's subscription has ended/.test(en.words) && !en.pay, en.words);
-ok('archived: the same', /This venue's subscription has ended/.test(ar.words), ar.words);
+/* INBOX 236.2/237 (11 Nov 2026): a cancelled venue is told its games are off and offered the way back (Start again, to
+   the restart card on Your account), never "subscription has ended ... email support" (a free month never was one). */
+ok('ended: "This venue\'s games are off", it was cancelled, nothing lost', /This venue's games are off/.test(en.words) && /It was cancelled, and nothing has been lost/.test(en.words) &&
+   !/subscription/.test(en.words) && !/support@/.test(en.words), en.words);
+ok('ended, owner: a Start again link to the account page', en.pay && en.pay.href === '/app/billing.html' && /Start again/.test(en.pay.textContent), en.pay && en.pay.href);
+var eh = card('ended', 'host');
+ok('ended, a host: no link they cannot use, told to ask the owner or a manager', !eh.pay && /Ask the venue owner or a manager/.test(eh.words), eh.words);
+ok('archived keeps its own words: "This venue\'s subscription has ended"', /This venue's subscription has ended/.test(ar.words), ar.words);
 ok('no card says "suspended"', [np, nh, en, ar].every(function (x) { return !/suspended/i.test(x.words); }));
 ok('the card is the only thing showing in the page body', np.C.wrap.children.every(function (k) { return k === np.card || k.style.display === 'none'; }),
    np.C.wrap.children.map(function (k) { return k.id + ':' + k.style.display; }).join(','));
@@ -315,6 +321,39 @@ var ROOM = 'Games are paused here tonight. Have a word with the staff.';
   var C = boot({ staff: ['JJ'], role: 'owner' });
   ok('any other refusal passes through unchanged', C.VP.hostRefusal(403, 'Only a manager can do that') === 'Only a manager can do that' &&
      C.VP.hostRefusal(500, ROOM) === ROOM && !C.document.getElementById('vpHoldCard'));
+})();
+
+section('8. The ended check runs FIRST, before any prompt (Dean, 11 Nov 2026, INBOX 236.1)');
+(function () {
+  var on = {}; for (var k in VENUES.JJ) on[k] = VENUES.JJ[k]; on.status = 'active'; on.suspended_reason = null;
+  var C = boot({ staff: ['JJ'], role: 'owner', venue: on });
+  var went = 0;
+  C.VP.endedFirst(function () { went++; }); drainMicrotasks();
+  ok('CONTROL: a venue that is on goes straight to the game, no card', went === 1 && !C.document.getElementById('vpHoldCard'), went);
+  // Cancelled since this page loaded (Bodalla Pub, 11 Nov): the page still holds the "on" venue.
+  C.db.vp_venues[0] = (function () { var o = {}; for (var k in on) o[k] = on[k]; o.status = 'suspended'; o.suspended_reason = 'cancelled'; return o; })();
+  ok('CONTROL: the page\'s own copy still says on', C.VP.getContext().venue.status === 'active');
+  C.VP.endedFirst(function () { went++; }); drainMicrotasks();
+  var c = C.document.getElementById('vpHoldCard');
+  ok('switched off since the page loaded: the venue is read again, the card shows, the game never starts', went === 1 && !!c && /This venue's games are off/.test(text(c)) &&
+     C.wrap.children.every(function (k) { return k === c || k.style.display === 'none'; }), [went, c ? text(c) : 'no card']);
+  C.VP.endedFirst(function () { went++; }); drainMicrotasks();
+  ok('a second tap on the held page: still nothing starts', went === 1);
+  // vp-gaming.js's gateFor (bingo, musical bingo, raffles, members draws): the state rules and the "free game" checks
+  // are only ever reached through VP.endedFirst.
+  var GSRC = readFile('venueplay/app/vp-gaming.js'), asked = 0, fwin = { VP: { endedFirst: function (fn) { asked++; } }, document: C.document };
+  (new Function('window', 'document', GSRC))(fwin, C.document);
+  var started = 0;
+  ['bingo90', 'musical', 'raffle', 'members'].forEach(function (f) { fwin.VPGaming.gateFor(f, function () { started++; }, { gameIsPaid: false }); });
+  ok('gateFor asks VP.endedFirst first for bingo, musical bingo, raffles and members draws, and starts nothing itself', asked === 4 && started === 0, [asked, started]);
+  var fwin2 = { VP: { endedFirst: function (fn) { fn(); } }, document: C.document };
+  (new Function('window', 'document', GSRC))(fwin2, C.document);
+  var s2 = 0; fwin2.VPGaming.gateFor('trivia', function () { s2++; });
+  ok('CONTROL: when the venue is on, gateFor carries on to the game as before', s2 === 1, s2);
+  ['index.html', 'trivia/host.html'].forEach(function (pg) {
+    var src = readFile('venueplay/app/' + pg);
+    ok(pg + ': Start goes through VP.endedFirst before anything else', /VP\.endedFirst\(/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
+  });
 })();
 
 print('');
