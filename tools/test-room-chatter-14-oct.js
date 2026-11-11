@@ -37,7 +37,9 @@ ok('phones re-join on rollcall only, never on host_here', /if\(m\.t==="rollcall"
   var sent = [], now = 100000;
   var Date = { now: function () { return now; } };
   var G = { status: 'running', claims: [] };
-  function $() { return { classList: { add: function () {} }, textContent: '', innerHTML: '' }; }
+  function $() { return { classList: { add: function () {} }, textContent: '', innerHTML: '', setAttribute: function () {} }; }
+  var HQ_LABEL = '';
+  function connQuiet() {}   // 11 Nov 2026 (INBOX 194): the quiet header, not what this section tests
   function send(m) { sent.push(m.t); }
   function sendState() { sent.push('state'); }
   function sendClaimPending() {}

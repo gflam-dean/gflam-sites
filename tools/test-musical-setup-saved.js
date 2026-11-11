@@ -113,7 +113,7 @@ var bootLog = [], started = 0;
 var ready = runLifted(liftCallback(HOST, 'VP.ready().then('), {
   VP: { holdGate: function () { return false; }, enforceShift: function () {}, setGameActive: function () {} },
   libReady: Promise.resolve(), startVenuePrefs: function () { started++; return Promise.resolve(); },
-  window: {}, $: function () { return { textContent: '', value: '' }; }, G: { claims: [] }, tv: ''
+  window: {}, $: function () { return { textContent: '', value: '', setAttribute: function () {} }; }, G: { claims: [] }, tv: ''
 }, bootLog);
 ready({ authed: true, currentVenueId: 'venue-1', role: 'host', venue: { id: 'venue-1', slug: 'test-alpha', status: 'active' } });
 drainMicrotasks();
