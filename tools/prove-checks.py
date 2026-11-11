@@ -654,6 +654,16 @@ MUTATIONS = [
      '    if not present:',
      '    if False and not present:',
      'a PUT Cloudflare accepted but did not bind is reported as set and confirmed'),
+    # THE TEST QUEUE, 11 Nov 2026 (tools/suite-queue.py, merged into release/12nov from
+    # tools/test-queue-cache-11nov). Its suite was on the gate with no row, so section Z was red.
+    ('suite-queue.test.py', 'tools/suite-queue.py',
+     "    if not lines or any(l.strip().startswith('FAIL') for l in lines):",
+     "    if not lines:",
+     'a suite that printed a FAIL line is judged a pass by the queue and cached as green'),
+    ('suite-queue.test.py', 'tools/suite-queue.py',
+     "    return t if t > now else t + 86400",
+     "    return t",
+     'a --stop-before time already past today stops the queue at once instead of tomorrow'),
     # THE PRE-PUSH GATE RECORD, 27 Oct 2026 (tools/gate-record.py, the hook, release.py step 5).
     ('gate-record.test.py', 'tools/gate-record.py',
      '    if age >= max_age_s:',

@@ -1271,6 +1271,18 @@ def local_checks(which):
     Mixing cqw and px in one corner is the fault, not the exact numbers: the two
     move at different rates, so they are only ever correct at one screen width."""
     corners = []
+    def _stretched(src, at):
+        # A RULE PINNED ON BOTH SIDES IS STRETCHED, NOT IN A CORNER. What's on's poster
+        # (.wb-pic, 11 Nov 2026) sets left, right, top and bottom inside its own feature
+        # panel: it fills a box and owns no corner of the stage, yet its "top ... left"
+        # read as a third top-left anchor beside the venue name's 14px. Only the rule's
+        # own declarations are read, so the Mini Bar shape (one side each) still counts.
+        # The rule's own body: a CSS block, or a style="..." attribute (quotes bound it).
+        a = max(src.rfind(c, 0, at) for c in '{"\'')
+        ends = [i for i in (src.find(c, at) for c in '}"\'') if i != -1]
+        body = src[a + 1:min(ends) if ends else len(src)]
+        sides = set(re.findall(r'(?<![-\w])(left|right|top|bottom)\s*:\s*[0-9.]', body))
+        return {'left', 'right'} <= sides or {'top', 'bottom'} <= sides
     for rel in ('venueplay/tv.html', 'venueplay/signage.html',
                 'venueplay/app/musical/screen.html', 'venueplay/app/trivia/screen.html',
                 'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html'):
@@ -1290,11 +1302,11 @@ def local_checks(which):
         # It reported my own documentation and stayed silent on the real rule.
         for m in re.finditer(r'(bottom|top)\s*:\s*([0-9.]+)(cqw|px|cqh|%)[^{}]{0,90}?'
                              r'(left|right)\s*:\s*([0-9.]+)(cqw|px|cqh|%)', src):
-            if not (m.group(5) == '50' and m.group(6) == '%'):
+            if not (m.group(5) == '50' and m.group(6) == '%') and not _stretched(src, m.start()):
                 pinned.setdefault((m.group(1), m.group(4)), set()).add((m.group(3), m.group(6)))
         for m in re.finditer(r'(left|right)\s*:\s*([0-9.]+)(cqw|px|cqh|%)[^{}]{0,90}?'
                              r'(bottom|top)\s*:\s*([0-9.]+)(cqw|px|cqh|%)', src):
-            if not (m.group(2) == '50' and m.group(3) == '%'):
+            if not (m.group(2) == '50' and m.group(3) == '%') and not _stretched(src, m.start()):
                 pinned.setdefault((m.group(4), m.group(1)), set()).add((m.group(6), m.group(3)))
         # left:50% with a translate is CENTRING, not a corner anchor. Counting it
         # made the check report a three-way "% and cqw and px" clash the moment I
@@ -4075,9 +4087,11 @@ def local_checks(which):
              'A venue shown a player\'s words or a Not for me count, an email kept where it should not be, or HQ '
              'never told when a room did not enjoy the night'),
             # D115: Dean's 5 Nov 2026 evening email notes, branch fix/email-copy-8nov.
+            # 51, not 54 (11 Nov 2026): the release/10nov merge c6c3d261 took the grace checks out with the grace
+            # words and set the ledger to 51; this floor was left at 54 and stayed red on release/12nov.
             ('D115. The receipt asks how we are going with signed faces, Manage your plan opens Account > Billing, the reminders carry real numbers, one button style, and the grace and kept-days words stay OFF',
              'test-receipt-survey.js',
-             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 54,
+             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 51,
              'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
              'console, or the emails promising a grace the billing does not give'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
