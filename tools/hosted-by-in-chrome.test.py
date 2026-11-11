@@ -211,10 +211,20 @@ WALL = r'''(function(){
   var mk=document.querySelector(".tv-corner .vn svg, .tv-corner svg");
   var ti=lay && lay.querySelector(".toplbl .tl-night");
   var ring=lay && lay.querySelector(".qfoot"), q=lay && lay.querySelector(".qtext");
+  /* what the room READS first: the highest text (its line box) or panel in the slide, not the slide's own box */
+  var ink=null;
+  if(lay){ var wk=document.createTreeWalker(lay,NodeFilter.SHOW_TEXT,null);
+    while(wk.nextNode()){ var tn=wk.currentNode; if(!tn.nodeValue.trim()) continue; var pe=tn.parentElement; if(!pe || pe.closest(".toplbl") || pe.closest("[hidden]")) continue; var ps=getComputedStyle(pe); if(ps.display==="none"||ps.visibility==="hidden"||ps.opacity==="0") continue;
+      var rg=document.createRange(); rg.selectNodeContents(tn); var rb=rg.getBoundingClientRect(); if(!(rb.width>0&&rb.height>0)) continue;
+      /* the ink, not the line box: the top of the tallest letter painted (a display face has a tall empty ascent above it) */
+      var gt=rb.top; try{ var cx=(window.__vpInkC||(window.__vpInkC=document.createElement("canvas"))).getContext("2d"); cx.font=ps.fontStyle+" "+ps.fontWeight+" "+ps.fontSize+" "+ps.fontFamily;
+        var tx=ps.textTransform==="uppercase"?tn.nodeValue.toUpperCase():tn.nodeValue, mt=cx.measureText(tx.trim()); if(mt.fontBoundingBoxAscent && mt.actualBoundingBoxAscent) gt=rb.top+(mt.fontBoundingBoxAscent-mt.actualBoundingBoxAscent); }catch(e){}
+      if(ink===null||gt<ink) ink=gt; }
+    [".qfoot",".pod",".podium > *","#tvBoardRows .brow",".answers .ans",".qrbig",".codebox"].forEach(function(sel){ [].forEach.call(lay.querySelectorAll(sel),function(e){ var r=R(e); if(r && (ink===null||r[1]<ink)) ink=r[1]; }); }); }
   return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(ln), name: bold ? bold.textContent : null,
     lbl: ln ? ln.textContent.slice(0, ln.textContent.length - (bold ? bold.textContent.length : 0)) : null, lineFs: ln ? parseFloat(getComputedStyle(ln).fontSize) : 0, lineClip: ln ? ln.scrollWidth > ln.clientWidth + 1 : false,
     img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
-    tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids, top: top, ring: R(ring), q: R(q) });
+    tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids, top: top, ink: ink, ring: R(ring), q: R(q) });
 })()'''
 
 
@@ -228,6 +238,7 @@ def same(a, b, tol=1.0):
 
 names = {}
 TOPS = {}       # (width, height, slide) -> {variant: {top, ring, q}}: the slide's height on every variant
+MIN_INK = 0.035  # the same, to the ink of the first text or panel painted (the winners heading, a score row, the timer): 38px at 1080, 25px at 720
 MIN_GAP = 0.015  # the clear room under the title block, as a share of the height (16px at 1080, 11px at 720)
 
 
@@ -257,6 +268,9 @@ def wall_checks(tag, m, base, host_logo, venue):
     top = m.get('top')
     ok('%s: a little clear room under the line before the slide starts (%.0fpx, at least %.0f)' % (tag, (top or 0) - hb[3], MIN_GAP * H),
        top is not None and top - hb[3] >= MIN_GAP * H - 0.5, [top, hb])
+    ink = m.get('ink')
+    ok('%s: and the same clear room under the line to the first thing the room reads, the heading, the timer or the first row (%.0fpx, at least %.0f)' % (tag, (ink or 0) - hb[3], MIN_INK * H),
+       ink is not None and ink - hb[3] >= MIN_INK * H - 0.5, [ink, hb])
     ok('%s: the whole slide is on the screen' % tag, all(k[1] >= 0 and k[3] <= H and k[0] >= 0 and k[2] <= W for k in m.get('kids') or []), [k for k in m.get('kids') or [] if k[3] > H][:2])
     L = m.get('logo') if venue != 'none' else m.get('tag')
     img = m.get('img')

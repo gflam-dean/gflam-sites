@@ -87,7 +87,7 @@
      question and the timer land on the same line on a crest, a wordmark, no venue logo and no host logo, with a
      little clear room under the line. The game's name is marked data-fit-ignore so the fit does not treat it as
      part of the slide it is lifting the slide clear of. Nothing moves when there is no card. */
-  var BAND = 0.16;
+  var BAND = 0.172;
 
   function css() {
     if (d.getElementById("vpHostedByCss")) return;
