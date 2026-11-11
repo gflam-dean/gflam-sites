@@ -2357,7 +2357,8 @@
       /* "All venues" only when there IS more than one (Dean, 5 Nov 2026, INBOX item 21c). With one venue the name says it. */
       var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues"
                 : (names.length ? names.join(", ") : "No venues");
-      var roleWord = h.is_owner ? "Owner" : (h.role === "manager" ? "Manager" : "Host");
+      /* The owner row is the ACCOUNT HOLDER (Dean, 11 Nov 2026, INBOX 242: "Paul, Account holder (owner)"). */
+      var roleWord = h.is_owner ? "Account holder" : (h.role === "manager" ? "Manager" : "Host");
       /* The owner and managers get the full mobile from the Worker (INBOX items 21b, 54); the last three digits only as a fallback. */
       var sub = roleWord + " · " + scope + (h.mobile ? " · " + h.mobile : (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : ""));
       // A full-access login (the owner's, or one HQ set up) is owner-only, and even the owner

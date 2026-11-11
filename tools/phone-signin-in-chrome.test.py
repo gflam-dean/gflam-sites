@@ -270,6 +270,9 @@ try:
        (up[0]['args'].get('data') or {}).get('full_name') == 'Test Host', up)
     ok('the code box shows where it went, with "Code not arriving? Carry on for now"', '0452 510 904' in text(sid, 'vpAySentTo') and visible(sid, 'vpAyLater'))
     shot(sid, '5-about-you-code')
+    # Auth's phone change puts the verified number on the login, so the Worker reads it from now (Dean, 11 Nov 2026,
+    # INBOX 248: the emailed link stops once the name and mobile are in, not at the first tap).
+    S.W.seed('auth', [{'id': UID, 'email': 'owner@test.local', 'phone': '61452510904', 'user_metadata': {'full_name': 'Olive Owner'}}])
     type_in(sid, 'vpAyCode', '123456')
     click(sid, 'vpAyVerify')
     S.until(sid, '!!document.getElementById("vpAyGo")', 10)

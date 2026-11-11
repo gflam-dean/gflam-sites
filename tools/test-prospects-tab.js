@@ -170,8 +170,8 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   r = await setUp({ name: 'Their Second Venue', email: 'Owner@TwoVenues.example', mobile: '0400 999 888' });
   var sv = DB.vp_venues.filter(function (x) { return x.name === 'Their Second Venue'; })[0] || {};
   var svStaff = DB.vp_venue_staff.filter(function (x) { return x.venue_id === sv.id; });
-  check('the email AND the mobile are both on one existing login: that login is reused (no new login), as the new venue\'s manager',
-    r.status === 200 && AUTH.length === authBefore && svStaff.length === 1 && svStaff[0].auth_user_id === OLD.id && svStaff[0].role === 'manager' && r.body.login && r.body.login.existing === true, [r.body, svStaff]);
+  check('the email AND the mobile are both on one existing login: that login is reused (no new login), as the new venue\'s account holder (owner, Dean 11 Nov 2026, INBOX 242)',
+    r.status === 200 && AUTH.length === authBefore && svStaff.length === 1 && svStaff[0].auth_user_id === OLD.id && svStaff[0].role === 'owner' && r.body.login && r.body.login.existing === true, [r.body, svStaff]);
   check('so "Choose another venue" lists both: the login has a staff row at each', DB.vp_venue_staff.filter(function (x) { return x.auth_user_id === OLD.id; }).map(function (x) { return x.venue_id; }).sort().join() === [OLDV.id, sv.id].sort().join());
   check('the two venues stay separate accounts: a NEW account record for the new venue, the old one untouched', sv.founding_id && sv.founding_id !== OLDV.founding_id &&
     DB.venueplay_founding.filter(function (f) { return f.id === U(702); })[0].stripe_subscription_id === 'sub_old' && !DB.venueplay_founding.filter(function (f) { return f.id === sv.founding_id; })[0].stripe_subscription_id, sv);

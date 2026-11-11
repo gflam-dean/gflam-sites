@@ -908,7 +908,7 @@
   "counted_by": "lines"
  },
  "tools/test-phone-signin.js": {
-  "checks": 81,
+  "checks": 82,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -1331,6 +1331,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-welcome-details.js": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
  "tools/test-welcome-email-renders.js": {
   "checks": 38,
   "counted_by": "lines"
@@ -1473,6 +1477,10 @@
  },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 376,
+  "counted_by": "lines"
+ },
+ "tools/welcome-name-in-chrome.test.py": {
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/whats-on-in-chrome.test.py": {
