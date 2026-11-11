@@ -329,6 +329,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-fade.js"></script>   <!-- every clip fades in and out; Next and Pause fade quickly (INBOX 260, 11 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
@@ -1044,25 +1045,46 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       var AC=window.AudioContext||window.webkitAudioContext; if(!AC){ _graphDead=true; return; }
       if(!_ac2) _ac2=new AC();
       _srcNode=_ac2.createMediaElementSource(clipAudio);
-      _boostNode=_ac2.createGain(); _boostNode.gain.value=_boost;
+      _boostNode=_ac2.createGain(); _boostNode.gain.value=_boost*fadeLevel();
       _limiter=_ac2.createDynamicsCompressor();
       // A limiter, not a squash: leave everything under the ceiling alone, catch the peaks.
       _limiter.threshold.value=-6; _limiter.knee.value=0; _limiter.ratio.value=20;
       _limiter.attack.value=0.003; _limiter.release.value=0.25;
       _srcNode.connect(_boostNode); _boostNode.connect(_limiter); _limiter.connect(_ac2.destination);
+      applyFade(fadeLevel());   // the fade moves from the element to the gain in one step, never on both at once
     }catch(e){ _graphDead=true; _srcNode=null; }
   }
   function setBoost(x){
     var v=Number(x); if(!isFinite(v)) return;
     _boost=Math.max(1, Math.min(4, v));
-    if(_boostNode){ try{ _boostNode.gain.value=_boost; }catch(e){} }
+    applyFade(fadeLevel());   // the slider moves the room; the fade rides on top of it
   }
+  /* FADES (INBOX 260, Dean 11 Nov 2026). /app/vp-fade.js says how loud the clip is right now (0 to 1):
+     1.5 s in, 2.5 s out, half a second on Next or Pause. It goes on the gain AFTER the Room volume
+     boost (gain = Room volume x level), or on the element before that graph is built, never both.
+     So the fade scales the slider and never overrides it. If the shared file did not load, the clip
+     plays as it always did, at full level. */
+  function applyFade(lv){
+    if(_boostNode){ try{ clipAudio.volume=1; _boostNode.gain.value=_boost*lv; }catch(e){} }
+    else { try{ clipAudio.volume=lv; }catch(e){} }
+  }
+  var _clipFade=window.VPFade ? VPFade.create({ el:clipAudio, apply:applyFade }) : null;
+  function fadeLevel(){ return _clipFade ? _clipFade.level() : 1; }
+  /* NEXT MID-CLIP fades the old clip out in half a second, then the new one starts from 0 and fades in.
+     A clip nobody can hear (blocked, paused, none) is switched at once. */
   function playClip(url){
     if(!url) return;
+    _hostPaused=false;
+    if(_clipFade) _clipFade.out(function(){ startClip(url); }, "switch");
+    else startClip(url);
+  }
+  function startClip(url){
     try{
       clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
-      _hostPaused=false;
-      clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
+      clipAudio.src=url; clipAudio.currentTime=0;
+      if(_clipFade) _clipFade.start(); else clipAudio.volume=1.0;   // always from 0 at a clip's start, never left at 0 by the last one
+      /* The host paused (or a claim came in) during the half-second fade: the new song is loaded and waits for Play. */
+      if(_hostPaused) return;
       var pr=clipAudio.play();
       /* A play() that neither rejects nor starts (the clip sat at 0:00 on Dean's TV for song 1): look again
          after three seconds and call a clip that has not moved blocked, instead of waiting for song 2. */
@@ -1076,7 +1098,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       else buildBoost();
     }catch(e){ audioBlocked(); }
   }
-  function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
+  function stopClip(){ if(_clipFade) _clipFade.stop(); try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
   // "Reveal when the clip ends" is this event. The timer above is only the safety net.
   clipAudio.addEventListener("ended", function(){ if(_revealMode==="end") doReveal(); });
 
@@ -1190,8 +1212,14 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     }
     else if(m.t==="volume"){ setBoost(m.level); }   // the host turning the room up
     else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
-      if(m.action==="pause"){ _hostPaused=true; try{ clipAudio.pause(); }catch(e){} }
-      else if(m.action==="play"){ _hostPaused=false; try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
+      /* Pause fades out in half a second, then pauses. A switch still fading lands paused (startClip reads _hostPaused). */
+      if(m.action==="pause"){ _hostPaused=true; if(_clipFade) _clipFade.out(function(){ try{ clipAudio.pause(); }catch(e){} }, "pause"); else { try{ clipAudio.pause(); }catch(e){} } }
+      else if(m.action==="play"){
+        _hostPaused=false;
+        if(_clipFade && _clipFade.pending()==="switch") return;   // the next song is about to start on its own
+        if(_clipFade) _clipFade.resume();                         // back up in half a second (and a waiting pause is dropped)
+        try{ if(clipAudio.paused){ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); } }catch(e){}
+      }
     }
     else if(m.t==="players"){
       /* kept, never painted: no player count on the TV (Dean, 4 Nov 2026 evening); the host console has it */

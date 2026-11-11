@@ -523,6 +523,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-fade.js"></script>   <!-- every clip fades in and out; Next and Pause fade quickly (INBOX 260, 11 Nov 2026) -->
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
@@ -1082,21 +1083,31 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var AC=window.AudioContext||window.webkitAudioContext; if(!AC){ _hdead=true; return; }
       if(!_hac) _hac=new AC();
       _hsrc=_hac.createMediaElementSource(audio);
-      _hgain=_hac.createGain(); _hgain.gain.value=_hboost;
+      _hgain=_hac.createGain(); _hgain.gain.value=_hboost*hostFadeLevel();
       _hlim=_hac.createDynamicsCompressor();
       _hlim.threshold.value=-6; _hlim.knee.value=0; _hlim.ratio.value=20;
       _hlim.attack.value=0.003; _hlim.release.value=0.25;
       _hsrc.connect(_hgain); _hgain.connect(_hlim); _hlim.connect(_hac.destination);
+      hostApplyFade(hostFadeLevel());   // the fade moves from the element to the gain in one step, never on both at once
     }catch(e){ _hdead=true; _hsrc=null; }
   }
   function setRoomVolume(pct){
     var v=Math.max(100, Math.min(400, Number(pct)||240));
     _hboost=v/100;
-    if(_hgain){ try{ _hgain.gain.value=_hboost; }catch(e){} }
+    hostApplyFade(hostFadeLevel());   // the slider moves the level; the fade rides on top of it
     var lbl=$("volVal"); if(lbl) lbl.textContent=v+"%";
     try{ localStorage.setItem("vpMusicVolume", String(v)); }catch(e){}
     bcast({ t:"volume", level:v/100 });   // the screen is usually the one actually making the noise
   }
+  /* FADES (INBOX 260, Dean 11 Nov 2026), the same /app/vp-fade.js as the TV: 1.5 s in, 2.5 s out, half a
+     second on Next or Pause. On the gain after the Room volume boost (gain = Room volume x level), or on the
+     element before that graph is built, never both, so it scales the slider and never overrides it. */
+  function hostApplyFade(lv){
+    if(_hgain){ try{ audio.volume=1; _hgain.gain.value=_hboost*lv; }catch(e){} }
+    else { try{ audio.volume=lv; }catch(e){} }
+  }
+  var _hostFade=window.VPFade ? VPFade.create({ el:audio, apply:hostApplyFade }) : null;
+  function hostFadeLevel(){ return _hostFade ? _hostFade.level() : 1; }
   function fmtTime(s){ s=Math.max(0,Math.floor(s||0)); var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
   function resetClipUI(){ $("clipFill").style.width="0%"; $("clipElapsed").textContent="0:00"; $("clipTotal").textContent="0:30"; }
   function updateClipUI(){
@@ -1196,20 +1207,29 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          that can make a sound, and staying muted means the song plays to nobody.
          That is what happens when a host tests on their own, and when a venue's
          TV never came up. So: be the sound system, and say so. */
-      audio.crossOrigin="anonymous";   // before the src, or the boost graph would get silence
-      audio.src=song.previewUrl; audio.volume=1.0;
-      audio.muted = !(G.hostMonitor || soundIsOnlyHere());
       noteIfAlone();
       resetClipUI();
-      var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
       $("playPauseBtn").disabled=false; $("playPauseBtn").textContent="Pause";
+      /* Next mid-clip: the old clip fades out in half a second, then this one starts from 0 and fades in.
+         A clip nobody hears here (muted, paused, none) switches at once, inside the host's own tap. */
+      var url=song.previewUrl;
+      if(_hostFade) _hostFade.out(function(){ hostStartClip(url); }, "switch"); else hostStartClip(url);
     } else {
+      if(_hostFade) _hostFade.stop();
       try{ audio.pause(); }catch(e){} audio.removeAttribute("src");
       warn.classList.remove("hidden"); resetClipUI(); $("playPauseBtn").disabled=true;
     }
     prefetchNext();
     renderLive();
     syncPlayBtn();   // after the first song this flips to "Play next song"
+  }
+  function hostStartClip(url){
+    audio.crossOrigin="anonymous";   // before the src, or the boost graph would get silence
+    audio.src=url;
+    if(_hostFade) _hostFade.start(); else audio.volume=1.0;   // always from 0 at a clip's start, never left at 0 by the last one
+    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    resetClipUI();
+    var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
   }
   // First press reads "Play song"; once a song is on, it becomes "Play next song".
   function syncPlayBtn(){ var b=$("playNextBtn"); if(b) b.textContent=(G.playedOrder.length?"Play next song":"Play song"); }
@@ -1272,8 +1292,20 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
   }
   function togglePlayPause(){ if(!audio.src) return;
-    if(audio.paused){ if(audio.ended) return; var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
-    else { audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
+    var fading = _hostFade ? _hostFade.pending() : "";
+    /* Pause tapped while the next song is still fading in over the last one: that song lands now, then pauses. */
+    if(fading==="switch" && _hostFade.flush()){ try{ audio.pause(); }catch(e){} setPlayPause(false); bcast({ t:"clipctl", action:"pause" }); return; }
+    if(audio.paused || fading==="pause"){   // a Pause still fading out is a paused clip to the host
+      if(audio.ended) return;
+      if(_hostFade) _hostFade.resume();
+      if(audio.paused){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+      setPlayPause(true); bcast({ t:"clipctl", action:"play" });
+    }
+    else {
+      /* Pause fades out over half a second, then pauses; the button says Play at once. */
+      if(_hostFade) _hostFade.out(function(){ try{ audio.pause(); }catch(e){} }, "pause"); else audio.pause();
+      setPlayPause(false); bcast({ t:"clipctl", action:"pause" });
+    }
   }
   /* A claim pauses the room. The TV already stopped its clip on claim_pending; this device
      kept running, so the Pause button read "Pause" while the room heard nothing and the first
@@ -1286,7 +1318,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G._pausedForClaim && audio.src && audio.paused && !audio.ended){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); }
     G._pausedForClaim=false;
   }
-  function stopAudio(){ try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
+  function stopAudio(){ if(_hostFade) _hostFade.stop(); try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
 
   // ---- Spotify affordance (for venues who prefer full tracks off their own subscription) ----
   function spotifyLinks(){
