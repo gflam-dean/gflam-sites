@@ -281,8 +281,8 @@ def wall_checks(tag, m, base, host_logo, venue, mode):
             # rule alone made it about 20px tall at 720.
             words = round((m['lblR'][3] - m['lblR'][1]) + m.get('gap', 0) + 1.15 * m.get('nameFs', 0)) if m.get('lblR') else 0   # HOSTED BY over one line of the name
             want = max(want, words)
-            ok('%s: the host\'s logo is 70%% of the venue logo\'s height or as tall as HOSTED BY over one line of the name, whichever is more (%.0f against %.0f), or held to 13%% of the width' % (tag, ih, want),
-               abs(ih - want) <= 1.5 or iw >= 0.13 * W - 1.5, [ih, iw, want])
+            ok('%s: the host\'s logo is 70%% of the venue logo\'s height or as tall as HOSTED BY over one line of the name, whichever is more (%.0f against %.0f)' % (tag, ih, want),
+               abs(ih - want) <= 1.5, [ih, iw, want])   # the 13% width cap narrows the box, never its height (object-fit), so no escape for it (15 Nov 2026: the escape hid a full-height logo)
             ok('%s: the host\'s logo is at least as tall as HOSTED BY over one line of the name (%.0f against %.0f)' % (tag, ih, words),
                words > 0 and ih >= words - 1.5, [ih, words])
     else:
