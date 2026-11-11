@@ -14,6 +14,8 @@ player would:
   - One line across: the right-hand column stays faint (rows only, unchanged for existing venues); the 2nd row on the
     real-song-centre card is bright
   - the TV: "Any line (across, down or diagonal)" for the pattern, and "Any line wins a Meat tray"
+  - 256.2 (Dean's 5:39pm screenshot: a dim "I've got a line" over a finished row): that was a SENT claim, the button
+    disabled while the host checks; the note saying so went after 6 s. Now it stays until the host answers
 Takes /tmp/vp-heavy.lock (VP_WAIT_LOCK seconds to wait).
 
     python3 tools/any-line-in-chrome.test.py
@@ -87,6 +89,12 @@ def run(B, base):
             P.js('document.getElementById("bingoBtn").click()'); time.sleep(0.8)
             sent = P.js('document.body.innerText.indexOf("Sent. The host is checking your card")>=0 || document.body.innerText.indexOf("YOU WON")>=0 || document.body.innerText.toLowerCase().indexOf("you won")>=0')
             ok('tapped: the claim is SENT (the phone\'s own check agrees with the Worker\'s)', bool(sent), P.js('document.body.innerText.slice(0,400)'))
+            time.sleep(7.0)   # the old note went after 6 s and left a dim button with no words (Dean's 5:39pm screenshot, 256.2)
+            st = P.obj('JSON.stringify({ dis: document.getElementById("bingoBtn").disabled, note: (function(n){ return (n && !n.classList.contains("hidden") && n.getBoundingClientRect().height>0) ? n.textContent : ""; })(document.getElementById("bingoNote")) })') or {}
+            ok('7 s later, the host still checking: the button is dim (disabled) AND the note still says "Sent. The host is checking your card"', st.get('dis') is True and 'The host is checking your card' in (st.get('note') or ''), st)
+            P.js(say('vp-' + ROOM, [{'t': 'resume', 'pid': None}])); time.sleep(0.5)
+            st = P.obj('JSON.stringify({ dis: document.getElementById("bingoBtn").disabled, note: (document.getElementById("bingoNote")||{}).textContent||"" })') or {}
+            ok('the host waves it off: the button is back and the note says so', st.get('dis') is False and 'not a winner yet' in (st.get('note') or ''), st)
         finally:
             P.close()
 

@@ -183,5 +183,71 @@ pass("the musical object is merged, not replaced (other settings and games kept)
 pass("the snapshot table is locked (RLS on, nothing granted)", /alter table public\.vp_backup_186_game_prefs enable row level security/.test(body) && /revoke all on public\.vp_backup_186_game_prefs from anon, authenticated/.test(body));
 pass("vp_music_games.pattern is allowed 'any_line'", /'any_line', 'one_line', 'two_lines', 'four_corners', 'full_house'/.test(body) && /add value if not exists/.test(body));
 
+print("\n7. 256.2, DEAN'S 5:39PM SCREENSHOT: THE DIM BUTTON WAS A CLAIM WITH THE HOST, AND NOTHING SAID SO");
+(function(){
+  /* The button in the picture: background rgb(144,21,83), words rgb(144,144,145) (sampled from
+     reports/musical-live-11nov/dean-phone-1739-faint-button.png). Work out both states from the page's own CSS. */
+  var ink = (PLAY.match(/--ink:#([0-9A-Fa-f]{6})/) || [])[1] || "000000";
+  var INK = [0, 2, 4].map(function(k){ return parseInt(ink.substr(k, 2), 16); });
+  var op = parseFloat((PLAY.match(/#vCard \.bingoBtn:disabled\{opacity:([\d.]+)\}/) || [])[1]);
+  var fm = PLAY.match(/#vCard \.bingoBtn\.faint\{background:rgba\((\d+),(\d+),(\d+),([\d.]+)\);color:rgba\(255,255,255,([\d.]+)\)\}/);
+  function over(c, a){ return c.map(function(v, k){ return Math.floor(v * a + INK[k] * (1 - a)); }); }
+  var disBg = over([255, 31, 142], op), disTx = over([255, 255, 255], op);
+  var faintBg = fm ? over([+fm[1], +fm[2], +fm[3]], +fm[4]) : [0, 0, 0], faintTx = fm ? over([255, 255, 255], +fm[5]) : [0, 0, 0];
+  function near(a, b){ return Math.abs(a[0] - b[0]) <= 3 && Math.abs(a[1] - b[1]) <= 3 && Math.abs(a[2] - b[2]) <= 3; }
+  pass("the picture is the DISABLED button (a claim sent, the host checking): pink and white at " + op + " over the page = " + disBg + " / " + disTx, near(disBg, [144, 21, 83]) && near(disTx, [144, 144, 145]), [disBg, disTx]);
+  pass("and NOT the faint class (that is " + faintBg + " / " + faintTx + ")", !near(faintBg, [144, 21, 83]) && !near(faintTx, [144, 144, 145]), [faintBg, faintTx]);
+
+  /* The fix: while the claim is with the host, the note says so, and does not time out after 6 seconds. */
+  var timers = [], els = {};
+  function el(id){ if(!els[id]) els[id] = { id: id, innerHTML: "", textContent: "", className: "bingonote hidden", disabled: false,
+    classList: { _c: function(){ return (els[id].className || "").split(/\s+/).filter(Boolean); },
+      contains: function(c){ return this._c().indexOf(c) >= 0; },
+      add: function(c){ var a = this._c(); if(a.indexOf(c) < 0) a.push(c); els[id].className = a.join(" "); },
+      remove: function(c){ els[id].className = this._c().filter(function(x){ return x !== c; }).join(" "); },
+      toggle: function(c, on){ if(on === undefined) on = !this.contains(c); if(on) this.add(c); else this.remove(c); } } }; return els[id]; }
+  var env = {
+    $: el, P: { claimPending: false, won: false, active: true, cells: CARD, gameId: "g1" },
+    setTimeout: function(f, ms){ timers.push({ f: f, at: ms }); return timers.length; }, clearTimeout: function(i){ if(timers[i - 1]) timers[i - 1].f = null; },
+    checkPattern: function(){ return true; }, sayNotYet: function(){}, send: function(){},
+    playerPost: function(){ return new Promise(function(){}); },   // the host has not answered yet
+    _aw: 1
+  };
+  var names = Object.keys(env);
+  var src = "var _noteT=null;\n" + grab("setMsg", PLAY) + "\n" + grab("noteBingo", PLAY) + "\n" + grab("hideBingoNote", PLAY) + "\n" +
+            ((PLAY.match(/var PENDING_NOTE=[^\n]*?_pendNote=false;/) || [""])[0]) + "\n" + grab("pendingNote", PLAY) + "\n" + grab("paintHint", PLAY) + "\n" + grab("pressBingo", PLAY) +
+            "\nreturn { press: pressBingo, note: noteBingo, pending: pendingNote, hide: hideBingoNote };";
+  el("pMsg"); el("noteHint");
+  var api = new Function(names.join(","), src).apply(null, names.map(function(k){ return env[k]; }));
+  function noteUp(){ var n = el("bingoNote"); return !n.classList.contains("hidden") ? n.innerHTML : ""; }
+  api.press();
+  pass("tapped with a finished line: the claim is sent and the button disabled", env.P.claimPending === true && el("bingoBtn").disabled === true);
+  pass("the note says the host is checking", /The host is checking your card/.test(noteUp()), noteUp());
+  timers.forEach(function(t){ if(t.f) t.f(); });   // every timer runs out: 6 s, and longer
+  pass("and still says so after every timer has run out (it went after 6 s, the dim button left with no words)", /The host is checking your card/.test(noteUp()), noteUp());
+  api.pending(true);
+  pass("a song played while waiting (renderCard) keeps it up", /The host is checking your card/.test(noteUp()), noteUp());
+  api.note("The host checked your card and it is not a winner yet. Keep playing!", "no");
+  api.pending(false);
+  pass("the host's answer replaces it, and the end of the wait does not hide that answer", /not a winner yet/.test(noteUp()), noteUp());
+  api.pending(true); api.pending(false);
+  pass("a claim that ends some other way (a new game, a winner) takes the note down", noteUp() === "", noteUp());
+})();
+(function(){
+  /* The centre square in the picture reads "Free" with a tick. That is the FREE square, not a song called Free: the
+     Worker puts 0 at index 12 on every card it deals, phone or paper, even when the playlist has a song called "Free". */
+  var deck = SONGS.slice(); deck.unshift({ id: "free-song", title: "Free" });
+  var seen = 0, wrong = 0;
+  for (var t = 0; t < 25; t++){
+    var c = new Function("randInt", grab("generateMusicCard", W) + "\nreturn generateMusicCard;")(function(n){ return (t * 7) % n; })(deck);
+    if (c[12] !== 0) wrong++;
+    for (var i = 0; i < 25; i++) if (c[i] && c[i].title === "Free") seen++;
+  }
+  pass("every dealt card has the FREE square at index 12 (0), even with a song called \"Free\" in the deck", wrong === 0, wrong);
+  pass("a song called \"Free\" is dealt like any other song, never into the centre", seen > 0, seen);
+  pass("so the phone and the Worker both count the centre as covered: they agree (a centre left out by one of them would split them)",
+    workerCheck("one_line", CARD, played([10, 11, 13, 14])).valid === true && phoneFor("one", [10, 11, 13, 14], [10, 11, 13, 14]).marked() === true);
+})();
+
 print("\n" + (ran - bad) + " of " + ran + " checks passed" + (bad ? "  (" + bad + " FAILED)" : ""));
 if (bad) throw new Error(bad + " failed");
