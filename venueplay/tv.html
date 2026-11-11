@@ -654,6 +654,7 @@
     VPTvHold.intro({ t0:t0 });
   }catch(e){} })();
 </script>
+<script src="/app/vp-fresh.js"></script>   <!-- a release that goes out while this screen is up reaches it (INBOX 282.9, 12 Nov 2026) -->
 <script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared with trivia and musical bingo (number bingo, 12 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 <script src="/app/vp-tvapp.js"></script>   <!-- the Samsung and LG apps (&app=tizen|webos); does nothing anywhere else -->
@@ -2557,6 +2558,18 @@
      reload stops waiting for it. Longer than BINGO_LIVE_MS so a real round is never
      interrupted, far shorter than the 90 minute host-silence timeout. */
   var STUCK_MS=3*60*1000;
+  /* A NEW RELEASE REACHES A SCREEN THAT IS ALREADY UP (Dean, live play on The Mini Bar with the Kogan TV app, 12 Nov 2026,
+     INBOX 282.9: the old musical intro, no fades, the old raffle look). Every file is served no-cache, so any LOAD is live,
+     but a TV loads this page once and keeps it for days. /app/vp-fresh.js looks at the site every 10 minutes; when the
+     screen there is not the one running here, this page reloads: at once on the ads, otherwise when the game on the wall
+     ends (reloadWhenIdle, as a room-formats change does), never over a game. */
+  try{
+    if(window.VPFresh) VPFresh.start({ onNew: function(){
+      try{ sessionStorage.setItem("vpTvReloadWhy","new-release"); }catch(e){}
+      if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("new-release"); else location.reload(); return; }
+      reloadWhenIdle=true; armStuckReload();
+    } });
+  }catch(e){}
   /* THE GAME IS OVER WHEN THE ADS GO UP (live play audit, 20 Oct 2026). The ads never touched the
      bingo state, so the last winner rode along underneath them: End game, then Open lobby, and the
      console's mode:"bingo" repainted "BINGO! Sam WINS the meat tray" over the new lobby, and the
