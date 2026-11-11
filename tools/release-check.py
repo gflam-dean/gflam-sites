@@ -3695,6 +3695,41 @@ def local_checks(which):
                why='run python3 tools/check-migrations-parse.py. A migration that does not parse stops in the SQL '
                    'editor with nothing changed, on the night it was needed')
 
+        # D55 (INBOX 217, Dean 11 Nov 2026): Dean runs migrations EARLY, so every migration this release
+        # ADDS must already be on the live database before the push. The "NOT RUN" comment in a file is
+        # never trusted: tools/check-migrations-live.py reads what each new migration creates and asks the
+        # live database, read-only (GET selects, limit 1, and the REST schema document for functions).
+        # THE ONE PRODUCTION QUESTION IN THE LOCAL HALF, on purpose: it has to be asked before the push,
+        # and the pre-push hook runs --local. It asks nothing when the branch adds no migration (main
+        # itself, after a release), and nothing in a prove-checks copy (no .git, so a note, never a pass).
+        # Its logic is proven without a network by tools/migrations-live.test.py.
+        head('D55. Every migration this release adds is already live')
+        t = os.path.join(ROOT, 'tools', 'check-migrations-live.py')
+        if not os.path.isdir(os.path.join(ROOT, '.git')) and not os.path.isfile(os.path.join(ROOT, '.git')):
+            note('every migration this release adds is already on the live database',
+                 'SKIPPED, not a git checkout: nothing to compare with origin/main')
+        elif not os.path.isfile(t):
+            ok('every migration this release adds is already on the live database', False,
+               why='tools/check-migrations-live.py is missing')
+        else:
+            try:
+                r = subprocess.run([sys.executable, t], capture_output=True, text=True, timeout=300, cwd=ROOT)
+                out = ((r.stdout or '') + (r.stderr or '')).strip()
+                rc = r.returncode
+            except Exception as e:
+                out, rc = 'could not run it: %s' % type(e).__name__, 1
+            lines = out.splitlines()
+            bad = [l.strip()[4:].strip() for l in lines if l.strip().startswith('FAIL')]
+            unseen = [l.strip() for l in lines if 'cannot be probed' in l]
+            m = re.search(r'(\d+) of (\d+) checks passed', out)
+            for u in unseen:
+                note('a migration REST cannot see', u[4:].strip()[:160])
+            ok('every migration this release adds is already on the live database',
+               rc == 0 and not bad and bool(m) and m.group(1) == m.group(2),
+               detail=(m.group(0) if m else (lines[-1][:120] if lines else 'no output')),
+               why=('; '.join(b[:200] for b in bad[:3]) if bad else (lines[-1][:160] if lines else 'no output'))
+                   + '. Run python3 tools/check-migrations-live.py')
+
         head('D20. A host route cannot lose its staff check, nor a draw its generator')
         t = os.path.join(ROOT, 'tools', 'check-worker-guards.py')
         if not os.path.isfile(t):
