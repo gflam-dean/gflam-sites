@@ -220,7 +220,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 114,
+  "checks": 115,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {

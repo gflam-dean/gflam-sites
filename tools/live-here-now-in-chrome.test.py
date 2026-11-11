@@ -473,6 +473,8 @@ def main():
     print('\nTHE PAGE FILE')
     check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
           '<script src="/app/vp-analytics.js" defer></script>' in HTML and 'vp-pixel' not in HTML and 'fbq(' not in HTML)
+    check('the copyright line is lowercase like every other page: "trading as venueplay" (Dean, 4 Nov 2026)',
+          'trading as venueplay' in HTML and 'trading as VenuePlay' not in HTML)
     check('the foot carries the venueplay wordmark (data-vp-mark="wordmark"), linked home',
           'data-vp-mark="wordmark"' in HTML and 'class="mark" href="/" aria-label="venueplay home"' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
