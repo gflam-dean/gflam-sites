@@ -88,8 +88,8 @@ check('it says games run as normal, because the tick gates no game', /your games
 check('it links to the Terms', !!walk(c, function (e) { return e.tagName === 'A' && e.getAttribute('href') === '/terms'; }));
 var tick = P.document.getElementById('vpTermsTick'), by = P.document.getElementById('vpTermsBy'), go = P.document.getElementById('vpTermsGo');
 check('there is a tick box, a name field and an Accept button', !!tick && tick.getAttribute('type') === 'checkbox' && !!by && !!go && go.textContent === 'Accept');
-check('the tick names section 6, the date and the venue, then the onboarding sentence word for word',
-  /I accept section 6 of the Terms \(effective 28 October 2026\) for Tugun Bowls Club\. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules\. venueplay supplies the software only\./.test(t), t);
+check('the tick names the Terms, the date and the venue, then the onboarding sentence word for word',
+  /I accept the Terms \(effective 28 October 2026\) for Tugun Bowls Club\. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules\. venueplay supplies the software only\./.test(t), t);
 check('the name starts as the staff member\'s own name where we have one', by.value === 'Jane Smith', by.value);
 check('the tick starts unticked: an acceptance is an act, never a default', tick.checked === false);
 check('the card sits at the top of the page content, above the game picker', P.wrap.children[0] === c && P.wrap.children[1] === P.view);
@@ -113,7 +113,8 @@ check('a host gets no tick and no Accept button', !H.document.getElementById('vp
 
 var A = page(); A.VP.termsCard(ctxFor('admin'));
 var at = card(A) ? allText(card(A)) : '';
-check('HQ View as is told the venue has not accepted, and that it cannot accept for them', /has not accepted section 6/.test(at) && /HQ View as cannot accept it for them/.test(at), at);
+check('HQ View as is told, in plain words, the venue has not accepted and only its owner or a manager can', /Tugun Bowls Club hasn't accepted the updated Terms yet/.test(at) && /Only the venue's owner or a manager can accept them when they sign in/.test(at), at);
+check('no "section 6" jargon on any version of the card, venue or HQ (Dean, 11 Nov 2026)', [P, H, A].every(function (X) { return card(X) && !/section 6/i.test(allText(card(X))); }) && /Read the Terms/.test(at), [t, ht, at]);
 check('HQ View as gets no tick and no Accept button', !A.document.getElementById('vpTermsTick') && !A.document.getElementById('vpTermsGo'));
 
 var D = page();

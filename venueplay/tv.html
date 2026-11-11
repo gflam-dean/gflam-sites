@@ -72,6 +72,7 @@
   .tv-status[hidden]{display:none}
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .sdot{display:none} /* no status dot on a TV, not even beside Reconnecting: the word says it (Dean, 11 Nov 2026, INBOX 194) */
 
   /* ---- fullscreen control (setup affordance, ads/pairing states only) ---- */
   .tv-fs{position:absolute;left:2cqw;bottom:2.4cqw;z-index:9;display:flex;align-items:center;gap:.7cqw;

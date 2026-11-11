@@ -169,6 +169,7 @@
   "helpdesk-hq-in-chrome.test.py",
   "home-hero-in-chrome.test.py",
   "hop-name.test.js",
+  "host-quiet-in-chrome.test.py",
   "host.html loads the shared names",
   "host.html takes its names from the same place, so they cannot drift",
   "hq-contact-rule.test.js",
