@@ -26,6 +26,9 @@
    ========================================================================== */
 (function (root) {
   var EVERY_MS = 10 * 60 * 1000;
+  /* The first look waits a minute: a screen's first seconds are for its own slides and pictures, and twenty
+     requests at load were enough to change what lit first (tv-first-slide-in-chrome, 12 Nov 2026). */
+  var FIRST_MS = 60 * 1000;
 
   function fnv(s) {
     var h = 2166136261;
@@ -76,6 +79,7 @@
     if (!f) return null;
     var setT = o.setTimeout || function (fn, ms) { return w.setTimeout(fn, ms); };
     var every = o.every || EVERY_MS;
+    var first = (o.first === undefined) ? FIRST_MS : o.first;
     var loc = w.location || {};
     var page = o.page || ((loc.pathname || "/") + (loc.search || ""));
     var scripts = o.scripts || ownScripts(w.document, loc.origin || "");
@@ -89,9 +93,9 @@
         if (!stopped && !told) setT(look, every);
       });
     }
-    look();
+    if (first > 0) setT(look, first); else look();
     return { look: look, stop: function () { stopped = true; }, base: function () { return base; } };
   }
 
-  root.VPFresh = { start: start, fingerprint: fingerprint, ownScripts: ownScripts, fnv: fnv, EVERY_MS: EVERY_MS };
+  root.VPFresh = { start: start, fingerprint: fingerprint, ownScripts: ownScripts, fnv: fnv, EVERY_MS: EVERY_MS, FIRST_MS: FIRST_MS };
 })(typeof window !== "undefined" ? window : this);

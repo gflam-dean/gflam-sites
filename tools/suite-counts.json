@@ -1372,7 +1372,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-fresh.js": {
-  "checks": 13,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
