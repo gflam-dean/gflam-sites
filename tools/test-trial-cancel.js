@@ -129,7 +129,8 @@ async function prospect(o) {
 }
 function bne(y, mo, d, h, mi) { return Date.UTC(y, mo - 1, d, h - 10, mi || 0); }   // a Brisbane wall-clock time as epoch ms
 function day(ms) { return vpaBneDay(ms); }
-var REM = function () { return sent.filter(function (m) { return /free month|How is venueplay going/.test(m.subject || ''); }); };
+/* Reminders to the VENUE only: our own staff alerts ("venueplay · FYI: CANCELLED VENUE: <name> (free month)", INBOX 235) are not reminders. */
+var REM = function () { return sent.filter(function (m) { return /free month|How is venueplay going/.test(m.subject || '') && !/^venueplay \u00b7 /.test(m.subject || ''); }); };
 async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t <= toMs; t += (stepMs || 3600000)) { var before = sent.length; await vpaProspectReminderSweep(ENV, t); for (var i = before; i < sent.length; i++) out.push({ at: t, msg: sent[i] }); } return out; }
 
 /* ---- the fake clock and the Test Bravo free month ---- */

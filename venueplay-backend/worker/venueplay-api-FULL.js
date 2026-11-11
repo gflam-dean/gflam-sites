@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 15:42 · f39a1895';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 16:42 · cdd8e55a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5250,6 +5250,15 @@ async function vpaProspectTrialCancel(env, prow, venue, nowMs) {
   }
   return { keepMs: keepMs };
 }
+/* TELL US A FREE MONTH WAS CANCELLED, OR TAKEN BACK (INBOX 235, Dean 11 Nov 2026). The paid route always told dean@
+   and hello@; the free-month routes (the cancel link, Your account, and their undo) told nobody, so Bodalla Pub's
+   cancel at 11:42 on 11 Nov reached no one. Best effort: a mail fault never stops a venue leaving or coming back. */
+async function vpaTrialCancelAlert(env, venue, o) {
+  o = o || {};
+  await vpaFireCancelAlert(env, { freeMonth: true, venueId: venue && venue.id, name: (venue && venue.name) || null, slug: (venue && venue.slug) || '',
+    undo: !!o.undo, ends: isFinite(o.keepMs) ? vpaPlainDateWords(o.keepMs) : null, players: venue && venue.max_players != null ? venue.max_players : null,
+    reason: o.reason || null, reasonDetail: o.reasonDetail || null, via: o.via || null }).catch(() => {});
+}
 /* BACK BEFORE THE END DATE (rule 3): the same free month carries on, reminders and all. Only while the venue is still
    on and the month has not ended; anything later is a paid restart. -> true when it carried on. */
 async function vpaProspectTrialResume(env, prow, venue, nowMs, actorLabel) {
@@ -5258,6 +5267,8 @@ async function vpaProspectTrialResume(env, prow, venue, nowMs, actorLabel) {
   await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(prow.venue_id) + '&cancelled_at=not.is.null', { cancelled_at: null });
   await vpaAudit(env, { actorId: null, label: actorLabel || 'the venue' }, 'prospect_cancel_undone', 'venue:' + venue.id,
     { name: venue.name || null, free_month_ends_at: prow.free_month_ends_at || null });
+  /* Every undo (cancel link, Your account, a card added in the month) tells us, INBOX 235. */
+  await vpaTrialCancelAlert(env, venue, { undo: true, keepMs: vpaProspectMonthEndMs(prow), via: actorLabel || 'the venue' });
   return true;
 }
 /* THE SWITCH-OFF AT THE END DATE (rule 1), from the hourly sweep. Cancelled rows whose month has ended in the last
@@ -5599,6 +5610,8 @@ async function vpaProspectCancel(request, env, json) {
   await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name,
     reason: postedWhy.reason, reason_label: postedWhy.reason ? VPA_CANCEL_REASONS[postedWhy.reason] : null, reason_detail: postedWhy.reasonDetail,
     keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null });
+  /* AND TELL US (INBOX 235): the paid route always did; this one never had. */
+  await vpaTrialCancelAlert(env, v, { keepMs: tc.keepMs, reason: postedWhy.reason, reasonDetail: postedWhy.reasonDetail, via: 'the cancel link' });
   if (asJson && json) return json({ ok: true, state: 'done', title: 'All done', text: plain(vpaTrialCancelledText(v.name || 'your venue', tc.keepMs)), foot: FOOT,
     resume: isFinite(tc.keepMs) ? { label: 'Keep my free month going' } : null });
   return page('All done', vpaTrialCancelledText(name, tc.keepMs) + (isFinite(tc.keepMs) ? '' : ' If you change your mind, just call us.'));
@@ -10328,6 +10341,8 @@ const VPA_ALERT_KINDS = {
   new_group:   'NEW GROUP',
   cancelled:   'CANCELLED VENUE',
   uncancelled: 'UNCANCELLED VENUE',
+  /* A FREE MONTH TAKEN BACK (INBOX 235, 11 Nov 2026): "CANCEL UNDONE: <name> (free month)". */
+  cancel_undone: 'CANCEL UNDONE',
   check:       'CHECK SIGNUP',
   enquiry:     'ENQUIRY',
 };
@@ -13656,11 +13671,27 @@ async function vpaFireCancelAlert(env, opts) {
     const name = (opts && opts.name) || 'A venue';
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const when = (opts && opts.ends) ? opts.ends : 'the end of their current period';
-    const heading = undo ? (name + ' has UN-cancelled') : (name + ' has cancelled');
+    /* A FREE MONTH CANCEL (INBOX 235, Dean 11 Nov 2026): Bodalla Pub cancelled its free month on the cancel link
+       and nothing reached us, because only the paid route ever called this. opts.freeMonth: the cancel link and
+       Your account's free-month cancel, and their undo. Subject "CANCELLED VENUE: <name> (free month)" /
+       "CANCEL UNDONE: <name> (free month)"; opts.ends is the end date they keep it to, or null when it went off
+       at once (nobody had signed in). */
+    const free = !!(opts && opts.freeMonth);
+    const heading = free ? (undo ? name + ' has taken back their free month cancel' : name + ' has cancelled their free month')
+      : (undo ? (name + ' has UN-cancelled') : (name + ' has cancelled'));
     /* The subject says the kind first so the inbox reads as a queue; the heading inside stays
        a sentence, because that is what a person reads once the email is open. */
-    const subject = vpaAlertSubject(undo ? 'uncancelled' : 'cancelled', name);
-    const lead = undo
+    const subject = free ? vpaAlertSubject(undo ? 'cancel_undone' : 'cancelled', name + ' (free month)')
+      : vpaAlertSubject(undo ? 'uncancelled' : 'cancelled', name);
+    const lead = free
+      ? (undo
+        ? (vpaEsc(name) + ' cancelled their free month and has just changed their mind' + (opts.via ? ' (' + vpaEsc(opts.via) + ')' : '')
+           + '. The same free month carries on' + (opts.ends ? ' until <b>' + vpaEsc(opts.ends) + '</b>' : '') + '. Nothing further to do.')
+        : (opts.ends
+          ? (vpaEsc(name) + ' has cancelled their free month. No card, nothing charged. They keep using venueplay until <b>'
+             + vpaEsc(opts.ends) + '</b>, then it switches off, so there is a window to call them.')
+          : (vpaEsc(name) + ' has cancelled their free month before anyone signed in, so it is switched off now. No card, nothing charged.')))
+      : undo
       ? (vpaEsc(name) + ' was scheduled to end and the owner has just reversed it. Nothing further to do.')
       : (vpaEsc(name) + ' has scheduled their cancellation. They keep playing until <b>'
          + vpaEsc(when) + '</b>, so there is a window to call them before it takes effect.');
@@ -13668,7 +13699,9 @@ async function vpaFireCancelAlert(env, opts) {
     const rows = [
       ['Venue', vpaEsc(name)],
       ['Slug', vpaEsc((opts && opts.slug) || '')],
-      ['Stops', undo ? 'no longer stopping' : vpaEsc(when)],
+      ['Plan', free ? 'Free month, no card' : ''],
+      ['Cancelled from', free && opts.via ? vpaEsc(opts.via) : ''],
+      ['Stops', undo ? 'no longer stopping' : (free && !opts.ends ? 'now (switched off)' : vpaEsc(when))],
       ['Players on the plan', String((opts && opts.players) != null ? opts.players : '')],
       ['Worth', (opts && opts.monthly) ? vpaEsc(opts.monthly) + ' a month' : ''],
       ['Reason', undo ? '' : vpaEsc(reasonLabel)],
@@ -13701,7 +13734,7 @@ async function vpaFireCancelAlert(env, opts) {
     await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
               : (sent ? 'sent to ' + sent + ' of ' + VPA_CANCEL_ALERTS.length : 'not sent: Resend refused it'),
               { to: VPA_CANCEL_ALERTS, undo: undo, ends: (opts && opts.ends) || null,
-                sent: sent, subject: subject });
+                sent: sent, subject: subject, free_month: free });
   } catch (e) {
     await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
   }
@@ -14668,6 +14701,9 @@ async function vpbTrialCancelVenue(env, o, venue, prow, undo, why, json) {
     detail: { name: venue.name || null, via: 'account', actor_user: o.authUserId, reason: why.reason,
       reason_label: why.reason ? VPA_CANCEL_REASONS[why.reason] : null, reason_detail: why.reasonDetail,
       keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null } }), false).catch(() => {});
+  /* AND TELL US (INBOX 235), the same as the cancel link and the paid route. */
+  await vpaTrialCancelAlert(env, venue, { keepMs: tc.keepMs, reason: why.reason, reasonDetail: why.reasonDetail,
+    via: o.actingAsAdmin ? 'HQ (View as)' : 'Your account' });
   return json({ ok: true, cancelling: true, trial: true, switched_off: !isFinite(tc.keepMs),
     keeps_until: isFinite(tc.keepMs) ? new Date(tc.keepMs).toISOString() : null,
     ends: isFinite(tc.keepMs) ? vpaPlainDateWords(tc.keepMs) : null, text: vpaTrialCancelledText(name, tc.keepMs) });
