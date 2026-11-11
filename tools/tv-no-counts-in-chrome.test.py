@@ -107,7 +107,8 @@ PROBE = r'''(function(){
 
 COUNT_SHAPES = [
     (r'\b\d+\s*/\s*\d+\b', 'an "N/N" count'),
-    (r'\b\d[\d,]*\s+(players?|teams?|people|entries|entrants|answered|joined|playing|in the room|here tonight|got it right)\b', 'an "N players/answered/entries" count'),
+    # "playing" but not "Playing for $1,240": the new-look flip board's prize line sits right under its digits (12 Nov 2026)
+    (r'\b\d[\d,]*\s+(players?|teams?|people|entries|entrants|answered|joined|playing(?!\s+for\b)|in the room|here tonight|got it right)\b', 'an "N players/answered/entries" count'),
     (r'\b(players?|teams?|answered|joined|entries|entrants)\s*[:·]?\s*\d', 'a "players: N" count'),
     (r'\bof\s+\d+\s+(players?|teams?|people)\b', 'an "of N players" count'),
     (r'\b\d+(st|nd|rd|th)\s+of\s+\d+\b', 'a "3rd of N" place'),
