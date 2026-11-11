@@ -131,13 +131,13 @@
     <div class="side" id="side" hidden>
       <div id="joinPart">
         <h2 id="sideHead">Scan with your phone to play</h2>
-        <div class="qr" id="playQr"></div>
+        <div class="qr"><canvas id="playQr" width="180" height="180"></canvas></div>
         <p class="small" id="joinWords">Or go to venueplay.com.au/play and type <b id="joinCode">------</b></p>
       </div>
       <div id="hostPart" hidden>
         <h2>Your host console</h2>
         <p>On your tablet or second phone, scan this and sign in with your mobile. Then run the 5 questions from there.</p>
-        <div class="qr" id="hostQr"></div>
+        <div class="qr"><canvas id="hostQr" width="180" height="180"></canvas></div>
       </div>
       <p class="status" id="playStatus" role="status">Getting the game ready...</p>
       <button class="btn" type="button" id="startNow" hidden>Start now</button>

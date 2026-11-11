@@ -1244,7 +1244,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-demo.js": {
-  "checks": 49,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-vp-draw-11.js": {
@@ -1332,7 +1332,7 @@
   "counted_by": "lines"
  },
  "tools/try-demo-in-chrome.test.py": {
-  "checks": 52,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

@@ -113,5 +113,29 @@ check('any other address is refused (no open redirect)', T.nextAfterSignIn(LS(JS
   T.nextAfterSignIn(LS('not json'), NOW) === '/app/');
 check('nothing chosen: the console, as always', T.nextAfterSignIn(LS(), NOW) === '/app/');
 
+/* 7. EVERY QR IS DRAWN INTO A CANVAS (11 Nov 2026, INBOX 190). VPQR.draw hands its element straight to
+   QRCode.toCanvas, which needs a <canvas>: try.html gave it a <div>, toCanvas called back with an
+   error, there is no .qrbig/.qrmini box for the "Scan not available" words, and the player's and the
+   host's squares were blank white. Every page that draws a QR by id is read here and each id it draws
+   into must be a <canvas>. */
+print('');
+print('7. Every QR is drawn into a canvas');
+var QR_PAGES = ['venueplay/app/try.html', 'venueplay/tv.html', 'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html'];
+var QR_CALL = /(?:VPQR\.draw|drawQR|drawPairQR)\(\s*(?:\$|document\.getElementById)\(\s*["']([A-Za-z0-9_-]+)["']\s*\)/g;
+function tagOfId(html, id) { var m = new RegExp('<([a-zA-Z]+)[^>]*\\sid=["\']' + id + '["\']').exec(html); return m ? m[1].toLowerCase() : ''; }
+var notCanvas = [], drawn = {};
+for (var qi = 0; qi < QR_PAGES.length; qi++) {
+  var qhtml = readFile(QR_PAGES[qi]), qm;
+  QR_CALL.lastIndex = 0;
+  while ((qm = QR_CALL.exec(qhtml))) {
+    drawn[QR_PAGES[qi] + '#' + qm[1]] = 1;
+    var qt = tagOfId(qhtml, qm[1]);
+    if (qt !== 'canvas') notCanvas.push(QR_PAGES[qi] + '#' + qm[1] + ' is <' + qt + '>');
+  }
+}
+check('the try-it demo draws its player QR into a <canvas> (#playQr)', drawn['venueplay/app/try.html#playQr'] === 1 && tagOfId(readFile('venueplay/app/try.html'), 'playQr') === 'canvas', tagOfId(readFile('venueplay/app/try.html'), 'playQr'));
+check('  and its host console QR into a <canvas> (#hostQr)', drawn['venueplay/app/try.html#hostQr'] === 1 && tagOfId(readFile('venueplay/app/try.html'), 'hostQr') === 'canvas', tagOfId(readFile('venueplay/app/try.html'), 'hostQr'));
+check('every QR the TV, trivia and musical bingo screens draw by id is a <canvas> too (' + Object.keys(drawn).length + ' found)', Object.keys(drawn).length >= 8 && notCanvas.length === 0, notCanvas);
+
 print('');
 print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('All ' + ran + ' checks passed'));

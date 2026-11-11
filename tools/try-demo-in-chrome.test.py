@@ -48,6 +48,15 @@ def clickid(r, sid, i):
     return r.ask(sid, '(function(){ var b=document.getElementById(%s); if(!b) return false; b.click(); return true; })()' % json.dumps(i))
 
 
+def qr_drawn(i):
+    """INBOX 190 (11 Nov 2026): the QR square is a real drawn code, not a blank white panel. VPQR.draw
+    hands the element to QRCode.toCanvas, which needs a <canvas>: a <div> left it white. Painted means
+    a canvas at least 100 px wide in the page with both dark and light pixels in it."""
+    return ('(function(){ var c=document.getElementById(%s); if(!c || c.tagName!=="CANVAS" || !c.width || c.width<100) return false;'
+            ' var d=c.getContext("2d").getImageData(0,0,c.width,c.height).data, dark=0, light=0;'
+            ' for(var i=0;i<d.length;i+=16){ if(d[i+3]>200 && d[i]<60) dark++; else if(d[i+3]>200 && d[i]>200) light++; }'
+            ' return dark>50 && light>50; })()' % json.dumps(i))
+
 FIT = r'''(function(){ var bad=[].filter.call(document.querySelectorAll("button,.btn,a.btn"),function(b){ var r=b.getBoundingClientRect(); return r.width>0 && r.height>0 && r.height<44; }).map(function(b){ return b.id||b.textContent.trim().slice(0,30); });
   return JSON.stringify({ wide: document.documentElement.scrollWidth - window.innerWidth, small: bad }); })()'''
 STEP = '(function(){ var s=document.querySelector(".step.on"); return s ? s.id : (document.getElementById("play").classList.contains("on") ? "play" : ""); })()'
@@ -113,7 +122,7 @@ QTEXT = '(document.getElementById("pqText")||{}).textContent'
 
 def scene_a(RIG):
     print('\nA. ON A LAPTOP, AS A PLAYER, TWO PHONES')
-    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
+    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'), real_qr=True)
     try:
         seed(r); clock_now(r)
         tl, lap = r.open('/app/try.html?device=computer', width=1366, height=768)
@@ -137,6 +146,8 @@ def scene_a(RIG):
         ok('the demo session is opened, marked a demo', r.until(lap, '/joined/.test(document.getElementById("playStatus").textContent)', 40) is True and
            any(s.get('is_demo') is True for s in db(r, 'vp_sessions')), [db(r, 'vp_sessions'), r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(lap, 'document.getElementById("playErr").textContent')])
         ok('  with the QR for their phone beside it, once the lobby is open', r.until(lap, '!document.getElementById("side").hidden && /Scan with your phone to play/.test(document.getElementById("side").innerText)', 10) is True)
+        ok('  and the player QR is really drawn (a painted canvas, not a blank white square)', r.until(lap, qr_drawn('playQr'), 10) is True,
+           r.ask(lap, '(function(){ var c=document.getElementById("playQr"); return c ? c.tagName+" "+c.width : "none"; })()'))
         f = r.layout = r.json(lap, FIT)
         ok('laid out for 1366: nothing wider than the screen', f.get('wide', 1) <= 0, f)
         if SHOTS: r.shot(lap, os.path.join(SHOTS, 'try-lobby-1366.jpg'))
@@ -209,7 +220,7 @@ def scene_a(RIG):
 
 def scene_bcd(RIG):
     print('\nB. NO OTHER DEVICE: NO DEMO, STRAIGHT INTO THEIR ACCOUNT (Dean, 6 Nov 2026)')
-    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
+    r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'), real_qr=True)
     try:
         seed(r)
         for dev, w, h in (('phone', 375, 812), ('computer', 1366, 768)):
@@ -242,6 +253,8 @@ def scene_bcd(RIG):
         r.until(ld, STEP + '==="stepMode"', 20)
         to_play(r, ld, 'host', 3, True)
         ok('the TV and the player QR, plus the host console QR', r.until(ld, '!document.getElementById("hostPart").hidden && !!document.querySelector("#tvBox iframe")', 10) is True)
+        ok('  the host console QR is really drawn (a painted canvas, not a blank white square)', r.until(ld, qr_drawn('hostQr'), 10) is True,
+           r.ask(ld, '(function(){ var c=document.getElementById("hostQr"); return c ? c.tagName+" "+c.width : "none"; })()'))
         ok('  and nothing runs itself here (the host runs the 5 questions)', r.ask(ld, '!document.querySelector("iframe.driver")') is True)
         ok('  the host link is the demo console', r.ask(ld, 'VPDemo.hostUrl(VPTry.n)').endswith('/app/trivia/host.html?demo=host&n=3'))
         r.close_tab(td)
