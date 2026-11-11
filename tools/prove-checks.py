@@ -142,6 +142,60 @@ MUTATIONS = [
      '    if (f === "not_played") return !!(p.day21 && p.day21.words);\n',
      '    if (f === "not_played") return true;\n',
      'the Games not played filter shows every prospect'),
+    # ---- 11 Nov 2026 (INBOX 217): every migration a release adds is live before the push. tools/check-migrations-live.py,
+    # proven with a fake database by tools/migrations-live.test.py (no network).
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "elif code in ('PGRST205', '42P01', '42703', 'PGRST204') or (st == 404 and not code):",
+     'elif False:',
+     'a missing table or column reads as "could not tell" instead of "Migration NNN is not live yet: Dean runs it first"'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     '        if st == 200:',
+     '        if st == 200 or st >= 400:',
+     'a 404 for a table that is not there reads as live'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     '(?:column\\s+)?(?:if\\s+not\\s+exists\\s+)?("',
+     '(?:column\\s+)?("',
+     '"add column if not exists x" is read as a column called "if", so the real column is never asked'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "        if sql.startswith('--', i):",
+     '        if False:',
+     'a statement inside a comment is read as one, so a commented-out alter table is asked about'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "'--diff-filter=A', '%s...HEAD' % base",
+     "'%s...HEAD' % base",
+     'an edit to a migration main already has is counted as new to this release'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     '        if get is None:',
+     '        if False:',
+     'no key in the env file crashes the check instead of a plain red line saying why'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     'if isinstance(rows, list) and rows:',
+     'if isinstance(rows, list):',
+     'a documented live-probe passes on an empty answer, so a seed that never ran reads as live'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "if kind == 'rows' and (path.startswith('rpc/') or '/rpc/' in path):",
+     'if False:',
+     'a live-probe line could make the release check CALL a database function'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "'live' if '/rpc/' + path in schema else 'missing'",
+     "'live' if True else 'missing'",
+     'a function missing from the live database reads as live'),
+    ('migrations-live.test.py', 'tools/check-migrations-live.py',
+     "why = 'cannot be probed (policy/index only)'",
+     "why = 'cannot be probed'",
+     'a policy-only migration no longer says why it was not checked'),
+    ('migrations-live.test.py', 'tools/release.py',
+     "    r = sh([PY, 'tools/check-migrations-live.py', '--base', remote_before])",
+     "    r = sh([PY, '-c', 'pass'])",
+     "release.py stops asking whether the release's migrations are live before it pushes"),
+    ('migrations-live.test.py', 'tools/release.py',
+     "        stop('a migration in this release",
+     "        print('a migration in this release",
+     'release.py prints that a migration is not live and pushes anyway'),
+    ('migrations-live.test.py', 'tools/release-check.py',
+     'rc == 0 and not bad and bool(m) and m.group(1) == m.group(2),',
+     'True,',
+     "the gate's D55 line is green whatever the migration check says"),
     # ---- 10 Nov 2026 (Dean): when a venue clicks Cancel, ask why. tools/test-cancel-reason.js (D190).
     ('test-cancel-reason.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  const patch = { cancel_at_period_end: !undo };\n",
@@ -19492,6 +19546,13 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    'every migration this release adds is already on the live database':
+        'it asks git which migrations this branch adds since origin/main, and scratch() copies the repo '
+        'WITHOUT .git, so here it is a note (SKIPPED), never a pass; and it reads the live database, which '
+        'a scratch copy must not depend on. Its logic is proven by migrations-live.test.py (a fake database, '
+        '13 mutation rows). In a real checkout it was seen red on 11 Nov 2026: a made-up migration adding '
+        'vp_venues.zz_not_real went FAIL "Migration 999 is not live yet: Dean runs it first", and green again '
+        'with the file removed (13 of 13 live on release/12nov).',
     'every prove-checks mutation still finds the line it breaks':
         'it runs this very file with --list, and scratch() copies the repo WITHOUT .git and breaks '
         'one line in the copy, so here it is a note (SKIPPED), never a pass: run inside a copy it '

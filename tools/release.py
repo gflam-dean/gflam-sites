@@ -9,7 +9,8 @@ the step that gets skipped". Four audit findings of 20 Sep 2026 were order fault
 before green, stamp before landed, check before deployed, push before commit. This walks
 the steps and stops at the first one that is not true:
 
-    0. the tree is clean and every Worker is stamped
+    0. the tree is clean and every Worker is stamped, and every migration the release adds is
+       already live (tools/check-migrations-live.py, read-only, INBOX 217)
     1. push the planned commit to main BY SHA (the pre-push hook runs the local gate; a red gate
        refuses the push; the release refuses if origin/main moved, if HEAD moved during the hook,
        or if what landed is not the SHA planned: 27 Oct 2026, the "three" incident)
@@ -151,6 +152,15 @@ def main():
     remote_before = remote_main()
     if not remote_before:
         stop('could not read origin/main from GitHub (git ls-remote). No network, or no access; nothing was pushed.')
+    # EVERY MIGRATION THIS RELEASE ADDS IS ALREADY LIVE (INBOX 217, Dean 11 Nov 2026). Dean runs them
+    # early; the code that reads a new column must never land before it. Asked against origin's main AS THE
+    # REMOTE REPORTS IT (not the local origin/main copy), read-only, before anything is pushed. The hook's
+    # local gate asks the same (D55); this is here as well so a release refuses before it pushes anything.
+    r = sh([PY, 'tools/check-migrations-live.py', '--base', remote_before])
+    print('\n'.join('  ' + l for l in (r.stdout or '').strip().splitlines()[-16:]))
+    if r.returncode != 0:
+        stop('a migration in this release is not on the live database yet (above). Dean runs it first, '
+             'then release again. Nothing was pushed.')
     step(1, 'push %s to main by name (the hook runs the local gate)' % head[:8])
     push_exactly(head, remote_before, 'push')
 
