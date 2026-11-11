@@ -80,6 +80,15 @@ var ords = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111, 112].map(L.ordinal).jo
 pass("places read 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th 112th", ords === "1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th 112th", ords);
 pass("a coaster venue reads 'Tugun 4224'", L.placeLabel({ suburb: "Tugun", postcode: "4224", state: "QLD" }) === "Tugun 4224");
 pass("a venueplay venue (no suburb held) reads '2485 NSW'", L.placeLabel({ suburb: "", postcode: "2485", state: "NSW" }) === "2485 NSW");
+pass("a venue on our list (no postcode shown) reads 'Bodalla NSW'", L.placeLabel({ suburb: "Bodalla", postcode: "", state: "NSW" }) === "Bodalla NSW");
+pass("only a venue with a venueplay login reads 'On venueplay' ('Game on now' while a game is open); every other pick reads 'Not on venueplay yet'",
+  L.statusWords({ on: true }).text === "On venueplay" && L.statusWords({ on: true, live: true }).text === "Game on now" && L.statusWords({ on: false, live: true }).text === "Not on venueplay yet" &&
+  L.statusWords({}).text === "Not on venueplay yet" && L.statusWords({ on: true }).cls === "on" && L.statusWords({ on: false }).cls === "off");
+pass("Add it: name, suburb and one of the eight states are needed; the website is optional but must look like one",
+  L.addCheck({ name: "Royal Hotel", suburb: "Bowral", state: "NSW", website: "" }) === null && L.addCheck({ name: "Royal Hotel", suburb: "Bowral", state: "NSW", website: "royalhotel.com.au" }) === null &&
+  L.addCheck({ name: "ab", suburb: "Bowral", state: "NSW" }).field === "name" && L.addCheck({ name: "Royal Hotel", suburb: "", state: "NSW" }).field === "suburb" &&
+  L.addCheck({ name: "Royal Hotel", suburb: "Bowral", state: "" }).field === "state" && L.addCheck({ name: "Royal Hotel", suburb: "Bowral", state: "NSW", website: "not a site" }).field === "website" &&
+  L.STATES.join() === "QLD,NSW,VIC,SA,WA,TAS,NT,ACT");
 
 print("\nTHE CHALLENGE LINK");
 pass("the link is venueplay.com.au/live-here-now?c=CODE", L.shareUrl("ABC234") === "https://venueplay.com.au/live-here-now?c=ABC234");
@@ -126,8 +135,14 @@ pass("no phone number on a public page", !/07 ?5228|5228 ?3667|04\d\d ?\d{3} ?\d
 pass("no .dev or workers.dev address", !/workers\.dev|\.dev\b/.test(PAGE));
 pass("never 'roster'", !/roster/i.test(text));
 pass("no price or offer on the coaster page itself", !/\$\d|offer/i.test(text.replace(/\/\*[\s\S]*?\*\//g, "")));
-pass("no input on the page asks for anything but a first name and a venue",
-  (PAGE.match(/<input /g) || []).length === 4 && /id="nameIn"/.test(PAGE) && /id="whereIn"/.test(PAGE) && /id="leadIn"/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE) && !/type="(email|tel)"/.test(PAGE));
+pass("the only inputs: the first name, the venue search, the four 'Add it' boxes (name, suburb, state, website), the challenge link, and the venue's own sign-up (email, mobile)",
+  (PAGE.match(/<input /g) || []).length === 8 && (PAGE.match(/<select /g) || []).length === 1 && ["nameIn", "whereIn", "leadIn", "leadSuburb", "leadSite", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
+  /<select id="leadState">/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE), (PAGE.match(/<input [^>]*id="[^"]+"/g) || []).map(function (x) { return /id="([^"]+)"/.exec(x)[1]; }));
+pass("the sign-up is hidden until the Worker says this venue has it switched on, and its one tick is the phones' own (VPConsent, consent_version)",
+  /<form class="optin-card" id="optinCard" novalidate hidden>/.test(PAGE) && /<script src="\/app\/vp-consent\.js"><\/script>/.test(PAGE) &&
+  /window\.VPConsent\.render\(tick, /.test(PAGE) && /body\.consent_version = window\.VPConsent\.VERSION/.test(PAGE) && /var o = S\.optin, card = \$\('optinCard'\);/.test(PAGE) && !/checked/.test(PAGE.slice(PAGE.indexOf('id="optinCard"'), PAGE.indexOf('id="optinOk"'))));
+pass("the old free-text board is gone: an added venue is sent to /coaster/lead and the round starts with NO place",
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = null; S\.venue = null;\n      setTimeout\(begin,/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
 
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }

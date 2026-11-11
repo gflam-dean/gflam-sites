@@ -11,10 +11,16 @@
                                   prospect form, pre-filled and carrying the coaster id
                                   (window.hqProspectPrefill); the Worker moves the board only after the
                                   prospect is fully set up, and from then the normal emails start.
-     Coaster players at venues not on venueplay   pubs players typed in (leads), switchable the same way.
+     Venues players added (possible new leads)    "Can't find your venue? Add it" (INBOX 232): name,
+                                  suburb, state, website, how many asked, lead_guard's name note. HQ adds
+                                  it to the picker, keeps it as a possible lead, or marks it not a venue.
+                                  Never cold email from here.
+     Players at venues on our list                 venues from our licensed list (not on venueplay) with play.
      Venues on venueplay with coaster play         customers and prospects (a prospect with coaster play
-                                  is a lead too, Dean item 9).
-   The billing Worker answers owner and accounts only: POST /admin/coaster/list, /add, /remove. Before
+                                  is a lead too, Dean item 9), each with its coaster sign-up switch (OFF
+                                  until HQ turns it on).
+   The billing Worker answers owner and accounts only: POST /admin/coaster/list, /add, /remove, /review,
+   /optins. Before
    migration 153 it answers need_migration 153 and this says "not switched on yet" in plain words.
    House rules: no em dashes, lowercase venueplay, every name escaped, nothing under 15px.
    ========================================================================== */
@@ -51,16 +57,31 @@
       '<div class="cqline">' + cqEsc(where(c) || "Postcode not known") + '</div>' +
       '<div class="cqline cqplay">' + cqEsc(playText(c, d)) + '</div>' + buttonsHtml(c) + "</div>";
   }
+  /* A venue a player added: a possible new lead for review. Never emailed from here. */
+  var REVIEW = { "new": "New", kept: "Kept as a possible lead" };
   function leadRowHtml(l, d) {
+    var site = /^https:\/\//i.test(String(l.website || "")) ? '<a href="' + cqEsc(l.website) + '" target="_blank" rel="noopener noreferrer">' + cqEsc(String(l.website).replace(/^https:\/\//i, "")) + "</a>" : "No website given";
     return '<div class="panel pad cqrow" data-cq-id="' + cqEsc(l.id) + '"><div class="cqtop">' +
-      '<div class="cqname">Coaster players at ' + cqEsc(l.name) + ', not on venueplay</div></div>' +
-      '<div class="cqline cqplay">' + cqEsc(playText(l, d)) + '</div>' + buttonsHtml(l) + "</div>";
+      '<div class="cqname">' + cqEsc(l.name) + '</div><span class="cqtag">' + cqEsc(REVIEW[l.review] || "New") + "</span></div>" +
+      '<div class="cqline">' + cqEsc([l.suburb, l.state].filter(Boolean).join(", ") || "Suburb not known") + " &middot; " + site + "</div>" +
+      '<div class="cqline cqplay">Added by ' + cqEsc(plural(l.asks || 1, "player", "players")) + "</div>" +
+      (l.guard_note ? '<div class="cqline cqwarn">Check: ' + cqEsc(l.guard_note) + "</div>" : "") +
+      '<div class="cqacts"><button type="button" class="btn pink" data-cq-review="list" data-cq-for="' + cqEsc(l.id) + '">Add to the picker</button>' +
+      (l.review === "kept" ? "" : '<button type="button" class="btn ghost" data-cq-review="keep" data-cq-for="' + cqEsc(l.id) + '">Keep as a possible lead</button>') +
+      '<button type="button" class="btn ghost" data-cq-review="dismiss" data-cq-for="' + cqEsc(l.id) + '">Not a venue</button></div></div>';
   }
-  var VSTATUS = { prospect: "a prospect", customer: "a customer", left: "archived", gone: "no longer on venueplay" };
+  var VSTATUS = { prospect: "a prospect", customer: "a customer", left: "archived", gone: "no longer on venueplay", listed: "not on venueplay" };
   function boardRowHtml(b, d) {
+    var sw = "";
+    if (b.kind === "venue" && b.status !== "gone" && b.status !== "left") {
+      sw = '<div class="cqline">Sign-ups for ' + cqEsc(b.name || "this venue") + ' at the end of a round: <b>' + (b.optins ? "On" : "Off") + "</b></div>" +
+        '<div class="cqacts"><button type="button" class="btn ' + (b.optins ? "ghost" : "pink") + '" data-cq-optins="' + (b.optins ? "off" : "on") + '" data-cq-for="' + cqEsc(b.venue_id) + '">' +
+        (b.optins ? "Switch sign-ups off" : "Switch sign-ups on") + "</button></div>";
+    }
     return '<div class="panel pad cqrow"><div class="cqtop"><div class="cqname">Coaster players at ' + cqEsc(b.name || "a venue") + "</div>" +
       '<span class="cqtag cqst-' + cqEsc(b.status) + '">' + cqEsc(VSTATUS[b.status] || b.status) + "</span></div>" +
-      '<div class="cqline cqplay">' + cqEsc(playText(b, d)) + "</div></div>";
+      (b.kind === "listed" ? '<div class="cqline">' + cqEsc([b.suburb, b.state].filter(Boolean).join(", ")) + ", on our venue list</div>" : "") +
+      '<div class="cqline cqplay">' + cqEsc(playText(b, d)) + "</div>" + sw + "</div>";
   }
   function addFormHtml() {
     return '<div class="panel pad cqadd"><div class="cqh3">Add a coaster venue</div>' +
@@ -81,13 +102,18 @@
     if (d.error) return head + '<div class="panel pad"><p class="cqp" style="margin:0">' + cqEsc(d.error) + "</p></div>";
     var coaster = d.coaster || [], leads = d.leads || [];
     var venues = (d.boards || []).filter(function (b) { return b.kind === "venue"; });
+    var listed = (d.boards || []).filter(function (b) { return b.kind === "listed"; });
     return head + addFormHtml() +
       '<div class="cqh3">Coaster venues <span class="mono">' + coaster.length + "</span></div>" +
       (coaster.length ? '<div class="cqlist">' + coaster.map(function (c) { return coasterRowHtml(c, d); }).join("") + "</div>"
         : '<p class="cqp">None yet. Add one above when you hand a venue its coasters.</p>') +
-      '<div class="cqh3">Coaster players at venues not on venueplay <span class="mono">' + leads.length + "</span></div>" +
+      '<div class="cqh3">Venues players added (possible new leads) <span class="mono">' + leads.length + "</span></div>" +
+      '<p class="cqp">From "Can\'t find your venue? Add it" on the coaster page. Nothing here is ever emailed or sent to cold email. Add it to the picker so players can pick it (it becomes a coaster venue, still no emails), keep it as a possible lead, or mark it not a venue.</p>' +
       (leads.length ? '<div class="cqlist">' + leads.map(function (l) { return leadRowHtml(l, d); }).join("") + "</div>"
-        : '<p class="cqp">Nobody has typed in a venue that is not on venueplay yet.</p>') +
+        : '<p class="cqp">No player has added a venue yet.</p>') +
+      '<div class="cqh3">Players at venues on our list, not on venueplay <span class="mono">' + listed.length + "</span></div>" +
+      (listed.length ? '<div class="cqlist">' + listed.map(function (b) { return boardRowHtml(b, d); }).join("") + "</div>"
+        : '<p class="cqp">No coaster rounds at venues from our list in the last ' + cqEsc(d.round_days || 30) + " days.</p>") +
       '<div class="cqh3">Venues on venueplay with coaster play <span class="mono">' + venues.length + "</span></div>" +
       (venues.length ? '<div class="cqlist">' + venues.map(function (b) { return boardRowHtml(b, d); }).join("") + "</div>"
         : '<p class="cqp">No coaster rounds at venueplay customers or prospects in the last ' + cqEsc(d.round_days || 30) + " days.</p>");
@@ -117,7 +143,8 @@
     "#coasterHq .cqh2{font-weight:800;font-size:18px;color:#fff;margin:0 0 12px}" +
     "#coasterHq .cqh3{font-weight:800;font-size:16px;color:#fff;margin:22px 0 10px}" +
     "#coasterHq .cqp,#coasterHq .cqline{font-size:15px;color:var(--muted);line-height:1.5;margin:0 0 12px}" +
-    "#coasterHq .cqline{margin:6px 0 0}#coasterHq .cqplay{color:var(--text)}" +
+    "#coasterHq .cqline{margin:6px 0 0}#coasterHq .cqplay{color:var(--text)}#coasterHq .cqwarn{color:var(--roll)}" +
+    "#coasterHq .cqline a{color:var(--text);text-decoration:underline;overflow-wrap:anywhere}" +
     "#coasterHq .cqlist{display:grid;gap:12px}" +
     "#coasterHq .cqtop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}" +
     "#coasterHq .cqname{font-weight:800;font-size:16px;color:#fff;flex:1;min-width:0;overflow-wrap:anywhere}" +
@@ -208,9 +235,33 @@
       return load().then(function () { say(S.msg, true); return j; });
     });
   }
+  var REVIEWED = { list: " is in the picker now. Players can pick it.", keep: " is kept as a possible lead.", dismiss: " is marked not a venue." };
+  function review(btn, id, action) {
+    var c = find(id); if (!c) return null;
+    btn.disabled = true;
+    return post("/admin/coaster/review", { id: id, action: action }).then(function (j) {
+      btn.disabled = false;
+      if (j.error || j.need_migration) { say(j.error || "Coaster venues are not switched on yet."); return j; }
+      S.msg = c.name + REVIEWED[action];
+      return load().then(function () { say(S.msg, true); return j; });
+    });
+  }
+  function optins(btn, venueId, on) {
+    btn.disabled = true;
+    return post("/admin/coaster/optins", { venue_id: venueId, on: on }).then(function (j) {
+      btn.disabled = false;
+      if (j.error || j.need_migration) { say(j.error || "Coaster venues are not switched on yet."); return j; }
+      S.msg = on ? "Sign-ups are on. Players there see the venue's own sign-up at the end of a round." : "Sign-ups are off.";
+      return load().then(function () { say(S.msg, true); return j; });
+    });
+  }
   function onClick(e) {
     var t = e.target && e.target.closest && e.target.closest("button"); if (!t) return;
     if (t.id === "cqAdd") { add(t); return; }
+    var rv = t.getAttribute("data-cq-review");
+    if (rv) { review(t, t.getAttribute("data-cq-for"), rv); return; }
+    var oi = t.getAttribute("data-cq-optins");
+    if (oi) { optins(t, t.getAttribute("data-cq-for"), oi === "on"); return; }
     var sw = t.getAttribute("data-cq-switch");
     if (sw) {
       var c = find(sw); if (!c) return;
@@ -230,6 +281,6 @@
   }
 
   root.VPCoaster = { load: load,
-    _t: { sectionHtml: sectionHtml, coasterRowHtml: coasterRowHtml, leadRowHtml: leadRowHtml, boardRowHtml: boardRowHtml, S: S, onClick: onClick, mount: mount, add: add, remove: remove, find: find } };
+    _t: { sectionHtml: sectionHtml, coasterRowHtml: coasterRowHtml, leadRowHtml: leadRowHtml, boardRowHtml: boardRowHtml, S: S, onClick: onClick, mount: mount, add: add, remove: remove, find: find, review: review, optins: optins } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);

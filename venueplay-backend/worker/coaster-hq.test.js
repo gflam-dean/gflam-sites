@@ -85,6 +85,7 @@ function world() {
   DB.vp_platform_admins = [{ auth_user_id: ADMIN, label: 'Dean', role: 'owner' }, { auth_user_id: ACCTS, label: 'Accounts', role: 'accounts' }, { auth_user_id: STAFF, label: 'Helper', role: 'staff' }];
   DB.vp_venues = []; DB.venueplay_founding = []; DB.vp_venue_staff = []; DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = []; DB.vp_venue_screen = [];
   DB.vp_signin_links = []; DB.vp_prospect_welcomes = []; DB.vp_prospects = []; DB.vp_coaster_venues = []; DB.vp_coaster_plays = [];
+  DB.vp_coaster_optin_venues = []; DB.vp_licensed_venues = [];
 }
 function req(path, body, headers, method) {
   var h = {}; for (var k in (headers || {})) h[k.toLowerCase()] = headers[k];
@@ -178,6 +179,7 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   var done = coasterRow(C(4), 'coaster', 'Switched Already Hotel', { venue_id: U(60), switched_at: '2026-11-04T00:00:00.000Z' });
   var pr = await call('/admin/prospect', pbody({ name: 'Coaster Prospect Inn' }), AS(ADMIN));
   var PV = pr.body.venue.id;
+  DB.vp_venues.forEach(function (v) { if (v.id === PV && v.status == null) v.status = 'active'; });   // the column's default in the real table
   DB.vp_venues.push({ id: U(61), name: 'Paying Customer Club', postcode: '2000', au_state: 'NSW', founding_id: U(62), status: 'active' });
   DB.venueplay_founding.push({ id: U(62), status: 'card_on_file', stripe_subscription_id: 'sub_1' });
   DB.vp_prospects.push({ venue_id: U(63), created_at: '2026-10-01T00:00:00.000Z' });   // was a prospect, now paying
@@ -189,11 +191,23 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   play('v:' + PV, 'Ana', DAY); play('v:' + PV, 'Ben', DAY);
   play('v:' + U(61), 'Cat', DAY); play('v:' + U(63), 'Dan', 10 * DAY);
   play('c:' + C(4), 'Gone', DAY);   // a switched row's stray round: the row is not open, so no board is listed for it
+  DB.vp_licensed_venues.push({ id: 107, name: 'Bodalla Pub', suburb: 'Bodalla', postcode: '2545', au_state: 'NSW', name_key: 'bodalla pub', source: 'venue master list' });
+  play('l:107', 'Lee', DAY); play('l:107', 'Max', 2 * DAY);   // a venue on our licensed list, not on venueplay
+  var added = coasterRow(C(5), 'lead', 'Added Arms', { suburb: 'Fitzroy', au_state: 'VIC', website: 'https://addedarms.com.au', asks: 3, guard_note: null, review: 'new', created_at: '2026-10-30T00:00:00.000Z' });
+  coasterRow(C(6), 'lead', 'Not A Pub', { suburb: 'Nowhere', au_state: 'QLD', review: 'dismissed', created_at: '2026-10-29T00:00:00.000Z' });
+  DB.vp_coaster_optin_venues.push({ venue_id: U(61) });
   var l = await call('/admin/coaster/list', {}, AS(ADMIN));
   var byId = function (list, id) { return (list || []).filter(function (x) { return x.id === id; })[0] || {}; };
   var bd = function (key) { return (l.body.boards || []).filter(function (x) { return x.board === key; })[0] || null; };
   check('coaster venues and leads come back apart, newest first; a row already made a normal prospect is not listed',
-    l.status === 200 && l.body.ok === true && (l.body.coaster || []).map(function (c) { return c.id; }).join() === [C(1), C(2)].join() && (l.body.leads || []).map(function (c) { return c.id; }).join() === C(3), l.body);
+    l.status === 200 && l.body.ok === true && (l.body.coaster || []).map(function (c) { return c.id; }).join() === [C(1), C(2)].join() && (l.body.leads || []).map(function (c) { return c.id; }).join() === [C(3), C(5)].join(), l.body);
+  var AL = byId(l.body.leads, C(5));
+  check('a venue a player added comes back for review with its suburb, state, website, how many asked and its review state; a dismissed one is out of sight',
+    AL.suburb === 'Fitzroy' && AL.state === 'VIC' && AL.website === 'https://addedarms.com.au' && AL.asks === 3 && AL.review === 'new' && !byId(l.body.leads, C(6)).id, AL);
+  var BL = (l.body.boards || []).filter(function (x) { return x.board === 'l:107'; })[0] || {};
+  check('players at a venue on our licensed list: a board "listed", named from the list, with its play', BL.kind === 'listed' && BL.name === 'Bodalla Pub' && BL.suburb === 'Bodalla' && BL.state === 'NSW' && BL.rounds_30d === 2 && BL.players_7d === 2, BL);
+  var OC = (l.body.boards || []).filter(function (x) { return x.board === 'v:' + U(61); })[0] || {}, OP = (l.body.boards || []).filter(function (x) { return x.board === 'v:' + PV; })[0] || {};
+  check('each venueplay venue with play says whether its coaster sign-ups are on (only the one HQ switched on)', OC.optins === true && OP.optins === false, [OC.optins, OP.optins]);
   var R = byId(l.body.coaster, C(1));
   check('The Royal: 3 rounds finished in the last 30 days (an unfinished one and one 32 days ago do not count); 2 different first names in the last 7 days (Sam and sam are one)',
     R.rounds_30d === 3 && R.players_7d === 2 && R.board === 'c:' + C(1) && R.suburb === 'Paddington' && R.postcode === '4064', R);
@@ -217,10 +231,39 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   check('before migration 153: 503 "Run migration 153" with need_migration 153, not an empty list that looks like nobody', l0.status === 503 && /Run migration 153/.test(l0.body.error) && l0.body.need_migration === 153 && !l0.body.coaster, l0);
   check('a database that did not answer is said as that (502), never "run the migration" and never a short list', l5.status === 502 && !l5.body.need_migration && !l5.body.coaster, l5);
 
+  section('3b. POST /admin/coaster/review and /admin/coaster/optins');
+  var rvs = await call('/admin/coaster/review', { id: C(5), action: 'keep' }, AS(STAFF));
+  check('staff cannot review one', rvs.status === 403 && added.review === 'new', rvs);
+  var rvk = await call('/admin/coaster/review', { id: C(5), action: 'keep' }, AS(ADMIN));
+  check('Keep as a possible lead: reviewed, still a lead, still no board, audited', rvk.status === 200 && added.kind === 'lead' && added.review === 'kept' && !!added.reviewed_at && added.reviewed_label === 'Dean' &&
+    auditOf('coaster_lead_kept').length === 1 && auditOf('coaster_lead_kept')[0].target === 'coaster:' + C(5), [rvk.body, added]);
+  var rvl = await call('/admin/coaster/review', { id: C(5), action: 'list' }, AS(ACCTS));
+  check('Add to the picker: it becomes a coaster venue (players can pick it), on its state\'s clock, still not a venueplay venue', rvl.status === 200 && added.kind === 'coaster' && added.review === 'listed' &&
+    added.timezone === 'Australia/Melbourne' && added.venue_id === null && auditOf('coaster_lead_listed').length === 1, [rvl.body, added]);
+  var rva = await call('/admin/coaster/review', { id: C(5), action: 'dismiss' }, AS(ADMIN));
+  check('a coaster venue is not a lead to review any more: 404', rva.status === 404 && added.kind === 'coaster', rva);
+  var rvb = await call('/admin/coaster/review', { id: C(3), action: 'nope' }, AS(ADMIN)), rvc = await call('/admin/coaster/review', { id: 'x', action: 'keep' }, AS(ADMIN));
+  check('an unknown action or id is refused and changes nothing', rvb.status === 400 && rvc.status === 400 && byId(DB.vp_coaster_venues, C(3)).review == null, [rvb, rvc]);
+  var rvd = await call('/admin/coaster/review', { id: C(3), action: 'dismiss' }, AS(ADMIN));
+  check('Not a venue: dismissed, out of the review list', rvd.status === 200 && byId(DB.vp_coaster_venues, C(3)).review === 'dismissed' &&
+    !((await call('/admin/coaster/list', {}, AS(ADMIN))).body.leads || []).some(function (x) { return x.id === C(3); }));
+  check('nothing in review sends an email or a text', sent.length === 0 && SMS.length === 0, sent);
+  var ons = await call('/admin/coaster/optins', { venue_id: PV, on: true }, AS(STAFF));
+  check('staff cannot switch sign-ups', ons.status === 403 && DB.vp_coaster_optin_venues.length === 1, ons);
+  var on1 = await call('/admin/coaster/optins', { venue_id: PV, on: true }, AS(ADMIN));
+  var on2 = await call('/admin/coaster/optins', { venue_id: PV, on: true }, AS(ADMIN));
+  check('Switch sign-ups on: one row for the venue (twice is still one), audited', on1.status === 200 && on2.status === 200 &&
+    DB.vp_coaster_optin_venues.filter(function (r) { return r.venue_id === PV; }).length === 1 && auditOf('coaster_optins_on').length === 2, DB.vp_coaster_optin_venues);
+  var off1 = await call('/admin/coaster/optins', { venue_id: PV, on: false }, AS(ACCTS));
+  check('Switch sign-ups off: the row goes, the other venue\'s stays, audited', off1.status === 200 && !DB.vp_coaster_optin_venues.some(function (r) { return r.venue_id === PV; }) &&
+    DB.vp_coaster_optin_venues.some(function (r) { return r.venue_id === U(61); }) && auditOf('coaster_optins_off').length === 1, DB.vp_coaster_optin_venues);
+  var onx = await call('/admin/coaster/optins', { venue_id: U(99), on: true }, AS(ADMIN));
+  check('not an active venueplay venue: 404, nothing switched', onx.status === 404 && DB.vp_coaster_optin_venues.length === 1, onx);
+
   section('4. POST /admin/coaster/remove: the row and its rounds');
   var playsBefore = DB.vp_coaster_plays.length;
   var rs = await call('/admin/coaster/remove', { id: C(1) }, AS(STAFF));
-  check('staff cannot remove one', rs.status === 403 && DB.vp_coaster_venues.length === 4);
+  check('staff cannot remove one', rs.status === 403 && DB.vp_coaster_venues.length === 6);
   var rm = await call('/admin/coaster/remove', { id: C(1) }, AS(ADMIN));
   check('owner removes The Royal: the row goes and its 5 rounds (first names only) go with it; every other board\'s rounds stay',
     rm.status === 200 && rm.body.rounds_deleted === 5 && !DB.vp_coaster_venues.some(function (c) { return c.id === C(1); }) && !DB.vp_coaster_plays.some(function (p) { return p.board === 'c:' + C(1); }) &&
@@ -362,10 +405,13 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   section('7. The HQ section (vp-coaster-hq.js) against the real Worker, and hq.html\'s own form');
   world();
   coasterRow(C(30), 'coaster', 'Sam\'s <b>Bar</b> & Grill', { suburb: 'Burleigh <i>Heads</i>', postcode: '4220', au_state: 'QLD', logo_url: 'https://db/storage/v1/object/public/venue-logos/coaster/' + C(30) + '/abc.png' });
-  coasterRow(C(31), 'lead', 'Fox <script>alert(1)</script> Hounds');
+  coasterRow(C(31), 'lead', 'Fox <script>alert(1)</script> Hounds', { suburb: 'Tugun', au_state: 'QLD', website: 'https://fox.example/"><b>x</b>', asks: 2, guard_note: 'cafe name (lead_guard: cafes are not venueplay venues)', review: 'new' });
+  DB.vp_licensed_venues.push({ id: 108, name: 'Elwood <b>RSL</b>', suburb: 'Elwood', postcode: '3184', au_state: 'VIC', name_key: 'elwood rsl', source: 'venue master list' });
+  play('l:108', 'Lee', DAY);
   play('c:' + C(30), 'Sam', DAY); play('c:' + C(31), 'Jo', DAY); play('c:' + C(31), 'Kim', DAY);
   var pr7 = await call('/admin/prospect', pbody({ name: 'Prospect With Coasters' }), AS(ADMIN));
   play('v:' + pr7.body.venue.id, 'Ana', DAY);
+  DB.vp_venues.forEach(function (v) { if (v.id === pr7.body.venue.id && v.status == null) v.status = 'active'; });   // the column's default in the real table
   var PANE = readFile('venueplay/app/vp-coaster-hq.js');
   var API = 'https://api.venueplay.com.au';
   function mk(id) { return { id: id || '', value: '', innerHTML: '', textContent: '', hidden: false, className: '', disabled: false, kids: [], ls: {},
@@ -392,12 +438,26 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   check('a coaster venue shows its logo, where it is, "No emails", its play, and both buttons', /<img class="cqlogo" alt="" src="https:\/\/db\/storage\/v1\/object\/public\/venue-logos\/coaster\//.test(H) &&
     /Burleigh &lt;i&gt;Heads&lt;\/i&gt;, 4220 QLD/.test(H) && /No emails/.test(H) && /1 round in the last 30 days, 1 player in the last 7 days/.test(H) &&
     new RegExp('data-cq-switch="' + C(30) + '">Make it a normal prospect<').test(H) && new RegExp('data-cq-remove="' + C(30) + '">Remove<').test(H), H);
-  check('a lead reads "Coaster players at X, not on venueplay", with its play and the same two buttons', /Coaster players at Fox &lt;script&gt;alert\(1\)&lt;\/script&gt; Hounds, not on venueplay/.test(H) &&
-    /1 round in the last 30 days|2 rounds in the last 30 days, 2 players in the last 7 days/.test(H) && new RegExp('data-cq-switch="' + C(31) + '"').test(H), H);
+  check('a venue a player added is listed for review: name, suburb and state, its website as a link (escaped), how many added it, lead_guard\'s note, and the three review buttons',
+    /Venues players added \(possible new leads\)/.test(H) && /Nothing here is ever emailed or sent to cold email/.test(H) &&
+    /<div class="cqname">Fox &lt;script&gt;alert\(1\)&lt;\/script&gt; Hounds<\/div><span class="cqtag">New<\/span>/.test(H) && /Tugun, QLD &middot; <a href="https:\/\/fox\.example\/&quot;&gt;&lt;b&gt;x&lt;\/b&gt;"/.test(H) &&
+    /Added by 2 players/.test(H) && /Check: cafe name \(lead_guard: cafes are not venueplay venues\)/.test(H) &&
+    new RegExp('data-cq-review="list" data-cq-for="' + C(31) + '">Add to the picker<').test(H) && new RegExp('data-cq-review="keep" data-cq-for="' + C(31) + '">Keep as a possible lead<').test(H) &&
+    new RegExp('data-cq-review="dismiss" data-cq-for="' + C(31) + '">Not a venue<').test(H) && !new RegExp('data-cq-switch="' + C(31) + '"').test(H), H);
+  check('players at a venue on our list: "Coaster players at Elwood RSL", "not on venueplay", where it is (escaped)', /Players at venues on our list, not on venueplay <span class="mono">1<\/span>/.test(H) &&
+    /Coaster players at Elwood &lt;b&gt;RSL&lt;\/b&gt;<\/div><span class="cqtag cqst-listed">not on venueplay<\/span>/.test(H) && /Elwood, VIC, on our venue list/.test(H), H);
+  check('a venueplay venue with play shows its sign-up switch, Off until HQ turns it on', /Sign-ups for Prospect With Coasters at the end of a round: <b>Off<\/b>/.test(H) && /data-cq-optins="on" data-cq-for="[0-9a-f-]{36}">Switch sign-ups on</.test(H), H);
   check('a venueplay prospect with coaster play: "Coaster players at Prospect With Coasters", marked a prospect', /Coaster players at Prospect With Coasters<\/div><span class="cqtag cqst-prospect">a prospect<\/span>/.test(H), H);
   function btn(attr, id) { return { id: '', disabled: false, textContent: '', getAttribute: function (k) { return k === attr ? id : null; }, closest: function () { return this; } }; }
   T7.onClick({ target: btn('data-cq-switch', C(30)) });
   check('Make it a normal prospect opens hq.html\'s Set up a prospect with the name, the postcode and the coaster id', PREFILL.length === 1 && PREFILL[0].name === 'Sam\'s <b>Bar</b> & Grill' && PREFILL[0].postcode === '4220' && PREFILL[0].coaster_id === C(30), PREFILL);
+  function btn2(a1, v1, id) { return { id: '', disabled: false, textContent: '', getAttribute: function (k) { return k === a1 ? v1 : k === 'data-cq-for' ? id : null; }, closest: function () { return this; } }; }
+  await T7.optins(btn2('data-cq-optins', 'on', pr7.body.venue.id), pr7.body.venue.id, true);
+  check('Switch sign-ups on goes through the real Worker and the list then says On', DB.vp_coaster_optin_venues.some(function (r) { return r.venue_id === pr7.body.venue.id; }) &&
+    /Sign-ups for Prospect With Coasters at the end of a round: <b>On<\/b>/.test(ELS.cqBody.innerHTML) && /Sign-ups are on/.test(ELS.cqMsg.textContent), ELS.cqMsg.textContent);
+  await T7.review(btn2('data-cq-review', 'keep', C(31)), C(31), 'keep');
+  check('a review button goes through the real Worker: Keep as a possible lead, and the row says so', (DB.vp_coaster_venues.filter(function (c) { return c.id === C(31); })[0] || {}).review === 'kept' &&
+    /Kept as a possible lead<\/span>/.test(ELS.cqBody.innerHTML) && /is kept as a possible lead/.test(ELS.cqMsg.textContent), ELS.cqMsg.textContent);
   ELS.cqName.value = 'Pane Added Hotel'; ELS.cqSuburb.value = 'Tugun'; ELS.cqPostcode.value = '4224'; T7.S.logo = LOGO;
   var addBtn = { id: 'cqAdd', disabled: false, textContent: '' };
   await T7.add(addBtn);

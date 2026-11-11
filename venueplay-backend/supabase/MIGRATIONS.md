@@ -619,14 +619,18 @@ grant or function and RLS-BASELINE.json does not change. Either order with the s
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
 
-`venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page): two tables, both
-service role only (RLS on, no policies, revoked from public/anon/authenticated). `vp_coaster_venues`: places on the coaster
-round that are NOT venueplay venues, kind 'coaster' (a "coaster venue (no emails)" Dean adds in HQ: name, suburb, postcode,
-logo; not a vp_venues row, no login, no email, so no automatic email path can reach it until HQ switches it to a normal
-prospect, which sets venue_id/switched_at) or kind 'lead' (a pub a player typed in, shown in HQ as "coaster players at X, not
-on venueplay"; one row per name). `vp_coaster_plays`: one row per round, first name only, scored and timed by the game Worker
-(the trivia rule, triviaAnswerPoints), boards by the place's local night and week, deleted after 35 days by the game Worker's
-nightly sweep. Run BEFORE the game Worker (/coaster/*) and billing Worker (/admin/coaster/*); before it, both answer "not
-switched on yet" and the page plays as before. After running, dump RLS-BASELINE.json (two new tables). NUMBER: 140 to 152
-are taken on other branches (152 is fix/hq-prospects-6nov), so 153. Branch `feature/live-here-now-v2`. NOT RUN. Read-back and
-rollback in the file.
+`venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page; reworked 12 Nov 2026 for
+INBOX 229/232 before it was ever run): three tables, all service role only (RLS on, no policies, revoked from
+public/anon/authenticated). `vp_coaster_venues`: places on the coaster round that are NOT venueplay venues, kind 'coaster' (a
+"coaster venue (no emails)" Dean adds in HQ, or a player-added venue HQ put in the picker; not a vp_venues row, no login, no
+email, so no automatic email path can reach it until HQ switches it to a normal prospect, which sets venue_id/switched_at) or
+kind 'lead' (a venue a player ADDED, "Can't find your venue? Add it": name, suburb, state, optional website, asks, lead_guard's
+name note, review new/kept/listed/dismissed; a possible new lead for HQ, never a board, never cold email). `vp_coaster_plays`:
+one row per round, first name only, scored and timed by the game Worker (triviaAnswerPoints), boards 'v:'/'c:'/'l:<licensed
+venue id>' (the picker also lists our licensed list, migration 171, HOTEL/PUB/TAVERN/RSL/CLUB names only), by the place's local
+night and week, deleted after 35 days by the game Worker's nightly sweep. `vp_coaster_optin_venues`: the venueplay venues HQ
+switched the end-of-round sign-up on for (no row = off; every venue starts off); sign-ups go to vp_captures (source 'coaster',
+consent_version per 174) exactly as the phones' do. Run BEFORE the game Worker (/coaster/*) and billing Worker
+(/admin/coaster/*); before it, both answer "not switched on yet" and the page plays as before. After running, dump
+RLS-BASELINE.json (three new tables). NUMBER: 153 is Dean's reserved number (INBOX 222). Branch `feature/live-here-now-v2`.
+NOT RUN. Read-back and rollback in the file.

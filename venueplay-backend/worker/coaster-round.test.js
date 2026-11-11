@@ -76,6 +76,12 @@ function matches(r, f) {
     if (x.v === "not.is.null") return !(v === null || v === undefined);
     if (x.v.indexOf("eq.") === 0) { var w = x.v.slice(3); return Array.isArray(v) ? arrStr(v) === w : String(v) === w; }
     if (x.v.indexOf("lt.") === 0) return String(v) < x.v.slice(3);
+    if (x.v.indexOf("gte.") === 0) return String(v) >= x.v.slice(4);
+    if (x.v.indexOf("in.(") === 0) return x.v.slice(4, -1).split(",").indexOf(String(v)) >= 0;
+    if (x.v.indexOf("ilike.") === 0) {   /* PostgREST ilike: * is any run of letters, case ignored */
+      var pat = x.v.slice(6).toLowerCase().split("*").map(function (t) { return t.replace(/[.?+^$()[\]{}|\\]/g, "\\$&"); }).join(".*");
+      return v != null && new RegExp("^" + pat + "$").test(String(v).toLowerCase());
+    }
     throw new Error("fake db: unknown filter " + x.c + "=" + x.v);
   });
 }
@@ -118,7 +124,7 @@ function sbInsert(env, table, obj, ret) {
       row.answers = row.answers || []; row.points = row.points || 0; row.correct = row.correct || 0; row.ms_total = row.ms_total || 0; row.finished_at = row.finished_at || null;
     }
     if (table === "vp_coaster_venues") {
-      if (row.kind === "lead" && t.some(function (r) { return r.kind === "lead" && !r.venue_id && r.name_key === row.name_key; })) throw httpErr(409, "dup");
+      if (row.kind === "lead" && t.some(function (r) { return r.kind === "lead" && !r.venue_id && r.name_key === row.name_key && String(r.suburb || "").toLowerCase() === String(row.suburb || "").toLowerCase() && r.au_state === row.au_state; })) throw httpErr(409, "dup");
       row.venue_id = row.venue_id || null;
     }
     t.push(row);
@@ -141,6 +147,10 @@ function sbDelete(env, table, filter) {
   });
 }
 function abuseIpHash() { return Promise.resolve("iphash"); }
+function sbInsertAny(env, table, obj, ret) {
+  if (table === "vp_captures" && DB.no174 && "consent_version" in obj) { calls.push("INSERT " + table + " (refused: no column)"); return Promise.reject(httpErr(502, "A database error occurred (x)")); }
+  return sbInsert(env, table, obj, ret);
+}
 function rateLimit(env, key, max, win) { calls.push("rl:" + key + ":" + max + ":" + win); return Promise.resolve({ ok: !limited }); }
 function enc(s) { return encodeURIComponent(String(s)); }
 function json(obj, status) { return { body: obj, status: status || 200 }; }
@@ -166,11 +176,11 @@ function FixedDate(x) { if (!(this instanceof FixedDate)) return new RealDate(NO
 FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; FixedDate.parse = RealDate.parse; FixedDate.prototype = RealDate.prototype;
 
 var SRC = SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
-  lift("assertUuid") + (uu ? uu[0] : "") + "\n" + BLOCK +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };";
+  lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + BLOCK +
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };";
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
   "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", SRC)(
-  sbGet, sbGetAll, sbInsert, sbPatchReturning, sbDelete, abuseIpHash, rateLimit, enc, MiniURL, fakeFetch, FixedDate,
+  sbGet, sbGetAll, sbInsertAny, sbPatchReturning, sbDelete, abuseIpHash, rateLimit, enc, MiniURL, fakeFetch, FixedDate,
   randomTokenHex, genCode, sha256Hex, readJsonOf, httpErr);
 
 var V_MINI = "11111111-1111-4111-8111-111111111111", V_PERTH = "22222222-2222-4222-8222-222222222222", V_GONE = "33333333-3333-4333-8333-333333333333";
@@ -194,7 +204,32 @@ function fresh() {
       { id: C_SWITCHED, kind: "coaster", name: "Switched Arms", name_key: "switched arms", suburb: "Burleigh", postcode: "4220", au_state: "QLD", timezone: "Australia/Brisbane", venue_id: V_MINI },
       { id: L_OLD, kind: "lead", name: "Leady Larry's", name_key: "leady larrys", venue_id: null }
     ],
-    vp_coaster_plays: []
+    vp_coaster_plays: [],
+    /* Our licensed venues list (migration 171). Only HOTEL, PUB, TAVERN, RSL or CLUB names may show. */
+    vp_licensed_venues: [
+      { id: 101, name: "Royal Hotel", suburb: "Bowral", postcode: "2576", au_state: "NSW" },
+      { id: 102, name: "Royal Hotel", suburb: "Mudgee", postcode: "2850", au_state: "NSW" },
+      { id: 103, name: "Royal Hotel", suburb: "Ballarat", postcode: "3350", au_state: "VIC" },
+      { id: 104, name: "Royal Hotel", suburb: "Sydney", postcode: "2000", au_state: "NSW" },   // the same pub as a venueplay venue
+      { id: 105, name: "Royal Cafe", suburb: "Bowral", postcode: "2576", au_state: "NSW" },
+      { id: 106, name: "Royal Bowling Greens", suburb: "Perth", postcode: "6000", au_state: "WA" },
+      { id: 107, name: "Bodalla Pub", suburb: "Bodalla", postcode: "2545", au_state: "NSW" },
+      { id: 108, name: "Elwood RSL", suburb: "Elwood", postcode: "3184", au_state: "VIC" },
+      { id: 109, name: "Kalgoorlie Tavern", suburb: "Kalgoorlie", postcode: "6430", au_state: "WA" },
+      { id: 110, name: "Grand Clubhouse", suburb: "Darwin", postcode: "0800", au_state: "NT" },
+      { id: 111, name: "Glenelg Golf Club", suburb: "Glenelg", postcode: "5045", au_state: "SA" }
+    ],
+    vp_sessions: [
+      { id: "s1", venue_id: "77777777-7777-4777-8777-777777777773", status: "running", created_at: "2026-11-06T09:00:00.000Z" },
+      { id: "s2", venue_id: "77777777-7777-4777-8777-777777777774", status: "lobby", created_at: "2026-11-05T09:00:00.000Z" },
+      { id: "s3", venue_id: "77777777-7777-4777-8777-777777777775", status: "ended", created_at: "2026-11-06T09:30:00.000Z" }
+    ],
+    vp_venue_settings: [
+      { venue_id: V_MINI, collect_first_name: true, collect_email: true, collect_mobile: false, collect_marketing_optin: true },
+      { venue_id: V_PERTH, collect_first_name: true, collect_email: true, collect_mobile: true, collect_marketing_optin: true }
+    ],
+    vp_coaster_optin_venues: [{ venue_id: V_MINI }],
+    vp_captures: []
   };
   calls = []; limited = false; fetched = []; W.reset();
 }
@@ -215,7 +250,8 @@ step(function () {
     var m = r.body.matches;
     pass("'min' finds The Mini Bar, a venueplay venue, as its board 'v:<id>'", r.status === 200 && m.length === 1 && m[0].name === "The Mini Bar" && m[0].place === "v:" + V_MINI, r.body);
     pass("only the place, name, suburb, postcode, state and whether it was typed in full come back (no slug, email, code or status)",
-      Object.keys(m[0]).sort().join(",") === "exact,name,place,postcode,state,suburb", Object.keys(m[0]));
+      Object.keys(m[0]).sort().join(",") === "exact,name,on,place,postcode,state,suburb", Object.keys(m[0]));
+    pass("...and it is marked ON venueplay (it has a venueplay login)", m[0].on === true, m[0]);
     pass("the database is asked for ACTIVE venueplay venues, paged and ordered", calls.some(function (c) { return /^GETALL vp_venues\?status=eq\.active.*order=/.test(c); }), calls);
     pass("and for coaster venues not yet switched to a prospect", calls.some(function (c) { return /^GETALL vp_coaster_venues\?kind=eq\.coaster&venue_id=is\.null.*order=/.test(c); }), calls);
     pass("and the per-network limit is counted", calls.some(function (c) { return /^rl:coaster:find:iphash:30:60$/.test(c); }), calls);
@@ -224,6 +260,7 @@ step(function () {
     var m = r.body.matches;
     pass("'tug' finds the coaster venue Tugun Tavern, with its suburb and postcode, as 'c:<id>'",
       m.length === 1 && m[0].place === "c:" + C_TUGUN && m[0].suburb === "Tugun" && m[0].postcode === "4224", m);
+    pass("...and it is NOT marked on venueplay (a coaster venue has no login)", m.length === 1 && m[0].on === false, m);
     return get(W.venues, "?q=lea");
   }).then(function (r) {
     pass("a pub another player typed in (a lead) is never offered to anyone else", r.body.matches.length === 0, r.body);
@@ -233,9 +270,46 @@ step(function () {
     return get(W.venues, "?q=gone");
   }).then(function (r) {
     pass("a cancelled venue is never offered", r.body.matches.length === 0, r.body);
+    calls = [];
     return get(W.venues, "?q=royal");
   }).then(function (r) {
-    pass("at most five answers, then 'more', never a count", r.body.matches.length === 5 && r.body.more === true && !("count" in r.body), r.body);
+    var m = r.body.matches;
+    pass("at most eight picks, then 'more', never a count", m.length === 8 && r.body.more === true && !("count" in r.body), r.body);
+    pass("venueplay venues come first at the same closeness, then our list", m.slice(0, 6).every(function (x) { return x.on === true; }) && m.slice(6).every(function (x) { return x.on === false; }), m.map(function (x) { return x.place; }));
+    pass("our list is read for THIS search only, narrowed by the typed word (ilike), ordered, at most 60 rows",
+      calls.some(function (c) { return /^GET vp_licensed_venues\?name=ilike\.\*royal\*&select=id,name,suburb,postcode,au_state&order=name\.asc,id\.asc&limit=60$/.test(c); }), calls);
+    pass("a venue on our list shows its suburb and state, never its postcode, as 'l:<id>'",
+      m.slice(6).every(function (x) { return /^l:\d+$/.test(x.place) && x.suburb && x.state && x.postcode === ""; }), m.slice(6));
+    pass("the same pub on venueplay AND on our list shows once, as on venueplay (Royal Hotel 2000)",
+      !m.some(function (x) { return x.place === "l:104"; }) && m.some(function (x) { return x.place === "v:77777777-7777-4777-8777-777777777771"; }), m);
+    pass("'game on now' only where a game is open (lobby, running, paused) and opened in the last 10 hours",
+      m.filter(function (x) { return x.live; }).map(function (x) { return x.place; }).join() === "v:77777777-7777-4777-8777-777777777773", m.filter(function (x) { return x.live; }));
+    pass("...asked in ONE read for the venueplay picks only", calls.filter(function (c) { return /^GET vp_sessions\?venue_id=in\./.test(c) && /status=in\.\(lobby,running,paused\)/.test(c) && /created_at=gte\./.test(c); }).length === 1, calls);
+    return get(W.venues, "?q=royal ca");
+  }).then(function (r) {
+    pass("a name without HOTEL, PUB, TAVERN, RSL or CLUB on our list never shows ('Royal Cafe')", !r.body.matches.some(function (x) { return /cafe/i.test(x.name); }), r.body);
+    return get(W.venues, "?q=royal bow");
+  }).then(function (r) {
+    pass("...nor 'Royal Bowling Greens'", !r.body.matches.some(function (x) { return /bowling/i.test(x.name); }), r.body);
+    return get(W.venues, "?q=clubhouse");
+  }).then(function (r) {
+    pass("the target words are whole words: 'Grand Clubhouse' is not a club", r.body.matches.length === 0, r.body);
+    return get(W.venues, "?q=bodalla");
+  }).then(function (r) {
+    var m = r.body.matches;
+    pass("'bodalla' finds Bodalla Pub on our list, not on venueplay", m.length === 1 && m[0].place === "l:107" && m[0].on === false && m[0].suburb === "Bodalla" && m[0].state === "NSW", m);
+    return get(W.venues, "?q=elwood");
+  }).then(function (r) {
+    pass("an RSL is on the list ('Elwood RSL')", r.body.matches.length === 1 && r.body.matches[0].place === "l:108", r.body);
+    return get(W.venues, "?q=kalg");
+  }).then(function (r) {
+    pass("a tavern is on the list ('Kalgoorlie Tavern')", r.body.matches.length === 1 && r.body.matches[0].place === "l:109", r.body);
+    DB.vp_licensed_venues = null;
+    W.reset();
+    return get(W.venues, "?q=royal");
+  }).then(function (r) {
+    pass("our list missing or empty: the search still answers with venueplay venues", r.status === 200 && r.body.matches.length === 6 && r.body.matches.every(function (x) { return x.on; }), r.body);
+    fresh();
     calls = [];
     return get(W.venues, "?q=mi");
   }).then(function (r) {
@@ -255,35 +329,55 @@ step(function () {
 });
 
 step(function () {
-  print("\nNOT LISTED? TYPE IT: A LEAD FOR DEAN");
+  print("\nCAN'T FIND YOUR VENUE? ADD IT: A POSSIBLE NEW LEAD FOR HQ, NEVER A BOARD");
   fresh(); NOW = FRI_830PM;
-  return post(W.lead, { name: "The Drunken Duck & Co" }).then(function (r) {
+  var ADD = { name: "The Drunken Duck & Co", suburb: "Fitzroy", state: "VIC", website: "drunkenduck.com.au" };
+  return post(W.lead, ADD).then(function (r) {
     var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "The Drunken Duck & Co"; })[0];
-    pass("a typed pub is kept as a lead (kind 'lead') and the player gets its board", r.status === 200 && !!row && row.kind === "lead" && r.body.place === "c:" + row.id, [r.body, row]);
+    pass("an added venue is kept for HQ's review as kind 'lead' with its suburb, state and website", r.status === 200 && r.body.added === true && !!row && row.kind === "lead" &&
+      row.suburb === "Fitzroy" && row.au_state === "VIC" && row.website === "https://drunkenduck.com.au" && row.timezone === "Australia/Melbourne", [r.body, row]);
+    pass("the player gets NO board for it (never a place from typed text)", !("place" in r.body), r.body);
     pass("its key drops 'the', case, '&' and punctuation", row && row.name_key === "drunken duck and co", row && row.name_key);
     pass("the key is the same words HQ keeps (coasterNameKey)", W.key("The Drunken Duck & Co") === "drunken duck and co");
-    pass("the lead limit is counted per network over 10 minutes", calls.some(function (c) { return /^rl:coaster:lead:iphash:6:600$/.test(c); }), calls);
-    return post(W.lead, { name: "drunken duck and co" });
+    pass("a fine pub name carries no lead_guard note", row && row.guard_note == null, row);
+    pass("the add limit is counted per network over 10 minutes", calls.some(function (c) { return /^rl:coaster:lead:iphash:6:600$/.test(c); }), calls);
+    return post(W.lead, { name: "drunken duck and co", suburb: "fitzroy", state: "VIC" });
   }).then(function (r) {
     var rows = DB.vp_coaster_venues.filter(function (x) { return x.kind === "lead" && x.name_key === "drunken duck and co"; });
-    pass("a mate typing the same pub another way lands on the SAME board (one lead row)", rows.length === 1 && r.body.place === "c:" + rows[0].id, [rows.length, r.body]);
-    return post(W.lead, { name: "The Mini Bar" });
+    pass("a mate adding the same venue another way counts one more ask on the SAME row", r.body.added === true && rows.length === 1 && rows[0].asks === 2, rows);
+    return post(W.lead, { name: "Drunken Duck & Co", suburb: "Byron Bay", state: "NSW" });
   }).then(function (r) {
-    pass("typing a listed pub in full gives that pub's board, not a lead", r.body.place === "v:" + V_MINI && r.body.listed === true && !DB.vp_coaster_venues.some(function (x) { return x.name === "The Mini Bar"; }), r.body);
-    return post(W.lead, { name: "ab" });
+    pass("the same name in another suburb is another venue", DB.vp_coaster_venues.filter(function (x) { return x.name_key === "drunken duck and co"; }).length === 2, r.body);
+    return post(W.lead, { name: "Bean There Cafe", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
-    pass("fewer than three letters is refused", r.status === 400, r);
-    return post(W.lead, { name: "The Big Shit Pub" });
+    var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Bean There Cafe"; })[0];
+    pass("lead_guard's name rule is noted for HQ: a cafe name is kept with its note, never refused to the player", r.status === 200 && row && /cafe name/.test(row.guard_note || ""), row);
+    pass("lead_guard, like ~/venue-enrich/lead_guard.py: a strong venue word rescues a name, a food bar is no bar, a test venue is flagged",
+      W.guard("Royal Hotel Restaurant") === "" && W.guard("Coffee Club") !== "" && W.guard("Pizza Bar") !== "" && W.guard("Thai Restaurant & Bar") === "" &&
+      /fixture/.test(W.guard("Test Alpha Hotel")) && W.guard("The Mini Bar") === "", [W.guard("Coffee Club"), W.guard("Pizza Bar"), W.guard("Thai Restaurant & Bar")]);
+    return post(W.lead, { name: "ab", suburb: "Tugun", state: "QLD" });
+  }).then(function (r) {
+    pass("fewer than three letters is refused, and says which box", r.status === 400 && r.body.field === "name", r);
+    return post(W.lead, { name: "Some Pub", suburb: "", state: "QLD" });
+  }).then(function (r) {
+    pass("no suburb is refused, and says which box", r.status === 400 && r.body.field === "suburb", r);
+    return post(W.lead, { name: "Some Pub", suburb: "Tugun", state: "XX" });
+  }).then(function (r) {
+    pass("a state that is not one of the eight is refused", r.status === 400 && r.body.field === "state", r);
+    return post(W.lead, { name: "Some Pub", suburb: "Tugun", state: "QLD", website: "not a site" });
+  }).then(function (r) {
+    pass("a website that does not look like one is refused (it is optional: empty is fine)", r.status === 400 && r.body.field === "website" && W.site("") === "" && W.site("http://x.com.au/a") === "https://x.com.au/a", r);
+    return post(W.lead, { name: "The Big Shit Pub", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
     pass("a rude name is refused and nothing is kept", r.status === 400 && !DB.vp_coaster_venues.some(function (x) { return /shit/i.test(x.name); }), r);
     fresh(); limited = true;
-    return post(W.lead, { name: "Some Pub" });
+    return post(W.lead, { name: "Some Pub", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
     pass("over the limit: 429 and nothing kept", r.status === 429 && DB.vp_coaster_venues.length === 3, r);
     fresh(); DB.missing = true;
-    return post(W.lead, { name: "Some Pub" });
+    return post(W.lead, { name: "Some Pub", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
-    pass("before migration 153: 503 { off: true }, so the page plays the old way", r.status === 503 && r.body.off === true, r);
+    pass("before migration 153: 503 { off: true }", r.status === 503 && r.body.off === true, r);
   });
 });
 
@@ -330,7 +424,22 @@ step(function () {
     pass("a coaster venue has its own board, with its logo and suburb", r.status === 200 && r.body.place === "c:" + C_TUGUN && r.body.venue.suburb === "Tugun" && /t\.png$/.test(r.body.venue.logo_url), r.body);
     return post(W.start, { name: "Jo", place: "c:" + L_OLD, qids: five(0) });
   }).then(function (r) {
-    pass("a typed-in pub has a board too, and shows no logo", r.status === 200 && r.body.place === "c:" + L_OLD && r.body.venue.logo_url === "", r.body);
+    pass("a venue a player added (a lead) has NO board: it waits for HQ", r.status === 404 && r.body.place_gone === true && !DB.vp_coaster_plays.some(function (x) { return x.board === "c:" + L_OLD; }), r.body);
+    return post(W.start, { name: "Jo", place: "l:107", qids: five(0) });
+  }).then(function (r) {
+    var row = DB.vp_coaster_plays[DB.vp_coaster_plays.length - 1];
+    pass("a venue on our list has its own board 'l:<id>', its night on its state's clock, no logo, and is not 'on venueplay'",
+      r.status === 200 && r.body.place === "l:107" && r.body.venue.name === "Bodalla Pub" && r.body.venue.logo_url === "" && r.body.venue.on === false && row.board === "l:107" && row.night === "2026-11-06", [r.body, row && row.night]);
+    pass("...and no sign-up box: it is not a venueplay venue", !("optin" in r.body), r.body);
+    return post(W.start, { name: "Jo", place: "l:105", qids: five(0) });
+  }).then(function (r) {
+    pass("a list id whose name has none of the target words has no board ('Royal Cafe')", r.status === 404, r.body);
+    return post(W.start, { name: "Jo", place: "l:99999", qids: five(0) });
+  }).then(function (r) {
+    pass("a list id that is not there has no board", r.status === 404, r.body);
+    return post(W.start, { name: "Jo", place: "l:0", qids: five(0) });
+  }).then(function (r) {
+    pass("a made-up place is refused before the database is asked", r.status === 404, r.body);
     return post(W.start, { name: "Mia", code: P1.code, place: "c:" + C_TUGUN, qids: five(10) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[DB.vp_coaster_plays.length - 1];
@@ -515,6 +624,52 @@ step(function () {
 });
 
 step(function () {
+  print("\nTHE VENUE'S OWN SIGN-UP: ONLY WHERE HQ SWITCHED IT ON, THE SAME GATE AND TICK AS THE PHONES");
+  fresh(); NOW = FRI_830PM;
+  var mini, perth;
+  return post(W.start, { name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
+    mini = r.body;
+    pass("a round at a venue HQ switched on carries the sign-up box: what the venue collects (email, no mobile) and the tick",
+      r.status === 200 && JSON.stringify(mini.optin) === JSON.stringify({ email: true, mobile: false, marketing_optin: true }), mini.optin);
+    return post(W.start, { name: "Sam", place: "v:" + V_PERTH, qids: five(0) });
+  }).then(function (r) {
+    perth = r.body;
+    pass("a venue NOT switched on gets no box (every existing venue starts OFF)", r.status === 200 && !("optin" in perth), perth);
+    calls = [];
+    return post(W.optin, { play: mini.play, token: mini.token, email: "Sam@Example.com ", mobile: "0412 345 678", marketing_optin: true, consent_version: "vpc-2-6nov" });
+  }).then(function (r) {
+    var c = DB.vp_captures[0];
+    pass("the sign-up is kept for THAT venue, source 'coaster', with the consent words' version", r.status === 200 && r.body.stored === true && c && c.venue_id === V_MINI &&
+      c.source === "coaster" && c.email === "sam@example.com" && c.marketing_optin === true && c.consent_version === "vpc-2-6nov", c);
+    pass("only what the venue collects is kept (it does not collect a mobile)", c && !("mobile" in c), c);
+    pass("it cannot prove the phone was in the room, so it is kept with during_game false, like every such sign-up", c && c.during_game === false, c);
+    pass("the sign-up limit is counted per network", calls.some(function (x) { return /^rl:coaster:optin:iphash:10:600$/.test(x); }), calls);
+    return post(W.optin, { play: mini.play, token: mini.token, email: "jo@example.com", marketing_optin: false });
+  }).then(function (r) {
+    var c = DB.vp_captures[1];
+    pass("no tick: the email is kept, the opt-in is not (never ticked for them)", r.body.stored === true && c && !c.marketing_optin && !("consent_version" in c), c);
+    return post(W.optin, { play: mini.play, token: "wrong", email: "x@example.com", marketing_optin: true });
+  }).then(function (r) {
+    pass("someone else's round: refused, nothing kept", r.status === 403 && DB.vp_captures.length === 2, r);
+    return post(W.optin, { play: perth.play, token: perth.token, email: "x@example.com", marketing_optin: true });
+  }).then(function (r) {
+    pass("at a venue not switched on: nothing kept", r.status === 200 && r.body.stored === false && DB.vp_captures.length === 2, r);
+    return post(W.optin, { play: mini.play, token: mini.token, email: "nope", marketing_optin: true });
+  }).then(function (r) {
+    pass("an email that does not look right is refused", r.status === 400, r);
+    DB.no174 = true;
+    return post(W.optin, { play: mini.play, token: mini.token, email: "late@example.com", marketing_optin: true, consent_version: "vpc-2-6nov" });
+  }).then(function (r) {
+    var c = DB.vp_captures[2];
+    pass("before migration 174's column: kept without the version rather than lost", r.body.stored === true && c && c.email === "late@example.com" && c.marketing_optin === true && !("consent_version" in c), c);
+    DB.no174 = false; DB.vp_coaster_optin_venues = [];
+    return post(W.optin, { play: mini.play, token: mini.token, email: "after@example.com", marketing_optin: true });
+  }).then(function (r) {
+    pass("switched off again in HQ: nothing more is kept", r.body.stored === false && DB.vp_captures.length === 3, r);
+  });
+});
+
+step(function () {
   print("\nONE COPY OF EACH RULE, AND THE ROUTES ARE WIRED");
   pass("the coaster scores with triviaAnswerPoints and never restates it", /triviaAnswerPoints\(correct, COASTER_BASE, COASTER_SECS, true, 1,/.test(BLOCK) && BLOCK.indexOf("0.5") < 0);
   pass("the coaster search matches with the TV app's venueSearchScore", /venueSearchScore\(q, r\.name\)/.test(BLOCK) && BLOCK.indexOf("startsWith") < 0);
@@ -524,10 +679,16 @@ step(function () {
    "if (method === 'POST' && path === '/coaster/lead')       return await handleCoasterLead(request, env, json);",
    "if (method === 'POST' && path === '/coaster/start')      return await handleCoasterStart(request, env, json);",
    "if (method === 'POST' && path === '/coaster/answer')     return await handleCoasterAnswer(request, env, json);",
-   "if (method === 'GET'  && path === '/coaster/board')      return await handleCoasterBoardRoute(request, env, json);"].forEach(function (l) {
+   "if (method === 'GET'  && path === '/coaster/board')      return await handleCoasterBoardRoute(request, env, json);",
+   "if (method === 'POST' && path === '/coaster/optin')      return await handleCoasterOptin(request, env, json);"].forEach(function (l) {
     pass("the router sends " + l.split("'")[3] + " to its handler", router.indexOf(l) >= 0);
   });
-  pass("nothing in the coaster block asks for an email, a mobile or a surname", !/email|mobile|phone|surname|last_name/i.test(BLOCK.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
+  var o0 = BLOCK.indexOf("async function coasterOptinAsk("), o1 = BLOCK.indexOf("/* GET /coaster/board?", o0);
+  pass("the venue's sign-up is one piece of the block (coasterOptinAsk, handleCoasterOptin)", o0 > 0 && o1 > o0 && BLOCK.slice(o0, o1).indexOf("async function handleCoasterOptin(") > 0);
+  pass("outside the venue's own sign-up, nothing in the coaster block asks for an email, a mobile or a surname",
+    !/email|mobile|phone|surname|last_name/i.test((BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
+  pass("the sign-up goes through the phones' own gate (gatedCapture) and the venue's own settings (venueCollectCfg), never a copy",
+    /gatedCapture\(cfg, /.test(BLOCK) && /venueCollectCfg\(env, where\.venue_id\)/.test(BLOCK) && BLOCK.indexOf("function gatedCapture") < 0);
   return Promise.resolve();
 });
 

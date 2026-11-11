@@ -249,6 +249,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/coaster/list'           && typeof vpaCoasterList === 'function')        return await vpaCoasterList(request, env, json);
       if (request.method === 'POST' && path === '/admin/coaster/add'            && typeof vpaCoasterAdd === 'function')         return await vpaCoasterAdd(request, env, json);
       if (request.method === 'POST' && path === '/admin/coaster/remove'         && typeof vpaCoasterRemove === 'function')      return await vpaCoasterRemove(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/review'         && typeof vpaCoasterReview === 'function')      return await vpaCoasterReview(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/optins'         && typeof vpaCoasterOptins === 'function')      return await vpaCoasterOptins(request, env, json);
       // HQ > Subscribers (31 Oct 2026; migration 134): who asked for the monthly email, counts, matches, the CSV.
       if (request.method === 'POST' && path === '/admin/subscribers')        return await vpsHandleAdminList(request, env, json);
       if (request.method === 'POST' && path === '/admin/subscribers/export') return await vpsHandleAdminExport(request, env, json);
@@ -3708,6 +3710,15 @@ async function vpaProspectsData(env) {
  *                               prospect with coaster play is a coaster lead too, Dean item 9)
  *   POST /admin/coaster/add     { name, suburb, postcode, logo? }: a "coaster venue (no emails)"
  *   POST /admin/coaster/remove  { id }: a coaster venue or a lead, and its rounds (first names only) with it
+ *   POST /admin/coaster/review  { id, action }: a venue a PLAYER ADDED ("Can't find your venue? Add it", INBOX
+ *                               232) is a POSSIBLE NEW LEAD for HQ to review, never cold email: 'keep' (reviewed,
+ *                               stays a possible lead), 'list' (players can pick it: it becomes a coaster venue,
+ *                               still no emails) or 'dismiss' (not a venue; hidden). lead_guard's name note shows.
+ *   POST /admin/coaster/optins  { venue_id, on }: the venue's own sign-up at the end of a coaster round, per
+ *                               venueplay venue, OFF for every venue until HQ switches it on (vp_coaster_optin_venues)
+ *
+ * The picker also lists OUR licensed venues list (vp_licensed_venues, HOTEL/PUB/TAVERN/RSL/CLUB names, marked
+ * "not on venueplay yet"); a board there is 'l:<list id>' and shows here as "on our list, not on venueplay".
  *
  * NO EMAILS, BY CONSTRUCTION. A coaster venue is a vp_coaster_venues row: not a vp_venues row, no login, no
  * email address, no vp_prospects row. Every automatic email and text in this Worker starts from vp_venues,
@@ -3735,7 +3746,7 @@ async function vpaCoasterList(request, env, json) {
   let places, plays;
   try {
     places = await vpaSelectAll(env, 'vp_coaster_venues', 'venue_id=is.null&switched_at=is.null' +
-      '&select=id,kind,name,name_key,suburb,postcode,au_state,timezone,logo_url,created_at,created_label&order=created_at.desc,id.asc');
+      '&select=id,kind,name,name_key,suburb,postcode,au_state,timezone,logo_url,website,asks,guard_note,review,reviewed_at,created_at,created_label&order=created_at.desc,id.asc');
     plays = await vpaSelectAll(env, 'vp_coaster_plays', 'started_at=gte.' + encodeURIComponent(new Date(now - VPA_COASTER_ROUND_DAYS * DAY).toISOString()) +
       '&select=id,board,first_name,started_at,finished_at&order=started_at.asc,id.asc');
   } catch (e) {
@@ -3755,7 +3766,9 @@ async function vpaCoasterList(request, env, json) {
   const row = (c) => Object.assign({ id: c.id, kind: c.kind, name: c.name, suburb: c.suburb || '', postcode: c.postcode || '', state: c.au_state || '',
     logo_url: c.logo_url || null, created_at: c.created_at, created_label: c.created_label || '', board: 'c:' + c.id }, statOf('c:' + c.id));
   const coaster = places.filter((c) => c.kind === 'coaster').map(row);
-  const leads = places.filter((c) => c.kind === 'lead').map(row);
+  /* Venues players added, for review: newest first, dismissed ones out of sight. */
+  const leads = places.filter((c) => c.kind === 'lead' && c.review !== 'dismissed').map((c) => Object.assign(row(c),
+    { website: c.website || '', asks: c.asks || 1, guard_note: c.guard_note || '', review: c.review || 'new', reviewed_at: c.reviewed_at || null }));
   /* The venueplay venues with coaster play: customer or still a prospect, by the prospects tab's own rule
      (vpaProspectSignedUp, vpaProspectGone), never a second copy of it. */
   const vids = Object.keys(stats).filter((k) => /^v:/.test(k)).map((k) => k.slice(2));
@@ -3781,6 +3794,25 @@ async function vpaCoasterList(request, env, json) {
     boards.push(Object.assign({ board: 'v:' + id, kind: 'venue', venue_id: id, name: v ? v.name : '', postcode: v ? (v.postcode || '') : '', state: v ? (v.au_state || '') : '', status: status }, statOf('v:' + id)));
   });
   coaster.concat(leads).forEach((c) => { if (stats[c.board]) boards.push(Object.assign({ board: c.board, kind: c.kind, coaster_id: c.id, name: c.name, suburb: c.suburb, postcode: c.postcode, state: c.state, status: c.kind }, statOf(c.board))); });
+  /* Players at venues on our licensed list (not on venueplay): a warm lead each, named from the list. */
+  const lids = Object.keys(stats).filter((k) => /^l:[0-9]+$/.test(k)).map((k) => k.slice(2));
+  const listed = {};
+  for (let i = 0; i < lids.length; i += 100) {
+    try {
+      (await vpaSelectAll(env, 'vp_licensed_venues', 'id=in.(' + lids.slice(i, i + 100).join(',') + ')&select=id,name,suburb,postcode,au_state&order=id.asc'))
+        .forEach((l) => { listed[String(l.id)] = l; });
+    } catch (_) { /* the list unreadable: the boards still show, by number */ }
+  }
+  lids.forEach((id) => {
+    const l = listed[id];
+    boards.push(Object.assign({ board: 'l:' + id, kind: 'listed', listed_id: Number(id), name: l ? l.name : 'Venue ' + id + ' on our list', suburb: l ? (l.suburb || '') : '',
+      postcode: l ? (l.postcode || '') : '', state: l ? (l.au_state || '') : '', status: 'listed' }, statOf('l:' + id)));
+  });
+  /* Which venueplay venues have the coaster sign-up switched on. Missing table: none are. */
+  let optinOn = {};
+  try { (await vpaSelectAll(env, 'vp_coaster_optin_venues', 'select=venue_id&order=venue_id.asc')).forEach((r) => { optinOn[r.venue_id] = true; }); }
+  catch (_) { optinOn = {}; }
+  boards.forEach((b) => { if (b.kind === 'venue') b.optins = !!optinOn[b.venue_id]; });
   boards.sort((a, b) => (b.rounds_30d - a.rounds_30d) || (b.players_7d - a.players_7d) || String(a.name).localeCompare(String(b.name)));
   return json({ ok: true, coaster: coaster, leads: leads, boards: boards, round_days: VPA_COASTER_ROUND_DAYS, player_days: VPA_COASTER_PLAYER_DAYS });
 }
@@ -3854,6 +3886,62 @@ async function vpaCoasterRemove(request, env, json) {
   const out = { ok: true, removed: { id: id, name: gone[0].name, kind: gone[0].kind }, rounds_deleted: rounds };
   if (warn) out.warnings = [warn];
   return json(out);
+}
+/* A VENUE A PLAYER ADDED, REVIEWED (INBOX 232). Only rows of kind 'lead' that are still open. 'list' turns it into
+   a coaster venue (players can pick it; still not a venueplay venue, no emails) with its state's clock. Nothing
+   here ever reaches cold email: a kept lead is a note for Dean, and any later load runs lead_guard as always. */
+async function vpaCoasterReview(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const id = String((_b.body && _b.body.id) || '').trim().toLowerCase();
+  const action = String((_b.body && _b.body.action) || '');
+  if (!VPA_UUID_RE.test(id)) return json({ error: 'Which venue?' }, 400);
+  if (['keep', 'list', 'dismiss'].indexOf(action) < 0) return json({ error: 'Keep, add to the list, or not a venue?' }, 400);
+  const TZ = { NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne', TAS: 'Australia/Hobart', QLD: 'Australia/Brisbane', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
+  let c;
+  try { c = (await vpaSelectAll(env, 'vp_coaster_venues', 'id=eq.' + id + '&kind=eq.lead&venue_id=is.null&select=id,name,suburb,au_state,timezone,review&order=id.asc'))[0]; }
+  catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'The database did not answer. Try again.' }, 502);
+  }
+  if (!c) return json({ error: 'That venue is not waiting for review any more.' }, 404);
+  const now = new Date().toISOString(), by = String(actor.label || '').slice(0, 120) || null;
+  const patch = action === 'list'
+    ? { kind: 'coaster', review: 'listed', reviewed_at: now, reviewed_label: by, timezone: c.timezone || TZ[c.au_state] || 'Australia/Brisbane' }
+    : { review: action === 'keep' ? 'kept' : 'dismissed', reviewed_at: now, reviewed_label: by };
+  try { await vpaPatch(env, 'vp_coaster_venues', 'id=eq.' + id + '&kind=eq.lead&venue_id=is.null', patch); }
+  catch (e) { return json({ error: 'It was not saved (the database did not answer). Try again.' }, 502); }
+  await vpaAudit(env, actor, 'coaster_lead_' + (action === 'list' ? 'listed' : action === 'keep' ? 'kept' : 'dismissed'), 'coaster:' + id, { name: c.name, suburb: c.suburb || undefined, state: c.au_state || undefined });
+  return json({ ok: true, id: id, action: action });
+}
+/* THE VENUE'S OWN SIGN-UP AT THE END OF A COASTER ROUND, per venueplay venue: on or off (INBOX 232). OFF for
+   every venue until HQ turns it on here (Dean: nothing new moves an existing venue). The fields and the tick are
+   still the venue's own settings; this only says whether the coaster page offers them. */
+async function vpaCoasterOptins(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const vid = String((_b.body && _b.body.venue_id) || '').trim();
+  const on = (_b.body && _b.body.on) === true;
+  if (!VPA_UUID_RE.test(vid)) return json({ error: 'Which venue?' }, 400);
+  const v = (await vpaSelectAll(env, 'vp_venues', 'id=eq.' + vid + '&select=id,name,status&order=id.asc'))[0];
+  if (!v || v.status !== 'active') return json({ error: 'That venue is not an active venueplay venue.' }, 404);
+  try {
+    if (on) {
+      const have = await vpaSelectAll(env, 'vp_coaster_optin_venues', 'venue_id=eq.' + vid + '&select=venue_id&order=venue_id.asc');
+      if (!have.length) await vpaInsert(env, 'vp_coaster_optin_venues', { venue_id: vid, switched_label: String(actor.label || '').slice(0, 120) || null }, false);
+    } else {
+      await vpaDelete(env, 'vp_coaster_optin_venues', 'venue_id=eq.' + vid);
+    }
+  } catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'It was not saved (the database did not answer). Try again.' }, 502);
+  }
+  await vpaAudit(env, actor, on ? 'coaster_optins_on' : 'coaster_optins_off', 'venue:' + vid, { name: v.name });
+  return json({ ok: true, venue_id: vid, on: on });
 }
 /* MAKE IT A NORMAL PROSPECT. Called by vpaProspectSetUp ONLY after the prospect is fully made. Points the
    coaster row at the new venue (only while it is still open) and moves its board to the venue's own. Never
