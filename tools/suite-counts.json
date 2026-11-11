@@ -1128,7 +1128,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 28,
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/test-self-serve-restart.js": {
@@ -1289,6 +1289,10 @@
  },
  "tools/test-tv-slides-in-step.js": {
   "checks": 10,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-takeover-12nov.js": {
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-tv-type.js": {
@@ -1505,6 +1509,10 @@
  },
  "tools/tv-sting-in-chrome.test.py": {
   "checks": 150,
+  "counted_by": "lines"
+ },
+ "tools/tv-takeover-12nov-in-chrome.test.py": {
+  "checks": 64,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {

@@ -1260,7 +1260,6 @@
     if(r && r.free){ G.freeEntry=true; var fe=$("freeEntryNote"); if(fe) fe.classList.remove("hidden"); }
     startDraw();
   }
-  var _tvReady=false;
   function startDraw(){
     if(G.busy) return;
     readInputs();
@@ -1280,9 +1279,9 @@
        only when the page opened, so the room could miss the whole draw. Now Draw claims it, and if the TV was
        not already on the raffle the spin waits (a few seconds at most) for the raffle screen to say it is up,
        so the room sees the whole draw. If it never comes, the draw goes ahead and the console says why. */
-    if(!_tvReady){
+    if(typeof TVC!=="undefined" && !startDraw._tv){   // the second pass (startDraw._tv) is the draw itself
       G.busy=true; var _b=$("drawBtn"); _b.disabled=true; _b.textContent="Putting the draw on the TV\u2026";
-      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); _tvReady=true; try{ startDraw(); } finally { _tvReady=false; } });
+      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); startDraw._tv=true; try{ startDraw(); } finally { startDraw._tv=false; } });
       return;
     }
 

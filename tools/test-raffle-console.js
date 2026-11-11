@@ -107,6 +107,10 @@ eval(lift('parseSkips')); eval(lift('readInputs')); eval(lift('validRange'));
 eval(lift('drawnCount')); eval(lift('skippedCount')); eval(lift('remainingCount'));
 // the cash jackpot warning (15 Oct 2026): renderRange and startDraw call renderJackWarn
 eval(lift('jackpotWarning')); eval(lift('stateLimit')); eval(lift('renderJackWarn'));
+/* The TV claim (/app/vp-tvclaim.js, 12 Nov 2026) is its own suite (tools/test-tv-takeover-12nov.js). Lifted
+   console code calls it; here it is the console that has already taken the TV, which is what these checks are about. */
+var TVC = { onAir: function () { return true; }, claim: function () {}, release: function () {}, heard: function () {},
+            whenShowing: function (fn) { fn(true); }, showing: function () { return true; }, render: function () {} };
 eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
 eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle'));
 eval(lift('pickOrder')); eval(lift('prizeNext')); eval(lift('announcing')); eval(lift('sendAnnounce')); var ANNOUNCE_MS = 4000;   // Dean's two choices (9 Nov 2026)
@@ -447,6 +451,5 @@ if (tf && line) {
 
 drainMicrotasks();
 print('');
-print(PASS + ' passed, ' + FAIL + ' failed');
-if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+if (FAIL) { print((PASS) + ' of ' + (PASS + FAIL) + ' checks passed'); throw new Error(FAIL + ' check(s) failed'); }
+print('ALL ' + PASS + ' CHECKS PASSED');

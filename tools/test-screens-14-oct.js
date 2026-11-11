@@ -126,7 +126,14 @@ print('\n== 6. an idle bingo lobby gives the wall up to a game actually being pl
   var calls = [];
   function onGameMode(g, force) { calls.push(g + (force ? '!' : '')); }
   function onAir(m) { return m.t !== 'state' && m.t !== 'host_here'; }
-  var f = new Function('m', 'game', 'tvMode', 'state', 'onAir', 'onGameMode', body);
+  /* 12 Nov 2026 (INBOX 282.8): a finished bingo win yields like an idle lobby (bingoFinished), a Draw's claim takes a
+     win that is up (bingoWinUp), and the host's force goes straight in (enterEmbed). Off here unless a check says. */
+  var finished = false;
+  function bingoFinished() { return finished; }
+  function bingoWinUp() { return false; }
+  function enterEmbed(g) { calls.push(g + '=>'); }
+  var f0 = new Function('m', 'game', 'tvMode', 'state', 'onAir', 'onGameMode', 'bingoFinished', 'bingoWinUp', 'enterEmbed', body);
+  var f = function (m, game, tvMode, state, onAir, onGameMode) { return f0(m, game, tvMode, state, onAir, onGameMode, bingoFinished, bingoWinUp, enterEmbed); };
   f({ t: 'question' }, 'trivia', 'bingo', { phase: 'lobby', called: [] }, onAir, onGameMode);
   ok('a trivia question takes the wall off an empty bingo lobby', calls.join() === 'trivia!', calls.join());
   calls = [];
@@ -134,6 +141,9 @@ print('\n== 6. an idle bingo lobby gives the wall up to a game actually being pl
   ok('but never off a bingo game with balls called', calls.length === 0, calls.join());
   f({ t: 'state', active: false }, 'trivia', 'bingo', { phase: 'lobby', called: [] }, onAir, onGameMode);
   ok('and another game merely saying where it stands does not', calls.length === 0, calls.join());
+  finished = true; calls = [];
+  f({ t: 'drawing' }, 'raffle', 'bingo', { phase: 'win', called: [5, 12] }, onAir, onGameMode);
+  ok('a raffle drawing takes the wall off a FINISHED bingo winner (12 Nov 2026, FINDINGS R3/R7)', calls.join() === 'raffle!', calls.join());
 })();
 
 print('');

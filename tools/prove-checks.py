@@ -98,6 +98,10 @@ MUTATIONS = [
      '(/^[A-Z][a-z]/.test(p) && !/[A-Z]/.test(p.slice(1)))',
      '(/^[A-Z][a-z]/.test(p))',
      '"Meat Tray" reads "meat Tray" on the raffle console again (FINDINGS R1)'),
+    ('test-screens-14-oct.js', 'venueplay/tv.html',
+     '        if(bingoFinished()) idleBingo=true;\n',
+     '\n',
+     'a raffle drawing cannot take the wall off a finished bingo winner (R3/R7)'),
     # tools/tv-takeover-12nov-in-chrome.test.py (each proof is a 3.5 minute Chrome run: the five that matter most)
     ('tv-takeover-12nov-in-chrome.test.py', 'venueplay/app/index.html',
      '      if((G.status==="running" || G.status==="lobby") && !G.won){',

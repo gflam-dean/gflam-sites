@@ -23,9 +23,10 @@ function fakeClient(){ var chans=[]; return { chans:chans, channel:function(name
   show('the page loads /app/vp-channel.js', src.indexOf('<script src="/app/vp-channel.js"></script>')>0);
   var client=fakeClient(), els={}, sent=[], ch=null, subscribed=false, _leaving=false, _closed=false, queue=[];
   function $(id){ return els[id]||(els[id]={ classList:{ remove:function(){ this.on=false; }, add:function(){ this.on=true; } }, textContent:"" }); }
-  var api=(new Function("client","window","$","send","flushQueue","onPair","onMsg","VPChannel","setTimeout","clearTimeout",
+  var api=(new Function("client","window","$","send","flushQueue","onPair","onMsg","VPChannel","setTimeout","clearTimeout","TVC",
      "var ch=null, subscribed=false, _leaving=false, _closed=false;\n"+body+"\nreturn { open:openChannel, ch:function(){ return ch; }, sub:function(){ return subscribed; } };"))
-     (client, window, $, function(m){ sent.push(m); }, function(){ queue.push("flush"); }, function(){}, function(){}, window.VPChannel, setTimeout, clearTimeout);
+     (client, window, $, function(m){ sent.push(m); }, function(){ queue.push("flush"); }, function(){}, function(){}, window.VPChannel, setTimeout, clearTimeout,
+      { onAir:function(){ return false; } });   // the TV claim (vp-tvclaim.js, 12 Nov 2026): a console that has not taken the TV
   api.open("ACDEFG"); timers=[];
   show("it opens one real channel", client.chans.length===1 && client.chans[0].subs===1);
   client.chans[0].cb("SUBSCRIBED");

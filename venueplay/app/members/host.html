@@ -850,7 +850,6 @@
   }
   function closeDrawAgain(){ var a=$("drawAgainAsk"); if(a) a.classList.add("hidden"); }
   function drawAgainYes(){ closeDrawAgain(); _drawAgainOk=true; startDraw(); }
-  var _tvReady=false;
   function startDraw(){
     if(alreadyDrawnTonight() && !_drawAgainOk){ askDrawAgain(); return; }
     _drawAgainOk=false;
@@ -879,9 +878,9 @@
        wall was not already on the members draw, the spin waits a few seconds at most for the members screen to
        say it is up, so the room sees the whole draw; if it never comes the draw goes ahead and the console
        says why (vp-tvclaim.js). */
-    if(!_tvReady){
+    if(typeof TVC!=="undefined" && !startDraw._tv){   // the second pass (startDraw._tv) is the draw itself
       G.busy=true; $("drawBtn").disabled=true; $("drawBtn").textContent="Putting the draw on the TV\u2026";
-      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); _tvReady=true; _drawAgainOk=true; try{ startDraw(); } finally { _tvReady=false; } });
+      TVC.whenShowing(function(){ G.busy=false; drawBtnIdle(); startDraw._tv=true; _drawAgainOk=true; try{ startDraw(); } finally { startDraw._tv=false; } });
       return;
     }
     clearTimers(); hideWinnerCard();
