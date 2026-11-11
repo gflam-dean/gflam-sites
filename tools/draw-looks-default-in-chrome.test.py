@@ -46,6 +46,11 @@ def stand_up(game, prefs, host_page):
     return W
 
 
+def table(W, name):
+    """The Worker's fake database, read back (worker-stdio.js answers {table})."""
+    with W.lock:
+        W.p.stdin.write(json.dumps({'table': name}) + '\n'); W.p.stdin.flush()
+        return json.loads(W.p.stdout.readline())['body']
 def js(sid, expr, wait=8): return R.ask(sid, expr, wait)
 def shot(sid, name):
     if SHOTS: time.sleep(0.5); R.shot(sid, os.path.join(SHOTS, name))
@@ -60,6 +65,14 @@ CHIPS = ('(function(sel){return [].map.call(document.querySelectorAll(sel+" butt
 def chips(sid, sel): return js(sid, CHIPS + '(%s)' % json.dumps(sel))
 ACCEPT = ('var b=[].slice.call(document.querySelectorAll("button")).filter(function(x){ return x.offsetParent!==null && '
           '/I understand|Accept|Start as a free/i.test(x.textContent); })[0]; if(b) b.click(); true')
+
+
+def tv_on(tv, screen):
+    """wait until the TV's game frame shows this game's screen, loaded, before a draw (a TV that joins late only shows the result)"""
+    got = R.until(tv, '(function(){var f=document.getElementById("gameFrame"); return !!f && f.style.display!=="none" && /%s/.test(f.src)'
+                      ' && !!f.contentDocument && f.contentDocument.readyState==="complete" && !!f.contentWindow.VPDrawStyle;})()' % screen, 40) is True
+    time.sleep(1.5)
+    return got
 
 
 def draw(host):
@@ -86,6 +99,7 @@ def raffle(label, prefs, want, want_chip):
     ok('%s: the draw time chips show' % label, js(host, '!document.getElementById("timeField").classList.contains("hidden")') is True)
     js(host, 'document.querySelector("#prizePresets button").click(); true')
     R.until(host, '/Meat tray/.test(document.getElementById("prizeList").textContent)', 10)
+    ok('%s: the TV has the raffle screen up before the draw' % label, tv_on(tv, 'raffle\\/screen'), js(tv, 'document.getElementById("gameFrame").src'))
     draw(host)
     ok('%s: the TV draws the %s' % (label, {'ticket': 'ticket roll', 'race': 'race plate'}[want]),
        R.until(tv, STAGE + '===%s' % json.dumps(want), 30) is True, js(tv, STAGE) + ' | ' + str(js(host, '(document.getElementById("hostErrText")||{}).textContent||""')))
@@ -102,17 +116,27 @@ def members(label, prefs):
     W.seed('vp_venue_screen', [{'venue_id': W.info['venue'], 'slug': W.info['slug'], 'slides': [], 'logo_url': None}], replace=True)
     made = W.ask('POST', '/host/members/settings', {'venue_id': W.info['venue'], 'name': 'Thursday draw', 'current_jackpot_cents': 10000}, {})['body']
     did = (made.get('draw') or {}).get('id')
-    imp = W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'member_number': 101 + i, 'name': 'Member %d' % i} for i in range(12)]}, {})['body']
-    ok('%s: a draw with 12 members is set up through the real Worker' % label, bool(did) and not imp.get('error'), (made, imp))
+    imp = W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'number': 101 + i, 'name': 'Member %d' % i} for i in range(12)]}, {})['body']
+    ok('%s: a draw with 12 members is set up through the real Worker' % label, bool(did) and imp.get('added') == 12, (made, imp))
+    for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members'):   # the console reads these from the page's own database
+        R.db[t] = table(W, t)
     ttid, tv = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
     htid, host = R.open('/app/members/host.html', width=1000, height=1100)
     ok('%s: the members console loads' % label, R.until(host, '!!document.getElementById("drawBtn") && document.getElementById("drawBtn").offsetParent!==null', 60) is True,
        js(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     ok('%s: the usual look is Flip board, and there is no "As now"' % label, R.until(host, CHIPS + '("#styleChips")==="*Flip board|Race plate"', 15) is True, chips(host, '#styleChips'))
     ok('%s: this draw is on "Usual", and no one-draw "As now"' % label, chips(host, '#onceChips') == '*Usual|Flip board|Race plate', chips(host, '#onceChips'))
+    ok('%s: the TV has the members screen up before the draw' % label, tv_on(tv, 'members\\/screen'), js(tv, 'document.getElementById("gameFrame").src'))
+    dbg = js(host, 'JSON.stringify(typeof G!=="undefined" ? {m:G.members.length, s:(G.members[0]||{}).status, mr:(G.members[0]||{}).roster_id, d:G.draws.map(function(x){return x.roster_id;})} : "noG")')
+    dbg = str(dbg) + ' db:' + json.dumps({t: len(R.db.get(t) or []) for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members')}) + ' ' + json.dumps((R.db.get('vp_member_rosters') or [None])[0])
     draw(host)
-    ok('%s: the TV draws the flip board' % label, R.until(tv, STAGE + '==="flip"', 30) is True,
-       js(tv, STAGE) + ' | ' + str(js(host, '(document.getElementById("hostErrText")||document.getElementById("drawNote")||{}).textContent||""')))
+    got = R.until(tv, STAGE + '==="flip"', 30) is True
+    if not got:
+        dbg += ' | TV:' + str(js(tv, '(function(){var f=document.getElementById("gameFrame"); return (f?f.src+" "+f.style.display:"noframe")+" "+document.body.innerText.replace(/\\s+/g," ").slice(0,120);})()'))
+        dbg += ' | HOST:' + str(js(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,400)'))
+        print('  debug ' + dbg[-900:])
+    ok('%s: the TV draws the flip board' % label, got,
+       js(tv, STAGE) + ' | ' + str(js(host, '(document.getElementById("hostErrText")||document.getElementById("drawNote")||{}).textContent||""')) + ' | ' + dbg)
     shot(tv, 'members-flip.jpg')
     ok('%s: no page threw anything' % label, errs(host) in ('[]', None) and errs(tv) in ('[]', None), (errs(host), errs(tv)))
 
@@ -121,7 +145,7 @@ try:
     raffle('nothing saved', None, 'ticket', 'Ticket roll')
     raffle('"" saved (the old As now)', {'raffle': {'draw_style': '', 'draw_time': 'short'}}, 'ticket', 'Ticket roll')
     raffle('race plate saved', {'raffle': {'draw_style': 'race'}}, 'race', 'Race plate')
-    members('"" saved (the old As now)', {'members': {'draw_style': '', 'draw_time': 'fast'}})
+    members('"" saved (the old As now)', {'members': {'draw_style': '', 'draw_time': 'normal'}})
 finally:
     if R: R.close()
 
