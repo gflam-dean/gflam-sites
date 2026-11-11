@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/migrations-live.test.py": {
-  "checks": 27,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/migrations-parse.test.py": {
