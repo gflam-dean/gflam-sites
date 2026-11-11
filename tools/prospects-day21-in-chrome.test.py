@@ -231,5 +231,7 @@ try:
 finally:
     S.close()
 
-print('\n%s: %d passed, %d failed' % ('PASS' if not FAIL[0] else 'FAIL', PASS[0], FAIL[0]))
+# The gate reads the LAST line (release-check.suite_passed): "ALL N CHECKS PASSED" or "N of N checks passed".
+# "PASS: 19 passed, 0 failed" was neither, so a green run read as red and failed the 12 Nov pre-push gate.
+print('\nALL %d CHECKS PASSED' % PASS[0] if not FAIL[0] else '\nFAIL: %d passed, %d failed' % (PASS[0], FAIL[0]))
 sys.exit(1 if FAIL[0] else 0)
