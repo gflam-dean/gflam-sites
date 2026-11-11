@@ -1885,7 +1885,8 @@
     connect(code);
   }
   $("connectBtn").addEventListener("click", tryConnect);
-  $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startRound(); else openLobby(); });
+  /* The ended check first (INBOX 236.1): a venue switched off since this page loaded gets its card, not a lobby. */
+  $("startBtn").addEventListener("click", function(){ if(G.status==="lobby"){ startRound(); return; } if(window.VP && VP.endedFirst) VP.endedFirst(openLobby); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
   /* ---- PAPER TEAMS (Dean, 25 Sep 2026) ----

@@ -281,7 +281,8 @@ chain = chain.then(function () {
    and a cancelled venue that their games were "on hold for the moment" and "we will sort it out". */
 [['free_month_ended', 'owner', /free month has ended, so your games are paused/, /Add your card/],
  ['free_month_ended', 'host', /free month has ended, so games are paused here/, /Ask the venue owner or a manager/],
- ['cancelled', 'owner', /subscription has ended, so its games are off/, /start it again/],
+ ['cancelled', 'owner', /games are off\. It was cancelled, and nothing has been lost/, /Start again<\/a> from your account/],   // INBOX 237: the console's words
+ ['cancelled', 'host', /games are off\. It was cancelled/, /Ask the venue owner or a manager to start it again/],
  ['manual', 'owner', /switched off for now/, /we will sort it out/]].forEach(function (c) {
   chain = chain.then(function () {
     return run('the bar for ' + c[0] + ' (' + c[1] + ')',

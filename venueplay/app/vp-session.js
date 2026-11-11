@@ -1103,6 +1103,19 @@
           : 'Your TV keeps showing your ads and nothing has been lost. Ask the venue owner or a manager to add a card, and everything comes straight back on.',
         link: owner ? { href: '#vp-card', label: 'Add your card' } : null };
     }
+    /* CANCELLED: SAY SO, AND OFFER THE WAY BACK (Dean, 11 Nov 2026, INBOX 236.2 and 237). "This venue's subscription has
+       ended ... Email support@" was wrong for a free month cancelled (it never was a subscription) and sent them to an
+       inbox when the self-serve restart is one tap on their account page. One message that is true of both, the same
+       on the console and the Account banner; the restart card on Your account says the rest. DRAFT words, Dean
+       approves (reports/cancelled-venue-11nov/words.md). An archived venue keeps its own words below. */
+    if ((r === 'ended' || r === 'cancelled') && !isArchived(v)) {
+      return { reason: 'ended',
+        title: "This venue's games are off",
+        text: owner
+          ? 'It was cancelled, and nothing has been lost. Start again from your account and your games, members list and slides are all just as you left them.'
+          : 'It was cancelled, and nothing has been lost. Ask the venue owner or a manager to start it again from their account.',
+        link: owner ? { href: '/app/billing.html', label: 'Start again' } : null };
+    }
     if (r === 'ended' || r === 'cancelled' || isArchived(v)) {
       return { reason: 'ended',
         title: "This venue's subscription has ended",
@@ -1187,6 +1200,26 @@
     if (other && opts && opts.other && typeof opts.other.onClick === 'function') {
       other.addEventListener('click', function () { holdGate(null); opts.other.onClick(); });
     }
+    return true;
+  }
+
+  /* THE ENDED CHECK RUNS FIRST (Dean, 11 Nov 2026, INBOX 236.1). On a cancelled venue the bingo console let Dean in and
+     put up the start prompts (the state rules, the "free game" checks) before anything said the venue was off: the
+     page had read the venue before it was switched off, and only a reload showed the card. So every game's Start goes
+     through here BEFORE any prompt: the venue is read again, and a switched-off venue gets the card (holdGate) and
+     nothing else. A read that fails carries on to the game's own path, where the game Worker still refuses a venue
+     that is off (assertVenueActive), so this can never stop a night at a venue that is on. */
+  function endedFirst(onOk) {
+    var go = typeof onOk === 'function' ? onOk : function () {};
+    var c0 = _ctx;
+    if (c0 && c0.venue && holdGate(c0)) return false;
+    var done = false;
+    function once(c) {
+      if (done) return; done = true;
+      if (c && c.venue && holdGate(c)) return;
+      go();
+    }
+    try { refresh().then(once, function () { once(null); }); } catch (e) { once(null); }
     return true;
   }
 
@@ -1454,7 +1487,9 @@
           ? 'Your free month has ended, so your games are paused. Nothing has been lost. <a href="/app/billing.html" style="color:#180d00;text-decoration:underline">Add your card</a> and everything comes straight back on.'
           : 'The free month has ended, so games are paused here. Nothing has been lost. Ask the venue owner or a manager to add a card and everything comes straight back on.')
       : (v.suspended_reason === 'cancelled' || v.suspended_reason === 'ended')
-      ? 'This venue\'s subscription has ended, so its games are off. Nothing has been lost. Email support@venueplay.com.au to start it again.'
+      ? (owner   /* the same words as the console card (holdWords, INBOX 237): one message per case */
+          ? 'This venue\'s games are off. It was cancelled, and nothing has been lost. <a href="/app/billing.html" style="color:#180d00;text-decoration:underline">Start again</a> from your account and everything is just as you left it.'
+          : 'This venue\'s games are off. It was cancelled, and nothing has been lost. Ask the venue owner or a manager to start it again from their account.')
       : 'This venue\'s games are switched off for now. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
     statusBar('hold', bar);
   }
@@ -1655,6 +1690,7 @@
     suspensionBanner: suspensionBanner,
     statusBar: statusBar,
     holdGate: holdGate,
+    endedFirst: endedFirst,
     holdWords: holdWords,
     termsCard: termsCard,   // section 6 of the Terms, accepted once (28 Oct 2026)
     termsGate: termsGate,   // a prospect venue's console is held on that card until it is ticked (migration 122)

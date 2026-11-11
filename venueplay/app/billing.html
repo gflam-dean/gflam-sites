@@ -158,7 +158,10 @@
      scrollbar under it, and on a phone the tabs were 39px tall. Now: the row WRAPS, never scrolls; 15px text;
      every tab 48px tall (the brand's touch target). On a desktop or iPad that is one row; on a phone it is two
      even rows, the first four tabs above and Draws, Marketing, Game settings below (the phone rule further down). */
-  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow:visible}
+  /* STUCK BELOW THE HEADER, NOT UNDER IT (Dean, 11 Nov 2026, INBOX 238): top:10px stuck the strip 10px from the top of the
+     window, behind the sticky header, and a sliver of the pink active tab showed under it. --hdr-h is the header's own
+     height, measured by stickTabs() below, so the strip stops just under it at every width. */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:calc(var(--hdr-h, 64px) + 10px);z-index:5;overflow:visible}
   .tabs button{flex:1 1 auto;min-width:0;min-height:48px;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:15px;line-height:1.2;padding:8px 10px;border-radius:10px;cursor:pointer;transition:.15s}
   .tabs button.on{background:var(--pink);color:#fff}
   .tabs button:hover:not(.on){color:var(--text)}
@@ -255,7 +258,7 @@
     .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
     .canxlink{min-height:44px;display:inline-flex;align-items:center}
     .venue .keep{min-height:44px;display:inline-flex;align-items:center}   /* "Keep this venue" was 17px tall (demo audit, 5 Nov 2026) */
-    .tabs{top:6px}
+    .tabs{top:calc(var(--hdr-h, 64px) + 6px)}
     /* ALL SEVEN TABS ON SCREEN (14 Oct 2026 audit; two even rows since 5 Nov 2026). The first four take
        about a quarter each, so a fifth can never join their row, and the last three share the second row.
        Down to 320px wide: the padding is small so "Game settings" still fits beside the other two. */
@@ -581,6 +584,9 @@
          this line (Dean, 6 Nov 2026: "Billing is the only screen that shows all venues"). -->
     <p class="acctgroup" id="acctGroup" hidden>You're looking at the group</p>
 
+    <!-- A FREE MONTH CANCELLED BUT STILL ON (INBOX 237/240, 11 Nov 2026): one message, above the tabs so every tab says it,
+         with the undo. Filled by applyTrialCx(). -->
+    <div id="cxTop" class="leftcard" role="status" hidden></div>
     <div class="tabs" role="tablist">
       <button class="on" data-tab="billing">Billing</button>
       <button data-tab="people">People</button>
@@ -1463,19 +1469,11 @@
       }
       if (v.trial && v.trial.cancelled && !v.left){
         /* CANCELLED IN ITS FREE MONTH (INBOX 191): still on to the end date; carrying on is one tap, the same month. */
+        /* Players read only, no stepper, no "Cancel this venue" (INBOX 240/241.2): the one message and its undo are the
+           card above the tabs (cxTop), so the row only names the venue. */
         row.innerHTML =
-          '<div class="nm"><b>' + esc(v.name) + '</b><small>Cancelled</small></div>' +
-          '<div class="cxbanner"><span>' + (v.trial.ends_words ? 'You can keep using venueplay until ' + esc(v.trial.ends_words) + ', then we\u2019ll switch it off.' : 'This venue is cancelled.') + '</span>' +
-          (v.trial.ends_words ? '<button class="keep" type="button">Keep my free month going</button>' : '') + '</div>';
-        var kf = row.querySelector(".keep");
-        if (kf) kf.addEventListener("click", function(){
-          kf.disabled = true;
-          api("/account/cancel-venue", { venue_id:v.id, undo:true }).then(function(r){
-            kf.disabled = false;
-            if (r.error){ showMsg(r.error); return; }
-            showMsg(r.text || ("Your free month at " + v.name + " carries on."), true); load();
-          });
-        });
+          '<div class="nm"><b>' + esc(v.name) + '</b><small>Cancelled' + (v.trial.cancelled_words ? ' on ' + esc(v.trial.cancelled_words) : '') +
+          ' &middot; ' + nPlayers(v.players) + '</small></div>';
         wrap.appendChild(row); return;
       }
       if (v.cancelling){
@@ -1827,9 +1825,18 @@
     var back = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on.";
     /* THE SELF-SERVE RESTART (Dean, INBOX 54.3): with it switched on, a paused prospect or a cancelled venue comes back
        from here in one tap, so the card says that instead of "call us". The Worker decides what the tap does. */
+    /* A FREE MONTH CANCELLED AND NOW OFF (INBOX 236.2, 237): never "subscription", it never was one, and nothing was
+       charged. DRAFT words, Dean approves (reports/cancelled-venue-11nov/words.md). */
+    var freeCx = st.state === "cancelled" && d && (d.venues || []).some(function(v){ return v.trial && v.trial.cancelled; });
+    if (d && d.restart && freeCx){
+      return { title: "You cancelled your free month, so your games are off",
+        text: "Nothing has been lost, and nothing was ever charged. Start again below and your games, members list, slides and draws are all just as you left them.",
+        keep: keep, restart: true };
+    }
     if (d && d.restart && (st.state === "paused_prospect" || st.state === "cancelled")){
-      return { title: st.state === "paused_prospect" ? "Your free month has ended, so your games are paused" : "Your subscription has ended",
-        text: "Nothing has been lost. Come back below and your games, members list, slides and draws are all just as you left them.",
+      return { title: st.state === "paused_prospect" ? "Your free month has ended, so your games are paused" : "Your games are off",
+        text: st.state === "paused_prospect" ? "Nothing has been lost. Come back below and your games, members list, slides and draws are all just as you left them."
+          : "This venue was cancelled, so its games are switched off. Nothing has been lost: start again below and your games, members list, slides and draws are all just as you left them.",
         keep: keep, restart: true };
     }
     if (st.state === "paused_prospect") return { title: "Your free month has ended, so your games are paused",
@@ -1878,7 +1885,8 @@
     var sum = document.querySelector("#tp-billing > .card"); hide(sum, left);
     ["Your venues", "Payment reminders"].forEach(function(t){ sec(t).forEach(function(el){ hide(el, left); }); });
     // A paused prospect has no Stripe customer yet, so the portal has nothing to open: the card button is above.
-    sec("Invoices & card").forEach(function(el){ hide(el, left && st.state === "paused_prospect" && d.has_subscription === false); });
+    /* ...and a free month cancelled and off has none either (INBOX 237: "Open" went nowhere). */
+    sec("Invoices & card").forEach(function(el){ hide(el, left && (st.state === "paused_prospect" || st.state === "cancelled") && d.has_subscription === false); });
     // Marketing: only the opt-in download. The venue link, the table signs and the pointer to Game settings go.
     sec("Your venue link").forEach(function(el){ hide(el, left); });
     // Since the 6 Nov tidy the link and the signs are cards with ids, not .label sections (INBOX item 33: after leaving,
@@ -1918,6 +1926,60 @@
     }
     if (left) paintLeftDraws();
   }
+  /* A FREE MONTH CANCELLED, STILL ON TO ITS END DATE (Dean, 11 Nov 2026, INBOX 237, 240, 241.2; Bodalla Pub). The trial
+     rules keep the games on until the end date (INBOX 191.1), so the tabs stay as they are, but Billing has nothing to
+     bill: the plan, This month / Next month, Next payment, the steppers, Cancel this venue, + Add another venue and the
+     payment emails all go. ONE message instead, above the tabs: "Cancelled on 11 November. Your free month runs until
+     10 December, nothing to pay." with "Keep my free month going". Every venue on the account must be in that state
+     (a prospect account has one); a switched-off one is applyStanding's (the left card). */
+  function trialCxVenues(d){
+    var vs = (d && d.venues) || [];
+    if (!vs.length || (d.standing && d.standing.games === false)) return null;
+    for (var i = 0; i < vs.length; i++){ var t = vs[i].trial; if (!t || !t.cancelled || !t.ends_words || vs[i].left) return null; }
+    return vs;
+  }
+  function trialCxWords(v){
+    return (v.trial.cancelled_words ? "Cancelled on " + v.trial.cancelled_words + ". " : "Cancelled. ") +
+      "Your free month runs until " + v.trial.ends_words + ", nothing to pay.";
+  }
+  function applyTrialCx(d){
+    var vs = trialCxVenues(d), on = !!vs, top = $("cxTop");
+    document.body.classList.toggle("vp-trialcx", on);
+    function hide(el){ if (!el) return; if (on){ el.setAttribute("data-cx-hid", "1"); el.style.display = "none"; }
+                       else if (el.getAttribute("data-cx-hid")){ el.removeAttribute("data-cx-hid"); el.style.display = ""; } }
+    hide(document.querySelector("#tp-billing > .card"));             // plan, This month / Next month, Next payment
+    hide($("addToggle")); hide($("addForm")); hide($("addVenueNote")); // + Add another venue
+    var pb = $("portalBtn"), pbCard = pb && pb.closest(".card");      // Invoices & card: no card, no invoices yet
+    if (d && d.has_subscription === false){ hide(pbCard); hide(pbCard && pbCard.previousElementSibling && pbCard.previousElementSibling.classList.contains("label") ? pbCard.previousElementSibling : null); }
+    var rm = $("reminders"), rmCard = rm && rm.closest(".card");      // Email me before each payment
+    hide(rmCard); hide(rmCard && rmCard.previousElementSibling && rmCard.previousElementSibling.classList.contains("label") ? rmCard.previousElementSibling : null);
+    hide($("players-note"));
+    if (!top) return;
+    if (!on){ top.hidden = true; top.innerHTML = ""; return; }
+    var v = vs[0];
+    top.innerHTML = '<h2>' + esc(trialCxWords(v)) + '</h2>' +
+      '<div class="lcact"><button class="go" type="button" id="cxKeep">Keep my free month going</button></div>';
+    top.hidden = false;
+    var kf = $("cxKeep");
+    kf.addEventListener("click", function(){
+      kf.disabled = true;
+      api("/account/cancel-venue", { venue_id:v.id, undo:true }).then(function(r){
+        kf.disabled = false;
+        if (r.error){ showMsg(r.error); return; }
+        showMsg(r.text || ("Your free month at " + v.name + " carries on."), true); load();
+      });
+    });
+  }
+  /* The header's height into --hdr-h, for the sticky tab strip (INBOX 238). It changes when the header's line wraps
+     (a phone, a long name) and when a status bar is added above it, so it is measured again on resize and on load. */
+  function stickTabs(){
+    try{ var h = document.querySelector("header"); if (!h) return;
+      document.documentElement.style.setProperty("--hdr-h", Math.round(h.getBoundingClientRect().height) + "px"); }catch(e){}
+  }
+  stickTabs();
+  window.addEventListener("resize", stickTabs);
+  window.addEventListener("load", stickTabs);
+  try{ if (window.ResizeObserver) new ResizeObserver(stickTabs).observe(document.querySelector("header")); }catch(e){}
   /* The paused prospect's own signed card link (/account/card-link, the same route the console's hold card uses). */
   function leftCardLink(){
     var a = $("leftCardBtn"); if (!a) return;
@@ -2053,6 +2115,7 @@
          lowering players is said where it matters, under Your venues (players-note). */
       render(d);
       applyStanding(d);
+      applyTrialCx(d);
       /* Back from the restart's card page (Stripe's Done): the venue comes on when Stripe tells the Worker, a moment later. */
       if (!load._restartSaid && /[?&]restarted=1(&|$)/.test(String(location.search || ""))){
         load._restartSaid = true;

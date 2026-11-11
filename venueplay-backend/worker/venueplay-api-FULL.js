@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 16:42 · cdd8e55a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Nov 2026, 17:09 · 2840f5ad';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12499,8 +12499,10 @@ async function vpbAccountSummary(request, env, json) {
       const pr = (prs || []).filter((p) => p && p.venue_id === v.id && ('first_signin_at' in p))[0];
       if (!pr || pr.paused_at) return;
       const keep = vpaTrialKeepsUntil(pr, nowT);
+      /* cancelled_words (INBOX 237/240, 11 Nov 2026): "Cancelled on 11 November", the day they pressed it, Brisbane. */
+      const cxMs = Date.parse(pr.cancelled_at || '');
       v.trial = { cancel_text: vpaTrialCancelText(pr, nowT), cancelled: !!pr.cancelled_at,
-        ends_words: isFinite(keep) ? vpaPlainDateWords(keep) : null };
+        ends_words: isFinite(keep) ? vpaPlainDateWords(keep) : null, cancelled_words: isFinite(cxMs) ? vpaPlainDateWords(cxMs) : null };
     });
   }
   /* THE DISCOUNT WAS ON THE SUBSCRIPTION ALL ALONG AND THIS NEVER READ IT.

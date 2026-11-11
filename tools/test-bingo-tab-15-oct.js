@@ -374,11 +374,10 @@ function from(tab) { return ROOM.filter(function (m) { return m.tab === tab; }).
 /* ================= 2b. the Open lobby button asks the tabs before the gaming rules ================= */
 print('\n== 2b. the Open lobby button asks the other tabs BEFORE the state gaming rules ==');
 (function () {
-  var at = CONSOLE.indexOf('$("startBtn").addEventListener("click", function(){');
-  if (at < 0) throw new Error('the Open lobby button lost its listener');
-  var k = CONSOLE.indexOf('function(){', at), d = 0, j = CONSOLE.indexOf('{', k);
-  do { if (CONSOLE[j] === '{') d++; else if (CONSOLE[j] === '}') d--; j++; } while (d > 0 && j < CONSOLE.length);
-  var HANDLER = CONSOLE.slice(k, j);
+  /* The handler is the named startClick since 11 Nov 2026 (INBOX 236.1: the ended check runs first, through VP.endedFirst,
+     which this rig's window does not have, so the order below is unchanged). */
+  if (CONSOLE.indexOf('$("startBtn").addEventListener("click", startClick);') < 0) throw new Error('the Open lobby button lost its listener');
+  var HANDLER = lift(CONSOLE, 'startClick', 'index.html');
   function rig(win) {
     var log = [];
     var f = new Function('window', 'VP_ONETAB', 'setTimeout', 'log',
