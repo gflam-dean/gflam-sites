@@ -453,20 +453,20 @@ def people():
             S.until(sid, 'document.getElementById("content").style.display!=="none" && !!document.querySelector("#hosts .hostrow")', 30)
             time.sleep(1)
             S.js(sid, '(function(){ var b=document.querySelector(\'.tabs button[data-tab="people"]\'); if(b) b.click(); return true; })()'); time.sleep(0.5)
-            m = json.loads(S.js(sid, PEOPLE))
+            m = S.json(sid, PEOPLE, {})
             ok('%s: Sam\'s row has a Show on TV button' % label, m.get('row') is True and m.get('btn') is True and m.get('btnText') == 'Show on TV', m)
             S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").click(); row.scrollIntoView({block:"start"}); return true; })()')
             time.sleep(0.6)
             if first:
                 if SHOTS: S.shot(sid, shot_path('people-%d-empty.png' % w), False)
                 S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").setAttribute("data-t","1"); row.querySelector(".hb-pick input").id="hbFileT"; return true; })()')
-                before = json.loads(S.js(sid, PEOPLE)).get('where')
+                before = S.json(sid, PEOPLE, {}).get('where')
                 S.set_file(sid, '#hbFileT', logo_file)
                 ok('%s: a chosen logo shows in the dark chip before Save' % label,
                    S.until(sid, '/^url\\("data:image/.test(document.querySelector(".hbpanel .hb-thumb").style.backgroundImage)', 15) is True,
                    S.js(sid, 'document.querySelector(".hbpanel .hb-thumb").style.backgroundImage.slice(0,40)'))
                 time.sleep(0.3)   # measured once the picked logo is painted, not before it has loaded
-                after = json.loads(S.js(sid, PEOPLE)).get('where')
+                after = S.json(sid, PEOPLE, {}).get('where')
                 ok('%s: nothing jumps when a logo is picked (the next heading stays at %spx)' % (label, before), before is not None and before == after, (before, after))
                 S.js(sid, '(function(){ var p=document.querySelector(".hbpanel"); var i=p.querySelector(".hb-name"); i.value=%s; i.dispatchEvent(new Event("input")); var t=p.querySelector(\'.hb-g[value="trivia"]\'); t.click(); return true; })()' % json.dumps(NAME))
                 time.sleep(0.3)
@@ -492,7 +492,7 @@ def people():
                 S.js(sid, '(function(){ var b=document.querySelector(\'.tabs button[data-tab="people"]\'); if(b) b.click(); return true; })()'); time.sleep(0.5)
                 S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").click(); row.scrollIntoView({block:"start"}); return true; })()')
                 time.sleep(0.6)
-            m = json.loads(S.js(sid, PEOPLE))
+            m = S.json(sid, PEOPLE, {})
             ok('%s: the row says it shows on the TV for trivia' % label, 'Shows on the TV for trivia' in (m.get('small') or ''), m.get('small'))
             ok('%s: the panel is open, the saved name in the box' % label, m.get('open') is True and S.js(sid, 'document.querySelector(".hbpanel .hb-name").value') == NAME, m)
             ok('%s: nothing on the page scrolls sideways (%s <= %s)' % (label, m.get('dsw'), m.get('dcw')), m.get('dsw', 1) <= m.get('dcw', 0), m)
