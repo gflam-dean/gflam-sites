@@ -36,7 +36,7 @@ The pre-push hook ran 98 Chrome suites one at a time on the Mac: 2 h 12 min. The
 | `gate-server.py run` | the ONE path that writes a record: on a clean checkout, sends every Chrome suite the gate runs (found the gate's way: tools/*.test.py + gatelib.uses_chrome), except signin-logo-in-chrome, to vp-tests-1 at -j 4 through ~/venue-enrich/builds/tools-remote/remote-run.sh; a suite red at -j 4 is re-run ALONE 3 times and counts only if all 3 are green; signs the result with HMAC-SHA256 and writes ~/venue-enrich/reports/gate-records/<tree>.json. Refuses to sign if the checkout is dirty, changes during the run, or anything stays red |
 | `gate-server.py check` | read only: would the gate accept a record for this tree, and why |
 | `gate-server.py init-key` | once per Mac: makes ~/.gflam-gate.env (mode 600) holding GATE_RECORD_KEY. The value is never printed, never sent to the server, never committed. Deleting the file stops every record being trusted |
-| `gate-server.test.py` | 76 checks, no network, no Chrome, fake runner, throwaway keys: every bypass below is refused |
+| `gate-server.test.py` | 77 checks, no network, no Chrome, fake runner, throwaway keys: every bypass below is refused |
 
 A record is accepted only when ALL of these hold, otherwise every Chrome suite runs on the Mac exactly as before (nothing is ever weaker than the old gate):
 - the key file exists, is mode 600 and owned by you; the record is signed with THAT key and not edited since (a changed count, suite list, time or tree breaks the signature);

@@ -140,7 +140,9 @@ try:
 
     red = dict(GREEN, rc=1, last='4 of 5 checks passed', bad=['FAIL the logo'])
     good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red]}), KEY, say=lambda s: None)
-    ok('a suite red at -j 4 and red alone: not signed, named', not good and CHROME[0] in text, text)
+    ok('a suite red at -j 4 and red alone: not signed, named by the red rule itself', not good and 'red on the server: ' + CHROME[0] in text, text)
+    ok('... and a record that fails its own check is never signed either (the second lock behind the first)',
+       "return False, 'NOT SIGNED: the record would not pass its own check: ' + why, None" in io.open(os.path.join(TOOLS, 'gate-server.py'), encoding='utf-8').read())
 
     print('\n2. flakes: red at -j 4 is green only after 3 green lone re-runs')
     sent[:] = []
