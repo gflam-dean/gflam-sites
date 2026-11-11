@@ -932,7 +932,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----
   var clipAudio=$("clipAudio"), _clipUnlocked=false;
-  function unlockClip(){ if(_clipUnlocked) return; _clipUnlocked=true; try{ var p=clipAudio.play(); if(p&&p.then){ p.then(function(){ clipAudio.pause(); }).catch(function(){}); } }catch(e){} }
+  /* The first tap's warm-up play() is paused at once, so it must never touch a REAL clip: a click on the TV during a song
+     used to pause that song, and a click to turn a blocked TV's sound on (soundTap below) would have been undone by it. */
+  function unlockClip(){ if(_clipUnlocked) return; _clipUnlocked=true; if(clipAudio.getAttribute("src")) return; try{ var p=clipAudio.play(); if(p&&p.then){ p.then(function(){ clipAudio.pause(); }).catch(function(){}); } }catch(e){} }
   /* A Fire Stick remote sends key events, never pointer events, so binding the unlock to
      pointerdown alone meant a kiosk TV could never satisfy the gesture requirement. */
   document.addEventListener("pointerdown", unlockClip, { once:true });
@@ -943,7 +945,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      origin only: a message from anywhere else is ignored. */
   window.addEventListener("message", function(e){
     if(e.origin !== window.location.origin) return;
-    if(e.data && e.data.vp === "unlock-audio"){ unlockClip(); unlockAudio(); }
+    if(e.data && e.data.vp === "unlock-audio"){ unlockClip(); unlockAudio(); soundTap(); }
   });
 
   /* THE ROOM CAN HEAR NOTHING AND NOBODY IS TOLD.
@@ -964,27 +966,51 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     try{ if(navigator.getAutoplayPolicy && navigator.getAutoplayPolicy("mediaelement")==="disallowed") return "blocked"; }catch(e){}
     return "unknown";
   }
-  function audioBlocked(){
-    if(_audioWarned) { try{ tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){} return; } _audioWarned=true;
+  /* CLICK ANYWHERE ON THIS SCREEN TO TURN THE SOUND ON (Dean, live play on The Mini Bar, 11 Nov 2026). A laptop or a
+     Chrome tab on the TV blocks sound until somebody clicks on the page once, and the old bar ("Allow autoplay on the TV")
+     went in eight seconds and did not say what to do. Now the TV says it in the one sentence that fixes it, along the
+     bottom edge (off the MUSICAL BINGO title, Dean's 10 Nov 2026 sign-off), big enough to read from the bar, and it stays
+     up until the sound really is on. One click anywhere (or a key on a remote) plays the song that is on now. It shows
+     only when this screen really is blocked: a play was refused or never started, or the browser says so in advance. */
+  var SOUND_BAR_TEXT="Click anywhere on this screen to turn the sound on";
+  function showSoundBar(){
     var w=document.getElementById("audioWarn");
-    if(!w){
-      /* A BAR ALONG THE VERY BOTTOM EDGE (Dean's 10 Nov 2026 sign-off: at the top centre it sat on the MUSICAL BINGO title).
-         The bottom edge is clear on every screen: the played strip ends 5cqw above it and the old JOIN NOW card is off
-         the wall. It never moves a title or any other text. It goes after eight seconds (the host console is told as
-         well), and bottom left it used to sit on the JOIN NOW QR (20 Oct 2026), which is why it is not a box there. */
-      w=document.createElement("div"); w.id="audioWarn";
-      w.setAttribute("style","position:fixed;bottom:0;left:0;right:0;z-index:99;text-align:center;"+
-        "background:rgba(255,45,85,.94);color:#fff;border-radius:0;padding:.55em 4vw;"+
-        "font:700 clamp(14px,1.5vw,28px)/1.3 system-ui,-apple-system,sans-serif");
-      w.textContent="No sound on this screen. Allow autoplay on the TV, or play the music from another device.";
-      document.body.appendChild(w);
+    if(w) return;
+    w=document.createElement("div"); w.id="audioWarn"; w.setAttribute("role","status");
+    w.setAttribute("style","position:fixed;bottom:0;left:0;right:0;z-index:99;text-align:center;cursor:pointer;"+
+      "background:#FF1F8E;color:#fff;border-radius:0;padding:.4em 4vw;"+
+      "font:800 clamp(18px,2vw,48px)/1.25 'Hanken Grotesk',system-ui,-apple-system,sans-serif");
+    w.textContent=SOUND_BAR_TEXT;
+    document.body.appendChild(w);
+  }
+  function hideSoundBar(){ var w=document.getElementById("audioWarn"); if(w) w.remove(); }
+  /* The browser can say before song 1 that it will refuse sound (Chrome's getAutoplayPolicy): ask for the click then. */
+  function soundBarIfBlocked(){ try{ if(audioState()==="blocked") showSoundBar(); }catch(e){} }
+  var _hostPaused=false;   // the host paused the clip (or a claim did): a click to turn the sound on must not restart it
+  function soundTap(){
+    if(!_audioWarned && !document.getElementById("audioWarn")) return;
+    try{ unlockAudio(); }catch(e){}
+    var src=clipAudio.getAttribute("src");
+    if(src && !clipAudio.ended && !_hostPaused && state.phase==="running"){
+      try{ var p=clipAudio.play();
+        if(p&&p.then) p.then(function(){ audioOk(); if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} } buildBoost(); }).catch(function(){});
+      }catch(e){}
+      return;
     }
-    setTimeout(function(){ var x=document.getElementById("audioWarn"); if(x) x.remove(); }, 8000);
+    /* Nothing playing this second: the click itself is what the browser wanted. Where it can say, believe it. */
+    var pol=""; try{ pol=navigator.getAutoplayPolicy ? navigator.getAutoplayPolicy("mediaelement") : ""; }catch(e){}
+    if(pol!=="disallowed") audioOk();
+  }
+  document.addEventListener("pointerdown", soundTap);
+  document.addEventListener("keydown", soundTap);
+  function audioBlocked(){
+    if(_audioWarned) { showSoundBar(); try{ tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){} return; } _audioWarned=true;
+    showSoundBar();
     try{ tvSend({ t:"tv_audio_blocked" }); tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){}
   }
   function audioOk(){
-    var was=_audioWarned; _audioWarned=false; _audioHeard=true;
-    var w=document.getElementById("audioWarn"); if(w) w.remove();
+    var was=_audioWarned||!!document.getElementById("audioWarn"); _audioWarned=false; _audioHeard=true;
+    hideSoundBar();
     if(was){ try{ tvSend({ t:"tv_here", audio:"ok" }); }catch(e){} }   // the host stops playing it here
   }
   /* ============ LOUDER THAN THE LAPTOP CAN GO ============================
@@ -1034,6 +1060,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(!url) return;
     try{
       clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
+      _hostPaused=false;
       clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
       var pr=clipAudio.play();
       /* A play() that neither rejects nor starts (the clip sat at 0:00 on Dean's TV for song 1): look again
@@ -1061,7 +1088,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it. */
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="played" && !m.replay) _endArmed=true; }catch(e){} }
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here", audio:audioState() }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here", audio:audioState() }); soundBarIfBlocked(); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
     if(typeof m.game_id==="string" && m.game_id && (m.t==="started" || m.t==="state")) _gameId=m.game_id;
@@ -1161,15 +1188,15 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     }
     else if(m.t==="volume"){ setBoost(m.level); }   // the host turning the room up
     else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
-      if(m.action==="pause"){ try{ clipAudio.pause(); }catch(e){} }
-      else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
+      if(m.action==="pause"){ _hostPaused=true; try{ clipAudio.pause(); }catch(e){} }
+      else if(m.action==="play"){ _hostPaused=false; try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
     }
     else if(m.t==="players"){
       /* kept, never painted: no player count on the TV (Dean, 4 Nov 2026 evening); the host console has it */
       if(typeof m.count==="number") state.playerCount=m.count;
     }
     else if(m.t==="claim_pending"){
-      try{ clipAudio.pause(); }catch(e){}   // quiet the room while the host checks the claim
+      _hostPaused=true; try{ clipAudio.pause(); }catch(e){}   // quiet the room while the host checks the claim
       state.phase="claim"; show("tvClaim");
       $("claimName").textContent=m.name||"Player";
       $("tvClaimEye").textContent=claimEyeText(state.pattern);
@@ -1183,6 +1210,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       state.phase="running"; show("tvRun"); renderRun();
       /* AND THE MUSIC COMES BACK ON. The claim paused this clip; "Play on" only switched the
          panel, so the rest of the song never played and the host reached for the next one. */
+      _hostPaused=false;
       try{ if(clipAudio.src && clipAudio.paused && !clipAudio.ended){ var rp=clipAudio.play(); if(rp&&rp.catch) rp.catch(function(){}); } }catch(e){}
     }
     else if(m.t==="winner"){

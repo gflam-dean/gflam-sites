@@ -1932,20 +1932,20 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      at once (Dean saw it only after song 2, 6 Nov 2026). The host is ASKED, never switched over (Dean, 6 Nov 2026, 13:10):
      "The TV can't play sound. Play the songs on this device?" Yes turns this device's sound on (the tap also lets the browser
      play it); No leaves it off and says how to fix the TV. When the TV recovers, a switch the Yes turned on is put back. */
-  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false;
+  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false, _audioErrShown=false;
   function tvSoundYes(){
     if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
     audio.muted = !(G.hostMonitor || soundIsOnlyHere());
     try{ if(audio.paused && audio.src && G.status==="running") audio.play().catch(function(){}); }catch(e){}
-    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound, so the songs are coming out of THIS device. Put it through the PA, or press any key on the TV remote once."; }
+    var n=$("tvAudioNote"); if(n){ n.textContent="The songs are coming out of THIS device. Put it through the PA, or click once on the TV screen to turn the TV\u2019s sound on."; }
     syncMonitorBtn();
   }
   function tvSoundNo(){
-    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound. Press any key on the TV remote once to turn it on."; }
+    var n=$("tvAudioNote"); if(n){ n.textContent="Click once on the TV screen to turn its sound on. On a TV app, press any key on the remote once."; }
   }
   function askTvSound(n){
     n.textContent="";
-    n.appendChild(document.createTextNode("The TV can\u2019t play sound. Play the songs on this device? "));
+    n.appendChild(document.createTextNode("The TV has no sound yet. Click once on the TV screen to turn its sound on. Or play the songs on this device? "));
     var y=document.createElement("button"), no=document.createElement("button");
     y.type="button"; y.id="tvSoundYes"; y.className="btn pink"; y.textContent="Yes";
     no.type="button"; no.id="tvSoundNo"; no.className="btn ghost"; no.textContent="No";
@@ -1960,10 +1960,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var n=$("tvAudioNote");
     if(state==="blocked"){
       audio.muted = !(G.hostMonitor || soundIsOnlyHere());   // a TV is there (it just spoke): quiet here until the host answers
-      if(n){ if(G.hostMonitor) n.textContent="The TV can\u2019t play sound; the songs are coming out of this device."; else askTvSound(n); n.classList.remove("hidden"); }
+      if(n){ if(G.hostMonitor) n.textContent="The TV has no sound yet, so the songs are coming out of this device. Click once on the TV screen to turn its sound on."; else askTvSound(n); n.classList.remove("hidden"); }
     } else {
       if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
       if(n) n.classList.add("hidden");
+      if(_audioErrShown){ _audioErrShown=false; clearHostError(); }   // the TV's sound came on: the banner about it goes too
     }
     syncMonitorBtn();
   }
@@ -1999,7 +2000,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        host has no way to know the room is hearing nothing until somebody complains. */
     if(m.t==="tv_audio_blocked"){
       noteTvAudio("blocked");
-      hostError("The TV cannot play the music (autoplay is blocked on that screen). This device is playing it instead: put it through the PA, or allow autoplay on the TV.");
+      /* PLAIN WORDS: WHAT TO DO, NOT WHY (Dean, live play on The Mini Bar, 11 Nov 2026: "autoplay is blocked on that screen.
+         Turn on the monitor switch" and he did not know what to do). The TV itself now says "Click anywhere on this screen
+         to turn the sound on"; this says the same, and names the Yes right under Now playing. */
+      hostError(G.hostMonitor
+        ? "The TV has no sound yet, so the songs are coming out of this device. Click once on the TV screen to turn its sound on."
+        : "The TV has no sound yet. Click once on the TV screen to turn its sound on, or tap Yes under Now playing to play the songs from this device.");
+      _audioErrShown=true;
       return;
     }
     /* Another console's presence ping. Never acted on by itself (anybody can send one): it only makes
@@ -2455,6 +2462,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G.hostMonitor && _tvAudio==="blocked") b.innerHTML="&#128266; Playing on THIS device only, the TV is blocked &middot; tap to mute";
     else if(G.hostMonitor)     b.innerHTML="&#128266; Also playing here &middot; tap to mute this device";
     else if(soundIsOnlyHere()) b.innerHTML="&#128266; Playing here, no screen connected &middot; tap to mute";
+    else if(_tvAudio==="blocked") b.innerHTML="&#128263; The TV has no sound yet &middot; tap to play it here";
     else                       b.innerHTML="&#128263; Sound is on the TV &middot; tap to also hear it here";
   }
   var _aloneSaid=false;

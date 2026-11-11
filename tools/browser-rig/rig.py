@@ -68,7 +68,7 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class Rig(object):
-    def __init__(self, hold=None, host_pages=(), review=False, real_qr=False):
+    def __init__(self, hold=None, host_pages=(), review=False, real_qr=False, chrome_args=()):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
         as slow pub wifi does, so a test can look at a page whose scripts have not all arrived.
         `host_pages` adds pages served with the host signed in, beside /app/index.html and the purchase
@@ -154,7 +154,8 @@ class Rig(object):
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         # The Browser registers itself with verify-live's atexit and SIGTERM handlers, so the Chrome
         # goes whatever ends this process (27 Oct 2026). The jsc Worker behind the pipe is ours to end.
-        self.B = VL.Browser()
+        # `chrome_args` (11 Nov 2026): Chrome switches for this suite only, e.g. a TV browser that blocks sound until clicked.
+        self.B = VL.Browser(extra_args=chrome_args) if chrome_args else VL.Browser()
         atexit.register(self.close)
 
     # ---- tabs ----

@@ -21,7 +21,7 @@ var SCREEN = readFile('venueplay/app/musical/screen.html');
 var CSS = SCREEN.slice(SCREEN.indexOf('<style>'), SCREEN.indexOf('</style>'));
 
 print('\n== 1. the no-sound message is a bottom bar ==');
-var aw = SCREEN.slice(SCREEN.indexOf('w.id="audioWarn"'), SCREEN.indexOf('No sound on this screen'));
+var aw = SCREEN.slice(SCREEN.indexOf('w.id="audioWarn"'), SCREEN.indexOf('w.textContent=SOUND_BAR_TEXT'));
 show('it is pinned to the bottom edge, full width', /bottom:0;left:0;right:0/.test(aw));
 show('and never to the top, where the title is', !/top:/.test(aw));
 

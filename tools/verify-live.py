@@ -257,7 +257,9 @@ def kill_tree(pid, grace=10):
 
 
 class Browser(object):
-    def __init__(self):
+    def __init__(self, extra_args=()):
+        """`extra_args`: more Chrome switches for one suite (11 Nov 2026), e.g. a TV whose browser blocks sound until
+        it is clicked ('--autoplay-policy=document-user-activation-required'). Default none: every caller unchanged."""
         if not os.path.exists(CHROME):
             raise SystemExit('Google Chrome is not at %s. This tool needs a real browser;\n'
                              'there is no way to check what a screen PAINTS without one.' % CHROME)
@@ -268,7 +270,7 @@ class Browser(object):
             [CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--no-first-run',
              '--no-default-browser-check', '--window-size=1280,800',
              '--user-data-dir=' + self.profile,
-             '--remote-debugging-port=%d' % self.port, 'about:blank'],
+             '--remote-debugging-port=%d' % self.port] + list(extra_args or ()) + ['about:blank'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         _LIVE.append(self)
         # Two minutes, not forty seconds, and stop early if Chrome has died. On 20 Oct 2026, with the
