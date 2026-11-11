@@ -958,7 +958,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      used to be swallowed by an empty catch. If the kiosk's autoplay setting is off, name that tune
      runs in complete silence while the screen cheerfully shows "Now playing". Say so on the wall,
      and tell the host console, so somebody knows within one song rather than one round. */
-  var _audioWarned=false, _audioHeard=false;
+  var _audioWarned=false, _audioHeard=false, _audioHeardSrc="";   // _audioHeardSrc: the clip the room was last heard playing (INBOX 282.2)
   /* WHAT THIS SCREEN CAN SAY ABOUT ITS OWN SOUND, before and after song 1 (Dean's live play, 6 Nov 2026:
      song 1 was silent and the host was only told after song 2). 'blocked' = a play was refused or never
      started; 'ok' = a clip has really played here; 'unknown' = nothing tried yet. Where the browser can say
@@ -1033,16 +1033,16 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(n==="NotAllowedError") audioBlocked();
     else { try{ console.info("[venueplay musical] play() did not start: "+(n||e)); }catch(_e){} }
   }
-  /* THE REAL EVIDENCE THAT THE ROOM HEARS IT: the element says "playing" and its clock moves. Not a timer. */
-  var _audioHeardSrc="";
-  function heardNow(){ _audioHeardSrc=clipAudio.getAttribute("src")||""; audioOk(); }
-  clipAudio.addEventListener("playing", function(){ if(!clipAudio.paused && !clipAudio.muted) heardNow(); });
-  clipAudio.addEventListener("timeupdate", function(){ if(!clipAudio.paused && !clipAudio.muted && clipAudio.currentTime>0.2 && (clipAudio.getAttribute("src")||"")!==_audioHeardSrc) heardNow(); });
   function audioOk(){
     var was=_audioWarned||!!document.getElementById("audioWarn"); _audioWarned=false; _audioHeard=true;
     hideSoundBar();
     if(was){ try{ tvSend({ t:"tv_here", audio:"ok" }); }catch(e){} }   // the host stops playing it here
   }
+  /* THE REAL EVIDENCE THAT THE ROOM HEARS IT (INBOX 282.2): the element says "playing" and its clock moves. Not a timer. */
+  function heardNow(){ _audioHeardSrc=clipAudio.getAttribute("src")||""; audioOk(); }
+  clipAudio.addEventListener("playing", function(){ if(!clipAudio.paused && !clipAudio.muted) heardNow(); });
+  clipAudio.addEventListener("timeupdate", function(){ if(!clipAudio.paused && !clipAudio.muted && clipAudio.currentTime>0.2 && (clipAudio.getAttribute("src")||"")!==_audioHeardSrc) heardNow(); });
+
   /* ============ LOUDER THAN THE LAPTOP CAN GO ============================
 
      An <audio> element's volume is a fraction of the source, so 1.0 IS the file,
