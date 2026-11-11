@@ -310,7 +310,7 @@ def fast_gate(name, path, skip_live=False):
         rr, flake = gatelib.run_suite_with_retry(cmd, os.path.basename(s), _passed, cwd=str(REPO),
                                                  timeout=900 if is_chrome else 300, chrome=is_chrome,
                                                  say=lambda x: print('  ' + x))
-        good, why = passwording.verdict(rr.rc, rr.out, rr.timed_out)
+        good, why = _passed(rr), passwording.verdict(rr.rc, rr.out, rr.timed_out)[1]
         line(os.path.basename(s), good, '%s (%.0fs%s)%s' % (rr.last[:90], rr.seconds,
              ', passed on retry' if flake and flake['outcome'] == 'passed on retry' else '',
              '' if good else '  why: ' + why[:140]))
