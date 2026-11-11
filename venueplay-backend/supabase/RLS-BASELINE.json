@@ -1768,6 +1768,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_help_blocklist": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_help_faq": {
    "enabled": true,
    "forced": false
@@ -1805,6 +1809,10 @@
    "forced": false
   },
   "vp_help_triage_events": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_host_brands": {
    "enabled": true,
    "forced": false
   },
