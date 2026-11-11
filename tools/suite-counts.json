@@ -576,7 +576,7 @@
   "counted_by": "lines"
  },
  "tools/test-drawstyle.js": {
-  "checks": 52,
+  "checks": 65,
   "counted_by": "lines"
  },
  "tools/test-early-bingo-restore.js": {
@@ -1281,6 +1281,10 @@
  },
  "tools/tv-bare-setup-in-chrome.test.py": {
   "checks": 73,
+  "counted_by": "lines"
+ },
+ "tools/tv-drawstyle-in-chrome.test.py": {
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/tv-endshow-in-chrome.test.py": {
