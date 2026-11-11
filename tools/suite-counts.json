@@ -135,6 +135,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/any-line-in-chrome.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
  "tools/billing-words-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"
@@ -517,6 +521,10 @@
  },
  "tools/test-answers-room-relays-nothing.js": {
   "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-any-line-15nov.js": {
+  "checks": 60,
   "counted_by": "lines"
  },
  "tools/test-archive-sweep-fails-closed.js": {

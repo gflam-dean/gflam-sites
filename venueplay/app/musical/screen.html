@@ -346,10 +346,12 @@
 
   /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
    who has played bingo anywhere else, and the free square makes it look even more like a
-   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
-   told in their own dropdown ("any full row"). The player and the TV were the two screens
-   that never said so, which is a dispute at the bar waiting to happen. */
-var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
+   diagonal counts. For "One line" it does not: checkMusicPattern checks rows only, which is what
+   the host is told in their own dropdown ("any full row"), and the phone and TV say "One line
+   across". "Any line" (Dean, 11 Nov 2026, INBOX 256, the default for new venues) is a full row,
+   column or diagonal: the console and the TV say "Any line (across, down or diagonal)", the
+   phone just "Any line". */
+var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
@@ -487,7 +489,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   /* ONE SENTENCE FOR THE PATTERN AND THE PRIZE (Dean, 3 Nov 2026): "One line wins a meat tray". The prize is as the
      host typed it, after "wins" (with "a" or "an" unless it already starts with a word like "the", a number or a
      dollar sign). No prize set yet: the pattern alone, "One line wins". */
-  var PATTERN_SHORT={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  var PATTERN_SHORT={any:"Any line",one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
   function winsLine(pattern, prize){
     var pat=PATTERN_SHORT[pattern]||PATTERN_NAMES[pattern]||"One line";
     var pz=String(prize||"").trim();
@@ -496,7 +498,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return pat+" wins "+(/^[aeiou]/i.test(pz) ? "an " : "a ")+pz;
   }
   /* NOT "bingo": musical bingo is not bingo. The line says what the player has, by the game\'s pattern. */
-  var CLAIM_EYE={one:"Someone has a line",two:"Someone has two lines",corners:"Someone has four corners",full:"Someone has a full house"};
+  var CLAIM_EYE={any:"Someone has a line",one:"Someone has a line",two:"Someone has two lines",corners:"Someone has four corners",full:"Someone has a full house"};
   function claimEyeText(p){ return CLAIM_EYE[p]||CLAIM_EYE.one; }
   function renderMeta(){
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;

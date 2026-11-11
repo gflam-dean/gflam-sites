@@ -762,3 +762,14 @@ RLS-BASELINE.json gains one table: rerun venueplay-backend/tools/dump-rls-baseli
 with the Workers and the site: before it runs the game Worker's /host/hosted-by answers "nothing to show", the TV shows no
 line, and an owner's save on Account > People is told the feature is not switched on yet. NUMBER: 177 to 180 are taken, so
 181. Branch `fix/hosted-by-12nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-186-musical-any-line.sql` (Dean, 11 Nov 2026, INBOX 256: musical bingo "Any line", a full row, column or
+diagonal, is the DEFAULT FOR NEW VENUES; existing venues keep theirs): (1) a snapshot table `vp_backup_186_game_prefs`
+(every venue's game_prefs and whether it had a settings row; RLS on, nothing granted), (2) every venue with no saved
+musical pattern gets `game_prefs.musical.pattern = 'one'` written explicitly (the pattern the console started on until
+now; the same one-key merge as vp_set_game_prefs; a saved pattern is never touched), (3) `vp_music_games.pattern`
+accepts 'any_line' (a CHECK naming pattern is replaced with one that includes it; an enum gets the value; neither, no
+change). RUN IT BEFORE deploying the game Worker and the musical pages from this branch: the new console starts on Any
+line for a venue with nothing saved. Early is safe (the live code never sends 'any_line'). RLS-BASELINE.json: one new
+table, re-dump after. NUMBER: 181, 184, 185 live or taken, 183 spoken for, checked every branch and worktree 11 Nov 2026,
+so 186. Branch `fix/any-line-15nov`. NOT RUN. Read-back and rollback in the file.

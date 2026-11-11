@@ -323,6 +323,7 @@
           <div class="field half">
             <label for="patternSel">Winning pattern</label>
             <select id="patternSel">
+              <option value="any" selected>Any line (across, down or diagonal)</option>
               <option value="one">One line (any full row)</option>
               <option value="two">Two lines</option>
               <option value="corners">Four corners</option>
@@ -538,12 +539,14 @@
 
   /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
    who has played bingo anywhere else, and the free square makes it look even more like a
-   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
-   told in their own dropdown ("any full row"). The player and the TV were the two screens
-   that never said so, which is a dispute at the bar waiting to happen. */
-var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
+   diagonal counts. For "One line" it does not: checkMusicPattern checks rows only, which is what
+   the host is told in their own dropdown ("any full row"), and the phone and TV say "One line
+   across". "Any line" (Dean, 11 Nov 2026, INBOX 256, the default for new venues) is a full row,
+   column or diagonal: the console and the TV say "Any line (across, down or diagonal)", the
+   phone just "Any line". */
+var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
   // Host UI pattern value -> the vp_music_games pattern the Worker expects.
-  var PAT_TO_WORKER={one:"one_line",two:"two_lines",corners:"four_corners",full:"full_house"};
+  var PAT_TO_WORKER={any:"any_line",one:"one_line",two:"two_lines",corners:"four_corners",full:"full_house"};
 
   // ---- song library (loaded from data/musical-library.json) ----
   // Only the host loads the library. Players and the TV receive song titles and
@@ -822,7 +825,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var G={
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"", slug:"",
     consoleId:(window.VP_PICKUP ? VP_PICKUP.newId() : ""),   // this console, so a pickup elsewhere can stand it down (vp-pickup.js)
-    status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
+    status:"setup", pattern:"any", prize:"the prize", autoDaub:true,   // "any": the dropdown's default for a venue with none saved (INBOX 256)
     playlistId:"", playlistName:"All songs", hitsOnly:true,
     songs:[],              // song objects in play this game (each gains song_id from the Worker at start)
     byTitle:{},            // normTitle -> song object (with song_id + previewUrl), for playSong/claim render
@@ -930,7 +933,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // ---- reload-recovery: a host refresh mid-game picks the live game back up (same pattern as trivia/host) ----
   // We stash only the session id; the Worker's /snapshot is the source of truth and rebuilds the rest.
   var MUSIC_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
-  var WORKER_TO_PAT={ one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
+  var WORKER_TO_PAT={ any_line:"any", one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
   function musicKey(){ return "vpMusicGame-"+(G.venueId||""); }
   function saveMusic(){
     try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId })); } }catch(e){}
@@ -1801,10 +1804,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   });
   // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
   // prize (one line -> two lines -> full house). A full house is the end, so no carry-on from there.
-  function nextPat(cur){ return cur==="one"?"two":cur==="two"?"full":""; }
+  function nextPat(cur){ return (cur==="one"||cur==="any")?"two":cur==="two"?"full":""; }
   /* What the host may play for next (Dean, 10 Nov 2026: "jump straight to full house"): after one line,
      two lines or a full house; after two lines, a full house. Four corners and a full house end the game. */
-  function nextPatOptions(cur){ return cur==="one"?["two","full"]:cur==="two"?["full"]:[]; }
+  function nextPatOptions(cur){ return (cur==="one"||cur==="any")?["two","full"]:cur==="two"?["full"]:[]; }
   var CARRY_LABELS={two:"Two lines",full:"Full house"};
   /* THE CARRY-ON BOX ONLY EXISTS WHILE A WIN IS WAITING FOR A DECISION (10 Nov 2026, Test Charlie: "Audit
      Two won!" stayed over the setup page after End game). Only endGameNow() ever hid it; the two-tap End
