@@ -158,6 +158,7 @@
   .tvline{margin:0 0 12px;padding:12px 14px;border:1px solid rgba(255,31,142,.45);border-radius:12px;background:rgba(255,31,142,.07);color:#fff;font-size:15px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
   .tvline span{flex:1 1 220px}
   .tvline .tvline-btn{width:auto;min-height:44px;margin:0;padding:0 16px;font-size:15px}
+  .tvline.idle{border:0;background:none;padding:0;justify-content:center}
 
   /* ---- Shared console classes (design review, 1 Oct 2026; moved 16 Oct 2026) ----
      What used to be the same style="" attribute on every console, so a size is set once
@@ -480,7 +481,7 @@
      now only Draw (or the host's own "Put the draw on the TV") does, and until then this is a settings page
      that leaves the wall alone. A live round counts as on air, so a reload mid-claim puts it back. */
   var TVC=(window.VPTvClaim ? VPTvClaim.make({ game:"raffle", send:function(m){ send(m); if(m && m.t==="mode") send({ t:"host_here" }); }, box:"tvLine",
-    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV" })
+    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV", idleButton:"Put the raffle on the TV" })
     : { onAir:function(){ return true; }, claim:function(){}, release:function(){}, heard:function(){}, whenShowing:function(fn){ fn(true); }, showing:function(){ return true; }, render:function(){} });
 
   // ---- console state (the Worker is authoritative; this is the console's view) ----
@@ -1543,6 +1544,7 @@
     if($("runHelp")) $("runHelp").classList.remove("hidden");   // walkthrough shows only on the console, never sign-in
     $("roomCode").textContent=code;
     renderPresets(); renderPrizeList(); renderRange(); renderResults();
+    TVC.render();   // the quiet "Put the raffle on the TV" until a draw takes it
   }
   // the screen announces itself; on a fresh (re)load we re-announce and replay the state
   function onPair(m){

@@ -142,6 +142,7 @@
   .tvline{margin:0 0 12px;padding:12px 14px;border:1px solid rgba(255,31,142,.45);border-radius:12px;background:rgba(255,31,142,.07);color:#fff;font-size:15px;line-height:1.45;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
   .tvline span{flex:1 1 220px}
   .tvline .tvline-btn{width:auto;min-height:44px;margin:0;padding:0 16px;font-size:15px}
+  .tvline.idle{border:0;background:none;padding:0;justify-content:center}
   /* the in-page question (draw again?), styled like the rest of the console */
   .ask{position:fixed;top:0;left:0;right:0;bottom:0;inset:0;z-index:9000;background:rgba(8,6,12,.82);display:flex;align-items:center;justify-content:center;padding:18px}
   .askbox{max-width:30em;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
@@ -475,7 +476,7 @@
      its heartbeat kept the board's return-to-ads timer from running out. Now only Draw (or the host's own
      "Put the draw on the TV") takes it; until then this is a settings page and the wall is left alone. */
   var TVC=(window.VPTvClaim ? VPTvClaim.make({ game:"members", send:function(m){ send(m); if(m && m.t==="mode") send({ t:"host_here" }); }, box:"tvLine",
-    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV" })
+    live:function(){ return !!(G.round || G.busy); }, noun:"this draw", button:"Put the draw on the TV", idleButton:"Put the draws board on the TV" })
     : { onAir:function(){ return true; }, claim:function(){}, release:function(){}, heard:function(){}, whenShowing:function(fn){ fn(true); }, showing:function(){ return true; }, render:function(){} });
 
   // ---- authoritative-ish console state (the Worker is the real authority) ----
@@ -1218,6 +1219,7 @@
     if($("runHelp")) $("runHelp").classList.remove("hidden");   // walkthrough shows only on the console, never sign-in
     $("roomCode").textContent=code;
     renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); applyRoleGates();
+    TVC.render();   // the quiet "Put the draws board on the TV" until a draw takes it
     // Pick a live round back up. Runs after the draws are rendered so curDraw() resolves, and
     // after the TV is paired so the winner can go back on the screen.
     if(!G.round) restoreRound();

@@ -68,6 +68,10 @@
     var live = opts.live || function () { return false; };     // a round in progress counts as on air (a reload mid-claim)
     var noun = opts.noun || "this draw";
     var button = opts.button || "Put the draw on the TV";
+    /* THE "OPEN LOBBY" OF A DRAW. Before tonight's first draw a venue may want the raffle's prizes or the
+       members draws board on the wall (a club puts the board up at 5pm for a 7:30 draw). That is now a tap,
+       not a side effect of opening the page: this quiet button, shown while the console is not on air. */
+    var idleButton = opts.idleButton || "";
     var claimed = false, claimAt = 0, lastTvAt = 0, lastShow = "", lastShowAt = 0, waiters = [];
 
     function onAir() { var l = false; try { l = !!live(); } catch (e) {} return claimed || l; }
@@ -82,7 +86,8 @@
 
     /* What the console should say right now: null for nothing. */
     function line() {
-      if (!onAir() || showing()) return null;
+      if (showing()) return null;
+      if (!onAir()) return idleButton ? { text: "", button: idleButton, idle: true } : null;
       if (claimAt && (now() - claimAt) < GRACE_MS) return null;   // give the TV its moment to switch
       return { text: "The TV is not showing " + noun + ". " + why(), button: button };
     }
@@ -94,10 +99,11 @@
       var l = line();
       if (!l) { box.classList.add("hidden"); box.innerHTML = ""; return; }
       box.innerHTML = "";
-      var p = document.createElement("span"); p.textContent = l.text;
+      box.classList.toggle("idle", !!l.idle);
+      if (l.text) { var p = document.createElement("span"); p.textContent = l.text; box.appendChild(p); }
       var b = document.createElement("button"); b.type = "button"; b.className = "btn ghost tvline-btn"; b.textContent = l.button;
-      b.addEventListener("click", function () { claim(true); });
-      box.appendChild(p); box.appendChild(b);
+      b.addEventListener("click", function () { claim(!l.idle); });   // the warning's button forces; the quiet one is an ordinary claim
+      box.appendChild(b);
       box.classList.remove("hidden");
     }
 

@@ -119,6 +119,17 @@ check('its claim is for the members screen', modes()[0] && modes()[0].mode === '
 t.heard({ t: 'tv_here', showing: 'members' });
 check('and the members screen saying it is up is what counts', t.showing() === true);
 
+print('');
+print('The quiet "Put the raffle on the TV" (the draw\'s Open lobby)');
+sent = [];
+t = C.make({ game: 'raffle', send: function (m) { sent.push(m); }, now: function () { return NOW; }, setTimeout: setTimeout,
+             idleButton: 'Put the raffle on the TV' });
+l = t.line() || {};
+check('a console not on air offers the button, with no warning words', l.idle === true && l.text === '' && l.button === 'Put the raffle on the TV', l);
+check('and offering it sends nothing', sent.length === 0, sent);
+t.heard({ t: 'tv_here', showing: 'raffle' });
+check('no button when the raffle is already on the wall', t.line() === null, t.line());
+
 /* ---- the router on every game screen: a force is obeyed over a live game, a claim is not ---- */
 var channels = [];
 function makeClient() {
