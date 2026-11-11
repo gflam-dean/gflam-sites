@@ -231,6 +231,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/home-trusted-heading-in-chrome.test.py": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/host-quiet-in-chrome.test.py": {
   "checks": 39,
   "counted_by": "lines"
@@ -1204,7 +1208,7 @@
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
-  "checks": 43,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-try-demo-billing.js": {

@@ -168,6 +168,7 @@
   "help-seed-matches-faq.test.py",
   "helpdesk-hq-in-chrome.test.py",
   "home-hero-in-chrome.test.py",
+  "home-trusted-heading-in-chrome.test.py",
   "hop-name.test.js",
   "host-quiet-in-chrome.test.py",
   "host.html loads the shared names",

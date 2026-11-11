@@ -137,6 +137,9 @@ function world() {
   check('slow whatever the count: six seconds a logo', track.style.animationDuration === '36s', track.style.animationDuration);
   var css = (head.children.filter(function (c) { return c.id === 'vpTrustedCss'; })[0] || {}).textContent || '';
   check('it pauses under the mouse', /#trusted \.marquee:hover \.track\{animation-play-state:paused\}/.test(css), css.slice(0, 200));
+  check('the heading wordmark is sized and sat on the heading baseline, and the heading sits lower (INBOX 231)',
+    /#trusted \.trusted-word\{display:inline-block;height:1\.1em;width:auto;vertical-align:-\.297em;/.test(css)
+    && /#trusted \.sec-head\{margin-top:36px\}/.test(css) && /@media\(max-width:600px\)\{#trusted \.sec-head\{margin-top:22px\}\}/.test(css));
   check('and stands still for anyone who asked for reduced motion', /@media\(prefers-reduced-motion:reduce\)\{#trusted \.track\{animation:none/.test(css));
   shown = T.render(rows(5), section, track);
   check('dropping back to five hides it again', shown === 0 && section.style.display === 'none', section.style.display);
@@ -162,6 +165,11 @@ function world() {
     check(p + ' loads /app/vp-trusted.js', h.indexOf('<script src="/app/vp-trusted.js"></script>') !== -1);
     check(p + ' asks the Worker through it', h.indexOf('if (workerReady && window.VPTrusted) VPTrusted.load(VP_WORKER);') !== -1);
     check(p + ' no longer reads the view straight from the browser', h.indexOf('v_vp_trusted') === -1);
+    var head = (h.match(/<section class="sec" id="trusted"[\s\S]*?<\/section>/) || [''])[0];
+    check(p + ': the heading\'s "venueplay" is the logo file, never typed text (Dean, 11 Nov 2026, INBOX 231)',
+      /<h2 class="sec-title">Venues already running <img class="trusted-word" src="\/logos\/venueplay-primary\.svg" alt="venueplay"[^>]*><\/h2>/.test(head)
+      && !/>\s*venueplay\s*</i.test(head.replace(/alt="venueplay"/, '')), head.slice(0, 300));
+    check(p + ': no "Trusted by" eyebrow over the heading', head && !/class="label"|Trusted by/i.test(head), head.slice(0, 200));
   });
   finished = true;
 })().catch(function (e) { fails++; print('  FAIL threw: ' + (e && e.stack || e)); });
