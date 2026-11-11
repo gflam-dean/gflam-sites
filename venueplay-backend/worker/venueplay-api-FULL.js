@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 01:45 · d956463a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 01:52 · 80c03dfb';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3895,8 +3895,8 @@ async function vpaCoasterReview(request, env, json) {
   if (actor.error) return json({ error: actor.error }, actor.status);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
-  const id = String((_b.body && _b.body.id) || '').trim().toLowerCase();
-  const action = String((_b.body && _b.body.action) || '');
+  const body = _b.body || {};
+  const id = String(body.id || '').trim().toLowerCase(), action = String(body.action || '');
   if (!VPA_UUID_RE.test(id)) return json({ error: 'Which venue?' }, 400);
   if (['keep', 'list', 'dismiss'].indexOf(action) < 0) return json({ error: 'Keep, add to the list, or not a venue?' }, 400);
   const TZ = { NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne', TAS: 'Australia/Hobart', QLD: 'Australia/Brisbane', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 01:45 · 4111ce1f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 01:52 · 09e170cb';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2608,7 +2608,7 @@ async function handleCoasterLead(request, env, json) {
   }
   try {
     const q = 'kind=eq.lead&venue_id=is.null&name_key=eq.' + enc(key) + '&suburb=ilike.' + enc(suburb.replace(/[*%_\\]/g, '')) +
-      '&au_state=eq.' + enc(state) + '&select=id,asks,website&limit=1';
+      '&au_state=eq.' + state + '&select=id,asks,website&limit=1';   // state is one of COASTER_STATES
     let row = (await sbGet(env, 'vp_coaster_venues', q))[0];
     if (row) {
       const patch = { asks: Math.min(9999, (row.asks || 1) + 1) };
@@ -2768,7 +2768,8 @@ async function handleCoasterOptin(request, env, json) {
   if (!(await coasterLimit(request, env, 'optin', COASTER_OPTIN_MAX_PER_IP, 600))) return json({ error: 'Too many sign-ups from this network. Wait a few minutes.' }, 429);
   try {
     const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=id,board,token_hash&limit=1'))[0];
-    if (!row || (await sha256Hex(String(b.token || ''))) !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
+    const proof = await sha256Hex(String(b.token || ''));   // the round's secret, as /coaster/answer checks it
+    if (!row || proof !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
     const where = await coasterPlace(env, row.board);
     const ask = await coasterOptinAsk(env, where);
     if (!ask) return json({ ok: true, stored: false });   // not switched on for this venue: nothing is kept
