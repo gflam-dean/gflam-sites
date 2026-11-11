@@ -995,8 +995,9 @@ def main():
         check('hq: every request carries the HQ login', all((p.get('headers') or {}).get('Authorization') == 'Bearer hq-admin-token' for p in (t.js('window.__posts') or [])))
         light = t.js(LIGHT + '("#paneHelpdesk input:not([type=radio]):not([type=checkbox]), #paneHelpdesk select, #paneHelpdesk textarea")')
         check('hq: the filters are HQ\'s dark inputs, dates included, not browser white', light == [], light)
-        check('hq: the list is HQ\'s card (rounded panel) with HQ\'s badges (capitals), one row per ticket',
-              t.js('(function(){var tb=document.getElementById("hdRows").closest(".panel"),b=document.querySelector("#hdRows .badge");return getComputedStyle(tb).borderRadius==="16px"&&getComputedStyle(b).textTransform==="uppercase";})()') is True)
+        # HQ's badges are plain words since the AI clean-up (12 Nov 2026: no spaced capitals): the same .badge, no uppercase
+        check('hq: the list is HQ\'s card (rounded panel) with HQ\'s badges (plain words, no capitals), one row per ticket',
+              t.js('(function(){var tb=document.getElementById("hdRows").closest(".panel"),b=document.querySelector("#hdRows .badge");return getComputedStyle(tb).borderRadius==="16px"&&!!b&&b.classList.contains("badge")&&getComputedStyle(b).textTransform==="none";})()') is True)
         t.shot('11-hq-help-desk-list')
         t.js('document.querySelector("#hdRows [data-id=a2]").click()')
         opened = t.until('(function(){var x=(document.getElementById("hdTicket")||{}).textContent||"";return /#1002/.test(x)?x:"";})()', 8) or ''
