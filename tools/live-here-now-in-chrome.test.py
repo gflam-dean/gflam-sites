@@ -663,6 +663,9 @@ def main():
         tn.js('(function(){var s=document.getElementById("leadState");s.value="VIC";s.dispatchEvent(new Event("change"));})()')
         tn.type_into('leadSite', 'duckanddrake.com.au')
         tn.shot('lhn-addit-375.png')
+        tn.js('(function(){var e=document.getElementById("leadBtn");if(e)e.scrollIntoView({block:"end"});})()')
+        time.sleep(0.2)
+        tn.shot('lhn-addit-lower-375.png')
         tn.tap_id('leadBtn')
         s = wait(tn, lambda s: bool(s.get('leadDone')), 4)
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
