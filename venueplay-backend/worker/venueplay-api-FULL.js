@@ -5288,7 +5288,9 @@ async function vpaProspectTrialSwitchOff(env, nowMs) {
   let rows;
   const now = new Date(nowMs).toISOString(), floor = new Date(nowMs - 90 * 86400000).toISOString();
   try {
-    rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null&first_signin_at=not.is.null' +
+    /* No first_signin_at filter (INBOX 239): Bodalla Pub's month was set by hand (free_month_ends_at 10 Dec) after its
+       cancel; a row with an end date is one with a month to end, and a row with neither never matches the range. */
+    rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null' +
       '&and=' + encodeURIComponent('(free_month_ends_at.lt."' + now + '",free_month_ends_at.gt."' + floor + '")') + '&select=*&order=venue_id.asc');
   } catch (e) { return out; }
   for (const p of rows || []) {
@@ -5303,6 +5305,119 @@ async function vpaProspectTrialSwitchOff(env, nowMs) {
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ended after a cancel)' }, 'prospect_switched_off', 'venue:' + v.id,
       { name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
     out.push(v.id);
+  }
+  return out;
+}
+/* ===========================================================================
+ * ONE FRIENDLY EMAIL FOR A FREE MONTH CANCELLED PART WAY (Dean, 11 Nov 2026, INBOX 239.1 and 258.1)
+ *
+ * "The Friday before the free month ends, one email 'Your free month ends on <day> <date>': friendly, no pressure,
+ * a Keep it going / add a card button, and nothing after it ever." Every other email stops at the cancel (the card
+ * reminders skip cancelled_at, and so do the members list reminder and the monthly report); this is the one exception.
+ *   - WHEN: from 9am on the last Friday BEFORE the free month's last Brisbane day, in Dean's send window at the venue
+ *     (vpaSendAllowedAt: Monday to Friday 9 to 12 and 2 to 5, its own local time). Outside it, the next window.
+ *     Never after the month has ended (the switch-off follows), and never before the cancel.
+ *   - ONLY for a cancel made BEFORE that Friday. One made on or after it was told the date on the cancel screen a
+ *     moment ago, and gets nothing more.
+ *   - ONCE PER VENUE, EVER: an audit row trial_end_note on target 'trial-end-note:<venue>' is written BEFORE the
+ *     send; any row there means it has gone (or was tried). A read that fails sends nothing.
+ *   - Not to a venue that is off, has a card, is marked Do not contact, or has unsubscribed.
+ *   - THE SWITCH: TRIAL_END_NOTE = 'on' on the billing Worker. OFF by default, until Dean approves the words
+ *     (reports/free-month-end-email-11nov). Off, it reads nothing and writes nothing.
+ * ======================================================================== */
+const VPA_TRIAL_END_NOTE_ACTION = 'trial_end_note';
+function vpaTrialEndNoteOn(env) { return String((env && env.TRIAL_END_NOTE) || '').trim().toLowerCase() === 'on'; }
+const VPA_LONG_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+/* "Thursday 10 December", Brisbane. */
+function vpaBneLongDate(ms) {
+  const d = new Date(ms + VPA_BNE_MS);
+  return VPA_LONG_DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
+}
+/* The Brisbane day of the last Friday strictly before the month's last day ('2026-12-04' for an end on Thu 10 Dec). */
+function vpaTrialEndNoteDay(endMs) {
+  let d = vpaAddDays(vpaBneDay(endMs), -1);
+  while (vpaWeekday(d) !== 5) d = vpaAddDays(d, -1);
+  return d;
+}
+/* The first moment the note may go, or NaN when it never goes (no month, or cancelled on or after that Friday). */
+function vpaTrialEndNoteDueAt(prow, state) {
+  const end = vpaProspectMonthEndMs(prow), cx = Date.parse((prow && prow.cancelled_at) || '');
+  if (!isFinite(end) || !isFinite(cx)) return NaN;
+  const fri = vpaBneDayStartMs(vpaTrialEndNoteDay(end));
+  if (cx >= fri) return NaN;
+  return vpaSendAllowedAt(state, fri);
+}
+function vpaRenderTrialEndNote(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const venue = o.venueName || 'your venue', when = o.endsLong || '';
+  const subject = 'Your free month ends on ' + when;
+  const P = 'margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44';
+  const inner =
+      '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your free month ends on ' + vpaEsc(when) + '</h1>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
+    + '<p style="' + P + '">Just a quick note to say your free month of venueplay at ' + vpaEsc(venue) + ' runs until ' + vpaEsc(when)
+    + '. As you asked, we’ll switch it off after that. Nothing has been charged and nothing will be.</p>'
+    + '<p style="' + P + '">If you’d like to keep your games going, add a card before then and everything carries on just as it is.</p>'
+    + (o.cardUrl ? vpaEmailButton(vpaEsc(o.cardUrl), 'Keep it going') : '')
+    + '<p style="margin:20px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Either way, thanks for giving venueplay a go. This is the last email you’ll get from us about it.</p>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff('') + '</p>'
+    + '<p style="margin:26px 0 10px;font-size:13px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call '
+    + '<a href="tel:' + VP_SUPPORT_TEL + '" style="color:#8a8a95;text-decoration:none">' + VP_SUPPORT_PHONE + '</a> and press 2.</p>'
+    + '<p style="margin:0;font-size:13px;line-height:1.6;color:#8a8a95">You are getting this because we set up venueplay for ' + vpaEsc(venue)
+    + ' at your request. venueplay. <a href="' + site + '/terms" style="color:#8a8a95">Terms</a> &middot; <a href="' + site + '/privacy" style="color:#8a8a95">Privacy</a> &middot; '
+    + '<a href="' + site + '/unsubscribe?e=' + encodeURIComponent(String(o.email || '')) + '" style="color:#8a8a95">Unsubscribe from product emails</a></p>';
+  return { subject: subject, html: vpaVenueEmailCard('Nothing to pay. Add a card if you’d like to keep your games going.', inner, subject) };
+}
+async function vpaTrialEndNoteSweep(env, nowMs) {
+  const out = { sent: [], held: 0, skipped: 0 };
+  if (!vpaTrialEndNoteOn(env)) return Object.assign(out, { off: true });
+  if (!env.RESEND_API_KEY) return Object.assign(out, { why: 'no RESEND_API_KEY on this Worker' });
+  let rows;
+  const now = new Date(nowMs).toISOString(), ceil = new Date(nowMs + 14 * 86400000).toISOString();
+  try {
+    rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null' +
+      '&and=' + encodeURIComponent('(free_month_ends_at.gte."' + now + '",free_month_ends_at.lt."' + ceil + '")') + '&select=*&order=venue_id.asc');
+  } catch (e) { return Object.assign(out, { why: 'prospects not readable' }); }
+  let unsub;
+  for (const p of rows || []) {
+    const end = vpaProspectMonthEndMs(p);
+    if (!(nowMs <= end)) continue;
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id,au_state,postcode&limit=1');
+    const v = vr && vr[0];
+    if (!v || v.status !== 'active') { out.skipped++; continue; }
+    const state = vpaSendState(v);
+    const due = vpaTrialEndNoteDueAt(p, state);
+    if (!isFinite(due)) { out.skipped++; continue; }
+    if (nowMs < due || !vpaInSendWindow(nowMs, state)) { out.held++; continue; }
+    if (p.no_contact === true) { out.skipped++; continue; }
+    const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice,contact_email,contact_name&limit=1') : [];
+    const f = fr && fr[0];
+    if (vpaProspectSignedUp(v, f)) { out.skipped++; continue; }   // a card since: nothing to say
+    const email = String(p.email || (f && f.contact_email) || '').trim();
+    if (!email) { out.skipped++; continue; }
+    if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
+    if (unsub === null) { out.held++; continue; }                  // cannot read the list: not this hour
+    if (unsub[email.toLowerCase()]) { out.skipped++; continue; }
+    /* ONCE, EVER: look, then claim; a failed look or claim sends nothing. */
+    const lock = 'trial-end-note:' + v.id;
+    const done = await vpaMrGet(env, 'vp_admin_audit', 'action=eq.' + VPA_TRIAL_END_NOTE_ACTION + '&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
+    if (!done.ok || done.rows.length) { out.skipped++; continue; }
+    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, VPA_TRIAL_END_NOTE_ACTION, lock,
+      { venue_id: v.id, name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
+    if (!claimed) { out.skipped++; continue; }
+    const first = String(p.contact_name || (f && f.contact_name) || '').trim().split(/\s+/)[0] || '';
+    const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, email: email, endsLong: vpaBneLongDate(end),
+      cardUrl: await vpaCardLink(env, v.founding_id) });
+    let res = null;
+    try {
+      res = await fetch('https://api.resend.com/emails', { method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+    } catch (_) { res = null; }
+    const ok = !!(res && res.ok);
+    await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,
+      { name: v.name || null, ends: vpaBneLongDate(end) });
+    if (ok) out.sent.push(v.id); else out.skipped++;
   }
   return out;
 }
@@ -5717,6 +5832,9 @@ async function vpaRenderProspectReminder(env, o) {
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
 async function vpaProspectReminderSweep(env, nowMs) {
   const out = { started: 0, sent: [], paused: [], stopped: 0 };
+  /* The one friendly email before a cancelled free month ends (INBOX 239.1), behind TRIAL_END_NOTE (off). Before the
+     switch-off, so a month ending this hour is never emailed after it has gone. */
+  out.end_note = await vpaTrialEndNoteSweep(env, nowMs).catch(() => null);
   /* A free month cancelled part way switches off at its end date (INBOX 191.1). First, and on its own read, so a
      missing migration 127 below cannot hold it. */
   out.switched_off = await vpaProspectTrialSwitchOff(env, nowMs).catch(() => []);
@@ -5889,6 +6007,9 @@ async function vpaMembersReminderSweep(env, nowMs) {
     if (!pq.ok) { out.skipped++; continue; }
     const prow = pq.rows[0] || null;
     if (prow && prow.no_contact === true) { out.skipped++; continue; }
+    /* ALL THEIR EMAILS STOP AT THE CANCEL (Dean, 11 Nov 2026, INBOX 258.1): a free month cancelled part way stays on
+       to its end date, and gets no members list reminder in that time. */
+    if (prow && prow.cancelled_at) { out.skipped++; continue; }
     let to = '', first = '';
     if (v.founding_id) {
       const fq = await vpaMrGet(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1');
@@ -18842,6 +18963,11 @@ async function vprMonthlySweep(env, nowMs, opts) {
   const batch = parseInt(env.MONTHLY_REPORTS_BATCH, 10) > 0 ? parseInt(env.MONTHLY_REPORTS_BATCH, 10) : VPR_BATCH;
   const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
   const tests = await vprTestVenueIds(env, venues);
+  /* ALL THEIR EMAILS STOP AT THE CANCEL (INBOX 258.1): a free month cancelled part way is still active to its end date.
+     A list that cannot be read holds this tick (no report goes blind to a venue that said stop). */
+  let cxIds;
+  try { cxIds = new Set((await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&select=venue_id&order=venue_id.asc')).map((r) => r.venue_id)); }
+  catch (e) { return { off: false, waiting: true, sent: 0, why: 'cancelled prospects not readable' }; }
   /* What venues play, to Dean only, once a month. Never throws, so it cannot hold up a venue's report. */
   const games = await vprGamesSend(env, month, venues, tests);
   const done = new Set((await vpaSelectAll(env, 'vp_admin_audit',
@@ -18863,6 +18989,7 @@ async function vprMonthlySweep(env, nowMs, opts) {
     let why = '';
     let acct = null;
     if (tests.has(v.id)) why = 'test venue';
+    else if (cxIds.has(v.id)) why = 'cancelled their free month';
     else if (!r.this_month.nights && !r.last_month.nights) why = 'no nights in either month';
     else {
       acct = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1')) || [])[0] || null;

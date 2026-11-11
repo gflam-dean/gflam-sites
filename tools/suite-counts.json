@@ -1215,6 +1215,10 @@
   "checks": 53,
   "counted_by": "lines"
  },
+ "tools/test-trial-end-note.js": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-15-oct.js": {
   "checks": 114,
   "counted_by": "lines"
