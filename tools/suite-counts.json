@@ -200,7 +200,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 45,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/feedback-followup-in-chrome.test.py": {
@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 246,
+  "checks": 248,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -240,7 +240,7 @@
   "counted_by": "lines"
  },
  "tools/home-hero-in-chrome.test.py": {
-  "checks": 24,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/home-trusted-heading-in-chrome.test.py": {
@@ -336,7 +336,7 @@
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
-  "checks": 77,
+  "checks": 79,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
@@ -480,7 +480,7 @@
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
-  "checks": 30,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-a-player-bills-once-alive.js": {

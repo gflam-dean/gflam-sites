@@ -31,9 +31,9 @@
      NOT written here: /app/vp-help.js draws them into each [data-vph-audience] below (data-mode
      "page"), the same code as the Help panel on the phones and the console. This page is the
      header, the footer and the three ways in. The look is index.html's: same tokens, same type.
-     THE SUPPORT PHONE (07 5228 3667): the widget draws "Call us on" into the VENUE part only, as it
-     does on the console; the sales part names it under its form; the player part and this page's
-     footer never do (players use Help, and the phone menu sends players to voicemail). -->
+     THE SUPPORT PHONE: never on this page (it is public). It lives behind sign-in only: the console's
+     Help panel, settings, the account page, and the emails a venue gets (Dean 2 Nov 2026; INBOX 280,
+     12 Nov 2026 took it off the venue part and the sales part here too). -->
 <style>
   :root{
     --ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171B;
@@ -114,7 +114,6 @@
   .note a{white-space:nowrap}
   .reach{margin-top:18px;font-size:var(--fs-sm);color:var(--muted);line-height:1.8}
   .reach a{color:#FF8AC4}
-  .reach a.tel{white-space:nowrap}
   /* The widget, drawn into the page: full width of the card, on the page's own type. */
   .panel .vph-inline{max-width:none}
   .panel .vph-pageflow{scroll-margin-top:84px}
@@ -249,7 +248,7 @@
             <h2>Bring venueplay to your venue</h2>
             <p>Tell us about your venue and the nights you run, and we'll get back to you. Want to see it first? <a href="/see-a-night" style="color:#FF8AC4;text-decoration:underline;text-underline-offset:3px">See a night</a>.</p>
           </div>
-          <p class="reach">Or email <a href="mailto:sales@venueplay.com.au">sales@venueplay.com.au</a>, or call <a class="tel" href="tel:+61752283667">07 5228 3667</a>.</p>
+          <p class="reach">Or email <a href="mailto:sales@venueplay.com.au">sales@venueplay.com.au</a>.</p>
         </div>
         <div class="card" data-vph-audience="sales"></div>
       </div>

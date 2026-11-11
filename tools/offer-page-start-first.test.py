@@ -177,6 +177,22 @@ ok('the month rows live in one file, vp-offer.js, and nsw.html loads it', '<scri
 IDX = rd('venueplay/index.html')
 ok('the homepage never loads the offer file and never sends these events (no offers there)',
    'vp-offer.js' not in IDX and 'vpTrack' not in IDX and 'Have a play for free' not in IDX)
+# INBOX 280 (12 Nov 2026): what search engines read about the offer pages. Plain /offer goes to the homepage, so its
+# structured data is the homepage's; the /offer-<month> page (nsw.html) carries none of its own.
+def ld_blocks(src):
+    out = []
+    for b in re.findall(r'<script type="application/ld\+json">(.*?)</script>', re.sub(r'<!--.*?-->', ' ', src, flags=re.S), re.S):
+        try:
+            out.append(json.dumps(json.loads(b)))
+        except Exception as e:
+            out.append('UNPARSED ' + str(e))
+    return out
+ok('/offer goes to the homepage, and the offer page itself (nsw.html) has no structured data naming "VenuePlay" or a telephone',
+   re.search(r'^/offer\s+/\s+30[12]\s*$', red, re.M) is not None and not [b for b in ld_blocks(NSW) if '"VenuePlay"' in b or '"telephone"' in b],
+   ld_blocks(NSW))
+idx_ld = ld_blocks(IDX)
+ok('so /offer\'s structured data (the homepage\'s 2 blocks) says "venueplay" in lowercase and carries no telephone',
+   len(idx_ld) == 2 and all('"name": "venueplay"' in b and '"VenuePlay"' not in b and '"telephone"' not in b and 'UNPARSED' not in b for b in idx_ld), idx_ld)
 ok('vp-analytics.js is the one place that defines vpTrack', len([p for p in glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.js'), recursive=True) if 'window.vpTrack =' in open(p, encoding='utf-8', errors='replace').read()]) == 1)
 txt = re.sub(r'<[^>]+>', ' ', BODY)
 ok('brand: no em or en dash anywhere on the page body, "venueplay" never capitalised in the new copy',

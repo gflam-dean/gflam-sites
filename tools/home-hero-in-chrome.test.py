@@ -75,6 +75,17 @@ try:
         h1, lede, cta, logo, lines = M.get('h1') or {}, M.get('lede') or {}, M.get('cta') or {}, M.get('logo') or {}, M.get('lines') or []
         ok('%s: the fonts loaded, the page does not scroll sideways' % tag, M.get('fonts') == 'loaded' and M.get('sw', 9999) <= M.get('vw', 0), [M.get('fonts'), M.get('sw'), M.get('vw')])
         ok('%s: nothing overlaps the heading (no logo, badge or demo on it)' % tag, h1 and not M.get('over'), M.get('over'))
+        if w == 375:
+            # INBOX 280 (12 Nov 2026): what Google reads off the page as served. Every structured-data name is
+            # "venueplay" in lowercase, and no block publishes the support landline (it is never public).
+            LD = S.js(sid, '(function(){var n=[],t=0,bad=[];function walk(o){if(Array.isArray(o)){o.forEach(walk);return;}if(o&&typeof o==="object"){Object.keys(o).forEach(function(k){if(k==="name")n.push(o[k]);if(k==="telephone")t++;walk(o[k]);});}}'
+                       '[].forEach.call(document.querySelectorAll(\'script[type="application/ld+json"]\'),function(s){try{walk(JSON.parse(s.textContent));}catch(e){bad.push(String(e));}});'
+                       'return JSON.stringify({blocks:document.querySelectorAll(\'script[type="application/ld+json"]\').length,names:n,tel:t,bad:bad});})()')
+            LD = json.loads(LD) if isinstance(LD, str) else {}
+            ok('structured data: both blocks parse and all 4 names say "venueplay", lowercase, never "VenuePlay"',
+               LD.get('blocks') == 2 and not LD.get('bad') and LD.get('names') == ['venueplay'] * 4, LD)
+            ok('structured data: no "telephone" anywhere in it (the support line is never on a public page)',
+               LD.get('blocks') == 2 and LD.get('tel') == 0, LD)
         if phone:
             mid = M['vw'] / 2.0
             cen = lambda b: (b['l'] + b['r']) / 2.0
@@ -98,7 +109,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 24
+EXPECTED = 26
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -498,11 +498,13 @@ def help_page_checks(b, VP):
             check(tag + ' venue: one column on a phone: the card under the heading, the email line under the card, nothing sideways',
                   bool(lay.get('card')) and lay['card'][1] > lay['head'][3] and lay['reach'][1] >= lay['card'][3] and lay['sw'] <= lay['vw'], lay)
         check(tag + ' venue: the player panel stays shut, and the address says #venue', t.js('document.getElementById("player").hidden && location.hash==="#venue" && document.querySelector("[data-path=venue]").getAttribute("aria-selected")==="true"') is True)
-        # THE SUPPORT PHONE on /help: drawn by the widget into the venue part, as on the console.
+        # THE SUPPORT PHONE is never on /help (INBOX 280, 12 Nov 2026): it is a PUBLIC page. The landline lives behind
+        # sign-in (the console's Help panel, below), in emails and on printed flyers. Until 12 Nov these asserted the opposite.
         c = page_call(t)
-        check(tag + ' venue: "Call us on 07 5228 3667", a tel:+61752283667 link, above the issues, inside the card, no sideways scroll', call_ok(c), c)
-        check(tag + ' venue: the call line is the first thing in the venue help, and there is one of it',
-              t.js('(function(){var f=document.getElementById("vphFlow-venue"),c=document.getElementById("vphCall-venue");if(!f||!c)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return first===c&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
+        check(tag + ' venue: no "Call us on" line in the public venue help (the number is for signed-in venues only)',
+              c is None and t.js('document.querySelectorAll("#venue .vph-call").length===0') is True, c)
+        check(tag + ' venue: and no tel: link anywhere in the venue part, and the issues come first',
+              t.js('(function(){var f=document.getElementById("vphFlow-venue");if(!f)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return !document.querySelector("#venue a[href^=\'tel:\']")&&!!first&&first.className==="vph-q";})()') is True)
         t.shot('21-help-%s-venue' % tag)
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("#vphFlow-venue [data-issue=\'%s\']").click()' % I3['id'])
@@ -520,8 +522,8 @@ def help_page_checks(b, VP):
         check(tag + ' venue: after the last step the public venue form opens, about that issue, with name, venue, email, kind',
               about == 'About: ' + I3['title'] and all(t.js('!!document.getElementById("%s")' % i) for i in ('vphName-venue', 'vphVenue-venue', 'vphEmail-venue', 'vphKind-venue')), about)
         c = page_call(t)
-        check(tag + ' venue: the public venue form has the call line too, inside the form, tappable',
-              call_ok(c) and t.js('!!document.querySelector("#vphFlow-venue .vph-form #vphCall-venue")') is True, c)
+        check(tag + ' venue: the public venue form has no call line and no tel: link either',
+              c is None and t.js('!document.querySelector("#vphFlow-venue .vph-form .vph-call") && !document.querySelector("#venue a[href^=\'tel:\']")') is True, c)
         check(tag + ' venue: and the small print under Send does not say the number a second time',
               t.js('document.getElementById("vphFine-venue").textContent') == "We'll reply by email.", t.js('document.getElementById("vphFine-venue").textContent'))
         check(tag + ' venue: its kinds are help, billing and sales', t.js('Array.prototype.map.call(document.getElementById("vphKind-venue").options,function(o){return o.value;}).join()') == 'venue_support,accounts,sales')
@@ -583,11 +585,13 @@ def help_page_checks(b, VP):
         check(tag + ' sales: the enquiry form is on the page', t.js('!!document.getElementById("vphMsg-sales")') is True)
         check(tag + ' sales: and it never asks the player question "Where were you playing?"',
               t.js('!document.getElementById("vphVenue-sales") && !/Where were you playing/.test(document.getElementById("sales").textContent)') is True)
-        sr = t.js('(function(){var a=document.querySelector("#sales .reach a[href^=\'tel:\']");if(!a)return null;var r=a.getBoundingClientRect();return {href:a.getAttribute("href"),text:a.textContent,shown:r.width>0&&r.height>0,one:document.querySelectorAll("#sales a[href^=\'tel:\']").length===1,line:a.parentNode.textContent};})()')
-        # 23 Oct 2026: the sales form names the sales mailbox, and the public pages no longer carry the number, so
-        # this is the one public place a prospective venue is given it.
-        check(tag + ' sales: under the form, "or call 07 5228 3667", tappable, once, beside sales@venueplay.com.au',
-              bool(sr) and sr['href'] == 'tel:+61752283667' and sr['text'] == '07 5228 3667' and sr['shown'] and sr['one'] and sr['line'] == 'Or email sales@venueplay.com.au, or call 07 5228 3667.', sr)
+        sr = t.js('(function(){var r=document.querySelector("#sales .reach");if(!r)return null;var b=r.getBoundingClientRect();return {tels:document.querySelectorAll("#sales a[href^=\'tel:\']").length,shown:b.width>0&&b.height>0,line:r.textContent};})()')
+        # INBOX 280 (12 Nov 2026): /help is public, so the sales part gives the sales mailbox and no number. Until 12 Nov
+        # this asserted "or call 07 5228 3667" here.
+        check(tag + ' sales: under the form, "Or email sales@venueplay.com.au." and no phone number or tel: link',
+              bool(sr) and sr['tels'] == 0 and sr['shown'] and sr['line'] == 'Or email sales@venueplay.com.au.' and no_phone_in(t, '#sales') is True, sr)
+        check(tag + ': nowhere on the public /help page is there a tel: link',
+              t.js('document.querySelectorAll("a[href^=\'tel:\']").length') == 0, t.js('document.querySelectorAll("a[href^=\'tel:\']").length'))
         t.shot('24-help-%s-sales' % tag)
         # 29 Oct 2026 (Dean's phone test): the enquiry names its venue, as fields a later job can set up as a prospect.
         labels = t.js('Array.prototype.map.call(document.querySelectorAll("#sales .vph-form label"),function(l){return l.textContent;}).join("|")') or ''
