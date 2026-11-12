@@ -1,3 +1,6 @@
+/* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them up or
+   change them." Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* HQ > PROSPECTS, RUN AND NOT WORD-SEARCHED (Dean, 29 Oct 2026; migration 125).
 
    "Can we please put the prospects into HQ as a tab somewhere? ... if they haven't signed up they're not
@@ -154,7 +157,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('the welcome says clearly the account is set up for 10 players, and that they can change it any time (Dean, 29 Oct 2026; 5 Nov 2026: "say clearly")',
     /Your plan is set to 10 players, so that's \$25\.00 a month\. You can change it any time\./.test(lastMail.text || '') && /<strong>10 players<\/strong>/.test(lastMail.html || ''), (lastMail.text || '').slice(0, 900));
   check('the welcome says plainly it is not a sign-up that starts billing, in words that match the code (phase 2), and the 7 Nov review (short: no card, a reminder, cancel; the start of the free month is in the offer line), no card, a reminder, cancel',
-    (lastMail.text || '').indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your free month ends. Not for you? Just hit cancel") !== -1 &&
+    (lastMail.text || '').indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your first month ends. Not for you? Just hit cancel") !== -1 &&
     (lastMail.text || '').indexOf('simply pauses') === -1 && (lastMail.text || '').indexOf('5 days') === -1 &&
     /<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&amp;t=[0-9a-f]{32}"|<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&t=[0-9a-f]{32}"/.test(lastMail.html || '') && (lastMail.html || '').indexOf('workers.dev') === -1, (lastMail.text || '').slice(0, 1400));
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',

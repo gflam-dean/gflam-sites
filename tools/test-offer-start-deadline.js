@@ -1,3 +1,6 @@
+/* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them up or
+   change them." Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* THE OFFER NEEDS THE FREE MONTH STARTED BY ITS DATE (Dean, 7 Nov 2026, for the Thu 12 Nov release; branch
    fix/offer-start-deadline-12nov). To get the $2.50 offer rate a prospect must SIGN IN FOR THE FIRST TIME by their offer's
    date (30 November for OFFER-NOV-2026, 31 December for OFFER-DEC-2026). Being set up by then is not enough. A first
@@ -130,7 +133,7 @@ async function prospect(o) {
 }
 function bne(y, mo, d, h, mi) { return Date.UTC(y, mo - 1, d, h - 10, mi || 0); }   // a Brisbane wall-clock time as epoch ms
 function day(ms) { return vpaBneDay(ms); }
-var REM = function () { return sent.filter(function (m) { return /free month|How is venueplay going/.test(m.subject || ''); }); };
+var REM = function () { return sent.filter(function (m) { return /first month|How is venueplay going/.test(m.subject || ''); }); };
 async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t <= toMs; t += (stepMs || 3600000)) { var before = sent.length; await vpaProspectReminderSweep(ENV, t); for (var i = before; i < sent.length; i++) out.push({ at: t, msg: sent[i] }); } return out; }
 
 
@@ -165,7 +168,7 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   check('November: a first sign-in at 30 Nov 23:59:59.999 is $2.50; at 1 Dec 00:00:00.000 it is $3.00', vpaOfferRateAt(ENV, 'OFFER-NOV-2026', NOV_LAST) === 2.5 && vpaOfferRateAt(ENV, 'OFFER-NOV-2026', DEC_FIRST) === 3);
   check('December: 31 Dec 23:59:59.999 is $2.50; 1 Jan 00:00:00.000 is $3.00', vpaOfferRateAt(ENV, 'OFFER-DEC-2026', DEC_LAST) === 2.5 && vpaOfferRateAt(ENV, 'OFFER-DEC-2026', JAN_FIRST) === 3);
   check('the offer\'s own day in words: 30 November, 31 December; nothing for no code', vpaOfferDayWords('OFFER-NOV-2026') === '30 November' && vpaOfferDayWords('OFFER-DEC-2026') === '31 December' && vpaOfferDayWords(null) === '');
-  check('Dean\'s sentence, with the day', vpaOfferSigninWords('OFFER-DEC-2026') === 'Your free month starts the first time you sign in. Sign in by 31 December to keep $2.50 a player.', vpaOfferSigninWords('OFFER-DEC-2026'));
+  check('Dean\'s sentence, with the day', vpaOfferSigninWords('OFFER-DEC-2026') === 'Your first month is on us. It starts the first time you sign in. Sign in by 31 December to keep $2.50 a player.', vpaOfferSigninWords('OFFER-DEC-2026'));
 
   section('2. November, end to end: setup writes no rate; the first sign-in decides it');
   fresh();
@@ -277,7 +280,7 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var qr = await withClock(NOV12, function () { return call('/autopilot/prospects/quiet', undefined, AP, 'GET'); });
   var qp = ((qr.body && qr.body.prospects) || []).filter(function (p) { return p.venue_id === Q.v.id; })[0] || {};
   check('the quiet list hands the Mac the day and the sentence for its follow-up', qp.offer_signin_by === '30 November' && qp.offer_open === true &&
-    qp.offer_words === 'Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player.', qp);
+    qp.offer_words === 'Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player.', qp);
   var qr2 = await withClock(DEC_FIRST, function () { return call('/autopilot/prospects/quiet', undefined, AP, 'GET'); });
   var qp2 = ((qr2.body && qr2.body.prospects) || []).filter(function (p) { return p.venue_id === Q.v.id; })[0] || {};
   check('once the day has passed: offer_open false and no sentence', qp2.offer_open === false && qp2.offer_words === '', qp2);
@@ -295,14 +298,14 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   fresh();
   var vis = function (h) { return String(h || '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/\s+/g, ' '); };
   var wn = await withClock(NOV5, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', firstName: 'Sam', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
-  check('the welcome on the November offer: "Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player."',
-    vis(wn).indexOf("Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player a month, for as long as you're with us. No lock-in.") !== -1 && !/lock in the|lock it in|need to start by/i.test(vis(wn)), vis(wn).slice(0, 900));
+  check('the welcome on the November offer: "Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player."',
+    vis(wn).indexOf("Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player a month, for as long as you're with us. No lock-in.") !== -1 && !/lock in the|lock it in|need to start by/i.test(vis(wn)), vis(wn).slice(0, 900));
   var wd = await withClock(NOV11, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-DEC-2026' }); });
   check('the welcome on the December offer (after the 10 Nov switch): Sign in by 31 December', vis(wd).indexOf('Sign in by 31 December to keep $2.50 a player a month') !== -1 && vis(wd).indexOf('30 November') === -1);
   var wl = await withClock(DEC_FIRST, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
-  check('a welcome on the November offer sent on 1 Dec: the standard $3.00 line, no sign-in-by date', /Your free month starts the first time you sign in\. Then it's \$3\.00 a player a month\. No lock-in\./.test(vis(wl)) && !/Sign in by/.test(vis(wl)), vis(wl).slice(0, 600));
+  check('a welcome on the November offer sent on 1 Dec: the standard $3.00 line, no sign-in-by date', /Your first month is on us\. It starts the first time you sign in\. Then it's \$3\.00 a player a month\. No lock-in\./.test(vis(wl)) && !/Sign in by/.test(vis(wl)), vis(wl).slice(0, 600));
   var tplWas = TPL['welcome-prospect.html'];
-  TPL['welcome-prospect.html'] = tplWas.replace(/<!--IF:founding-->[\s\S]*?<!--ENDIF:founding-->/, "<!--IF:founding-->\n<p>To keep the {{player_rate}} deal, it stays at {{player_rate}} for as long as you're with us.{{offer_deadline}} Your first month is free.</p>\n<!--ENDIF:founding-->");
+  TPL['welcome-prospect.html'] = tplWas.replace(/<!--IF:founding-->[\s\S]*?<!--ENDIF:founding-->/, "<!--IF:founding-->\n<p>To keep the {{player_rate}} deal, it stays at {{player_rate}} for as long as you're with us.{{offer_deadline}} Your first month is on us.</p>\n<!--ENDIF:founding-->");
   var wo = await withClock(NOV5, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
   TPL['welcome-prospect.html'] = tplWas;
   check('while Pages still serves the OLD template (the Worker deploys first), its token still gets the old whole sentence, never "us.30 November"',
@@ -312,15 +315,15 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var mark = sent.length;
   await withClock(bms(2026, 11, 20, 10, 0), function () { return vpaSendSigninLink(ENV, S.login, S.v.id, { hq: true }); });
   var se = sent.slice(mark).map(function (m) { return vis(m.html); }).join(' ');
-  check('the sign-in link email before the date: the same sentence', se.indexOf('Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player.') !== -1, se.slice(0, 600));
+  check('the sign-in link email before the date: the same sentence', se.indexOf('Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player.') !== -1, se.slice(0, 600));
   mark = sent.length;
   await withClock(bms(2026, 12, 2, 10, 0), function () { return vpaSendSigninLink(ENV, S.login, S.v.id, { hq: true }); });
   var se2 = sent.slice(mark).map(function (m) { return vis(m.html); }).join(' ');
   check('after the date: the link email goes without it', se2.length > 50 && se2.indexOf('Sign in by') === -1, se2.slice(0, 300));
   var r1 = await vpaRenderProspectReminder(ENV, { kind: 'early', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 20, offerRate: 2.5, cardUrl: 'c', cancelUrl: 'd' });
   var r2 = await vpaRenderProspectReminder(ENV, { kind: 'early', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 20, offerRate: 3, cardUrl: 'c', cancelUrl: 'd' });
-  check('reminders: an on-time starter "You started your free month in time for $2.50 a player"; a late starter no offer at all',
-    vis(r1.html).indexOf('You started your free month in time for $2.50 a player.') !== -1 && !/\$2\.50|offer/.test(vis(r2.html)), [vis(r1.html).slice(0, 300), vis(r2.html).slice(0, 300)]);
+  check('reminders: an on-time starter "You started your first month in time for $2.50 a player"; a late starter no offer at all',
+    vis(r1.html).indexOf('You started your first month in time for $2.50 a player.') !== -1 && !/\$2\.50|offer/.test(vis(r2.html)), [vis(r1.html).slice(0, 300), vis(r2.html).slice(0, 300)]);
   var W1 = readFile('venueplay/emails/welcome-prospect.html'), R1 = readFile('venueplay/emails/prospect-reminder.html'), API = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   var spoken = ['vpaRenderProspectWelcome', 'vpaRenderProspectReminder', 'vpaOfferSigninWords', 'vpaProspectRateInfo', 'vpaProspectSigninOfferWords'].map(function (n) { return lift(API, n); }).join('\n');
   check('grep: the two templates and the Worker functions that write these words never say "grace" or "lock it in"/"lock in the", and have no long dash',

@@ -1,3 +1,6 @@
+/* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them up or
+   change them." Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* THE SELF-SERVE RESTART, WALKED DAY BY DAY (Dean, 5 Nov 2026, builds INBOX item 54 answer 3; branch fix/self-serve-restart-10nov).
 
    Dean: a venue that cancelled, and a paused prospect, can come back within its 90 days in one tap from the Account
@@ -144,7 +147,7 @@ async function prospect(o) {
 }
 function bne(y, mo, d, h, mi) { return Date.UTC(y, mo - 1, d, h - 10, mi || 0); }   // a Brisbane wall-clock time as epoch ms
 function day(ms) { return vpaBneDay(ms); }
-var REM = function () { return sent.filter(function (m) { return /free month|How is venueplay going/.test(m.subject || ''); }); };
+var REM = function () { return sent.filter(function (m) { return /first month|How is venueplay going/.test(m.subject || ''); }); };
 async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t <= toMs; t += (stepMs || 3600000)) { var before = sent.length; await vpaProspectReminderSweep(ENV, t); for (var i = before; i < sent.length; i++) out.push({ at: t, msg: sent[i] }); } return out; }
 
 
