@@ -728,11 +728,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
        3. Only a card that still cannot fit at WIDEN_MAX goes under 15px, the whole card evenly, down to FIT_FLOOR.
      Titles are also kept clear of the tick's corner (TICK_IN, TICK_SZ, as #vCard .cc.daub::after), marked or not,
      so a tap never moves a title. The text-size buttons in the menu raise the floor and the cap together (cz). */
-  /* ALL FIVE COLUMNS ON ONE SCREEN, NO SIDEWAYS SWIPE (Dean, 12 Nov 2026, INBOX 291 / 288.8, after playing it live: "must fit
-     on one screen (all the columns), no swipe"). This supersedes step 2 above (the wider card) and so the 10 Nov "never under
-     15px": the card is never wider than the screen (WIDEN_MAX 1), and a card whose longest word cannot sit at 15px goes down
-     evenly, the whole card one size (step 3), as Dean's 3 Nov rule had it ("long song titles just drop in font size"). */
-  var FIT_MAX=20, FIT_MIN=15, FIT_FLOOR=11, FIT_LH=1.15, WIDEN_MAX=1, WIDEN_STEP=0.1, TICK_IN=3, TICK_SZ=14, _fitPending=false, _aw=1;
+  var FIT_MAX=20, FIT_MIN=15, FIT_FLOOR=11, FIT_LH=1.15, WIDEN_MAX=2.2, WIDEN_STEP=0.1, TICK_IN=3, TICK_SZ=14, _fitPending=false, _aw=1;
   function clearOfTick(el, sp){
     var tn=sp.firstChild; if(!tn || tn.nodeType!==3) return true;
     var cb=el.getBoundingClientRect(), x0=cb.right-el.clientLeft-TICK_IN-TICK_SZ-1, y1=cb.top+el.clientTop+TICK_IN+TICK_SZ+1;

@@ -4,8 +4,7 @@
      1. no hyphen, ever: no soft-hyphen code left, the tile says hyphens:none, the card is built from plain titles
      2. the square's title: a trailing bracketed part is dropped on the phone square only ("(Hot Summer Night)",
         "[Radio Edit]"); a title that starts with brackets keeps them; the full title stays for a screen reader
-     3. the fitter: one size for every title, 15px where it fits; never wider than the screen (12 Nov 2026: no swipe),
-        so a long word brings the whole card down evenly
+     3. the fitter: one size for every title, 15px floor, wider card (swipe) before anything under 15px
      4. the note has its own slot of fixed height, so the card never shrinks for it; every note is short
      5. FREE has its own look (gold, no tick), never the marked square's
      6. after End game ("idle") a won or lost phone leaves its end screen for the lobby; a new game cancels the wait
@@ -71,11 +70,9 @@ show('FIT_MIN is 15 and FIT_MAX 20', /var FIT_MAX=20, FIT_MIN=15,/.test(PLAY));
   show('short words: no widening, one size for every title and Free', a.aw === 1 && a.sizes.every(function (s) { return s === a.sizes[0]; }) && a.free === a.sizes[0], JSON.stringify(a));
   show('...and it is the biggest that fits, at or under 20px', parseFloat(a.sizes[0]) <= 20 && parseFloat(a.sizes[0]) >= 15, a.sizes[0]);
   var b = mk([3, 7.5, 4], 62);   // "Thunderstruck": cannot make 15px on the screen's width
-  /* ALL FIVE COLUMNS ON ONE SCREEN (Dean, 12 Nov 2026, INBOX 291 / 288.8): the card is never made wider than the screen
-     any more (no swipe); a long word brings the whole card down evenly instead. */
-  show('one long word: the card stays the screen\'s width (no swipe) and the whole card drops EVENLY under 15px', b.aw === 1 && b.sizes.every(function (s) { return s === b.sizes[0]; }) && parseFloat(b.sizes[0]) < 15, JSON.stringify(b));
-  var c = mk([3, 20, 4], 62);    // a word longer still
-  show('a longer word: still the screen\'s width, the whole card smaller, EVENLY (never per title)', c.aw === 1 && c.sizes.every(function (s) { return s === c.sizes[0]; }) && parseFloat(c.sizes[0]) < 15, JSON.stringify(c));
+  show('one long word: the card is made wider (swipe) and every title is 15px', b.aw > 1 && b.aw <= 2.2 && b.sizes.every(function (s) { return s === '15px'; }), JSON.stringify(b));
+  var c = mk([3, 20, 4], 62);    // a word too long even at the widest card
+  show('a word too long even at the widest: the whole card smaller, EVENLY (never per title)', c.aw === 2.2 && c.sizes.every(function (s) { return s === c.sizes[0]; }) && parseFloat(c.sizes[0]) < 15, JSON.stringify(c));
 })();
 show('the card\'s width is the screen times --aw (the zoom buttons no longer stretch it by --cz)', /#vCard \.card5\{[^}]*width:calc\(100% \* var\(--aw,1\)\)/.test(flat) && /\$\("cardGrid"\)\.style\.setProperty\("--cz", 1\);/.test(PLAY));
 show('a wide card says so in the slot under it: "Swipe the card sideways to see every song."', PLAY.indexOf('"Swipe the card sideways to see every song."') > 0);
