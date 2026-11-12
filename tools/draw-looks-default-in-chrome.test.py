@@ -99,6 +99,9 @@ def raffle(label, prefs, want, want_chip):
     ok('%s: the draw time chips show' % label, js(host, '!document.getElementById("timeField").classList.contains("hidden")') is True)
     js(host, 'document.querySelector("#prizePresets button").click(); true')
     R.until(host, '/Meat tray/.test(document.getElementById("prizeList").textContent)', 10)
+    # 12 Nov 2026 (INBOX 286, fix/tv-takeover-12nov): opening a console no longer takes the TV; the host puts the draw
+    # on it with the TV line's button, as tools/multi-raffle-in-chrome.test.py does
+    R.until(host, '!!document.querySelector("#tvLine .tvline-btn")', 30); js(host, 'document.querySelector("#tvLine .tvline-btn").click(); true')
     ok('%s: the TV has the raffle screen up before the draw' % label, tv_on(tv, 'raffle\\/screen'), js(tv, 'document.getElementById("gameFrame").src'))
     draw(host)
     ok('%s: the TV draws the %s' % (label, {'ticket': 'ticket roll', 'race': 'race plate'}[want]),
@@ -126,6 +129,9 @@ def members(label, prefs):
        js(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     ok('%s: the usual look is Flip board, and there is no "As now"' % label, R.until(host, CHIPS + '("#styleChips")==="*Flip board|Race plate"', 15) is True, chips(host, '#styleChips'))
     ok('%s: this draw is on "Usual", and no one-draw "As now"' % label, chips(host, '#onceChips') == '*Usual|Flip board|Race plate', chips(host, '#onceChips'))
+    # 12 Nov 2026 (INBOX 286, fix/tv-takeover-12nov): opening a console no longer takes the TV; the host puts the draw
+    # on it with the TV line's button, as tools/multi-raffle-in-chrome.test.py does
+    R.until(host, '!!document.querySelector("#tvLine .tvline-btn")', 30); js(host, 'document.querySelector("#tvLine .tvline-btn").click(); true')
     ok('%s: the TV has the members screen up before the draw' % label, tv_on(tv, 'members\\/screen'), js(tv, 'document.getElementById("gameFrame").src'))
     dbg = js(host, 'JSON.stringify(typeof G!=="undefined" ? {m:G.members.length, s:(G.members[0]||{}).status, mr:(G.members[0]||{}).roster_id, d:G.draws.map(function(x){return x.roster_id;})} : "noG")')
     dbg = str(dbg) + ' db:' + json.dumps({t: len(R.db.get(t) or []) for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members')}) + ' ' + json.dumps((R.db.get('vp_member_rosters') or [None])[0])
