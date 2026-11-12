@@ -139,7 +139,7 @@ pass("each answer keeps that question's own time, from when it was shown", /took
 pass("tooks start empty for every round", /results = \[\]; total = 0; ended = null; tooks = \[\];/.test(PAGE));
 pass("the ring is the trivia phone's (one copy: /app/vp-qring.css and vp-qring.js, also loaded by the trivia phone)",
   /<link rel="stylesheet" href="\/app\/vp-qring\.css">/.test(PAGE) && /<script src="\/app\/vp-qring\.js"><\/script>/.test(PAGE) && /id="pqRing"/.test(PAGE) &&
-  PAGE.indexOf(".pq-ring{") < 0 && /window\.VPQRing\.paint\(\$\('pqRing'\), \$\('pqCdNum'\)/.test(PAGE));
+  PAGE.indexOf(".pq-ring{flex") < 0 && PAGE.indexOf(".pq-ring .rfg{") < 0 && /window\.VPQRing\.paint\(\$\('pqRing'\), \$\('pqCdNum'\)/.test(PAGE));
 pass("when the ring hits 0: Time's up, then the answer is sent as -1 (the Worker's time's up)",
   /if \(left <= 0\) \{ clearInterval\(ticker\); timeUp\(\); \}/.test(PAGE) && /window\.VPQRing\.timesUp\(\);\n    setTimeout\(function \(\) \{ answer\(-1\); \}, 900\);/.test(PAGE));
 pass("Time's up reads as such, not 'Not quite'", L.verdict(null, 0).text === "Time's up" && L.verdict(false, 0).text === "Not quite");
