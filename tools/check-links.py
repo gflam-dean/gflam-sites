@@ -79,6 +79,22 @@ def links_in(path):
     return out
 
 
+def rewrites(folder):
+    """The addresses _redirects SERVES from another page (a 200 rewrite, the address stays): /coaster and
+       /gflam are the offer page, and a link to one is a link to that page (5 Nov 2026). A 301 or 302 is not
+       counted: a link that only works by bouncing should point where it lands."""
+    out = {}
+    try:
+        lines = io.open(os.path.join(folder, '_redirects'), encoding='utf-8').read().splitlines()
+    except Exception:
+        return out
+    for l in lines:
+        w = l.split()
+        if len(w) >= 3 and not w[0].startswith('#') and w[2] == '200' and '*' not in w[0] and ':' not in w[0]:
+            out[w[0].rstrip('/') or '/'] = w[1]
+    return out
+
+
 def check(which='both', external=False):
     bad, warn, seen = [], [], collections.Counter()
     for site in (['venueplay', 'partyplay'] if which == 'both' else [which]):
@@ -95,6 +111,7 @@ def check(which='both', external=False):
                 if f.endswith('.html'):
                     pages.append(os.path.relpath(os.path.join(d, f), folder))
         pages.sort()
+        served = rewrites(folder)
         todo = queue.Queue()
         for page in pages:
             p = os.path.join(folder, page)
@@ -125,6 +142,8 @@ def check(which='both', external=False):
                 if not rel.startswith('/'):
                     d = os.path.dirname(page)
                     rel = '/' + os.path.normpath(os.path.join(d, rel)) if d else '/' + rel
+                if (rel.rstrip('/') or '/') in served:
+                    rel = served[rel.rstrip('/') or '/']
                 target = rel.lstrip('/')
                 cands = [target, target + '.html', os.path.join(target, 'index.html')]
                 if target in ('', '/'):

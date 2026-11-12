@@ -268,7 +268,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 67,
+  "checks": 115,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {
@@ -1695,6 +1695,18 @@
   "checks": 93,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/coaster-hq.test.js": {
+  "checks": 90,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/coaster-page.test.js": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/coaster-round.test.js": {
+  "checks": 138,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/draw-fairness.test.js": {
   "checks": 13,
   "counted_by": "lines"
@@ -1796,7 +1808,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/signup-source.test.js": {
-  "checks": 41,
+  "checks": 48,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {
@@ -1844,7 +1856,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/trivia-score.test.js": {
-  "checks": 16,
+  "checks": 18,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/trivia-set-delete.test.js": {

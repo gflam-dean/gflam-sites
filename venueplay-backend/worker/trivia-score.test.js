@@ -29,10 +29,12 @@ for (var i = 0; i < CANDIDATES.length; i++) {
 }
 if (src === null) { print("FAIL could not find venueplay-game.js"); throw new Error("no source"); }
 
-/* The real scoring block, taken from the Worker verbatim. */
-var m = /let pts = 0;[\s\S]*?\n    \}/.exec(src);
-ok("the scoring block is still in the Worker", !!m);
-if (!m) throw new Error("scoring block not found");
+/* The real scoring rule, taken from the Worker verbatim. Since 5 Nov 2026 it is ONE function,
+   triviaAnswerPoints, called by the reveal and by the coaster round (/live-here-now), so both pay
+   by the same rule; this lifts that function and runs it. */
+var m = /\nfunction triviaAnswerPoints\([\s\S]*?\n\}\n/.exec(src);
+ok("the scoring function is still in the Worker", !!m);
+if (!m) throw new Error("scoring function not found");
 var BLOCK = m[0];
 // Since 28 Sep 2026 the sum is multiplied for a double points question (mult is 1 otherwise;
 // tools/test-double-points.js runs the doubled case).
@@ -41,24 +43,18 @@ ok("the bonus is still half of base at most", /base \* 0\.5/.test(BLOCK));
 ok("time left is clamped to the question length",
    /Math\.max\(0, Math\.min\(secs,/.test(BLOCK),
    "without the clamp an early or late clock gives negative or runaway points");
+/* The reveal must CALL it (one copy), and nothing else in the Worker may restate the rule. */
+var reveal = src.indexOf("const flipped = await sbPatchReturning(env, 'vp_trivia_games',");
+var revealEnd = src.indexOf("if (scored.length) {", reveal);
+ok("the trivia reveal scores each answer with triviaAnswerPoints",
+   reveal > 0 && revealEnd > reveal && /const pts = triviaAnswerPoints\(correct, base, secs, speedBonus, mult, endsAtMs,/.test(src.slice(reveal, revealEnd)));
+ok("the half-of-base bonus is written once in the whole Worker (one copy of the rule)",
+   src.split("base * 0.5").length === 2, (src.split("base * 0.5").length - 1) + " copies");
 
-/* Run it. answered_at and question_ends_at are ISO strings in the Worker. */
+var triviaAnswerPoints = new Function(BLOCK + "\nreturn triviaAnswerPoints;")();
+/* Run it. answered_at and question_ends_at are milliseconds here. */
 function score(opts) {
-  var base = opts.base, secs = opts.secs, speedBonus = opts.speedBonus !== false, mult = 1;
-  var correct = opts.correct;
-  var endsAtMs = opts.endsAt;
-  var a = { answered_at: opts.answeredAt };
-  var Date_parse = Date.parse;
-  var pts;
-  // `let pts = 0` inside an eval is block-scoped and never reaches the variable
-  // out here, which is why the first run of this returned undefined for every
-  // case. Bind it to the outer one instead. The arithmetic below is untouched
-  // Worker source; only the declaration is rewritten.
-  var runnable = BLOCK
-        .replace(/^\s*let pts = 0;/, "pts = 0;")
-        .replace(/Date\.parse\(a\.answered_at\)/g, "a.answered_at");
-  eval(runnable);
-  return pts;
+  return triviaAnswerPoints(opts.correct, opts.base, opts.secs, opts.speedBonus !== false, 1, opts.endsAt, opts.answeredAt);
 }
 var END = 100000;                       // question closes at t=100s
 function at(secondsBeforeEnd){ return END - secondsBeforeEnd * 1000; }

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Nov 2026, 20:39 · 209a900d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 02:00 · d1561c1c';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -388,6 +388,13 @@ export default {
       if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
       if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json, roomHandoverAuth);   // signed, or only an ask (F2)
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
+      /* The coaster round, /live-here-now (migration 153): public, rate limited, first names only. */
+      if (method === 'GET'  && path === '/coaster/venues')     return await handleCoasterVenues(request, env, json);
+      if (method === 'POST' && path === '/coaster/lead')       return await handleCoasterLead(request, env, json);
+      if (method === 'POST' && path === '/coaster/start')      return await handleCoasterStart(request, env, json);
+      if (method === 'POST' && path === '/coaster/answer')     return await handleCoasterAnswer(request, env, json);
+      if (method === 'GET'  && path === '/coaster/board')      return await handleCoasterBoardRoute(request, env, json);
+      if (method === 'POST' && path === '/coaster/optin')      return await handleCoasterOptin(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
@@ -535,6 +542,10 @@ export default {
     }));
     /* THE 90-DAY DELETION PROMISE, KEPT. Its own waitUntil, like the two above, so a failure
        anywhere else cannot be the reason a venue's old customers are still on file. */
+    /* The coaster round's first names go after 35 days (migration 153). Its own waitUntil, like the rest. */
+    ctx.waitUntil(sweepCoasterPlays(env).then(function (r) {
+      if (r.error) console.log('[coaster] sweep: ' + r.error);
+    }));
     ctx.waitUntil(sweepRetention(env).then(function (r) {
       if (r.error) { console.log('[retention] FAILED: ' + r.error); return; }
       if (r.venues) console.log('[retention] cleared player details for ' + r.venues + ' closed venue(s), '
@@ -2644,6 +2655,515 @@ async function handleVenueLike(request, env, json) {
 let screenPollRpcMissing = false;   // per isolate: once PostgREST says the function is not there, stop asking
 let screenShownRpcMissing = false;  // the same, for vp_screen_poll_shown (migration 135)
 let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migration 139)
+
+/* =====================================================================
+ * THE COASTER ROUND (/live-here-now v2, Dean 4 Nov 2026; migration 153)
+ * ---------------------------------------------------------------------
+ * All 10,000 drink coasters carry ONE QR, to venueplay.com.au/live-here-now. The page asks the
+ * player's FIRST NAME, then "Where are you playing?" (three letters of the pub's name), then five
+ * questions scored like a real venueplay trivia night ("Correct! +130"), then their place on that
+ * pub's board: "Tonight" and "This week", first names only. "Challenge your mates" makes a link
+ * (?c=CODE) that puts friends on the same five questions and the same board.
+ *
+ * WHAT THE SEARCH LISTS (Dean 11 Nov 2026, INBOX 229 and 232, over item 10): OUR WHOLE VENUE LIST,
+ * type-ahead, and the player PICKS one; typed free text never makes a board ("typed free text is junk").
+ *   - venueplay venues (vp_venues, active: customers and prospects, every one has a venueplay login).
+ *     These alone are marked "on venueplay", and "game on now" while a game is open there.
+ *   - our licensed venues list (vp_licensed_venues, migration 171: the send list and the venue master,
+ *     where the SportsPick sweep lands), ONLY names with HOTEL, PUB, TAVERN, RSL or CLUB in them (Dean's
+ *     target order). Read per search (never held whole), shown with suburb and state, never a postcode,
+ *     and plainly marked "not on venueplay yet": never as if they were on venueplay.
+ *   - COASTER VENUES Dean added in HQ (vp_coaster_venues kind 'coaster'), also "not on venueplay yet".
+ * "Can't find your venue? Add it" (POST /coaster/lead: name, suburb, state, optional website) goes to
+ * HQ's review list as a POSSIBLE NEW LEAD, never into cold email; lead_guard's name rules are noted on
+ * it for HQ (coasterLeadGuard). An added venue has no board until HQ adds it to the list.
+ * OPT-INS: at a venueplay venue that HQ has switched on for coaster sign-ups (vp_coaster_optin_venues,
+ * OFF for every venue until then), the end of the round offers the venue's own sign-up: the same
+ * fields the venue collects (vp_venue_settings), the same one tick (VPConsent, consent_version) and
+ * the same gate (gatedCapture) as the phones (POST /coaster/optin).
+ * The matching is the TV app's own (venueSearchQuery / venueSearchScore above): one copy.
+ *
+ * WHO SCORES: this Worker, never the phone. /coaster/start keeps the round (vp_coaster_plays) and
+ * hands the phone a secret; each /coaster/answer is timed HERE from when the question went up and
+ * paid by triviaAnswerPoints, the trivia night's own rule (base 100, up to +50 for speed over a
+ * 20 second window; there is no countdown on the coaster, a slow answer still scores 100). Each
+ * answer is a compare-and-set on the answers so far, so a replayed or doubled tap scores once.
+ *
+ * WHAT IS KEPT ABOUT A PERSON: the first word of the name they typed, through cleanName (14
+ * characters at most), and nothing else: no surname, no contact detail, no phone id. Rounds are
+ * deleted after COASTER_KEEP_DAYS by the nightly sweep. The tables are service role only; these
+ * routes are the only door, each rate limited per network.
+ *
+ * TONIGHT AND THIS WEEK: the place's own night, 5am to 5am on its clock (a coaster venue's clock
+ * comes from its postcode; a typed-in pub is Brisbane's), and that night's Monday. So the boards
+ * empty by themselves and somebody new can always place.
+ *
+ * BEFORE MIGRATION 153 every route here answers 503 { off: true } and the page plays the old way
+ * (no name, no board).
+ * ===================================================================== */
+const COASTER_BANK_URL = 'https://venueplay.com.au/data/live-here-now.json';   // the page's own question file
+const COASTER_BASE = 100;            // points for a right answer, as a trivia night's default
+const COASTER_SECS = 20;             // the speed bonus window, as a trivia night's default question
+const COASTER_REVEAL_MS = 1300;      // the page shows right or wrong this long before the next question
+const COASTER_ROUND = 5;
+const COASTER_KEEP_DAYS = 35;        // rounds are deleted after this; "This week" needs 7
+const COASTER_BOARD_ROWS = 10;
+const COASTER_FIND_MAX_PER_IP = 30;  // searches a minute per network (a pub's wifi is one network)
+const COASTER_START_MAX_PER_IP = 40; // rounds per 10 minutes per network
+const COASTER_ANSWER_MAX_PER_IP = 250;
+const COASTER_LEAD_MAX_PER_IP = 6;   // typed-in pubs per 10 minutes per network
+const COASTER_BOARD_MAX_PER_IP = 120;
+const COASTER_PLACE_RE = /^(?:([vc]):([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})|(l):([1-9][0-9]{0,11}))$/;
+const COASTER_FIND_LIMIT = 8;        // picks shown at once; "keep typing" past that, never a count
+const COASTER_LISTED_READ = 60;      // rows read from our licensed list per search, before scoring
+const COASTER_OPTIN_MAX_PER_IP = 10; // sign-ups per 10 minutes per network
+const COASTER_LIVE_HOURS = 10;       // a game opened longer ago than this is not "game on now"
+/* Dean's target words: only listed venues whose NAME has one of these show from our licensed list. */
+const COASTER_LISTED_WORDS = /(?:^|[^a-z])(hotel|hotels|pub|pubs|tavern|taverns|rsl|club|clubs)(?![a-z])/i;
+const COASTER_STATE_TZ = { NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne', TAS: 'Australia/Hobart',
+  QLD: 'Australia/Brisbane', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
+const COASTER_STATES = ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'];
+let _coasterBank = null, _coasterBankAt = 0;
+let _coasterRows = null, _coasterRowsAt = 0;
+
+/* Before migration 153, or the database failing: 503 { off: true }, and the page plays the old way
+   (no name, no board) rather than not at all. dbError keeps the detail in the log, never in the answer. */
+function coasterOff(json) { return json({ off: true, error: 'The coaster board is not switched on yet.' }, 503); }
+function coasterMissingTable(e) { return !!e && e.status === 502; }
+/* A typed pub name with a word the TV's cleanName refuses, anywhere in it. */
+function coasterRude(name) {
+  for (let k = 0; k < name.length; k += 10) {
+    const part = name.slice(k, k + 20).trim();
+    if (part && cleanName(part) === 'Player' && !/^player/i.test(part)) return true;
+  }
+  return false;
+}
+
+async function coasterLimit(request, env, what, max, secs) {
+  const ipHash = await abuseIpHash(request, env);
+  if (!ipHash) return true;
+  const rl = await rateLimit(env, 'coaster:' + what + ':' + ipHash, max, secs);
+  return rl.ok;
+}
+
+/* The same words HQ keeps a coaster venue's name_key in (vpaCoasterNameKey in the billing Worker). */
+function coasterNameKey(s) {
+  return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/['\u2018\u2019`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+}
+
+/* A first name and nothing more: the first word of what was typed, through the TV's own cleanName. */
+function coasterFirstName(raw) {
+  const n = cleanName(String(raw || '').replace(/[\x00-\x1f]+/g, ' ').trim());
+  if (!n) return null;
+  const first = n.split(/\s+/)[0].replace(/[^A-Za-z\u00C0-\u024F'\-]/g, '').slice(0, 14);
+  return /[A-Za-z\u00C0-\u024F]/.test(first) ? first.charAt(0).toUpperCase() + first.slice(1) : null;
+}
+
+/* The place's night (5am to 5am where it is) and that night's Monday, as yyyy-mm-dd. */
+function coasterNight(tz, ms) {
+  const p = praffleParts(praffleTz(tz), (ms == null ? Date.now() : ms) - 5 * 3600000);
+  const d = new Date(Date.UTC(p.y, p.m - 1, p.d));
+  const iso = (x) => x.toISOString().slice(0, 10);
+  const mon = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86400000);
+  return { night: iso(d), week: iso(mon) };
+}
+
+/* The question file the page plays from: id -> the right answer's index. */
+async function coasterBank() {
+  const now = Date.now();
+  if (_coasterBank && now - _coasterBankAt < 3600000) return _coasterBank;
+  const res = await fetch(COASTER_BANK_URL, { cf: { cacheTtl: 600 } });
+  if (!res.ok) throw httpError(503, 'The questions did not load. Try again.');
+  const d = await res.json();
+  const map = new Map();
+  for (const q of (d && d.q) || []) if (Array.isArray(q) && typeof q[0] === 'string' && q[3] >= 0 && q[3] <= 3) map.set(q[0], q[3]);
+  if (map.size < COASTER_ROUND) throw httpError(503, 'The questions did not load. Try again.');
+  _coasterBank = map; _coasterBankAt = now;
+  return map;
+}
+
+/* Who a board belongs to: { place, name, logo_url, tz } or null. A coaster venue Dean has since
+   switched to a normal prospect answers as that venue (its board moved with it). */
+async function coasterPlace(env, place) {
+  const m = COASTER_PLACE_RE.exec(String(place || '').toLowerCase());
+  if (!m) return null;
+  if (m[3] === 'l') {
+    /* A venue on our licensed list: its own board, under its list id, only for the names the search shows. */
+    const rows = await sbGet(env, 'vp_licensed_venues', 'id=eq.' + enc(m[4]) + '&select=id,name,suburb,au_state&limit=1');
+    const l = rows && rows[0];
+    if (!l || !COASTER_LISTED_WORDS.test(l.name || '')) return null;
+    return { place: 'l:' + l.id, name: l.name, suburb: l.suburb || '', logo_url: '', tz: COASTER_STATE_TZ[l.au_state] || 'Australia/Brisbane', listed: true };
+  }
+  let kind = m[1], id = m[2];
+  if (kind === 'c') {
+    const rows = await sbGet(env, 'vp_coaster_venues', 'id=eq.' + enc(id) + '&select=id,kind,name,suburb,timezone,logo_url,venue_id&limit=1');
+    const c = rows && rows[0];
+    if (!c) return null;
+    /* A venue a player added is a possible lead waiting for HQ, never a board (INBOX 232: no free text). */
+    if (!c.venue_id && c.kind !== 'coaster') return null;
+    if (!c.venue_id) return { place: 'c:' + c.id, name: c.name, suburb: c.suburb || '', logo_url: c.logo_url || '', tz: c.timezone || 'Australia/Brisbane' };
+    kind = 'v'; id = c.venue_id;
+  }
+  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(id) + '&select=id,name,status,timezone&limit=1');
+  if (!v || !v[0] || v[0].status !== 'active') return null;
+  let logo = '';
+  try {
+    const s = await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(id) + '&select=logo_url&limit=1');
+    logo = (s && s[0] && s[0].logo_url) || '';
+  } catch (e) { logo = ''; }   // a logo is a nicety; the name stands in
+  return { place: 'v:' + v[0].id, name: v[0].name, suburb: '', logo_url: logo, tz: v[0].timezone || 'Australia/Brisbane', venue_id: v[0].id, on: true };
+}
+
+/* The search, over what is in venueplay only. Rows: venueplay venues and coaster venues, kept 60 s. */
+async function coasterRows(env) {
+  const now = Date.now();
+  if (_coasterRows && now - _coasterRowsAt < 60000) return _coasterRows;
+  const venues = (await sbGetAll(env, 'vp_venues', 'status=eq.active&select=id,name,postcode,au_state,status&order=id.asc')) || [];
+  let coaster = [];
+  try {
+    coaster = (await sbGetAll(env, 'vp_coaster_venues', 'kind=eq.coaster&venue_id=is.null&select=id,name,suburb,postcode,au_state&order=id.asc')) || [];
+  } catch (e) { coaster = []; }   // before migration 153: venueplay venues only
+  const rows = [];
+  for (const v of venues) if (v && v.id && v.status === 'active') rows.push({ place: 'v:' + v.id, name: v.name || '', suburb: '', postcode: v.postcode || '', state: v.au_state || '', on: true, vid: v.id });
+  for (const c of coaster) if (c && c.id) rows.push({ place: 'c:' + c.id, name: c.name || '', suburb: c.suburb || '', postcode: c.postcode || '', state: c.au_state || '', on: false });
+  _coasterRows = rows; _coasterRowsAt = now;
+  return rows;
+}
+/* One search over the picks: venueplay venues first at the same closeness, then the rest by name.
+   Every match says whether it is ON venueplay; nothing else is ever dressed up as if it were. */
+function coasterSearch(rows, typed) {
+  const q = venueSearchQuery(typed);
+  if (q.flat.length < FIND_MIN_LETTERS) return { matches: [], why: 'Type at least three letters of the name.' };
+  const hits = [], seen = new Set();
+  for (const r of rows || []) {
+    const sc = venueSearchScore(q, r.name);
+    if (sc < 0) continue;
+    const twin = coasterNameKey(r.name) + '|' + (r.postcode || r.suburb || '').toLowerCase() + '|' + (r.state || '');
+    if (seen.has(twin)) continue;           // the same pub on venueplay and on our list: once, as on venueplay
+    seen.add(twin);
+    hits.push({ sc: sc, r: r });
+  }
+  hits.sort((a, b) => (a.sc - b.sc) || ((b.r.on ? 1 : 0) - (a.r.on ? 1 : 0)) || String(a.r.name).localeCompare(String(b.r.name)) ||
+    String(a.r.suburb || a.r.postcode).localeCompare(String(b.r.suburb || b.r.postcode)));
+  const out = { matches: hits.slice(0, COASTER_FIND_LIMIT).map((h) => {
+    const m = { place: h.r.place, name: h.r.name, suburb: h.r.suburb, postcode: h.r.listed ? '' : h.r.postcode, state: h.r.state, exact: h.sc === 0, on: !!h.r.on };
+    if (h.r.live) m.live = true;
+    return m;
+  }) };
+  if (hits.length > COASTER_FIND_LIMIT) { out.more = true; }   // never a count
+  return out;
+}
+
+/* Our licensed venues list (migration 171), read for THIS search only: the typed text's longest word
+   narrows the read, Dean's target words keep only pubs, taverns, hotels, RSLs and clubs. A missing or
+   empty list is just no rows: the search still has venueplay and coaster venues. */
+async function coasterListed(env, typed) {
+  const words = venueSearchQuery(typed).words.filter((w) => /^[a-z0-9]+$/.test(w));
+  const longest = words.slice().sort((a, b) => b.length - a.length)[0] || '';
+  if (longest.length < FIND_MIN_LETTERS) return [];
+  let rows = [];
+  try {
+    rows = (await sbGet(env, 'vp_licensed_venues', 'name=ilike.' + enc('*' + longest + '*') +
+      '&select=id,name,suburb,postcode,au_state&order=name.asc,id.asc&limit=' + COASTER_LISTED_READ)) || [];
+  } catch (e) { rows = []; }
+  return rows.filter((l) => l && l.id && COASTER_LISTED_WORDS.test(l.name || ''))
+    .map((l) => ({ place: 'l:' + l.id, name: l.name || '', suburb: l.suburb || '', postcode: l.postcode || '', state: l.au_state || '', on: false, listed: true }));
+}
+
+/* Which of these venueplay venues have a game open now (lobby, running or paused, opened in the last
+   COASTER_LIVE_HOURS): "game on now" on their pick. A failed read marks none, never all. */
+async function coasterLiveSet(env, venueIds) {
+  const ids = (venueIds || []).filter((x) => UUID_RE.test(String(x)));
+  if (!ids.length) return new Set();
+  try {
+    const since = new Date(Date.now() - COASTER_LIVE_HOURS * 3600000).toISOString();
+    const rows = await sbGet(env, 'vp_sessions', 'venue_id=in.(' + ids.map(enc).join(',') + ')&status=in.(lobby,running,paused)&created_at=gte.' +
+      enc(since) + '&select=venue_id&limit=50');
+    return new Set((rows || []).map((r) => r.venue_id));
+  } catch (e) { return new Set(); }
+}
+
+/* GET /coaster/venues?q=<typed> */
+async function handleCoasterVenues(request, env, json) {
+  const typed = String(new URL(request.url).searchParams.get('q') || '').slice(0, 80);
+  if (venueSearchQuery(typed).flat.length < FIND_MIN_LETTERS) return json(coasterSearch([], typed));
+  if (!(await coasterLimit(request, env, 'find', COASTER_FIND_MAX_PER_IP, 60))) {
+    return json({ matches: [], why: 'Too many searches from this network. Wait a minute and try again.' }, 429);
+  }
+  let rows;
+  try { rows = await coasterRows(env); } catch (e) { return json({ matches: [] }); }   // a failed search is not a failed page
+  const listed = await coasterListed(env, typed);
+  const out = coasterSearch(rows.concat(listed), typed);
+  const live = await coasterLiveSet(env, out.matches.filter((m) => m.on).map((m) => m.place.slice(2)));
+  out.matches.forEach((m) => { if (m.on && live.has(m.place.slice(2))) m.live = true; });
+  return json(out);
+}
+
+/* lead_guard's name rules (~/venue-enrich/lead_guard.py name_refusal and fixture_refused, 10 Nov 2026), as a
+   NOTE for HQ on a venue a player added: a cafe or restaurant-only name, or a test venue's name. The row is
+   kept either way (HQ decides); nothing here ever reaches cold email, and any later load still runs the
+   real lead_guard. '' when the name is fine. */
+const COASTER_GUARD_STRONG = /(?:^|[^a-z])(hotels?|pubs?|taverns?|clubs?|inn|arms|rsl|rsm|bowlo|bowls|bowling|golf|leagues|brewery|brewing|brewhouse|taphouse|tap house|taproom|tap room|saloon|beer hall|beer cafe|nightclub)(?![a-z])/i;
+const COASTER_GUARD_FAKE = /(?:^|[^a-z])(coffee club|curry club|burger club|supper club|breakfast club|happy inn|golden inn|jade inn|dragon inn|lotus inn|china inn|peking inn|canton inn|bamboo inn)(?![a-z])/gi;
+const COASTER_GUARD_CAFE = /(?:^|[^a-z])(cafes?|caffe|caffee|coffee|espresso|expresso|coffee ?house|latteria|milk bar|juice bar|smoothie bar|snack bar|lunch bar|breakfast bar|brunch bar|tea ?house|bakery|patisserie|cakes|deli|delicatessen|provedore)(?![a-z])/i;
+const COASTER_GUARD_FOOD = /(?:^|[^a-z])(restaurants?|ristorante|pizzeria|pizza|trattoria|osteria|eatery|eateries|diner|takeaway|take away|sushi|noodles?|dumplings?|kebabs?|burgers?|fish and chips|fish & chips|thai|indian|chinese|vietnamese|cantina)(?![a-z])/i;
+const COASTER_GUARD_FOODBAR = /(?:^|[^a-z])(pasta|pizza|burger|noodle|sushi|dumpling|taco|kebab|salad|sandwich|milk|juice|smoothie|snack|lunch|breakfast|brunch|espresso|coffee|cafe) bar(?![a-z])/gi;
+const COASTER_GUARD_FIXTURE = /(?:^|[^a-z])(test\s+hotel|test\s+(?:alpha|bravo|charlie)(?:\s+hotel)?|sarah[’']?s\s+test\s+bar|logo\s+pub|photo\s+pub|down\s+pub|done\s+pub|mini\s+bar\s+test)(?![a-z])/i;
+function coasterLeadGuard(name) {
+  const n = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!n) return '';
+  if (COASTER_GUARD_FIXTURE.test(n)) return 'test venue name (lead_guard: fixture)';
+  const clean = n.replace(COASTER_GUARD_FAKE, ' ');
+  if (COASTER_GUARD_STRONG.test(clean)) return '';
+  const realBar = /(?:^|[^a-z])bars?(?![a-z])/i.test(clean.replace(COASTER_GUARD_FOODBAR, ' '));
+  if (COASTER_GUARD_CAFE.test(n)) return 'cafe name (lead_guard: cafes are not venueplay venues)';
+  if (COASTER_GUARD_FOOD.test(n) && !realBar) return 'restaurant-only name (lead_guard: not a venueplay venue)';
+  return '';
+}
+/* A website as typed, kept only when it looks like one: https:// added, no spaces, a dot in the host. */
+function coasterWebsite(raw) {
+  let w = String(raw || '').trim().slice(0, 200);
+  if (!w) return '';
+  if (!/^https?:\/\//i.test(w)) w = 'https://' + w;
+  const m = /^https?:\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)(?::\d+)?(\/[^\s]*)?$/i.exec(w);
+  return m ? w.replace(/^http:\/\//i, 'https://') : null;
+}
+
+/* POST /coaster/lead { name, suburb, state, website }: "Can't find your venue? Add it" (INBOX 232).
+   It goes to HQ's review list as a POSSIBLE NEW LEAD: never a board, never into cold email. The same
+   name and suburb added again counts one more ask on the same row. */
+async function handleCoasterLead(request, env, json) {
+  const b = await readJson(request);
+  const clean = (v, n) => String(v || '').replace(/[\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+  const name = clean(b.name, 60), suburb = clean(b.suburb, 60), state = clean(b.state, 3).toUpperCase();
+  const key = coasterNameKey(name);
+  if (key.replace(/ /g, '').length < 3) return json({ error: 'Type the venue\'s name.', field: 'name' }, 400);
+  if (coasterRude(name)) return json({ error: 'Type the venue\'s name.', field: 'name' }, 400);
+  if (coasterNameKey(suburb).replace(/ /g, '').length < 2 || coasterRude(suburb)) return json({ error: 'Type the suburb or town.', field: 'suburb' }, 400);
+  if (COASTER_STATES.indexOf(state) < 0) return json({ error: 'Pick the state.', field: 'state' }, 400);
+  const website = coasterWebsite(b.website);
+  if (website === null) return json({ error: 'That website does not look right. Leave it empty if you are not sure.', field: 'website' }, 400);
+  if (!(await coasterLimit(request, env, 'lead', COASTER_LEAD_MAX_PER_IP, 600))) {
+    return json({ error: 'Too many from this network. Wait a few minutes and try again.' }, 429);
+  }
+  try {
+    const q = 'kind=eq.lead&venue_id=is.null&name_key=eq.' + enc(key) + '&suburb=ilike.' + enc(suburb.replace(/[*%_\\]/g, '')) +
+      '&au_state=eq.' + state + '&select=id,asks,website&limit=1';   // state is one of COASTER_STATES
+    let row = (await sbGet(env, 'vp_coaster_venues', q))[0];
+    if (row) {
+      const patch = { asks: Math.min(9999, (row.asks || 1) + 1) };
+      if (website && !row.website) patch.website = website;
+      await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), patch);
+      return json({ ok: true, added: true });
+    }
+    try {
+      await sbInsert(env, 'vp_coaster_venues', { kind: 'lead', name: name, name_key: key, suburb: suburb, au_state: state, website: website || null,
+        timezone: COASTER_STATE_TZ[state], guard_note: coasterLeadGuard(name) || null, created_label: 'coaster player' }, false);
+    } catch (e) {
+      if (!(e && e.status === 409)) throw e;   // a mate added it at the same moment: one row
+    }
+    return json({ ok: true, added: true });
+  } catch (e) {
+    if (coasterMissingTable(e)) return coasterOff(json);
+    throw e;
+  }
+}
+
+/* POST /coaster/start { name, place, qids } or { name, code } (a mate's "Challenge your mates" link). */
+async function handleCoasterStart(request, env, json) {
+  const b = await readJson(request);
+  const first = coasterFirstName(b.name);
+  if (!first) return json({ error: 'Type your first name.' }, 400);
+  if (!(await coasterLimit(request, env, 'start', COASTER_START_MAX_PER_IP, 600))) {
+    return json({ error: 'Too many rounds from this network. Wait a few minutes and try again.' }, 429);
+  }
+  try {
+    let board = String(b.place || '').toLowerCase(), qids = b.qids, fromCode = null;
+    const code = String(b.code || '').toUpperCase();
+    if (code) {
+      if (!/^[A-Z0-9]{6}$/.test(code)) return json({ error: 'That challenge link is not right.' }, 400);
+      const g = (await sbGet(env, 'vp_coaster_plays', 'code=eq.' + enc(code) + '&select=board,qids&limit=1'))[0];
+      if (!g) return json({ error: 'That challenge has finished. Play a fresh round.', gone: true }, 404);
+      board = g.board; qids = g.qids; fromCode = code;
+    }
+    const bank = await coasterBank();
+    if (!Array.isArray(qids) || qids.length !== COASTER_ROUND) return json({ error: 'Pick five questions.' }, 400);
+    qids = qids.map((x) => String(x));
+    const distinct = qids.filter((x, i) => qids.indexOf(x) === i);
+    if (distinct.length !== COASTER_ROUND || !qids.every((x) => bank.has(x))) return json({ error: 'Those are not questions from the coaster.' }, 400);
+    const where = await coasterPlace(env, board);
+    if (!where) return json({ error: 'Pick where you are playing again.', place_gone: true }, 404);
+    const nowMs = Date.now();
+    const t = coasterNight(where.tz, nowMs);
+    const token = randomTokenHex(16);
+    const tokenHash = await sha256Hex(token);
+    let row = null;
+    for (let tries = 0; tries < 4 && !row; tries++) {
+      try {
+        row = (await sbInsert(env, 'vp_coaster_plays', {
+          board: where.place, first_name: first, qids: qids, code: genCode(6), from_code: fromCode,
+          token_hash: tokenHash, asked_at: new Date(nowMs).toISOString(), started_at: new Date(nowMs).toISOString(), night: t.night, week: t.week,
+        }, true))[0];
+      } catch (e) {
+        if (!(e && e.status === 409)) throw e;   // the 6-letter code clashed: draw another
+      }
+    }
+    if (!row) return json({ error: 'That did not start. Try again.' }, 500);
+    const out = { ok: true, play: row.id, token: token, code: row.code, place: where.place, name: first,
+                  venue: { name: where.name, suburb: where.suburb, logo_url: where.logo_url, on: !!where.on }, qids: qids, base: COASTER_BASE };
+    const ask = await coasterOptinAsk(env, where);
+    if (ask) out.optin = ask;
+    return json(out);
+  } catch (e) {
+    if (coasterMissingTable(e)) return coasterOff(json);
+    throw e;
+  }
+}
+
+/* A board: the top first names for the place's night or week, ties to the faster total time. */
+async function coasterBoard(env, board, period, key, playId) {
+  const col = period === 'week' ? 'week' : 'night';
+  const rows = await sbGet(env, 'vp_coaster_plays', 'board=eq.' + enc(board) + '&' + col + '=eq.' + enc(key) +
+    '&finished_at=not.is.null&select=id,first_name,points,correct,ms_total&order=points.desc,ms_total.asc,finished_at.asc&limit=200');
+  let rank = null;
+  for (let i = 0; i < rows.length; i++) if (playId && rows[i].id === playId) { rank = i + 1; break; }
+  return {
+    period: col === 'week' ? 'week' : 'tonight', rank: rank, players: rows.length, more: rows.length >= 200,
+    rows: rows.slice(0, COASTER_BOARD_ROWS).map((r, i) => ({ place: i + 1, name: r.first_name, points: r.points, correct: r.correct, you: !!playId && r.id === playId })),
+  };
+}
+
+/* POST /coaster/answer { play, token, i, a } */
+async function handleCoasterAnswer(request, env, json) {
+  const b = await readJson(request);
+  const playId = assertUuid(String(b.play || ''), 'round');
+  const i = Number(b.i), a = Number(b.a);
+  if (!Number.isInteger(i) || i < 0 || i >= COASTER_ROUND || !Number.isInteger(a) || a < 0 || a > 3) return json({ error: 'Which answer?' }, 400);
+  if (!(await coasterLimit(request, env, 'answer', COASTER_ANSWER_MAX_PER_IP, 600))) return json({ error: 'Too many answers from this network. Wait a few minutes.' }, 429);
+  try {
+    const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=*&limit=1'))[0];
+    if (!row || (await sha256Hex(String(b.token || ''))) !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
+    const done = Array.isArray(row.answers) ? row.answers : [];
+    if (row.finished_at || done.length !== i) return json({ error: 'That question is already answered.', answered: done.length }, 409);
+    const bank = await coasterBank();
+    const right = bank.get(row.qids[i]);
+    if (right === undefined) return json({ error: 'That question is not on the coaster any more.' }, 409);
+    const now = Date.now();
+    const shownAt = Date.parse(row.asked_at) + (i === 0 ? 0 : COASTER_REVEAL_MS);
+    const correct = a === right;
+    const pts = triviaAnswerPoints(correct, COASTER_BASE, COASTER_SECS, true, 1, shownAt + COASTER_SECS * 1000, now);
+    const took = Math.max(0, Math.min(120000, now - shownAt));
+    const last = i === COASTER_ROUND - 1;
+    const patch = {
+      answers: done.concat([a]), points: (row.points || 0) + pts, correct: (row.correct || 0) + (correct ? 1 : 0),
+      ms_total: (row.ms_total || 0) + took, asked_at: new Date(now).toISOString(),
+    };
+    if (last) patch.finished_at = patch.asked_at;
+    /* Compare-and-set on the answers so far: a doubled tap or a replay scores once. */
+    const changed = await sbPatchReturning(env, 'vp_coaster_plays',
+      'id=eq.' + enc(playId) + '&finished_at=is.null&answers=eq.' + enc('{' + done.join(',') + '}'), patch);
+    if (!changed || !changed.length) return json({ error: 'That question is already answered.' }, 409);
+    const out = { ok: true, i: i, right: right, correct: correct, points: pts, total: patch.points, done: last };
+    if (last) {
+      out.score = { correct: patch.correct, points: patch.points, secs: Math.round(patch.ms_total / 1000) };
+      try { out.board = await coasterBoard(env, row.board, 'night', row.night, playId); } catch (e) { out.board = null; }
+    }
+    return json(out);
+  } catch (e) {
+    if (coasterMissingTable(e)) return coasterOff(json);
+    throw e;
+  }
+}
+
+/* THE VENUE'S OWN SIGN-UP AT THE END OF A ROUND (INBOX 232). Only at a venueplay venue HQ has switched on
+   (vp_coaster_optin_venues: OFF for every venue until HQ turns it on, Dean's rule for anything new), and only
+   for what that venue already collects on its phones (vp_venue_settings: email and/or mobile), with the one
+   tick. { email, mobile, marketing_optin } or null: null hides the box. Never throws. */
+async function coasterOptinAsk(env, where) {
+  if (!where || !where.on || !where.venue_id) return null;
+  try {
+    const on = await sbGet(env, 'vp_coaster_optin_venues', 'venue_id=eq.' + enc(where.venue_id) + '&select=venue_id&limit=1');
+    if (!on || !on.length) return null;
+    const cfg = await venueCollectCfg(env, where.venue_id);
+    if (!cfg.collect_email && !cfg.collect_mobile) return null;
+    return { email: !!cfg.collect_email, mobile: !!cfg.collect_mobile, marketing_optin: !!cfg.collect_marketing_optin };
+  } catch (e) { return null; }   // before migration 153, or the read failing: no box
+}
+
+/* POST /coaster/optin { play, token, email, mobile, marketing_optin, consent_version, pid }
+   The player's sign-up for THAT venue, kept exactly the way a sign-up on the phones is: the venue's own
+   gate (gatedCapture: only what it collects, the tick only with an address), the consent words' version
+   (migration 174; tried once more without it if the column is not there, so a sign-up is never lost), in
+   vp_captures with source 'coaster'. The round's secret proves this phone played the round, not that it
+   was in the room, so like every sign-up that cannot prove that (/join/list, a token-less /capture) it is
+   kept with during_game false: stored, and left out of the venue's export by the existing rule. */
+async function handleCoasterOptin(request, env, json) {
+  const b = await readJson(request);
+  const playId = assertUuid(String(b.play || ''), 'round');
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  const mobile = String(b.mobile || '').replace(/[^0-9+]/g, '').slice(0, 20);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
+  if (mobile && !/^\+?[0-9]{8,15}$/.test(mobile)) return json({ error: 'That mobile does not look right.' }, 400);
+  if (!email && !mobile) return json({ error: 'Type your email.' }, 400);
+  if (!(await coasterLimit(request, env, 'optin', COASTER_OPTIN_MAX_PER_IP, 600))) return json({ error: 'Too many sign-ups from this network. Wait a few minutes.' }, 429);
+  try {
+    const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=id,board,token_hash&limit=1'))[0];
+    const proof = await sha256Hex(String(b.token || ''));   // the round's secret, as /coaster/answer checks it
+    if (!row || proof !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
+    const where = await coasterPlace(env, row.board);
+    const ask = await coasterOptinAsk(env, where);
+    if (!ask) return json({ ok: true, stored: false });   // not switched on for this venue: nothing is kept
+    const cfg = await venueCollectCfg(env, where.venue_id);
+    const cap = gatedCapture(cfg, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile || null });
+    if (!(cap.email || cap.mobile)) return json({ ok: true, stored: false });
+    const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
+    if (consentVersion && cap.marketing_optin) cap.consent_version = consentVersion;   // migration 174's column
+    const ipHash = await abuseIpHash(request, env);
+    const ins = Object.assign({ venue_id: where.venue_id, source: 'coaster', during_game: false }, cap);
+    if (ipHash) ins.source_ip_hash = ipHash;
+    try { await sbInsert(env, 'vp_captures', ins, false); }
+    catch (e) {
+      if (!('consent_version' in ins) || (e && e.status && e.status !== 502)) throw e;
+      const r2 = Object.assign({}, ins); delete r2.consent_version;
+      await sbInsert(env, 'vp_captures', r2, false);
+    }
+    return json({ ok: true, stored: true });
+  } catch (e) {
+    if (coasterMissingTable(e)) return coasterOff(json);
+    throw e;
+  }
+}
+
+/* GET /coaster/board?place=..&period=tonight|week[&play=<round id>] */
+async function handleCoasterBoardRoute(request, env, json) {
+  const u = new URL(request.url);
+  const period = u.searchParams.get('period') === 'week' ? 'week' : 'night';
+  const play = String(u.searchParams.get('play') || '');
+  if (!(await coasterLimit(request, env, 'board', COASTER_BOARD_MAX_PER_IP, 600))) return json({ error: 'Too many from this network. Wait a few minutes.' }, 429);
+  try {
+    const where = await coasterPlace(env, u.searchParams.get('place'));
+    if (!where) return json({ error: 'No board for that place.' }, 404);
+    const t = coasterNight(where.tz, Date.now());
+    const out = await coasterBoard(env, where.place, period, period === 'week' ? t.week : t.night, UUID_RE.test(play) ? play : null);
+    out.venue = { name: where.name, suburb: where.suburb, logo_url: where.logo_url };
+    return json(out);
+  } catch (e) {
+    if (coasterMissingTable(e)) return coasterOff(json);
+    throw e;
+  }
+}
+
+/* The nightly sweep: rounds older than COASTER_KEEP_DAYS go. */
+async function sweepCoasterPlays(env, nowMs) {
+  const cut = new Date((nowMs == null ? Date.now() : nowMs) - COASTER_KEEP_DAYS * 86400000).toISOString();
+  try {
+    await sbDelete(env, 'vp_coaster_plays', 'started_at=lt.' + enc(cut));
+    return { ok: true, before: cut };
+  } catch (e) {
+    return { error: coasterMissingTable(e) ? 'migration 153 not run' : String((e && e.message) || e) };
+  }
+}
 
 /* The TV's &tvk= (what kind of TV, a code from venueplay/app/vp-tvtype.js) and &tvd= (a random id for
    that TV), made safe or refused (null). Only the SHAPE is checked here: the list of codes lives in
@@ -7573,16 +8093,7 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
     if (racedOut) continue;
     if (a.is_correct !== null && a.is_correct !== undefined) continue;
     const correct = a.answer_index === q.correct_index;
-    let pts = 0;
-    if (correct) {
-      let bonus = 0;
-      if (speedBonus && endsAtMs && a.answered_at && secs > 0) {
-        // Faster answers keep more of the +50% bonus: remaining/secs of base*0.5.
-        const remaining = Math.max(0, Math.min(secs, (endsAtMs - Date.parse(a.answered_at)) / 1000));
-        bonus = Math.round(base * 0.5 * (remaining / secs));
-      }
-      pts = mult * (base + bonus);
-    }
+    const pts = triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, a.answered_at ? Date.parse(a.answered_at) : 0);
     // Collected, not written one at a time. See the batch below.
     scored.push({ id: a.id, is_correct: correct, points_awarded: pts });
   }
@@ -9090,6 +9601,25 @@ async function handlePlayerAlive(request, env, json) {
   } catch (e) {
     return json({ ok: true, recorded: false });
   }
+}
+
+/* WHAT A TRIVIA ANSWER IS WORTH, IN ONE PLACE (moved here 5 Nov 2026 from inside the reveal, unchanged,
+   so the coaster round on /live-here-now scores by the very same rule: "Correct! +130"). A correct
+   answer is base, plus up to another half of base for speed, scaled by how much of the question's time
+   was left when it was given; a wrong one is worth nothing. mult is 2 on a double points question
+   (migration 96), 1 otherwise. Times are milliseconds. trivia-score.test.js runs this function. */
+function triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, answeredAtMs) {
+  let pts = 0;
+  if (correct) {
+    let bonus = 0;
+    if (speedBonus && endsAtMs && answeredAtMs && secs > 0) {
+      // Faster answers keep more of the +50% bonus: remaining/secs of base*0.5.
+      const remaining = Math.max(0, Math.min(secs, (endsAtMs - answeredAtMs) / 1000));
+      bonus = Math.round(base * 0.5 * (remaining / secs));
+    }
+    pts = mult * (base + bonus);
+  }
+  return pts;
 }
 
 async function handlePlayerScore(request, env, json) {

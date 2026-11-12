@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 18:21 · c47131fa';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 01:52 · aff804b3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -286,6 +286,12 @@ export default {
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
       // Edit details on a prospect (Dean, 4 Nov 2026): name, email, mobile, phone, with an audit row.
       if (request.method === 'POST' && path === '/admin/prospect/update'        && typeof vpaProspectUpdate === 'function')     return await vpaProspectUpdate(request, env, json);
+      // HQ > Prospects > Coaster venues (Dean, 4 Nov 2026; migration 153): coaster venues (no emails), coaster leads, the boards.
+      if (request.method === 'POST' && path === '/admin/coaster/list'           && typeof vpaCoasterList === 'function')        return await vpaCoasterList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/add'            && typeof vpaCoasterAdd === 'function')         return await vpaCoasterAdd(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/remove'         && typeof vpaCoasterRemove === 'function')      return await vpaCoasterRemove(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/review'         && typeof vpaCoasterReview === 'function')      return await vpaCoasterReview(request, env, json);
+      if (request.method === 'POST' && path === '/admin/coaster/optins'         && typeof vpaCoasterOptins === 'function')      return await vpaCoasterOptins(request, env, json);
       // HQ > Subscribers (31 Oct 2026; migration 134): who asked for the monthly email, counts, matches, the CSV.
       if (request.method === 'POST' && path === '/admin/subscribers')        return await vpsHandleAdminList(request, env, json);
       if (request.method === 'POST' && path === '/admin/subscribers/export') return await vpsHandleAdminExport(request, env, json);
@@ -3628,6 +3634,13 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,
   });
 
+  /* 7. A COASTER VENUE MADE A NORMAL PROSPECT (HQ's button, migration 153): only now, with the venue fully made,
+     its coaster row points here and its board moves to this venue. Best effort: never fails the setup. HQ only. */
+  if (b.coaster_id != null && b.coaster_id !== '' && !opts.via) {
+    const cw = await vpaCoasterSwitch(env, actor, b.coaster_id, venue.id);
+    if (cw) warnings.push(cw);
+  }
+
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
     tv_url: site + '/tv',   // bare: the TV asks for the screen code (Dean, 5 Nov 2026), never a /tv?slug link
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
@@ -4502,6 +4515,276 @@ async function vpaProspectDay21Sweep(env, nowMs) {
     if (t) await helpPushNew(env, t);
   } catch (e) { /* the audit rows stand: one try per venue */ }
   return { alerted: fresh.length, lines: lines };
+}
+
+/* ===========================================================================
+ * HQ > COASTER VENUES AND COASTER LEADS (Dean, 4 Nov 2026, /live-here-now v2; migration 153)
+ *
+ * All 10,000 drink coasters carry ONE QR. The player gives a first name, then picks where they are playing
+ * from what is IN venueplay (customers, prospects and coaster venues) or types a pub that is not listed. The
+ * game Worker (/coaster/*) writes the rounds; HQ reads and runs the places here, owner or accounts only:
+ *
+ *   POST /admin/coaster/list    { ok, coaster, leads, boards }: the coaster venues Dean added, the pubs players
+ *                               typed in ("coaster players at X, not on venueplay"), and every board with play:
+ *                               rounds finished in the last 30 days and different first names in the last 7,
+ *                               and for a venueplay venue whether it is a customer or still a prospect (a
+ *                               prospect with coaster play is a coaster lead too, Dean item 9)
+ *   POST /admin/coaster/add     { name, suburb, postcode, logo? }: a "coaster venue (no emails)"
+ *   POST /admin/coaster/remove  { id }: a coaster venue or a lead, and its rounds (first names only) with it
+ *   POST /admin/coaster/review  { id, action }: a venue a PLAYER ADDED ("Can't find your venue? Add it", INBOX
+ *                               232) is a POSSIBLE NEW LEAD for HQ to review, never cold email: 'keep' (reviewed,
+ *                               stays a possible lead), 'list' (players can pick it: it becomes a coaster venue,
+ *                               still no emails) or 'dismiss' (not a venue; hidden). lead_guard's name note shows.
+ *   POST /admin/coaster/optins  { venue_id, on }: the venue's own sign-up at the end of a coaster round, per
+ *                               venueplay venue, OFF for every venue until HQ switches it on (vp_coaster_optin_venues)
+ *
+ * The picker also lists OUR licensed venues list (vp_licensed_venues, HOTEL/PUB/TAVERN/RSL/CLUB names, marked
+ * "not on venueplay yet"); a board there is 'l:<list id>' and shows here as "on our list, not on venueplay".
+ *
+ * NO EMAILS, BY CONSTRUCTION. A coaster venue is a vp_coaster_venues row: not a vp_venues row, no login, no
+ * email address, no vp_prospects row. Every automatic email and text in this Worker starts from vp_venues,
+ * vp_prospects, venueplay_founding or vp_venue_staff, and none of them reads these two tables (proved by
+ * venueplay-backend/worker/coaster-hq.test.js, which runs the real sweeps against coaster venues). Emails
+ * start only when Dean presses "Make it a normal prospect": HQ's ordinary Set up a prospect runs with
+ * coaster_id, and AFTER the venue is fully made, vpaCoasterSwitch points the coaster row at the new venue
+ * and moves its board ('c:<id>' to 'v:<venue id>'). Best effort: the setup never fails for it.
+ * ======================================================================== */
+const VPA_COASTER_NEED = 'Run migration 153 first (vp_coaster_venues, vp_coaster_plays): coaster venues are not switched on yet.';
+const VPA_COASTER_ROUND_DAYS = 30, VPA_COASTER_PLAYER_DAYS = 7;
+/* THE NAME KEY. The game Worker keys a typed-in lead the same way, so "The Royal Hotel", "royal hotel" and
+   "Royal  Hotel!" are one place with one board. Keep the two byte for byte the same. */
+function vpaCoasterNameKey(s) {
+  return String(s).toLowerCase().replace(/&/g, ' and ').replace(/['‘’`]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
+}
+/* A missing table answers 404 (PGRST205 / 42P01). Anything else is a database that did not answer. */
+function vpaCoasterMissing(e) {
+  return /\b404\b|PGRST205|42P01|does not exist|Could not find the table/i.test(String((e && e.message) || e));
+}
+async function vpaCoasterList(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const now = Date.now(), DAY = 86400000;
+  let places, plays;
+  try {
+    places = await vpaSelectAll(env, 'vp_coaster_venues', 'venue_id=is.null&switched_at=is.null' +
+      '&select=id,kind,name,name_key,suburb,postcode,au_state,timezone,logo_url,website,asks,guard_note,review,reviewed_at,created_at,created_label&order=created_at.desc,id.asc');
+    plays = await vpaSelectAll(env, 'vp_coaster_plays', 'started_at=gte.' + encodeURIComponent(new Date(now - VPA_COASTER_ROUND_DAYS * DAY).toISOString()) +
+      '&select=id,board,first_name,started_at,finished_at&order=started_at.asc,id.asc');
+  } catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'Could not read the coaster boards just now. Try again in a minute.' }, 502);
+  }
+  /* Per board: rounds FINISHED in the last 30 days, and different first names (any case) in the last 7. */
+  const stats = {};
+  const weekAgo = now - VPA_COASTER_PLAYER_DAYS * DAY;
+  for (const p of plays) {
+    const s = stats[p.board] || (stats[p.board] = { rounds_30d: 0, names: {}, last_played_at: null });
+    if (p.finished_at) s.rounds_30d++;
+    if (Date.parse(p.started_at) >= weekAgo) s.names[String(p.first_name || '').trim().toLowerCase()] = true;
+    if (!s.last_played_at || String(p.started_at) > s.last_played_at) s.last_played_at = p.started_at;
+  }
+  const statOf = (board) => { const s = stats[board]; return s ? { rounds_30d: s.rounds_30d, players_7d: Object.keys(s.names).filter(Boolean).length, last_played_at: s.last_played_at } : { rounds_30d: 0, players_7d: 0, last_played_at: null }; };
+  const row = (c) => Object.assign({ id: c.id, kind: c.kind, name: c.name, suburb: c.suburb || '', postcode: c.postcode || '', state: c.au_state || '',
+    logo_url: c.logo_url || null, created_at: c.created_at, created_label: c.created_label || '', board: 'c:' + c.id }, statOf('c:' + c.id));
+  const coaster = places.filter((c) => c.kind === 'coaster').map(row);
+  /* Venues players added, for review: newest first, dismissed ones out of sight. */
+  const leads = places.filter((c) => c.kind === 'lead' && c.review !== 'dismissed').map((c) => Object.assign(row(c),
+    { website: c.website || '', asks: c.asks || 1, guard_note: c.guard_note || '', review: c.review || 'new', reviewed_at: c.reviewed_at || null }));
+  /* The venueplay venues with coaster play: customer or still a prospect, by the prospects tab's own rule
+     (vpaProspectSignedUp, vpaProspectGone), never a second copy of it. */
+  const vids = Object.keys(stats).filter((k) => /^v:/.test(k)).map((k) => k.slice(2));
+  const venues = {}, accounts = {}, prospectIds = {};
+  for (let i = 0; i < vids.length; i += 100) {
+    const chunk = vids.slice(i, i + 100).map(encodeURIComponent).join(',');
+    (await vpaSelectAll(env, 'vp_venues', 'id=in.(' + chunk + ')&select=id,name,slug,postcode,au_state,founding_id,group_id,status,suspended_reason&order=id.asc'))
+      .forEach((v) => { venues[v.id] = v; });
+    try {
+      (await vpaSelectAll(env, 'vp_prospects', 'venue_id=in.(' + chunk + ')&select=venue_id&order=venue_id.asc')).forEach((p) => { prospectIds[p.venue_id] = true; });
+    } catch (_) { /* migration 125 not run: nobody reads as a prospect */ }
+  }
+  const fids = Object.keys(venues).map((k) => venues[k].founding_id).filter(Boolean);
+  for (let i = 0; i < fids.length; i += 100) {
+    (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
+      ')&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
+  }
+  const boards = [];
+  vids.forEach((id) => {
+    const v = venues[id];
+    const status = !v ? 'gone' : vpaProspectGone(v) ? 'left'
+      : (prospectIds[id] && !vpaProspectSignedUp(v, accounts[v.founding_id])) ? 'prospect' : 'customer';
+    boards.push(Object.assign({ board: 'v:' + id, kind: 'venue', venue_id: id, name: v ? v.name : '', postcode: v ? (v.postcode || '') : '', state: v ? (v.au_state || '') : '', status: status }, statOf('v:' + id)));
+  });
+  coaster.concat(leads).forEach((c) => { if (stats[c.board]) boards.push(Object.assign({ board: c.board, kind: c.kind, coaster_id: c.id, name: c.name, suburb: c.suburb, postcode: c.postcode, state: c.state, status: c.kind }, statOf(c.board))); });
+  /* Players at venues on our licensed list (not on venueplay): a warm lead each, named from the list. */
+  const lids = Object.keys(stats).filter((k) => /^l:[0-9]+$/.test(k)).map((k) => k.slice(2));
+  const listed = {};
+  for (let i = 0; i < lids.length; i += 100) {
+    try {
+      (await vpaSelectAll(env, 'vp_licensed_venues', 'id=in.(' + lids.slice(i, i + 100).join(',') + ')&select=id,name,suburb,postcode,au_state&order=id.asc'))
+        .forEach((l) => { listed[String(l.id)] = l; });
+    } catch (_) { /* the list unreadable: the boards still show, by number */ }
+  }
+  lids.forEach((id) => {
+    const l = listed[id];
+    boards.push(Object.assign({ board: 'l:' + id, kind: 'listed', listed_id: Number(id), name: l ? l.name : 'Venue ' + id + ' on our list', suburb: l ? (l.suburb || '') : '',
+      postcode: l ? (l.postcode || '') : '', state: l ? (l.au_state || '') : '', status: 'listed' }, statOf('l:' + id)));
+  });
+  /* Which venueplay venues have the coaster sign-up switched on. Missing table: none are. */
+  let optinOn = {};
+  try { (await vpaSelectAll(env, 'vp_coaster_optin_venues', 'select=venue_id&order=venue_id.asc')).forEach((r) => { optinOn[r.venue_id] = true; }); }
+  catch (_) { optinOn = {}; }
+  boards.forEach((b) => { if (b.kind === 'venue') b.optins = !!optinOn[b.venue_id]; });
+  boards.sort((a, b) => (b.rounds_30d - a.rounds_30d) || (b.players_7d - a.players_7d) || String(a.name).localeCompare(String(b.name)));
+  return json({ ok: true, coaster: coaster, leads: leads, boards: boards, round_days: VPA_COASTER_ROUND_DAYS, player_days: VPA_COASTER_PLAYER_DAYS });
+}
+async function vpaCoasterAdd(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const NONE = ' Nothing was added.';
+  const name = String(b.name || '').replace(/[\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const key = vpaCoasterNameKey(name).slice(0, 120);
+  if (!name || !key) return json({ error: 'Enter the venue name.' + NONE }, 400);
+  const suburb = String(b.suburb || '').replace(/[\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const postcode = String(b.postcode || '').replace(/\D/g, '').slice(0, 4);
+  const state = postcode.length === 4 ? vpaStateFromPostcode(postcode) : null;
+  if (!state) return json({ error: 'Enter the coaster venue\'s 4-digit postcode. It sets the state and the time its board resets.' + NONE }, 400);
+  // The logo is checked in full, by the venue logo's own rules, before anything is made.
+  let logo = null;
+  if (b.logo != null && b.logo !== '') {
+    logo = vpbLogoCheck(b.logo);
+    if (logo.error) return json({ error: logo.error + NONE }, logo.status);
+  }
+  const probe = await fetch(env.SUPABASE_URL + '/rest/v1/vp_coaster_venues?select=id&limit=1', { headers: vpaHeaders(env) });
+  if (!probe.ok) return json({ error: VPA_COASTER_NEED + NONE, need_migration: 153 }, 503);
+  // Already a coaster venue here, or already a venueplay venue: one place, one board.
+  const twin = await vpaSelect(env, 'vp_coaster_venues', 'kind=eq.coaster&venue_id=is.null&name_key=eq.' + encodeURIComponent(key) + '&postcode=eq.' + postcode + '&select=id&limit=1');
+  if (twin && twin.length) return json({ error: name + ' (' + postcode + ') is already a coaster venue.' + NONE }, 409);
+  const onVp = await vpaSelect(env, 'vp_venues', 'name=eq.' + encodeURIComponent(name) + '&postcode=eq.' + postcode + '&select=id&limit=1');
+  if (onVp && onVp.length) return json({ error: name + ' (' + postcode + ') is already on venueplay, so players can already pick it.' + NONE }, 409);
+  let c;
+  try {
+    c = await vpaInsert(env, 'vp_coaster_venues', { kind: 'coaster', name: name, name_key: key, suburb: suburb || null, postcode: postcode,
+      au_state: state, timezone: vpaTimezoneFromPostcode(postcode), created_label: String(actor.label || '').slice(0, 120) || null });
+  } catch (e) { return json({ error: 'The coaster venue was not saved (' + String((e && e.message) || e).slice(0, 120) + ').' + NONE }, 500); }
+  const warnings = [];
+  let logoUrl = null;
+  if (logo) {
+    try {
+      const st = await vpbLogoStore(env, 'coaster/' + c.id, logo.bytes, logo.kind);
+      if (st.error) throw new Error(st.error);
+      await vpaPatch(env, 'vp_coaster_venues', 'id=eq.' + encodeURIComponent(c.id), { logo_url: st.url });
+      logoUrl = st.url;
+    } catch (e) { warnings.push('The venue is added, but its logo did not go up (' + String((e && e.message) || e).slice(0, 120) + '). Remove it and add it again with the logo.'); }
+  }
+  await vpaAudit(env, actor, 'coaster_venue_added', 'coaster:' + c.id, { name: name, suburb: suburb || undefined, postcode: postcode, state: state,
+    logo: logoUrl ? { bytes: logo.bytes.length, type: logo.kind.type, w: logo.kind.w, h: logo.kind.h } : undefined });
+  const out = { ok: true, coaster: { id: c.id, kind: 'coaster', name: name, name_key: key, suburb: suburb, postcode: postcode, state: state, logo_url: logoUrl } };
+  if (warnings.length) out.warnings = warnings;
+  return json(out);
+}
+async function vpaCoasterRemove(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const id = String((_b.body && _b.body.id) || '').trim().toLowerCase();
+  if (!VPA_UUID_RE.test(id)) return json({ error: 'Which coaster venue?' }, 400);
+  let gone;
+  try { gone = await vpaDelete(env, 'vp_coaster_venues', 'id=eq.' + id + '&venue_id=is.null'); }
+  catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'It was not removed (the database did not answer). Try again.' }, 502);
+  }
+  if (!gone.length) return json({ error: 'That coaster venue is not there any more (removed, or already made a normal prospect).' }, 404);
+  /* Its rounds go with it: first names only, and a board nobody can reach is nothing to keep. */
+  let rounds = 0, warn = null;
+  try { rounds = (await vpaDelete(env, 'vp_coaster_plays', 'board=eq.' + encodeURIComponent('c:' + id))).length; }
+  catch (e) { warn = 'It is removed, but its rounds were not deleted just now. They go by themselves after 35 days.'; }
+  await vpaAudit(env, actor, 'coaster_venue_removed', 'coaster:' + id, { name: gone[0].name, kind: gone[0].kind, rounds_deleted: rounds });
+  const out = { ok: true, removed: { id: id, name: gone[0].name, kind: gone[0].kind }, rounds_deleted: rounds };
+  if (warn) out.warnings = [warn];
+  return json(out);
+}
+/* A VENUE A PLAYER ADDED, REVIEWED (INBOX 232). Only rows of kind 'lead' that are still open. 'list' turns it into
+   a coaster venue (players can pick it; still not a venueplay venue, no emails) with its state's clock. Nothing
+   here ever reaches cold email: a kept lead is a note for Dean, and any later load runs lead_guard as always. */
+async function vpaCoasterReview(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const body = _b.body || {};
+  const id = String(body.id || '').trim().toLowerCase(), action = String(body.action || '');
+  if (!VPA_UUID_RE.test(id)) return json({ error: 'Which venue?' }, 400);
+  if (['keep', 'list', 'dismiss'].indexOf(action) < 0) return json({ error: 'Keep, add to the list, or not a venue?' }, 400);
+  const TZ = { NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne', TAS: 'Australia/Hobart', QLD: 'Australia/Brisbane', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
+  let c;
+  try { c = (await vpaSelectAll(env, 'vp_coaster_venues', 'id=eq.' + id + '&kind=eq.lead&venue_id=is.null&select=id,name,suburb,au_state,timezone,review&order=id.asc'))[0]; }
+  catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'The database did not answer. Try again.' }, 502);
+  }
+  if (!c) return json({ error: 'That venue is not waiting for review any more.' }, 404);
+  const now = new Date().toISOString(), by = String(actor.label || '').slice(0, 120) || null;
+  const patch = action === 'list'
+    ? { kind: 'coaster', review: 'listed', reviewed_at: now, reviewed_label: by, timezone: c.timezone || TZ[c.au_state] || 'Australia/Brisbane' }
+    : { review: action === 'keep' ? 'kept' : 'dismissed', reviewed_at: now, reviewed_label: by };
+  try { await vpaPatch(env, 'vp_coaster_venues', 'id=eq.' + id + '&kind=eq.lead&venue_id=is.null', patch); }
+  catch (e) { return json({ error: 'It was not saved (the database did not answer). Try again.' }, 502); }
+  await vpaAudit(env, actor, 'coaster_lead_' + (action === 'list' ? 'listed' : action === 'keep' ? 'kept' : 'dismissed'), 'coaster:' + id, { name: c.name, suburb: c.suburb || undefined, state: c.au_state || undefined });
+  return json({ ok: true, id: id, action: action });
+}
+/* THE VENUE'S OWN SIGN-UP AT THE END OF A COASTER ROUND, per venueplay venue: on or off (INBOX 232). OFF for
+   every venue until HQ turns it on here (Dean: nothing new moves an existing venue). The fields and the tick are
+   still the venue's own settings; this only says whether the coaster page offers them. */
+async function vpaCoasterOptins(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const vid = String((_b.body && _b.body.venue_id) || '').trim();
+  const on = (_b.body && _b.body.on) === true;
+  if (!VPA_UUID_RE.test(vid)) return json({ error: 'Which venue?' }, 400);
+  const v = (await vpaSelectAll(env, 'vp_venues', 'id=eq.' + vid + '&select=id,name,status&order=id.asc'))[0];
+  if (!v || v.status !== 'active') return json({ error: 'That venue is not an active venueplay venue.' }, 404);
+  try {
+    if (on) {
+      const have = await vpaSelectAll(env, 'vp_coaster_optin_venues', 'venue_id=eq.' + vid + '&select=venue_id&order=venue_id.asc');
+      if (!have.length) await vpaInsert(env, 'vp_coaster_optin_venues', { venue_id: vid, switched_label: String(actor.label || '').slice(0, 120) || null }, false);
+    } else {
+      await vpaDelete(env, 'vp_coaster_optin_venues', 'venue_id=eq.' + vid);
+    }
+  } catch (e) {
+    if (vpaCoasterMissing(e)) return json({ error: VPA_COASTER_NEED, need_migration: 153 }, 503);
+    return json({ error: 'It was not saved (the database did not answer). Try again.' }, 502);
+  }
+  await vpaAudit(env, actor, on ? 'coaster_optins_on' : 'coaster_optins_off', 'venue:' + vid, { name: v.name });
+  return json({ ok: true, venue_id: vid, on: on });
+}
+/* MAKE IT A NORMAL PROSPECT. Called by vpaProspectSetUp ONLY after the prospect is fully made. Points the
+   coaster row at the new venue (only while it is still open) and moves its board to the venue's own. Never
+   throws: a warning for HQ, or null. */
+async function vpaCoasterSwitch(env, actor, coasterId, venueId) {
+  const id = String(coasterId || '').trim().toLowerCase();
+  const STAYS = ' The prospect is set up; its coaster board stays where it is.';
+  if (!VPA_UUID_RE.test(id)) return 'That coaster venue was not recognised.' + STAYS;
+  try {
+    const have = await vpaSelectAll(env, 'vp_coaster_venues', 'id=eq.' + id + '&select=id,kind,name,venue_id&order=id.asc');
+    const c = have[0];
+    if (!c) return 'That coaster venue is not there any more.' + STAYS;
+    if (c.venue_id) return c.name + ' was already made a normal prospect.' + STAYS;
+    await vpaPatch(env, 'vp_coaster_venues', 'id=eq.' + id + '&venue_id=is.null', { venue_id: venueId, switched_at: new Date().toISOString() });
+    const now = (await vpaSelectAll(env, 'vp_coaster_venues', 'id=eq.' + id + '&select=id,venue_id&order=id.asc'))[0];
+    if (!now || now.venue_id !== venueId) return c.name + ' was switched by somebody else at the same moment.' + STAYS;
+    await vpaPatch(env, 'vp_coaster_plays', 'board=eq.' + encodeURIComponent('c:' + id), { board: 'v:' + venueId });
+    await vpaAudit(env, actor, 'coaster_venue_switched', 'venue:' + venueId, { coaster_id: id, name: c.name, kind: c.kind });
+    return null;
+  } catch (e) {
+    return 'Its coaster board did not move (' + String((e && e.message) || e).slice(0, 120) + ').' + STAYS;
+  }
 }
 
 /* ===========================================================================
@@ -15780,34 +16063,36 @@ async function vpbLogoDoor(request, env, json) {
   return { o: o, b: b, venue: venue };
 }
 
-/* --- POST /account/logo-upload { venue_id, data } : data is a data: URL or bare base64. --- */
-/* THE ONE CHECK ON AN UPLOADED LOGO, and the one write of it to storage (6 Nov 2026). The venue logo
-   and the host's Hosted by logo (INBOX 120) are the same kind of file on the same screen, so they pass
-   the same rules: a data: URL or bare base64, a PNG or WebP of 1MB or less, 16 to 4096 pixels each way,
-   into the venue-logos bucket under <folder>/<sha256>.<ext>. Returns { url, bytes, kind } or
-   { status, error } in the words the page shows. */
-async function vpbStoreLogo(env, rawData, folder) {
-  const raw = String(rawData || '');
+/* THE LOGO RULES, ONCE (5 Nov 2026). A venue's own upload (vpbLogoUpload) and HQ's coaster venue
+   (vpaCoasterAdd, /live-here-now v2) both go through these two, so a coaster venue's logo is held to
+   exactly the same bytes, size and pixel limits as a venue's and can never drift from them.
+   vpbLogoCheck(raw): raw is a data: URL or bare base64. { bytes, kind } or { error, status }. */
+function vpbLogoCheck(raw) {
+  raw = String(raw || '');
   const m = raw.match(/^data:[^;,]*;base64,(.+)$/);
   const b64 = (m ? m[1] : raw).replace(/\s+/g, '');
-  if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return { status: 400, error: 'That did not look like an image.' };
+  if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return { error: 'That did not look like an image.', status: 400 };
   // Refuse on the encoded length first: four characters carry three bytes, so nothing this
   // long can decode to 1 MB or less, and a 40 MB string is never decoded at all.
   if (Math.floor(b64.length * 3 / 4) > VPB_MAX_LOGO_BYTES + 2) {
-    return { status: 413, error: 'That logo is too big. Keep it to 1MB or less.' };
+    return { error: 'That logo is too big. Keep it to 1MB or less.', status: 413 };
   }
   let bytes;
-  try { bytes = vpaB64ToBytes(b64); } catch (_) { return { status: 400, error: 'That did not look like an image.' }; }
-  if (bytes.length > VPB_MAX_LOGO_BYTES) return { status: 413, error: 'That logo is too big. Keep it to 1MB or less.' };
+  try { bytes = vpaB64ToBytes(b64); } catch (_) { return { error: 'That did not look like an image.', status: 400 }; }
+  if (bytes.length > VPB_MAX_LOGO_BYTES) return { error: 'That logo is too big. Keep it to 1MB or less.', status: 413 };
   const kind = vpbLogoSniff(bytes);
-  if (!kind) return { status: 415, error: 'Use a PNG (or a WebP). A PNG with a transparent background sits best on the screen.' };
+  if (!kind) return { error: 'Use a PNG (or a WebP). A PNG with a transparent background sits best on the screen.', status: 415 };
   if (kind.w < VPB_LOGO_MIN_PX || kind.h < VPB_LOGO_MIN_PX) {
-    return { status: 400, error: 'That logo is only ' + kind.w + ' by ' + kind.h + ' pixels, too small to read on a TV. Use one at least 200 pixels wide.' };
+    return { error: 'That logo is only ' + kind.w + ' by ' + kind.h + ' pixels, too small to read on a TV. Use one at least 200 pixels wide.', status: 400 };
   }
   if (kind.w > VPB_LOGO_MAX_PX || kind.h > VPB_LOGO_MAX_PX) {
-    return { status: 400, error: 'That logo is ' + kind.w + ' by ' + kind.h + ' pixels. Keep it under ' + VPB_LOGO_MAX_PX + ' pixels each way.' };
+    return { error: 'That logo is ' + kind.w + ' by ' + kind.h + ' pixels. Keep it under ' + VPB_LOGO_MAX_PX + ' pixels each way.', status: 400 };
   }
-
+  return { bytes: bytes, kind: kind };
+}
+/* Store checked logo bytes in the public venue-logos bucket at <folder>/<sha256>.<ext>, so the same
+   file twice is one object and a changed file is a new address. { url } or { error }. */
+async function vpbLogoStore(env, folder, bytes, kind) {
   await vpbEnsureBucket(env, 'venue-logos', { limit: VPB_MAX_LOGO_BYTES, types: ['image/png', 'image/webp'] });
   const path = folder + '/' + (await vpbSha256Hex(bytes)) + '.' + kind.ext;
   const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/venue-logos/' + path, {
@@ -15816,16 +16101,30 @@ async function vpbStoreLogo(env, rawData, folder) {
                'Content-Type': kind.type, 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
     body: bytes,
   });
-  if (!up.ok) { const t = await up.text(); return { status: 500, error: 'Upload failed. ' + t.slice(0, 160) }; }
-  return { url: env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path, bytes: bytes, kind: kind };
+  if (!up.ok) { const t = await up.text(); return { error: 'Upload failed. ' + t.slice(0, 160) }; }
+  return { url: env.SUPABASE_URL + '/storage/v1/object/public/venue-logos/' + path };
 }
 
+/* The check and the store in one call, for the host's Hosted by logo (INBOX 120): the same rules
+   as the venue logo and a coaster venue's. { url, bytes, kind } or { status, error }. */
+async function vpbStoreLogo(env, rawData, folder) {
+  const c = vpbLogoCheck(rawData);
+  if (c.error) return { status: c.status, error: c.error };
+  const st = await vpbLogoStore(env, folder, c.bytes, c.kind);
+  if (st.error) return { status: 500, error: st.error };
+  return { url: st.url, bytes: c.bytes, kind: c.kind };
+}
+
+/* --- POST /account/logo-upload { venue_id, data } : data is a data: URL or bare base64. --- */
 async function vpbLogoUpload(request, env, json) {
   const g = await vpbLogoDoor(request, env, json);
   if (g.res) return g.res;
-  const st = await vpbStoreLogo(env, g.b.data, g.venue.id);
-  if (st.error) return json({ error: st.error }, st.status);
-  const url = st.url, bytes = st.bytes, kind = st.kind;
+  const c = vpbLogoCheck(g.b.data);
+  if (c.error) return json({ error: c.error }, c.status);
+  const bytes = c.bytes, kind = c.kind;
+  const st = await vpbLogoStore(env, g.venue.id, bytes, kind);
+  if (st.error) return json({ error: st.error }, 500);
+  const url = st.url;
   const was = await vpbReadScreen(env, g.venue.id);
   if (!(await vpbWriteLogo(env, g.venue, url, vpbScreenActor(g.o, 'logo-upload')))) return json({ error: 'The logo uploaded but could not be saved. Try again.' }, 500);
   await vpbScreenAudit(env, g.o, 'logo_set', g.venue.id, was.ok ? was.row : undefined,
