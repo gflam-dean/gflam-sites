@@ -75,5 +75,5 @@ function has(o, id) { return JSON.stringify(o || {}).indexOf(id) >= 0; }
   check('the filter is the Postgres IS NOT TRUE one (false and null pass)', /const VPA_NOT_DEMO = '&is_demo=not\.is\.true';/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')));
 
   print('');
-  print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('All ' + ran + ' checks passed'));
+  print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { print('  FAIL suite threw: ' + e + '\n' + (e && e.stack)); bad++; });

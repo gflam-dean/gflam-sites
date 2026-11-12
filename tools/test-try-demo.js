@@ -215,5 +215,5 @@ function rowsOf(t) { return (DB[t] || []).length; }
   show('a real night at the same venue is still held for the tick (terms_first)', hr.status === 403 && hr.body.code === 'terms_first', JSON.stringify(hr.body));
 
   print('');
-  print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('All ' + ran + ' checks passed'));
+  print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { print('  FAIL suite threw: ' + e + '\n' + (e && e.stack)); bad++; });
