@@ -18843,7 +18843,7 @@ MUTATIONS = [
      'in Chrome: the raffle demo shows the old spinning tiles'),
     ('demo-pairs-in-chrome.test.py', 'venueplay/app/members/screen.html',
      '      VPDemoClock.run({ lap:C.lap(), steps:steps });',
-     '      VPDemoClock.run({ lap:C.lap(), steps:steps, epoch:Date.now()+9000 });',
+     '      VPDemoClock.run({ lap:C.lap(), steps:steps, epoch:Date.now()-7000-((Math.random()*14000)|0) });',
      'in Chrome: the see-a-night room TV and The big screen show different members draw screens'),
     ('demo-pairs-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '    VPDemoClock.run({ lap:C.lap(), steps:steps });\n    return;',
