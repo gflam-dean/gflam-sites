@@ -211,7 +211,8 @@ print("\n7. 256.2, DEAN'S 5:39PM SCREENSHOT: THE DIM BUTTON WAS A CLAIM WITH THE
     setTimeout: function(f, ms){ timers.push({ f: f, at: ms }); return timers.length; }, clearTimeout: function(i){ if(timers[i - 1]) timers[i - 1].f = null; },
     checkPattern: function(){ return true; }, sayNotYet: function(){}, send: function(){},
     playerPost: function(){ return new Promise(function(){}); },   // the host has not answered yet
-    _aw: 1
+    _aw: 1,
+    _sizeNowOn: false   // the musical card's 30-second text size row (INBOX 323): not showing in this stand-in
   };
   var names = Object.keys(env);
   var src = "var _noteT=null;\n" + grab("setMsg", PLAY) + "\n" + grab("noteBingo", PLAY) + "\n" + grab("hideBingoNote", PLAY) + "\n" +

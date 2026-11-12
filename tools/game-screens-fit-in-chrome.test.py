@@ -21,8 +21,7 @@ rating's id). On every screen below it checks:
   BINGO    three tickets with balls called and "One to go" (folded to one open ticket on a short phone), YOU WON
            (not asked during the claim; asked once the host ends the game, INBOX 287.5), the follow-up open, and the
            confetti between the header and our logo, never past the edge
-  MUSICAL  the 5x5 card with the claim button (the page never scrolls; the card's own swipe for a long title waits on
-           Dean's pick, see the musical card note in the code), YOU WON, asked after
+  MUSICAL  the 5x5 card with the claim button (all five columns on screen, no sideways swipe), YOU WON, asked after
            the claim, the follow-up open, and End game with no winner (it says so and asks "How was that?", INBOX 289.1)
 
 Plus, on every screen: no spaced-out capitals (letter-spacing of 0.1em or more on uppercase text: the banned AI
@@ -142,7 +141,6 @@ MEASURE = r'''(function(){
   [].forEach.call(document.querySelectorAll("body *"), function(e){
     if(e.closest && (e.closest(".hidden") || e.closest("[hidden]"))) return;
     if(e.classList && (e.classList.contains("cfetti"))) return;
-    if(window.__swipeOk && e.closest && e.closest(window.__swipeOk)) return;
     if(!vis(e)) return;
     var r=e.getBoundingClientRect(), s=getComputedStyle(e);
     if(s.position==="fixed" && (e.id==="vpHelpBtn" || e.closest("#vpHelp"))) return;
@@ -214,11 +212,10 @@ def confetti_ok(P, tag):
     ok('%s: and the page is no wider while it falls' % tag, m.get('sw') == m.get('W'), m)
 
 
-def fits(P, tag, need=(), swipe_ok=''):
+def fits(P, tag, need=()):
     """The screen fits: no scrolling down or sideways, nothing inside it scrolls, no spaced caps; `need` are
-    selectors that must be fully on screen. `swipe_ok` names the one box allowed to swipe on its own (see musical)."""
+    selectors that must be fully on screen."""
     time.sleep(0.6)
-    P.js('window.__swipeOk=%s; true' % json.dumps(swipe_ok or None))
     m = P.obj(MEASURE) or {}
     P.shot(tag.replace(' ', '-').replace(':', '').replace('/', '-').lower())
     ok('%s: the page does not scroll down (%s tall on a %s screen)' % (tag, m.get('sh'), m.get('H')), (m.get('sh') or 9999) <= (m.get('H') or 0) + 1, [m.get('view'), m.get('text')])
@@ -414,11 +411,7 @@ def musical(B, base, w, h):
         ok(t + ': CONTROL the card is dealt', P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15), P.js('document.body.innerText.slice(0,200)'))
         pl = ['Dancing Queen', 'Khe Sanh', 'Africa']
         P.say({'t': 'played', 'played': pl, 'played_ids': [sid(x) for x in pl]}); time.sleep(1.5)
-        # THE MUSICAL CARD'S OWN SWIPE IS WAITING ON DEAN (12 Nov 2026). INBOX 291 asks for all five columns with no swipe; his
-        # 10 Nov sign-off says never under 15px and never a split word, so a card holding "Wonderwall" was made wider and swiped.
-        # Both cannot hold on a 375 phone (it takes the whole card to 11px: tools/musical-card-spacing and ux-fixes go red), so
-        # the card box keeps its swipe until Dean picks (reports/phone-screens-12nov). The PAGE still never scrolls either way.
-        fits(P, t + ' card', ['#bingoBtn', '#cardGrid .cc:nth-child(1)', '#cardGrid .cc:nth-child(21)', '.pfoot svg'], swipe_ok='#cardWrap')
+        fits(P, t + ' card', ['#bingoBtn', '#cardGrid .cc:nth-child(5)', '#cardGrid .cc:nth-child(25)', '.pfoot svg'])
         P.say({'t': 'winner', 'pid': 'pidmus1', 'name': 'Dean', 'cardNo': 17})
         ok(t + ': CONTROL YOU WON', P.until('!document.getElementById("vWon").classList.contains("hidden")', 10))
         time.sleep(0.6); confetti_ok(P, t + ' you won')

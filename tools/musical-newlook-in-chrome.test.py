@@ -504,14 +504,15 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             gx = [C[i + 1]['r'][0] - C[i]['r'][2] for i in range(4)]; gy = [C[(i + 1) * 5]['r'][1] - C[i * 5]['r'][3] for i in range(4)]
             ok('%s card: even 8px gaps across and down' % tag, all(abs(g - 8) <= 1 for g in gx + gy), [gx, gy])
             aw = float(P.js('parseFloat(document.getElementById("cardGrid").style.getPropertyValue("--aw")||"1")') or 1)
-            # 10 Nov 2026: a card that cannot hold 15px on the screen's width is made wider (aw) and swiped; its right edge is then off screen
-            ok('%s card: 16px sides (the card %sx the screen\'s width)' % (tag, aw), abs(C[0]['r'][0] - 16) <= 1 and abs((C[4]['r'][2] - 16) - (375 - 32) * aw) <= 2, [C[0]['r'][0], C[4]['r'][2], aw])
+            # 12 Nov 2026 (Dean, INBOX 291: all five columns on one screen, no swipe): the card is never wider than the screen
+            ok('%s card: 16px sides, the card exactly the screen\'s width (no sideways swipe)' % tag, aw == 1 and abs(C[0]['r'][0] - 16) <= 1 and abs(C[4]['r'][2] - (375 - 16)) <= 2, [C[0]['r'][0], C[4]['r'][2], aw])
             hs = [c['r'][3] - c['r'][1] for c in C]
             ok('%s card: every tile at least 64px tall, all the same' % tag, min(hs) >= 64 and max(hs) - min(hs) <= 1, [min(hs), max(hs)])
             ok('%s card: every title inside its tile, never cut' % tag, all(c['free'] or (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1) for c in C), [c['txt'] for c in C if not c['free'] and not (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1)])
             ww = [c for c in C if c['txt'] == 'Wonderwall'][0]
             ok('%s card: no hyphen anywhere, ever (Dean, 10 Nov 2026): Wonderwall whole' % tag, not any('­' in c['txt'] for c in C) and ww['txt'] == 'Wonderwall', repr(ww['txt']))
-            ok('%s card: one size for every title and Free, 15px to 20px' % tag, len(set(c['fs'] for c in C)) == 1 and 15 <= C[0]['fs'] <= 20, sorted(set(c['fs'] for c in C)))
+            # one size for the whole card; a long single word ("Wonderwall") brings it under 15px since nothing is swiped (12 Nov 2026)
+            ok('%s card: one size for every title and Free, 10px to 20px (option C, Dean via main INBOX 323)' % tag, len(set(c['fs'] for c in C)) == 1 and 10 <= C[0]['fs'] <= 20, sorted(set(c['fs'] for c in C)))
             ok('%s card: Free in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
         bt = cd.get('btn') or {}
         ok('%s card: the claim is a pink pill saying the pattern, "I\'ve got a line", faint before the marks make a line' % tag, bt.get('text') == "I've got a line" and bt.get('faint') is True and float((bt.get('rad') or '0px').replace('px', '')) >= 28, bt)
