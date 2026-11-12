@@ -352,7 +352,7 @@
   "counted_by": "lines"
  },
  "tools/not-found-in-chrome.test.py": {
-  "checks": 39,
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
