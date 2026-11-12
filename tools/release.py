@@ -25,7 +25,12 @@ the steps and stops at the first one that is not true:
        written by the hook, read by tools/gate-record.py) the Chrome suites are left out
        (--skip-chrome) and every other local check plus the whole live half still runs, with
        the reason printed. Any other state is the full gate, as before.
-    6. one plain line
+    6. A REAL NIGHT (INBOX 295.1, 12 Nov 2026), OFF until VP_REAL_NIGHT=1: the release is LIVE but not DONE until
+       ~/venue-enrich/reports/real-night/<build[:8]>.md records all five games played back to back on The Mini Bar
+       with the Kogan TV app and the same two phones, a TV shot, a phone shot and a PASS by a named person for each
+       (tools/real-night-check.py judges it; tools/real-night-template.md is the form). Off by default because the
+       night is played after the push: main and Dean switch it on.
+    7. one plain line
 
 It calls the existing tools; it adds no judgement of its own. Secrets stay in
 ~/.gflam-migrate.env, read by the tools that need them, never printed here.
@@ -129,6 +134,9 @@ def main():
         for w in workers: print('  would deploy %s -> %s' % (w, LIVE_WORKERS[w]))
         for f in served[:8]: print('  would wait for %s to be served' % f)
         if screens: print('  would run verify-live --stamp (screen files changed)')
+        on, _, _ = real_night(head)
+        print('  would %s' % ('want a real-night record (VP_REAL_NIGHT=1): ' + _rn().record_path(head) if on else
+                              'not ask for a real-night record (VP_REAL_NIGHT is not 1)'))
         return 0
 
     step(0, 'the tree is clean and every Worker is stamped')
@@ -216,8 +224,34 @@ def main():
     if r.returncode != 0:
         stop('the full gate is red on the live release. Read it; a "this release is live" line means Pages has not finished, run python3 tools/release-check.py again.')
 
+    step(6, 'a real night on this build: five games, The Mini Bar, the Kogan TV app, the same two phones')
+    on, good, lines = real_night(head)
+    for l in lines: print('  ' + l)
+    if on and not good:
+        stop('LIVE, but NOT DONE: %s is not verified until a real night is recorded for it. Play the night, write the '
+             'record (tools/real-night-template.md), then python3 tools/real-night-check.py %s says DONE.' % (head[:8], head))
+
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0
+
+
+def _rn():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('real_night_check', os.path.join(ROOT, 'tools', 'real-night-check.py'))
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    return m
+
+
+def real_night(build, env=None):
+    """Step 6 (INBOX 295.1). (on, good, lines to print). OFF unless VP_REAL_NIGHT=1, and then it says so; ON, the
+    release is done only when tools/real-night-check.py passes the record for this build."""
+    env = os.environ if env is None else env
+    if env.get('VP_REAL_NIGHT') != '1':
+        return False, True, ['%soff: VP_REAL_NIGHT is not 1, so no real-night record is asked for yet (main and Dean switch it on)%s' % (DIM, OFF)]
+    good, why, path = _rn().check(build)
+    if good:
+        return True, True, ['real night recorded: ' + path]
+    return True, False, ['no real night for this build yet (%s):' % path] + ['  - ' + w for w in why]
 
 
 def gate_argv(root):

@@ -423,6 +423,10 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/real-night-check.test.py": {
+  "checks": 47,
+  "counted_by": "lines"
+ },
  "tools/reconnect-layout-in-chrome.test.py": {
   "checks": 115,
   "counted_by": "lines"
