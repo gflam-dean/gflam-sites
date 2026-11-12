@@ -646,6 +646,10 @@ def main():
         on = t.until('(function(){var x=document.getElementById("bingoBtn");return !!(x&&x.offsetParent&&x.getBoundingClientRect().height>20);})()', 25)
         check('bingo phone: the demo night reaches the ticket and the BINGO button', bool(on))
         t.until('!!document.getElementById("vphLink")', 5)
+        # Since fix/demo-sync-live-12nov the demo phone hears "started" each lap, as a real phone does, so the
+        # start-of-game show (#vpSting, 2.3 s on a phone) plays over the page right then. Measure the Help link
+        # once the show has finished, the way a player sees the page; the overlap rule itself is unchanged.
+        t.until('!document.getElementById("vpSting")', 10)   # finish() removes it
         m = link_checks(t, 'bingo phone')
         check('bingo phone: the Help link is below the BINGO button, never on it', m and m.get('below') is not None and m['below'] >= 0, m and m.get('below'))
         t.js('window.scrollTo(0,0)')
