@@ -65,13 +65,13 @@ def fetch(base, path):
 
 
 class Tab(object):
-    def __init__(self, b, w, h):
+    def __init__(self, b, w, h, mobile=True):
         self.b = b
         self.tid = b.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
         self.sid = b.call('Target.attachToTarget', {'targetId': self.tid, 'flatten': True})['sessionId']
         b.call('Page.enable', session=self.sid)
-        b.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': True}, session=self.sid)
-        b.call('Emulation.setTouchEmulationEnabled', {'enabled': True}, session=self.sid)
+        b.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': mobile}, session=self.sid)
+        b.call('Emulation.setTouchEmulationEnabled', {'enabled': mobile}, session=self.sid)
         b.call('Network.enable', session=self.sid)
         b.call('Network.setBlockedURLs', {'urls': ['*fonts.googleapis.com*', '*fonts.gstatic.com*', '*googletagmanager*',
                                                    '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*']}, session=self.sid)
@@ -121,10 +121,11 @@ LOOK = r'''(function(){
     if(/^(BUTTON|A|H1|H2|P|INPUT|LABEL)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
   });
   function box(sel){ var e=document.querySelector(sel); if(!e) return null; var r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,top:r.top,bottom:r.bottom,left:r.left,right:r.right,w:r.width,h:r.height}; }
-  var ways=Array.prototype.map.call(document.querySelectorAll(".ways a"),function(a){var r=a.getBoundingClientRect();return {href:a.getAttribute("href"),text:a.querySelector("b").textContent,x:r.left+r.width/2,y:r.top+r.height/2,h:r.height,bottom:r.bottom};});
+  var ways=Array.prototype.map.call(document.querySelectorAll(".ways a"),function(a){var r=a.getBoundingClientRect();return {href:a.getAttribute("href"),text:a.querySelector("b").textContent,x:r.left+r.width/2,y:r.top+r.height/2,h:r.height,top:r.top,bottom:r.bottom};});
+  var lg=document.querySelector("header img"), lr=lg&&lg.getBoundingClientRect(), lede=document.querySelector(".lede"), lcs=lede&&getComputedStyle(lede).display!=="none";
   var found=document.getElementById("found");
   return JSON.stringify({vw:vw, vh:vh, sw:document.documentElement.scrollWidth, sh:document.documentElement.scrollHeight, out:out.slice(0,6), clipped:clipped.slice(0,6),
-    h1:box("h1"), code:box("#code"), go:box("#go"), ways:ways, foot:box("footer"), mainTop:box(".hero"), lastWay:box(".ways a:last-child"),
+    h1:box("h1"), code:box("#code"), go:box("#go"), ways:ways, foot:box("footer"), join:box("#join"), lede:lcs?box(".lede"):null, logo:lg?{nat:lg.naturalWidth,h:lr.height,w:lr.width,left:lr.left}:null, mainTop:box(".hero"), lastWay:box(".ways a:last-child"),
     value:document.getElementById("code").value, found:found.hidden?"":found.textContent, title:document.title,
     h1text:document.querySelector("h1").textContent});
 })()'''
@@ -144,8 +145,25 @@ def main():
           u'—' not in HTML and 'roster' not in HTML.lower() and not re.search(r'\$\s?\d|\boffer\b|\bprice', text, re.I)
           and not re.search(r'\b0\d[\s\d]{8,}|\b1[38]00\b|tel:', HTML) and '.dev' not in HTML)
     check('the name is written "venueplay" in what a person reads', 'VenuePlay' not in text and 'venueplay' in text)
-    check('the header carries the new wordmark, drawn by tools/sync-brand-mark.py (data-vp-mark="wordmark")',
-          'data-vp-mark="wordmark"' in HTML)
+    # BRAND v3.2 / THE NEW LOOK (13 Nov 2026, INBOX 341): the real logo FILE, no spaced mono eyebrow, no v2 neon triangle.
+    logo = re.search(r'<header>[\s\S]*?<img src="(/logos/[^"]+\.svg)"[^>]*alt="venueplay"', HTML)
+    check('the header carries the supplied logo FILE (an img of /logos/venueplay-primary.svg), not a retyped or hand-drawn wordmark',
+          bool(logo) and logo.group(1) == '/logos/venueplay-primary.svg' and os.path.exists(SITE + logo.group(1)) and 'data-vp-mark' not in HTML, logo and logo.group(1))
+    kit = os.path.expanduser('~/venue-enrich/logo-kit-1nov/vector/venueplay-horizontal-on-dark.svg')
+    if os.path.exists(kit):
+        kd = re.findall(r' d="([^"]+)"', io.open(kit, encoding='utf-8').read())
+        sd = re.findall(r' d="([^"]+)"', io.open(SITE + '/logos/venueplay-primary.svg', encoding='utf-8').read())
+        check('that file IS the logo kit horizontal-on-dark artwork (same letters, same pink triangle)', kd == sd and len(kd) >= 2, (len(kd), len(sd)))
+    body_text = re.sub(r'<[^>]+>', ' ', re.sub(r'<head>[\s\S]*?</head>|<script[\s\S]*?</script>|<style[\s\S]*?</style>|<!--[\s\S]*?-->', ' ', HTML))
+    check('no "404 · Page not found" eyebrow: no eyebrow class, no mono caps line, no "404" or "Page not found" in what a person reads',
+          'eyebrow' not in HTML and not re.search(r'\b404\b|page not found', body_text, re.I), body_text[:200])
+    check('no v2 neon triangle (no .neon svg, no flicker animation) and no gradient on the page',
+          'class="neon"' not in HTML and 'flicker' not in HTML and 'gradient' not in re.sub(r'/\*[\s\S]*?\*/', '', HTML), None)
+    check('new-look type only: Anton headline, Manrope body, JetBrains Mono for the code box, no Hanken (that is TV body)',
+          'Anton' in HTML and 'Manrope' in HTML and 'Hanken' not in HTML, None)
+    lhn = io.open(os.path.join(SITE, 'live-here-now.html'), encoding='utf-8').read()
+    check('wording matches live-here-now v2: "Play 60 seconds of trivia" / "Five quick questions" (its own words: 60-second trivia, Five quick questions)',
+          'Play 60 seconds of trivia' in HTML and 'Five quick questions' in HTML and 'Five quick questions' in lhn and '60-second trivia' in lhn, None)
     rel = [u for u in re.findall(r'(?:href|src|action)="([^"]+)"', HTML)
            if not u.startswith(('/', 'https://', 'mailto:'))]
     check('every link, script and form address is absolute, because this page is served AT the missing address, at any depth',
@@ -178,21 +196,39 @@ def main():
                   s.get('sw', 999) <= w and not s.get('out') and not s.get('clipped'), {k: s.get(k) for k in ('sw', 'out', 'clipped')})
             check('%d px: the code box and Join sit side by side, on the first screen, big enough for a thumb' % w,
                   s.get('code') and s.get('go') and s['code']['bottom'] <= h and s['go']['bottom'] <= h
-                  and s['code']['h'] >= 52 and s['go']['h'] >= 52 and s['go']['left'] >= s['code']['right'] and s['go']['right'] <= w,
+                  and s['code']['h'] >= 48 and s['go']['h'] >= 48 and s['go']['left'] >= s['code']['right'] and s['go']['right'] <= w,
                   (s.get('code'), s.get('go')))
-            check('%d px: the three other ways back, each a full-width row at least 56 px tall' % w,
+            check('%d px: the three other ways back, each a full-width row at least 50 px tall' % w,
                   [x['href'] for x in s.get('ways', [])] == ['/live-here-now', '/', '/see-a-night']
-                  and all(x['h'] >= 56 for x in s['ways']), [(x['href'], x['h']) for x in s.get('ways', [])])
-            if h >= 844:
-                # Not a small card in the middle of nothing: the content runs from near the top of the
-                # screen to near the bottom, all of it on the first screen.
-                check('%d px: the page fills the screen (the content spans at least 80%% of it) and every way back is on it' % w,
-                      s['lastWay']['bottom'] <= h and (s['lastWay']['bottom'] - s['mainTop']['top']) >= 0.8 * h - 64,
-                      (s['mainTop']['top'], s['lastWay']['bottom'], h))
+                  and all(x['h'] >= 50 for x in s['ways']), [(x['href'], x['h']) for x in s.get('ways', [])])
+            check('%dx%d: ONE SCREEN, no scroll: the whole page (support line too) fits, the document is no taller than the screen' % (w, h),
+                  s.get('sh', 9999) <= h and s['foot']['bottom'] <= h + 0.5 and s['lastWay']['bottom'] <= h, (s.get('sh'), s['foot'], s['lastWay']['bottom']))
+            check('%dx%d: spacing: the gaps between headline, code box and the rows are 6 to 40 px, the support line sits under the last row' % (w, h),
+                  all(6 <= g <= 40 for g in (s['join']['top'] - (s['lede']['bottom'] if s.get('lede') else s['h1']['bottom']),
+                                             s['ways'][0]['top'] - s['join']['bottom'], s['ways'][1]['top'] - s['ways'][0]['bottom'])) and s['foot']['top'] >= s['lastWay']['bottom'],
+                  (s['h1'], s.get('lede'), s['join'], [(x['top'], x['bottom']) for x in s['ways']], s['foot']))
+            check('%dx%d: the real logo file is painted at a readable size (at least 20 px tall, 90 px wide), top left' % (w, h),
+                  s['logo'] and s['logo']['nat'] > 0 and s['logo']['h'] >= 20 and s['logo']['w'] >= 90 and s['logo']['left'] <= 24, s.get('logo'))
             check('%d px: the headline is big: "That page is not on tonight."' % w,
-                  s.get('h1text') == 'That page is not on tonight.' and s['h1']['h'] >= 90, (s.get('h1text'), s.get('h1')))
+                  s.get('h1text') == 'That page is not on tonight.' and s['h1']['h'] >= 70, (s.get('h1text'), s.get('h1')))
             if A.shots:
                 t.shot(os.path.join(A.shots, 'not-found-%d.png' % w))
+            t.close()
+
+        print('\nIPAD AND LAPTOP: still one screen, still filled and centred')
+        for w, h, mob in ((768, 1024, True), (1024, 768, True), (1366, 768, False), (1920, 1080, False)):
+            t = Tab(b, w, h, mob)
+            t.go(base + '/qr/old-table-link')
+            t.until('document.readyState==="complete"')
+            time.sleep(0.3)
+            s = look(t)
+            check('%dx%d: ONE SCREEN, no scroll, nothing sideways or cut off, the logo and the support line both on it' % (w, h),
+                  s.get('sh', 9999) <= h and s.get('sw', 9999) <= w and not s.get('out') and not s.get('clipped') and s['foot']['bottom'] <= h + 0.5
+                  and s['logo']['nat'] > 0, {k: s.get(k) for k in ('sh', 'sw', 'out', 'clipped')})
+            check('%dx%d: the content is a column in the middle, not stretched across the screen (under 600 px wide, centred)' % (w, h),
+                  s['join']['w'] <= 600 and abs((s['join']['left'] + s['join']['right']) / 2 - w / 2) <= 2, s['join'])
+            if A.shots:
+                t.shot(os.path.join(A.shots, 'not-found-%dx%d.png' % (w, h)))
             t.close()
 
         print('\nJOINING A GAME FROM HERE')
@@ -241,7 +277,7 @@ def main():
             t.close()
 
         print('\nTHE WAYS BACK WORK FROM FOUR FOLDERS DEEP')
-        for i, (want, mark) in enumerate((('/live-here-now', 'document.getElementById("q")'),
+        for i, (want, mark) in enumerate((('/live-here-now', 'document.getElementById("vWhere") && !document.getElementById("vWhere").hidden && document.getElementById("vName").hidden && document.getElementById("whereIn")'),
                                           ('/', 'document.querySelector("header .logo")'),
                                           ('/see-a-night', 'document.querySelector("h1")'))):
             t = Tab(b, 390, 844)
@@ -252,6 +288,15 @@ def main():
             t.tap(way['x'], way['y'])
             got = t.until('location.pathname===%s && !!(%s) && location.pathname' % (json.dumps(want), mark), 15)
             check('"%s" opens %s' % (way['text'], want), got == want, t.js('location.href'))
+            if want == '/live-here-now':
+                # INBOX 344 / 309.1a: the 404's trivia link lands on the VENUE step ("Where are you playing?", the type-ahead), never a name-first screen
+                time.sleep(1.0)
+                st = t.js('JSON.stringify({where:!document.getElementById("vWhere").hidden, name:!document.getElementById("vName").hidden, play:!document.getElementById("vPlay").hidden, input:!!document.getElementById("whereIn").offsetParent, nameInput:!!document.getElementById("nameIn").offsetParent, h1:(document.querySelector("#vWhere h1")||{}).textContent})')
+                st = json.loads(st) if st else {}
+                check('the 404 trivia link lands on the VENUE step first (type-ahead shown), and never on a name-first screen',
+                      st.get('where') and st.get('input') and not st.get('name') and not st.get('nameInput') and not st.get('play'), st)
+                if A.shots:
+                    t.shot(os.path.join(A.shots, 'not-found-lands-on-venue-step-390.png'))
             t.close()
     finally:
         b.close()

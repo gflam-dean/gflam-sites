@@ -13,7 +13,7 @@
 <link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
 <!--
-  A REAL NOT-FOUND PAGE (14 Oct 2026 audit; redesigned for phones 1 Nov 2026).
+  A REAL NOT-FOUND PAGE (14 Oct 2026 audit; redesigned for phones 1 Nov 2026, brand v3.2 / new look 13 Nov 2026: no caps line, no v2 neon triangle, logo file, one screen at 375x667).
 
   Without a 404.html at the root, Cloudflare Pages treats the site as a single-page app and
   answers ANY unknown address with the homepage and a 200. So a mistyped link looked like the
@@ -35,102 +35,99 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@800&family=Manrope:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
-  :root{--ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171B;--pink:#FF1F8E;--pink-deep:#C70F69;--muted:#9A9AA4;
-    --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.14);--glow:rgba(255,31,142,.55)}
+  /* BRAND v3.2 / THE NEW LOOK (13 Nov 2026, INBOX 341/344): near-black, white, one pink. No gradients, no neon triangle
+     (that is the v2 logo and a TV-only effect), no mono caps line. The logo is the supplied file. One screen at 375x667. */
+  :root{--ink:#0A0A0B;--card:#1A1A1F;--pink:#FF1F8E;--pink-deep:#C70F69;--muted:#8A8A95;
+    --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16)}
   *{box-sizing:border-box;margin:0;padding:0}
   html{overflow-x:clip;-webkit-text-size-adjust:100%}
-  body{background:radial-gradient(560px 420px at 92% 4%, rgba(255,31,142,.18), transparent 62%),
-    radial-gradient(480px 360px at -12% 100%, rgba(255,31,142,.08), transparent 70%), var(--ink);background-color:var(--ink);
-    color:#fff;font:16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+  body{background:var(--ink);color:#fff;font:16px/1.5 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
     min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   [hidden]{display:none!important}
-  .shell{width:100%;max-width:540px;margin:0 auto;padding:0 22px}
+  .shell{width:100%;max-width:520px;margin:0 auto;padding:0 20px}
   header{padding-top:env(safe-area-inset-top)}
-  .nav{height:64px;display:flex;align-items:center}
-  .nav a{display:flex;color:#fff}
-  main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding-top:20px;padding-bottom:24px}
+  .nav{height:56px;display:flex;align-items:center}
+  .nav a{display:flex}
+  .nav img{display:block;height:26px;width:auto}
+  main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding-top:6px;padding-bottom:14px}
 
-  /* ---------- THE TOP: a big neon triangle, gone a little off course ---------- */
-  .hero{position:relative}
-  /* The neon triangle sits up in the top right, beside the logo and the 404 line and clear of the
-     headline: it costs no height, so the way into a game stays on the first screen. */
-  .hero h1,.hero p{position:relative}
-  .neon{position:absolute;right:0;top:-84px;width:86px;height:99px;transform:rotate(-12deg);overflow:visible;pointer-events:none;opacity:.9;
-    filter:drop-shadow(0 0 10px rgba(255,31,142,.85)) drop-shadow(0 0 26px rgba(255,31,142,.45));animation:flicker 5s linear infinite}
-  @keyframes flicker{0%,91%,95%,100%{opacity:1}92%,94%{opacity:.55}}
-  .eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;text-transform:none;color:var(--pink);
-    display:flex;align-items:center;gap:12px}
-  h1{font-family:Anton,Impact,'Arial Narrow',sans-serif;font-weight:400;text-transform:uppercase;line-height:.93;letter-spacing:.005em;
-    font-size:clamp(46px,14.2vw,72px);margin-top:14px}
+  h1{font-family:Anton,Impact,'Arial Narrow',sans-serif;font-weight:400;text-transform:uppercase;line-height:.96;letter-spacing:.005em;
+    font-size:clamp(34px,10.6vw,66px)}
   h1 .accent{color:var(--pink)}
-  .lede{margin-top:16px;color:#D8D8DD;font-size:17px;font-weight:500;max-width:34ch}
+  .lede{margin-top:10px;color:#C9C9D0;font-size:16px;font-weight:500;max-width:36ch}
 
-  /* ---------- JOINING A GAME: first, because that is who scanned a code ---------- */
-  .join{margin-top:24px;padding:18px 18px 18px;border-radius:22px;
-    background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 62%),var(--ink-2);border:1px solid rgba(255,31,142,.3)}
-  .join h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.015em;line-height:1.2}
-  .join p{margin-top:4px;color:#C9C9D0;font-size:15px}
-  .row{display:flex;gap:10px;margin-top:14px}
-  .row input{flex:1;min-width:0;height:58px;border-radius:16px;border:2px solid var(--line-2);background:#0A0A0B;color:#fff;
-    font-family:'JetBrains Mono',ui-monospace,monospace;font-size:24px;letter-spacing:.24em;text-transform:uppercase;text-align:center;padding:0 8px;outline:none}
-  .row input::placeholder{color:#4A4A52;letter-spacing:.24em}
-  .row input:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(255,31,142,.18)}
-  .row button{flex:none;height:58px;padding:0 22px;border:0;border-radius:16px;background:var(--pink);color:#0A0A0B;cursor:pointer;
-    font-family:Manrope,system-ui,sans-serif;font-weight:700;font-size:18px;box-shadow:0 10px 26px -8px rgba(255,31,142,.65);
-    -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .join{margin-top:16px;padding:14px;border-radius:18px;background:var(--card);border:1px solid rgba(255,31,142,.45)}
+  .join h2{font-weight:800;font-size:19px;letter-spacing:-.01em;line-height:1.2}
+  .join p{margin-top:2px;color:#C9C9D0;font-size:14.5px}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .row input{flex:1;min-width:0;height:54px;border-radius:14px;border:2px solid var(--line-2);background:var(--ink);color:#fff;
+    font-family:'JetBrains Mono',ui-monospace,monospace;font-size:23px;letter-spacing:.22em;text-transform:uppercase;text-align:center;padding:0 8px;outline:none}
+  .row input::placeholder{color:#4A4A52;letter-spacing:.22em}
+  .row input:focus{border-color:var(--pink)}
+  .row button{flex:none;height:54px;padding:0 24px;border:0;border-radius:14px;background:var(--pink);color:var(--ink);cursor:pointer;
+    font-family:Manrope,system-ui,sans-serif;font-weight:700;font-size:18px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .row button:active{background:var(--pink-deep)}
-  .found{margin-top:10px;font-size:14px;color:#FF8AC4;font-weight:600}
+  .join p.found{margin-top:2px;font-size:14.5px;color:var(--pink);font-weight:700}
 
-  /* ---------- THE OTHER WAYS BACK ---------- */
-  .ways{margin-top:12px;display:grid;gap:10px}
-  .way{display:flex;align-items:center;gap:14px;min-height:66px;padding:12px 16px 12px 12px;border-radius:18px;background:var(--ink-2);
+  .ways{margin-top:10px;display:grid;gap:8px}
+  .way{display:flex;align-items:center;gap:12px;min-height:58px;padding:8px 14px 8px 10px;border-radius:16px;background:var(--card);
     border:1px solid var(--line-2);-webkit-tap-highlight-color:transparent}
   .way:active{border-color:var(--pink)}
-  .way .ico{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,31,142,.12);color:var(--pink)}
+  .way .ico{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(255,31,142,.14);color:var(--pink)}
   .way .ico svg{display:block}
   .way .tx{flex:1;min-width:0}
-  .way b{display:block;font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.25}
-  .way small{display:block;color:var(--muted);font-size:13.5px;line-height:1.35;margin-top:2px}
+  .way b{display:block;font-weight:800;font-size:16.5px;letter-spacing:-.01em;line-height:1.25}
+  .way small{display:block;color:var(--muted);font-size:13px;line-height:1.3;margin-top:1px}
   .way .go{flex:none;color:#6E6E78}
 
-  footer{border-top:1px solid var(--line);padding:20px 0 calc(24px + env(safe-area-inset-bottom))}
-  .foot{font-size:14px;color:var(--muted);text-align:center}
+  footer{border-top:1px solid var(--line);padding:12px 0 calc(14px + env(safe-area-inset-bottom))}
+  .foot{font-size:13.5px;color:var(--muted);text-align:center}
   .foot a{color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,31,142,.6);overflow-wrap:anywhere}
 
   @media(max-width:360px){
-    .shell{padding:0 16px}
-    .neon{width:66px;height:76px;top:-74px}
-    .lede{font-size:16px}
-    .join{padding:18px 14px 16px;margin-top:22px}
-    .row input{font-size:21px;letter-spacing:.18em}
-    .row button{padding:0 16px}
-    .way{min-height:62px}
+    .shell{padding:0 14px}
+    .row input{font-size:21px;letter-spacing:.16em}
+    .row button{padding:0 18px}
   }
-  @media(min-height:900px){ .join{margin-top:34px} }
+  /* short phones (SE at 568 tall): drop the one-line lede and the way subtitles' spare room */
+  @media(max-height:620px){
+    .nav{height:46px}.nav img{height:22px}
+    .lede,.way small{display:none}
+    .join{margin-top:12px;padding:12px}
+    .row input,.row button{height:48px}
+    .way{min-height:52px;padding-top:6px;padding-bottom:6px}
+    footer{padding-top:8px}
+  }
+  @media(min-height:800px){
+    .nav{height:68px}.nav img{height:30px}
+    main{padding-top:18px;padding-bottom:28px}
+    .join{margin-top:26px;padding:18px}
+    .way{min-height:66px}
+    footer{padding:18px 0 calc(22px + env(safe-area-inset-bottom))}
+  }
+  @media(min-width:700px) and (min-height:800px){ h1{font-size:72px} .shell{max-width:560px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
 <body>
 <header>
   <div class="shell nav">
-    <a href="/" aria-label="venueplay home"><svg class="vp-wm" height="23" width="114.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></a>
+    <a href="/" aria-label="venueplay home"><img src="/logos/venueplay-primary.svg" alt="venueplay" width="1219" height="284"></a>
   </div>
 </header>
 
 <main class="shell">
   <div class="hero">
-    <svg class="neon" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FF1F8E" stroke-width="1.7" stroke-linejoin="round"/><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FFD1E8" stroke-width=".55" stroke-linejoin="round"/></svg>
-    <p class="eyebrow">404 &middot; Page not found</p>
     <h1>That page is not <span class="accent">on tonight.</span></h1>
     <p class="lede">The link may be wrong, or the page has moved. Here is the quickest way back.</p>
   </div>
 
   <form class="join" id="join" action="/play" method="get" autocomplete="off">
     <h2><label for="code">Joining a game?</label></h2>
-    <p>Type the code from the TV screen.</p>
+    <p id="sub">Type the code from the TV screen.</p>
     <div class="row">
       <input id="code" name="code" inputmode="text" placeholder="ABC234" autocapitalize="characters" autocorrect="off" spellcheck="false">
       <button type="submit" id="go">Join</button>
@@ -158,7 +155,7 @@
 </main>
 
 <footer>
-  <p class="shell foot">Stuck? Email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a> and we will sort it out.</p>
+  <p class="shell foot">Stuck? Email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a></p>
 </footer>
 
 <script>
@@ -191,6 +188,7 @@
     var f = document.getElementById('found');
     f.textContent = 'That address looks like a game code: ' + seg + '. Tap Join.';
     f.hidden = false;
+    document.getElementById('sub').hidden = true;
   }
 })();
 </script>
