@@ -54,6 +54,12 @@
 /gflam      /nsw  200
 /gflam/     /nsw  200
 
+# THE DRINK COASTER'S "From a venue? Click here" (Dean, 4 Nov 2026, /live-here-now v2). The same offer
+# page, showing whichever month's offer is live today (VPOffer.forPath), never the home page; the
+# sign-up is tagged utm_source=coaster (vp-subscribe.js), so HQ > Reports counts what the coasters bring.
+/coaster    /nsw  200
+/coaster/   /nsw  200
+
 # STATE PAGES RETIRED (Dean, 25 Sep 2026: "all the state links are gone except for nsw"). Nobody
 # was sent these, and /nsw is the one already in inboxes, so it keeps serving the October page.
 /qld          /offer-oct  301

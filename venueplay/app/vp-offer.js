@@ -65,11 +65,15 @@
      vp-subscribe.js tags a visit to /gflam as utm_source=gflam.com.au, so the sign-up is counted
      in HQ > Reports. */
   function isGflam(pathname) { return /^\/gflam\/?$/i.test(pathname || ''); }
+  /* THE DRINK COASTER'S LINK, venueplay.com.au/coaster (Dean, 4 Nov 2026, /live-here-now v2: "From a
+     venue? Click here"). The same rule as /gflam: today's live offer, never the home page's price;
+     vp-subscribe.js tags it utm_source=coaster. */
+  function isCoaster(pathname) { return /^\/coaster\/?$/i.test(pathname || ''); }
 
   /* The offer page: the row its address names (/offer-nov), today's row for /gflam, else October
      (/nsw, the link already in venues' inboxes). */
   function forPath(pathname, nowMs) {
-    if (isGflam(pathname)) {
+    if (isGflam(pathname) || isCoaster(pathname)) {
       var today = forDate(nowMs);
       if (today && SERVES[today]) today = SERVES[today];
       return { key: today || 'oct', row: OFFERS[today || 'oct'] };
@@ -79,5 +83,5 @@
     if (SERVES[key]) key = SERVES[key];
     return { key: key, row: OFFERS[key] };
   }
-  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, SERVES: SERVES, isGflam: isGflam };
+  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, SERVES: SERVES, isGflam: isGflam, isCoaster: isCoaster };
 })(typeof window !== 'undefined' ? window : this);

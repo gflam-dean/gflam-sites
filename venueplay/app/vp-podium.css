@@ -1,0 +1,23 @@
+/* THE PODIUM ON A PHONE (INBOX 313), drawn by /app/vp-podium.js. The trivia night's steps at phone size:
+   2nd left, 1st in the middle and tallest, 3rd right; the player's step in venueplay pink. */
+.vpp{position:fixed;left:0;top:0;right:0;bottom:0;z-index:60;background:rgba(10,10,11,.96);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px 16px;overflow:hidden;cursor:pointer}
+.vpp-t{font-family:'Anton',sans-serif;font-weight:400;font-size:34px;line-height:1.1;color:#fff;text-align:center;margin:0 0 28px;
+  animation:vppIn .5s cubic-bezier(.2,1.3,.4,1) both}
+.vpp-steps{display:flex;align-items:flex-end;justify-content:center;gap:8px;width:100%;max-width:400px}
+.vpp-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;animation:vppUp .6s ease-out both}
+.vpp-col.r1{animation-delay:.35s}.vpp-col.r2{animation-delay:.15s}.vpp-col.r3{animation-delay:0s}
+.vpp-n{font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;color:#fff;overflow-wrap:anywhere;line-height:1.2}
+.vpp-p{font-family:'Anton',sans-serif;font-size:20px;color:#2FD08A;margin:2px 0 8px}
+.vpp-step{width:100%;border-radius:12px 12px 0 0;background:#1A1A1F;color:#fff;font-family:'Anton',sans-serif;font-size:40px;
+  display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
+.vpp-col.r1 .vpp-step{height:150px;background:#FFC24B;color:#0A0A0B}
+.vpp-col.r2 .vpp-step{height:110px}
+.vpp-col.r3 .vpp-step{height:80px}
+.vpp-col.you .vpp-step{box-shadow:0 0 0 4px #FF1F8E,0 0 30px -4px rgba(255,31,142,.7)}
+.vpp-col.you .vpp-n{color:#FF8AC4}
+.vpp-confetti{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;opacity:.95;pointer-events:none;animation:vppFall 2.6s linear forwards}
+@keyframes vppFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+@keyframes vppIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes vppUp{0%{transform:translateY(40px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){ .vpp-t,.vpp-col,.vpp-confetti{animation:none} }

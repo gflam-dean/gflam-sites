@@ -119,6 +119,7 @@ eval(liftBlock(/^const HOST_TRIVIA_STATUS = \{/m));
 eval(liftLine(/^let hostTriviaRpcMissing[^\n]*/m));
 eval(lift('hostTriviaRpc'));
 eval(lift('handleHostReveal'));
+eval(lift('triviaAnswerPoints'));   // the one scoring rule the reveal calls (5 Nov 2026)
 eval(lift('handleHostRevealManyTrips'));
 function req() { return { body: { game_id: 'g1' } }; }
 function idx(prefix) { for (var i = 0; i < log.length; i++) if (log[i].indexOf(prefix) === 0) return i; return -1; }

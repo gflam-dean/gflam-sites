@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the countdown ring, one copy with the drink coaster (12 Nov 2026) -->
 <link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the musical and bingo phones (6 Nov 2026) -->   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
 <style>
   :root{
@@ -68,15 +69,7 @@
   .pq-head{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}   /* the countdown ABOVE the question (Dean, 3 Nov 2026) */
   .pq-text{align-self:stretch;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
   .pq-text.long{font-size:19px}
-  .pq-ring{flex:none;position:relative;width:72px;height:72px}
-  .pq-ring svg{position:absolute;left:0;top:0;width:100%;height:100%;transform:rotate(-90deg)}
-  .pq-ring .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
-  .pq-ring .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
-  .pq-ring .n{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
-  .pq-ring .n b{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1}
-  .pq-ring .n span{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;letter-spacing:0;text-transform:none;margin-top:1px;color:#B9B9C6}   /* "secs" in normal case, well inside the ring (Dean, 12 Nov 2026: SECS spilled out of it and spaced caps are the AI look) */
-  .pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
-  .pq-cd{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* the words, for a screen reader; the ring shows the time */
+  /* The countdown ring's own rules live in /app/vp-qring.css (shared with the drink coaster, 12 Nov 2026). */
   .panswers{display:flex;flex-direction:column;gap:12px}
   .pans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:10px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;transition:opacity .15s,box-shadow .15s;line-height:1.12}
   /* FULL COLOUR (Dean, 3 Nov 2026: players pick by colour at a glance). Each button is filled with its
@@ -412,6 +405,7 @@
 <script src="/app/vp-demo.js"></script>   <!-- the try-it demo: their own name, email and mobile from sign-up, never the tick (INBOX 82) -->   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-qring.js"></script>   <!-- the countdown ring, one copy with the drink coaster (12 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
@@ -769,13 +763,10 @@
   function phoneQClass(q){ return "pq-text" + (String(q||"").length > 90 ? " long" : ""); }
   function phoneAnsClass(opts){ var n=0; for(var i=0;i<(opts||[]).length;i++) n=Math.max(n, String(opts[i]==null?"":opts[i]).length);
     return n>40 ? " alen-3" : n>22 ? " alen-2" : ""; }
-  var PRING_C=2*Math.PI*34;
   function phoneRing(rem){
     var r=$("pqRing"), n=$("pqCdNum"); if(!r || !n || !P.q) return;
     var frac=Math.max(0, Math.min(1, (P.q.endsAt-Date.now())/((P.q.secs||20)*1000)));
-    r.setAttribute("stroke-dasharray", PRING_C); r.setAttribute("stroke-dashoffset", PRING_C*(1-frac));
-    r.style.stroke = rem<=5 ? "var(--roll)" : "var(--pink)";
-    n.textContent = rem;
+    window.VPQRing.paint(r, n, frac, rem);   // one copy with the drink coaster (/app/vp-qring.js)
   }
   // ---- countdown ----
   function stopCd(){ if(P.cdTimer){ clearInterval(P.cdTimer); P.cdTimer=null; } }
@@ -785,7 +776,7 @@
     try{ phoneRing(rem); }catch(e){}
     if(P.locked){ $("pqCd").textContent="Answer locked in"; }
     else { $("pqCd").textContent="Answer in "+rem+"s"; }
-    if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
+    if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(true); }
   }
 
   // Accepts either a live broadcast (endsAt in ms) or a /snapshot question (ends_at ISO).
@@ -926,8 +917,11 @@
     }
     go();
   }
-  function lockOut(){
+  /* moment: the clock really ran out while this phone watched (never a catch-up), so the shared Time's up
+     moment plays, the drink coaster's own (VPQRing.timesUp, INBOX 312), once a question. */
+  function lockOut(moment){
     if(P.q && !P.locked){
+      if(moment && !P.q.upShown && window.VPQRing){ P.q.upShown=true; try{ window.VPQRing.timesUp(); }catch(e){} }
       var btns=document.querySelectorAll("#pAnswers .pans");
       for(var k=0;k<btns.length;k++){ btns[k].disabled=true; btns[k].classList.add("dim"); }
       $("pStatus").className="pstatus"; $("pStatus").textContent="Time's up";
@@ -1224,7 +1218,7 @@
     }
     else if(m.t==="lock"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
-      stopCd(); lockOut();
+      stopCd(); lockOut(!m.to);
     }
     else if(m.t==="reveal"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone

@@ -787,3 +787,19 @@ only on Dean's yes, after `python3 tools/draw-looks-snapshot.py --live` has writ
 191 wrote; the old draw on the TVs also needs the site change reverted). Simulated in tools/migration-191-sim.test.py (no
 database). RLS-BASELINE.json: one new table, re-dump after. NUMBER: 186 live, 187 to 190 written on branches, checked every
 branch and worktree 12 Nov 2026, so 191. RUN LIVE, Thu 12 Nov 2026 (Dean ran it; main read it back: snapshot 44 rows, all 44 venues raffle draw_style 'ticket' and members draw_style 'flip'). RLS-BASELINE.json and COLUMNS-BASELINE.json carry the new table, written BY HAND from this migration file (RLS on, not forced, no policy, no grant to anon or authenticated; columns venue_id, had_row, game_prefs, taken_at), NOT from a live dump: confirm with `python3 venueplay-backend/tools/dump-rls-baseline.py --check`.
+
+`venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page; reworked 12 Nov 2026 for
+INBOX 229/232 before it was ever run): three tables, all service role only (RLS on, no policies, revoked from
+public/anon/authenticated). `vp_coaster_venues`: places on the coaster round that are NOT venueplay venues, kind 'coaster' (a
+"coaster venue (no emails)" Dean adds in HQ, or a player-added venue HQ put in the picker; not a vp_venues row, no login, no
+email, so no automatic email path can reach it until HQ switches it to a normal prospect, which sets venue_id/switched_at) or
+kind 'lead' (a venue a player ADDED, "Can't find your venue? Add it": name, suburb, state, optional website, asks, lead_guard's
+name note, review new/kept/listed/dismissed; a possible new lead for HQ, never a board, never cold email). `vp_coaster_plays`:
+one row per round, first name only, scored and timed by the game Worker (triviaAnswerPoints), boards 'v:'/'c:'/'l:<licensed
+venue id>' (the picker also lists our licensed list, migration 171, HOTEL/PUB/TAVERN/RSL/CLUB names only), by the place's local
+night and week, deleted after 35 days by the game Worker's nightly sweep. `vp_coaster_optin_venues`: the venueplay venues HQ
+switched the end-of-round sign-up on for (no row = off; every venue starts off); sign-ups go to vp_captures (source 'coaster',
+consent_version per 174) exactly as the phones' do. Run BEFORE the game Worker (/coaster/*) and billing Worker
+(/admin/coaster/*); before it, both answer "not switched on yet" and the page plays as before. After running, dump
+RLS-BASELINE.json (three new tables). NUMBER: 153 is Dean's reserved number (INBOX 222). Branch `feature/live-here-now-v2`.
+RUN LIVE (main checked the three tables and the reworked columns 12 Nov 2026, INBOX 302). Read-back and rollback in the file.

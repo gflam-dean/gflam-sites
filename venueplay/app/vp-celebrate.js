@@ -220,5 +220,43 @@
     return L;
   }
 
-  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz, phoneLayer: phoneLayer };
+  /* THE RECORDED SOUNDS, ONE NAMED SLOT PER MOMENT (Dean 12 Nov 2026, INBOX 312/313/317/318). The file for each
+     moment comes from Dean's sound pass (~/venue-enrich/sounds-chosen-12nov, wired next release): putting a
+     file in SOUNDS is a data change, nothing else moves. An empty slot plays nothing (never a synth stand-in).
+     A phone plays only after the player has tapped the page (phones refuse sound before a tap), never on a
+     demo page, and never when the player turned sound off with the mute button (kept on this phone). */
+  var SOUNDS = { timesup: "", podium: "" };
+  var _tapped = false, _audio = null;
+  if (root.document && root.document.addEventListener) {
+    var _onTap = function () { _tapped = true; root.document.removeEventListener("pointerdown", _onTap, true); };
+    root.document.addEventListener("pointerdown", _onTap, true);
+  }
+  function muted() { try { return root.localStorage.getItem("vpqMute") === "1"; } catch (e) { return false; } }
+  function setMuted(m) { try { root.localStorage.setItem("vpqMute", m ? "1" : "0"); } catch (e) {} }
+  function sound(name) {
+    var src = SOUNDS[name];
+    if (!src || !_tapped || muted() || isDemoPage()) return false;
+    try { _audio = _audio || new root.Audio(); _audio.src = src; var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
+    catch (e) { return false; }
+  }
+  /* The small sound on/off button: in the given row (never over an answer), else bottom right. Its look is
+     .vpq-mute in /app/vp-qring.css. */
+  function muteButton(into) {
+    var d = root.document; if (!d || !d.body || d.getElementById("vpqMute")) return;
+    var btn = d.createElement("button");
+    btn.type = "button"; btn.id = "vpqMute"; btn.className = "vpq-mute" + (into ? " inline" : "");
+    var SPK = '<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
+    function label() {
+      var m = muted();
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style="vertical-align:middle">' + SPK +
+        (m ? '<path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+           : '<path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>') + "</svg>";
+      btn.setAttribute("aria-label", m ? "Sound off. Tap to turn it on" : "Sound on. Tap to turn it off");
+    }
+    btn.addEventListener("click", function () { setMuted(!muted()); label(); });
+    label();
+    (into || d.body).appendChild(btn);
+  }
+
+  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz, phoneLayer: phoneLayer, sound: sound, SOUNDS: SOUNDS, muted: muted, setMuted: setMuted, muteButton: muteButton };
 })(window);

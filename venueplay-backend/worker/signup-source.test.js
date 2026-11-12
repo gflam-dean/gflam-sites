@@ -49,10 +49,17 @@ pass('/offer-dec serves the JANUARY page and OFFER-JAN-2027 whatever the date (I
 pass('/offer-jan is January, and the December row is still there for the code that ends 31 Dec', VO.forPath('/offer-jan', utc(2026, 11, 4)).key === 'jan' && VO.OFFERS.dec.code === 'OFFER-DEC-2026');
 pass('/nsw is still October', VO.forPath('/nsw', utc(2026, 11, 4)).key === 'oct');
 pass('/gflamx is not the gflam link', VO.isGflam('/gflamx') === false && VO.isGflam('/gflam') === true);
+/* The drink coaster's "From a venue? Click here" (Dean, 4 Nov 2026, /live-here-now v2): the same rule. */
+var co = VO.forPath('/coaster', utc(2026, 11, 4, 2));
+pass('/coaster on 4 November shows the November row and its code (today\'s offer, never the home page)', co.key === 'nov' && co.row.code === 'OFFER-NOV-2026', co);
+pass('/coaster/ in December shows exactly what /gflam/ shows that day (the same month rule, INBOX 159 included)', VO.forPath('/coaster/', utc(2026, 12, 3)).key === VO.forPath('/gflam/', utc(2026, 12, 3)).key && !!VO.forPath('/coaster/', utc(2026, 12, 3)).row);
+pass('/coaster past the last row shows an ENDED row', VO.forPath('/coaster', utc(2027, 4, 4)).row.ended === true);
+pass('/coasterx is not the coaster link', VO.isCoaster('/coasterx') === false && VO.isCoaster('/coaster') === true);
 
 print('\n2. the address is served');
 var red = find('venueplay/_redirects');
 pass('_redirects serves /gflam from the offer page (a 200 rewrite, the address stays /gflam)', /^\/gflam\s+\/nsw\s+200\s*$/m.test(red));
+pass('_redirects serves /coaster from the offer page too', /^\/coaster\s+\/nsw\s+200\s*$/m.test(red) && /^\/coaster\/\s+\/nsw\s+200\s*$/m.test(red));
 
 print('\n3. a visit to /gflam is tagged, and the tag lasts the visit');
 function subscribePage(pathname, search, store) {
@@ -73,6 +80,8 @@ var u3 = subscribePage('/gflam', '?utm_source=gflam.com.au&utm_campaign=xmas', {
 pass('tags typed onto the link win', u3.utm_campaign === 'xmas', u3);
 var u4 = subscribePage('/offer-nov', '', {}).utm();
 pass('an untagged visit to /offer-nov is not counted as gflam', !u4.utm_source, u4);
+var uc = subscribePage('/coaster', '', {}).utm();
+pass('landing on /coaster gives utm_source=coaster (medium qr, campaign live-here-now)', uc.utm_source === 'coaster' && uc.utm_medium === 'qr' && uc.utm_campaign === 'live-here-now', uc);
 var nsw = find('venueplay/nsw.html'), home = find('venueplay/index.html');
 pass('the offer page sends the visit\'s tags with the sign-up', /embedded: wantEmbedded, utm: \(window\.VPSubscribe && VPSubscribe\.utm\) \? VPSubscribe\.utm\(\) : \{\} \}/.test(nsw));
 pass('the home page does too (tags only, no offer)', /embedded: wantEmbedded, utm: \(window\.VPSubscribe && VPSubscribe\.utm\) \? VPSubscribe\.utm\(\) : \{\} \}/.test(home));
@@ -148,13 +157,15 @@ var T = vpaSignupSourceTally([
   { target: 'account:2', detail: { utm_source: 'gflam.com.au', venue: 'B' }, created_at: '2026-11-18T00:00:00Z' },
   { target: 'account:3', detail: { utm_source: 'www.gflam.com.au', venue: 'C' }, created_at: '2026-10-31T13:30:00Z' },
   { target: 'account:4', detail: { utm_source: 'gflam.com.au', venue: 'Test Alpha' }, created_at: '2026-11-18T00:00:00Z' },
-  { target: 'account:5', detail: { utm_source: 'instantly', venue: 'E' }, created_at: '2026-11-18T00:00:00Z' }
+  { target: 'account:5', detail: { utm_source: 'instantly', venue: 'E' }, created_at: '2026-11-18T00:00:00Z' },
+  { target: 'account:6', detail: { utm_source: 'coaster', venue: 'F' }, created_at: '2026-11-18T00:00:00Z' }
 ], [
   { id: 1, venue_name: 'A', stripe_subscription_id: 'sub_a' },
   { id: 2, venue_name: 'B', stripe_subscription_id: null },
   { id: 3, venue_name: 'C', stripe_subscription_id: 'sub_c' },
   { id: 4, venue_name: 'Test Alpha', stripe_subscription_id: 'sub_t' },
-  { id: 5, venue_name: 'E', stripe_subscription_id: 'sub_e' }
+  { id: 5, venue_name: 'E', stripe_subscription_id: 'sub_e' },
+  { id: 6, venue_name: 'F', stripe_subscription_id: 'sub_f' }
 ], NOW);
 var G = T.sources.filter(function (x) { return x.source === 'gflam.com.au'; })[0];
 pass('gflam.com.au and www.gflam.com.au are one source', !!G && T.sources.filter(function (x) { return /gflam/.test(x.source); }).length === 1, T.sources);
@@ -162,6 +173,7 @@ pass('signed up all time = 2 (A and C; B never added a card; the test venue is l
 pass('signed up this month = 1 (C started 11:30pm on 31 October in Brisbane, so it is October)', G && G.signed_up.month === 1, G && G.signed_up);
 pass('started = 3 all time, 2 this month (a retry of the same account counts once)', G && G.started.all === 3 && G.started.month === 2, G && G.started);
 pass('another source is kept apart', T.sources.some(function (x) { return x.source === 'instantly' && x.signed_up.all === 1; }));
+pass('a sign-up from the drink coaster is counted under coaster in HQ', T.sources.some(function (x) { return x.source === 'coaster' && x.signed_up.all === 1; }), T.sources);
 pass('the month is Brisbane\'s', T.month === '2026-11', T.month);
 
 function route(auditsOk) {

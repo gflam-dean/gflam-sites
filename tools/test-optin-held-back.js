@@ -57,6 +57,16 @@ function arm(opts) {
     table = table ? table[1] : '';
     queries.push(table + '?' + q);
     if (table === 'v_vp_player_optins') return reply(opts.visible || [], q);
+    if (table === 'vp_captures' && /(^|&)source=eq\.coaster(&|$)/.test(q)) {
+      /* The drink coaster's sign-ups (INBOX 303). A fake that HONOURS the filters it is sent (venue,
+         source, tick), unless told to hand back every row as stored, the way a dropped filter would. */
+      if (opts.coasterQueryFails) return Promise.reject(new Error('coaster boom'));
+      var all = opts.coaster || [];
+      if (opts.coasterRaw) return reply(all, q);
+      var vin = /(?:^|&)venue_id=in\.\(([^)]*)\)/.exec(q), vs = vin ? decodeURIComponent(vin[1]).split(',') : null;
+      var tick = /(?:^|&)marketing_optin=is\.true(&|$)/.test(q);
+      return reply(all.filter(function (c) { return c.source === 'coaster' && (!vs || vs.indexOf(c.venue_id) >= 0) && (!tick || c.marketing_optin === true); }), q);
+    }
     if (table === 'vp_captures') {
       if (opts.heldQueryFails) return Promise.reject(new Error('boom'));
       return reply(opts.held || [], q);
@@ -102,7 +112,7 @@ check('all held, nothing visible: count 0 AND held 1', r3.count === 0 && r3.held
 
 /* 4. It asks the right question: opted in, and unverified. Not merely unverified. */
 run({ visible: [], held: [] });
-var q = queries.filter(function (x) { return x.indexOf('vp_captures') === 0; })[0] || '';
+var q = queries.filter(function (x) { return x.indexOf('vp_captures') === 0 && !/source=eq\.coaster/.test(x); })[0] || '';
 check('asks for opted-in rows only', /marketing_optin=is\.true/.test(q), q);
 check('asks for unverified rows only', /during_game=is\.false/.test(q), q);
 check('scoped to this account\'s venues', /venue_id=in\.\(v1\)/.test(q), q);
@@ -116,6 +126,46 @@ check('and it reports 0 rather than a broken number', r5.held_unverified === 0, 
 /* 6. Still one person once. The dedup that stops a venue mailing a regular twelve times. */
 var r6 = run({ visible: [person('a@x.com'), person('a@x.com'), person('b@x.com')] });
 check('the same punter across many nights is listed once', r6.count === 2, r6.count);
+
+/* 7. THE DRINK COASTER'S SIGN-UPS (Dean, 12 Nov 2026, INBOX 303): "coaster / live here now sign-ups MUST
+      show in the venue's player export, same opt-in rules as game players". /coaster/optin keeps them in
+      vp_captures, source 'coaster', during_game false, so the view leaves them out; the export reads them
+      itself. Only people who ticked THAT venue's opt-in; a sign-up without the tick NEVER appears. */
+print('the drink coaster\'s sign-ups, by the same opt-in rules');
+function cap(email, tick, venue, at) {
+  return { id: 'k-' + email, venue_id: venue || 'v1', source: 'coaster', during_game: false, first_name: null, last_name: null,
+           email: email, mobile: null, postcode: null, marketing_optin: tick, marketing_optin_at: tick ? (at || '2026-11-12T09:00:00Z') : null,
+           consent_version: tick ? 'vpc-2-6nov' : null };
+}
+var C = [cap('ticked@x.com', true), cap('noticked@x.com', false), cap('other@x.com', true, 'v9')];
+var r7 = run({ visible: [person('a@x.com')], coaster: C });
+check('a coaster sign-up who ticked this venue\'s opt-in IS in the venue\'s file', /ticked@x\.com/.test(r7.csv) && r7.count === 2, r7);
+check('a coaster sign-up who did NOT tick is never in the file', r7.csv.indexOf('noticked@x.com') < 0, r7.csv);
+check('another venue\'s coaster sign-up is never in this venue\'s file', r7.csv.indexOf('other@x.com') < 0, r7.csv);
+check('the coaster sign-up carries its venue and the time they ticked',
+  r7.csv.split('\n').some(function (l) { return l.indexOf('The Wellshot,') === 0 && l.indexOf('ticked@x.com') > 0 && l.indexOf('2026-11-12T09:00:00Z') > 0; }), r7.csv);
+check('newest opt-in first across games and coaster (the coaster sign-up of 12 Nov before the game player of 17 Sep)',
+  r7.csv.indexOf('ticked@x.com') < r7.csv.indexOf('a@x.com'), r7.csv);
+var cq = queries.filter(function (x) { return x.indexOf('vp_captures') === 0 && /source=eq\.coaster/.test(x); })[0] || '';
+check('the coaster read asks for THIS account\'s venues, source coaster, ticked only, in a total order',
+  /venue_id=in\.\(v1\)/.test(cq) && /marketing_optin=is\.true/.test(cq) && /order=marketing_optin_at\.desc,id\.asc/.test(cq), cq);
+/* Even if the database handed back every row (a dropped filter), the untick and the other venue stay out. */
+var r8 = run({ visible: [], coaster: C, coasterRaw: true });
+check('a dropped filter still never lets an untick through', r8.csv.indexOf('noticked@x.com') < 0, r8.csv);
+check('a dropped filter still never lets another venue\'s sign-up through', r8.csv.indexOf('other@x.com') < 0 && r8.count === 1, r8.csv);
+/* The same person from a game and from the coaster: once. */
+var r9 = run({ visible: [person('ticked@x.com')], coaster: [cap('ticked@x.com', true)] });
+check('the same person from a game night and the coaster is listed once', r9.count === 1, r9.csv);
+/* Coaster sign-ups are now in the file, so they are not "held back". */
+run({ visible: [], coaster: C });
+var hq = queries.filter(function (x) { return x.indexOf('vp_captures') === 0 && /during_game=is\.false/.test(x); })[0] || '';
+check('the held-back count leaves coaster sign-ups out (they are in the file now)', /or=\(source\.is\.null,source\.neq\.coaster\)/.test(hq), hq);
+/* A failed coaster read refuses the file rather than handing over a short list. */
+var r10 = run({ visible: [person('a@x.com')], coaster: C, coasterQueryFails: true });
+check('the coaster read failing refuses the file, never a short list', !!(r10 && r10.threw), r10);
+/* No coaster sign-ups: the file is exactly what it was. */
+var r11 = run({ visible: [person('b@x.com'), person('a@x.com')] });
+check('no coaster sign-ups: the game rows keep the database\'s order', r11.csv.indexOf('b@x.com') < r11.csv.indexOf('a@x.com'), r11.csv);
 
 print(fails ? ('FAILED ' + fails) : ('ALL ' + ran + ' CHECKS PASSED'));
 if (fails) { throw new Error('held back: ' + fails + ' failed'); }
