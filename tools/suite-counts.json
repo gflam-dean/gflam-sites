@@ -740,7 +740,7 @@
   "counted_by": "lines"
  },
  "tools/test-feedback-form.js": {
-  "checks": 75,
+  "checks": 78,
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
