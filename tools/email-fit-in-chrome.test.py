@@ -25,6 +25,17 @@ def check(name, ok, saw=None):
     if not ok: fails += 1
 
 pages = {}
+# INBOX 280 (12 Nov 2026): the payment reminders linked /privacy.html and /terms.html, which only redirect. Every email
+# template links the clean addresses, as the rest already did.
+legal = {}
+for f in sorted(os.listdir(os.path.join(ROOT, 'venueplay', 'emails'))):
+    h = open(os.path.join(ROOT, 'venueplay', 'emails', f), encoding='utf-8').read()
+    legal[f] = re.findall(r'href="(?:https://venueplay\.com\.au)?/(privacy|terms)(\.html)?[?#"]', h)
+old = sorted(f for f, ls in legal.items() if any(x for _, x in ls))
+check('no email template links /privacy.html or /terms.html (they only redirect)', not old, old)
+for f in ('upcoming-payment.html', 'upcoming-payment-group.html'):
+    check('%s links the privacy policy at /privacy and the terms at /terms' % f,
+          ('privacy', '') in legal.get(f, []) and ('terms', '') in legal.get(f, []), legal.get(f))
 for f in sorted(os.listdir(os.path.join(ROOT, 'venueplay', 'emails'))):
     h = open(os.path.join(ROOT, 'venueplay', 'emails', f), encoding='utf-8').read()
     h = re.sub(r'\{\{([a-z_]+)\}\}', lambda m: FILL.get(m.group(1), '$60.00'), h)

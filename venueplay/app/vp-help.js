@@ -61,14 +61,15 @@
   var SUPPORT = "support@" + BRAND + ".com.au";
   var NAME = BRAND === "partyplay" ? "PartyPlay" : "venueplay";
   var FAQ_KEY = { patron: "patron", venue: "venue", guest: "guest", host: "host" }[MODE] || "";
-  /* THE SUPPORT PHONE (Dean, 20 Oct 2026). VenuePlay VENUES only: the console, settings and the
-     account page, and the venue part of the public help page. Never a player (they use this Help,
+  /* THE SUPPORT PHONE (Dean, 20 Oct 2026). VenuePlay VENUES only, SIGNED IN: the console, settings
+     and the account page. Since 2 Nov 2026 (Dean) never the public help page, not its venue part and
+     not its sales part (INBOX 280, 12 Nov 2026: "venue_public" no longer gets it). Never a player (they use this Help,
      and the phone menu sends players to voicemail) and never PartyPlay, which has no line. The
      billing Worker's VP_SUPPORT_PHONE and VP_SUPPORT_TEL are the same two strings, and
      tools/support-phone.test.py fails if any copy anywhere differs. Who sees it is decided per
      form by phoneFor(ctx), because the help page draws a venue form and a player form side by side. */
   var SUPPORT_PHONE = BRAND === "venueplay" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
-  function phoneFor(ctx) { return ctx && (ctx.mode === "venue" || ctx.mode === "venue_public") ? SUPPORT_PHONE : null; }
+  function phoneFor(ctx) { return ctx && ctx.mode === "venue" ? SUPPORT_PHONE : null; }
   /* Who a form is for. The panel has one, from the script tag; the help page has one per audience. */
   var CTX = { mode: MODE, faq: FAQ_KEY, page: false };
 

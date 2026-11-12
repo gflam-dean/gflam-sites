@@ -13,10 +13,11 @@ copies one answer: it reads the Worker's two strings and then
   - every phone number and every tel: link in every file we serve, every migration and the Worker
     must be THAT number (a typo, an old number or a second number anywhere is red)
   - the help widget's own copy is the same two strings
-  - the places a venue looks for HELP have it: the /help page (venue part and sales form), the
-    console's Help panel, the venue FAQ, and the four email templates (as the tags the Worker
-    fills). Since 23 Oct 2026 (Dean) the PUBLIC pages do not: the sales pages, terms, privacy,
-    llms.txt and the structured data point at the help page instead
+  - the places a SIGNED-IN venue looks for HELP have it: the console's Help panel, the venue FAQ,
+    and the four email templates (as the tags the Worker fills). Since 23 Oct 2026 (Dean) the PUBLIC
+    pages do not: the sales pages, terms, privacy, llms.txt and the structured data point at the
+    help page instead. Since INBOX 280 (12 Nov 2026) the public /help page does not either, in any
+    part: the support landline is only behind sign-in, in emails and on printed flyers
   - the places a player looks never do: the bingo, musical bingo and trivia phones, the TV, the
     player FAQ, and all of PartyPlay bar the one shared widget file (where it is gated to
     VenuePlay venues, which help-desk-pages.test.py proves in a browser)
@@ -97,7 +98,7 @@ for rel in SERVED + OTHER:
             wrong.append('%s: %s' % (rel, h))
     if hits:
         where_found.append(rel)
-SEEN = ['venueplay/help.html', 'venueplay/data/help-faq.json', 'venueplay/app/vp-help.js',
+SEEN = ['venueplay/data/help-faq.json', 'venueplay/app/vp-help.js',
         'venueplay-backend/worker/venueplay-api-FULL.js', 'venueplay-backend/supabase/venueplay-112-help-faq-support-phone.sql']
 check('the sweep below is not blind: it found the number in each place it is meant to be', all(x in where_found for x in SEEN),
       [x for x in SEEN if x not in where_found])
@@ -106,8 +107,8 @@ check('every phone number and tel: link we serve, send or store is exactly "%s" 
 # ---------------------------------------------------------------- the widget's own copy
 H = read('venueplay/app/vp-help.js')
 mw = re.search(r'var SUPPORT_PHONE = BRAND === "venueplay" \? \{ show: "([^"]+)", tel: "([^"]+)" \} : null;', H)
-gate = re.search(r'function phoneFor\(ctx\) \{ return ctx && \(ctx\.mode === "venue" \|\| ctx\.mode === "venue_public"\) \? SUPPORT_PHONE : null; \}', H)
-check('the help widget holds the same two strings, for VenuePlay only, and hands them only to a venue form (the console\'s, or /help\'s venue part)',
+gate = re.search(r'function phoneFor\(ctx\) \{ return ctx && ctx\.mode === "venue" \? SUPPORT_PHONE : null; \}', H)
+check('the help widget holds the same two strings, for venueplay only, and hands them only to a SIGNED-IN venue form (the console\'s), never the public /help',
       bool(mw) and mw.group(1) == SHOW and mw.group(2) == TEL and bool(gate) and no_comments(H, 'js').count('SUPPORT_PHONE') == 2, mw and mw.groups())
 check('the PartyPlay copy of the widget is the same file, so it is gated the same way', read('partyplay/lib/vp-help.js') == H)
 
@@ -152,6 +153,33 @@ check('the home page structured data still parses, names a support ContactPoint 
       pub.get('@type') == 'Organization' and cp.get('@type') == 'ContactPoint' and cp.get('contactType') == 'customer support'
       and cp.get('email') == 'support@venueplay.com.au' and 'telephone' not in cp and 'telephone' not in pub, data)
 
+# INBOX 280 (12 Nov 2026): EVERY structured-data block on the home page (which /offer redirects to), not only
+# the first: the name is lowercase like everywhere else, and no block carries a telephone (Google shows it).
+def walk(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k, v
+            for x in walk(v):
+                yield x
+    elif isinstance(o, list):
+        for v in o:
+            for x in walk(v):
+                yield x
+
+
+blocks = []
+for b in re.findall(r'<script type="application/ld\+json">(.*?)</script>', no_comments(s, 'html'), re.S):
+    try:
+        blocks.append(json.loads(b))
+    except Exception as e:
+        blocks.append({'unparsed': str(e)})
+pairs = [kv for b in blocks for kv in walk(b)]
+names = [v for k, v in pairs if k == 'name']
+check('the home page structured data (both blocks, all %d names) says "venueplay", lowercase, never "VenuePlay"' % len(names),
+      len(blocks) == 2 and len(names) == 4 and all(n == 'venueplay' for n in names), names)
+check('and no structured-data block on the home page has a "telephone" anywhere in it',
+      len(blocks) == 2 and not [k for k, v in pairs if k == 'telephone'], [kv for kv in pairs if kv[0] == 'telephone'])
+
 PUBLIC = ['venueplay/index.html', 'venueplay/nsw.html', 'venueplay/terms.html', 'venueplay/privacy.html', 'venueplay/see-a-night.html',
           'venueplay/404.html', 'venueplay/llms.txt', 'venueplay/sitemap.xml', 'venueplay/add-card.html', 'venueplay/unsubscribe.html']
 bad = [p for p in PUBLIC if not no_phone(no_comments(read(p), 'html' if p.endswith('.html') else ''))]
@@ -164,7 +192,12 @@ def part(pid):
     m = re.search(r'<div class="panel" id="%s".*?(?=<div class="panel" id=|</section>)' % pid, s, re.S)
     return m.group(0) if m else ''
 sales = part('sales')
-check('/help: under the sales form, "or call 07 5228 3667", tappable, beside sales@venueplay.com.au', has_link(sales) and 'or call <a' in sales and 'mailto:sales@venueplay.com.au' in sales, sales[-260:])
+# INBOX 280 (12 Nov 2026): /help is a PUBLIC page, so the sales part no longer gives the number either.
+check('/help: the sales part offers sales@venueplay.com.au and no phone number and no tel: link',
+      bool(sales) and 'mailto:sales@venueplay.com.au' in sales and no_phone(sales), sales[-260:])
+check('/help, a public page: no 07 5228 3667 and no tel: link anywhere on it (only signed-in help, the console, emails and flyers carry it)',
+      bool(s) and no_phone(s) and not LANDLINE.search(s) and not INTL.search(s),
+      [m.group(0) for m in (LANDLINE.search(s), INTL.search(s), TEL_LINK.search(s)) if m])
 pl, foot = part('player'), s[s.find('<footer'):s.find('</footer>')]
 check('/help: the player part and the footer have no phone number and no tel: link',
       bool(pl) and bool(foot) and no_phone(pl) and no_phone(foot), [pl[-200:], foot[-200:]])
