@@ -78,7 +78,8 @@ var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntri
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","alignCorner","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
             "enterHolding","notePats","patName",   // patName: the board names a venue's own pattern (24 Oct 2026)
-            "holdHandover","tvBreathPhase","tvHoldHtml"];   // the "venueplay tv" holding card and its cross-fade (3 Nov 2026)
+            "holdHandover","tvBreathPhase","tvHoldHtml",
+            "slideQrURL","slideQrHtml","drawSlideQrs"];   // the "scan to join" slide QR helpers buildAds/entryInner call (12 Nov 2026)   // the "venueplay tv" holding card and its cross-fade (3 Nov 2026)
 var SRC = {}, missing = [];
 for (var ni = 0; ni < NEED.length; ni++) {
   SRC[NEED[ni]] = grab(NEED[ni]);

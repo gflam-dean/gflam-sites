@@ -242,6 +242,15 @@
   body.vpfb-more .finalwrap .scorebox{margin-top:4px;font-size:19px}
   body.vpfb-more .finalwrap .rankline{margin-top:0}
   body.vpfb-more .finalwrap .vpfb{margin-top:8px}
+  /* AN IPHONE SE (375x667) with the Help button now in the foot: the "Not for me" reasons, the line and Send ran 19px over
+     the screen after the host ended the game early (Dean's rule: one screen, no scroll, 13 Nov 2026). Under 700px tall the
+     small "Trivia final scores" label goes (the big line already says it) and the headline closes up. */
+  @media (max-height:700px){
+    body.vpfb-more .finalwrap .fk{display:none}
+    body.vpfb-more .finalwrap #finalBig{font-size:34px!important}
+    body.vpfb-more .finalwrap #finalSub{font-size:15px}
+    body.vpfb-more .finalwrap .vpfb .chips{margin-bottom:6px}
+  }
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>

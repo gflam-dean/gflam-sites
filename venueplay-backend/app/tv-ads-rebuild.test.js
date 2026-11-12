@@ -45,6 +45,8 @@ function grab(name){
 var fnBuild = grab("buildAds"), fnSig = grab("adsSignature"), fnStart = grab("startAds"), fnStop = grab("stopAds"), fnSlot = grab("adSlotAt");
 /* buildAds hands the "venueplay tv" holding card over with a cross-fade (3 Nov 2026): the two helpers it calls. */
 var fnHand = grab("holdHandover"), fnPhase = grab("tvBreathPhase");
+var fnQrUrl = grab("slideQrURL"), fnQrDraw = grab("drawSlideQrs");   // buildAds calls drawSlideQrs after the swap (12 Nov 2026)
+ok("slideQrURL and drawSlideQrs are still in tv.html", !!fnQrUrl && !!fnQrDraw);
 ok("holdHandover and tvBreathPhase are still in tv.html", !!fnHand && !!fnPhase);
 ok("buildAds is still in tv.html", !!fnBuild);
 ok("adsSignature is still in tv.html", !!fnSig);
@@ -123,7 +125,7 @@ var NOW = 0; Date.now = function(){ return NOW; };
 function setTimeout(fn, ms){ timers.push({ fn:fn, ms:ms }); return timers.length; }
 function clearTimeout(){}
 function clearInterval(){}
-eval(fnSig); eval(fnBuild); eval(fnStop); eval(fnSlot); eval(fnStart); eval(fnHand); eval(fnPhase);
+eval(fnSig); eval(fnBuild); eval(fnStop); eval(fnSlot); eval(fnStart); eval(fnHand); eval(fnPhase); eval(fnQrUrl); eval(fnQrDraw);
 
 function shownIndex(){
   for (var i = 0; i < host.childNodes.length; i++) if (host.childNodes[i].classList.contains("show")) return i;

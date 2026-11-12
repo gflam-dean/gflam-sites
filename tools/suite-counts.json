@@ -1772,7 +1772,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {
-  "checks": 30,
+  "checks": 31,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-logo.test.js": {
