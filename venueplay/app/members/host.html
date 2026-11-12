@@ -321,6 +321,22 @@
                 <button type="button" data-dt="long">Long, 12 seconds</button>
               </div>
             </div>
+            <!-- THE DRAW MOMENTS (13 Nov 2026, INBOX 285 option 2 and 299b option 3). Both OFF until the venue switches them on (game_prefs draw_winner_big / draw_countdown,
+                 absent = off). Same look as the draw look above. -->
+            <div class="field2" id="momentsField">
+              <span class="flab">Winner takes the screen<small>The winner's name flips in across the whole TV on giant tiles, and the amount is not the headline. Off keeps the draw as it is now.</small></span>
+              <div class="chips" id="winBigChips">
+                <button type="button" data-wb="off">Off</button>
+                <button type="button" data-wb="on">On</button>
+              </div>
+            </div>
+            <div class="field2" id="cdField">
+              <span class="flab">Countdown before the draw<small>Shows a Draw in 5:00 clock on the TV, a big final ten seconds, then the claim clock in the same band. You start it above the Draw button.</small></span>
+              <div class="chips" id="cdChips">
+                <button type="button" data-cdon="off">Off</button>
+                <button type="button" data-cdon="on">On</button>
+              </div>
+            </div>
             <button class="btn pink big" id="saveSettingsBtn">Save settings</button>
             <div class="lockline hidden" id="settingsLock">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" stroke="#8A8A94" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#8A8A94" stroke-width="2"/></svg>
@@ -360,6 +376,17 @@
           <button type="button" data-once="race">Race plate</button>
         </div>
       </div>
+      <!-- THE COUNTDOWN CONTROL (13 Nov 2026): only when "Countdown before the draw" is on in Draw and jackpot settings -->
+      <div class="field2 hidden" id="cdCtl">
+        <span class="flab">Count down to the draw<small id="cdState">The TV shows the clock. The draw starts by itself at 0:00.</small></span>
+        <div class="chips" id="cdMins">
+          <button type="button" data-cdm="60">1 minute</button>
+          <button type="button" data-cdm="120">2 minutes</button>
+          <button type="button" data-cdm="300">5 minutes</button>
+          <button type="button" data-cdm="600">10 minutes</button>
+        </div>
+        <button type="button" class="btn ghost hidden" id="cdCancel">Cancel countdown</button>
+      </div>
       <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
       <button class="btn pink xl" id="drawBtn">Draw</button>
       <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button>
@@ -395,7 +422,8 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-tvclaim.js"></script>   <!-- the TV is taken only by Draw, and the host is told when it is not showing the draw (12 Nov 2026) -->
 <script src="/app/vp-drawrecord.js"></script>
-<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: flip board, race plate; only its draw times are read here -->
+<script src="/app/vp-drawstyle.js"></script>
+<script src="/app/vp-drawcount.js"></script>   <!-- the countdown before the draw: the console side (13 Nov 2026, INBOX 299b) -->   <!-- the draw looks: flip board, race plate; only its draw times are read here -->
 <script>
 (function(){
   "use strict";
@@ -467,7 +495,17 @@
   function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   var ch=null, subscribed=false, sendQueue=[];
   function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
-  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  /* THE DRAW MOMENTS (13 Nov 2026): while a venue has them on, the draw, the winner and the result carry wx (the winner takes the screen) and cd (the
+     countdown's claim band) so a TV that loads mid-claim paints the same thing. Off sends nothing extra: the TV draws exactly what it always did. */
+  function sendMoments(obj){
+    if(obj && (obj.t==="drawing" || obj.t==="winner" || obj.t==="claimed")){
+      if(G.winBig && currentLook()==="flip") obj.wx=1;
+      if(G.cdOn) obj.cd=1;
+    }
+    return obj;
+  }
+  function currentLook(){ return (typeof VPDrawStyle!=="undefined") ? VPDrawStyle.lookFor("members", G.drawStyle, G.styleOnce) : ""; }
+  function send(obj){ sendMoments(obj); if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   /* THE TV IS TAKEN BY DRAW, NEVER BY OPENING THIS PAGE (12 Nov 2026, INBOX 286, FINDINGS D7; /app/vp-tvclaim.js).
      Opening this console only to change a setting switched The Mini Bar's TV to the members draw and kept it
@@ -482,7 +520,7 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
-    drawStyle:"flip", drawTime:"normal", styleOnce:null,   // the TV draw look ("flip" or "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
+    drawStyle:"flip", drawTime:"normal", styleOnce:null, winBig:false, cdOn:false, momentsSet:false,   // the TV draw look ("flip" or "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
     round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null,
     lastResult:null   // the draw just paid or rolled over ({ won, name, amountCents, nextCents, capped }): step 3 until the host moves on
   };
@@ -883,6 +921,7 @@
       return;
     }
     clearTimers(); hideWinnerCard();
+    if(CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
@@ -1233,6 +1272,7 @@
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, INBOX 286)
         send({ t:"mode", mode:"members", claim:1 });   // so a /tv that just reloaded mid-draw comes back to it
         if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:(G.round.remaining>0?G.round.remaining:0) }); }
+        else if(CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }
     }
@@ -1276,6 +1316,7 @@
   function membersPrefs(){
     var id=G.currentDrawId;
     var p=(id && id!=="__new" && /^[0-9a-f-]{36}$/i.test(id)) ? { draw_id:id } : {};
+    if(G.momentsSet){ p.draw_winner_big=!!G.winBig; p.draw_countdown=!!G.cdOn; }   // saved only once the venue has touched them: absent = off, nothing moves for any other venue
     if(G.lookSet){ p.draw_style=G.drawStyle||""; p.draw_time=G.drawTime||"normal"; }   // only once the venue has chosen (or loaded) a look: a console that never touched it saves nothing for it
     return p;
   }
@@ -1289,13 +1330,45 @@
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   renderLook();
+  /* THE DRAW MOMENTS: the two switches, and the countdown control above the Draw button. The clock is this console's; the TV is told the seconds left. */
+  var CD=null;
+  function renderMoments(){
+    var b=document.querySelectorAll("#winBigChips button"), i;
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-wb")==="on")===!!G.winBig);
+    b=document.querySelectorAll("#cdChips button");
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-cdon")==="on")===!!G.cdOn);
+    $("cdCtl").classList.toggle("hidden", !G.cdOn);
+    renderCd();
+  }
+  function renderCd(){
+    var on=!!(CD && CD.running()), l=on ? CD.left() : 0;
+    $("cdState").textContent = on ? ("Drawing in "+Math.floor(l/60)+":"+(l%60<10?"0":"")+(l%60)+". The draw starts by itself at 0:00.") : "The TV shows the clock. The draw starts by itself at 0:00.";
+    $("cdCancel").classList.toggle("hidden", !on); $("cdMins").classList.toggle("hidden", on);
+  }
+  function cdStartDraw(){ if(G.busy || G.round) return; $("drawBtn").click(); }
+  CD=(window.VPDrawCount ? VPDrawCount.host({ send:function(m){ send(m); },
+    extra:function(){ var d=curDraw(), x={ look:currentLook() }, nums=d ? activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; }) : [];
+      if(nums.length){ x.minNumber=Math.min.apply(null,nums); x.maxNumber=Math.max.apply(null,nums); }
+      if(G.winBig && x.look==="flip") x.wx=1; return x; },
+    onZero:cdStartDraw, onChange:renderCd }) : null);
+  $("winBigChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-wb]"); if(!b) return; G.winBig=b.getAttribute("data-wb")==="on"; G.momentsSet=true; renderMoments(); queueMembersPrefs(); });
+  $("cdChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-cdon]"); if(!b) return; G.cdOn=b.getAttribute("data-cdon")==="on"; G.momentsSet=true; if(!G.cdOn && CD) CD.cancel(); renderMoments(); queueMembersPrefs(); });
+  $("cdMins").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-cdm]"); if(!b || !CD || G.busy || G.round) return;
+    var secs=parseInt(b.getAttribute("data-cdm"),10);
+    if(typeof TVC!=="undefined") TVC.whenShowing(function(){ CD.start(secs); renderCd(); }); else { CD.start(secs); renderCd(); }   // taking the TV is a real action
+  });
+  $("cdCancel").addEventListener("click", function(){ if(CD) CD.cancel(); renderCd(); });
+  renderMoments();
   function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce); }
   $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
   renderOnce();
   function applyMembersPrefs(p){
     if(p && typeof p.draw_style==="string" && typeof VPDrawStyle!=="undefined") G.drawStyle=VPDrawStyle.usual("members", p.draw_style), G.lookSet=true;   // a stored "" (the old "As now") is the flip board (INBOX 284)
     if(p && typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
-    renderLook();
+    if(p && typeof p.draw_winner_big==="boolean") G.winBig=p.draw_winner_big, G.momentsSet=true;
+    if(p && typeof p.draw_countdown==="boolean") G.cdOn=p.draw_countdown, G.momentsSet=true;
+    renderLook(); renderMoments();
     if(!p || !p.draw_id || G.round || G.busy) return;
     var wd=todayWeekday().toLowerCase(), tonight=false, found=false;
     for(var i=0;i<G.draws.length;i++){

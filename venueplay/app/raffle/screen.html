@@ -258,7 +258,8 @@
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock (12 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
-<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (ticket roll, race plate), silent (10 Nov 2026) -->
+<script src="/app/vp-drawstyle.js"></script>
+<script src="/app/vp-drawcount.js"></script>   <!-- the countdown band + final ten + claim clock band; off unless the host switched "Countdown before the draw" on (13 Nov 2026, INBOX 299b) -->   <!-- the draw looks (ticket roll, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -486,7 +487,7 @@
     var nt=$("venueNameTag");
     var drawn=[]; for(var di=0; di<S.endDrawn.length; di++){ var dn=S.endDrawn[di].nums||[]; for(var dj=0; dj<dn.length; dj++) drawn.push(pad(dn[dj])); }
     $("tvStyleTitle").textContent=S.styleName || "Raffle";   // the raffle's own name ("Sunday meats"); the word Raffle only when it has none
-    S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", digits:S.padW, min:S.min, max:S.max, name:S.styleName, prizeNo:S.prizeNo, prizeOf:S.prizeOf, drawn:drawn,
+    S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", noClock:!!S.cdOn, digits:S.padW, min:S.min, max:S.max, name:S.styleName, prizeNo:S.prizeNo, prizeOf:S.prizeOf, drawn:drawn,
       drawSecs:S.styleSecs||9, prize:S.prizeLabel, venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
     return S.stage;
   }
@@ -564,6 +565,7 @@
       if(!S.stage || S.stage.style!==S.styleKey){ showLayer("tvStyle"); makeStage().showWin({ number:nums[0] }); }
       else { showLayer("tvStyle"); if(!S.stage.isPicked()) S.stage.setPick({ number:nums[0] }); }
     } else spawnBurst(36);
+    if(S.cdOn && styleOn() && !multi && allowRedraw && time>0 && cdc()){ cdc().claim(time, time); }   // the claim clock in the countdown band, big (13 Nov 2026)
     if(allowRedraw && time>0){
       S.remaining=time; S.claimTotal=time;
       $("tvPresent").textContent="Bring your ticket to the host."; $("tvPresent").classList.remove("hidden");
@@ -708,7 +710,18 @@
 
   // Host message types the screen reacts to. On any of them it marks the host seen and
   // replies tv_here so a freshly (re)loaded console re-syncs, same handshake as the trivia TV.
-  var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,pick:1,winner:1,claimed:1,redraw:1};
+  var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,pick:1,winner:1,claimed:1,redraw:1,count:1,count_off:1};
+  /* THE COUNTDOWN BEFORE THE DRAW (13 Nov 2026, INBOX 299b). Only when the host's setting is on: t:"count" carries the seconds left (resent every
+     10 seconds so a late or drifting TV catches up), t:"count_off" cancels. The band sits over "Get your tickets"; the claim clock uses the same band. */
+  var cdCtl=null;
+  function cdc(){ if(!cdCtl && window.VPDrawCount) cdCtl=VPDrawCount.make($("tv"), { mode:"raffle" }); return cdCtl; }
+  function onCount(m){
+    cancelAdsReturn();
+    if(S.phase==="drawing" || S.phase==="winner" || S.phase==="result" || S.phase==="redraw") return;
+    if(!cdc()) return;
+    if(S.phase!=="idle"){ S.phase="idle"; renderIdle(); }
+    cdc().count(m.secs, m.total);
+  }
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
@@ -718,6 +731,9 @@
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next draw stops it. */
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); }catch(e){} }
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here", showing:"raffle" }); }
+    if(m.t==="count"){ onCount(m); return; }
+    if(m.t==="count_off"){ if(cdCtl) cdCtl.cancel(); scheduleAdsReturn(); return; }
+    if(m.t==="drawing" || m.t==="winner" || m.t==="claimed" || m.t==="redraw"){ S.cdOn=!!m.cd; if(cdCtl) cdCtl.cancel(); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
     // The host tapped "Back to ads". Go now rather than sit through the 18 second

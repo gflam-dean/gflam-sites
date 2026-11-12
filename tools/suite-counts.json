@@ -211,6 +211,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/draw-moments-console-in-chrome.test.py": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 40,
   "counted_by": "lines"
@@ -725,6 +729,10 @@
  },
  "tools/test-draw-looks-switch.js": {
   "checks": 47,
+  "counted_by": "lines"
+ },
+ "tools/test-draw-moments.js": {
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {
@@ -1585,6 +1593,10 @@
  },
  "tools/tv-bare-setup-in-chrome.test.py": {
   "checks": 73,
+  "counted_by": "lines"
+ },
+ "tools/tv-draw-moments-in-chrome.test.py": {
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/tv-drawstyle-in-chrome.test.py": {

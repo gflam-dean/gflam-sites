@@ -29,9 +29,9 @@ SHAPE_KEYS = {
                 'set_mode', 'picture_round', 'end_suspense', 'round_board', 'rounds'),
     'musical': ('playlist', 'playlists', 'hits_only', 'pattern', 'reveal', 'rounds', 'prize'),
     'bingo':   ('caller', 'pattern', 'cards', 'allow_early', 'ticket_kind', 'rounds', 'prize'),
-    'raffle':  ('draw_style', 'draw_time', 'allow_redraw', 'spin_seconds', 'jackpot_on', 'pick_order', 'announce_prize',
+    'raffle':  ('draw_style', 'draw_time', 'draw_countdown', 'allow_redraw', 'spin_seconds', 'jackpot_on', 'pick_order', 'announce_prize',
                 'tickets_from', 'range_min', 'range_max'),
-    'members': ('draw_style', 'draw_time'),
+    'members': ('draw_style', 'draw_time', 'draw_winner_big', 'draw_countdown'),
 }
 WORDS = ('prize',)   # kept as "there is one", never the venue's own words
 

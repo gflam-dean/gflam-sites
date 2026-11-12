@@ -42,6 +42,25 @@
     var m = mode === "members" ? "members" : "raffle";
     return (typeof once === "string" && CHOICES[m].hasOwnProperty(once)) ? once : usual(m, usualLook);
   }
+  /* THE WINNER TAKES THE SCREEN (13 Nov 2026, INBOX 285 option 2; OFF unless the venue's "Winner takes the screen" setting is on, game_prefs
+     draw_winner_big, default off). A member's name from the members list is "Last,First" or "First Last": always say it First Last. */
+  function niceName(raw) {
+    var s = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim();
+    var i = s.indexOf(",");
+    if (i > 0 && s.indexOf(",", i + 1) < 0) { var a = s.slice(0, i).trim(), b = s.slice(i + 1).trim(); if (a && b) s = b + " " + a; }
+    return s;
+  }
+  /* the name on one or two rows of tiles: one row up to 11 letters, else split at the space nearest the middle */
+  function nameLines(raw) {
+    var s = niceName(raw).toUpperCase(); if (!s) return [];
+    if (s.length <= 11 || s.indexOf(" ") < 0) return [s.slice(0, 16)];
+    var mid = s.length / 2, best = -1, i;
+    for (i = 0; i < s.length; i++) if (s.charAt(i) === " " && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+    return [s.slice(0, best).slice(0, 16), s.slice(best + 1).slice(0, 16)];
+  }
+  /* named sound slots, EMPTY on purpose: Dean has not chosen a clean close-mic split-flap recording (13 Nov 2026), and crowd noise is not a stand-in.
+     The flip board is built to work silent. */
+  var SOUND = { "splitflap-clean-closemic": "" };
   function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
   function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
   function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -176,8 +195,9 @@
     var clockEl = el("div", "vpds-clock", stage);
     var pnoEl = el("div", "vpds-pno", stage);
     if (o.prizeOf > 1 && o.prizeNo > 0) pnoEl.textContent = "Prize " + (o.prizeNo | 0) + " of " + (o.prizeOf | 0); else pnoEl.style.display = "none";
-    var drawnEl = (style === "flip") ? el("div", "vpds-drawn", stage) : null;
-    var C = { members: members, n: n, DRAW: DRAW, R: R, st: st, world: world, prizeEl: prizeEl, claimEl: claimEl, o: o };
+    var bigWin = style === "flip" && members && !!o.winnerBig;   // the winner takes the screen (off unless the venue switched it on)
+    var drawnEl = (style === "flip" && !bigWin && !o.noClock) ? el("div", "vpds-drawn", stage) : null;   // the numbers-drawn strip goes with the new winner moment (INBOX 285a)
+    var C = { big: bigWin, members: members, n: n, DRAW: DRAW, R: R, st: st, world: world, prizeEl: prizeEl, claimEl: claimEl, o: o };
     var view = null;
 
     function randNo() { return pad(lo + Math.floor(r() * span), n, members ? " " : "0"); }
@@ -201,14 +221,14 @@
     function applyClaim() {
       var line = claimLine(o.mode, st.winNo);
       claimEl.textContent = ""; var sp = el("span", "", claimEl); sp.style.whiteSpace = "nowrap"; sp.textContent = line;
-      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, style === "flip" ? 64 : (style === "ticket" ? 84 : 100), 40);
+      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, style === "flip" ? 64 : (style === "ticket" ? (o.noClock ? 72 : 84) : 100), 40);
     }
 
     function render(t) {
       st.t = t;
       view.render(t);
-      prizeEl.style.opacity = ease.out(seg(t, 0.2, 0.8));
-      clockEl.style.opacity = (st.clockText && t >= R + 1.5) ? ease.out(seg(t, R + 1.5, R + 2.1)) : 0;
+      prizeEl.style.opacity = ease.out(seg(t, 0.2, 0.8)) * (view.prizeK ? view.prizeK(t) : 1);
+      clockEl.style.opacity = (st.clockText && !o.noClock && t >= R + 1.5) ? ease.out(seg(t, R + 1.5, R + 2.1)) : 0;
       if (drawnEl) paintDrawn(t);
     }
     /* THE NUMBERS DRAWN SO FAR (flip board): they stay along the bottom, this draw's added when it lands; at most 10 */
@@ -245,7 +265,7 @@
       seek: function (t) { buildItemsOnce(); if (st.raf) root.cancelAnimationFrame(st.raf); st.dead = false; render(clamp(t, 0, TOTAL)); },
       setPick: function (p) {
         if (!p) return; buildItemsOnce();
-        st.winNo = pad(p.number == null ? "" : p.number, n, members ? " " : "0"); st.winName = p.name ? String(p.name) : "";
+        st.winNo = pad(p.number == null ? "" : p.number, n, members ? " " : "0"); st.winName = p.name ? (bigWin ? niceName(p.name) : String(p.name)) : "";
         st.items[st.N] = { no: st.winNo, nm: st.winName }; st.picked = true;
         view.refresh(); applyClaim(); render(st.t);
       },
@@ -256,6 +276,8 @@
       },
       setClock: function (s) { st.clockText = s || ""; clockEl.textContent = st.clockText; render(st.t); },
       isPicked: function () { return st.picked; },
+      showBlank: function () { st.blank = true; buildItemsOnce(); if (st.raf) root.cancelAnimationFrame(st.raf); st.started = true; render(INTRO + 0.01); root.addEventListener("resize", fit); },   // the empty board, for the countdown
+
       time: function () { return st.t; },
       destroy: function () { st.dead = true; if (st.raf) root.cancelAnimationFrame(st.raf); root.removeEventListener("resize", fit); host.innerHTML = ""; host.classList.remove("vpds"); }
     };
@@ -294,6 +316,7 @@
         els.push({ d: d, idx: -1, key: "", no: d.querySelector(".vpds-no"), s: d.querySelector(".vpds-sno"), nm: d.querySelector(".vpds-nm"), card: d.firstChild });
       }
       claimEl.style.top = (members ? 906 : 896) + "px"; clockEl.style.bottom = "12px"; clockEl.style.fontSize = "38px"; prizeEl.style.top = (members ? 810 : 768) + "px"; if (members) prizeEl.style.fontSize = "90px";
+      if (o.noClock && !members) { claimEl.style.top = "820px"; prizeEl.style.top = "712px"; prizeEl.style.fontSize = "96px"; }   // the countdown band owns the bottom of the screen: the claim line and prize sit above it
       v.after = function () {};
       v.refresh = function () { for (var i = 0; i < els.length; i++) els[i].idx = -1; };
       v.render = function (t) {
@@ -310,7 +333,7 @@
           var key = i + "|" + items[i].no + "|" + items[i].nm;
           if (e.key !== key) { e.key = key; var show = (i === N && !st.picked) ? "" : items[i].no; e.no.textContent = show; if (e.s) e.s.textContent = show; if (e.nm) e.nm.textContent = (i === N) ? items[i].nm : ""; }
           var x = (i - p) * pitch, y = 0, rot = 0, sc = 1, op = 1, sh = 0.35;
-          if (i === N) { y = lift; sc = 1 + 0.8 * wle; rot = -1.2 * wle; sh = 0.35 + 0.4 * wle; e.d.style.zIndex = 5; } else e.d.style.zIndex = 1;
+          if (i === N) { y = lift; sc = 1 + ((o.noClock && !members) ? 0.45 : 0.8) * wle; rot = -1.2 * wle; sh = 0.35 + 0.4 * wle; e.d.style.zIndex = 5; } else e.d.style.zIndex = 1;
           if (i !== N && t > R) {
             var tear = ease.out(seg(t, R + 0.1, R + 0.4)), drop = Math.pow(seg(t, R + 0.3, R + 1.2), 2);
             var sg = i > N ? 1 : -1; x += sg * (40 * tear + 60 * drop); y = 760 * drop; rot = sg * 7 * drop; op = 1 - seg(t, R + 0.7, R + 1.2);
@@ -329,14 +352,14 @@
       var FL = 0.11, v = { N: Math.round(c.DRAW * 3.6), moveDur: 0.13, freezeT: 1e9, S: null }, mods = [], nmods = [];
       var g = 18, pad0 = members ? 48 : 54, rowTarget = members ? 998 : 1134;
       var mw = Math.min(members ? 236 : 270, Math.floor((rowTarget - (n - 1) * g) / n)), mh = members ? 346 : 400;
-      var rowW = n * mw + (n - 1) * g, nh = 124;
-      var W = rowW + pad0 * 2, H = members ? pad0 * 2 + mh + 26 + nh : pad0 * 2 + mh;
+      var rowW = n * mw + (n - 1) * g, nh = 124, big = !!c.big, withName = members && !big;
+      var W = rowW + pad0 * 2, H = withName ? pad0 * 2 + mh + 26 + nh : pad0 * 2 + mh;
       var bd = el("div", "vpds-board", c.world); bd.style.width = W + "px"; bd.style.height = H + "px"; bd.style.top = (members ? 160 : 168) + "px";
       [[18, 18], [W - 40, 18], [18, H - 40], [W - 40, H - 40]].forEach(function (p) { var s = el("div", "vpds-screw", bd); s.style.left = p[0] + "px"; s.style.top = p[1] + "px"; });
       var row = el("div", "vpds-row", bd); row.style.left = (W - rowW) / 2 + "px"; row.style.top = pad0 + "px"; row.style.display = "flex";
       function makeMod(parent, w, h, fs, anton, dy) {
         var gap = Math.round(h * 0.012) + 2, hh = (h - gap) / 2;
-        var m = el("div", "vpds-m", parent); if (parent.children.length > 1 && parent === row) m.style.marginLeft = g + "px"; m.style.width = w + "px"; m.style.height = h + "px";
+        var m = el("div", "vpds-m", parent); if (parent.children.length > 1 && (parent === row || parent.__gap)) m.style.marginLeft = (parent.__gap || g) + "px"; m.style.width = w + "px"; m.style.height = h + "px";
         function mk(cls, top) {
           var d = el("div", "vpds-h " + cls, m); d.style.height = hh + "px"; if (cls === "vpds-hb") d.style.top = (hh + gap) + "px";
           var ch = el("div", "vpds-ch", d); ch.style.font = (anton ? 400 : 700) + " " + fs + "px/" + h + "px " + (anton ? "Anton" : "'Hanken Grotesk'") + ",sans-serif";
@@ -346,7 +369,7 @@
         var sT = mk("vpds-ht"), sB = mk("vpds-hb"), fT = mk("vpds-ht"), fB = mk("vpds-hb");
         [0, 1].forEach(function (q) { var p = el("div", "vpds-pin", m); p.style.height = Math.round(h * .06) + "px"; p.style.top = (hh + gap / 2 - h * .03) + "px"; p.style[q ? "right" : "left"] = "-3px"; });
         var last = [null, null];
-        return { set: function (o2, n2, p, flut) {
+        return { m: m, set: function (o2, n2, p, flut) {
           if (last[0] !== o2 || last[1] !== n2) { sT.c.textContent = n2; sB.c.textContent = o2; fT.c.textContent = o2; fB.c.textContent = n2; last = [o2, n2]; }
           var a = p < .5 ? Math.pow(p * 2, 1.5) : 1, b = p < .5 ? 0 : Math.pow((p - .5) * 2, 0.8);
           fT.d.style.visibility = p < .5 ? "visible" : "hidden"; fB.d.style.visibility = (p >= .5 && p < 1) ? "visible" : "hidden";
@@ -359,7 +382,7 @@
       }
       var fs = Math.min(Math.round(mh * .86), Math.round(mw * 1.75));
       for (var k = 0; k < n; k++) mods.push(makeMod(row, mw, mh, fs, true, 0));
-      if (members) {
+      if (withName) {
         var nr = el("div", "vpds-row", bd); nr.style.left = (W - rowW) / 2 + "px"; nr.style.top = (pad0 + mh + 26) + "px";
         nmods.push(makeMod(nr, rowW, nh, 96, false, -17));
       }
@@ -368,9 +391,42 @@
       claimEl.style.top = (bottom + (members ? 16 + 76 + 12 : 16 + 90 + 12)) + "px"; claimEl.style.fontSize = "64px"; claimEl.setAttribute("data-maxw", "1700");
       clockEl.style.bottom = "88px"; clockEl.style.fontSize = "38px";
       v.after = function () {};
-      v.refresh = function () {};
+      /* THE WINNER TAKES THE SCREEN: after the number lands the board shrinks to the top and the name flips in on giant tiles, one letter
+         after another, across one or two rows; yellow when the name is complete. Built when the server's winner is known. */
+      var bigTiles = [], bigEnd = 0, bigTop = 300, bigBottom = 0, bigDone = false, T0 = R + 0.9, STAG = 0.09, FLIPD = 0.24;
+      v.prizeK = big ? function (t) { return 1 - ease.brand(seg(t, R + 0.2, R + 0.7)); } : null;
+      v.claimT0 = R + 0.9;
+      v.refresh = function () {
+        if (!big || !st.winName || bigTiles.length) return;
+        var lines = nameLines(st.winName), gapT = 14, maxChars = 0, li, ci, k2 = 0;
+        for (li = 0; li < lines.length; li++) maxChars = Math.max(maxChars, lines[li].length);
+        var tw = Math.min(lines.length > 1 ? 170 : 200, Math.floor((1700 - (maxChars - 1) * gapT) / maxChars)), th = Math.min(lines.length > 1 ? 230 : 300, Math.round(tw * 1.5));
+        var fs2 = Math.min(Math.round(th * .86), Math.round(tw * 1.75)), rowGap = 20;
+        for (li = 0; li < lines.length; li++) {
+          var chars = lines[li], rw = 0, rowEl = el("div", "vpds-row", c.world); rowEl.__gap = gapT;
+          for (ci = 0; ci < chars.length; ci++) rw += (chars.charAt(ci) === " " ? Math.round(tw * .5) : tw) + (ci ? gapT : 0);
+          rowEl.style.left = Math.round((1920 - rw) / 2) + "px"; rowEl.style.top = (bigTop + li * (th + rowGap)) + "px";
+          for (ci = 0; ci < chars.length; ci++) {
+            var chh = chars.charAt(ci);
+            if (chh === " ") { var sp = el("div", "", rowEl); sp.style.cssText = "flex:none;width:" + Math.round(tw * .5) + "px;margin-left:" + gapT + "px"; continue; }
+            var md = makeMod(rowEl, tw, th, fs2, true, 0); bigTiles.push({ mod: md, ch: chh, k: k2++ });
+          }
+        }
+        bigEnd = T0 + (bigTiles.length - 1) * STAG + FLIPD; bigBottom = bigTop + lines.length * th + (lines.length - 1) * rowGap;
+        v.claimT0 = bigEnd + 0.25; claimEl.style.top = (bigBottom + 36) + "px";
+      };
       v.render = function (t) {
         var S = v.S, items = st.items, N = st.N; if (!S) return;
+        if (big) {
+          var tw2 = ease.brand(seg(t, R + 0.3, R + 1.0)), sc = 1 - 0.58 * tw2;
+          bd.style.transformOrigin = "50% 0"; bd.style.top = (160 - 90 * tw2) + "px"; bd.style.transform = "translateX(-50%) scale(" + sc + ")";
+          for (var bi = 0; bi < bigTiles.length; bi++) {
+            var bt = bigTiles[bi], p0 = seg(t, T0 + bt.k * STAG, T0 + bt.k * STAG + FLIPD);
+            bt.mod.set(p0 < 1 ? " " : bt.ch, bt.ch, p0, flut(t - (T0 + bt.k * STAG + FLIPD)));
+          }
+          var done = bigTiles.length > 0 && t >= bigEnd + 0.3;
+          if (done !== bigDone) { bigDone = done; for (bi = 0; bi < bigTiles.length; bi++) { var cs = bigTiles[bi].mod.m.querySelectorAll(".vpds-ch"); for (var cj = 0; cj < cs.length; cj++) cs[cj].style.color = done ? "#FFD93D" : ""; } }
+        }
         var z = 0.84 + 0.16 * ease.inOut(seg(t, INTRO, R)); c.world.style.transform = "scale(" + z + ")";
         function state(td) {
           if (td <= 0) return { i: 0, p: 1, since: 9 };
@@ -382,7 +438,7 @@
           return { i: N, p: 1, since: 0 };
         }
         function flut(s) { return (s > 0 && s < 0.35) ? 5 * Math.exp(-s * 14) * Math.sin(s * 70) : 0; }
-        function ch(i, k2) { var it = items[i]; if (i === N && !st.picked) return " "; return it.no.charAt(k2); }
+        function ch(i, k2) { var it = items[i]; if (st.blank || (i === N && !st.picked)) return " "; return it.no.charAt(k2); }
         var td = t - INTRO, q;
         for (q = 0; q < mods.length; q++) {
           var s2 = state(td < S.Tc ? td - q * 0.014 : td);
@@ -394,7 +450,7 @@
           var o3 = s3.i - 1 >= 0 ? (s3.i - 1 === N ? items[N].nm : "") : "", n3 = s3.i === N ? (st.picked ? items[N].nm : "") : "";
           nmods[q].set(s3.p < 1 ? o3 : n3, n3, o3 === n3 ? 1 : s3.p, (o3 === n3 && s3.i < N) ? 0 : flut(s3.since));
         }
-        var b2 = ease.brand(seg(t, R + 0.9, R + 1.5)); claimEl.style.opacity = b2; claimEl.style.transform = "translateY(" + ((1 - b2) * 18) + "px)";
+        var b2 = ease.brand(seg(t, v.claimT0, v.claimT0 + 0.6)); claimEl.style.opacity = b2; claimEl.style.transform = "translateY(" + ((1 - b2) * 18) + "px)";
       };
       return v;
     }
@@ -456,5 +512,5 @@
     }
   }
 
-  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
+  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
 })(typeof window !== "undefined" ? window : this);
