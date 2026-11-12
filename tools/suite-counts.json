@@ -379,6 +379,10 @@
   "checks": 152,
   "counted_by": "lines"
  },
+ "tools/one-phone-a-night-in-chrome.test.py": {
+  "checks": 53,
+  "counted_by": "lines"
+ },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"

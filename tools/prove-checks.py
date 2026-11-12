@@ -1372,6 +1372,20 @@ MUTATIONS = [
      'if is_local_path "$url"; then\n  exec "$real" "$@"',
      'if false; then\n  exec "$real" "$@"',
      'the shim refuses every push, local ones too, so gate-record.test.py\'s push to its bare temp remote is written down and the gate must read the record'),
+    # ONE PHONE ALL NIGHT, AND EVERY GAME ASKS "HOW WAS THAT?" (INBOX 295.2c/e, tools/one-phone-a-night-in-chrome.test.py;
+    # proven on the test server 12 Nov 2026)
+    ('one-phone-a-night-in-chrome.test.py', 'venueplay/play.html',
+     '    if(!savedName){ savedName=siblingName(room); if(savedName) saveName(room, savedName); }',
+     '',
+     'after trivia and musical bingo the bingo phone asks its name again and the console counts nobody until it is typed'),
+    ('one-phone-a-night-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '      var sib=siblingIdentity(room);\n',
+     '      var sib=null;\n',
+     'after trivia the musical phone asks "Your details" again (282.4)'),
+    ('one-phone-a-night-in-chrome.test.py', 'venueplay/app/vp-feedback.js',
+     'fetch(o.api + "/feedback", {',
+     'fetch(o.api + "/feedback-gone", {',
+     'the rating tapped on "How was that?" never reaches the Worker, so no row is kept (295.2e)'),
     # RELEASE.PY PUSHES BY SHA AND PROVES WHAT LANDED (27 Oct 2026, tools/release-push.test.py).
     ('release-push.test.py', 'tools/release.py',
      "    r = subprocess.run(['git', 'push', 'origin', sha + ':refs/heads/main'], cwd=ROOT)",
