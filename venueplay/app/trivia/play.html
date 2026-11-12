@@ -71,7 +71,7 @@
   .pq-text.long{font-size:19px}
   /* The countdown ring's own rules live in /app/vp-qring.css (shared with the drink coaster, 12 Nov 2026). */
   .panswers{display:flex;flex-direction:column;gap:12px}
-  .pans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:10px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;transition:opacity .15s,box-shadow .15s;line-height:1.12}
+  .pans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:14px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;transition:opacity .15s,box-shadow .15s;line-height:1.12}
   /* FULL COLOUR (Dean, 3 Nov 2026: players pick by colour at a glance). Each button is filled with its
      letter's colour, the letter big in Anton in white, the answer beside it near-black (AA on all four). */
   .pans.c0{--c:#FF5A4E}
@@ -116,6 +116,10 @@
   .pans.neutral.right .pl{color:#fff}
   .pans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}   /* your wrong pick: outlined in its colour */
   .pans.mine .pl{color:var(--c);text-shadow:none}
+  /* THE TAG NEVER SITS ON THE WORDS (Dean, 12 Nov 2026, INBOX 282.5, FINDINGS T2: "Right, yours" over the answer). The tag
+     ("Right · yours", "Yours", "Right answer", and "Locked in" on the question) straddles the card's top edge and reaches
+     12px into it, and a two-line answer started 4px from the top. Every answer card, on the question and on the result
+     alike, now keeps 14px clear above its words, so the tag sits in that strip and nothing moves between the two screens. */
   .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;text-transform:none;padding:4px 8px;border-radius:6px}
   .pans.mine .tg{color:var(--c)}
   .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:14px 18px;display:flex;align-items:center;gap:12px}
@@ -201,7 +205,7 @@
     .pq-text{font-size:20px;line-height:1.18}
     .pq-text.long{font-size:18px}
     .panswers{gap:10px}
-    .pans{min-height:72px;padding:6px 14px 6px 12px;border-radius:14px;gap:12px}
+    .pans{min-height:72px;padding:14px 14px 6px 12px;border-radius:14px;gap:12px}
     .pans .pl{font-size:36px;min-width:30px}
     .pstatus{margin-top:8px;font-size:15px}
     #vRes .pcard,.pcard{margin-top:8px;padding:7px 16px}
@@ -215,7 +219,7 @@
      tall the answers and the gaps close up a little more; nothing gets smaller than 15px. */
   @media (max-height:700px){
     .panswers{gap:8px}
-    .pans{min-height:62px;padding-top:4px;padding-bottom:4px}
+    .pans{min-height:62px;padding-top:14px;padding-bottom:4px}
     .pq-head{margin-bottom:8px}
     #vRes .pcard,.pcard{margin-top:6px;padding:5px 16px}
   }
