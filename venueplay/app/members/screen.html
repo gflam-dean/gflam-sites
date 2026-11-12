@@ -786,7 +786,7 @@
       tvSubscribed=true;
       tvStatus(true);
       // announce ourselves so the host replays the current jackpot + draws list
-      ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } });
+      ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true, showing:"members" } });   // what is on the wall, for the console (vp-tvclaim.js, 12 Nov 2026)
     }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
@@ -823,7 +823,7 @@
        host who reloads their tablet mid-draw, or opens the console while the wall is already
        live, reads "Waiting for screen" for the rest of the night with a working screen in
        front of them, and a live round's winner is never replayed to it. */
-    tvSend({ t:"tv_here" });
+    tvSend({ t:"tv_here", showing:"members" });   // and what is on the wall (vp-tvclaim.js)
     if(m.t==="host_here"){ /* host present; wait for state */ return; }
     if(m.t==="state"){
       /* A routine state refresh must NOT wipe a winner or a result off the wall. The host resends

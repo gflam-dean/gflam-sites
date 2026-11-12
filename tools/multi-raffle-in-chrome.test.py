@@ -130,6 +130,8 @@ try:
     htid, host = R.open('/app/raffle/host.html', width=1000, height=1100)
     ok('the console loads, signed in, on the raffle setup', R.until(host, '!document.getElementById("consoleView").classList.contains("hidden")', 60) is True,
        js(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    # 12 Nov 2026 (INBOX 286): opening the console no longer takes the TV; the host puts the raffle on it
+    R.until(host, '!!document.querySelector("#tvLine .tvline-btn")', 30); js(host, 'document.querySelector("#tvLine .tvline-btn").click(); true')
     ok('"Which raffle are you drawing?" shows both raffles, and tonight\'s (drawn %s) is picked by itself' % TODAY,
        R.until(host, '!document.getElementById("raffleField").classList.contains("hidden") && document.querySelectorAll("#rafflePick button").length===2', 20) is True
        and js(host, PICKS) == 'Meat Raffle · %s|*Chook Raffle · %s' % (OTHER, TODAY), js(host, PICKS))
@@ -187,6 +189,8 @@ try:
     ttid, tv = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
     htid, host = R.open('/app/raffle/host.html', width=1000, height=1100)
     R.until(host, '!document.getElementById("consoleView").classList.contains("hidden")', 60)
+    # 12 Nov 2026 (INBOX 286): opening the console no longer takes the TV; the host puts the raffle on it
+    R.until(host, '!!document.querySelector("#tvLine .tvline-btn")', 30); js(host, 'document.querySelector("#tvLine .tvline-btn").click(); true')
     ok('every saved prize shows', R.until(host, PRESETS + '==="Meat tray|Old prize"', 20) is True, js(host, PRESETS))
     time.sleep(1.5)   # /screen has answered by now (the presets wait on the same boot)
     ok('no "Which raffle" question', js(host, 'document.getElementById("raffleField").classList.contains("hidden") && document.querySelectorAll("#rafflePick button").length===0') is True,

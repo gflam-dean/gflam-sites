@@ -1510,6 +1510,7 @@
   function touchGame(){ lastGameTouch = Date.now(); }
   function reassertToTv(){
     if(!(G.status==="running" || G.status==="lobby")) return;
+    if(G.won) return;   // a finished game does not take the wall back when this tab comes into view (12 Nov 2026, see tvHere)
     if(Date.now() - lastGameTouch > STALE_GAME_MS){
       console.info("[vp] not putting a " +
         Math.round((Date.now()-lastGameTouch)/3600000) +
@@ -4322,7 +4323,11 @@
     if(m && m.hello && Date.now()-_lastHelloReplay>3000){
       _lastHelloReplay=Date.now();
       send({ t:"host_here" });
-      if(G.status==="running" || G.status==="lobby"){
+      /* A FINISHED GAME DOES NOT CLAIM THE TV (12 Nov 2026, INBOX 282.8, FINDINGS R3/R7). After Finish game
+         the status is still "running" (New game reuses it), so every TV that said hello, the Kogan app
+         starting up included, was sent mode:"bingo" and put back on last game's winner, over the raffle the
+         host had moved on to. The raffle could never get the wall back. Finished = G.won: no mode. */
+      if((G.status==="running" || G.status==="lobby") && !G.won){
         send({ t:"mode", mode:"bingo", caller:!!G.caller });   // running OR an open lobby: replay so the TV shows the game/QR
         sendState();
         if(G.claims.length) sendClaimPending();

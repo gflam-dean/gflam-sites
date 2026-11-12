@@ -132,6 +132,10 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  'curStep', 'syncStep', 'nextDrawText', 'advSumText', 'renderDrawChips', 'renderListAge', 'renderDone', 'minClaim', 'applyPresentRule'];
 /* ...and the SA note those read, lifted as the page writes it. */
 eval(liftVar(/var NO_PRESENT_NOTE=[^\n]*/) || (function () { throw new Error('NO_PRESENT_NOTE is not in the page any more'); })());
+/* The TV claim (/app/vp-tvclaim.js, 12 Nov 2026) is its own suite (tools/test-tv-takeover-12nov.js). Lifted
+   console code calls it; here it is the console that has already taken the TV, which is what these checks are about. */
+var TVC = { onAir: function () { return true; }, claim: function () {}, release: function () {}, heard: function () {},
+            whenShowing: function (fn) { fn(true); }, showing: function () { return true; }, render: function () {} };
 for (var li = 0; li < LIFTED.length; li++) eval(lift(LIFTED[li]));
 
 /* The page's own boot handler for a failed load, lifted from the page, not written here. */
@@ -324,6 +328,5 @@ G.busy = false; G.round = null;
 
 drainMicrotasks();
 print('');
-print(PASS + ' passed, ' + FAIL + ' failed');
-if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-print('PASS');
+if (FAIL) { print((PASS) + ' of ' + (PASS + FAIL) + ' checks passed'); throw new Error(FAIL + ' check(s) failed'); }
+print('ALL ' + PASS + ' CHECKS PASSED');

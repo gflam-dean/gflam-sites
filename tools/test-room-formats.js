@@ -46,14 +46,17 @@ function boot(F, o) {
   o = o || {};
   var v = {};
   v.tv = bootPage('venueplay/tv.html', { who: 'tv', search: '?venue=' + SLUG, old: o.oldTv });
-  v.host = bootPage('venueplay/app/' + F + '/host.html', { who: 'host', host: true, old: o.oldHost, exports: ['G', 'openLobby', 'send', 'gsend', 'bcast', 'sendState'] });
+  v.host = bootPage('venueplay/app/' + F + '/host.html', { who: 'host', host: true, old: o.oldHost, exports: ['G', 'openLobby', 'send', 'gsend', 'bcast', 'sendState', 'TVC'] });
   v.screen = bootPage('venueplay/app/' + F + '/screen.html', { who: 'screen', search: '?venue=' + SLUG, hop: true, embedded: true, old: o.oldTv });
   if (HAS_PHONE[F] && !o.noPhone) v.phone = bootPage('venueplay/app/' + F + '/play.html', { who: 'phone', search: '?room=' + CODE_B, exports: ['P', 'send'] });
   return v;
 }
 /* The console puts the game on: a lobby for musical and trivia (POST /session, the players'
-   channel opens), and nothing more for raffle and members, which announce themselves on connect. */
+   channel opens). The raffle and members draw used to announce themselves on connect; since 12 Nov 2026
+   (INBOX 286, /app/vp-tvclaim.js) they take the TV only on the host's action, so the host taps
+   "Put the raffle on the TV" here (an old cached console still announces itself on connect). */
 async function openGame(F, v) {
+  if ((F === 'raffle' || F === 'members') && v.host.ex.TVC) { try { v.host.ex.TVC.claim(false); } catch (e) { TIMER_ERRORS.push('claim: ' + e); } }
   if (F === 'trivia') {
     var SET = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', sel = v.host.$('setSel');
     sel.options = [{ value: SET, text: 'Pub classics', textContent: 'Pub classics', getAttribute: function () { return null; } }]; sel.selectedIndex = 0; sel.value = SET;
@@ -305,7 +308,6 @@ function errorsOf(v) { var e = []; for (var k in v) e = e.concat(v[k].errors.map
   check('nothing threw on any page all night', TIMER_ERRORS.length === 0 && tvAll.errors.length === 0, TIMER_ERRORS.concat(tvAll.errors).slice(0, 5));
 
   print('');
-  print(PASS + ' passed, ' + FAIL + ' failed');
-  if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
-  print('PASS');
+  if (FAIL) { print(PASS + ' of ' + (PASS + FAIL) + ' checks passed'); throw new Error(FAIL + ' check(s) failed'); }
+  print('ALL ' + PASS + ' CHECKS PASSED');
 })().catch(function (e) { print('RIG ERROR ' + e + '\n' + (e && e.stack)); throw e; });

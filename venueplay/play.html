@@ -1822,6 +1822,25 @@
      "busy" and no phone would ever follow the host anywhere. idle is excluded on
      purpose: it means the game just ended. */
   var PLAY_TYPES = { ball:1, started:1, state:1, resume:1, winner:1, claim_pending:1, cards:1 };
+  /* A FINISHED GAME'S SCREEN DOES NOT HANG ON ALL NIGHT (12 Nov 2026, INBOX 282.8b). Finish game leaves
+     the winner up, and nothing after it ever reached this phone: the raffle and the members draw have no
+     phone game, and End game's idle keeps a winner's screen on purpose. Dean's phone still showed the bingo
+     winner twenty minutes and four draws later. The host confirmed the win before it went up, so ten
+     minutes is long enough to show it at the bar; then the phone goes back to waiting for the host and
+     looks for whatever is on now. A new bingo round clears it sooner, as it always has, and another
+     game's lobby too (the mode branch below). */
+  var DONE_SHOW_MS = 10 * 60 * 1000;
+  function doneSweep(){
+    if(!(P.won || P.ended)){ P.doneAt=0; return; }
+    if(!P.doneAt){ P.doneAt=Date.now(); return; }
+    if(Date.now() - P.doneAt < DONE_SHOW_MS) return;
+    P.doneAt=0;
+    P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.shared=false; P.sharedWith=[]; P.lostBy="";
+    P.active=false; P.cards=[]; P.called=[];
+    clearWin(P.room); clearStage(P.room); setHeaderBall(0); route();
+    if(typeof VP_LOOK_NOW === "function") VP_LOOK_NOW(true);
+  }
+  setInterval(doneSweep, 30000);
   var lastPlay = 0;
   var VP_LOOK_NOW = null;   // set by watchVenue: the lookup that decides where a phone belongs
   function playingHere(){ return P.active && lastPlay && (Date.now() - lastPlay < 60000); }
@@ -2048,6 +2067,7 @@
         saveStage();
         if(P.cards.length){ renderCards(); show("vCard"); } else { renderStageWin(); }
       } else {
+        P.doneAt=Date.now();   // the finished game's screen leaves by itself later (doneSweep)
         if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
         else {
           var first=ws.filter(function(w){ return w.pid!==P.pid; })[0]||ws[0];
@@ -2119,7 +2139,7 @@
     // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
     // message (cards / started) clears it below, so it never lingers into the next game.
     var _w=loadWin(room);
-    if(_w && P.joined){ P.won=true; P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
+    if(_w && P.joined){ P.won=true; P.doneAt=_w.ts||Date.now(); P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
     var _sw=loadStage(room);
     if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
