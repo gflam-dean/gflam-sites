@@ -921,7 +921,7 @@
       return;
     }
     clearTimers(); hideWinnerCard();
-    if(CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
+    if(typeof CD!=="undefined" && CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
@@ -1272,7 +1272,7 @@
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, INBOX 286)
         send({ t:"mode", mode:"members", claim:1 });   // so a /tv that just reloaded mid-draw comes back to it
         if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:(G.round.remaining>0?G.round.remaining:0) }); }
-        else if(CD && CD.running()){ CD.resend(); }
+        else if(typeof CD!=="undefined" && CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }
     }

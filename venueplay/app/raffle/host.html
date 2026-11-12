@@ -1305,7 +1305,7 @@
       return;
     }
 
-    if(CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
+    if(typeof CD!=="undefined" && CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
     G.busy=true; clearTimers(); G.lastWin=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
     drawBtnBusy();
@@ -1581,7 +1581,7 @@
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, FINDINGS R6)
         send({ t:"mode", mode:"raffle", claim:1 });   // so a /tv that just reloaded mid-raffle comes back to it
         if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
-        else if(CD && CD.running()){ CD.resend(); }
+        else if(typeof CD!=="undefined" && CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }
     }
