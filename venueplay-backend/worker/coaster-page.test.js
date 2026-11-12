@@ -195,21 +195,24 @@ var fakeRoot = { document: { addEventListener: function (ev, fn) { if (ev === "p
   Audio: function () { this.play = function () { fakeRoot.played = (fakeRoot.played || 0) + 1; }; }, navigator: {} };
 new Function("window", "self", "root", CEL.replace(/\}\)\(typeof window !== ["']undefined["'] \? window : this\);?\s*$/, "})(window);"))(fakeRoot, fakeRoot, fakeRoot);
 var VC = fakeRoot.VPCelebrate;
-pass("vp-celebrate.js is the one sound player: named slots 'timesup' and 'podium', empty until Dean's sound pass", !!VC && VC.SOUNDS && VC.SOUNDS.timesup === "" && VC.SOUNDS.podium === "" && typeof VC.sound === "function", VC && VC.SOUNDS);
+pass("vp-celebrate.js is the one sound player: named slots 'timesup', 'podium' and 'answerup' hold Dean's files (13 Nov 2026)", !!VC && VC.SOUNDS && /^\/app\/sounds\/.+\.mp3$/.test(VC.SOUNDS.timesup) && /^\/app\/sounds\/.+\.mp3$/.test(VC.SOUNDS.podium) && /^\/app\/sounds\/.+\.mp3$/.test(VC.SOUNDS.answerup) && typeof VC.sound === "function", VC && VC.SOUNDS);
 tapFns.forEach(function (f) { f(); });   // the player has tapped the page
-pass("an empty slot plays nothing (never a synth stand-in)", VC && VC.sound("timesup") === false && !fakeRoot.played);
-VC.SOUNDS.podium = "/sounds/podium.mp3";
-pass("dropping a file in a slot is all it takes: it then plays, after a tap", VC.sound("podium") === true && fakeRoot.played === 1, fakeRoot.played);
+fakeRoot.played = 0;   // the first tap also warms the audio element with a silent clip: not a sound
+pass("the coaster has no host switch, so its sounds stay off (the per-game Game sounds switch says OFF until told)", VC.sound("timesup") === false && VC.sound("podium") === false && !fakeRoot.played);
 VC.SOUNDS.podium = "";
+pass("an empty slot plays nothing (never a synth stand-in), even with its game ON", (VC.setGameSounds("trivia", true), VC.sound("podium")) === false && !fakeRoot.played);
+VC.SOUNDS.podium = "/sounds/podium.mp3";
+pass("dropping a file in a slot is all it takes: it then plays, after a tap, once the game's sounds are ON", VC.sound("podium") === true && fakeRoot.played === 1, fakeRoot.played);
+VC.setGameSounds("trivia", false);
 /* answerup (INBOX 282.5): a slot for the trivia answer going up before the clock reaches 0, played by the WALL (a TV is
    driven by a remote and is never tapped), never by a phone that has not been tapped. A fresh player with no tap yet. */
 var fakeRoot2 = { document: { addEventListener: function () {}, removeEventListener: function () {} }, localStorage: { getItem: function () { return "1"; }, setItem: function () {} }, location: { pathname: "/app/trivia/screen", search: "" },
   Audio: function () { this.play = function () { fakeRoot2.played = (fakeRoot2.played || 0) + 1; }; }, navigator: {} };
 new Function("window", "self", "root", CEL.replace(/\}\)\(typeof window !== ["']undefined["'] \? window : this\);?\s*$/, "})(window);"))(fakeRoot2, fakeRoot2, fakeRoot2);
 var VC2 = fakeRoot2.VPCelebrate;
-pass("the 'answerup' slot is there for Dean's file, empty, and empty plays nothing even on the wall", VC2 && VC2.SOUNDS.answerup === "" && VC2.sound("answerup", { wall: true }) === false && !fakeRoot2.played, VC2 && VC2.SOUNDS);
-VC2.SOUNDS.answerup = "/sounds/answerup.mp3";
-pass("with a file: a phone never tapped (and muted) stays silent, the wall plays it with no tap", VC2.sound("answerup") === false && VC2.sound("answerup", { wall: true }) === true && fakeRoot2.played === 1, fakeRoot2.played);
+pass("the 'answerup' slot holds Dean's chime, and it plays nothing while the game's sounds are OFF, even on the wall", VC2 && /^\/app\/sounds\/.+\.mp3$/.test(VC2.SOUNDS.answerup) && VC2.sound("answerup", { wall: true }) === false && !fakeRoot2.played, VC2 && VC2.SOUNDS);
+VC2.setGameSounds("trivia", true);
+pass("sounds ON: a phone never tapped (and muted) stays silent, the wall plays it with no tap", VC2.sound("answerup") === false && VC2.sound("answerup", { wall: true }) === true && fakeRoot2.played === 1, fakeRoot2.played);
 pass("Time's up asks the one player for its slot and the one buzz, and has no player of its own", /c\.sound\('timesup'\)/.test(QR) && /c\.buzz\(180\)/.test(QR) && !/new root\.Audio|\.play\(\)|vibrate/.test(QR));
 print("\nTHE PODIUM (INBOX 313): IN THE LEAD OR TOP 3, THE TRIVIA NIGHT'S STEPS, THEN THE BOARD");
 var PR = {};

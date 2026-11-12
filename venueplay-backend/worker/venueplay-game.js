@@ -4750,6 +4750,7 @@ const gpSwaps = (v) => {
 const GAME_PREFS_KEYS = {
   bingo: {
     caller:        gpBool,
+    sounds:        gpBool,   // the recorded game sounds (13 Nov 2026, INBOX 316): OFF unless the venue switches them on
     // a built-in pattern, or the venue's own (c:<uuid>, migration 118); the console checks it still exists
     pattern:       (v) => ({ one: 1, two: 1, full: 1, corners: 1, top: 1, middle: 1, bottom: 1 }[v] ||
                            (typeof v === 'string' && /^c:/.test(v) && GP_UUID.test(v.slice(2)))) ? v : undefined,
@@ -4787,6 +4788,7 @@ const GAME_PREFS_KEYS = {
     double_points: gpBool,
     double_last:   gpInt(1, 100),
     buzzer:        gpBool,   // the time's-up buzzer, OFF unless the venue switches it on (3 Nov 2026)
+    sounds:        gpBool,   // the recorded game sounds (13 Nov 2026, INBOX 316): OFF unless the venue switches them on
     buzzer_where:  (v) => ({ tv: 1, device: 1 }[v] ? v : undefined),   // where it plays: the TV, or the host's own device
     // the setup wizard (INBOX 104 round 3): a mix or picked categories, one-off theme nights, the usual prize buttons
     set_mode:      (v) => ({ mix: 1, pick: 1 }[v] ? v : undefined),
@@ -4857,6 +4859,7 @@ const GAME_PREFS_KEYS = {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,
     playlist_name: (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     hits_only:     (v) => (typeof v === 'boolean') ? v : undefined,
+    sounds:        gpBool,   // the recorded game sounds (13 Nov 2026, INBOX 316): OFF unless the venue switches them on
     pattern:       (v) => ({ any: 1, one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),   // 'any' = Any line (INBOX 256)
     prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),

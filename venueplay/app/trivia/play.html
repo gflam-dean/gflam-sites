@@ -1186,6 +1186,9 @@
   var _prPhone=null;   // Punters Reckon, mounted on first use
   function onMsg(m){
     if(!m||!m.t) return;
+    /* GAME SOUNDS (INBOX 316): any host message may carry the venue's "Game sounds" switch; this phone plays the recorded ones only while it is ON (and the player has not muted). */
+    if(typeof m.sounds==="boolean"){ try{ if(window.VPCelebrate && VPCelebrate.setGameSounds) VPCelebrate.setGameSounds("trivia", m.sounds); }catch(e){} }
+    if(m.t==="sounds") return;
     /* A host is on the channel: the console's heartbeat every 30 s, or anything it sends. Heard, the "no game" timer is moot. */
     var HOST_WORDS={ host_here:1, session:1, mode:1, started:1, state:1, question:1, lock:1, time:1, reveal:1, leaderboard:1, podium:1, idle:1, closed:1, handin:1, roundanswers:1 };
     if(HOST_WORDS[m.t]){ P.hostAt=Date.now(); if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; } }
