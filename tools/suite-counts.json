@@ -195,6 +195,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/design-audit-small-13nov-in-chrome.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/details-autofill-in-chrome.test.py": {
   "checks": 92,
   "counted_by": "lines"

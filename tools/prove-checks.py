@@ -3259,8 +3259,8 @@ MUTATIONS = [
      'venue television all night with nothing able to hide it'),
 
     ('no page uses a CSS variable it never defines', 'venueplay/tv.html',
-     'font-size:clamp(8px,1.1cqw,22px);color:var(--muted)}',
-     'font-size:clamp(8px,1.1cqw,22px);color:var(--muted-2)}',
+     'font-size:clamp(9px,1.2cqw,24px);color:var(--muted)}',
+     'font-size:clamp(9px,1.2cqw,24px);color:var(--muted-2)}',
      'one renamed token leaves a var() with nothing behind it, and a CSS variable that is '
      'not defined kills the whole declaration silently'),
 
@@ -15701,7 +15701,7 @@ MUTATIONS = [
      ' onerror="this.parentNode.classList.remove(\'has-badge\')"', '',
      'if Google\'s badge cannot load, the TV shows a broken image instead of the words version'),
     ('tv-landing-in-chrome.test.py', 'venueplay/tv.html',
-     '  .su-go > a{box-sizing:border-box;width:min(26cqw,440px);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}',
+     '  .su-go > a{box-sizing:border-box;width:min(26cqw,440px);min-width:min(220px,100%);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}',
      '  .su-go > a{box-sizing:border-box;display:flex;align-items:center;justify-content:center}',
      'the two buttons on /tv are different sizes again (Dean, 31 Oct 2026: "similar size and position")'),
     ('tv-landing-in-chrome.test.py', 'venueplay/tv.html',
@@ -22302,6 +22302,19 @@ MUTATIONS = [
      '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",',
      '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: true, advanced: true, prompt: "Game sounds",',
      "trivia's Game sounds panel starts On"),
+    # 13 Nov 2026, fix/design-audit-small-13nov (INBOX 353g): the TV set-up page on a phone, the host header on a phone, no spaced caps on the TV.
+    ('design-audit-small-13nov-in-chrome.test.py', 'venueplay/tv.html',
+     '.su-go > a{box-sizing:border-box;width:min(26cqw,440px);min-width:min(220px,100%);',
+     '.su-go > a{box-sizing:border-box;width:min(26cqw,440px);',
+     'on a phone the TV set-up buttons shrink to 26% of a 375px card: "Put in the screen code" spills out of its button and the Google Play badge is cropped'),
+    ('design-audit-small-13nov-in-chrome.test.py', 'venueplay/app/index.html',
+     '@media (max-width:480px){ .hactions{flex-wrap:wrap;max-width:100%;min-width:0} }',
+     '@media (max-width:480px){ .hactions{max-width:100%;min-width:0} }',
+     'on a phone the host header buttons run 65px off the right edge of the screen'),
+    ('design-audit-small-13nov-in-chrome.test.py', 'venueplay/tv.html',
+     'font-weight:800;text-transform:none;letter-spacing:0;\n    font-size:clamp(10px,1.4cqw,15px);line-height:1;',
+     'font-weight:800;text-transform:uppercase;letter-spacing:.12em;\n    font-size:clamp(10px,1.4cqw,15px);line-height:1;',
+     'the TV go-fullscreen button brings back spaced capitals, the banned AI look'),
 ]
 
 

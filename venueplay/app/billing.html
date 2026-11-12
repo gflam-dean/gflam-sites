@@ -41,6 +41,7 @@
   .brand .div{width:1px;height:20px;background:var(--line)}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:11px;color:var(--pink)}
   .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  @media (max-width:480px){ .hactions{flex-wrap:wrap;max-width:100%;min-width:0} }   /* design audit 13 Nov 2026: five buttons ran 65px off a 375 screen */
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
   .hact:hover{border-color:var(--pink);color:#fff}
   /* A link and a button in one row are the same box (3 Nov 2026): the anchor was 34px to the buttons' 32. */

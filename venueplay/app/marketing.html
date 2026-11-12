@@ -28,6 +28,7 @@
   .brand .div{width:1px;height:20px;background:var(--line)}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:11px;color:var(--pink)}
   .hactions{margin-left:auto;display:flex;gap:8px}
+  @media (max-width:480px){ .hactions{flex-wrap:wrap;max-width:100%;min-width:0} }   /* design audit 13 Nov 2026 */
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer}
   .hact:hover{border-color:var(--pink);color:#fff}
   .wrap{max-width:860px;margin:0 auto;padding:22px 18px 90px}

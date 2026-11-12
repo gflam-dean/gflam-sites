@@ -78,7 +78,7 @@
    Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
    that put a venue's name across the join panel on 5 Sep: two elements in one corner,
    one in cqw and one in px, only ever correct at a single screen width. */
-  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,22px);color:var(--muted)}
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:clamp(9px,1.2cqw,24px);color:var(--muted)}
   /* display:flex BEATS THE hidden ATTRIBUTE. The badge is markup-hidden and this rule
      made it visible from the first frame on every screen, reading "Connecting", until
      tvStatus(true) ran. On ?demo=1 connectRealtime() is deliberately never called, so
@@ -95,8 +95,8 @@
   .tv-fs{position:absolute;left:2cqw;bottom:2.4cqw;z-index:9;display:flex;align-items:center;gap:.7cqw;
     background:rgba(10,10,11,.72);border:1px solid rgba(255,31,142,.5);border-radius:1.2cqw;
     padding:.85cqw 1.4cqw;color:var(--text);cursor:pointer;backdrop-filter:blur(6px);
-    font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
-    font-size:clamp(9px,1.3cqw,14px);line-height:1;transition:background .2s ease,border-color .2s ease}
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;
+    font-size:clamp(10px,1.4cqw,15px);line-height:1;transition:background .2s ease,border-color .2s ease}
   .tv-fs:hover{background:rgba(255,31,142,.16);border-color:var(--pink)}
   .tv-fs svg{display:block;filter:drop-shadow(0 0 4px rgba(255,31,142,.7))}
   .tv-fs .fshint{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:.02em;font-size:.82em}
@@ -296,7 +296,7 @@
      both centred, words on top, and the button the same size at the same height at the foot of each card. */
   .su-way{flex:1 1 26cqw;min-width:260px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:1.4cqw;padding:1.8cqw 2cqw;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1cqw}
   .su-way .su-go{margin-top:auto;padding-top:.6cqw;display:flex;justify-content:center;width:100%}
-  .su-go > a{box-sizing:border-box;width:min(26cqw,440px);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}
+  .su-go > a{box-sizing:border-box;width:min(26cqw,440px);min-width:min(220px,100%);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}
   .su-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,2.5cqw,40px);line-height:1.15;color:#fff}
   .su-head b{color:var(--pink);font-weight:800}
   .su-text{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,1.75cqw,28px);line-height:1.4;color:var(--text)}
@@ -313,7 +313,7 @@
   .gplay .gp-words{display:flex;flex-direction:column;line-height:1.05}
   .gplay .gp-small{font-family:'Manrope',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(10px,1.1cqw,18px)}
   .gplay .gp-big{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(18px,2.3cqw,38px)}
-  .su-btn{display:inline-block;text-decoration:none;background:var(--pink);color:#fff;border-radius:1cqw;padding:1cqw 2cqw;
+  .su-btn{display:inline-block;text-align:center;text-decoration:none;background:var(--pink);color:#fff;border-radius:1cqw;padding:1cqw 2cqw;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(16px,2cqw,32px)}
   /* A TV remote moves focus from link to link, so the one it is on has to be obvious across a room. */
   .gplay:focus,.su-btn:focus,.gplay:hover,.su-btn:hover{outline:.35cqw solid var(--gold);outline-offset:.3cqw}
@@ -321,7 +321,7 @@
      named, muted, and never a link. The store box is the badge's size, so the two halves still match. */
   .su-soon{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.35cqw,22px);line-height:1.35;color:var(--muted)}
   .su-soon[hidden],.su-store[hidden]{display:none}
-  .su-store{box-sizing:border-box;width:min(26cqw,440px);height:clamp(48px,5.6cqw,86px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  .su-store{box-sizing:border-box;width:min(26cqw,440px);min-width:min(220px,100%);height:clamp(48px,5.6cqw,86px);display:flex;flex-direction:column;align-items:center;justify-content:center;
     border:2px solid var(--line);border-radius:1cqw;line-height:1.1}
   .su-store .ss-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(15px,1.8cqw,30px);color:#fff}
   .su-store .ss-when{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.2cqw,20px);color:var(--muted)}
@@ -394,7 +394,7 @@
     background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10)}
   .bvissue[hidden]{display:none}
   .bvissuelbl{font-family:'JetBrains Mono',ui-monospace,monospace;
-    font-size:clamp(9px,1.2cqw,15px);letter-spacing:.12em;text-transform:uppercase;
+    font-size:clamp(10px,1.3cqw,16px);letter-spacing:0;text-transform:none;
     color:var(--muted,#8A8A95);margin:0 0 .35em}
   .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
     color:var(--gold,#FFC24B);word-break:break-all;line-height:1.25}
@@ -465,7 +465,7 @@
               margin-bottom:.6cqw}
 
   /* ---- holding card ---- */
-  #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   #tvHold .hbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,8cqw,84px);color:#fff;line-height:1;margin:1.4cqw 0}
   #tvHold .hbig b{color:var(--pink)}
   #tvHold .hsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,18px);color:var(--muted)}
@@ -578,7 +578,7 @@
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
   .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,22px);color:var(--muted)}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:clamp(10px,1.4cqw,24px);color:var(--muted)}
   /* The join code a latecomer reads from across the bar. The 26px ceiling won on every 1080p TV. */
   .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,52px);color:var(--gold);letter-spacing:.08em}
 
