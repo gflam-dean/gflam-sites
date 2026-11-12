@@ -63,6 +63,26 @@ for p in PAGES:
         if EXCEPT.search(sel): continue
         bad.append('%s: %s' % (p, sel[:50]))
 ok('no rule in %d pages sets UPPERCASE with wide letter spacing (outside the named exceptions)' % len(PAGES), not bad, bad[:6])
+# 1b. THE GAME SCREENS, WITH NO LABEL EXCEPTIONS (Dean, 12 Nov 2026, INBOX 288.1 / 291: "QUESTION 1 OF 11", "LOCKED IN",
+# "SECS", "NUMBER", "LAST FIVE", "OF 90 CALLED", "BINGO ON 57", "WINS" were all spaced caps and all go). The three player
+# phones, their shared frame, and the number bingo wall's new look (#tvRun, #tvClaim, #tvWin in tv.html). Only a typed
+# join code (an input the player types into, drawn under the six boxes) may still be spaced.
+GAME = ['play.html', 'app/trivia/play.html', 'app/musical/play.html', 'app/vp-phone.css', 'app/vp-tonight.css', 'app/vp-feedback.js', 'tv.html']
+CODE_ONLY = re.compile(r'input|\.code\b|codein|codeval|-code\b|\.ccode|tjc')
+gbad = []
+for p in GAME:
+    t = rd(p)
+    for selx, body in rules_with(t, 'letter-spacing'):
+        sel = selx.split('*/')[-1].strip()
+        if p == 'tv.html' and not re.search(r'#tvRun|#tvClaim|#tvWin', sel): continue
+        ls = re.search(r'letter-spacing:\s*(-?[\d.]+)(em|px|cqw|rem)', body)
+        if not ls: continue
+        v = float(ls.group(1)); u = ls.group(2)
+        if not ((u == 'em' and v >= 0.05) or (u == 'px' and v >= 1) or (u in ('cqw', 'rem') and v >= 0.1)): continue
+        caps = re.search(r'text-transform:\s*uppercase', body) or re.search(r'JetBrains Mono', body)
+        if not caps or CODE_ONLY.search(sel): continue
+        gbad.append('%s: %s' % (p, sel[:60]))
+ok('no spaced capitals or spaced mono on any game screen (3 phones, their frame, the bingo wall), no label exceptions', not gbad, gbad[:8])
 IDX = rd('index.html')
 ok('home page labels are plain sentence case: .label has no UPPERCASE and no ::before dash',
    re.search(r"\.label\{[^}]*\}", IDX) and 'uppercase' not in re.search(r"\.label\{[^}]*\}", IDX).group(0) and '.label::before' not in IDX)

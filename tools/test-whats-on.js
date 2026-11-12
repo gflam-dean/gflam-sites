@@ -158,7 +158,7 @@ ok('tap Saturday (no game): the card says Sat 14 Nov, then the venue\'s two nigh
 /* Dean, 10 Nov 2026 (INBOX 114): the day strip underlines every day in pink (the venue's colour replaces it), today is a light touch,
    a one-off date is "Fri 13 Nov" (never "Friday 13"), a regular weekly night says its day in the plural. */
 var TJS = readFile('venueplay/app/vp-tonight.js');
-ok('phone strip: EVERY day has the pink underline, and a venue colour replaces it (--vpt-accent)', /box-shadow:inset 0 -3px 0 var\(--vpt-accent,#FF1F8E\)/.test(rule(PC, '.vpt-week .d')) && !/box-shadow/.test(rule(PC, '.vpt-week .d.on')));
+ok('phone strip: ONLY a night with our games has the pink underline (Dean, 12 Nov 2026, INBOX 288.5), and a venue colour replaces it (--vpt-accent)', /box-shadow:inset 0 -3px 0 var\(--vpt-accent,#FF1F8E\)/.test(rule(PC, '.vpt-week .d.on')) && !/box-shadow/.test(rule(PC, '.vpt-week .d')));
 ok('phone strip: today is a light touch (a thin outline), not a pink fill or a heavy highlight', /outline:1px solid rgba\(255,255,255,\.\d+\)/.test(rule(PC, '.vpt-week .d.now')) && !/background/.test(rule(PC, '.vpt-week .d.now')));
 var lbA = T.lobby(new Node('div'), { name: 'Sam', me: 'trivia', week: WEEK, events: EV, now: THU, accent: '#00AAFF' }), lbB = T.lobby(new Node('div'), { name: 'Sam', me: 'trivia', week: WEEK, events: EV, now: THU, accent: 'red; x' });
 ok('a venue colour (#rrggbb) goes on the strip; anything else is ignored and the pink stays', lbA.el.style['--vpt-accent'] === '#00AAFF' && lbB.el.style['--vpt-accent'] === undefined);

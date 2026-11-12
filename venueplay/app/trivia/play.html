@@ -63,7 +63,7 @@
   /* THE QUESTION, NEW LOOK (Dean, 3 Nov 2026): one label line, the question left with the clock ring beside
      it, and the four answers in the TV's colours: coral, blue, amber, violet, as a coloured edge and a
      letter chip on a dark card. The reveal uses the same layout, so the question does not move. */
-  .pq-count{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:15px;line-height:1.3;color:var(--muted);margin:0;text-align:center}   /* centred under the ring (Dean, 3 Nov 2026) */
+  .pq-count{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:15px;line-height:1.3;color:var(--muted);margin:0;text-align:center}   /* centred under the ring (Dean, 3 Nov 2026) */
   .pq-count b{color:#fff;font-weight:700}
   .pq-head{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}   /* the countdown ABOVE the question (Dean, 3 Nov 2026) */
   .pq-text{align-self:stretch;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
@@ -74,7 +74,7 @@
   .pq-ring .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
   .pq-ring .n{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
   .pq-ring .n b{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1}
-  .pq-ring .n span{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+  .pq-ring .n span{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;letter-spacing:0;text-transform:none;margin-top:1px;color:#B9B9C6}   /* "secs" in normal case, well inside the ring (Dean, 12 Nov 2026: SECS spilled out of it and spaced caps are the AI look) */
   .pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
   .pq-cd{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* the words, for a screen reader; the ring shows the time */
   .panswers{display:flex;flex-direction:column;gap:12px}
@@ -97,10 +97,11 @@
   .panswers.alen-3 .pans{font-size:18px}
   /* LOCKED IN: your pick outlined in its own colour and tagged, the others dim. */
   .pans.picked{box-shadow:0 0 0 3px #0A0A0B,0 0 0 6px var(--c)}   /* the pick stays full colour, ringed */
-  .pans.picked::after{content:"Locked in";position:absolute;left:20px;top:-11px;background:#0A0A0B;color:var(--c);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
+  .pans.picked::after{content:"Locked in";position:absolute;left:20px;top:-11px;background:#0A0A0B;color:var(--c);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;letter-spacing:0;text-transform:none;padding:4px 8px;border-radius:6px}
   .pans:disabled{cursor:not-allowed}
   .pans.dim{opacity:.32}
   .pstatus{text-align:center;font-family:'Manrope',sans-serif;font-weight:600;font-size:16px;color:var(--muted);margin-top:18px}
+  .pstatus.late{color:#fff;font-weight:700}
   .pstatus.locked{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .pstatus.warn{color:var(--roll)}
   .pcard .l{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
@@ -169,7 +170,7 @@
   body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .pfoot svg{ color:#191420!important }
   body.light .pans.right{ background:#2FD08A; color:#0A0A0B }
   .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
-    font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+    font-weight:800;font-size:15px;letter-spacing:0;text-transform:none}
   /* THE SCANNED DEMO (Dean, 4 Nov 2026): the start, the end card and the call-back form. Nothing under 15px. */
   .dgo{margin-top:22px}
   .dlead{color:var(--muted);font-size:16px;line-height:1.45;margin-top:4px}
@@ -216,6 +217,26 @@
     .finalwrap #finalBig{font-size:52px;margin-bottom:8px}
     .winner #finalBig{font-size:72px}
   }
+  /* AN IPHONE SE (375x667) AND SMALLER (Dean's standing rule, 12 Nov 2026: one screen, no scrolling, INBOX 289.4): a long
+     question with four two-line answers and the result card under them came out 15px taller than the screen. Under 700px
+     tall the answers and the gaps close up a little more; nothing gets smaller than 15px. */
+  @media (max-height:700px){
+    .panswers{gap:8px}
+    .pans{min-height:62px;padding-top:4px;padding-bottom:4px}
+    .pq-head{margin-bottom:8px}
+    #vRes .pcard,.pcard{margin-top:6px;padding:5px 16px}
+  }
+  /* WHILE THE FEEDBACK FOLLOW-UP IS OPEN (/app/vp-feedback.js, body.vpfb-more): the final screen closes up so the chips,
+     the line and Send fit with it, and typing never scrolls the page (Dean, 12 Nov 2026). */
+  body.vpfb-more .finalwrap{padding-top:6px}
+  body.vpfb-more .finalwrap .fk{margin-bottom:2px}
+  body.vpfb-more .finalwrap #finalBig{font-size:40px!important;margin:0 0 4px}
+  body.vpfb-more .finalwrap .frule{height:4px;margin:2px 0 6px}
+  body.vpfb-more .finalwrap #finalSub{font-size:16px}
+  body.vpfb-more .finalwrap .pnote{display:none}
+  body.vpfb-more .finalwrap .scorebox{margin-top:4px;font-size:19px}
+  body.vpfb-more .finalwrap .rankline{margin-top:0}
+  body.vpfb-more .finalwrap .vpfb{margin-top:8px}
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
@@ -228,6 +249,7 @@
     </div>
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
+      <button type="button" class="menuitem vp-mclose-row" id="menuClose">Close menu</button>   <!-- a way back out (Dean, 12 Nov 2026, INBOX 291) -->
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
       <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
@@ -815,6 +837,14 @@
      swiped-away tab) forgot what it had tapped: the buttons came back live, and at the reveal a team
      that had answered right and scored was told "NO ANSWER" and "Total 0 points" while the
      leaderboard said otherwise (audit, 25 Sep 2026, found by playing). Kept per game and question. */
+  /* A PHONE THAT JOINS LATE (Dean, 12 Nov 2026, INBOX 293): "You've joined at question 4. Jump in, the next one's yours."
+     (or "this one's yours" when a question is live). Questions it never saw stay missed: a finished question's answer is
+     never replayed to it. What this phone has seen is kept per game on the phone ("vp-tseen-<room>-<game>"), so a reload
+     is not mistaken for a late join. */
+  function seenKey(){ return "vp-tseen-"+(P.room||"")+"-"+(P.gameId||""); }
+  function sawAny(){ try{ return !!localStorage.getItem(seenKey()); }catch(e){ return false; } }
+  function markSeen(){ try{ localStorage.setItem(seenKey(), "1"); }catch(e){} }
+  function lateLine(n, live){ return "You\u2019ve joined at question "+n+". Jump in, "+(live ? "this one\u2019s yours." : "the next one\u2019s yours."); }
   function ansKey(){ return "vp-tans-"+(P.room||"")+"-"+(P.gameId||""); }
   function saveAns(qseq, i){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); o[qseq]=i; localStorage.setItem(ansKey(), JSON.stringify(o)); }catch(e){} }
   function loadAns(qseq){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); return (o[qseq]==null) ? null : o[qseq]; }catch(e){ return null; } }
@@ -1038,10 +1068,10 @@
     try{
       var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
       for(var i=0;i<44;i++){ var c=document.createElement("div"); c.className="cfetti";
-        c.style.left=Math.random()*100+"vw"; c.style.background=colors[i%colors.length];
+        c.style.left=(Math.random()*96)+"%"; c.style.background=colors[i%colors.length];
         c.style.animationDuration=(2+Math.random()*1.6)+"s"; c.style.animationDelay=(Math.random()*0.25)+"s";
         c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
-        document.body.appendChild(c);
+        ((window.VPCelebrate && VPCelebrate.phoneLayer) ? VPCelebrate.phoneLayer() : document.body).appendChild(c);   // between the header and our logo, never past the edge (12 Nov 2026)
         (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c); }
     }catch(e){}
   }
@@ -1070,7 +1100,10 @@
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
       $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
-    askHowItWent();
+    /* The winner is asked after the claim, not during it (Dean, 12 Nov 2026, INBOX 287.5): when the host ends the game,
+       or after a minute; everyone else at once. */
+    if(r===1){ if(!P.claimAskT) P.claimAskT=setTimeout(function(){ P.claimAskT=null; try{ if(!$("vFinal").classList.contains("hidden")) askHowItWent(); }catch(e){} }, 60000); }
+    else askHowItWent();
   }
 
   /* "How was that?", one tap, at the only moment the punter is still looking:
@@ -1172,7 +1205,10 @@
          answer they had already given. */
       if(m.to && m.to !== P.pid) return;
       P.ended=false; P.celebrated=false;
-      renderQuestion(m);
+      if(m.game_id) useGame(m.game_id);
+      var _late = (typeof sawAny==="function") && !sawAny() && (+m.qi||0) > 1 && loadAns(m.qseq)==null;
+      renderQuestion(m); if(typeof markSeen==="function") markSeen();
+      if(_late && !P.locked){ $("pStatus").className="pstatus late"; $("pStatus").textContent=lateLine(+m.qi, true); }
     }
     else if(m.t==="time"){
       /* The host gave the room more time. The Worker moved the real deadline first, so the
@@ -1193,6 +1229,12 @@
     else if(m.t==="reveal"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
+      /* a finished question this phone never saw: no "No answer" result for it, the late-join line instead (293) */
+      if((typeof sawAny==="function") && !sawAny() && (!P.q || P.q.qseq!==m.qseq) && loadAns(m.qseq)==null){
+        stopCd(); P.q=null;
+        showWait(m.qi ? lateLine(+m.qi, false) : "Jump in, the next one\u2019s yours.", "You\u2019re in");
+        return;
+      }
       showResult(m);
     }
     /* A PAPER NIGHT (Dean, 25 Sep 2026). The answers are held to the end of each round so a team
@@ -1230,8 +1272,10 @@
       /* The host ended the game (finding A, 6 Nov 2026). This used to show "YOU'RE IN / Good luck" over "Thanks for
          playing" and the score: a join screen at the end of a night. Now the quiet final-score screen, no sound. */
       if(P.joined){ P.q=null; stopCd();
+        var _wasWin=P.ended && P.rank===1;   // the winner was not asked on YOU WON (287.5): the host ending the game is the moment
         if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");
-        else showWait("The host has ended this game. Sit tight, another round may start.", "Game ended"); }
+        else showWait("The host has ended this game. Sit tight, another round may start.", "Game ended");
+        if(_wasWin){ if(P.claimAskT){ clearTimeout(P.claimAskT); P.claimAskT=null; } setTimeout(askHowItWent, 600); } }
     }
   }
 
@@ -1442,6 +1486,8 @@
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your team name in first."; return; }
+    var _me=(typeof VPDetails==="object" && VPDetails.mobileError) ? VPDetails.mobileError() : "";   // a real AU / NZ mobile or none (291)
+    if(_me){ $("joinErr").textContent=_me; try{ $("xMobile").focus(); }catch(e){} return; }
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
@@ -1532,6 +1578,7 @@
   // ---- menu (Light mode / Leave) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
   if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  (function(){ var mc=document.getElementById("menuClose"); if(mc && menuPanel) mc.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.add("hidden"); }); })();
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
   function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
   function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }

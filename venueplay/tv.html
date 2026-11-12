@@ -606,19 +606,21 @@
   .tl-round .tl-dot{color:#8A8A95}
   /* the join screen's "at <venue>" line sits under the code */
   .layer.join .lobbyat{margin-top:1.2cqw;max-width:40cqw;text-align:center}
+  /* NO SPACED CAPITALS ON THE WALL (Dean, 12 Nov 2026, INBOX 287 / 291): "NUMBER", "LAST FIVE", "27 OF 90 CALLED", "BINGO ON 57"
+     and "WINS" were wide-spaced mono capitals, the AI look. Plain words in Manrope: "Last called", "Last five balls". */
   /* running */
   #tvRun.runlayer{padding:calc(9cqw) 5% 3% 5%;gap:3cqw}
   #tvRun .runleft{flex:0 0 34%;padding-bottom:calc(5.1cqw + clamp(44px,8cqw,110px))}
-  #tvRun .balleye{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;text-indent:.3em;font-size:1.3cqw;line-height:1.2;color:#8A8A95}
+  #tvRun .balleye{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;text-indent:0;font-size:1.7cqw;line-height:1.2;color:#8A8A95}
   #tvRun .lastlbl{margin-top:min(2.2cqw,3vh)}
   #tvRun .curball{width:min(23cqw,32vh);aspect-ratio:1;border-radius:50%;margin:min(1.2cqw,1.6vh) 0 0;background:#0A0A0B;border:.85cqw solid var(--pink);box-shadow:none}
   #tvRun .cbnum{font-size:min(12.5cqw,17vh);color:#fff}
-  #tvRun .cbnum.ready{font-size:min(3.4cqw,4.6vh);letter-spacing:.14em;text-indent:.14em;color:#8A8A95}
+  #tvRun .cbnum.ready{font-size:min(3.4cqw,4.6vh);letter-spacing:0;text-indent:0;color:#8A8A95}
   #tvRun .prevballs{gap:.8cqw;margin-top:.8cqw}
   #tvRun .prevball{width:clamp(34px,min(4.8cqw,6.5vh),92px);border-radius:.8cqw;background:#1A1A1F;border:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(15px,2.2cqw,44px);color:#fff}
   #tvRun .prevball:first-child{background:#1A1A1F;color:#fff;border:none}
   #tvRun .prevball:nth-child(n+3){color:#fff}
-  #tvRun .ballcount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(15px,1.55cqw,30px);letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;margin-top:min(1.6cqw,2.2vh)}
+  #tvRun .ballcount{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;text-indent:0;font-size:clamp(15px,1.7cqw,32px);color:#8A8A95;margin-top:min(1.6cqw,2.2vh)}
   #tvRun .ballcount b{color:#fff}
   #tvRun .tvboard{gap:.6cqw}
   #tvRun .bcol{gap:.5cqw}
@@ -643,7 +645,7 @@
   #tvWin .wineye{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;font-size:2.4cqw;line-height:1.2;color:#FFD93D}
   #tvWin .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:min(11cqw,16vh);line-height:1.02;color:#fff;margin-top:1cqw;text-shadow:none;overflow-wrap:anywhere}
   #tvWin .winline{display:flex;align-items:baseline;gap:1.6cqw;margin-top:1.4cqw;flex-wrap:wrap}
-  #tvWin .winslabel{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:min(3.2cqw,4.8vh);color:#8A8A95;margin:0}
+  #tvWin .winslabel{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;text-indent:0;font-size:2cqw;color:#8A8A95;margin:0}
   #tvWin .winprize{font-family:'Manrope',sans-serif;font-weight:800;font-size:min(5cqw,7.5vh);line-height:1.1;color:#fff;margin:0;filter:none}
   #tvWin .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.4cqw;color:#8A8A95;margin-top:2cqw}
   #tvWin #winCardPart{display:none!important}
@@ -857,9 +859,9 @@
         <div class="lobbyname" style="font-size:clamp(20px,4.2cqw,60px)">Bingo</div>
         <div class="lobbyat" id="tvRunAt" style="display:none;margin-top:.6cqw;max-width:36cqw">at <b id="tvRunAtName"></b></div>
       </div>
-      <div class="balleye">Number</div>
+      <div class="balleye">Last called</div>
       <div class="curball"><span class="cbnum ready" id="cbNum">Ready</span></div>
-      <div class="balleye lastlbl">Last five</div>
+      <div class="balleye lastlbl">Last five balls</div>
       <div class="prevballs" id="tvPrev"></div>
       <div class="ballcount" id="tvBallCount"><b>0</b> of 90 called</div>
     </div>

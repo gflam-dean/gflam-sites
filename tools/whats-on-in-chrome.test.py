@@ -270,9 +270,10 @@ def tv_and_phone():
             ok('%dx%d: no spaced monospace capitals anywhere in the lobby or the ad heading (THIS WEEK HERE, NEXT, the day heading)' % (W, H), m.get('mono') == [], m.get('mono'))
             ok('%dx%d: the venue\'s ad and our logo still fit on the screen' % (W, H), m.get('adH', 0) > 60 and m.get('foot', 9999) <= m.get('h', 0) and m.get('doc', 9999) <= W, m)
             # Dean, 10 Nov 2026 (INBOX 114): a pink underline under EVERY day; today only a light touch (no pink fill).
-            u = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-week .d"),function(b){var c=getComputedStyle(b);return {sh:c.boxShadow,bg:c.backgroundColor,now:/\\bnow\\b/.test(b.className)};}))', [])
-            ok('%dx%d: every one of the seven days has the pink underline, and today has no pink fill (a light touch)' % (W, H),
-               len(u) == 7 and all('rgb(255, 31, 142)' in x['sh'] for x in u) and sum(1 for x in u if x['now']) == 1 and all(x['bg'] != 'rgb(255, 31, 142)' for x in u), u)
+            # Dean, 12 Nov 2026 (INBOX 288.5): ONLY a night with our games is underlined; Saturday said "No games this night" under a pink line.
+            u = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-week .d"),function(b){var c=getComputedStyle(b);return {sh:c.boxShadow,bg:c.backgroundColor,now:/\\bnow\\b/.test(b.className),on:/\\bon\\b/.test(b.className)};}))', [])
+            ok('%dx%d: only the nights with our games have the pink underline, the others none, and today has no pink fill (a light touch)' % (W, H),
+               len(u) == 7 and any(x['on'] for x in u) and any(not x['on'] for x in u) and all(('rgb(255, 31, 142)' in x['sh']) == x['on'] for x in u) and sum(1 for x in u if x['now']) == 1 and all(x['bg'] != 'rgb(255, 31, 142)' for x in u), u)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-lobby-%d.jpg' % W))
             r.ask(sid, 'window.__st.buttons[0].click(); true')
             time.sleep(0.3)

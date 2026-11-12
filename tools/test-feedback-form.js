@@ -216,6 +216,18 @@ function btn(host, word) { return host.querySelectorAll('button').filter(functio
     check('POST /feedback answers the id of the rating it kept, for Loved it, Good and Not for me alike',
           ids.every(function (x, k) { return typeof x === 'string' && x.length >= 30 && DB.vp_game_feedback.some(function (row) { return row.id === x && row.rating === [3, 2, 1][k]; }); }), ids);
 
+    /* 289.3 (Dean, 12 Nov 2026): a bingo rating has no game id on the phone; the Worker ties it to bingo's own game row. */
+    DB.vp_games = [{ id: 'bbbbbbbb-0000-4000-8000-000000000001', session_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', seq: 1, format: 'bingo90', status: 'finished' },
+                   { id: 'bbbbbbbb-0000-4000-8000-000000000002', session_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', seq: 2, format: 'bingo90', status: 'finished' }];
+    BODY = { code: 'QWERTY', rating: 1, source: 'player', format: 'bingo' };
+    var fb = await handleFeedback(req('/feedback'), ENV, json);
+    var brow = DB.vp_game_feedback.filter(function (row) { return row.id === (fb.body && fb.body.id); })[0] || {};
+    check('a bingo rating (no game id from the phone) is kept against the night\'s latest bingo game (INBOX 289.3)', brow.game_id === 'bbbbbbbb-0000-4000-8000-000000000002' && brow.format === 'bingo', brow);
+    BODY = { code: 'QWERTY', rating: 1, source: 'player', format: 'trivia' };   // Not for me, so the tally below is untouched
+    var ft = await handleFeedback(req('/feedback'), ENV, json);
+    var trow = DB.vp_game_feedback.filter(function (row) { return row.id === (ft.body && ft.body.id); })[0] || {};
+    check('a rating of another game with no id is left as it was (no bingo game pinned on it)', trow.game_id === null, trow);
+
     print('\n6. THE HOST CONSOLES: "9 PLAYERS LOVED TONIGHT", FAVOURABLE COUNTS ONLY (Dean, 1 Nov 2026; Tue 10 Nov)');
     for (var i2 = 0; i2 < 4; i2++) {
       BODY = { code: 'QWERTY', rating: [3, 1, 1, 2][i2], source: 'player', session_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', format: 'trivia' };

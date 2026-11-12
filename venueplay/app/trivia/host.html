@@ -1713,7 +1713,7 @@
       to({ t:"roundanswers", round:G.round, items:G.roundItems });
       if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     } else if(G.status==="reveal" && G.current){
-      to(withFin({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+      to(withFin({ t:"reveal", qseq:G.current.qseq, qi:(G.current.qi||G.current.qseq), correctIndex:G.current.correctIndex,   // qi: a late phone says "You've joined at question 4" (293)
            options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") }));
       if(G.board.length && !G.finale && G.roundBoard!==false) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });   // never over the last answer
     } else if(G.status==="ended" && G.board.length){

@@ -178,9 +178,9 @@
   /* THIS WEEK HERE: seven tappable days. onPick(day) repaints the spot. */
   function strip(o, picked, onPick) {
     var w = el("div", "vpt-week"), k = el("div", "k");
-    k.appendChild(el("span", "", "This week here"));
+    k.appendChild(el("span", "", "This week"));   // short enough for one line beside the ask at 390 (Dean, 12 Nov 2026, INBOX 288.4)
     var days = week(o);
-    if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
+    if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for times"));
     else if (days.some(function (x) { return x.ev; })) k.appendChild(el("span", "ask", "Tap a day"));   // the venue's own nights are a tap away
     w.appendChild(k);
     if (o && typeof o.accent === "string" && /^#[0-9A-Fa-f]{6}$/.test(o.accent)) w.style.setProperty("--vpt-accent", o.accent);   // the venue\u2019s own colour replaces the pink

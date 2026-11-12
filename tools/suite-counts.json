@@ -132,7 +132,7 @@
   "counted_by": "lines"
  },
  "tools/ai-look-cleanup.test.py": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/any-line-in-chrome.test.py": {
@@ -225,6 +225,10 @@
  },
  "tools/feedback-followup-in-chrome.test.py": {
   "checks": 153,
+  "counted_by": "lines"
+ },
+ "tools/game-screens-fit-in-chrome.test.py": {
+  "checks": 322,
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
@@ -732,7 +736,7 @@
   "counted_by": "lines"
  },
  "tools/test-feedback-form.js": {
-  "checks": 73,
+  "checks": 75,
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
@@ -857,6 +861,10 @@
  },
  "tools/test-members-reminder.js": {
   "checks": 33,
+  "counted_by": "lines"
+ },
+ "tools/test-mobile-check.js": {
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {

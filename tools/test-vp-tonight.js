@@ -53,7 +53,7 @@ ok('two games stored for tonight: NEXT this game, LATER the other with its start
 var wk = byClass(box, 'vpt-week')[0], days = byClass(wk, 'd');
 ok('THIS WEEK HERE: seven days from today, Today first with its date', days.length === 7 && /Today/.test(days[0].textContent) && /\b6\b/.test(days[0].textContent) && /Sat/.test(days[1].textContent) && /Thu/.test(days[6].textContent), texts(wk, 'd'));
 ok('the venue\'s game nights are marked, the others are not', /\bon\b/.test(days[5].className) && days[5].attrs['data-day'] === 'wed' && !/\bon\b/.test(days[1].className) && /\bon\b/.test(days[0].className));
-ok('no start times stored: "Ask at the bar for start times"', /Ask at the bar for start times/.test(wk.textContent));
+ok('no start times stored: "Ask at the bar for times"', /Ask at the bar for times/.test(wk.textContent));
 days[5].onclick();
 ok('tap Wednesday: the spot shows that night (no game per night stored: "Game night", ask at the bar)', /Wed 11/.test(spot.textContent) && /Game night/.test(spot.textContent) && /Ask at the bar/.test(spot.textContent), spot.textContent);
 ok('and Wednesday is marked as picked', /picked/.test(days[5].className) && !/picked/.test(days[0].className));
@@ -66,7 +66,7 @@ T.lobby(tm, { name: 'Sam', me: 'trivia', nights: ['wed'], week: [{ day: 'wed', g
 byClass(byClass(tm, 'vpt-week')[0], 'd')[5].onclick();
 var tms = byClass(tm, 'vpt-night')[0];
 ok('with game per night stored: "Trivia night, Ask for start time" and "Members draw, 7:30pm"', /Trivia night/.test(tms.textContent) && /Ask for start time/.test(tms.textContent) && /Members draw/.test(tms.textContent) && /7:30pm/.test(tms.textContent), tms.textContent);
-ok('and with a time stored the "Ask at the bar" line is not in the strip head', !/Ask at the bar for start times/.test(byClass(tm, 'vpt-week')[0].textContent));
+ok('and with a time stored the "Ask at the bar" line is not in the strip head', !/Ask at the bar for times/.test(byClass(tm, 'vpt-week')[0].textContent));
 ok('a stored night with no games is not marked', (function () { var z = new Node('div'); T.lobby(z, { me: 'trivia', nights: ['wed'], week: [{ day: 'mon', games: [{ game: 'trivia' }] }, { day: 'wed', games: [] }], now: FRI }); return !/\bon\b/.test(byClass(byClass(z, 'vpt-week')[0], 'd')[5].className); })());
 var mu = new Node('div');
 T.lobby(mu, { name: 'Sam', me: 'musical', week: [{ day: 'fri', games: [{ game: 'trivia', start: '19:00' }, { game: 'musical', start: '21:00' }] }], now: FRI });

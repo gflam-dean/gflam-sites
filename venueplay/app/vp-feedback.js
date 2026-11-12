@@ -97,7 +97,7 @@
     var el = document.createElement("style");
     el.id = "vpFbCss";
     el.textContent =
-      ".vpfb{margin-top:22px;text-align:center}" +
+      ".vpfb{margin-top:14px;text-align:center}" +
       ".vpl-fb .vpfb{margin-top:18px}" +
       ".vpfb .q{font-size:13px;color:var(--muted,#9A9AA4);margin-bottom:10px}" +
       ".vpfb .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}" +
@@ -116,7 +116,7 @@
       "body.light .vpfb .chips button[aria-pressed=true]{color:#191420}" +
       ".vpfb textarea,.vpfb input[type=email],.vpfb input[type=text]{width:100%;box-sizing:border-box;background:var(--ink-2,#121214);color:var(--text,#E7E7EC);" +
       "border:1px solid var(--line,rgba(255,255,255,.10));border-radius:10px;padding:10px 12px;font:500 14px/1.35 'Manrope',system-ui,sans-serif;margin-bottom:8px}" +
-      ".vpfb textarea{min-height:64px;resize:vertical}" +
+      ".vpfb textarea{min-height:52px;height:52px;resize:none}" +
       ".vpfb label.tick{display:flex;gap:10px;align-items:flex-start;min-height:38px;font-size:13px;color:var(--text,#E7E7EC);line-height:1.35;margin:4px 0 10px;cursor:pointer}" +
       ".vpfb label.tick input{width:20px;height:20px;flex:none;margin:0;accent-color:#FF1F8E}" +
       ".vpfb .who{font-size:12px;color:var(--faint,#8A8A94);margin:0 0 10px;text-align:center}" +
@@ -161,7 +161,9 @@
     var acts = node("div", "acts"), send = node("button", "send", "Send"), skip = node("button", "skip", "No thanks");
     send.type = "button"; skip.type = "button";
     acts.appendChild(skip); acts.appendChild(send); more.appendChild(acts);
-    function done(text) { wrap.textContent = ""; wrap.appendChild(node("div", "thanks", text)); }
+    /* ONE SCREEN WHILE THEY TYPE (Dean, 12 Nov 2026, INBOX 289.4 / 291): the page says the follow-up is open
+       (body.vpfb-more), so the end screen above it closes up to make room and nothing has to scroll. */
+    function done(text) { wrap.textContent = ""; wrap.appendChild(node("div", "thanks", text)); try { document.body.classList.remove("vpfb-more"); } catch (e) {} }
     skip.addEventListener("click", function () { done(rating === 1 ? "Thanks for telling us" : "Thanks, that helps the venue"); });
     send.addEventListener("click", function () {
       var body = payload(rating, {
@@ -176,6 +178,7 @@
       } catch (e) {}
     });
     wrap.textContent = ""; wrap.appendChild(more);
+    try { document.body.classList.add("vpfb-more"); } catch (e) {}
   }
 
   function ask(o) {

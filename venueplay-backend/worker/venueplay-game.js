@@ -2025,10 +2025,29 @@ async function handleFeedback(request, env, json) {
   }
   if (!venueId) return json({ ok: true, ignored: 'unknown code' });   // silent, like /capture
 
+  /* A BINGO RATING IS TIED TO ITS GAME (Dean, 12 Nov 2026, INBOX 289.3). The bingo phone has no game id (broadcast bingo
+     never told it one), so its rows landed with game_id empty and could not be read against the game they were about.
+     The Worker knows: bingo's own vp_games row on the night (markBroadcastGameLive), the latest one being the game that
+     just ended. Best effort: no row, no session, any error, and the rating is kept exactly as before. */
+  let gameId = b.game_id ? String(b.game_id) : null;
+  if (!gameId && /^bingo/i.test(String(b.format || ''))) {
+    try {
+      let sid = sessionId;
+      if (!sid) {
+        const last = await sbGet(env, 'vp_sessions', 'venue_id=eq.' + enc(venueId) + '&select=id&order=created_at.desc&limit=1');
+        sid = last.length ? last[0].id : null;
+      }
+      if (sid) {
+        const g = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(sid) + '&format=eq.bingo90&select=id&order=seq.desc&limit=1');
+        if (g.length && g[0].id) { gameId = String(g[0].id); if (!sessionId) sessionId = sid; }
+      }
+    } catch (e) { /* the rating matters more than the link */ }
+  }
+
   const ins = await sbInsert(env, 'vp_game_feedback', {
     venue_id: venueId,
     session_id: sessionId || null,
-    game_id: b.game_id ? String(b.game_id) : null,
+    game_id: gameId,
     format: b.format ? String(b.format).slice(0, 24) : null,
     source,
     rating,

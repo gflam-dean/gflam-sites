@@ -103,3 +103,29 @@
 
 /* 5 and 6 (the venue's ad, and the waiting screens) moved to /app/vp-tonight.css on 6 Nov 2026, so the bingo phone, which
    does not use this file, shares them with the trivia and musical phones. */
+
+/* 7. ONE SCREEN WHILE THE FOLLOW-UP IS OPEN (Dean, 12 Nov 2026, INBOX 289.4 / 291). "How was that?" -> a rating opens a few
+   chips, a line and Send under the end screen, and on a 375x667 iPhone that pushed Send off the bottom and the page
+   scrolled while they typed. /app/vp-feedback.js puts body.vpfb-more on while it is open: the end screen above closes up
+   (the words stay, smaller), and the card number sits right above the question, no gap. */
+.vp-out .vpfb{margin-top:10px}
+body.vpfb-more .vp-out{padding-top:6px}
+body.vpfb-more .vp-out .vp-kicker{margin-bottom:0}
+body.vpfb-more .vp-out .vp-h{font-size:36px;margin:0 0 4px}
+body.vpfb-more .vp-out .yrule{height:4px;margin:0 auto 6px}
+body.vpfb-more .vp-out .wprize{font-size:22px}
+body.vpfb-more .vp-out .vp-wait{margin-top:2px;font-size:15px}
+body.vpfb-more .vp-out .wcard{margin-top:2px}
+body.vpfb-more .vp-out .vp-sub{font-size:16px!important}
+body.vpfb-more .pfoot{padding-top:6px}
+.view > .vpfb{padding-left:16px;padding-right:16px}
+/* 8. A WAY OUT OF THE MENU (Dean, 12 Nov 2026, INBOX 291: "the phone menu has no back / close button") */
+.vp-mhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vp-mhead h3{margin:4px 0 6px}
+.vp-mclose{flex:none;min-height:44px;min-width:76px;border:none;border-radius:12px;background:#232329;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;cursor:pointer}
+body.light .vp-mclose{background:#EDEAF0;color:#191420}
+/* 9. IPHONE AUTOFILL (Dean, 12 Nov 2026, INBOX 288.7): Safari painted the details boxes bright yellow when it filled them.
+   The filled box keeps our dark field and white words. */
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill,select:-webkit-autofill{
+  -webkit-box-shadow:0 0 0 1000px #17171A inset;box-shadow:0 0 0 1000px #17171A inset;-webkit-text-fill-color:#fff;caret-color:#fff;transition:background-color 99999s ease 0s}
+body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px #FFFFFF inset;box-shadow:0 0 0 1000px #FFFFFF inset;-webkit-text-fill-color:#191420}
