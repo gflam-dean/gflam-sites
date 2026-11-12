@@ -95,18 +95,18 @@
     '.pcc .play{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.005em;overflow-wrap:anywhere}' +
     '.pcc .qr{flex:none;background:#fff}.pcc .qr svg{display:block;width:100%;height:100%}' +
     '.pcc .frame{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:var(--fw) solid #0A0A0B;border-radius:var(--rad);overflow:hidden}' +
-    '.pcc .head{display:flex;align-items:stretch;flex:none}' +
-    '.pcc .head .pl{flex:1;padding:3.6mm 4mm 3.4mm;min-width:0}' +
-    '.pcc .head .no{width:27mm;border-left:var(--fw) solid #0A0A0B;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
+    '.pcc .pchead{display:flex;align-items:stretch;flex:none}' +
+    '.pcc .pchead .pl{flex:1;padding:3.6mm 4mm 3.4mm;min-width:0}' +
+    '.pcc .pchead .no{width:27mm;border-left:var(--fw) solid #0A0A0B;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
     '.pcc .gwrap{flex:1 1 auto;min-height:0;display:flex;border-top:var(--fw) solid #0A0A0B;padding:1mm}' +
-    '.pcc .grid{flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:.8mm}' +
+    '.pcc .pcgrid{flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:.8mm}' +
     '.pcc .cell{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:0;overflow:hidden;background:#ECECEF;border-radius:.7mm;padding:1mm .1mm}' +
     '.pcc .cell .t{display:block;width:100%;font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.015em;word-break:normal;overflow-wrap:normal;hyphens:manual;text-wrap:balance}' +
     '.pcc .cell.free{flex-direction:column;gap:1.1mm;background:#fff;box-shadow:inset 0 0 0 .5mm #0A0A0B}' +
     '.pcc .cell.free img{width:6.5mm;height:7.5mm}' +
     '.pcc .cell.free .f{font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:800;font-size:13pt;line-height:1}' +
-    '.pcc .strip{flex:none;border-top:var(--fw) solid #0A0A0B;display:flex;align-items:center}' +
-    '.pcc .how{font-weight:600;line-height:1.3;font-size:9pt}.pcc .how b{font-weight:800}' +
+    '.pcc .pcstrip{flex:none;border-top:var(--fw) solid #0A0A0B;display:flex;align-items:center}' +
+    '.pcc .pchow{font-weight:600;line-height:1.3;font-size:9pt}.pcc .pchow b{font-weight:800}' +
     '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:3mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
     '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
     '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}' +
@@ -165,13 +165,13 @@
       var qr = c.code ? '<div class="scanbox"><div class="qr" style="width:26mm;height:26mm">' + qrSvg(c.code) + '</div>' +
         '<div style="width:21mm"><div style="font-family:\'Hanken Grotesk\',Arial,sans-serif;font-weight:800;font-size:9.5pt;line-height:1.15">Host scan</div>' +
         '<div class="k" style="font-size:7.5pt;margin-top:1.4mm;line-height:1.25">Card ' + esc(no) + '<br>' + esc(o.playlist || '') + '</div></div></div>' : '';
-      return '<div class="pcc ' + side + '"><div class="frame"><div class="head"><div class="pl"><div class="k" style="font-size:8.5pt">Playlist</div>' +
+      return '<div class="pcc ' + side + '"><div class="frame"><div class="pchead"><div class="pl"><div class="k" style="font-size:8.5pt">Playlist</div>' +
         '<div class="play" style="font-size:' + playlistSize(o.playlist) + 'pt;margin-top:.8mm">' + esc(o.playlist || '') + '</div>' +
         '<div class="nameln">Name <span></span></div></div>' +
         '<div class="no"><div class="k" style="font-size:8.5pt">Card</div><div class="play" style="font-size:38pt;margin-top:1mm">' + esc(no) + '</div>' +
         (o.printedLabel ? '<div class="pdate">Printed<br>' + esc(o.printedLabel) + '</div>' : '') + '</div></div>' +
-        '<div class="gwrap"><div class="grid">' + g + '</div></div>' +
-        '<div class="strip"><div style="flex:1;padding:3mm 4mm"><div class="how">' + how + '</div></div>' + qr + '</div></div>' + foot + '</div>';
+        '<div class="gwrap"><div class="pcgrid">' + g + '</div></div>' +
+        '<div class="pcstrip"><div style="flex:1;padding:3mm 4mm"><div class="pchow">' + how + '</div></div>' + qr + '</div></div>' + foot + '</div>';
     }
     var html = '';
     for (var i = 0; i < cards.length; i += 2) {

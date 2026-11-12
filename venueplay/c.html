@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<title>venueplay</title>
+<!-- THE CODE ON A PRINTED MUSICAL CARD (INBOX 335, 13 Nov 2026): venueplay.com.au/c/<21 characters>. The host's console reads the code
+     with its camera; a player's own phone camera lands HERE, and this page takes them to that venue's join page. It asks the game
+     Worker (/card/resolve) whose card it is: the answer is only the venue's public join name. A code that does not check out (a
+     copy, a typo, a card from before codes) goes where an unknown address has always gone, the 404 page with the 60-second
+     trivia (Dean likes it, INBOX 343 cancel note), never a "coming soon" and never a dead page. -->
+<style>body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}p{font-size:16px;color:#9A9AA4}a{color:#FF1F8E}</style>
+</head>
+<body>
+<p id="say">Taking you to the game...</p>
+<noscript><p><a href="/play">Join a game</a></p></noscript>
+<script>
+(function () {
+  var m = /^\/c\/([0-9A-Za-z]{21})\/?$/.exec(location.pathname || '');
+  var gone = function () { location.replace('/c-not-found'); };   // a path that is not a page: Pages answers with 404.html
+  if (!m) { gone(); return; }
+  var done = false, go = function (u) { if (done) return; done = true; location.replace(u); };
+  setTimeout(function () { if (!done) { done = true; document.getElementById('say').innerHTML = 'Open <a href="/play">venueplay.com.au/play</a> to join a game.'; } }, 8000);
+  fetch('https://game.venueplay.com.au/card/resolve?code=' + encodeURIComponent(m[1].toUpperCase()))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (j && j.ok && typeof j.slug === 'string' && /^[a-z0-9-]{1,80}$/.test(j.slug)) go('/play?venue=' + encodeURIComponent(j.slug));
+      else if (!done) { done = true; gone(); }
+    }, function () { if (!done) { done = true; document.getElementById('say').innerHTML = 'Open <a href="/play">venueplay.com.au/play</a> to join a game.'; } });
+})();
+</script>
+</body>
+</html>

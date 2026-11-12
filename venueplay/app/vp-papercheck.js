@@ -119,6 +119,7 @@
 
   /* ------------------------------------------------------------ the screen ------------------------------------------------------------ */
   var CSS =
+    ".ppc,.ppc *{box-sizing:border-box}" +
     ".ppc{position:fixed;inset:0;z-index:70;background:radial-gradient(1200px 600px at 80% -10%,rgba(255,31,142,.10),transparent 60%),#0A0A0B;color:#E7E7EC;display:flex;flex-direction:column;align-items:center;overflow:hidden;font-family:'Manrope',system-ui,sans-serif}" +
     ".ppc.hidden{display:none}" +
     ".ppc .top{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.10)}" +
