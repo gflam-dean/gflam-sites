@@ -292,7 +292,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 127,
+  "checks": 128,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {
@@ -351,8 +351,12 @@
   "checks": 37,
   "counted_by": "lines"
  },
+ "tools/never-again.test.py": {
+  "checks": 12,
+  "counted_by": "lines"
+ },
  "tools/not-found-in-chrome.test.py": {
-  "checks": 63,
+  "checks": 64,
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
@@ -1840,7 +1844,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 101,
+  "checks": 102,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {

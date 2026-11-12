@@ -1,0 +1,20 @@
+{
+ "about": "Dean 12 Nov 2026 (INBOX 295): a real night on the Kogan TV app broke in about 30 ways while the gate was green. One row per fault from that week: the check that would have gone red, the words inside that check, and the prove-checks row that breaks the fault on purpose. tools/never-again.test.py fails if a row loses its check, its words or its prove row, or if a fault has none (status 'gap' needs a note and a date).",
+ "faults": [
+  {"id": "tv-overscan", "inbox": "287.1", "fault": "TV venue logo and bingo board cut off at the edges (Kogan overscan)", "check": "tools/tv-safe-area-in-chrome.test.py", "words": ["1920", "1280"], "prove": "tv-safe-area-in-chrome.test.py"},
+  {"id": "spaced-caps", "inbox": "287.2, 288.1", "fault": "spaced mono capitals on game screens (BINGO ON 57, QUESTION 1 OF 11)", "check": "tools/ai-look-cleanup.test.py", "words": ["No spaced-out capitals", "letter-spacing"], "prove": "ai-look-cleanup.test.py"},
+  {"id": "phone-no-scroll", "inbox": "287.3, 288.3, 289.4", "fault": "phone game screens scroll or drift sideways", "check": "tools/game-screens-fit-in-chrome.test.py", "words": ["scrollWidth", "375", "390"], "prove": "game-screens-fit-in-chrome.test.py"},
+  {"id": "tv-lag", "inbox": "287.0", "fault": "TV lags the phones by 5 calls", "check": "tools/tv-in-step-in-chrome.test.py", "words": ["30", "2 s"], "prove": "tv-in-step-in-chrome.test.py"},
+  {"id": "one-phone-one-player", "inbox": "282.1, 295.2c", "fault": "one phone counted as several players across a night (billing)", "check": "tools/one-phone-a-night-in-chrome.test.py", "words": ["How was that", "trivia"], "prove": "one-phone-a-night-in-chrome.test.py"},
+  {"id": "musical-wrong-songs", "inbox": "282.3, 295.2d", "fault": "musical bingo dealt songs from no playlist shown", "check": "tools/real-settings-in-chrome.test.py", "words": ["dealt", "playlist"], "prove": "real-settings-in-chrome.test.py"},
+  {"id": "feedback-every-game", "inbox": "289.1, 295.2e", "fault": "musical bingo asked no 'How was that?'; rating row not saved", "check": "tools/feedback-followup-in-chrome.test.py", "words": ["How was that"], "prove": "feedback-followup-in-chrome.test.py"},
+  {"id": "takeover-on-load", "inbox": "286", "fault": "opening a console took the TV off the quiz", "check": "tools/tv-takeover-12nov-in-chrome.test.py", "words": ["load"], "prove": "tv-takeover-12nov-in-chrome.test.py"},
+  {"id": "venue-logo-ink", "inbox": "290", "fault": "venue logo changed colour beyond black ink to white", "check": "tools/venue-logo-in-chrome.test.py", "words": ["black"], "prove": "venue-logo-in-chrome.test.py"},
+  {"id": "late-joiner", "inbox": "291, 293", "fault": "late joiner to trivia or bingo sees no line or no marks", "check": "tools/game-screens-fit-in-chrome.test.py", "words": ["late"], "prove": "game-screens-fit-in-chrome.test.py"},
+  {"id": "old-tv-screens", "inbox": "282.9", "fault": "Kogan TV app shows old screens", "check": "venueplay-backend/worker/screen-probe.test.js", "words": ["version"], "prove": "screen-probe.test.js"},
+  {"id": "venue-step-first", "inbox": "309.1a, 344", "fault": "live here now asked for a name first, or 'Where are you playing?'", "check": "tools/live-here-now-in-chrome.test.py", "words": ["What venue are you at?"], "prove": "live-here-now-in-chrome.test.py"},
+  {"id": "lhn-time-honest", "inbox": "311", "fault": "'Done in 2062 seconds' on a 60-second round", "check": "tools/live-here-now-in-chrome.test.py", "words": ["Done in"], "prove": "live-here-now-in-chrome.test.py"},
+  {"id": "real-night-record", "inbox": "295.1", "fault": "a release called done with no real night played", "check": "tools/real-night-check.test.py", "words": ["DONE"], "prove": "real-night-check.test.py"},
+  {"id": "phone-total-vs-board", "inbox": "288.2", "fault": "phone final score 140 vs board 148 for the same player", "status": "gap", "gap_note": "cause not proven (FINDINGS T8: phone showed game 1 total, podium the replay). Needs a read-only sum of points_awarded per game for The Mini Bar 12 Nov, which main runs; the check is written the day the cause is known (NEEDS-DEAN 13 Nov).", "gap_until": "2026-11-20"}
+ ]
+}

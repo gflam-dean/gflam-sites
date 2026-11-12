@@ -8,7 +8,7 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
 
   - /here (the short address on the coaster) and /live answer 301 to /live-here-now
   - FIRST NAME first ("Nice one, Sam"), one box, nothing else asked; an empty name is refused
-  - "Where are you playing?": three letters finds the pub (name, then suburb and postcode or state)
+  - "What venue are you at?": three letters finds the pub (name, then suburb and postcode or state)
     from OUR WHOLE VENUE LIST (INBOX 229/232), each pick saying plainly whether it is on venueplay
     ("On venueplay", "Game on now") or "Not on venueplay yet"; two letters asks for more; nothing
     typed ever makes a board: "Can't find your venue? Add it" sends name, suburb, state and website
@@ -568,7 +568,9 @@ def main():
         t = Tab(b, base, api)
         t.go('/live-here-now')
         s = wait(t, lambda s: s.get('view') == 'vWhere')
-        check('the first screen is "Where are you playing?" (the venue first, INBOX 309.1), one search box', s.get('view') == 'vWhere' and s.get('inputs') == 1 and s.get('whereKick') == 'Coaster trivia', (s.get('view'), s.get('inputs'), s.get('whereKick')))
+        check('the first screen is "What venue are you at?" (the venue first, INBOX 309.1a), one search box', s.get('view') == 'vWhere' and s.get('inputs') == 1 and s.get('whereKick') == 'Coaster trivia', (s.get('view'), s.get('inputs'), s.get('whereKick')))
+        wh = t.js('document.getElementById("whereHead").textContent')
+        check('...and its heading reads exactly "What venue are you at?" (never "Where are you playing?")', wh == 'What venue are you at?', wh)
         check('the header reads "60-second trivia" before a venue is known', s.get('hdr') == '60-second trivia' and not s.get('tag'), s.get('hdr'))
         t.type_into('whereIn', 'mi')
         s = wait(t, lambda s: bool(s.get('hint')), 3)

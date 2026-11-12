@@ -224,6 +224,7 @@
   "never \"Gflam\" in a VenuePlay or PartyPlay customer email: the templates and the help desk emails say the brand and its ABN",
   "never \"roster\" in copy",
   "never \"the ACT\"",
+  "never-again.test.py",
   "night-pass-hq-in-chrome.test.py",
   "nights 2am to 2am where the venue is, players by phone, came back and how many times across weeks, new against the year before, per-game players, top teams, opt-ins, the month before, paged past 1,000; a venue, a manager or a marketing login sees only its own, View as only the venue viewed; HQ totals leave test venues out and name who is trending down; the email carries no player detail, no .dev link and never Gflam; off unless MONTHLY_REPORTS is on, then only 2am to 7am on the 1st to the 3rd, once per venue, never to an unsubscribed contact; the news HQ writes goes under the report only when ready, and before migration 133 the report still goes; slides shown per venue, per slide and in the totals, null before migration 135; HQ opens a stored copy (migration 136) made at 2am on the 1st and works a month out only on an owner's Refresh",
   "nights-dedup.test.js",

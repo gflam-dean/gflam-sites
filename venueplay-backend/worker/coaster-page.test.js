@@ -149,6 +149,8 @@ pass("there is no 'Just play, no board': Play now is hidden, shown only while th
   /<button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now<\/button>/.test(PAGE) && PAGE.indexOf("Just play, no board") < 0 &&
   /\$\('whereHint'\)\.textContent = 'The search is having a rest\. Try again in a minute, or just play\.'; \$\('skipWhere'\)\.hidden = false; return; \}/.test(PAGE) &&
   /\$\('skipWhere'\)\.hidden = true;\n      var m = d\.matches/.test(PAGE));
+pass("the venue step asks 'What venue are you at?' (Dean 12 Nov, INBOX 309.1a), never 'Where are you playing?'",
+  /<h1 class="pbig" id="whereHead">What venue are you at\?<\/h1>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
 pass("not on our list: the Add your venue form drops down straight away with what they typed", /if \(!m\.length\) openLead\(typed\);/.test(PAGE));
 var sms = L.smsHref("Sam got 4 of 5 (520 points). Same five questions: can you beat it?", "https://venueplay.com.au/live-here-now?c=ABC234");
 pass("Challenge your mates opens a text message with the words and the link", sms === "sms:?&body=" + encodeURIComponent("Sam got 4 of 5 (520 points). Same five questions: can you beat it? https://venueplay.com.au/live-here-now?c=ABC234"), sms);

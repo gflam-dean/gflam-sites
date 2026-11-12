@@ -77,6 +77,23 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 13 Nov 2026 (INBOX 295 never-again map, 309.1a): tools/never-again.test.py reads tools/never-again-map.json
+    ('never-again.test.py', 'tools/never-again-map.json',
+     '"check": "tools/tv-safe-area-in-chrome.test.py"',
+     '"check": "tools/tv-safe-area-GONE.test.py"',
+     'a never-again row whose check file is gone'),
+    ('never-again.test.py', 'tools/never-again-map.json',
+     '"words": ["1920", "1280"]',
+     '"words": ["zzzz-not-in-it"]',
+     'a never-again row whose check no longer says what made it that check'),
+    ('never-again.test.py', 'tools/never-again-map.json',
+     '"prove": "tv-safe-area-in-chrome.test.py"',
+     '"prove": "no-such-suite.test.py"',
+     'a never-again check nobody has broken on purpose'),
+    ('never-again.test.py', 'tools/never-again-map.json',
+     '"gap_until": "2026-11-20"',
+     '"gap_until": "2026-01-01"',
+     'a never-again gap left open past its date'),
     # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
     # plays a 3 question quiz on the browser rig (tv.html with the wall in its frame, two phones) and keeps a timeline.
     ('trivia-ux-in-chrome.test.py', 'venueplay/app/trivia/host.html',
@@ -16116,6 +16133,14 @@ MUTATIONS = [
      '    nm.textContent = name;\n',
      "    nm.textContent = '60-second trivia';\n",
      'the header never names the venue the player picked'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     '<h1 class="pbig" id="whereHead">What venue are you at?</h1>',
+     '<h1 class="pbig" id="whereHead">Where are you playing?</h1>',
+     'the venue step is headed "Where are you playing?" again'),
+    ('not-found-in-chrome.test.py', 'venueplay/live-here-now.html',
+     '<h1 class="pbig" id="whereHead">What venue are you at?</h1>',
+     '<h1 class="pbig" id="whereHead">Five quick questions. First, your name?</h1>',
+     'the 404 trivia link lands on a screen that is not "What venue are you at?"'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
      'Date.now() - (last.at || 0) < PLACE_HOURS * 3600000',
      'Date.now() - (last.at || 0) > PLACE_HOURS * 3600000',

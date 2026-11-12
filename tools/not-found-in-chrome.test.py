@@ -289,12 +289,13 @@ def main():
             got = t.until('location.pathname===%s && !!(%s) && location.pathname' % (json.dumps(want), mark), 15)
             check('"%s" opens %s' % (way['text'], want), got == want, t.js('location.href'))
             if want == '/live-here-now':
-                # INBOX 344 / 309.1a: the 404's trivia link lands on the VENUE step ("Where are you playing?", the type-ahead), never a name-first screen
+                # INBOX 344 / 309.1a: the 404's trivia link lands on the VENUE step ("What venue are you at?", the type-ahead), never a name-first screen
                 time.sleep(1.0)
                 st = t.js('JSON.stringify({where:!document.getElementById("vWhere").hidden, name:!document.getElementById("vName").hidden, play:!document.getElementById("vPlay").hidden, input:!!document.getElementById("whereIn").offsetParent, nameInput:!!document.getElementById("nameIn").offsetParent, h1:(document.querySelector("#vWhere h1")||{}).textContent})')
                 st = json.loads(st) if st else {}
                 check('the 404 trivia link lands on the VENUE step first (type-ahead shown), and never on a name-first screen',
                       st.get('where') and st.get('input') and not st.get('name') and not st.get('nameInput') and not st.get('play'), st)
+                check('...and that step asks "What venue are you at?" (INBOX 344/309.1a)', st.get('h1') == 'What venue are you at?', st.get('h1'))
                 if A.shots:
                     t.shot(os.path.join(A.shots, 'not-found-lands-on-venue-step-390.png'))
             t.close()

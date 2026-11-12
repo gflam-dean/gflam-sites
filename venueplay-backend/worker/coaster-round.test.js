@@ -3,7 +3,7 @@
    Dean's spec (reports/live-here-now-v2/DEAN-NOTES.md, later items override earlier):
      - first name at the start, so the end is personalised; first names only, never a surname or
        a contact detail on a board
-     - "Where are you playing?": type three letters of the pub's name; the search lists ONLY what
+     - "What venue are you at?": type three letters of the pub's name; the search lists ONLY what
        is in venueplay (customers, prospects and coaster venues added in HQ), never the cold list;
        a pub that is not listed is typed in and kept as a lead for Dean
      - points like real venueplay trivia: right answers score, plus a speed bonus, the same rule
