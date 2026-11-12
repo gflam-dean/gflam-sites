@@ -32,8 +32,8 @@
 .tv.tv-bleed{overflow:visible!important}   /* tv.html only: the window clips it (body overflow hidden) */
 #tvAds .ad-photo{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw}
 
-/* THE BINGO REVEAL BALL. It is min(56cqw, 68vh) and pops in at up to 1.3x, which on the safe box reached
-   14px from the top at 1920x1080. 68vh of the window is 61.2vh of the safe box's height share (90%), so the
-   ball and its rings are capped there: the same share of the box as it was of the window. */
-.tv .brball, .tv .brrings{max-width:61.2vh;max-height:61.2vh}
-.tv .brball{font-size:39.6vh}
+/* THE BINGO REVEAL BALL. It is min(56cqw, 68vh) and its pop overshoots to about 1.34x, which on the safe box
+   reached 14px from the top at 1920x1080 (and 46px at a 61.2vh cap). Capped at 58vh, the overshoot's top stays
+   about 70px down, inside the safe box; the number keeps its share of the ball (44/68). */
+.tv .brball, .tv .brrings{max-width:58vh;max-height:58vh}
+.tv .brball{font-size:37.5vh}

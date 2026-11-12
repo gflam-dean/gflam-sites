@@ -191,6 +191,7 @@
     /* THE TV SAFE BOX (Dean via main, INBOX 321.2, 12 Nov 2026): a page with /app/vp-tvsafe.css draws its wall 5% in
        from every edge, so the fit's room and its margins are the safe box's, as ?safe=5 would make them. */
     var inset = (SAFE || (w.VPVenueLogo && w.VPVenueLogo.safeShare ? Math.round(w.VPVenueLogo.safeShare() * 100) : 0)) / 100;
+    if (layer.classList && layer.classList.contains("ad-photo")) inset = SAFE / 100;   /* a photo slide is full-bleed: fitted to the window */
     var availH = w.innerHeight * (1 - inset * 2);
     var availW = w.innerWidth * (1 - inset * 2);
 

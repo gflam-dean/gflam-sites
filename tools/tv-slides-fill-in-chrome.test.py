@@ -18,6 +18,13 @@ Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears a
 VP_SHOTS=<dir> also saves the frames.
 
     python3 tools/tv-slides-fill-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import os, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -91,7 +98,9 @@ def run():
         r.ask(sid, 'VP_FIT(); true'); time.sleep(0.8)
         a2 = r.ask(sid, 'getComputedStyle(window.__pA).transform')
         ok('vp-fit: a layer with no id shrunk round a keep-out is full size again once the keep-out has gone (not judged by another layer)',
-           a1 not in ('none', None) and a2 in ('none', 'matrix(1, 0, 0, 1, 0, 0)'), [a1, a2])
+           # TV SAFE AREA RE-PIN (12 Nov 2026): the probe layer is the whole window, so "full size" is now the fit to the SAFE
+           # BOX with no shift: scale 0.9 (or none), never the keep-out's shift or shrink. Was: no transform at all.
+           a1 not in ('none', None) and a2 != a1 and a2 in ('none', 'matrix(1, 0, 0, 1, 0, 0)', 'matrix(0.9, 0, 0, 0.9, 0, 0)'), [a1, a2])
         r.close_tab(tid)
     finally:
         r.close()
