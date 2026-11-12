@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 14:52 · 267fd958';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 01:39 · cad72f1f';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -485,6 +485,9 @@ export default {
       if (method === 'POST' && path === '/host/paper/print')   return await handlePaperPrint(request, env, json);
       if (method === 'POST' && path === '/host/paper/check')   return await handlePaperCheck(request, env, json);
       if (method === 'POST' && path === '/host/paper/score')   return await handlePaperScore(request, env, json);
+      if (method === 'POST' && path === '/host/paper/scan')    return await handlePaperScan(request, env, json);
+      if (method === 'POST' && path === '/host/paper/state')   return await handlePaperState(request, env, json);
+      if (method === 'GET'  && path === '/card/resolve')       return await handleCardResolve(request, env, json);
       if (method === 'GET'  && path === '/snapshot')           return await handleSnapshot(request, env, json);
       return json({ error: 'not found' }, 404);
     } catch (e) {
@@ -12289,6 +12292,313 @@ function shuffleArray(a) {
 /* ---- MUSICAL BINGO card + pattern (5x5, FREE centre) ---- */
 
 // Deal a 5x5 musical bingo card: 24 distinct songs plus a FREE centre (index 12 = 0).
+/* ===================== PAPER-V2 BEGIN (13 Nov 2026, INBOX 335, 340, 342, 345) =====================
+ * PRINTED MUSICAL CARDS, VERSION 2: a signed code on every card, squares worked out from the card set, the bracket rule
+ * and the host's scan. Pure functions first (they run under jsc in tools/test-paper-cards-v2.js), routes after.
+ *
+ * THE CODE. A card carries https://venueplay.com.au/c/<body><seal>, where the body is
+ *     1 K7Q2MX 07 PC4F      version, card set, card number, playlist tag
+ * and the seal is 8 base-32 characters of HMAC-SHA256 over the body with a key only this Worker has
+ * (env.PAPER_CARD_KEY; until that is set, a key worked out from SUPABASE_JWT_SECRET, which is always there, or the service key).
+ * A forged or edited code fails the seal. Nothing about a player, the venue's members or the night is in it.
+ *
+ * THE SQUARES. Worked out, not stored-only: the set code, the card number and the key shuffle the set's frozen song list
+ * (sorted by id), and the first 24 songs with different PRINTED titles are the card. Reprint card 7 and it is the same card.
+ * The stored squares (vp_sessions.paper.musical.cards) stay as a cross-check: a scan refuses when the two ever differ.
+ *
+ * ONE NIGHT'S RECORD. vp_sessions.paper.musical = the CURRENT set {set, playlist_id, playlist_name, tag, digest, on, cards};
+ * vp_sessions.paper.sets = every set printed tonight {CODE: {name, tag, on, at, replaced_at}} so a binned set still
+ * answers "bin them". No database change. */
+const PV_VER = '1';
+const PV_B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const PV_SET_RE = /^[0-9A-HJKMNP-TV-Z]{6}$/;
+const PV_K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+
+// UTF-8 bytes by hand: the test rig fakes TextEncoder, and a Worker should not depend on it for a signature.
+function pvUtf8(s) {
+  const out = [];
+  s = String(s);
+  for (let i = 0; i < s.length; i++) {
+    let c = s.charCodeAt(i);
+    if (c >= 0xd800 && c < 0xdc00 && i + 1 < s.length) { const d = s.charCodeAt(i + 1); if (d >= 0xdc00 && d < 0xe000) { c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00); i++; } }
+    if (c < 0x80) out.push(c);
+    else if (c < 0x800) out.push(0xc0 | (c >> 6), 0x80 | (c & 63));
+    else if (c < 0x10000) out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+    else out.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+  }
+  return out;
+}
+function pvSha256(msg) {
+  const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const l = msg.length, total = Math.ceil((l + 9) / 64) * 64, buf = new Array(total).fill(0);
+  for (let i = 0; i < l; i++) buf[i] = msg[i] & 255;
+  buf[l] = 0x80;
+  const bits = l * 8;
+  buf[total - 4] = (bits >>> 24) & 255; buf[total - 3] = (bits >>> 16) & 255; buf[total - 2] = (bits >>> 8) & 255; buf[total - 1] = bits & 255;
+  const w = new Array(64);
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = ((buf[off + i * 4] << 24) | (buf[off + i * 4 + 1] << 16) | (buf[off + i * 4 + 2] << 8) | buf[off + i * 4 + 3]) | 0;
+    for (let i = 16; i < 64; i++) {
+      const a = w[i - 15], b = w[i - 2];
+      const s0 = ((a >>> 7) | (a << 25)) ^ ((a >>> 18) | (a << 14)) ^ (a >>> 3);
+      const s1 = ((b >>> 17) | (b << 15)) ^ ((b >>> 19) | (b << 13)) ^ (b >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+    }
+    let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (let i = 0; i < 64; i++) {
+      const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + PV_K[i] + w[i]) | 0;
+      const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      const mj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + mj) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  const out = [];
+  for (let i = 0; i < 8; i++) out.push((H[i] >>> 24) & 255, (H[i] >>> 16) & 255, (H[i] >>> 8) & 255, H[i] & 255);
+  return out;
+}
+function pvHmac(key, msg) {
+  let k = key.length > 64 ? pvSha256(key) : key.slice();
+  while (k.length < 64) k.push(0);
+  const ip = [], op = [];
+  for (let i = 0; i < 64; i++) { ip.push(k[i] ^ 0x36); op.push(k[i] ^ 0x5c); }
+  return pvSha256(op.concat(pvSha256(ip.concat(msg))));
+}
+// n characters of base 32 from the front of a byte array (5 bits each)
+function pvB32(bytes, n) {
+  let out = '', acc = 0, nb = 0, i = 0;
+  while (out.length < n) {
+    if (nb < 5) { acc = (acc << 8) | (bytes[i++] || 0); nb += 8; }
+    nb -= 5; out += PV_B32[(acc >> nb) & 31]; acc &= (1 << nb) - 1;
+  }
+  return out;
+}
+// The card key as bytes, or null when this Worker has nothing to sign with.
+function pvKey(env) {
+  const k = (env && env.PAPER_CARD_KEY) ? 'k|' + env.PAPER_CARD_KEY
+    : ((env && env.SUPABASE_JWT_SECRET) ? 'jwt|paper-cards|' + env.SUPABASE_JWT_SECRET
+    : ((env && env.SUPABASE_SERVICE_KEY) ? 'svc|paper-cards|' + env.SUPABASE_SERVICE_KEY : ''));
+  return k ? pvUtf8(k) : null;
+}
+function pvSeal(key, body) { return pvB32(pvHmac(key, pvUtf8('pc|' + body)), 8); }
+function pvPad2(n) { return (n < 10 ? '0' : '') + n; }
+function pvTag(name) { return pvB32(pvSha256(pvUtf8('tag|' + String(name || '').trim().toLowerCase())), 4); }
+function pvDigest(songs) { return pvB32(pvSha256(pvUtf8(songs.map((s) => s.id).join(','))), 10); }
+function pvNewSetCode() { let s = ''; for (let i = 0; i < 6; i++) s += PV_B32[randInt(32)]; return s; }
+function pvCodeBody(setCode, no, tag) { return PV_VER + setCode + pvPad2(no) + tag; }
+function pvMakeCode(key, setCode, no, tag) { const b = pvCodeBody(setCode, no, tag); return b + pvSeal(key, b); }
+// What is printed in the QR: capitals, so the code uses the small alphanumeric QR mode and stays readable on a cheap printer.
+function pvCodeUrl(code) { return 'HTTPS://VENUEPLAY.COM.AU/C/' + code; }
+// A scanned string (the whole address or just the code) to its parts, or null when it cannot be one of ours.
+function pvParseCode(raw) {
+  let s = String(raw == null ? '' : raw).trim();
+  const at = s.toLowerCase().lastIndexOf('/c/');
+  if (at >= 0) s = s.slice(at + 3);
+  s = s.replace(/[?#].*$/, '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  if (s.length !== 21 || s[0] !== PV_VER) return null;
+  const set = s.slice(1, 7), no = s.slice(7, 9), tag = s.slice(9, 13), seal = s.slice(13);
+  if (!PV_SET_RE.test(set) || !/^\d\d$/.test(no) || parseInt(no, 10) < 1 || !/^[0-9A-HJKMNP-TV-Z]{4}$/.test(tag) || !/^[0-9A-HJKMNP-TV-Z]{8}$/.test(seal)) return null;
+  return { body: s.slice(0, 13), set, no: parseInt(no, 10), tag, seal };
+}
+function pvCodeOk(key, parsed) { return !!(key && parsed && pvSeal(key, parsed.body) === parsed.seal); }
+
+// THE BRACKET RULE (Dean yes, 12 Nov 2026, INBOX 342): on paper only, a bracketed part of a title is not printed.
+// "Bad Case of Loving You (Doctor, Doctor)" prints "Bad Case of Loving You". The phone and the TV keep the full title.
+function paperPrintTitle(t) {
+  const full = String(t == null ? '' : t).trim();
+  const out = full.replace(/\s*[(\[][^)\]]*[)\]]\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  return out || full;
+}
+// Two songs that print the same ("Bad Company" and "Bad Company (LMS Studio Reel 2-73 Session)") never share a card.
+function pvTitleKey(t) { return paperPrintTitle(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+
+// A uniform integer stream from the key, label and a counter. Rejection sampling, so no modulo lean.
+function pvRng(key, label) {
+  let ctr = 0, buf = [], pos = 0;
+  const more = () => { buf = pvHmac(key, pvUtf8(label + '|' + (ctr++))); pos = 0; };
+  more();
+  const u32 = () => { if (pos + 4 > buf.length) more(); const v = ((buf[pos] << 24) | (buf[pos + 1] << 16) | (buf[pos + 2] << 8) | buf[pos + 3]) >>> 0; pos += 4; return v; };
+  return (max) => { const limit = Math.floor(0x100000000 / max) * max; let x; do { x = u32(); } while (x >= limit); return x % max; };
+}
+// Songs [{id,title,artist}] to the 25 cells of card `no` in set `setCode`, or null when the playlist has too few
+// different-looking titles. Same inputs, same card, every time. Cell shape matches generateMusicCard: {song_id,title}.
+function pvDealCard(key, setCode, no, songs) {
+  const pool = songs.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const rnd = pvRng(key, 'deal|' + setCode + '|' + no);
+  for (let i = pool.length - 1; i > 0; i--) { const j = rnd(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  const seen = {}, picks = [];
+  for (let i = 0; i < pool.length && picks.length < 24; i++) {
+    const k = pvTitleKey(pool[i].title);
+    if (!k || seen[k]) continue;
+    seen[k] = true; picks.push(pool[i]);
+  }
+  if (picks.length < 24) return null;
+  const cells = new Array(25).fill(0);
+  let ti = 0;
+  for (let p = 0; p < 25; p++) { if (p === 12) continue; const s = picks[ti++]; cells[p] = { song_id: s.id, title: s.title }; }
+  return cells;
+}
+function pvSameCells(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== 25 || b.length !== 25) return false;
+  for (let i = 0; i < 25; i++) {
+    const x = a[i] && (a[i].song_id || a[i].s), y = b[i] && (b[i].song_id || b[i].s);
+    if ((x || 0) !== (y || 0)) return false;
+  }
+  return true;
+}
+// 'Mon 16 Nov' from 'YYYY-MM-DD' (the day the venue printed, never a game date)
+function paperDateLabel(ymd) {
+  const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(String(ymd || ''));
+  if (!m) return '';
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ' ' + (+m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1];
+}
+// Today's date at the venue as YYYY-MM-DD (a venue with no timezone is Brisbane, the Worker's usual fallback)
+function paperToday(tz) {
+  let parts;
+  try { parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); }
+  catch (e) { parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); }
+  const g = {}; parts.forEach((p) => { g[p.type] = p.value; });
+  return g.year + '-' + g.month + '-' + g.day;
+}
+function paperClockLabel(iso, tz) {
+  try { return new Intl.DateTimeFormat('en-AU', { timeZone: tz || 'Australia/Brisbane', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso)).replace(/\s*([ap])m/i, ' $1m').toLowerCase(); } catch (e) { return ''; }
+}
+
+// How close a card is: the nearest finish for the pattern, in squares to go. cells = the card, played = Set of song ids.
+function pvClosest(pattern, cells, played) {
+  const cov = (i) => i === 12 || !!(cells[i] && (cells[i].song_id || cells[i].s) && played.has(cells[i].song_id || cells[i].s));
+  const miss = (line) => line.filter((i) => !cov(i));
+  const rows = [], cols = [];
+  for (let r = 0; r < 5; r++) { rows.push([0, 1, 2, 3, 4].map((c) => r * 5 + c)); cols.push([0, 1, 2, 3, 4].map((c2) => c2 * 5 + r)); }
+  let best = null;
+  const consider = (label, left) => { if (!best || left.length < best.left.length) best = { label, left }; };
+  if (pattern === 'one_line') rows.forEach((l, r) => consider('Row ' + (r + 1) + ' across', miss(l)));
+  else if (pattern === 'any_line') {
+    rows.forEach((l, r) => consider('Row ' + (r + 1) + ' across', miss(l)));
+    cols.forEach((l, r) => consider('Column ' + (r + 1) + ' down', miss(l)));
+    consider('the diagonal', miss([0, 6, 12, 18, 24])); consider('the diagonal', miss([4, 8, 12, 16, 20]));
+  } else if (pattern === 'two_lines') {
+    const m = rows.map((l, r) => ({ r, left: miss(l) })).sort((a, b) => a.left.length - b.left.length).slice(0, 2);
+    best = { label: 'Two rows across', left: m[0].left.concat(m[1].left) };
+  } else if (pattern === 'four_corners') consider('Four corners', miss([0, 4, 20, 24]));
+  else consider('Full house', miss([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]));
+  return best ? { label: best.label, to_go: best.left.length, left: best.left } : { label: '', to_go: 25, left: [] };
+}
+
+// Has a musical game been played off this set (or is one running)? Then the cards are on the tables for good tonight.
+async function paperPlayedOff(env, session, set) {
+  const games = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(session.id) +
+    '&format=eq.musical_bingo&select=id,status,config&order=seq.desc&limit=100').catch(() => null);
+  // A failed read says "played": replacing cards that may be on the tables is the worse mistake.
+  return !games || games.some((g) => g.status === 'running' || (g.config && g.config.playlist_id === set.playlist_id));
+}
+async function paperVenueTz(env, venueId) {
+  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=timezone&limit=1').catch(() => []);
+  return (v[0] && v[0].timezone) || 'Australia/Brisbane';
+}
+// The state the console reads to draw the lock bar and the scan button. Never a card's squares.
+function paperStateOut(session, locked) {
+  const m = session && session.paper && session.paper.musical;
+  if (!m || !Array.isArray(m.cards) || !m.cards.length) return { printed: 0 };
+  return { printed: m.cards.length, playlist_name: m.playlist_name || '', set: m.set || '', coded: !!m.set, locked: !!locked,
+           printed_on: m.on || '', printed_label: paperDateLabel(m.on) };
+}
+async function handlePaperState(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const session = await getSession(env, String(b.session_id || '').trim());
+  await requireStaff(env, authUserId, session.venue_id, 'host');
+  const m = session.paper && session.paper.musical;
+  const locked = (m && m.playlist_id) ? await paperPlayedOff(env, session, m) : false;
+  return json(paperStateOut(session, locked));
+}
+
+// The card scan. A host holds a printed card to the console's camera; the console sends what it read.
+// States: win (a claim is in the list), notyet, no_game, wrong_playlist, replaced, other_night, other_venue, not_card.
+async function handlePaperScan(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  let game = null, session;
+  const gameId = String(b.game_id || '').trim();
+  if (gameId) {
+    assertUuid(gameId, 'game_id');
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status,config');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    game = games[0];
+    session = await getSession(env, game.session_id);
+  } else {
+    session = await getSession(env, String(b.session_id || '').trim());
+  }
+  const staff = await requireStaff(env, authUserId, session.venue_id, 'host');
+  const key = pvKey(env);
+  const parsed = pvParseCode(b.code);
+  if (!key) return json({ error: 'Card scanning is not set up on this Worker' }, 503);
+  if (!pvCodeOk(key, parsed)) return json({ state: 'not_card' });
+  const tz = await paperVenueTz(env, session.venue_id);
+  const paper = session.paper || {};
+  const cur = paper.musical && paper.musical.set ? paper.musical : null;
+  const sets = (paper.sets && typeof paper.sets === 'object') ? paper.sets : {};
+  if (!cur || cur.set !== parsed.set) {
+    const mine = sets[parsed.set];
+    if (mine) return json({ state: 'replaced', card_no: parsed.no, playlist_name: mine.name || '', printed_label: paperDateLabel(mine.on),
+      replaced_at: mine.replaced_at || null, replaced_clock: mine.replaced_at ? paperClockLabel(mine.replaced_at, tz) : '',
+      tonight_playlist: cur ? cur.playlist_name : '', tonight_label: cur ? paperDateLabel(cur.on) : '' });
+    const other = await sbGet(env, 'vp_sessions', 'paper->sets->>' + parsed.set + '=not.is.null&select=id,venue_id,paper&limit=1').catch(() => []);
+    if (!other.length) return json({ state: 'not_card' });
+    const rec = (other[0].paper && other[0].paper.sets && other[0].paper.sets[parsed.set]) || {};
+    if (other[0].venue_id !== session.venue_id) return json({ state: 'other_venue', card_no: parsed.no });
+    return json({ state: 'other_night', card_no: parsed.no, playlist_name: rec.name || '', printed_label: paperDateLabel(rec.on),
+      tonight_playlist: cur ? cur.playlist_name : '', tonight_label: cur ? paperDateLabel(cur.on) : '' });
+  }
+  const pc = Array.isArray(cur.cards) ? cur.cards.find((c) => c.no === parsed.no) : null;
+  if (!pc || parsed.tag !== cur.tag) return json({ state: 'not_card' });
+  const base = { card_no: parsed.no, playlist_name: cur.playlist_name, printed_label: paperDateLabel(cur.on) };
+  // The squares worked out from the set must be the squares stored for it. If not, nothing is judged and HQ is told.
+  const songs = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(cur.playlist_id) + '&select=id,title,artist');
+  const derived = (songs.length >= 24 && pvDigest(songs.slice().sort((a, c) => (a.id < c.id ? -1 : 1))) === cur.digest) ? pvDealCard(key, cur.set, parsed.no, songs) : null;
+  if (!derived || !pvSameCells(derived, pc.cells)) {
+    await sbInsert(env, 'vp_admin_audit', { action: 'paper_card_mismatch', target: 'venue:' + session.venue_id,
+      detail: { session_id: session.id, set: cur.set, card_no: parsed.no } }, false).catch(() => {});
+    return json({ error: 'This card cannot be checked automatically. Type its number instead.', state: 'mismatch' }, 409);
+  }
+  if (!game || game.format !== 'musical_bingo' || game.status !== 'running') return json(Object.assign({ state: 'no_game' }, base));
+  if (!(game.config && game.config.playlist_id === cur.playlist_id)) {
+    return json(Object.assign({ state: 'wrong_playlist', game_playlist: (game.config && game.config.playlist_name) || '' }, base));
+  }
+  const res = await paperCheckCore(env, session, game, cur, parsed.no, staff);
+  const cells = pc.cells;
+  const playedIdx = [];
+  cells.forEach((c, i) => { if (i !== 12 && c && res.played_ids.has(c.song_id)) playedIdx.push(i); });
+  if (res.verdict === 'valid') {
+    const rank = {}; res.play_order.forEach((id, i) => { rank[id] = i + 1; });
+    return json(Object.assign({ state: 'win', claim_id: res.claim_id, display_name: res.display_name, winning_cells: res.cells, played_cells: playedIdx,
+      cell_titles: cells.map((c) => (c && c.song_id ? paperPrintTitle(c.title) : '')),
+      win_songs: res.cells.map((i) => (i === 12 ? { title: 'Free', n: 0 } : { title: paperPrintTitle(cells[i].title), n: rank[cells[i].song_id] || 0 })) }, base, { cells }));
+  }
+  const near = pvClosest(res.pattern, cells, res.played_ids);
+  return json(Object.assign({ state: 'notyet', played_cells: playedIdx, closest: near.label, to_go: near.to_go,
+    still_to_play: near.left.map((i) => paperPrintTitle(cells[i].title)), winning_cells: [] }, base));
+}
+
+// The public half of the code: a player's own camera on a card. Gives back only the venue's public join slug.
+async function handleCardResolve(request, env, json) {
+  const u = new URL(request.url);
+  const key = pvKey(env);
+  const parsed = pvParseCode(u.searchParams.get('code'));
+  if (!key || !pvCodeOk(key, parsed)) return json({ ok: false }, 404);
+  const rows = await sbGet(env, 'vp_sessions', 'paper->sets->>' + parsed.set + '=not.is.null&select=id,venue_id&limit=1').catch(() => []);
+  if (!rows.length) return json({ ok: false }, 404);
+  const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(rows[0].venue_id) + '&select=slug,name,status&limit=1').catch(() => []);
+  if (!v.length || !v[0].slug) return json({ ok: false }, 404);
+  return json({ ok: true, slug: v[0].slug, name: v[0].name || '' });
+}
+/* ====================== PAPER-V2 END ====================== */
+
 /* ------------------------------ PAPER PLAYERS ------------------------------
  * Printed musical bingo cards and trivia answer sheets, for the regulars who will not use a phone.
  * Dean, 25 Sep 2026. Storage is vp_sessions.paper (migration 88); limits are PAPER_MAX.
@@ -12385,15 +12695,22 @@ async function handlePaperPrint(request, env, json) {
      picked the 80s (the fault trivia's sheets had, fixed 27 Sep 2026). Compared by NAME, since
      every print sends a fresh random draw of the same playlist. Once a musical game is running, or
      any game tonight has been dealt from these cards, they are on the tables and the set is kept:
-     a reprint then is only for an extra card. */
+     a reprint then is only for an extra card. PAPER-V2: a replaced set is remembered in paper.sets, so
+     a card from it that is scanned later is told "bin it". */
   const askedName = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : '';
-  let replaced = false, kept = false;
-  if (set && askedName && askedName !== set.playlist_name) {
-    const games = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(session.id) +
-      '&format=eq.musical_bingo&select=id,status,config&order=seq.desc&limit=100').catch(() => null);
-    // A failed read keeps the set: replacing cards that may be on the tables is the worse mistake.
-    const played = !games || games.some((g) => g.status === 'running' || (g.config && g.config.playlist_id === set.playlist_id));
-    if (played) kept = true; else { set = null; replaced = true; }
+  const key = pvKey(env);
+  if (!key) return json({ error: 'Card printing is not ready on this Worker. Tell venueplay support.' }, 503);
+  const sets = Object.assign({}, (paper.sets && typeof paper.sets === 'object') ? paper.sets : {});
+  let replaced = false, kept = false, playedOff = false;
+  if (set) {
+    playedOff = await paperPlayedOff(env, session, set);
+    const changed = !!(askedName && askedName !== set.playlist_name);
+    if (changed && playedOff) kept = true;
+    else if (changed || (!set.set && !playedOff)) {
+      // the host changed their mind before any game, or these are cards from before the codes: new cards, the old set is binned
+      if (set.set && sets[set.set]) sets[set.set] = Object.assign({}, sets[set.set], { replaced_at: now });
+      set = null; replaced = true;
+    }
   }
   if (!set) {
     const raw = (b.playlist && Array.isArray(b.playlist.songs)) ? b.playlist.songs : null;
@@ -12404,20 +12721,46 @@ async function handlePaperPrint(request, env, json) {
     /* Stored under a title of its own. ensureMusicPlaylist reuses any playlist with the same title and
        song count, and a reused one could be a DIFFERENT sixty songs from the set the host just drew. */
     const pid = await ensureMusicPlaylist(env, session.venue_id, name + ' (paper ' + session.id.slice(0, 8) + ')', clean);
-    set = { playlist_id: pid, playlist_name: name, cards: [] };
+    let code = pvNewSetCode();
+    for (let t = 0; t < 8 && (sets[code]); t++) code = pvNewSetCode();
+    const tz = await paperVenueTz(env, session.venue_id);
+    set = { set: code, playlist_id: pid, playlist_name: name, tag: pvTag(name), on: paperToday(tz), cards: [] };
   }
   const songs = await sbGet(env, 'vp_playlist_songs',
     'playlist_id=eq.' + enc(set.playlist_id) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
   if (songs.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
+  const coded = !!set.set;
+  const sorted = songs.slice().sort((x, y) => (x.id < y.id ? -1 : 1));
+  if (coded && !set.digest) set.digest = pvDigest(sorted);
+  if (coded && set.digest !== pvDigest(sorted)) return json({ error: 'The songs on these cards have changed. Print new cards.' }, 409);
   const cards = Array.isArray(set.cards) ? set.cards.slice() : [];
-  for (let no = cards.length + 1; no <= want; no++) cards.push({ no, cells: generateMusicCard(songs) });
-  paper.musical = { playlist_id: set.playlist_id, playlist_name: set.playlist_name, cards, printed_at: now };
+  for (let no = cards.length + 1; no <= want; no++) {
+    const cells = coded ? pvDealCard(key, set.set, no, songs) : generateMusicCard(songs);
+    if (!cells) return json({ error: 'This playlist has fewer than 24 songs that look different on paper. Pick another.' }, 409);
+    cards.push({ no, cells });
+  }
+  if (coded) {
+    // a reprint is the same card: the worked-out squares must be the squares already stored
+    for (const c of cards) {
+      if (!pvSameCells(pvDealCard(key, set.set, c.no, songs), c.cells)) {
+        await sbInsert(env, 'vp_admin_audit', { action: 'paper_card_mismatch', target: 'venue:' + session.venue_id,
+          detail: { session_id: session.id, set: set.set, card_no: c.no, at: 'print' } }, false).catch(() => {});
+        return json({ error: 'These cards cannot be reprinted exactly. Print a new set.' }, 409);
+      }
+    }
+    if (!sets[set.set]) sets[set.set] = { name: set.playlist_name, tag: set.tag, on: set.on, at: now };
+    paper.sets = sets;
+  } else if (Object.keys(sets).length) paper.sets = sets;
+  paper.musical = Object.assign({}, set, { cards, printed_at: now });
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { paper });
   await sbInsert(env, 'vp_admin_audit', { action: 'paper_printed', target: 'venue:' + session.venue_id,
-    detail: { session_id: session.id, kind, count: cards.length } }, false).catch(() => {});
+    detail: { session_id: session.id, kind, count: cards.length, set: set.set || null } }, false).catch(() => {});
   return json({
-    kind, cap, playlist_name: set.playlist_name, replaced, kept,
-    cards: cards.map((c) => ({ no: c.no, titles: c.cells.map((x) => (x && x.title) || '') })),
+    kind, cap, playlist_name: set.playlist_name, replaced, kept, coded, set: set.set || '', printed_on: set.on || '', printed_label: paperDateLabel(set.on),
+    locked: playedOff,
+    // The bracket rule is applied here, once, so every screen that prints a card agrees. The phone and TV keep the full title.
+    cards: cards.map((c) => ({ no: c.no, titles: c.cells.map((x) => (x && x.title) ? paperPrintTitle(x.title) : ''),
+      code: coded ? pvCodeUrl(pvMakeCode(key, set.set, c.no, set.tag)) : '' })),
   });
 }
 
@@ -12427,7 +12770,7 @@ async function handlePaperCheck(request, env, json) {
   const gameId = String(b.game_id || '').trim();
   assertUuid(gameId, 'game_id');
   const no = parseInt(b.card_no, 10);
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format,status,config');
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
   const session = await getSession(env, game.session_id);
@@ -12437,9 +12780,22 @@ async function handlePaperCheck(request, env, json) {
   const set = session.paper && session.paper.musical;
   const pc = (set && Array.isArray(set.cards)) ? set.cards.find((c) => c.no === no) : null;
   if (!pc) return json({ error: 'There is no paper card ' + (Number.isFinite(no) ? no + ' ' : '') + 'tonight' }, 404);
+  // PAPER-V2: the typed number checks the CURRENT set only, and only against a game played off that set's playlist.
+  if (set.set && game.config && game.config.playlist_id && game.config.playlist_id !== set.playlist_id) {
+    return json({ error: 'This game is not playing the songs on your printed cards (' + (set.playlist_name || 'the printed playlist') + ').' }, 409);
+  }
+  const res = await paperCheckCore(env, session, game, set, no, staff);
+  const out = { card_no: no, cells: pc.cells, display_name: res.display_name, paper: true, printed_label: paperDateLabel(set.on) };
+  if (res.verdict !== 'valid') return json(Object.assign(out, { auto_verdict: 'invalid' }));   // nothing to confirm, no claim row
+  return json(Object.assign(out, { auto_verdict: 'valid', claim_id: res.claim_id, winning_cells: res.cells }));
+}
 
-  // Checked = played. This is the moment a paper card becomes a player (Dean: "If they check a
-  // musical bingo code thats when an extra player is charged"), once, whatever the verdict.
+/* The check itself, shared by the typed number and the scan. Checked = played: this is the moment a paper card becomes a
+   player (Dean: "If they check a musical bingo code thats when an extra player is charged"), once, whatever the verdict.
+   Returns {verdict, claim_id, display_name, cells (winning), played_ids (Set), play_order ([song ids, first played first]), pattern}. */
+async function paperCheckCore(env, session, game, set, no, staff) {
+  const gameId = game.id;
+  const pc = set.cards.find((c) => c.no === no);
   const player = await ensurePaperPlayer(env, session, 'm', no);
   const cardNo = PAPER_CARD_BASE + no;
   const have = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&card_no=eq.' + cardNo + '&select=id,cells&limit=1');
@@ -12449,12 +12805,14 @@ async function handlePaperCheck(request, env, json) {
     card = Array.isArray(ins) ? ins[0] : ins;
   }
   const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=pattern');
-  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
-  const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id');
-  const result = checkMusicPattern(mg[0].pattern, pc.cells, new Set(plays.map((p) => p.song_id)));
-  const out = { card_no: no, cells: pc.cells, display_name: player.display_name, paper: true };
-  if (!result.valid) return json(Object.assign(out, { auto_verdict: 'invalid' }));   // nothing to confirm, no claim row
-
+  if (!mg.length) throw httpError(404, 'Not a musical game');
+  const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id,seq');
+  plays.sort((x, y) => (Number(x.seq) || 0) - (Number(y.seq) || 0));
+  const playedIds = new Set(plays.map((p) => p.song_id));
+  const out = { verdict: 'invalid', claim_id: null, display_name: player.display_name, cells: [], played_ids: playedIds,
+                play_order: plays.map((p) => p.song_id), pattern: mg[0].pattern };
+  const result = checkMusicPattern(mg[0].pattern, pc.cells, playedIds);
+  if (!result.valid) return out;
   const pend = await sbGet(env, 'vp_claims', 'game_id=eq.' + enc(gameId) + '&card_id=eq.' + enc(card.id) +
     '&status=eq.pending&select=id&limit=1');
   let claimId = pend.length ? pend[0].id : null;
@@ -12469,7 +12827,8 @@ async function handlePaperCheck(request, env, json) {
       cells: pc.cells, winning_cells: result.cells,
     }, actorRef(staff));
   }
-  return json(Object.assign(out, { auto_verdict: 'valid', claim_id: claimId, winning_cells: result.cells }));
+  out.verdict = 'valid'; out.claim_id = claimId; out.cells = result.cells;
+  return out;
 }
 
 async function handlePaperScore(request, env, json) {
