@@ -15081,6 +15081,11 @@ MUTATIONS = [
      '<!--IF:multivenue-->\n',
      '<!--IF:singlevenue-->\n',
      'a one-venue owner is told to switch venue'),
+    # THE SLIDES LINE (Dean via main INBOX 336, 12 Nov 2026, replacing 331's): the welcome's first paragraph, slides version.
+    ('test-prospect-setup.js', 'venueplay/emails/welcome-prospect.html',
+     'You can keep them on or swap them out. I just wanted you to see how the slides work in between your games.',
+     'You can keep them up or change them.',
+     "the welcome's slides line goes back to the words Dean replaced"),
     # NO "FREE" IN ANY VENUE EMAIL (Dean via main INBOX 331, 12 Nov 2026): a template, and the Worker's own words.
     ('test-welcome-email-renders.js', 'venueplay/emails/prospect-reminder.html',
      'In your first month, {{venue_name}} ran:',

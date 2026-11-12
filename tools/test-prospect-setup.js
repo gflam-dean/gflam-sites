@@ -1,6 +1,6 @@
 /* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
-   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them up or
-   change them." Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them on or
+   swap them out. I just wanted you to see how the slides work in between your games." (INBOX 336, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* HQ > SET UP A PROSPECT, END TO END, RUN AND NOT WORD-SEARCHED (Dean, 28 Oct 2026).
 
    "I want it so easy that they will never want to speak to me... when we set up the account that is
@@ -403,7 +403,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     check(c[0] + ': no urgency or push (Dean, 28 Oct 2026)', !/don't miss|do not miss|hurry|limited time|act now|today only|last chance|before it's gone|spots? left|we have set you up/i.test(txt), txt.slice(0, 300));
   });
   var vt = visible(VIC_HTML), qt = visible(QLD_HTML);
-  check('VIC: Hi Amit, the favour as Dean says it, with the slides from their website', /Hi Amit,/.test(vt) && /As promised, I've set you up an account for Caz Reitop's Dirty Secrets with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play\. You can keep them up or change them\./.test(vt), vt.slice(0, 400));
+  check('VIC: Hi Amit, the favour as Dean says it, with the slides from their website', /Hi Amit,/.test(vt) && /As promised, I've set you up an account for Caz Reitop's Dirty Secrets with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play\. You can keep them on or swap them out\. I just wanted you to see how the slides work in between your games\./.test(vt), vt.slice(0, 400));
   check('QLD: Hi there, the same favour without the slides line', /Hi there,/.test(qt) && /As promised, I've set you up an account for Tugun Test Bowls Club, so you can see how your TV looks and have a play\./.test(qt) && !/marketing team/.test(qt), qt.slice(0, 300));
   world(); ENV.FOUNDING_CODES = '';
   await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: '' })), ENV, J);

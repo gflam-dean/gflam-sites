@@ -1,6 +1,6 @@
 /* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
-   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them up or
-   change them." Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them on or
+   swap them out. I just wanted you to see how the slides work in between your games." (INBOX 336, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* A PROSPECT'S FREE MONTH, ITS CARD REMINDERS AND THE PAUSE, RUN AND NOT WORD-SEARCHED (Dean, 29 Oct 2026; migration 127).
 
    Dean's decisions: the free month starts at the FIRST SIGN-IN; with no card there are three reminders, day 3,
