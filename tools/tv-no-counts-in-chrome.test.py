@@ -182,8 +182,8 @@ SCREENS = [
     ('raffle', 'THE RAFFLE', '/app/raffle/screen.html?demo=1&sting=0',
      [('start', 800, None), ('drawing', 5000, None), ('winner', 12000, None), ('later', 30000, None)]),
     ('members', 'THE MEMBERS DRAW', '/app/members/screen.html?demo=1&sting=0',
-     [('drawing', 1500, None), ('winner', 8000, None), ('rollover', 15000, None),
-      ('purchase-raffle-draw', 21000, 'S({t:"drawing",kind:"entries",entriesTotal:8642,drawName:"Christmas raffle",amountCents:0,spinSecs:5})')]),
+     [('drawing', 1500, None), ('winner', 12000, None), ('rollover', 18000, None),   # the default 9 s draw since 12 Nov 2026
+      ('purchase-raffle-draw', 22000, 'S({t:"drawing",kind:"entries",entriesTotal:8642,drawName:"Christmas raffle",amountCents:0,spinSecs:5})')]),
     ('topanswers', 'TOP ANSWERS', '/app/topanswers/screen.html?demo=1&sting=0',
      [('start', 1500, None), ('round', 10000, None), ('later', 25000, None)]),
 ]

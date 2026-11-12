@@ -101,9 +101,9 @@ SCREENS = [
     ('musical bingo', '/app/musical/screen.html?demo=1&sting=0', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
     # The draw demos play the new looks since 12 Nov 2026 (INBOX 281): the ticket roll and the flip board are the tvStyle
     # layer through the draw and the win; then the claimed / rolled-over result. The show is on: the first draw at 4.4 s.
-    # The raffle's win is read 0.9 s after it lands (11.6 s): the ticket has landed and its claim clock has not ticked yet.
-    ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 12500, 'tvStyle'), ('result', 18500, 'tvResult')]),
-    ('members draw', '/app/members/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 13000, 'tvStyle'), ('result', 19500, 'tvResult')]),
+    # The default draw time (normal, 9 s): the win lands at 14.6 s; the raffle's is read 0.9 s later, landed and before its claim clock ticks.
+    ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 15500, 'tvStyle'), ('result', 21000, 'tvResult')]),
+    ('members draw', '/app/members/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 16000, 'tvStyle'), ('result', 22500, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),
 ]
 SIZES = [(1920, 1080), (1280, 720)]

@@ -163,18 +163,18 @@
 
   /* THE DRAWS IN THE NEW LOOK (Dean, 12 Nov 2026: the raffle and members draw demos were "not the new look").
      The demo walls play the draw as a venue on the new looks sees it: the TICKET ROLL for the raffle and the FLIP
-     BOARD for the members draw (/app/vp-drawstyle.js, live since 12 Nov), at the "short" draw time, each draw told
+     BOARD for the members draw (/app/vp-drawstyle.js), every venue's usual looks since INBOX 284, at the default "normal" draw time, each draw told
      its winner the way the host's console tells it (t:"pick" while the build-up runs). On this clock too, so the
      TV in the see-a-night room and "The big screen" over it show the same draw at the same moment.
 
      The raffle: three prizes of the "Friday Meat Raffle", tickets 1 to 150, one winning ticket a prize (the numbers
      the see-a-night host console shows: 087, 042, 131). The members draw: John S. (142) is drawn and is not there,
      so the jackpot rolls over and grows ($1,240 to $1,320), then K. Whitely (206) is drawn and claims it. */
-  var DRAW_SECS=6, INTRO_MS=1200;   // VPDrawStyle.secs("short") and VPDrawStyle.INTRO: the build-up is 7.2 s
+  var DRAW_SECS=9, INTRO_MS=1200;   // VPDrawStyle.secs("normal"), the consoles' default, and VPDrawStyle.INTRO: the build-up is 10.2 s
   var RAFFLE={
     NAME:"Friday Meat Raffle", MIN:1, MAX:150, PAD:3, DRAW_SECS:DRAW_SECS,
     DRAWS:[{ ticket:87, prize:"Meat tray" }, { ticket:42, prize:"Seafood platter" }, { ticket:131, prize:"Bottle of red" }],
-    EVERY:16000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, CLAIM_AFTER:12500, CLAIM_SECS:30,
+    EVERY:19000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, CLAIM_AFTER:15500, CLAIM_SECS:30,
     /* The first draw waits for the "IT'S RAFFLE TIME" show the wall plays when the console opens (vp-sting.js forDraw). */
     first:function(){ return (window.VPSting && window.VPSting.on) ? 4400 : 400; },
     drawAt:function(i){ return RAFFLE.first()+i*RAFFLE.EVERY; },
@@ -184,7 +184,7 @@
     NAME:"Friday Members Jackpot", MIN:1, MAX:380, DRAW_SECS:DRAW_SECS, CLAIM_SECS:180,
     START_CENTS:124000, GROW_CENTS:8000, RESET_CENTS:50000,
     DRAWS:[{ number:142, name:"John S.", here:false }, { number:206, name:"K. Whitely", here:true }],
-    EVERY:20000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, RESULT_AFTER:13600,
+    EVERY:23000, PICK_AFTER:1200, WIN_AFTER:INTRO_MS+DRAW_SECS*1000, RESULT_AFTER:16600,
     first:function(){ return (window.VPSting && window.VPSting.on) ? 4400 : 400; },   // after "MEMBERS DRAW TIME"
     drawAt:function(i){ return MEMBERS.first()+i*MEMBERS.EVERY; },
     lap:function(){ return MEMBERS.drawAt(MEMBERS.DRAWS.length-1)+MEMBERS.RESULT_AFTER+9000; }

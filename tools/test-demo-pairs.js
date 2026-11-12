@@ -243,8 +243,8 @@ function drawPair(src, label, which) {
 (function () {
   var r = drawPair(TV_RAFFLE, 'the raffle', 'RAFFLE'), a = r.a, C = r.C;
   var dr = a.got.filter(function (g) { return g.m.t === 'drawing'; });
-  show('every raffle draw is the TICKET ROLL at the short draw time, with the raffle\'s name and "Prize n of 3"',
-    dr.length >= 6 && dr.every(function (g, i) { return g.m.style === 'ticket' && g.m.drawSecs === 6 && g.m.raffle === C.NAME && g.m.prizeOf === 3 && g.m.prizeNo >= 1 && g.m.pad === 3 && g.m.max === 150; }),
+  show('every raffle draw is the TICKET ROLL at the consoles default draw time (normal, 9 s), with the raffle\'s name and "Prize n of 3"',
+    dr.length >= 6 && dr.every(function (g, i) { return g.m.style === 'ticket' && g.m.drawSecs === 9 && g.m.raffle === C.NAME && g.m.prizeOf === 3 && g.m.prizeNo >= 1 && g.m.pad === 3 && g.m.max === 150; }),
     JSON.stringify(dr.slice(0, 1).map(function (g) { return g.m; })));
   var ok = true, why = '';
   a.got.forEach(function (g, i) { if (g.m.t !== 'winner') return; var p = null; for (var k = i - 1; k >= 0; k--) { if (a.got[k].m.t === 'pick') { p = a.got[k].m; break; } if (a.got[k].m.t === 'drawing') break; }
@@ -258,8 +258,8 @@ function drawPair(src, label, which) {
 (function () {
   var r = drawPair(TV_MEMBERS, 'the members draw', 'MEMBERS'), a = r.a, C = r.C;
   var dr = a.got.filter(function (g) { return g.m.t === 'drawing'; });
-  show('every members draw is the FLIP BOARD at the short draw time, with the draw\'s name and its members\' number range',
-    dr.length >= 4 && dr.every(function (g) { return g.m.style === 'flip' && g.m.drawSecs === 6 && g.m.drawName === C.NAME && g.m.minNumber === 1 && g.m.maxNumber === 380; }), JSON.stringify(dr.slice(0, 1).map(function (g) { return g.m; })));
+  show('every members draw is the FLIP BOARD at the consoles default draw time (normal, 9 s), with the draw\'s name and its members\' number range',
+    dr.length >= 4 && dr.every(function (g) { return g.m.style === 'flip' && g.m.drawSecs === 9 && g.m.drawName === C.NAME && g.m.minNumber === 1 && g.m.maxNumber === 380; }), JSON.stringify(dr.slice(0, 1).map(function (g) { return g.m; })));
   var ok = true, why = '';
   a.got.forEach(function (g, i) { if (g.m.t !== 'winner') return; var p = null; for (var k = i - 1; k >= 0; k--) { if (a.got[k].m.t === 'pick') { p = a.got[k].m; break; } if (a.got[k].m.t === 'drawing') break; }
     if (!p || p.number !== g.m.number || p.name !== g.m.name) { ok = false; why = JSON.stringify([p, g.m]); } });
