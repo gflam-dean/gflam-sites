@@ -191,6 +191,10 @@
   "checks": 151,
   "counted_by": "lines"
  },
+ "tools/demo-pairs-in-chrome.test.py": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/details-autofill-in-chrome.test.py": {
   "checks": 92,
   "counted_by": "lines"
@@ -364,7 +368,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
-  "checks": 568,
+  "checks": 502,
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
@@ -665,6 +669,10 @@
  },
  "tools/test-day21-flag.js": {
   "checks": 40,
+  "counted_by": "lines"
+ },
+ "tools/test-demo-pairs.js": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {

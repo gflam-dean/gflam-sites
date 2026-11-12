@@ -280,6 +280,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock (12 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (members draw, 9 Nov 2026) -->
 <script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (flip board, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
@@ -874,21 +875,37 @@
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
       /* The first draw is a MISS, which is the whole point of a members draw: the jackpot rolls
          over and grows, and that is what brings the room back next week. Showing only a win
          would sell the wrong thing. */
-      at(0,     function(){ m({ t:"drawing", drawName:"Members Draw", number:418, name:"J. Hollis",
-                                amountCents:145000, minNumber:1, maxNumber:900, spinSecs:5, claimSecs:120 }); });
-      at(6500,  function(){ m({ t:"winner", number:418, name:"J. Hollis", amountCents:145000, claimSecs:120 }); });
-      at(14000, function(){ m({ t:"rollover", missedName:"J. Hollis", missedNumber:418,
-                                incrementCents:5000, nextJackpotCents:150000 }); });
-      at(20000, function(){ m({ t:"drawing", drawName:"Members Draw", number:206, name:"K. Whitely",
-                                amountCents:150000, minNumber:1, maxNumber:900, spinSecs:5, claimSecs:120 }); });
-      at(26500, function(){ m({ t:"winner", number:206, name:"K. Whitely", amountCents:150000, claimSecs:120 }); });
-      at(33000, function(){ m({ t:"claimed", name:"K. Whitely", amountCents:150000,
-                                incrementCents:5000, nextJackpotCents:5000, nextResetCents:5000 }); });
-      at(40000, function(){ m({ t:"idle" }); });
+      /* THE NEW LOOK, ON THE ONE CLOCK (Dean, 12 Nov 2026: the draw demos were "not the new look"). This played the
+         old spinning number on timers of its own. Now it is the FLIP BOARD (/app/vp-drawstyle.js) as a venue on the
+         new look sees it: the host's t:"drawing" with the look and the short draw time, t:"pick" with the member the
+         server drew while the board builds, the winner and the claim clock, then the result. The members, the
+         jackpot and the times are /app/vp-demo-clock.js (MEMBERS), and so is the clock, so the room TV on
+         /see-a-night and "The big screen" over it are on the same draw at the same moment. No timer here. */
+      var C=VPDemoClock.MEMBERS, steps=[];
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+      function jackpot(i){ return C.START_CENTS+i*C.GROW_CENTS; }   // draw 2 plays for the rolled-over jackpot
+      at(0, function(){
+        m({ t:"state", drawName:C.NAME, jackpotCents:C.START_CENTS, playing:true });
+      }, true, true);
+      C.DRAWS.forEach(function(d, i){
+        var t=C.drawAt(i);
+        at(t, function(){
+          /* The board's drawn row is THIS lap's members before this one: empty again every lap (each winner adds to it,
+             so without this it grew lap after lap), and right for a frame that joins part way through. */
+          state.drawnList=C.DRAWS.slice(0, i).map(function(x){ return String(x.number); });   // a late frame: the draws before this one
+          state.jackpotCents=jackpot(i);
+          m({ t:"drawing", drawName:C.NAME, minNumber:C.MIN, maxNumber:C.MAX, spinSecs:Math.round(C.WIN_AFTER/1000), style:"flip", drawSecs:C.DRAW_SECS });
+        }, true);
+        at(t+C.PICK_AFTER, function(){ m({ t:"pick", number:d.number, name:d.name }); });
+        at(t+C.WIN_AFTER, function(){ m({ t:"winner", number:d.number, name:d.name, claimSecs:C.CLAIM_SECS }); }, true);
+        at(t+C.RESULT_AFTER, function(){
+          if(d.here) m({ t:"claimed", name:d.name, amountCents:jackpot(i), nextResetCents:C.RESET_CENTS });
+          else m({ t:"rollover", missedName:d.name, missedNumber:d.number, incrementCents:C.GROW_CENTS, nextJackpotCents:jackpot(i+1) });
+        }, true);
+      });
 
       /* NO JOIN OR PAIRING CORNER ON A SALES PAGE: the code is one this browser invented, so
          scanning it leads to a room that does not exist. Watched, not hidden once, because the
@@ -918,14 +935,8 @@
         try{ new MutationObserver(hide).observe(document.body,{ childList:true, subtree:true }); }catch(e){}
       })();
 
-      var timers=[];
-      function run(){
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
-        timers.push(setTimeout(run, 45000));
-      }
-      run();
+      // A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap().
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 

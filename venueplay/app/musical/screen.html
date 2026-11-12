@@ -1374,9 +1374,12 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
            into textContent, so an object arrives on the wall as "[object Object]". It did. And it is
            the songs so far, made fresh each time: it used to be one list pushed onto every lap. */
         var played=SONGS.slice(0, i+1).map(function(x){ return x.title; });
-        // reveal:false first, so the wall shows the card filling in without naming the song
-        at(t, function(){ m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played, reveal:false }); }, true);
-        at(t+C.REVEAL, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
+        /* reveal:"end" (wait for the clip, and a demo has none) and not reveal:false: false is the wall's "legacy" mode,
+           which names the song 0.85 s later on the wall's own timer, while the phone marked it nearly three seconds
+           after that (Dean, 12 Nov 2026: "the demo phone lags behind the demo TV"). The title now comes with the
+           script's own reveal, the moment the phone marks the song (C.revealAt, shared with app/musical/play.html). */
+        at(t, function(){ m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played, reveal:"end" }); }, true);
+        at(C.revealAt(i), function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
         at(t+3400, function(){ m({ t:"players", count: 22 + i*4 }); });
       });
       var t=C.claimAt();

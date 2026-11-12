@@ -1602,8 +1602,11 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
         P.daubs={}; P.daubs[12]=true; for(var k=0;k<i;k++) tapSong(ORDER[k]);   // the card as it stands by this song
         fire({ t:"played", title:title, played:played, played_ids:ids, reveal:false });
       }, true);
-      at(t+3600, function(){ tapSong(title); });
-      if(i===2){ at(t+4300, function(){ tapSong("Wonderwall"); }); at(t+4900, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
+      /* MARKED THE MOMENT THE WALL NAMES IT (Dean, 12 Nov 2026: "the demo phone lags behind the demo TV"): this was
+         3.6 s in, nearly three seconds after the wall showed the title. C.revealAt is the wall's own reveal step. */
+      var r=C.revealAt(i)+C.MARK;
+      at(r, function(){ tapSong(title); });
+      if(i===2){ at(r+700, function(){ tapSong("Wonderwall"); }); at(r+1300, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
     });
     /* The real button asks the Worker to verify the card. A demo has no Worker, so it shows the
        same two screens the real thing does: sent and checking, then the win. */

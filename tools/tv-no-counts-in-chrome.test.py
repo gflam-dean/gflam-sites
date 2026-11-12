@@ -107,7 +107,8 @@ PROBE = r'''(function(){
 
 COUNT_SHAPES = [
     (r'\b\d+\s*/\s*\d+\b', 'an "N/N" count'),
-    (r'\b\d[\d,]*\s+(players?|teams?|people|entries|entrants|answered|joined|playing|in the room|here tonight|got it right)\b', 'an "N players/answered/entries" count'),
+    # "playing" but not "Playing for $1,240": the new-look flip board's prize line sits right under its digits (12 Nov 2026)
+    (r'\b\d[\d,]*\s+(players?|teams?|people|entries|entrants|answered|joined|playing(?!\s+for\b)|in the room|here tonight|got it right)\b', 'an "N players/answered/entries" count'),
     (r'\b(players?|teams?|answered|joined|entries|entrants)\s*[:·]?\s*\d', 'a "players: N" count'),
     (r'\bof\s+\d+\s+(players?|teams?|people)\b', 'an "of N players" count'),
     (r'\b\d+(st|nd|rd|th)\s+of\s+\d+\b', 'a "3rd of N" place'),
@@ -181,8 +182,8 @@ SCREENS = [
     ('raffle', 'THE RAFFLE', '/app/raffle/screen.html?demo=1&sting=0',
      [('start', 800, None), ('drawing', 5000, None), ('winner', 12000, None), ('later', 30000, None)]),
     ('members', 'THE MEMBERS DRAW', '/app/members/screen.html?demo=1&sting=0',
-     [('drawing', 1500, None), ('winner', 8000, None), ('rollover', 15000, None),
-      ('purchase-raffle-draw', 21000, 'S({t:"drawing",kind:"entries",entriesTotal:8642,drawName:"Christmas raffle",amountCents:0,spinSecs:5})')]),
+     [('drawing', 1500, None), ('winner', 12000, None), ('rollover', 18000, None),   # the default 9 s draw since 12 Nov 2026
+      ('purchase-raffle-draw', 22000, 'S({t:"drawing",kind:"entries",entriesTotal:8642,drawName:"Christmas raffle",amountCents:0,spinSecs:5})')]),
     ('topanswers', 'TOP ANSWERS', '/app/topanswers/screen.html?demo=1&sting=0',
      [('start', 1500, None), ('round', 10000, None), ('later', 25000, None)]),
 ]

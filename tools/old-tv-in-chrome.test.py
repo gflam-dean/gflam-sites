@@ -95,12 +95,19 @@ class Site(http.server.BaseHTTPRequestHandler):
 # covers the show and the demos' later timings.
 SCREENS = [
     ('bingo TV, no venue (set up this screen)', '/tv', [('setup', 4000, None)]),
-    ('bingo TV', '/tv?demo=1&sting=0', [('lobby', 1500, 'tvLobby'), ('game', 15000, 'tvRun'), ('claim', 29500, 'tvClaim'), ('win', 33000, 'tvWin')]),
+    ('bingo TV', '/tv?demo=1&sting=0', [('lobby', 1500, 'tvLobby'), ('game', 15000, 'tvRun'), ('claim', 28000, 'tvClaim'), ('win', 33000, 'tvWin')]),   # the claim at 27.2 s on the shared clock (12 Nov 2026)
     ('trivia', '/app/trivia/screen.html?demo=1&sting=0', [('lobby', 900, 'tvLobby'), ('question', 4000, 'tvQ'), ('reveal', 9000, 'tvReveal'),
                                                   ('podium', 36000, 'tvPodium'), ('board', 41000, 'tvBoard')]),   # the board only at the round's end (7 Nov 2026)
     ('musical bingo', '/app/musical/screen.html?demo=1&sting=0', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
-    ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 4700, 'tvDraw'), ('win', 8000, 'tvWin'), ('result', 13000, 'tvResult')]),
-    ('members draw', '/app/members/screen.html?demo=1', [('draw', 6000, 'tvDraw'), ('win', 10000, 'tvWin'), ('result', 17000, 'tvResult')]),
+    # The draw demos play the new looks since 12 Nov 2026 (INBOX 281): the ticket roll and the flip board are the tvStyle
+    # layer through the draw and the win; then the claimed / rolled-over result. The show is on: the first draw at 4.4 s.
+    # The default draw time (normal, 9 s): the win lands at 14.6 s. Read only where the stage stands still: the raffle's roll
+    # result, the members board once its flip has landed and its result. The raffle's roll moves through the whole draw and
+    # its win picture animates until after the claim, and the members board flips all through its draw, so two loads of
+    # the SAME page differ there (seen 12 Nov 2026 on the test server), which is motion, not layout. The new-look stages on
+    # an old TV need a suite of their own that steps VPDrawStyle by ctl.seek(t) (written up for main, INBOX 281).
+    ('raffle', '/app/raffle/screen.html?demo=1', [('result', 21000, 'tvResult')]),
+    ('members draw', '/app/members/screen.html?demo=1', [('win', 16000, 'tvStyle'), ('result', 22500, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),
 ]
 SIZES = [(1920, 1080), (1280, 720)]

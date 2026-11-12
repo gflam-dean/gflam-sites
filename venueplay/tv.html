@@ -920,6 +920,7 @@
 <script src="/app/vp-logo.js"></script>   <!-- the venue's logo with its plain background taken off, for the What's on slide (9 Nov 2026) -->
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared with the demo phone /play?demo=1 (12 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script>
 (function(){
@@ -3373,34 +3374,35 @@
   if(DEMO && !DEMO_ADS_ONLY){
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
-      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
-      /* THE FIRST BALL WAITS FOR THE START-OF-GAME SHOW (2 Nov 2026, Dean: the show is on for every venue).
-         "started" lands at 1.2 s and the show runs about 4 s (/app/vp-sting.js), so a first ball at
-         2.6 s cut it off after 1.4 s on every lap of the sales-page demo. 5.4 s lets it play in full,
-         as the real console's hold does (index.html STING_HOLD_SECONDS). */
-      var FIRST=(window.VPSting && VPSting.on) ? 5400 : 2600;   // 2600 as before the show, on a TV with ?sting=0
-      var called=[];
+      /* ONE NIGHT FOR THE TV AND THE PHONE (Dean, 12 Nov 2026: "the demo TV calls different numbers from what the
+         demo phone shows"). The balls, the times, the winner and the clock are /app/vp-demo-clock.js (BINGO), shared
+         with the demo phone (play.html ?demo=1), from the one start the sales page puts on both frames (?t0=). This
+         wall used to run its own setTimeout chain with its first ball at 5.4 s while the phone's came at 2.6 s, so
+         the two were never on the same number. No timer here. */
+      var C=VPDemoClock.BINGO, BALLS=C.BALLS;
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[];
-      function at(ms, fn){ steps.push([ms, fn]); }
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
 
       // A bingo round: lobby, a dozen balls, a claim, a winner, then back to the ads.
       /* AT ZERO, not 300ms. Until the first message arrives tv.html shows its ordinary
          full-screen JOIN THE GAME lobby, with a QR built from the code this browser invented.
          Embedded on the sales page that was the FIRST thing a visitor saw when they tapped the
          big screen, and it is a scannable code leading to a room that does not exist: the one
-         thing this demo promises it will never show. Three hundred milliseconds is not long,
-         but it is the first frame, which is the one people photograph. A zero timeout still
-         runs after this script finishes parsing, so the page is ready either way. */
-      at(0,    function(){ m({t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE}); m({t:"mode", mode:"bingo"}); });
+         thing this demo promises it will never show. */
+      at(0, function(){ m({t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE}); m({t:"mode", mode:"bingo"}); }, true, true);
       // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
-      at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
+      at(C.STARTED, function(){ m({t:"started", pattern:"one", prize:C.PRIZE}); }, false, true);
       BALLS.forEach(function(n,i){
-        at(FIRST + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
+        /* Each ball carries the whole called list, so a frame that joins part way through (a late load, a tab back
+           from hiding) paints the board as it stands: a key step. */
+        var called=BALLS.slice(0, i+1);
+        at(C.ballAt(i), function(){ m({t:"ball", number:n, called:called.slice()}); }, true);
       });
-      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Jess", cardNo:47}); });
-      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Jess", cardNo:47, prize:"$50 bar tab"}); });   // a believable card, not #000
-      at(FIRST + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
+      // The demo phone's own player and ticket: the TV gives the game to the phone beside it.
+      at(C.claimAt(), function(){ m({t:"claim_pending", name:C.PLAYER, cardNo:C.CARD_NO}); }, true);
+      at(C.winAt(),   function(){ m({t:"winner", name:C.PLAYER, cardNo:C.CARD_NO, prize:C.PRIZE}); }, true);
+      at(C.idleAt(),  function(){ m({t:"idle"}); }, true);
 
       /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
          venue and no session behind it, so a prospect who scans the QR would be told
@@ -3413,15 +3415,8 @@
         if(j) o.observe(j, { attributes:true, attributeFilter:["class"] });
       })();
 
-      var timers=[];
-      function run(){
-        called=[];
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // Loop for as long as the page is open. A sales page is left sitting on a desk.
-        timers.push(setTimeout(run, FIRST + BALLS.length*2100 + 14000));
-      }
-      run();
+      // Loop for as long as the page is open. A sales page is left sitting on a desk: one lap is C.lap().
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 
