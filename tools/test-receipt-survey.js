@@ -1,3 +1,6 @@
+/* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "...so you can have a play and
+   see how the slides work in between your games. You can keep them on or swap them out." (INBOX 339, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* THE 8 NOV EMAIL ROUND, RUN (Dean's notes, 5 Nov 2026 evening). RUNS the shipped billing Worker, the shipped
    /rate/ page script and the shipped vp-session.js functions; only fetch, the database and crypto are stubbed.
 
@@ -181,7 +184,7 @@ async function main() {
   var W = { email: 'gm@pub.com', firstName: 'Sam', venueName: 'The Royal', seats: 10, offerCode: 'OFFER-NOV-2026' };
   var off = '', RAW = ''; vpaRenderProspectWelcome(ENV, W).then(function (x) { RAW += x; off = visible(x); }); drain();
   check('the welcome says the plan in numbers and the short no-card line, and never 5 days',
-    /Your plan is set to 10 players ?, so that's \$25\.00 a month\. You can change it any time\./.test(off) && off.indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your free month ends.") !== -1 && off.indexOf('5 days') === -1, off.slice(-900));
+    /Your plan is set to 10 players ?, so that's \$25\.00 a month\. You can change it any time\./.test(off) && off.indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your first month ends.") !== -1 && off.indexOf('5 days') === -1, off.slice(-900));
   var STD = Number((/const VPA_STANDARD_RATE = ([\d.]+)/.exec(src) || [])[1]);
   function withGrace(name, keep) { return new Function('VPA_STANDARD_RATE', 'VPA_PAUSED_KEEP_DAYS', 'return ' + liftFn(src, name).replace(/^function/, 'async function'))(STD, keep || 0); }
   var R = { kind: 'last', firstName: 'Sam', venueName: 'The Royal', endsWords: 'Wed 2 December', daysLeft: 2, offerRate: 2.5, cardUrl: 'https://venueplay.com.au/add-card?f=f1&t=x', cancelUrl: 'https://venueplay.com.au/prospect/cancel/?f=f1&t=x', email: 'gm@pub.com' };
@@ -205,8 +208,8 @@ async function main() {
   function rem(kind, stats, days) { var out = null; vpaRenderProspectReminder(ENV, clone(R, { kind: kind, daysLeft: days || 8, stats: stats })).then(function (x) { out = visible(x.html); }); drain(); return out; }
   var ST = { ok: true, nights: 4, totalGames: 6, totalPlayers: 148, regulars: 21, biggest: { players: 47, at: '2026-11-27T09:30:00Z' } };
   var wk = rem('last', ST, 8);
-  check('one week out, with numbers: "One week left", then "In your free month, The Royal ran:" over the tiles (6 games, 148 players), "Your biggest night had 47 players. Don\'t let that stop now." then the ask',
-    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. If you'd like to keep going, add your card before then and it won't be charged until your free month ends. In your free month, The Royal ran: 6 games 148 players Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
+  check('one week out, with numbers: "One week left", then "In your first month, The Royal ran:" over the tiles (6 games, 148 players), "Your biggest night had 47 players. Don\'t let that stop now." then the ask',
+    wk.indexOf('One week left of your first month') !== -1 && wk.indexOf("ends on Wed 2 December. If you'd like to keep going, add your card before then and it won't be charged until your first month ends. In your first month, The Royal ran: 6 games 148 players Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
   /* SUBSCRIBERS ARE COUNTED FROM THE SAME VIEW THE MONTHLY REPORT READS (v_vp_player_optins), run through vpaVenueStats. */
   var SEL0 = vpaSelect, SELA0 = vpaSelectAll, asked = [];
   vpaSelect = function (env, table) {
@@ -227,16 +230,16 @@ async function main() {
     visible(wkS).indexOf('ran: 6 games 148 players 32 subscribers') !== -1 && (wkS.replace(/<table role="presentation" data-vp-foot="block"[\s\S]*?<\/table>/g, '').match(/<img/g) || []).length === 1, visible(wkS).slice(0, 600));
   var wk0 = rem('last', { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 }, 8);
   check('one week out with no games yet: "You haven\'t had your first night yet" and the sign-in button, no numbers',
-    wk0.indexOf("You haven't had your first night yet, and there's still time.") !== -1 && /Open your venueplay/.test(wk0) && wk0.indexOf('In your free month') === -1, wk0.slice(0, 700));
+    wk0.indexOf("You haven't had your first night yet, and there's still time.") !== -1 && /Open your venueplay/.test(wk0) && wk0.indexOf('In your first month') === -1, wk0.slice(0, 700));
   var wkX = rem('last', null, 8), wkY = rem('last', { ok: false }, 8);
-  check('numbers that could not be read say nothing: no stats line and no first-night line', [wkX, wkY].every(function (t) { return t.indexOf('In your free month') === -1 && t.indexOf('first night') === -1; }));
+  check('numbers that could not be read say nothing: no stats line and no first-night line', [wkX, wkY].every(function (t) { return t.indexOf('In your first month') === -1 && t.indexOf('first night') === -1; }));
   var fd = rem('final', ST, 1);
   check('the last day: "Today is the last day", "We\'d be sad to see you go.", their numbers, the pause tonight, what they keep for 90 days, Add my card',
-    fd.indexOf("Today is the last day of your free month") !== -1 && fd.indexOf("We'd be sad to see you go. In your free month, The Royal ran: 6 games 148 players") !== -1 &&
+    fd.indexOf("Today is the last day of your first month") !== -1 && fd.indexOf("We'd be sad to see you go. In your first month, The Royal ran: 6 games 148 players") !== -1 &&
     fd.indexOf("If there's no card by tonight Your account pauses tonight: your games switch off and your TV keeps showing your ads. Nothing is lost") !== -1 &&
     /Here's what you still have for the next 90 days: .*Your members list .*Your ad slides .*Your raffle and members draw history .*Your billing page, ready for your card .*Add my card/.test(fd), fd.slice(0, 1200));
   var e3 = rem('early', ST, 27);
-  check('the day-3 note is as it was: no numbers, no last-day words', e3.indexOf("How's it going?") !== -1 && e3.indexOf('In your free month') === -1 && e3.indexOf('Today is the last day') === -1);
+  check('the day-3 note is as it was: no numbers, no last-day words', e3.indexOf("How's it going?") !== -1 && e3.indexOf('In your first month') === -1 && e3.indexOf('Today is the last day') === -1);
   check('the sweep reads the numbers only for the one-week and last-day emails', /stats: kind !== 'early' \? await vpaVenueStats\(env, v\.id/.test(src));
 
   /* 7. ONE BUTTON, ONE PLACE (Dean, 5 Nov 2026 round 5). Every button in every email a venue or staff gets is the same

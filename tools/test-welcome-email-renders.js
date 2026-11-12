@@ -1,3 +1,6 @@
+/* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "...so you can have a play and
+   see how the slides work in between your games. You can keep them on or swap them out." (INBOX 339, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* RUNS the product, it does not word-search it. The testing audit of 27 Oct 2026 filed this suite
    as "reads-file" because its scanner looked for load() and this file executes the shipped code
    through (0, eval)(src) instead. Its prove-checks rows break product logic, not strings, and go
@@ -85,7 +88,7 @@ check('the plan box in plain words: the rate, the plan\'s players and the total;
       words(one).indexOf("You pay $2.50 a month for each player in your plan. Your player limit is 40, so that's $100.00 a month. You can change it any time. Prices include GST. " + BUSY) !== -1 &&
       /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>Account &gt; Billing</.test(one) && /Full details in our <a href="https:\/\/venueplay\.com\.au\/terms"[^>]*>Terms of Service</.test(one) &&
       words(one).indexOf('Busy nights and changing your maximum') === -1 && words(one).indexOf('maximum players per session') === -1 && words(one).indexOf('On an annual plan') === -1 &&
-      words(one).indexOf('No lock-in') !== -1 && words(one).indexOf("Your plan Your first month is free You can enjoy everything venueplay does until ") !== -1 && words(one).indexOf('Your first payment then is $100.00 a month for 40 players. Nothing is charged before then, and you can change or cancel any time.') !== -1, words(one).slice(0, 900));
+      words(one).indexOf('No lock-in') !== -1 && words(one).indexOf("Your plan Your first month is on us You can enjoy everything venueplay does until ") !== -1 && words(one).indexOf('Your first payment then is $100.00 a month for 40 players. Nothing is charged before then, and you can change or cancel any time.') !== -1, words(one).slice(0, 900));
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@pub.com', contact_name: 'Sam', plan: 'annual', max_seats: 40 },
   [{ name: 'The Royal Hotel', seats: 40, slug: 'the-royal-hotel-4220' }], false);
@@ -119,7 +122,7 @@ check('the group steps are sign in, add each host, then each TV with that venue\
 /* "YOUR VENUES" (Dean, 5 Nov 2026 round 4): after the login, each venue's name on its own line, and never "signed up
    today" or a count of venues in words. */
 check('after the login, "Your venues" lists each venue\'s name, one per line, and the email never says how many were set up today',
-      words(grp).indexOf("Your login It's your mobile number") < words(grp).indexOf('Your venues The Anchor: 30 players The Crown: 50 players') && words(grp).indexOf('Your venues The Anchor: 30 players The Crown: 50 players Your plan Your first month is free') !== -1 &&
+      words(grp).indexOf("Your login It's your mobile number") < words(grp).indexOf('Your venues The Anchor: 30 players The Crown: 50 players') && words(grp).indexOf('Your venues The Anchor: 30 players The Crown: 50 players Your plan Your first month is on us') !== -1 &&
       /<p style="margin:0 0 6px;font-size:16px;line-height:1\.5;color:#0A0A0B"><strong>The Anchor:<\/strong> 30 players<\/p><p [^>]*><strong>The Crown:<\/strong> 50 players<\/p>/.test(grp) && !/set up 2 venues|today|all (2|two) (of your )?venues/i.test(words(grp)), words(grp).slice(0, 500));
 check('the group heading fits one line and the group email points at the in-app guide',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(grp) && words(grp).indexOf("When you first sign in, we'll walk you through it.") !== -1 && words(grp).indexOf('screen link') === -1);
@@ -156,12 +159,12 @@ function welcome(meta, group) {
 var back = welcome({ tier: 'founding', trial_end: String(D3), returning: '1' });
 check('a returning venue is told the THREE DAY date', back.indexOf('venueplay does until ' + fmt(D3)) !== -1, back.match(/venueplay does until [^,.]*/));
 check('and is never shown the thirty day one', fmt(D30) === fmt(D3) || back.indexOf(fmt(D30)) === -1, fmt(D30));
-check('and is not told it has a free month it did not get', !/first month is free/i.test(back), (back.match(/[^.]*free[^.]*\./i) || [])[0]);
-check('it is told why, in words', /free month was used on your earlier account/.test(back));
+check('and is not told it has a free month it did not get', !/first month is on us/i.test(back), (back.match(/[^.]*free[^.]*\./i) || [])[0]);
+check('it is told why, in words', /You had your first month on us with your earlier account/.test(back));
 var backGrp = welcome({ tier: 'founding', trial_end: String(D3), returning: '1' }, true);
-check('the same for a returning GROUP', backGrp.indexOf('venueplay does until ' + fmt(D3)) !== -1 && !/first month is free/i.test(backGrp), backGrp.match(/venueplay does until [^,.]*/));
+check('the same for a returning GROUP', backGrp.indexOf('venueplay does until ' + fmt(D3)) !== -1 && !/first month is on us/i.test(backGrp), backGrp.match(/venueplay does until [^,.]*/));
 var fresh = welcome({ tier: 'founding', trial_end: String(D30), returning: '0' });
-check('a new venue is still told a free month, to the right day', /first month is free/i.test(fresh) && fresh.indexOf('venueplay does until ' + fmt(D30)) !== -1, fresh.match(/venueplay does until [^,.]*/));
+check('a new venue is still told a free month, to the right day', /first month is on us/i.test(fresh) && fresh.indexOf('venueplay does until ' + fmt(D30)) !== -1, fresh.match(/venueplay does until [^,.]*/));
 var olds = welcome({ tier: 'founding' });
 check('a checkout made before the date was carried still gets a date, not a blank', olds.indexOf('venueplay does until ' + fmt(D30)) !== -1, olds.match(/venueplay does until [^,.]*/));
 var stale = welcome({ tier: 'founding', trial_end: String(NOWS - 86400) });
@@ -219,6 +222,20 @@ var ixs = readFile('venueplay/app/index.html');
 check('...and that is when the console really asks: more than one venue on the login', /if\(nVenues>1 && !venuePickFresh\(\)\)\{ showVenuePick\(\); return; \}/.test(ixs) && /staff\.forEach\(function\(x\)\{ var id=x&&x\.venue_id; if\(id && !seenV\[id\]\)\{ seenV\[id\]=1; nVenues\+\+; \} \}\);/.test(ixs));
 check('it points at the in-app guide for this venue in one line and ends with the help line',
       ob.indexOf("When you first open The Crown, we'll walk you through it.") !== -1 && ob.indexOf('If you need any help, let us know.') !== -1 && ob.indexOf('press 2') !== -1);
+
+/* NO "FREE" IN ANY VENUE EMAIL (Dean via main INBOX 331, 12 Nov 2026): "Your first month is on us", "your first
+   month", never "free month". Every template a venue is sent, as it reads (comments and tags out), and the venue
+   email words the Worker builds itself (the friendly first-month-end email's subject, the sign-in sentence, the
+   welcome's plan title). Player-facing "free entry" wording is not an email to a venue and is not read here. */
+var NOFREE = ['prospect-reminder', 'upcoming-payment-group', 'upcoming-payment', 'venue-onboarding', 'welcome-group',
+  'welcome-hq', 'welcome-prospect', 'welcome-self', 'welcome'].map(function (n) {
+  var t = readFile('venueplay/emails/' + n + '.html').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ');
+  var m = t.match(/[^.>]*\bfree\b[^.<]*/i); return m ? n + ': ' + m[0].trim() : null;
+}).filter(Boolean);
+[vpaTrialEndSubject('10 December'), vpaOfferSigninWords('OFFER-DEC-2026'), fresh].forEach(function (t, i) {
+  if (/\bfree\b/i.test(String(t))) NOFREE.push('worker words ' + i + ': ' + String(t).match(/[^.]*\bfree\b[^.]*/i)[0]);
+});
+check('no "free" in any venue email (Dean via main INBOX 331, 12 Nov): every template and the Worker\'s own venue email words', NOFREE.length === 0, NOFREE);
 
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }

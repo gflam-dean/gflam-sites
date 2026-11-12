@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '12 Nov 2026, 14:52 · d0579978';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 17:29 · 2255ddb3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5645,8 +5645,9 @@ function vpaTrialEndNoteDueAt(prow, state) {
    end is closer than Stripe allows), so NOTHING is charged before the free month ends. The first charge comes when
    it ends (Terms: "you are not charged until then").
    SUBJECT: short enough for ONE line in Gmail on a laptop (about 60 to 70 characters) and ONE line in iPhone Mail
-   (about 35): "Your free month ends 10 December" is 32 characters, 33 for the longest month (September). */
-function vpaTrialEndSubject(endsShort) { return 'Your free month ends ' + endsShort; }
+   (about 35): "Your first month ends 10 December" is 33 characters, 34 for the longest month (September).
+   NO "free" IN ANY VENUE EMAIL (Dean via main INBOX 331, 12 Nov 2026): "free month" became "first month" here. */
+function vpaTrialEndSubject(endsShort) { return 'Your first month ends ' + endsShort; }
 function vpaRenderTrialEndNote(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const venue = o.venueName || 'your venue', when = o.endsLong || '';
@@ -5654,11 +5655,11 @@ function vpaRenderTrialEndNote(env, o) {
   const P = 'margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44';
   const A = 'color:#8a8a95';
   const inner =
-      '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your free month ends on ' + vpaEsc(when) + '</h1>'
+      '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your first month ends on ' + vpaEsc(when) + '</h1>'
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
-    + '<p style="' + P + '">Just a quick note to say your free month of venueplay at ' + vpaEsc(venue) + ' runs until ' + vpaEsc(when)
+    + '<p style="' + P + '">Just a quick note to say your first month of venueplay at ' + vpaEsc(venue) + ' runs until ' + vpaEsc(when)
     + '. As you asked, we’ll switch it off after that. Nothing has been charged.</p>'
-    + '<p style="' + P + '">To keep your games running after that, add a card before then. Nothing is charged until your free month ends on '
+    + '<p style="' + P + '">To keep your games running after that, add a card before then. Nothing is charged until your first month ends on '
     + vpaEsc(when) + ', and everything carries on just as it is.</p>'
     + (o.cardUrl ? vpaEmailButton(vpaEsc(o.cardUrl), 'Keep it going') : '')
     + '<p style="margin:20px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Either way, thanks for giving venueplay a go. This is the last email you’ll get from us about it.</p>'
@@ -6126,8 +6127,8 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
-  const subject = o.kind === 'final' ? 'Last day of your free month at ' + (o.venueName || 'your venue')
-    : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
+  const subject = o.kind === 'final' ? 'Last day of your first month at ' + (o.venueName || 'your venue')
+    : o.kind === 'last' ? 'Your first month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
     : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
   return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
 }
@@ -6846,7 +6847,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     return Object.assign(done, { words: words });
   }
   /* A PROSPECT WHO HAS NOT SIGNED IN YET, before their offer's date (Dean, 7 Nov 2026): the same sentence as the welcome,
-     "Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player." */
+     "Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player." */
   const offerLine = win ? await vpaProspectSigninOfferWords(env, pick.venue_id, Date.now()) : '';
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
@@ -7476,11 +7477,12 @@ function vpaOfferRateAt(env, code, atMs) {
   if (isFinite(end)) return atMs <= end ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
   return vpaLiveCodes(env, atMs).length ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
 }
-/* Dean's sentence, with the offer's own day: "Your free month starts the first time you sign in. Sign in by 30 November
-   to keep $2.50 a player." Empty when the code has no date. */
+/* Dean's sentence, with the offer's own day: "Your first month is on us. It starts the first time you sign in. Sign in by
+   30 November to keep $2.50 a player." (Dean via main INBOX 331, 12 Nov 2026: no "free" in any venue email.) Empty when
+   the code has no date. */
 function vpaOfferSigninWords(code) {
   const day = vpaOfferDayWords(code);
-  return day ? 'Your free month starts the first time you sign in. Sign in by ' + day + ' to keep $' + VPA_OFFER_RATE.toFixed(2) + ' a player.' : '';
+  return day ? 'Your first month is on us. It starts the first time you sign in. Sign in by ' + day + ' to keep $' + VPA_OFFER_RATE.toFixed(2) + ' a player.' : '';
 }
 /* WHICH OFFER A PROSPECT IS ON. It is not a column on vp_prospects (no migration): it is written on the setup's audit row
    (vp_admin_audit prospect_set_up, detail.offer_code) and on every welcome sent (vp_prospect_welcomes detail.offerCode;
@@ -10530,8 +10532,8 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     /* A returning venue did not get a free month, so the email must not say it did. */
     const returning = !!(session && session.metadata && session.metadata.returning === '1');
     const freeIntro = returning
-      ? 'Your free month was used on your earlier account, and this time you have a few days to get set up'
-      : 'Your first month is free';
+      ? 'You had your first month on us with your earlier account, and this time you have a few days to get set up'
+      : 'Your first month is on us';
     const consoleUrl = site + '/app';
     /* THE TV LINK CARRIES THE VENUE, ALWAYS. This was `site + '/tv'` for every venue, so the
        email said "open this link on your screen" and handed over an address that names no
@@ -10586,7 +10588,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     }
     html = html.replace(/{{first_charge_date}}/g, firstCharge)
       .replace(/{{free_intro}}/g, freeIntro)
-      .replace(/{{free_title}}/g, returning ? 'Your free month was used on your earlier account' : 'Your first month is free')
+      .replace(/{{free_title}}/g, returning ? 'You had your first month on us with your earlier account' : 'Your first month is on us')
       .replace(/{{launch_phrase}}/g, launchPhrase)
       .replace(/{{player_rate}}/g, money(rate))
       .replace(/{{host_console_url}}/g, consoleUrl)

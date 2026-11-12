@@ -28,7 +28,7 @@
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <tr><td align="center" style="padding:24px 12px">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your free month of venueplay at {{venue_name}} runs until {{ends_on}}.</div>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your first month of venueplay at {{venue_name}} runs until {{ends_on}}.</div>
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">
       <tr><td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 28px">
         <img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
@@ -38,23 +38,23 @@
         <h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">How's it going?</h1>
 <!--ENDIF:early-->
 <!--IF:last-->
-        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">{{days_left}} days left of your free month</h1>
+        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">{{days_left}} days left of your first month</h1>
 <!--ENDIF:last-->
 <!--IF:final-->
-        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Today is the last day of your free month</h1>
+        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Today is the last day of your first month</h1>
 <!--ENDIF:final-->
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{greeting}}</p>
 <!--IF:early-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from venueplay. Your free month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your free month ends.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from venueplay. Your first month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your first month ends.</p>
 <!--ENDIF:early-->
 <!--IF:last-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends {{ends_when}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month at {{venue_name}} ends {{ends_when}}. If you'd like to keep going, add your card before then and it won't be charged until your first month ends.</p>
 <!--ENDIF:last-->
 <!--IF:final-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">We&#39;d be sad to see you go.</p>
 <!--ENDIF:final-->
 <!--IF:stats-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">In your free month, {{venue_name}} ran:</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">In your first month, {{venue_name}} ran:</p>
         {{stats_tiles}}
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{stats_line}}</p>
 <!--ENDIF:stats-->
@@ -71,7 +71,7 @@
           <tr><td align="center" style="padding:20px 22px;text-align:center">
             <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">If there's no card by {{nocard_when}}</p>
 <!--IF:offer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}}: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You started your free month in time for {{offer_rate}} a player. That price ends with the pause, so a card added after that is at our price on the day.</p>
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}}: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You started your first month in time for {{offer_rate}} a player. That price ends with the pause, so a card added after that is at our price on the day.</p>
 <!--ENDIF:offer-->
 <!--IF:nooffer-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}}. Nothing is lost, and adding a card switches it all back on.</p>
