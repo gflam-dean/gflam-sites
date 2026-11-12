@@ -157,8 +157,16 @@
   }
 
   function on() { return !!(line && !line.hidden); }
-  function inset() { return Math.max(14, Math.round(0.012 * (w.innerWidth || 1920))); }   /* the venue logo's own distance from the top */
-  function gapUnder() { return Math.max(2, Math.round(0.004 * (w.innerHeight || 1080))); }
+  /* THE TV SAFE BOX (Dean via main, INBOX 321.2, 12 Nov 2026): on a page with /app/vp-tvsafe.css every place and size
+     here is of the safe box (the window less 5% each side), the way /app/vp-venuelogo.js sizes the venue's logo. sf()
+     is 0 without the sheet, which is the window, as before. */
+  function sf() { try { return w.VPVenueLogo && w.VPVenueLogo.safeShare ? w.VPVenueLogo.safeShare() : 0; } catch (e) { return 0; } }
+  function SB() {
+    var W = w.innerWidth || 1920, H = w.innerHeight || 1080, k = sf();
+    return { x: k * W, y: k * H, W: W * (1 - 2 * k), H: H * (1 - 2 * k) };
+  }
+  function inset() { var b = SB(); return b.y + Math.max(14, Math.round(0.012 * b.W)); }   /* the venue logo's own distance from the top */
+  function gapUnder() { return Math.max(2, Math.round(0.004 * SB().H)); }
   function corner() { return d.querySelector(".tv-corner"); }
   /* The middle line: the venue logo's, its name's when it has none, our mark's when neither is up. */
   function anchor() {
@@ -200,7 +208,7 @@
   var placedAt = "";
   function place() {
     if (!el || !on()) return;
-    var W = w.innerWidth || 1920, H = w.innerHeight || 1080, T = inset();
+    var sb = SB(), W = sb.W, H = sb.H, T = inset();   /* the safe box's width and height (the window's with no sheet) */
     var gap = Math.max(16, Math.round(0.016 * W));
     var logoEl = d.getElementById("venueLogo");
     /* The venue logo arrives, and is sized by its shape, after this is first painted: follow it the moment it
@@ -233,10 +241,10 @@
          13% of the screen; beside a venue's NAME it is 4.4% of the height. NEVER SMALLER THAN 5% of the height
          (a smudge beside a wide wordmark or a name). */
       ih = Math.max(logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H), Math.round(0.05 * H));
-      var left = an ? an.right + gap : T;
+      var left = an ? an.right + gap : sb.x + Math.max(14, Math.round(0.012 * W));
       /* NEVER REACHES THE GAME'S NAME: it stops a gap short of the name as painted (TRIVIA is short, MUSICAL
          BINGO is long), and never past 13% of the screen's width beyond its own start. */
-      var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.13 * W);
+      var stop = Math.min(tl ? tl.left - gap : sb.x + 0.42 * W, left + 0.13 * W);
       var mw = Math.round(Math.max(0.06 * W, stop - left));
       s.left = Math.round(left) + "px";
       s.maxWidth = mw + "px";
@@ -261,7 +269,7 @@
     var lb = visible(line); if (lb && lb.bottom > lowest) lowest = lb.bottom;
     var bh = Math.round(lowest + UNDER * H);
     band.style.height = bh + "px"; band.hidden = false;
-    var bb = Math.max(bh, Math.round(BOARD * H));
+    var bb = Math.max(bh, Math.round(sb.y + BOARD * H));
     boardBand.style.height = bb + "px"; boardBand.hidden = false;
     podBand.style.height = Math.round(bb + POD * H) + "px"; podBand.hidden = false;
     lk += "," + bh;

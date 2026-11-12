@@ -20,6 +20,13 @@ Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears a
 VP_SHOTS=<dir> also saves the frames.
 
     python3 tools/whats-on-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import datetime, json, os, struct, sys, tempfile, time, zlib
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -204,8 +211,10 @@ def tv_and_phone():
         plain = [dict(n, image_url=None) if n.get('image_url') else n for n in nights]
         for W, H, got, m, rows in scene(plain, 'list'):
             ok('list %dx%d: no picture this week: the plain list takes its turn, its header at the top' % (W, H), got is True and not m.get('feature') and m.get('headTop', 999) < H * 0.12, m)
+            # TV SAFE AREA RE-PIN (12 Nov 2026): "across the whole wall" is 6% / 94% of the SAFE BOX's width from its left edge
+            # (5% in), was of the window's width
             ok('list %dx%d: three tiles side by side across the whole wall, the same size, clear of the header and the foot, every day label at full strength' % (W, H),
-               len(rows) == 3 and len(set(x['top'] for x in rows)) == 1 and len(set(x['h'] for x in rows)) == 1 and rows[0]['left'] <= m['w'] * 0.06 and rows[-1]['right'] >= m['w'] * 0.94
+               len(rows) == 3 and len(set(x['top'] for x in rows)) == 1 and len(set(x['h'] for x in rows)) == 1 and rows[0]['left'] <= m['w'] * (0.05 + 0.06 * 0.9) and rows[-1]['right'] >= m['w'] * (0.05 + 0.94 * 0.9)
                and rows[0]['top'] >= m.get('headTop', 0) + m['h'] * 0.08 and rows[-1]['bot'] <= m['h'] - 8 and rows[0]['h'] >= m['h'] * 0.3 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
         # Dean, 9 Nov 2026, Lunatic Hotel's real three nights: no spaced monospace capitals, the long title fitted and never
         # cut, the hours once ("2pm to 6pm"), the tiles even, the venue's logo shown (never held back, never a white box).
@@ -215,8 +224,9 @@ def tv_and_phone():
         for W, H, got, m, rows in scene(lun, 'lunatic', r.base + '/logos/venue-tugun-bowls.png'):
             ok('lunatic %dx%d: the day labels are plain words: not monospace, not capitals, no letter spacing' % (W, H),
                len(rows) == 3 and all('mono' not in x['dff'].lower() and x['dtt'] == 'none' and x['dls'] in ('normal', '0px') for x in rows), [(x['dff'], x['dtt'], x['dls']) for x in rows])
+            # TV SAFE AREA RE-PIN (12 Nov 2026): 94% of the SAFE BOX's width from its left edge (5% in), was of the window's
             ok('lunatic %dx%d: three even tiles across the wall; "Meat raffles and members draw" on two lines at most and never cut; the short titles on one line' % (W, H),
-               len(rows) == 3 and len(set(x['h'] for x in rows)) == 1 and rows[-1]['right'] >= m['w'] * 0.94 and not any(x['cut'] or x['tcut'] for x in rows)
+               len(rows) == 3 and len(set(x['h'] for x in rows)) == 1 and rows[-1]['right'] >= m['w'] * (0.05 + 0.94 * 0.9) and not any(x['cut'] or x['tcut'] for x in rows)
                and rows[1]['tl'] <= 2 and rows[0]['tl'] == 1 and rows[2]['tl'] == 1, [(x['t'], x['tl'], x['cut'], x['h'], x['left'], x['right'], m['w']) for x in rows])
             ok('lunatic %dx%d: the hours once: Sunday says "2pm to 6pm" and "2pm" nowhere else; Thursday keeps "$10 entry"' % (W, H),
                len(rows) == 3 and rows[2]['tm'] == '2pm to 6pm' and rows[2]['t'].count('2pm') == 1 and '$10 entry' in rows[0]['t'], [x['t'] for x in rows])

@@ -40,6 +40,13 @@ VP_SHOTS=<dir> also writes every frame measured (the before/after review set). T
 (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     python3 tools/musical-newlook-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, re, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
@@ -244,7 +251,8 @@ def title_checks(tag, x, w):
     t = x.get('title') or {}
     ok('%s: the game\'s name says MUSICAL BINGO, in Anton, white, capitals' % tag,
        t.get('text', '').strip().lower() == 'musical bingo' and 'Anton' in t.get('ff', '') and t.get('col') == 'rgb(255, 255, 255)' and t.get('tt') == 'uppercase', t)
-    ok('%s: the one title size trivia uses (2.6%% of the width), big enough for the back of the room' % tag, abs(t.get('fs', 0) - 0.026 * w) <= 0.6, t.get('fs'))
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 2.6% of the SAFE BOX's width (the wall, 90% of the window), was of the window
+    ok('%s: the one title size trivia uses (2.6%% of the width), big enough for the back of the room' % tag, abs(t.get('fs', 0) - 0.026 * (0.9 * w)) <= 0.6, t.get('fs'))
     G, M, L = t.get('r'), x.get('mark'), x.get('logo')
     ok('%s: on the same centre line as the corner logos (within 2px of ours)' % tag, bool(G and M) and abs((G[1] + G[3]) / 2 - (M[1] + M[3]) / 2) <= 2, [G, M])
     ok('%s: clear of the venue\'s logo and of ours' % tag, bool(G and M and L) and G[0] >= L[2] + 8 and G[2] + 8 <= M[0], [L, G, M])
@@ -268,7 +276,10 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ': a host in the lobby: the join screen is up (not the waiting card)', j.get('layer') == 'tvLobby', j.get('layer'))
         title_checks(tagn + ' join', j, w)
         ok(tagn + ' join: a real QR, drawn (dark modules on the white tile)', 0.25 < (j.get('qrInk') or 0) < 0.75, j.get('qrInk'))
-        ok(tagn + ' join: the QR is trivia\'s: 31.25% of the width, square, at 10.6% from the left', bool(j.get('qr')) and abs((j['qr'][2] - j['qr'][0]) - 0.3125 * w) <= 2 and abs(j['qr'][0] - 0.106 * w) <= 2, j.get('qr'))
+        # TV SAFE AREA RE-PIN (12 Nov 2026): every "% of the width" on this wall is of the SAFE BOX's width (90% of the window),
+        # and "in" and "down" are from the safe box's corner (5% in, 5% down); they were of the window
+        SW, SX, SY = 0.9 * w, 0.05 * w, 0.05 * h
+        ok(tagn + ' join: the QR is trivia\'s: 31.25% of the width, square, at 10.6% from the left', bool(j.get('qr')) and abs((j['qr'][2] - j['qr'][0]) - 0.3125 * SW) <= 2 and abs(j['qr'][0] - SX - 0.106 * SW) <= 2, j.get('qr'))
         ok(tagn + ' join: SCAN TO PLAY, "or go to venueplay.com.au/play", and the venue code in a pink-edged box',
            bool(j.get('scan')) and j.get('url', '').strip() == 'or go to venueplay.com.au/play' and j.get('code') == venue_code(slug) and j.get('cboxCol') == 'rgb(255, 31, 142)', [j.get('url'), j.get('code'), j.get('cboxCol')])
         ok(tagn + ' join: SCAN TO PLAY, the address and the code box on one centre line', bool(j.get('scan') and j.get('cbox')) and abs((j['scan'][0] + j['scan'][2]) / 2 - (j['cbox'][0] + j['cbox'][2]) / 2) <= 2, [j.get('scan'), j.get('cbox')])
@@ -290,7 +301,7 @@ def tv(B, base, w, h, logo, tag, shots):
         title_checks(tagn + ' now playing', n, w)
         A = n.get('art')
         ok(tagn + ' now playing: the artwork big on the left, 33.3% of the width square, at 6.25% in and 9.2% down, the picture in it',
-           bool(A) and abs((A[2] - A[0]) - w / 3.0) <= 2 and abs((A[3] - A[1]) - w / 3.0) <= 2 and abs(A[0] - 0.0625 * w) <= 2 and abs(A[1] - 0.0917 * w) <= 2 and n.get('artImg'), A)
+           bool(A) and abs((A[2] - A[0]) - SW / 3.0) <= 2 and abs((A[3] - A[1]) - SW / 3.0) <= 2 and abs(A[0] - SX - 0.0625 * SW) <= 2 and abs(A[1] - SY - 0.0917 * SW) <= 2 and n.get('artImg'), A)
         e = n.get('eye') or {}
         ok(tagn + ' now playing: NOW PLAYING in pink, right of the art', e.get('text', '').strip().lower() == 'now playing' and e.get('col') == 'rgb(255, 31, 142)' and bool(A and e.get('r')) and e['r'][0] >= A[2] + 0.03 * w, e)
         tl = n.get('ttl') or {}

@@ -188,7 +188,9 @@
     var box = contentBox(layer);
     if (!box || box.h <= 0) { layer.style.transform = ""; setPrev(layer, 1); return; }
 
-    var inset = SAFE / 100;
+    /* THE TV SAFE BOX (Dean via main, INBOX 321.2, 12 Nov 2026): a page with /app/vp-tvsafe.css draws its wall 5% in
+       from every edge, so the fit's room and its margins are the safe box's, as ?safe=5 would make them. */
+    var inset = (SAFE || (w.VPVenueLogo && w.VPVenueLogo.safeShare ? Math.round(w.VPVenueLogo.safeShare() * 100) : 0)) / 100;
     var availH = w.innerHeight * (1 - inset * 2);
     var availW = w.innerWidth * (1 - inset * 2);
 
@@ -204,8 +206,9 @@
     if (avoids.length) {
       var lb = layer.getBoundingClientRect();
       var W = w.innerWidth, H = w.innerHeight;
+      var Ws = W * (1 - inset * 2);                /* the safe box's width: the gap and margin are a share of it (12 Nov 2026) */
       var fit = solveFit(childRects(layer), avoids, W, H, lb.left + lb.width / 2, lb.top + lb.height / 2,
-                         scale, Math.round(W * 0.006), Math.round(H * inset) + Math.round(W * 0.008));
+                         scale, Math.round(Ws * 0.006), Math.round(H * inset) + Math.round(Ws * 0.008));
       tf = (fit.ty ? "translateY(" + fit.ty + "px) " : "") + (fit.s < 1 ? "scale(" + fit.s + ")" : "");
       tf = tf.replace(/\s+$/, "");
     }

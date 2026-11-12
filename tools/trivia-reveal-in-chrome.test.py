@@ -19,6 +19,13 @@ colours against the countdown's) and the running animations, read BEFORE they ar
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     python3 tools/trivia-reveal-in-chrome.test.py      screenshots go to $VP_SHOTS if set
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
@@ -177,7 +184,8 @@ def wall(B, base, w, h):
     ok(tag + ': it shows the right answer\'s letter, B, the same letter as the green card', M.get('letter') == 'B' and len(right) == 1 and right[0]['letter'] == 'B',
        [M.get('letter'), [c['letter'] for c in right]])
     ok(tag + ': in the timer ring\'s exact spot (within 1px)', same(M.get('r'), q.get('ring')), [M.get('r'), q.get('ring')])
-    ok(tag + ': the letter is big and bold, Anton at 9.5% of the width (idea 3\'s B)', 'Anton' in (M.get('lff') or '') and (M.get('lfs') or 0) >= 0.095 * w - 1, [M.get('lff'), M.get('lfs')])
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 9.5% of the SAFE BOX's width (the wall, 90% of the window), was of the window
+    ok(tag + ': the letter is big and bold, Anton at 9.5% of the width (idea 3\'s B)', 'Anton' in (M.get('lff') or '') and (M.get('lfs') or 0) >= 0.095 * (0.9 * w) - 1, [M.get('lff'), M.get('lfs')])
     T = M.get('tick')
     ok(tag + ': the tick badge sits on the disc\'s top right', bool(T and M.get('r')) and T[2] <= M['r'][2] + 1 and T[1] >= M['r'][1] - 1 and (T[0] + T[2]) / 2 > (M['r'][0] + M['r'][2]) / 2, [T, M.get('r')])
     wrong = [c for c in cards if 'dim' in c['cls']]
