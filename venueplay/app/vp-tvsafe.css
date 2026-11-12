@@ -37,3 +37,8 @@
    about 70px down, inside the safe box; the number keeps its share of the ball (44/68). */
 .tv .brball, .tv .brrings{max-width:58vh;max-height:58vh}
 .tv .brball{font-size:37.5vh}
+/* THE BALL ROLLS IN FROM THE RIGHT (brpop starts at translateX(55cqw), fading in), so for the first frames of
+   every call it crossed the right 5% border, out to the window edge (gate 12 Nov 2026, 1920x1080 bingo demo:
+   #brBall at x 1567 to 1920). The reveal is clipped to the safe box, so the ball now rolls in from the safe
+   box's edge; the dim, the rings, the pop and the glide left all happen well inside it. */
+.tv .ballreveal{overflow:hidden}
