@@ -2672,7 +2672,32 @@
   /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
      without another format's chatter answering it for us. */
   var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
-  function noteHostAlive(){ lastHostAt=Date.now(); }
+  function noteHostAlive(){ lastHostAt=Date.now(); quietAsks=0; }
+  /* A BINGO WALL THAT GOES QUIET ASKS WHERE THE GAME IS (INBOX 287.0, 12 Nov 2026: the Kogan TV app five calls
+     behind the phones, "27 of 90" on the wall while every phone read "32 of 90").
+     Nothing on this page queues a ball: every ball message carries the whole called list and the count, the
+     strip and the board are written from it the moment it lands (a ball still in the air is finished at once,
+     revealBall). So a wall that is BEHIND is a wall that did not hear: its socket died without a word, its
+     channel is waiting out a 30 s retry, or a message was held up on the way. It used to stay behind until the
+     next ball happened to reach it. Now, while bingo balls are being called and the host has said nothing for
+     QUIET_ASK_MS, the wall checks its own socket (VPChannel.pokeAll: a dead one is replaced at once, a waiting
+     retry runs now) and says hello; the console answers a hello with the whole game (tvHere in /app/index.html:
+     mode, state with every called number, any claim or win), so the wall lands on the latest ball. Asked again
+     at 8, 16, 32 then every 60 s while it stays quiet (a host pausing between games is not hammered); any word
+     from the host resets it. */
+  var QUIET_ASK_MS=8000, quietAsks=0, quietAskedAt=0;
+  setInterval(function(){
+    try{
+      if(tvMode!=="bingo" || !state || state.phase!=="running") return;   // balls only: a claim or a win on the wall is the host's to move on
+      var now=Date.now(), quiet=now-Math.max(lastHostAt||0, lastBingoAt||0);
+      var gap=Math.min(60000, QUIET_ASK_MS*Math.pow(2, Math.min(quietAsks, 3)));
+      if(quiet<QUIET_ASK_MS || now-quietAskedAt<gap) return;
+      quietAskedAt=now; quietAsks++;
+      try{ if(window.VPChannel && VPChannel.pokeAll) VPChannel.pokeAll("quiet"); }catch(e){}
+      tvSend({ t:"tv_here", hello:true });
+      try{ window.__vpTvQuietAsks=(window.__vpTvQuietAsks||0)+1; }catch(e){}
+    }catch(e){}
+  }, 2000);
   setInterval(function(){
     if(tvMode==="ads") { lastHostAt=Date.now(); return; }
     // A bingo screen sitting in the lobby is not a game. Everything else keeps the long window.

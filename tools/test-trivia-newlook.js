@@ -82,7 +82,7 @@ function tvRig(opts) {
   var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, RING_C=2*Math.PI*44, TV_BOARD_ROWS=' + /var TV_BOARD_ROWS = (\d+);/.exec(SCREEN)[1] + ', BOARD_PAGE_MS=' + /var BOARD_PAGE_MS=(\d+)/.exec(SCREEN)[1] + ', boardPageTimer=null, __iv=null, __ivms=0;\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function show(){} function applyColour(){} function stopBoardPaging(){} function unlockAudio(){} function celebrate(){}\n' +
     'function setInterval(f,ms){ __iv=f; __ivms=ms; return 1; } function setTimeout(){ return 0; } function clearTimeout(){} function clearInterval(){}\n' +
-    liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
+    liftAll(SCREEN, ['hostNow', 'qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
                      'buzzSay', 'timesUp'], 'trivia/screen.html') +
     '; return { q: renderQuestion, rev: renderReveal, rows: renderRows, board: renderBoardPaged, pod: renderPodium, up: timesUp, cur: function(){ return curQ; }, tick: function(){ if(__iv) __iv(); }, ivms: function(){ return __ivms; } };';
   var names = Object.keys(env);
