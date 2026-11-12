@@ -379,6 +379,10 @@
   "checks": 152,
   "counted_by": "lines"
  },
+ "tools/one-phone-a-night-in-chrome.test.py": {
+  "checks": 53,
+  "counted_by": "lines"
+ },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -403,6 +407,10 @@
   "checks": 31,
   "counted_by": "lines"
  },
+ "tools/prefs-shapes.test.py": {
+  "checks": 35,
+  "counted_by": "lines"
+ },
  "tools/prospects-day21-in-chrome.test.py": {
   "checks": 19,
   "counted_by": "lines"
@@ -425,6 +433,10 @@
  },
  "tools/real-night-check.test.py": {
   "checks": 47,
+  "counted_by": "lines"
+ },
+ "tools/real-settings-in-chrome.test.py": {
+  "checks": 217,
   "counted_by": "lines"
  },
  "tools/reconnect-layout-in-chrome.test.py": {

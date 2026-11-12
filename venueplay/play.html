@@ -922,6 +922,23 @@
   }
   function clearDaubs(){ try{ localStorage.removeItem(daubKey()); }catch(e){} }
   function saveName(room,name){ try{ localStorage.setItem("vp-name-"+room, name); }catch(e){} }
+  /* PLAYED ANOTHER GAME HERE TONIGHT: THE SAME NAME, NOT THE FORM AGAIN (INBOX 295.2c, 12 Nov 2026). Dean's night on The
+     Mini Bar went trivia, musical bingo, bingo. 282.4 taught the trivia and musical pages to take the name the other game's
+     page on this phone already holds (siblingIdentity); this page was left out, so the phone that played trivia and musical
+     bingo was asked its name again when the room moved to bingo, and the console counted nobody until it was typed. The
+     other pages' name, only where that page also holds this room's token (it really joined here), as musical and trivia
+     read it. Bingo's own name always wins; the pid stays this page's own. */
+  function siblingName(room){
+    var SIBLING_KEYS=[["vp-tname-","vp-ttoken-"],["vp-mname-","vp-mtoken-"]];   // trivia, musical bingo: name, token
+    if(!room) return "";
+    try{
+      for(var i=0;i<SIBLING_KEYS.length;i++){
+        var nm=localStorage.getItem(SIBLING_KEYS[i][0]+room)||"", tok=localStorage.getItem(SIBLING_KEYS[i][1]+room)||"";
+        if(String(nm).trim() && tok) return String(nm).trim().slice(0,20);
+      }
+    }catch(e){}
+    return "";
+  }
   // A confirmed win survives a phone reload (#28): the "show this to the host to claim" screen was
   // memory-only and set once by a live announcement that has already passed, so a locked/dropped tab
   // came back with no proof. Save it, restore it on reconnect, and clear it the moment a new round
@@ -2218,6 +2235,7 @@
     // a saved name means this player already joined this room: auto-rejoin on reload so
     // they land back on their card. The host re-deals it when we re-announce below.
     var savedName=loadName(room);
+    if(!savedName){ savedName=siblingName(room); if(savedName) saveName(room, savedName); }   // played trivia or musical bingo here tonight (siblingName)
     if(savedName){ P.name=savedName; P.joined=true; }
     // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
     // message (cards / started) clears it below, so it never lingers into the next game.
