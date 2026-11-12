@@ -203,12 +203,12 @@
   "checks": 40,
   "counted_by": "lines"
  },
- "tools/email-footer-in-chrome.test.py": {
-  "checks": 400,
-  "counted_by": "lines"
- },
  "tools/email-fit-in-chrome.test.py": {
   "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/email-footer-in-chrome.test.py": {
+  "checks": 400,
   "counted_by": "lines"
  },
  "tools/feedback-followup-in-chrome.test.py": {
@@ -300,7 +300,7 @@
   "counted_by": "lines"
  },
  "tools/multi-raffle-in-chrome.test.py": {
-  "checks": 32,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/musical-card-spacing-in-chrome.test.py": {

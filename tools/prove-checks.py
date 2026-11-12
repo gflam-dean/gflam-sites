@@ -9954,6 +9954,10 @@ MUTATIONS = [
     ('multi-raffle-in-chrome.test.py', 'venueplay/app/raffle/screen.html',
      '$("idleEye").textContent=S.raffleName ? (S.raffleName+" tonight") : "";', '$("idleEye").textContent=S.raffleName ? (S.raffleName+" tonight") : "Raffle tonight";',
      'a one-raffle venue\'s wall says "Raffle tonight" over GET YOUR TICKETS again, under RAFFLE in the title'),
+    # 12 Nov 2026 (fix/red-tests-12nov): a /tv in the TV's own game frame stops before it draws or says hello.
+    ('multi-raffle-in-chrome.test.py', 'venueplay/tv.html',
+     '    if(!fe || fe.id!=="gameFrame" || window.parent===window) return;', '    return;',
+     'the /tv the raffle screen sends its frame to after End game draws a second venue screen inside the TV (and can say hello to the console)'),
     ('tv-endshow-in-chrome.test.py', 'venueplay/app/members/screen.html',
      '    if(m.t==="to_ads" && membersEndShow()){', '    if(false && membersEndShow()){',
      'in Chrome: the members wall goes to the ads with no end-of-game show'),

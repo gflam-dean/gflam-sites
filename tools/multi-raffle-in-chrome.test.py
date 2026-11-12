@@ -85,6 +85,20 @@ def F(expr):
 EYE = F('(d.getElementById("idleEye")||{}).textContent||""')
 TVTEXT = F('d.body.innerText')
 TVPRIZES = F('(d.getElementById("idlePrizes")||{}).textContent||""')
+# A /tv INSIDE THE TV'S OWN GAME FRAME (12 Nov 2026). End game sends the raffle screen's frame to /tv?venue=, and the
+# /tv around it takes the frame down on its load. Before that, the /tv in the frame drew a whole second venue screen,
+# joined the game channels and said hello, and the still-open console answered with mode:"raffle": the wall went
+# straight back to the raffle (this suite's "back to the ads" check, red 2 of 3 on origin/main 606b3959). Recorded
+# from inside that frame by a script Chrome runs before the page's own, so it does not race the teardown.
+NEST = r"""(function(){ try{
+  if(window===window.top) return; var fe=window.frameElement, top=window.top;
+  if(!fe || fe.id!=="gameFrame" || !/^\/tv(\.html)?$/.test(location.pathname)) return;
+  top.__nestTv=(top.__nestTv||0)+1;
+  var po=BroadcastChannel.prototype.postMessage;
+  BroadcastChannel.prototype.postMessage=function(d){ var p=d&&d.payload; if(p&&p.t==="tv_here") top.__nestHello=(top.__nestHello||0)+1; return po.apply(this,arguments); };
+  function look(){ if(document.getElementById("tvFsBtn")) top.__nestDrawn=1; }
+  document.addEventListener("DOMContentLoaded", look); window.addEventListener("pagehide", look);
+}catch(e){} })();"""
 
 
 def draw_and_claim(host, tv, prize):
@@ -112,7 +126,7 @@ try:
                   {'id': 'raf-chook1', 'label': 'Chook Raffle', 'day': TODAY, 'time': '3pm'}],
                  [{'label': 'Meat tray', 'raffle_id': 'raf-meat01'}, {'label': 'Old prize', 'raffle_id': None},
                   {'label': 'Two chooks', 'raffle_id': 'raf-chook1'}])
-    ttid, tv = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
+    ttid, tv = R.open('/tv?venue=' + W.info['slug'], before=NEST, width=1280, height=720)
     htid, host = R.open('/app/raffle/host.html', width=1000, height=1100)
     ok('the console loads, signed in, on the raffle setup', R.until(host, '!document.getElementById("consoleView").classList.contains("hidden")', 60) is True,
        js(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
@@ -160,6 +174,10 @@ try:
     ok('End game closes the night: the venue is not live', until_live(W, False, 20), 'still live')
     ok('and the TV goes back to the venue\'s ads (the game frame comes down)', R.until(tv, 'document.getElementById("gameFrame").style.display==="none"', 30) is True,
        js(tv, 'document.getElementById("gameFrame").style.display+" "+document.getElementById("gameFrame").src'))
+    time.sleep(1.0)
+    ok('the /tv the raffle screen sends its frame to stops at once: no second venue screen drawn, no hello on any game channel',
+       R.until(tv, '(window.__nestTv||0)>=1', 10) is True and js(tv, '!window.__nestDrawn && !window.__nestHello') is True,
+       js(tv, 'JSON.stringify([window.__nestTv||0, window.__nestDrawn||0, window.__nestHello||0])'))
     ok('no script error on the console or the TV', errs(host) == '[]' and errs(tv) in ('[]', 'HUNG', None), [errs(host), errs(tv)])
     R.close_tab(htid); R.close_tab(ttid)
 
