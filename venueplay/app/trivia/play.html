@@ -146,6 +146,10 @@
   .finalwrap.winner .frule{display:block}
   .finalwrap #finalSub{font-size:18px;color:var(--muted)}
   .finalwrap .pnote{font-size:16px;color:var(--muted)}
+  /* THE PLACE IS AS PLAIN AS THE POINTS (Dean, 12 Nov 2026, FINDINGS T3: "show the place, not just points"): white and
+     bold right under them, never the small grey line it was. */
+  .finalwrap .rankline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:6px}
+  .finalwrap .rankline:empty{display:none}
   /* win celebration (shared with bingo/musical) */
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
@@ -164,7 +168,7 @@
   body.light .ptop{ background:rgba(255,255,255,.92) }
   body.light .brand .word, body.light .pbig{ color:#191420 }
   body.light .pcard{ background:#FFFFFF; color:#191420 }
-  body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .pfoot svg{ color:#191420!important }
+  body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .finalwrap .rankline, body.light .pfoot svg{ color:#191420!important }
   body.light .pans.right{ background:#2FD08A; color:#0A0A0B }
   .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
     font-weight:800;font-size:15px;letter-spacing:0;text-transform:none}
