@@ -101,9 +101,12 @@ SCREENS = [
     ('musical bingo', '/app/musical/screen.html?demo=1&sting=0', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
     # The draw demos play the new looks since 12 Nov 2026 (INBOX 281): the ticket roll and the flip board are the tvStyle
     # layer through the draw and the win; then the claimed / rolled-over result. The show is on: the first draw at 4.4 s.
-    # The default draw time (normal, 9 s): the win lands at 14.6 s; the raffle's is read 0.9 s later, landed and before its claim clock ticks.
-    ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 15500, 'tvStyle'), ('result', 21000, 'tvResult')]),
-    ('members draw', '/app/members/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('win', 16000, 'tvStyle'), ('result', 22500, 'tvResult')]),
+    # The default draw time (normal, 9 s): the win lands at 14.6 s. Read only where the stage stands still: the raffle's roll
+    # holding on a near miss and its result, the members board once its flip has landed and its result. The raffle's win
+    # picture animates until after the claim and the members board flips all through its draw, so two loads of the SAME
+    # page differ there (seen 12 Nov 2026), which is motion, not layout.
+    ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 7000, 'tvStyle'), ('result', 21000, 'tvResult')]),
+    ('members draw', '/app/members/screen.html?demo=1', [('win', 16000, 'tvStyle'), ('result', 22500, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),
 ]
 SIZES = [(1920, 1080), (1280, 720)]
