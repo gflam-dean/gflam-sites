@@ -348,6 +348,20 @@ def trivia_late(B, base, w, h):
             P.close()
 
 
+GRID_PROBE = r'''(function(){
+  var T=[].filter.call(document.querySelectorAll("#cardStack .ticket"), function(t){ return !t.classList.contains("shut") && t.querySelector(".card9"); });
+  var colX=[], colOff=0, rowOff=0, spill=[], cols=0, blankSeen=false;
+  T.forEach(function(t){
+    var cells=[].slice.call(t.querySelectorAll(".card9 .cc")); cols=Math.round(cells.length/3);
+    for(var r=0;r<3;r++){ var ys=[]; for(var c=0;c<cols;c++){ var e=cells[r*cols+c]; if(!e) continue; var b=e.getBoundingClientRect(), x=(b.left+b.right)/2;
+        ys.push((b.top+b.bottom)/2);
+        if(colX[c]==null) colX[c]=x; else colOff=Math.max(colOff, Math.abs(colX[c]-x));
+        if(/\bblank\b/.test(e.className)){ var bg=getComputedStyle(e).backgroundColor; if(bg && bg!=="transparent" && !/rgba\(\d+, \d+, \d+, 0\)/.test(bg)) blankSeen=true; }
+        else if(e.scrollWidth>e.clientWidth+0.5 || e.scrollHeight>e.clientHeight+0.5) spill.push(e.textContent); }
+      rowOff=Math.max(rowOff, Math.max.apply(null,ys)-Math.min.apply(null,ys)); }
+  });
+  return JSON.stringify({ n:T.length, cols:cols, colOff:Math.round(colOff*100)/100, rowOff:Math.round(rowOff*100)/100, spill:spill, blankSeen:blankSeen });
+})()'''
 
 
 def bingo(B, base, w, h):
@@ -374,6 +388,15 @@ def bingo(B, base, w, h):
         venue_logo_ok(P, t + ' three tickets')
         cut = P.obj('(function(){ var W=document.documentElement.clientWidth, out=[]; [].forEach.call(document.querySelectorAll("#cardStack .ticket:not(.shut) .cc"), function(e){ var r=e.getBoundingClientRect(), g=e.parentNode.getBoundingClientRect(); if(r.width>0 && (r.right>W+0.5 || r.right>g.right+0.5 || r.left<g.left-0.5)) out.push((e.getAttribute("data-n")||"blank")+" ["+Math.round(r.left)+","+Math.round(r.right)+"]"); }); return JSON.stringify(out.slice(0,9)); })()')
         ok(t + ' three tickets: all nine columns of every open ticket inside the ticket and the screen (none cut off on the right)', cut == [], cut)
+        # INBOX 320.6 (Dean, 12 Nov 2026): on a small phone the ticket stays a grid: nine columns lined up across rows AND
+        # tickets, rows lined up, every number inside its own square, the empty squares drawn; also at the largest text size
+        for zoom in ('', 'largest'):
+            if zoom: P.js('(function(){ for(var i=0;i<10;i++) document.getElementById("zoomIn").click(); return 1; })()'); time.sleep(0.8)
+            g = P.obj(GRID_PROBE) or {}
+            ok('%s three tickets%s: nine columns lined up across every row and ticket (%s), rows lined up (%s), every number inside its square (%s), empty squares drawn'
+               % (t, ' at the largest text size' if zoom else '', g.get('colOff'), g.get('rowOff'), g.get('spill')),
+               g.get('n', 0) >= 1 and g.get('cols') == 9 and g.get('colOff', 99) <= 0.75 and g.get('rowOff', 99) <= 0.75 and g.get('spill') == [] and g.get('blankSeen') is True, g)
+        P.js('(function(){ for(var i=0;i<12;i++) document.getElementById("zoomOut").click(); try{ localStorage.removeItem("vp-cardzoom"); }catch(e){} return 1; })()'); time.sleep(0.5)
         P.say({'t': 'winner', 'pid': pid, 'name': 'Dean', 'cardNo': 320, 'pattern': 'one', 'prize': 'Meat tray', 'winners': [{'pid': pid, 'name': 'Dean', 'cardNo': 320}], 'cont': False})
         ok(t + ': CONTROL YOU WON', P.until('!document.getElementById("vWon").classList.contains("hidden")', 10))
         time.sleep(0.6); confetti_ok(P, t + ' you won')

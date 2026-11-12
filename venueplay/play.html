@@ -385,6 +385,14 @@
   body.vp-onescreen .pfoot{padding-top:6px}
   #vCard .card9,#vCard .lay-pages .card9,#vCard .lay-align .card9{width:100%}
   #vCard .card9 .cc{aspect-ratio:auto;min-height:0;height:var(--ch,36px);font-size:calc(min(21px, var(--ch,36px) * .56) * var(--cz,1))}
+  /* THE TICKET STAYS A GRID ON A SMALL PHONE (Dean, INBOX 320.6, 12 Nov 2026): nine columns that never give way to a
+     number (minmax(0,1fr): a bigger text size can no longer push one column wider than the rest and shift that ticket
+     out of line with the others), every number held inside its own square (the size is capped by the square's width
+     too), and the empty squares drawn faintly, so every row and column reads as the ticket's grid. */
+  #vCard .card9{grid-template-columns:repeat(9,minmax(0,1fr))}
+  #vCard .card9 .cc{min-width:0;overflow:hidden;line-height:1;font-size:min(calc(min(21px, var(--ch,36px) * .56) * var(--cz,1)), calc((100vw - 76px) / 9 * .62), calc(var(--ch,36px) * .72))}
+  #vCard .card9 .cc.blank{background:rgba(255,255,255,.035);border-color:transparent}
+  body.light #vCard .card9 .cc.blank{background:rgba(25,20,32,.04)}
   #vCard .bingobar{position:static;padding:8px 0 0;margin-top:4px}
   #vCard .lastcalled{margin:2px 4px 6px}
   #vCard .tension{margin:4px 0 2px}
