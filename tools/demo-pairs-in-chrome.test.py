@@ -50,7 +50,10 @@ READ = r'''function(d, kind){
   if(!d || !d.body) return null;
   function on(id){ var e=d.getElementById(id); if(!e || e.classList.contains("hidden")) return false; var cs=d.defaultView.getComputedStyle(e); return cs.display!=="none" && cs.visibility!=="hidden"; }
   function tx(id){ var e=d.getElementById(id); return e ? (e.textContent||"").replace(/\s+/g," ").trim() : ""; }
-  var layer=[].filter.call(d.querySelectorAll(".layer"), function(l){ return on(l.id); }).map(function(l){ return l.id; })[0] || "";
+  /* The members wall's advertising board is a layer that is never marked hidden (it sits under the draw), so a
+     visible layer that is not an ad wins: otherwise every members sample read "adBoard" and could not differ. */
+  var lays=[].filter.call(d.querySelectorAll(".layer"), function(l){ return on(l.id); });
+  var layer=((lays.filter(function(l){ return !l.classList.contains("ad"); })[0]) || lays[0] || {}).id || "";
   var o={ layer:layer };
   if(kind==="trivia-tv"){ o.q = on("tvQ") ? tx("tvQText") : on("tvReveal") ? tx("tvRevQText") : ""; }
   if(kind==="trivia-phone"){ o.q = on("vQ") || on("vRes") || on("vReveal") ? tx("pqText") : ""; o.view=([].filter.call(d.querySelectorAll(".view"), function(v){ return !v.classList.contains("hidden"); })[0]||{}).id||""; }
