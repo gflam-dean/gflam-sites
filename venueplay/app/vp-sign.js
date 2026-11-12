@@ -33,6 +33,7 @@
   // enforce. Replay within a session is already caught by the nonce set; this only bounds ancient
   // cross-session replays loosely, which the screen reconciles against the server anyway.
   var MAX_AGE_MS = 6 * 60 * 60 * 1000;
+  var KID_WAIT_MS = 2000;         // the most a message waits for a new key to arrive (gate, INBOX 287.0)
   var NONCE_KEEP = 600;           // remember this many recent nonces to reject instant replays
 
   /* A REPLAY THAT THE NONCE SET COULD NOT SEE (audit, 14 Oct 2026).
@@ -260,7 +261,28 @@
     return Promise.all(jobs).then(function () { S.ready = true; });
   }
 
+  /* THE HOST'S CLOCK, AS THIS SCREEN SEES IT (INBOX 287.0, 12 Nov 2026: "TV time different to phone").
+     A trivia question carries its deadline (endsAt) on the HOST's clock, and the TV counted down to it on
+     its OWN clock. A phone keeps network time; a TV's clock can be well off, so the TV's ring ran ahead of
+     or behind the phones by exactly that error. Every signed message carries the host's clock (_ts), so
+     each one that verifies is a reading: host clock minus this clock, less however long it took to
+     arrive. The largest of the recent readings is the nearest to the truth (a slow arrival only ever
+     makes a reading smaller). hostNow() is this screen's clock moved by it; with no reading yet it is
+     Date.now() exactly, as before. Only VERIFIED messages count, so nobody can move a screen's clock. */
+  var CLOCK = [], CLOCK_KEEP = 20;
+  function noteClock(ts) {
+    ts = Number(ts); if (!ts) return;
+    CLOCK.push(ts - Date.now()); if (CLOCK.length > CLOCK_KEEP) CLOCK.shift();
+  }
+  function hostOffset() {
+    if (!CLOCK.length) return 0;
+    var m = CLOCK[0]; for (var i = 1; i < CLOCK.length; i++) if (CLOCK[i] > m) m = CLOCK[i];
+    return Math.abs(m) < 1500 ? 0 : m;   // inside a second and a half is the network, not the clock: change nothing
+  }
+
   var VPSign = {
+    hostNow: function () { return Date.now() + hostOffset(); },
+    hostOffset: hostOffset,
     // Fetch and import the venue PUBLIC key + enforce flag. `ident` is the venue slug (a string), or
     // an object identifying the venue by whatever the receiver holds: {venue:slug} | {code} | {session}.
     // Never rejects; on any failure the screen keeps working in "can't verify -> render" mode.
@@ -466,6 +488,7 @@
           // Remembered only once the signature is good, so a forger cannot poison the tables.
           if (payload._n) noteNonce(payload._n);
           noteSender(payload); saveSoon();
+          noteClock(payload._ts);   // a verified reading of the host's clock (hostNow)
           return "ok";
         })
         .catch(function () { return "bad"; });
@@ -500,7 +523,13 @@
         var kid = payload && payload._kid;
         if (kid && S.kid && kid !== S.kid && S._refetch && (Date.now() - (S._kidFetchAt || 0)) > 15000) {
           S._kidFetchAt = Date.now();
-          pre = Promise.resolve(S._refetch()).catch(function () {});
+          /* NEVER LONGER THAN TWO SECONDS (INBOX 287.0, 12 Nov 2026: the Kogan TV five calls behind the phones).
+             Every message waits in this one line behind this fetch, and a fetch has no time limit of its own: on a
+             TV whose network answers slowly it held the whole line, so every ball after it reached the wall late,
+             in order, behind it. The new key is still fetched; the line just stops waiting for it after two
+             seconds, and the message is judged on the key held (the next one tries again after 15 s). */
+          pre = Promise.race([Promise.resolve(S._refetch()).catch(function () {}),
+                              new Promise(function (res) { setTimeout(res, KID_WAIT_MS); })]);
         }
         return pre.then(function () { return VPSign.verify(payload); }).then(function (verdict) {
           if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }

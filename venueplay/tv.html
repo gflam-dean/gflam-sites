@@ -630,17 +630,20 @@
   .brdim{background:rgba(5,5,6,.9)}
   .brcall{text-shadow:none}
   /* claim */
-  #tvClaim .eyebrow{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.3em;font-size:1.3cqw;color:#8A8A95}
+  #tvClaim .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;font-size:2.2cqw;color:#8A8A95}   /* normal case, not spaced mono caps (INBOX 287.2) */
   #tvClaim .claimbig{color:var(--pink);text-shadow:none}
   #tvClaim .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#8A8A95}
   /* win, F */
   #tvWin .winrow{display:flex;align-items:center;justify-content:center;gap:5cqw;text-align:left;margin-top:3cqw}
   #tvWin .winring{flex:none;width:min(29cqw,42vh);aspect-ratio:1;border-radius:50%;border:.85cqw solid #FFD93D;background:#0A0A0B;box-shadow:0 0 3cqw rgba(255,217,61,.28);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:min(15cqw,22vh);line-height:1;color:#fff}
   #tvWin .wincol{min-width:0;max-width:44cqw}
-  #tvWin .wineye{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.5cqw;line-height:1.2;color:#FFD93D}
+  /* NORMAL CASE, NO SPACED MONO CAPS (INBOX 287.2, 12 Nov 2026: "B I N G O  O N  5 7" / "W I N S" on the Kogan = the
+     banned AI look). Plain words in the wall's own type, a size up so they still read from the bar. The cooler claim and
+     winner screen itself (B3) is a design pick for Dean; this is only the wording's look. */
+  #tvWin .wineye{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;font-size:2.4cqw;line-height:1.2;color:#FFD93D}
   #tvWin .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:min(11cqw,16vh);line-height:1.02;color:#fff;margin-top:1cqw;text-shadow:none;overflow-wrap:anywhere}
   #tvWin .winline{display:flex;align-items:baseline;gap:1.6cqw;margin-top:1.4cqw;flex-wrap:wrap}
-  #tvWin .winslabel{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.4cqw;color:#8A8A95;margin:0}
+  #tvWin .winslabel{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:min(3.2cqw,4.8vh);color:#8A8A95;margin:0}
   #tvWin .winprize{font-family:'Manrope',sans-serif;font-weight:800;font-size:min(5cqw,7.5vh);line-height:1.1;color:#fff;margin:0;filter:none}
   #tvWin .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.4cqw;color:#8A8A95;margin-top:2cqw}
   #tvWin #winCardPart{display:none!important}
@@ -1859,15 +1862,31 @@
     try{
       var t=new Image();
       t.onload=function(){ delete BAD_IMG[u]; try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} };
-      t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS); };
-      t.src=u;
+      t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, allPicturesOut() ? IMG_ALL_OUT_RETRY_MS : IMG_RETRY_MS); };
+      t.src=imgFresh(u);   // a fresh request, never the failure the TV may have kept
     }catch(e){}
+  }
+  /* ONE FAILED LOAD IS NOT A BROKEN PICTURE (INBOX 292.3, 12 Nov 2026). The Mini Bar's eight photo slides played
+     on the phones and in Chrome, and the Kogan TV app showed only the plain words of the members draw card: every
+     picture had been dropped from the loop. A TV app that has only just started (its wifi still joining, its
+     first requests refused) fails every picture at once, and each failure took its slide out for ten minutes.
+     So a failed picture still leaves the loop at once (never a black slide on the wall), but it is tried again,
+     off the wall and as a fresh request, four seconds later and back in the loop the moment it loads; and while
+     every picture slide is out, they are tried every minute, not every ten: a wall of plain words must mend
+     itself within a minute of the TV getting its pictures. A picture that is really gone stays out, as before. */
+  var IMG_SECOND_TRY_MS=4000, IMG_ALL_OUT_RETRY_MS=60000, imgErrors=0;
+  function imgFresh(u){ return u+(u.indexOf("?")<0?"?":"&")+"vpr="+Date.now(); }
+  function allPicturesOut(){
+    var n=0, out=0;
+    try{ (ADS.slides||[]).forEach(function(s){ if(s && s.image_url){ n++; if(BAD_IMG[String(s.image_url)]) out++; } }); }catch(e){}
+    return n>0 && out===n;
   }
   function probeImg(u){
     if(_probed[u]) return; _probed[u]=1;
     try{
       var im=new Image();
       im.onerror=function(){
+        imgErrors++; try{ window.__vpTvImgErrors=imgErrors; }catch(e){}
         BAD_IMG[u]=1;
         /* AND START THE ROTATION AGAIN. This used to be buildAds(true) alone, and buildAds hands back
            a set of slides with nothing lit. So on any venue with one broken picture, the good slides
@@ -1876,7 +1895,7 @@
            ("Show it again", then about a minute of GAME ON HERE before the first slide). Only while
            the ads are up: a game on screen gets the fresh set from enterAds when it ends. */
         try{ buildAds(true); if(tvMode==="ads") startAds(); }catch(e){}
-        setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS);   // a wifi blip is retried in 10 minutes
+        setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_SECOND_TRY_MS);   // the first try again is four seconds off (then a minute or ten, imgRetry)
       };
       im.src=u;
     }catch(e){}
@@ -2699,7 +2718,32 @@
   /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
      without another format's chatter answering it for us. */
   var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
-  function noteHostAlive(){ lastHostAt=Date.now(); }
+  function noteHostAlive(){ lastHostAt=Date.now(); quietAsks=0; }
+  /* A BINGO WALL THAT GOES QUIET ASKS WHERE THE GAME IS (INBOX 287.0, 12 Nov 2026: the Kogan TV app five calls
+     behind the phones, "27 of 90" on the wall while every phone read "32 of 90").
+     Nothing on this page queues a ball: every ball message carries the whole called list and the count, the
+     strip and the board are written from it the moment it lands (a ball still in the air is finished at once,
+     revealBall). So a wall that is BEHIND is a wall that did not hear: its socket died without a word, its
+     channel is waiting out a 30 s retry, or a message was held up on the way. It used to stay behind until the
+     next ball happened to reach it. Now, while bingo balls are being called and the host has said nothing for
+     QUIET_ASK_MS, the wall checks its own socket (VPChannel.pokeAll: a dead one is replaced at once, a waiting
+     retry runs now) and says hello; the console answers a hello with the whole game (tvHere in /app/index.html:
+     mode, state with every called number, any claim or win), so the wall lands on the latest ball. Asked again
+     at 8, 16, 32 then every 60 s while it stays quiet (a host pausing between games is not hammered); any word
+     from the host resets it. */
+  var QUIET_ASK_MS=8000, quietAsks=0, quietAskedAt=0;
+  setInterval(function(){
+    try{
+      if(tvMode!=="bingo" || !state || state.phase!=="running") return;   // balls only: a claim or a win on the wall is the host's to move on
+      var now=Date.now(), quiet=now-Math.max(lastHostAt||0, lastBingoAt||0);
+      var gap=Math.min(60000, QUIET_ASK_MS*Math.pow(2, Math.min(quietAsks, 3)));
+      if(quiet<QUIET_ASK_MS || now-quietAskedAt<gap) return;
+      quietAskedAt=now; quietAsks++;
+      try{ if(window.VPChannel && VPChannel.pokeAll) VPChannel.pokeAll("quiet"); }catch(e){}
+      tvSend({ t:"tv_here", hello:true });
+      try{ window.__vpTvQuietAsks=(window.__vpTvQuietAsks||0)+1; }catch(e){}
+    }catch(e){}
+  }, 2000);
   setInterval(function(){
     if(tvMode==="ads") { lastHostAt=Date.now(); return; }
     // A bingo screen sitting in the lobby is not a game. Everything else keeps the long window.

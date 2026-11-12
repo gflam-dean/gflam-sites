@@ -747,6 +747,10 @@
   "checks": 22,
   "counted_by": "lines"
  },
+ "tools/test-host-clock-12nov.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "tools/test-host-updates-optin.js": {
   "checks": 58,
   "counted_by": "lines"
@@ -1136,7 +1140,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 28,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-self-serve-restart.js": {
@@ -1309,6 +1313,10 @@
  },
  "tools/test-tv-watchdog-runs.js": {
   "checks": 12,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-win-words-12nov.js": {
+  "checks": 5,
   "counted_by": "lines"
  },
  "tools/test-two-accounts-one-login.js": {
@@ -1489,6 +1497,10 @@
  },
  "tools/tv-first-slide-in-chrome.test.py": {
   "checks": 33,
+  "counted_by": "lines"
+ },
+ "tools/tv-in-step-in-chrome.test.py": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/tv-landing-in-chrome.test.py": {

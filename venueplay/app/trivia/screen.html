@@ -644,11 +644,15 @@
   }
 
   // ---- ring / countdown ----
+  /* The question's deadline is on the HOST's clock, so the ring counts on the host's clock too (VPSign.hostNow,
+     /app/vp-sign.js), not this TV's, which can be well off (INBOX 287.0, 12 Nov 2026: "TV time different to phone"). */
+  function hostNow(){ try{ if(window.VPSign && VPSign.hostNow) return VPSign.hostNow(); }catch(e){} return Date.now(); }
+  window.__vpTriviaLeft=function(){ return curQ ? Math.max(0, Math.ceil((curQ.endsAt-hostNow())/1000)) : -1; };   // tools/tv-in-step-in-chrome.test.py
   function setRing(frac){ var r=$("tvRing"); r.setAttribute("stroke-dasharray", RING_C); r.setAttribute("stroke-dashoffset", RING_C*(1-frac)); }
   function stopRing(){ if(ringTimer){ clearInterval(ringTimer); ringTimer=null; } }
   function tickRing(){
     if(!curQ) return;
-    var remMs=curQ.endsAt-Date.now();
+    var remMs=curQ.endsAt-hostNow();
     var rem=Math.max(0, Math.ceil(remMs/1000));
     var frac=Math.max(0, Math.min(1, remMs/(curQ.dur*1000)));
     setRing(frac);
@@ -669,12 +673,12 @@
     return n>52 ? " alen-4" : n>24 ? " alen-3" : n>14 ? " alen-2" : ""; }
   function renderQuestion(m){
     stopRing(); if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
-    var dur=m.secs || Math.max(1, Math.round((m.endsAt-Date.now())/1000));
+    var dur=m.secs || Math.max(1, Math.round((m.endsAt-hostNow())/1000));
     curQ={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null, text:m.text||"", imageUrl:"", double:m.double===true,
            label:(m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question",
            /* LIVE: the clock was still running when this arrived. A replay to a TV that reloaded after the
               clock ran out carries secs 0 and is not live, so its "lock" never sounds the buzzer. */
-           live:(typeof m.secs==="number") ? m.secs>1 : ((Number(m.endsAt)||0)-Date.now()>1500), buzzed:false };
+           live:(typeof m.secs==="number") ? m.secs>1 : ((Number(m.endsAt)||0)-hostNow()>1500), buzzed:false };
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
@@ -1161,7 +1165,7 @@
       // The host added time. Stretch the ring to the new deadline rather than leaving it at zero.
       if(!curQ || m.qseq!==curQ.qseq) return;
       var ends=Number(m.endsAt)||0; if(!ends || ends<=curQ.endsAt) return;
-      curQ.dur=Math.max(1, Math.round((ends-Date.now())/1000));
+      curQ.dur=Math.max(1, Math.round((ends-hostNow())/1000));
       curQ.endsAt=ends;
       if(!ringTimer) ringTimer=setInterval(tickRing, 200);
       tickRing();
