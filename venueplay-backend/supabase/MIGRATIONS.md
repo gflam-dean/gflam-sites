@@ -786,4 +786,4 @@ only on Dean's yes, after `python3 tools/draw-looks-snapshot.py --live` has writ
 `ROLLBACK-draw-looks-191.sql` (not numbered on purpose; puts the two looks back from the snapshot where they are still what
 191 wrote; the old draw on the TVs also needs the site change reverted). Simulated in tools/migration-191-sim.test.py (no
 database). RLS-BASELINE.json: one new table, re-dump after. NUMBER: 186 live, 187 to 190 written on branches, checked every
-branch and worktree 12 Nov 2026, so 191. NOT RUN.
+branch and worktree 12 Nov 2026, so 191. RUN LIVE, Thu 12 Nov 2026 (Dean ran it; main read it back: snapshot 44 rows, all 44 venues raffle draw_style 'ticket' and members draw_style 'flip'). RLS-BASELINE.json and COLUMNS-BASELINE.json carry the new table, written BY HAND from this migration file (RLS on, not forced, no policy, no grant to anon or authenticated; columns venue_id, had_row, game_prefs, taken_at), NOT from a live dump: confirm with `python3 venueplay-backend/tools/dump-rls-baseline.py --check`.

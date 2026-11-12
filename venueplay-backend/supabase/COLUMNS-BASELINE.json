@@ -578,6 +578,12 @@
   "game_prefs",
   "taken_at"
  ],
+ "vp_backup_191_draw_looks": [
+  "venue_id",
+  "had_row",
+  "game_prefs",
+  "taken_at"
+ ],
  "vp_billing_usage": [
   "id",
   "venue_id",
