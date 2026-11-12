@@ -1,0 +1,20 @@
+/* vp-tvsafe.css  -- THE TITLE-SAFE MARGIN ON EVERY TV SCREEN (INBOX 287.1, 12 Nov 2026).
+
+   Dean's photos of the Kogan TV app on 12 Nov: the venue logo top left and the called board on the right
+   looked cut off. A television may crop the picture's edges (overscan), and broadcast has long kept words
+   and logos inside the middle 90% of the picture for that reason: the "title-safe" area. So every TV screen
+   (/tv and the trivia, musical bingo, raffle, members draw and Top Answers screens, standalone or in /tv's
+   frame) draws its whole wall inside 5% of each edge. The 5% border is the page's own dark background,
+   so nothing looks framed on a TV that does not crop.
+
+   HOW. Every screen lays itself out in container units of its .tv box, so moving the box's four edges in
+   by 5% of the window scales every word, number and logo on it by the same 90% and keeps the layout
+   exactly as designed. Things placed on the WINDOW rather than the box (the venue logo, top left, the
+   corner wrap on Top Answers) move in by the same 5%. Longhand top/right/bottom/left in vh and vw, never
+   `inset` or container units: a <link> stylesheet is not rewritten by /app/vp-oldtv.js, and an old TV
+   engine must still read every line here.
+
+   Loaded straight after each screen's own <style>. Checked by tools/tv-safe-area-in-chrome.test.py at
+   1920x1080 and 1280x720. */
+.tv, .tv-corner-wrap{top:5vh!important;bottom:5vh!important;left:5vw!important;right:5vw!important}
+#venueLogo{top:calc(5vh + 14px)!important;left:calc(5vw + 14px)!important}
