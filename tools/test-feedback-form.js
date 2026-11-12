@@ -7,9 +7,10 @@
      Good         "What would make it better?"             chips, a line, the email-me tick
      Not for me   "Sorry to hear that. What went wrong?"   chips, a line, the email-me tick
 
-   Dean, 2 Nov 2026: no ticks for the venue at all. The ONLY tick is the player's own "venueplay can
-   email me about this feedback (only about this)", unticked, with an email box that appears only
-   when it is ticked. "Only the venueplay team reads this." Dean, 6 Nov 2026: he gave a middle
+   Dean, 2 Nov 2026: no ticks for the venue at all. The ONLY tick is the player's own. REPINNED 12 Nov
+   2026 (Dean, INBOX 320.4): it says "Email me about this" and starts TICKED, the email box showing; no
+   "No thanks" button (Send with nothing on it posts nothing); no "Only the venueplay team reads this."
+   line. The email still travels only with the tick AND an address. Dean, 6 Nov 2026: he gave a middle
    rating and got no follow-up; the middle and low ratings must ask it too (run below, 3 x).
 
    What runs here:
@@ -18,8 +19,8 @@
      2. the phone's chips are the billing Worker's VPF_TAGS word for word (it drops unknown ones)
      4. the form itself, on a small stand-in DOM, for all three ratings: it opens once the rating
         is kept (the Worker hands back its id), the question, the chips, the line, the tick only on
-        Good / Not for me, the email box hidden until ticked, the "Only the venueplay team" line;
-        Send posts to /help/feedback against THAT rating; No thanks posts nothing; no id, no form;
+        Good / Not for me (ticked, the email box showing; untick hides it); Send posts to /help/feedback
+        against THAT rating; an empty Send posts nothing; an untick sends no email; no id, no form;
         asked once per game
      3. the three player pages each load vp-feedback.js and ask (the one-line hooks)
      5. the REAL game Worker: POST /feedback hands back the rating's id
@@ -159,13 +160,18 @@ function btn(host, word) { return host.querySelectorAll('button').filter(functio
         check('Loved it: no tick and no email box at all', boxes.length === 0 && !email, boxes.length);
       } else {
         var lab = more.querySelector('label');
-        check(WORDS[r] + ': exactly one tick, unticked: "venueplay can email me about this feedback (only about this)"',
-              boxes.length === 1 && boxes[0].checked === false && lab && lab.textContent === 'venueplay can email me about this feedback (only about this)', lab && lab.textContent);
-        check(WORDS[r] + ': the email box is hidden until the tick', email && email.classList.contains('hide'), email && email.className);
+        // REPINNED 12 Nov 2026 (INBOX 320.4): was one UNticked "venueplay can email me about this feedback (only about this)"
+        check(WORDS[r] + ': exactly one tick, ticked to start: "Email me about this"',
+              boxes.length === 1 && boxes[0].checked === true && lab && lab.textContent === 'Email me about this', lab && lab.textContent);
+        check(WORDS[r] + ': the email box shows with the tick', email && !email.classList.contains('hide'), email && email.className);
         boxes[0].click();
-        check(WORDS[r] + ': ticked, the email box shows', !email.classList.contains('hide'), email.className);
+        check(WORDS[r] + ': unticked, the email box hides', email.classList.contains('hide'), email.className);
+        boxes[0].click();
+        check(WORDS[r] + ': ticked again, it shows again', !email.classList.contains('hide'), email.className);
       }
-      check(WORDS[r] + ': "Only the venueplay team reads this."', more.querySelector('.who') && more.querySelector('.who').textContent === 'Only the venueplay team reads this.', more.textContent);
+      // REPINNED 12 Nov 2026 (INBOX 320.4): was '"Only the venueplay team reads this."' and a No thanks button
+      check(WORDS[r] + ': no "Only the venueplay team reads this." line and no "No thanks": one button, Send',
+            !more.querySelector('.who') && more.textContent.indexOf('Only the venueplay team') < 0 && !btn(more, 'No thanks') && more.querySelector('.acts').querySelectorAll('button').length === 1, more.textContent);
       check(WORDS[r] + ': nothing in the form offers the venue anything (no "Send this to", no "share", no name)', !/send this to|share|first name/i.test(more.textContent), more.textContent);
       chips[1].click();
       ta.value = '  Loud speakers  ';
@@ -181,13 +187,23 @@ function btn(host, word) { return host.querySelectorAll('button').filter(functio
       check(WORDS[r] + ': then a thank you', host.querySelector('.thanks') && /^Thanks/.test(host.querySelector('.thanks').textContent), host.textContent);
     }
 
-    // No thanks: nothing more is posted.
+    // Send with nothing on it (the old No thanks, INBOX 320.4): a thank you, nothing more posted, though the tick starts on.
     POSTS = []; NEXT_ID = 'f0000000-0000-4000-8000-000000000009';
     var h2 = freshScreen('vFinalSkip');
     F.ask({ api: 'https://game.test', code: 'SKIP', mount: h2, gameId: 'gs', format: 'trivia' });
     btn(h2, 'Good').click(); await settle();
-    btn(h2.querySelector('.more'), 'No thanks').click(); await settle();
-    check('No thanks: the form closes with a thank you and posts nothing more', POSTS.length === 1 && !h2.querySelector('.more') && /^Thanks/.test(h2.textContent), POSTS);
+    btn(h2.querySelector('.more'), 'Send').click(); await settle();
+    check('Send with nothing on it: the form closes with a thank you and posts nothing more', POSTS.length === 1 && !h2.querySelector('.more') && /^Thanks/.test(h2.textContent), POSTS);
+    // Unticked with an address typed: the line goes, the email does not (the tick is still the player's own choice).
+    POSTS = []; NEXT_ID = 'f0000000-0000-4000-8000-000000000008';
+    var h5 = freshScreen('vFinalUntick');
+    F.ask({ api: 'https://game.test', code: 'UNTICK', mount: h5, gameId: 'gu', format: 'musical' });
+    btn(h5, 'Not for me').click(); await settle();
+    var m5 = h5.querySelector('.more'), bx5 = m5.querySelectorAll('input').filter(function (i) { return i.type === 'checkbox'; })[0], em5 = m5.querySelectorAll('input').filter(function (i) { return i.type === 'email'; })[0];
+    bx5.click(); em5.value = 'sam@example.com'; m5.querySelector('textarea').value = 'Too loud';
+    btn(m5, 'Send').click(); await settle();
+    var s5 = POSTS.filter(function (p) { return /\/help\/feedback$/.test(p.url); })[0];
+    check('unticked: the line is sent, the email is not', s5 && s5.body.note === 'Too loud' && s5.body.email === undefined && s5.body.consent === false, s5 && s5.body);
 
     // An older game Worker that sends no id: the thanks stays, no form that could not be kept.
     POSTS = []; NEXT_ID = null;

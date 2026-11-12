@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/game-screens-fit-in-chrome.test.py": {
-  "checks": 328,
+  "checks": 386,
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
@@ -252,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 256,
+  "checks": 262,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -756,7 +756,7 @@
   "counted_by": "lines"
  },
  "tools/test-feedback-form.js": {
-  "checks": 75,
+  "checks": 78,
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {

@@ -1455,7 +1455,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
         if(P.won || P.ended){
           if(_endLeaveT) clearTimeout(_endLeaveT);
           _endLeaveT=setTimeout(function leave(){ _endLeaveT=null;
-            /* never while they are typing their feedback: the screen waits for Send or No thanks (Dean, 12 Nov 2026) */
+            /* never while they are typing their feedback: the screen waits for Send (Dean, 12 Nov 2026) */
             try{ if(document.body.classList.contains("vpfb-more")){ _endLeaveT=setTimeout(leave, 5000); return; } }catch(e){}
             if(!P.active){ P.won=false; P.ended=false; P.split=false; P.noWinner=false; route(); } }, END_LEAVE_MS);
         }

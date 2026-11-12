@@ -9,10 +9,11 @@ stand-in billing Worker keeps what POST /help/feedback is sent.
 
 For each phone and width, for Good (Dean, 6 Nov 2026: he tapped the middle rating and got no follow-up) and for Not
 for me and Loved it on the 390 phone:
-  - tapping the rating opens the follow-up: the question, the chips, the optional line, "Only the venueplay team
-    reads this.", No thanks and Send
-  - Good and Not for me carry the ONE tick, "venueplay can email me about this feedback (only about this)",
-    unticked, the email box hidden until it is ticked; Loved it has no tick at all
+  - tapping the rating opens the follow-up: the question, the chips, the optional line and Send (REPINNED 12 Nov 2026,
+    Dean INBOX 320.4: no "No thanks", no "Only the venueplay team reads this." line)
+  - Good and Not for me carry the ONE tick, "Email me about this", TICKED to start with the email box showing
+    (REPINNED 12 Nov 2026, INBOX 320.4; was unticked "venueplay can email me about this feedback (only about this)");
+    Loved it has no tick at all
   - nothing is wider than the phone (no sideways scroll), every chip and button is inside the screen and at
     least 36px tall, the line is readable (14px)
   - Send posts once to /help/feedback with the rating's id, the chip, the line, and the email only when ticked
@@ -160,13 +161,13 @@ def run_phone(B, base, name, path, view, fmt, args, w, h, rating, tag):
         if not opened: return
         m = P.obj(MEASURE) or {}
         ok(lab + ' it asks "%s"' % ASK[rating], m.get('q') == ASK[rating], m.get('q'))
-        ok(lab + ' its chips, an optional line, No thanks and Send', len(m.get('chips') or []) >= 5 and m.get('hasNoThanks') and m.get('hasSend'), m)
-        ok(lab + ' "Only the venueplay team reads this."', m.get('who') == 'Only the venueplay team reads this.', m.get('who'))
+        ok(lab + ' its chips, an optional line and Send, no "No thanks" (INBOX 320.4)', len(m.get('chips') or []) >= 5 and not m.get('hasNoThanks') and m.get('hasSend'), m)
+        ok(lab + ' no "Only the venueplay team reads this." line (INBOX 320.4)', not m.get('who') and 'Only the venueplay team' not in json.dumps(m), m.get('who'))
         if rating == 3:
             ok(lab + ' no tick at all', m.get('ticks') == 0, m.get('ticks'))
         else:
-            ok(lab + ' one tick, unticked: "venueplay can email me about this feedback (only about this)", its email box hidden',
-               m.get('ticks') == 1 and m.get('ticked') is False and m.get('tickWords') == 'venueplay can email me about this feedback (only about this)' and not m.get('emailShown'), m)
+            ok(lab + ' one tick, ticked to start: "Email me about this", its email box showing (INBOX 320.4)',
+               m.get('ticks') == 1 and m.get('ticked') is True and m.get('tickWords') == 'Email me about this' and m.get('emailShown'), m)
         ok(lab + ' nothing wider than the phone (no sideways scroll)', m.get('sw', 9999) <= m.get('W', 0), [m.get('sw'), m.get('W')])
         outside = [e for e in m.get('els', []) if e['l'] < 0 or e['r'] > m.get('W', 0)]
         ok(lab + ' every chip, button and box sits inside the screen', not outside, outside)
@@ -177,7 +178,7 @@ def run_phone(B, base, name, path, view, fmt, args, w, h, rating, tag):
         del HELP_POSTS[:]
         P.js('(function(){ var more=document.querySelector(".vpfb .more"); more.querySelectorAll(".chips button")[0].click();'
              ' var ta=more.querySelector("textarea"); ta.value="Loud speakers"; ta.dispatchEvent(new Event("input"));'
-             ' var t=more.querySelector("input[type=checkbox]"); if(t){ t.click(); var e=more.querySelector("input[type=email]"); e.value="sam@example.com"; }'
+             ' var t=more.querySelector("input[type=checkbox]"); if(t){ if(!t.checked) t.click(); var e=more.querySelector("input[type=email]"); e.value="sam@example.com"; }'
              ' return 1; })()')
         if rating != 3:
             em = P.obj('JSON.stringify({ shown: document.querySelector(".vpfb input[type=email]").getBoundingClientRect().height>0 })') or {}

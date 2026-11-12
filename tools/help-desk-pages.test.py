@@ -783,9 +783,10 @@ def main():
             down = {'/help/content?brand=venueplay&audience=patron': {'status': 500, 'body': {}}} if 'musical' in name else None
             t = Tab(b, routes=down)
             t.go(VP + path)
-            # The trivia phone keeps Help ONLY in its menu, top right (Dean, 3 Nov 2026: data-menu-only="1"), and the
-            # musical phone the same since its new look (4 Nov 2026: one menu sheet, Help its first row).
-            menu_only = True
+            # REPINNED 12 Nov 2026 (Dean, INBOX 320.7): Help right under our logo on EVERY game screen, the same spot on
+            # every game, AND in the menu. Was: the trivia phone (3 Nov) and the musical phone (4 Nov) kept Help ONLY in
+            # their menu (data-menu-only="1", which a game phone now ignores in /app/vp-help.js).
+            menu_only = False
             t.until('!!document.getElementById("%s")' % ('vphMenu' if menu_only else 'vphLink'), 15)
             # The start-of-game show (on by default again since 4 Nov) plays over the demo for about 2.5 s and
             # then takes itself off the page. Measure the game the player is left with, after it. Wait for the show to
@@ -804,6 +805,8 @@ def main():
                 link_checks(t, name)
             t.shot(('05-' if 'musical' in name else '06-') + name.replace(' ', '-'))
             check(name + ': Help is in the phone menu too', t.js('!!document.getElementById("vphMenu")') is True)
+            check(name + ': and the Help link sits on our logo\'s line at the foot, at the right of it (INBOX 320.7)',
+                  t.js('(function(){ var l=document.getElementById("vphLink"), f=l && l.closest(".pfoot"), s=f && f.querySelector("svg"); if(!s) return false; var a=s.getBoundingClientRect(), b=l.getBoundingClientRect(); return b.left>=a.right && Math.abs((b.top+b.bottom)/2-(a.top+a.bottom)/2)<=3; })()') is True)
             t.js('document.getElementById("%s").click()' % ('vphMenu' if menu_only else 'vphLink'))
             t.until('!!document.querySelector(".vph-msg")', 8)
             t.js('document.querySelector(".vph-msg").click()')

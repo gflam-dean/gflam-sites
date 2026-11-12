@@ -14,7 +14,7 @@
       player chooses to add afterwards (the follow-up below, Dean 1 Nov 2026)
       goes to the billing Worker's /help/feedback, rate-limited and honeypotted,
       into vp_feedback_notes (migration 137). The one tick is the player's own
-      "venueplay can email me about this feedback", on Good and Not for me only.
+      "Email me about this" (ticked to start, Dean 12 Nov 2026), on Good and Not for me only.
 
    2. It never blocks anything. If the Worker is unreachable, if the venue is
       old, if anything at all goes wrong, the punter sees a normal end screen and
@@ -52,7 +52,7 @@
   }
 
   /* THE FOLLOW-UP (Dean, 1 Nov 2026). Every rating gets one short question, tailored to it, all
-     of it optional and one tap away from gone ("No thanks"):
+     of it optional; Send with nothing on it keeps nothing (no "No thanks" since 12 Nov 2026, INBOX 320.4):
        Loved it     What did you love?               tags, a line
        Good         What would make it better?       tags, a line, an email to be answered about it
        Not for me   Sorry to hear that. What went wrong?   the same as Good
@@ -61,7 +61,7 @@
 
      NO TICKS FOR THE VENUE (Dean, 2 Nov 2026): the player is under no obligation to tick anything.
      A venue sees only COUNTS of "Loved it" and "Good"; every word and tag here goes to the venueplay
-     team only, and the form says so.
+     team only (the form no longer says so in a line of its own: Dean, INBOX 320.4).
 
      The tag keys must match VPF_TAGS in venueplay-api-FULL.js word for word: the Worker drops any
      it does not know. tools/test-player-look.js compares the two lists. */
@@ -122,14 +122,13 @@
       ".vpfb .who{font-size:12px;color:var(--faint,#8A8A94);margin:0 0 10px;text-align:center}" +
       ".vpfb .acts{display:flex;gap:8px;justify-content:center;margin-top:4px}" +
       ".vpfb .acts .send{background:var(--pink,#FF1F8E);border-color:var(--pink,#FF1F8E);color:#fff;min-width:120px}" +
-      ".vpfb .acts .skip{background:transparent;min-width:0}" +
       ".vpfb .hide{display:none!important}";
     document.head.appendChild(el);
   }
 
   function node(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  function tick(text) {
-    var l = node("label", "tick"), i = document.createElement("input"); i.type = "checkbox"; i.checked = false;
+  function tick(text, on) {
+    var l = node("label", "tick"), i = document.createElement("input"); i.type = "checkbox"; i.checked = !!on;
     l.appendChild(i); l.appendChild(node("span", "", text)); return { label: l, box: i };
   }
 
@@ -150,21 +149,24 @@
     var note = node("textarea"); note.maxLength = 300; note.placeholder = "Anything else? (optional)"; note.setAttribute("aria-label", "Anything else");
     more.appendChild(note);
     var f = { mail: null, email: null };
+    /* PLAIN WORDS, TICKED TO START (Dean, INBOX 320.4, 12 Nov 2026): "Email me about this", already ticked, the email
+       box showing. It is still the player's own choice: untick it, or leave the box empty, and no email is sent or
+       kept (payload() and the Worker both need the tick AND an address); the ticket says they asked for a reply about
+       this feedback only. */
     if (rating <= 2) {
-      f.mail = tick("venueplay can email me about this feedback (only about this)");
+      f.mail = tick("Email me about this", true);
       f.email = node("input"); f.email.type = "email"; f.email.maxLength = 200; f.email.placeholder = "Your email"; f.email.setAttribute("aria-label", "Your email");
-      f.email.classList.add("hide");
       f.mail.box.addEventListener("change", function () { f.email.classList.toggle("hide", !f.mail.box.checked); });
       more.appendChild(f.mail.label); more.appendChild(f.email);
     }
-    more.appendChild(node("div", "who", "Only the venueplay team reads this."));
-    var acts = node("div", "acts"), send = node("button", "send", "Send"), skip = node("button", "skip", "No thanks");
-    send.type = "button"; skip.type = "button";
-    acts.appendChild(skip); acts.appendChild(send); more.appendChild(acts);
+    /* ONE BUTTON, SEND (Dean, INBOX 320.4, 12 Nov 2026): no "No thanks" (an empty Send keeps nothing) and no "Only the
+       venueplay team reads this." line. Venues still see only the COUNTS of Loved it and Good; every word goes to us. */
+    var acts = node("div", "acts"), send = node("button", "send", "Send");
+    send.type = "button";
+    acts.appendChild(send); more.appendChild(acts);
     /* ONE SCREEN WHILE THEY TYPE (Dean, 12 Nov 2026, INBOX 289.4 / 291): the page says the follow-up is open
        (body.vpfb-more), so the end screen above it closes up to make room and nothing has to scroll. */
     function done(text) { wrap.textContent = ""; wrap.appendChild(node("div", "thanks", text)); try { document.body.classList.remove("vpfb-more"); } catch (e) {} }
-    skip.addEventListener("click", function () { done(rating === 1 ? "Thanks for telling us" : "Thanks, that helps the venue"); });
     send.addEventListener("click", function () {
       var body = payload(rating, {
         tags: picked, note: note.value,
@@ -172,6 +174,7 @@
       });
       body.feedback_id = feedbackId; body.device = deviceId(); body.website = "";
       done(rating === 1 ? "Thanks for telling us" : "Thanks, that helps");
+      if (!body.tags.length && !body.note && !body.email) return;   // Send with nothing on it: the thank you, nothing posted
       try {
         fetch(helpApi() + "/help/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
           .catch(function () {});

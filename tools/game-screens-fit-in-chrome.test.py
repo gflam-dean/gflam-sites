@@ -32,7 +32,7 @@ VP_SHOTS_ONLY=1 takes the frames with no checks. Takes /tmp/vp-heavy.lock first 
 
     python3 tools/game-screens-fit-in-chrome.test.py
 """
-import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
+import re, base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
 ROOT = os.environ.get('VP_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -229,10 +229,39 @@ def venue_logo_ok(P, tag):
        (m.get('src') or '').endswith(LOGO_FILE) and m.get('shown') is True and m.get('loaded') is True and not m.get('nameShown') and not m.get('typed'), m)
 
 
+# INBOX 320.7 (Dean, 12 Nov 2026): our logo and Help on EVERY game screen, in the SAME spot on every screen of every game.
+# Every screen fits() measures adds its logo and Help here; main() then holds each phone size to one spot.
+FOOT = {}
+FOOT_PROBE = r'''(function(){ var s=document.querySelector("#app > .pfoot svg, .app > .pfoot svg"), h=document.getElementById("vphLink");
+  function R(e){ if(!e) return null; var r=e.getBoundingClientRect(), c=getComputedStyle(e); if(!r.width || !r.height || c.visibility==="hidden" || c.display==="none") return null; return [r.left,r.top,r.right,r.bottom]; }
+  return JSON.stringify({ logo:R(s), help:R(h), H:innerHeight, W:innerWidth }); })()'''
+
+
+def foot_spot(P, tag):
+    f = P.obj(FOOT_PROBE) or {}
+    lg, hp, H = f.get('logo'), f.get('help'), f.get('H') or 0
+    ok('%s: our logo and Help are both on screen, Help on the logo\'s line, at the right of it' % tag,
+       bool(lg and hp) and lg[3] <= H + 1 and hp[3] <= H + 1 and hp[0] >= lg[2] and hp[2] <= (f.get('W') or 0) + 0.5 and abs((hp[1] + hp[3]) / 2 - (lg[1] + lg[3]) / 2) <= 3, f)
+    if lg and hp:
+        FOOT.setdefault((P.w, P.h), []).append((tag, round(H - lg[3], 1), round(H - hp[3], 1), round((lg[0] + lg[2]) / 2, 1), round(hp[2], 1)))
+
+
+def foot_same_spot(w, h):
+    rows = FOOT.get((w, h)) or []
+    games = set(r[0].split(' ')[0] for r in rows)
+    lo = [r[1] for r in rows]; hl = [r[2] for r in rows]; cx = [r[3] for r in rows]
+    hr = [r[4] for r in rows]
+    ok('%dx%d: our logo and Help sit in the SAME spot on every game screen measured (%d screens, %s): logo %s to %spx from the bottom, Help %s to %spx, centre %s to %s'
+       % (w, h, len(rows), ', '.join(sorted(games)), min(lo or [0]), max(lo or [0]), min(hl or [0]), max(hl or [0]), min(cx or [0]), max(cx or [0])),
+       len(rows) >= 10 and {'trivia', 'bingo', 'musical'} <= games and max(lo) - min(lo) <= 3 and max(hl) - min(hl) <= 3 and max(cx) - min(cx) <= 2 and max(hr) - min(hr) <= 2,
+       [r[:3] for r in rows if abs(r[1] - (sorted(lo)[len(lo) // 2])) > 3 or abs(r[2] - (sorted(hl)[len(hl) // 2])) > 3][:12] + ['median', sorted(lo)[len(lo) // 2] if lo else None])
+
+
 def fits(P, tag, need=()):
     """The screen fits: no scrolling down or sideways, nothing inside it scrolls, no spaced caps; `need` are
     selectors that must be fully on screen."""
     time.sleep(0.6)
+    foot_spot(P, tag)   # our logo and Help, in their one spot (INBOX 320.7)
     m = P.obj(MEASURE) or {}
     P.shot(tag.replace(' ', '-').replace(':', '').replace('/', '-').lower())
     ok('%s: the page does not scroll down (%s tall on a %s screen)' % (tag, m.get('sh'), m.get('H')), (m.get('sh') or 9999) <= (m.get('H') or 0) + 1, [m.get('view'), m.get('text')])
@@ -276,6 +305,12 @@ def trivia(B, base, w, h):
         ok(t + ': CONTROL the question is up', P.until('!document.getElementById("vQ").classList.contains("hidden") && document.querySelectorAll("#pAnswers .pans").length===4', 10), P.js('document.body.innerText.slice(0,200)'))
         fits(P, t + ' question', ['#pAnswers .pans.c3', '#pqCd', '.pfoot svg'])
         venue_logo_ok(P, t + ' question')
+        # INBOX 320.3 (Dean, 12 Nov 2026): a long clock reads m:ss (9:58), never "598 secs", and it sits up under the header
+        cd = P.obj('(function(){ var n=document.getElementById("pqCdNum"), l=n.nextElementSibling, r=n.closest(".pq-ring").getBoundingClientRect(), h=document.querySelector(".ptop").getBoundingClientRect();'
+                   ' return JSON.stringify({ num:n.textContent, label:l && getComputedStyle(l).display!=="none" ? l.textContent : "", sr:document.getElementById("pqCd").textContent, gap:Math.round(r.top-h.bottom) }); })()') or {}
+        ok(t + ': a ten-minute clock reads minutes and seconds ("%s"), no "secs" under it, the screen reader the same ("%s")' % (cd.get('num'), cd.get('sr')),
+           re.match(r'^(10:00|9:[0-5]\d)$', cd.get('num') or '') is not None and cd.get('label') == '' and re.match(r'^Answer in (10:00|9:[0-5]\d)$', cd.get('sr') or '') is not None, cd)
+        ok(t + ': the countdown sits right under the header (%spx below it), not far down the screen' % cd.get('gap'), cd.get('gap') is not None and -1 <= cd['gap'] <= 12, cd)
         ring = P.obj('(function(){ var r=document.querySelector("#vQ .pring, #vQ .ring, #pqRing"); if(!r) return null; var b=r.getBoundingClientRect(), out=[];'
                      ' [].forEach.call(r.querySelectorAll("*"), function(e){ var c=e.getBoundingClientRect(); if(c.width>0 && (c.left<b.left-1||c.right>b.right+1||c.top<b.top-1||c.bottom>b.bottom+1)) out.push((e.id||e.className)+" "+e.textContent.trim()); });'
                      ' return JSON.stringify(out); })()')
@@ -285,8 +320,10 @@ def trivia(B, base, w, h):
         P.say({'t': 'reveal', 'fmt': 'trivia', 'qseq': 4, 'correctIndex': 0, 'options': q['options'], 'game_id': 'g-triv'})
         P.until('!document.getElementById("vRes").classList.contains("hidden")', 10)
         fits(P, t + ' result, wrong', ['#pResAnswers .pans.c3'])
-        P.say(dict(q, qseq=5, qi=5, endsAt=int(time.time() * 1000) + 600000))
-        P.until('!document.getElementById("vQ").classList.contains("hidden")', 10)
+        P.say(dict(q, qseq=5, qi=5, endsAt=int(time.time() * 1000) + 25000))
+        P.until('!document.getElementById("vQ").classList.contains("hidden")', 10); time.sleep(1.2)
+        cd = P.obj('(function(){ var n=document.getElementById("pqCdNum"), l=n.nextElementSibling; return JSON.stringify({ num:n.textContent, label:l && getComputedStyle(l).display!=="none" ? l.textContent : "" }); })()') or {}
+        ok(t + ': under a minute it is the plain seconds with "secs" ("%s %s")' % (cd.get('num'), cd.get('label')), re.match(r'^\d{1,2}$', cd.get('num') or '') is not None and cd.get('label') == 'secs', cd)
         P.js('document.querySelectorAll("#pAnswers .pans")[0].click()'); time.sleep(0.4)
         P.say({'t': 'reveal', 'fmt': 'trivia', 'qseq': 5, 'correctIndex': 0, 'options': q['options'], 'game_id': 'g-triv'})
         P.until('!document.getElementById("vRes").classList.contains("hidden")', 10); time.sleep(1.5)
@@ -319,8 +356,9 @@ def trivia_late(B, base, w, h):
             if live:
                 P.say({'t': 'question', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 4, 'qi': 4, 'qtotal': 11, 'secs': 30, 'to': 'pid1',
                        'endsAt': int(time.time() * 1000) + 600000, 'text': 'What is the capital of Australia?', 'options': opts})
-                ok(t + ': a question is live: it is up, with "You\u2019ve joined at question 4. Jump in, this one\u2019s yours."',
-                   P.until('document.getElementById("pStatus").textContent==="You\u2019ve joined at question 4. Jump in, this one\u2019s yours."', 8),
+                # REPINNED 12 Nov 2026 (Dean, INBOX 320.5): one clean line, no "Jump in"
+                ok(t + ': a question is live: it is up, with "You\u2019ve joined at question 4. This one\u2019s yours."',
+                   P.until('document.getElementById("pStatus").textContent==="You\u2019ve joined at question 4. This one\u2019s yours."', 8),
                    P.js('document.getElementById("pStatus").textContent'))
                 fits(P, t + ' question live', ['#pAnswers .pans.c3', '#pStatus'])
                 P.say({'t': 'question', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 5, 'qi': 5, 'qtotal': 11, 'secs': 30,
@@ -331,12 +369,28 @@ def trivia_late(B, base, w, h):
                 P.say({'t': 'reveal', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 4, 'qi': 4, 'correctIndex': 0, 'options': opts, 'to': 'pid1'})
                 time.sleep(1)
                 txt = P.js('document.body.innerText.replace(/\\s+/g," ")') or ''
-                ok(t + ': between questions: "You\u2019ve joined at question 4. Jump in, the next one\u2019s yours.", and the finished question is not replayed',
-                   'You\u2019ve joined at question 4. Jump in, the next one\u2019s yours.' in txt and P.js('document.getElementById("vRes").classList.contains("hidden")') is True
+                ok(t + ': between questions: "You\u2019ve joined at question 4. The next one\u2019s yours.", and the finished question is not replayed',
+                   'You\u2019ve joined at question 4. The next one\u2019s yours.' in txt and 'Jump in' not in txt and 'Just tap your answer' not in txt and P.js('document.getElementById("vRes").classList.contains("hidden")') is True
                    and 'No answer' not in txt, txt[:300])
                 fits(P, t + ' between questions')
         finally:
             P.close()
+
+
+GRID_PROBE = r'''(function(){
+  var T=[].filter.call(document.querySelectorAll("#cardStack .ticket"), function(t){ return !t.classList.contains("shut") && t.querySelector(".card9"); });
+  var colX=[], colOff=0, rowOff=0, spill=[], cols=0, blankSeen=false;
+  T.forEach(function(t){
+    var cells=[].slice.call(t.querySelectorAll(".card9 .cc")); cols=Math.round(cells.length/3);
+    for(var r=0;r<3;r++){ var ys=[]; for(var c=0;c<cols;c++){ var e=cells[r*cols+c]; if(!e) continue; var b=e.getBoundingClientRect(), x=(b.left+b.right)/2;
+        ys.push((b.top+b.bottom)/2);
+        if(colX[c]==null) colX[c]=x; else colOff=Math.max(colOff, Math.abs(colX[c]-x));
+        if(/\bblank\b/.test(e.className)){ var bg=getComputedStyle(e).backgroundColor; if(bg && bg!=="transparent" && !/rgba\(\d+, \d+, \d+, 0\)/.test(bg)) blankSeen=true; }
+        else if(e.scrollWidth>e.clientWidth+0.5 || e.scrollHeight>e.clientHeight+0.5) spill.push(e.textContent); }
+      rowOff=Math.max(rowOff, Math.max.apply(null,ys)-Math.min.apply(null,ys)); }
+  });
+  return JSON.stringify({ n:T.length, cols:cols, colOff:Math.round(colOff*100)/100, rowOff:Math.round(rowOff*100)/100, spill:spill, blankSeen:blankSeen });
+})()'''
 
 
 def bingo(B, base, w, h):
@@ -363,6 +417,15 @@ def bingo(B, base, w, h):
         venue_logo_ok(P, t + ' three tickets')
         cut = P.obj('(function(){ var W=document.documentElement.clientWidth, out=[]; [].forEach.call(document.querySelectorAll("#cardStack .ticket:not(.shut) .cc"), function(e){ var r=e.getBoundingClientRect(), g=e.parentNode.getBoundingClientRect(); if(r.width>0 && (r.right>W+0.5 || r.right>g.right+0.5 || r.left<g.left-0.5)) out.push((e.getAttribute("data-n")||"blank")+" ["+Math.round(r.left)+","+Math.round(r.right)+"]"); }); return JSON.stringify(out.slice(0,9)); })()')
         ok(t + ' three tickets: all nine columns of every open ticket inside the ticket and the screen (none cut off on the right)', cut == [], cut)
+        # INBOX 320.6 (Dean, 12 Nov 2026): on a small phone the ticket stays a grid: nine columns lined up across rows AND
+        # tickets, rows lined up, every number inside its own square, the empty squares drawn; also at the largest text size
+        for zoom in ('', 'largest'):
+            if zoom: P.js('(function(){ for(var i=0;i<10;i++) document.getElementById("zoomIn").click(); return 1; })()'); time.sleep(0.8)
+            g = P.obj(GRID_PROBE) or {}
+            ok('%s three tickets%s: nine columns lined up across every row and ticket (%s), rows lined up (%s), every number inside its square (%s), empty squares drawn'
+               % (t, ' at the largest text size' if zoom else '', g.get('colOff'), g.get('rowOff'), g.get('spill')),
+               g.get('n', 0) >= 1 and g.get('cols') == 9 and g.get('colOff', 99) <= 0.75 and g.get('rowOff', 99) <= 0.75 and g.get('spill') == [] and g.get('blankSeen') is True, g)
+        P.js('(function(){ for(var i=0;i<12;i++) document.getElementById("zoomOut").click(); try{ localStorage.removeItem("vp-cardzoom"); }catch(e){} return 1; })()'); time.sleep(0.5)
         P.say({'t': 'winner', 'pid': pid, 'name': 'Dean', 'cardNo': 320, 'pattern': 'one', 'prize': 'Meat tray', 'winners': [{'pid': pid, 'name': 'Dean', 'cardNo': 320}], 'cont': False})
         ok(t + ': CONTROL YOU WON', P.until('!document.getElementById("vWon").classList.contains("hidden")', 10))
         time.sleep(0.6); confetti_ok(P, t + ' you won')
@@ -408,12 +471,19 @@ def bingo_late(B, base, w, h):
             r = P.obj('(function(){ var c=%s, un=[], miss=[]; [].forEach.call(document.querySelectorAll("#cardStack .cc[data-n]"), function(e){ var n=+e.getAttribute("data-n"); if(c.indexOf(n)<0) return;'
                       ' if(!/\\bdaub\\b/.test(e.className)) un.push(n); if(+e.getAttribute("data-card")===0 && /\\bmissed\\b/.test(e.className)) miss.push(n); });'
                       ' return JSON.stringify({ unmarked: un, missed: miss.sort(function(a,b){return a-b;}), tension: (document.getElementById("tension")||{}).innerText||"" }); })()' % json.dumps(called)) or {}
-            if assist:
-                ok(t + ': every number called before it joined is marked on its tickets', r.get('unmarked') == [], r)
-            else:
-                ok(t + ': the ticket closest to winning outlines every called number on it still to mark (5 13 23 31 42 64 77 90)', r.get('missed') == [5, 13, 23, 31, 42, 64, 77, 90], r)
+            # REPINNED 12 Nov 2026 (Dean, INBOX 320.1): a late joiner gets every number already called marked for it ONCE,
+            # whatever "Mark numbers for me" says; then auto-marking stays off unless it is on. Was (mark-for-me off): the
+            # closest ticket outlined the called numbers still to mark.
+            ok(t + ': every number called before it joined is marked on its tickets, once, for it', r.get('unmarked') == [] and r.get('missed') == [], r)
             ok(t + ': and it says "One to go!" (ticket #401 has 5, 23, 42 and 64 of its top row)', 'One to go!' in (r.get('tension') or ''), r.get('tension'))
             fits(P, t + ' tickets', ['#bingoBtn'])
+            # the next ball after it joined: marked for it only with "Mark numbers for me" on (88 is on ticket #401)
+            P.say({'t': 'ball', 'number': 88, 'called': called + [88], 'active': True})
+            P.say({'t': 'state', 'pattern': 'one', 'prize': 'Meat tray', 'called': called + [88], 'active': True, 'session_id': SESS, 'join_code': ROOM})
+            time.sleep(1.0)
+            d88 = P.js('(function(){ var e=document.querySelector("#cardStack .cc[data-n=\'88\']"); return e ? /\\bdaub\\b/.test(e.className) : null; })()')
+            if assist: ok(t + ': the next ball (88) is marked for it, "Mark numbers for me" is on', d88 is True, d88)
+            else: ok(t + ': the next ball (88) is NOT marked for it: auto-marking switched itself off after the catch-up', d88 is False, d88)
         finally:
             P.close()
 
@@ -472,6 +542,7 @@ def main():
                 try: fn(B, base, w, h)
                 except Exception as e:
                     import traceback; traceback.print_exc(); ok('%s %dx%d ran to the end' % (name, w, h), False, e)
+            if not ONLY: foot_same_spot(w, h)
     finally:
         B.close(); srv.shutdown()
     print('')

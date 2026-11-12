@@ -385,6 +385,14 @@
   body.vp-onescreen .pfoot{padding-top:6px}
   #vCard .card9,#vCard .lay-pages .card9,#vCard .lay-align .card9{width:100%}
   #vCard .card9 .cc{aspect-ratio:auto;min-height:0;height:var(--ch,36px);font-size:calc(min(21px, var(--ch,36px) * .56) * var(--cz,1))}
+  /* THE TICKET STAYS A GRID ON A SMALL PHONE (Dean, INBOX 320.6, 12 Nov 2026): nine columns that never give way to a
+     number (minmax(0,1fr): a bigger text size can no longer push one column wider than the rest and shift that ticket
+     out of line with the others), every number held inside its own square (the size is capped by the square's width
+     too), and the empty squares drawn faintly, so every row and column reads as the ticket's grid. */
+  #vCard .card9{grid-template-columns:repeat(9,minmax(0,1fr))}
+  #vCard .card9 .cc{min-width:0;overflow:hidden;line-height:1;font-size:min(calc(min(21px, var(--ch,36px) * .56) * var(--cz,1)), calc((100vw - 76px) / 9 * .62), calc(var(--ch,36px) * .72))}
+  #vCard .card9 .cc.blank{background:rgba(255,255,255,.035);border-color:transparent}
+  body.light #vCard .card9 .cc.blank{background:rgba(25,20,32,.04)}
   #vCard .bingobar{position:static;padding:8px 0 0;margin-top:4px}
   #vCard .lastcalled{margin:2px 4px 6px}
   #vCard .tension{margin:4px 0 2px}
@@ -1176,6 +1184,19 @@
     var set=calledSet();
     for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=cd.cells[r][c]; if(n && set[n]) cd.daubs[n]=true; } } }
+  }
+  /* A LATE JOINER'S TICKETS, CAUGHT UP ONCE (Dean, INBOX 320.1, 12 Nov 2026): a phone dealt tickets after balls have been
+     called gets every number already called marked for it, once. From then on it marks its own (the game), unless the
+     player turned "Mark numbers for me" on (autoDaub). Only tickets with no marks of their own are touched, so a reload or
+     a resend never adds marks to a ticket the player was already playing; never in a paid game (real bingo, autoDaub). */
+  function lateCatchUp(prev){
+    if(P.paidMode || P.assist) { P.needCatchUp=false; return; }
+    var set=calledSet(), any=false, k; for(k in set){ any=true; break; }
+    if(!any) return false;
+    for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
+      if(prev && prev[cd.cardNo] && Object.keys(prev[cd.cardNo]).length) continue;
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=cd.cells[r][c]; if(n && set[n]) cd.daubs[n]=true; } } }
+    P.needCatchUp=false; saveDaubs(); return true;
   }
   // Which column of the 3x9 ticket a number sits in. The bands are 1-9, 10-19, ... 70-79, 80-90,
   // so it is floor(n/10), NOT floor((n-1)/10): the first column is nine numbers wide, not ten,
@@ -2046,6 +2067,8 @@
       P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:_prev[c.cardNo]||{} }; });
       if(P.cards.length) P.dealWait=false;   // the ticket we were waiting for is here
       P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
+      /* the numbers called before these tickets came: marked once now, or on the first state this phone hears (INBOX 320.1) */
+      P.needCatchUp=false; if(!lateCatchUp(_prev) && !P.gotState){ P.needCatchUp=true; P._catchPrev=_prev; }
       P.active=true; autoDaub(); route();
     }
     else if(m.t==="state"){
@@ -2070,6 +2093,8 @@
         _celebrated=false; clearWin(P.room);
       }
       if(m.session_id) P.lastSid=m.session_id;
+      if(P.needCatchUp && P.cards.length){ lateCatchUp(P._catchPrev); P.needCatchUp=false; }   // the first state only, never a later ball
+      P.gotState=true;
       autoDaub(); if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
