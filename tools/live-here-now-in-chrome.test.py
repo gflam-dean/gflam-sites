@@ -12,7 +12,7 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
     from OUR WHOLE VENUE LIST (INBOX 229/232), each pick saying plainly whether it is on venueplay
     ("On venueplay", "Game on now") or "Not on venueplay yet"; two letters asks for more; nothing
     typed ever makes a board: "Can't find your venue? Add it" sends name, suburb, state and website
-    to HQ's review list and the round plays with no board; "Just play, no board" plays without one;
+    to HQ's review list and the round plays with no board; "Play now" shows only while the search is down;
     the next scan offers the same venue first
   - the venue's own sign-up at the end (INBOX 232): only where the Worker says it is switched on, the
     phones' one tick unticked ("Send me offers from The Mini Bar. I'm 18 or over."), its consent
@@ -650,12 +650,12 @@ def main():
         wait(tn, lambda s: s.get('view') == 'vWhere')
         tn.type_into('whereIn', 'Duck and Drake')
         s = wait(tn, lambda s: 'No venue by that name' in s.get('hint', ''))
-        check('a venue that is not on our list says so, and nothing typed becomes a pick or a board', 'No venue by that name on our list' in s.get('hint', '') and not s.get('picks')
-              and not s.get('leadOpen') and s.get('notListed'), (s.get('hint'), s.get('leadOpen')))
-        tn.shot('lhn-notfound-375.png')
-        tn.tap_id('notListed')
+        check('a venue that is not on our list says so, and nothing typed becomes a pick or a board', 'No venue by that name on our list' in s.get('hint', '') and not s.get('picks'),
+              (s.get('hint'), s.get('picks')))
         s = wait(tn, lambda s: s.get('leadOpen'))
-        check('"Can\'t find your venue? Add it" opens the short form, the name already filled in', s.get('leadOpen') and s.get('leadVal') == 'Duck and Drake', s.get('leadVal'))
+        tn.shot('lhn-notfound-375.png')
+        check('not on our list: the Add your venue form drops down straight away, the name already filled in (INBOX 309.1b)',
+              s.get('leadOpen') and s.get('leadVal') == 'Duck and Drake' and not s.get('notListed'), (s.get('leadOpen'), s.get('leadVal')))
         n_lead = len([x for x in FAKE['log'] if x[1] == '/coaster/lead'])
         tn.tap_id('leadBtn')
         time.sleep(0.4)
@@ -698,12 +698,10 @@ def main():
         ts.go('/live-here-now')
         name_step(ts, 'Lou')
         wait(ts, lambda s: s.get('view') == 'vWhere')
-        n_before = len(FAKE['log'])
-        ts.tap_id('skipWhere')
-        _, s, seen = play_round(ts, [True, False, True, True, False])
-        check('"Just play, no board" plays the round on the phone, sending nothing',
-              len(FAKE['log']) == n_before and s.get('view') == 'score' and not s.get('board') and not s.get('challenge'), FAKE['log'][n_before:])
-        check('a right answer there says "Correct!" with no points to show', seen and seen[0]['after'].get('verdict') == 'Correct!', seen and seen[0]['after'].get('verdict'))
+        ts.type_into('whereIn', 'mini')
+        wait(ts, lambda s: len(s.get('picks', [])) >= 1)
+        hid = ts.js('document.getElementById("skipWhere").hidden')
+        check('with the search working there is no "play without a venue": they pick or add one (INBOX 309.1a)', hid is True, hid)
         ts.close()
 
         print('\nTHE BOARD DOWN (MIGRATION 153 NOT RUN, OR THE WORKER FAILING)')
@@ -716,6 +714,7 @@ def main():
         to.type_into('whereIn', 'mini')
         s = wait(to, lambda s: 'having a rest' in s.get('hint', ''))
         check('the search down says so and offers to just play', 'having a rest' in s.get('hint', '') and 'just play' in s.get('hint', '') and not s.get('leadOpen'), s.get('hint'))
+        check('...and only then shows "Play now"', to.js('document.getElementById("skipWhere").hidden') is False)
         to.tap_id('skipWhere')
         ids_off, s, seen = play_round(to, [True, False, True, True, False])
         check('the round still plays, the v1 way: "Correct!" with no points', len(ids_off) == 5 and seen[0]['after'].get('verdict') == 'Correct!', seen and seen[0]['after'].get('verdict'))
@@ -733,8 +732,12 @@ def main():
             tt.go('/live-here-now')
             name_step(tt, 'Jo')
             wait(tt, lambda s: s.get('view') == 'vWhere')
+            FAKE['off'] = True     # Play now shows only while the search is down; the five are the hour's either way
+            tt.type_into('whereIn', 'mini')
+            wait(tt, lambda s: 'having a rest' in s.get('hint', ''))
             tt.tap_id('skipWhere')
             ids, last, _ = play_round(tt, [True] * 5)
+            FAKE['off'] = False
             tt.close()
             return ids
         a = first_five(T0)
@@ -791,9 +794,8 @@ def main():
             tf.shot('lhn-typeahead-%d.png' % w)
             tf.type_into('whereIn', 'Duck and Drake')
             wait(tf, lambda s: 'No venue by that name' in s.get('hint', ''))
-            tf.shot('lhn-notfound-%d.png' % w)
-            tf.tap_id('notListed')
             wait(tf, lambda s: s.get('leadOpen'))
+            tf.shot('lhn-notfound-%d.png' % w)
             tf.type_into('leadSuburb', 'Fitzroy')
             tf.js('(function(){var s=document.getElementById("leadState");s.value="VIC";})()')
             f = waits.as_json(tf.js(FIT), {}, "FIT")

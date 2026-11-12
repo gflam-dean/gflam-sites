@@ -15655,6 +15655,19 @@ MUTATIONS = [
      '/live         /live-here-now  302',
      'the second spelling (/live) is a temporary redirect, not a 301'),
     # /live-here-now v2: the page's own logic block, lifted and run (coaster-page.test.js).
+    # INBOX 309.1 (Dean 12 Nov 2026): pick or add a venue (no Just play while the search works), the form drops down, text your mates.
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "      if (!m.length) openLead(typed);",
+     "      if (false) openLead(typed);",
+     'a venue not on our list leaves the player hunting for the Add it link'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '<button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now</button>',
+     '<button class="linkbtn quiet" id="skipWhere" type="button">Play now</button>',
+     'players skip picking a venue again, so nobody lands on a board'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "  function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text + ' ' + url); }",
+     "  function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text); }",
+     'the text to your mates goes without the link'),
     # INBOX 310-312 (Dean 12 Nov 2026): the trivia phone's ring, 20 seconds a question, Time's up; the time is each question's own.
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
      '    return t > 0 ? Math.min(QUESTION_SECS * 1000, t) : 0;',

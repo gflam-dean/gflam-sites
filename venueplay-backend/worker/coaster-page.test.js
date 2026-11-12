@@ -144,6 +144,16 @@ pass("when the ring hits 0: Time's up, then the answer is sent as -1 (the Worker
   /if \(left <= 0\) \{ clearInterval\(ticker\); timeUp\(\); \}/.test(PAGE) && /window\.VPQRing\.timesUp\(\);\n    setTimeout\(function \(\) \{ answer\(-1\); \}, 900\);/.test(PAGE));
 pass("Time's up reads as such, not 'Not quite'", L.verdict(null, 0).text === "Time's up" && L.verdict(false, 0).text === "Not quite");
 
+print("\nPICK OR ADD A VENUE, AND TEXT YOUR MATES (INBOX 309.1)");
+pass("there is no 'Just play, no board': Play now is hidden, shown only while the search is down",
+  /<button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now<\/button>/.test(PAGE) && PAGE.indexOf("Just play, no board") < 0 &&
+  /\$\('whereHint'\)\.textContent = 'The search is having a rest\. Try again in a minute, or just play\.'; \$\('skipWhere'\)\.hidden = false; return; \}/.test(PAGE) &&
+  /\$\('skipWhere'\)\.hidden = true;\n      var m = d\.matches/.test(PAGE));
+pass("not on our list: the Add your venue form drops down straight away with what they typed", /if \(!m\.length\) openLead\(typed\);/.test(PAGE));
+var sms = L.smsHref("Sam got 4 of 5 (520 points). Same five questions: can you beat it?", "https://venueplay.com.au/live-here-now?c=ABC234");
+pass("Challenge your mates opens a text message with the words and the link", sms === "sms:?&body=" + encodeURIComponent("Sam got 4 of 5 (520 points). Same five questions: can you beat it? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
+pass("...the text first, the link to copy second", /window\.location\.href = L\.smsHref\(text, url\);/.test(PAGE) && PAGE.indexOf('id="challenge"') < PAGE.indexOf('id="copyLink"') && /Or copy the link/.test(PAGE));
+
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
 var small = (css.match(/font-size:\s*(\d+(?:\.\d+)?)px/g) || []).filter(function (x) { return parseFloat(x.replace(/[^\d.]/g, "")) < 15; });
