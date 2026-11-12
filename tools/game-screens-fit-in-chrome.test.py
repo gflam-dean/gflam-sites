@@ -212,6 +212,23 @@ def confetti_ok(P, tag):
     ok('%s: and the page is no wider while it falls' % tag, m.get('sw') == m.get('W'), m)
 
 
+LOGO_FILE = '/logos/venue-tugun-bowls.png'   # the "uploaded" logo /join/info hands every phone here, for "The Mini Bar"
+
+
+def venue_logo_ok(P, tag):
+    """INBOX 320.2 (Dean, 12 Nov 2026): a venue with an uploaded logo shows THAT FILE in the phone header, never its name
+    typed out as a wordmark ("the mini bar." with a pink dot). The file is drawn, has loaded, and no visible header text
+    says the venue's name."""
+    m = P.obj('(function(){ var i=document.getElementById("venueLogo"), n=document.getElementById("hdrVenueName"), r=i?i.getBoundingClientRect():null;'
+              ' var hdr=i?i.closest(".ptop")||i.parentNode.parentNode:null, typed=[];'
+              ' if(hdr) [].forEach.call(hdr.querySelectorAll("*"), function(e){ if(e.children.length) return; var t=(e.textContent||"").replace(/[.\s]+/g," ").trim().toLowerCase(); var b=e.getBoundingClientRect();'
+              '   if(t==="the mini bar" && b.width>0 && b.height>0 && getComputedStyle(e).visibility!=="hidden") typed.push(e.id||e.className); });'
+              ' return JSON.stringify({ src:i?i.getAttribute("src"):null, shown:!!(i && !i.classList.contains("hidden") && r.width>0 && r.height>0), loaded:!!(i && i.complete && i.naturalWidth>0),'
+              '   nameShown:!!(n && !n.classList.contains("hidden") && n.getBoundingClientRect().width>0 && n.textContent.trim()), typed:typed }); })()') or {}
+    ok('%s: the venue\'s uploaded logo FILE is in the header (%s), loaded, and its name is never typed out instead' % (tag, m.get('src')),
+       (m.get('src') or '').endswith(LOGO_FILE) and m.get('shown') is True and m.get('loaded') is True and not m.get('nameShown') and not m.get('typed'), m)
+
+
 def fits(P, tag, need=()):
     """The screen fits: no scrolling down or sideways, nothing inside it scrolls, no spaced caps; `need` are
     selectors that must be fully on screen."""
@@ -258,6 +275,7 @@ def trivia(B, base, w, h):
         P.say(q)
         ok(t + ': CONTROL the question is up', P.until('!document.getElementById("vQ").classList.contains("hidden") && document.querySelectorAll("#pAnswers .pans").length===4', 10), P.js('document.body.innerText.slice(0,200)'))
         fits(P, t + ' question', ['#pAnswers .pans.c3', '#pqCd', '.pfoot svg'])
+        venue_logo_ok(P, t + ' question')
         ring = P.obj('(function(){ var r=document.querySelector("#vQ .pring, #vQ .ring, #pqRing"); if(!r) return null; var b=r.getBoundingClientRect(), out=[];'
                      ' [].forEach.call(r.querySelectorAll("*"), function(e){ var c=e.getBoundingClientRect(); if(c.width>0 && (c.left<b.left-1||c.right>b.right+1||c.top<b.top-1||c.bottom>b.bottom+1)) out.push((e.id||e.className)+" "+e.textContent.trim()); });'
                      ' return JSON.stringify(out); })()')
@@ -342,6 +360,7 @@ def bingo(B, base, w, h):
             called.append(n); P.say({'t': 'ball', 'number': n, 'called': called[:], 'active': True})
         ok(t + ': CONTROL three tickets are up', P.until('!document.getElementById("vCard").classList.contains("hidden")', 10), P.js('document.body.innerText.slice(0,200)'))
         fits(P, t + ' three tickets', ['#bingoBtn', '#cardStack .ticket:last-child', '.pfoot svg', '#vphLink'])
+        venue_logo_ok(P, t + ' three tickets')
         cut = P.obj('(function(){ var W=document.documentElement.clientWidth, out=[]; [].forEach.call(document.querySelectorAll("#cardStack .ticket:not(.shut) .cc"), function(e){ var r=e.getBoundingClientRect(), g=e.parentNode.getBoundingClientRect(); if(r.width>0 && (r.right>W+0.5 || r.right>g.right+0.5 || r.left<g.left-0.5)) out.push((e.getAttribute("data-n")||"blank")+" ["+Math.round(r.left)+","+Math.round(r.right)+"]"); }); return JSON.stringify(out.slice(0,9)); })()')
         ok(t + ' three tickets: all nine columns of every open ticket inside the ticket and the screen (none cut off on the right)', cut == [], cut)
         P.say({'t': 'winner', 'pid': pid, 'name': 'Dean', 'cardNo': 320, 'pattern': 'one', 'prize': 'Meat tray', 'winners': [{'pid': pid, 'name': 'Dean', 'cardNo': 320}], 'cont': False})
@@ -412,6 +431,7 @@ def musical(B, base, w, h):
         pl = ['Dancing Queen', 'Khe Sanh', 'Africa']
         P.say({'t': 'played', 'played': pl, 'played_ids': [sid(x) for x in pl]}); time.sleep(1.5)
         fits(P, t + ' card', ['#bingoBtn', '#cardGrid .cc:nth-child(5)', '#cardGrid .cc:nth-child(25)', '.pfoot svg'])
+        venue_logo_ok(P, t + ' card')
         P.say({'t': 'winner', 'pid': 'pidmus1', 'name': 'Dean', 'cardNo': 17})
         ok(t + ': CONTROL YOU WON', P.until('!document.getElementById("vWon").classList.contains("hidden")', 10))
         time.sleep(0.6); confetti_ok(P, t + ' you won')
