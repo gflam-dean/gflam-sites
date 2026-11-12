@@ -50,15 +50,23 @@
     return w;
   }
 
-  function fill(w, title, bodyHtml, count, noun) {
+  /* extra: {css, head, ready}. css is added AFTER the shared sheet (so its @page wins), head goes in <head> (the card fonts),
+     ready(w) runs once the page is written and may return a promise: the browser's print dialog opens only after it. */
+  function fill(w, title, bodyHtml, count, noun, extra) {
     if (!w || w.closed) return false;
+    extra = extra || {};
     var bar = '<div class="bar"><span>' + count + ' ' + noun + (count === 1 ? '' : 's') + ' ready. Print them before the night starts.</span>' +
       '<button type="button" onclick="window.print()">Print</button></div>';
     w.document.open();
     w.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title><style>' + CSS + '</style></head><body>' + bar + bodyHtml + '</body></html>');
+      '</title>' + (extra.head || '') + '<style>' + CSS + (extra.css || '') + '</style></head><body>' + bar + bodyHtml + '</body></html>');
     w.document.close();
-    try { w.focus(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400); } catch (e) {}
+    var go = function () { try { w.focus(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400); } catch (e) {} };
+    var done = false, once = function () { if (done) return; done = true; go(); };
+    try {
+      var p = extra.ready ? extra.ready(w) : null;
+      if (p && p.then) { p.then(once, once); setTimeout(once, 6000); } else once();
+    } catch (e) { once(); }
     return true;
   }
 
@@ -67,26 +75,140 @@
     try { w.document.body.innerHTML = '<div class="wait">' + esc(msg) + '</div>'; } catch (e) {}
   }
 
-  /* cards: [{no, titles:[25 strings, '' at the FREE centre]}]. Two cards to an A4 page. */
+  /* ---- PAPER CARDS V2 (INBOX 335, 340, 342, 345; layout from reports/musical-cards-print-12nov, 12 Nov 2026) ----
+     A4 landscape, two A5 cards to a sheet, cut down the middle. B's squared grid with A's soft tiles inside one strong rounded
+     frame; the playlist is printed BIG and the pattern is NOT printed at all; the printed date sits under the card number; a QR
+     on every card is the host's scan-to-check code; the footer is the venue's own logo and venueplay, each lined up with the
+     point where the frame's corner curve ENDS (the footer is inset by the frame's corner radius). Each square uses the biggest
+     size that fits its OWN title (never split a word, never under 11 pt, only a one-long-word title goes smaller than 13 pt). */
+  var CARD_FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap">';
+  var CARD_CSS =
+    '@page{size:297mm 210mm;margin:0}' +
+    '.pcs{position:relative;width:297mm;height:210mm;overflow:hidden;background:#fff;break-after:page;page-break-after:always;font-family:Manrope,Arial,sans-serif;color:#0A0A0B}' +
+    '.pcs:last-child{break-after:auto;page-break-after:auto}' +
+    '.pcs.one .pcc{padding-right:3mm}' +
+    '.pccut{position:absolute;left:148.5mm;top:0;bottom:0;border-left:.25mm dashed #8A8A95}' +
+    '.pccutlbl{position:absolute;left:148.5mm;top:3mm;transform:translateX(-50%);background:#fff;padding:1mm 0;font:600 6.5pt Manrope,Arial,sans-serif;color:#6A6A74;writing-mode:vertical-rl}' +
+    '.pcc{position:absolute;top:0;width:148.5mm;height:210mm;padding:10mm;display:flex;flex-direction:column;--fw:1.5mm;--rad:4mm}' +
+    '.pcc.L{left:0;padding-right:3mm}.pcc.R{left:148.5mm;padding-left:3mm}' +
+    '.pcc .k{font-weight:700;color:#55555E;line-height:1.1}' +
+    '.pcc .play{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.005em;overflow-wrap:anywhere}' +
+    '.pcc .qr{flex:none;background:#fff}.pcc .qr svg{display:block;width:100%;height:100%}' +
+    '.pcc .frame{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:var(--fw) solid #0A0A0B;border-radius:var(--rad);overflow:hidden}' +
+    '.pcc .head{display:flex;align-items:stretch;flex:none}' +
+    '.pcc .head .pl{flex:1;padding:3.6mm 4mm 3.4mm;min-width:0}' +
+    '.pcc .head .no{width:27mm;border-left:var(--fw) solid #0A0A0B;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
+    '.pcc .gwrap{flex:1 1 auto;min-height:0;display:flex;border-top:var(--fw) solid #0A0A0B;padding:1mm}' +
+    '.pcc .grid{flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:.8mm}' +
+    '.pcc .cell{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:0;overflow:hidden;background:#ECECEF;border-radius:.7mm;padding:1mm .1mm}' +
+    '.pcc .cell .t{display:block;width:100%;font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.015em;word-break:normal;overflow-wrap:normal;hyphens:manual;text-wrap:balance}' +
+    '.pcc .cell.free{flex-direction:column;gap:1.1mm;background:#fff;box-shadow:inset 0 0 0 .5mm #0A0A0B}' +
+    '.pcc .cell.free img{width:6.5mm;height:7.5mm}' +
+    '.pcc .cell.free .f{font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:800;font-size:13pt;line-height:1}' +
+    '.pcc .strip{flex:none;border-top:var(--fw) solid #0A0A0B;display:flex;align-items:center}' +
+    '.pcc .how{font-weight:600;line-height:1.3;font-size:9pt}.pcc .how b{font-weight:800}' +
+    '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:3mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
+    '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
+    '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}' +
+    '.pcc .vlogo{height:9mm;max-width:44mm;object-fit:contain;object-position:left center;display:block}' +
+    '.pcc .vname{font:800 10pt "Hanken Grotesk",Arial,sans-serif;max-width:60mm;line-height:1.1}' +
+    '.pcc .pdate{font-weight:700;color:#55555E;font-size:6.5pt;line-height:1.2;text-align:center;margin-top:1.4mm}';
+
+  /* The QR as an SVG string, drawn here from the qrcode library the console page loads. Level Q (a quarter of it can be
+     smudged and it still reads), the capitals address so it stays a small code. No margin: the box round it is the quiet zone. */
+  function qrSvg(text) {
+    var q = window.QRCode && window.QRCode.create ? window.QRCode.create(text, { errorCorrectionLevel: 'Q' }) : null;
+    if (!q) return '';
+    var n = q.modules.size, d = q.modules.data, path = '';
+    for (var r = 0; r < n; r++) {
+      var c = 0;
+      while (c < n) {
+        if (d[r * n + c]) { var s = c; while (c < n && d[r * n + c]) c++; path += 'M' + s + ' ' + r + 'h' + (c - s) + 'v1h-' + (c - s) + 'z'; }
+        else c++;
+      }
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + n + ' ' + n + '" shape-rendering="crispEdges"><path fill="#0A0A0B" d="' + path + '"/></svg>';
+  }
+
+  /* Per square: start at 13 pt and step down 0.25 pt to the 11 pt floor, until the title fits its own square. */
+  function fitCells(doc) {
+    var els = doc.querySelectorAll('.pcc .cell:not(.free) .t');
+    for (var i = 0; i < els.length; i++) {
+      var t = els[i], box = t.parentNode, pt = 13;
+      t.style.fontSize = pt + 'pt';
+      var over = function () { return t.scrollWidth > t.clientWidth + 0.5 || t.offsetHeight > box.clientHeight + 0.5; };
+      while (over() && pt > 11) { pt -= 0.25; t.style.fontSize = pt + 'pt'; }
+      /* A single long word that still does not fit at 11 pt goes smaller, square by square, never the whole card. */
+      while (over() && pt > 7) { pt -= 0.25; t.style.fontSize = pt + 'pt'; }
+    }
+  }
+
+  function playlistSize(name) { var n = String(name || '').length; return n > 22 ? 17 : (n > 16 ? 20 : (n > 11 ? 23 : 25)); }
+
+  /* cards: [{no, titles:[25 strings, '' at the FREE centre], code}] from /host/paper/print (titles already carry the bracket
+     rule). o: {venue, playlist, printedLabel, logo:{url,dark}|null}. Two cards to an A4 landscape sheet. */
   function musical(w, cards, o) {
     o = o || {};
+    var origin = '';
+    try { origin = window.location.origin; } catch (e) {}
+    var how = '<b>Mark a song when you hear it.</b> Got the pattern on the TV? Hand up, don\'t call out, and <b>show this card to the host</b>.';
+    var foot = '<div class="foot">' + (o.logo && o.logo.url
+        ? '<img class="vlogo" alt="' + esc(o.venue || '') + '" src="' + esc(o.logo.url) + '"' + (o.logo.dark ? ' style="filter:brightness(0)"' : '') + ' crossorigin="anonymous">'
+        : (o.venue ? '<div class="vname">' + esc(o.venue) + '</div>' : '<div></div>')) +
+      '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:25mm;display:block"></div>';
+    function one(c, side) {
+      var no = (c.no < 10 ? '0' : '') + c.no, g = '', k = 0;
+      for (var i = 0; i < 25; i++) {
+        if (i === 12) { g += '<div class="cell free"><img src="' + origin + '/brand/venueplay-icon-pink.svg" alt=""><span class="f">Free</span></div>'; continue; }
+        g += '<div class="cell"><span class="t">' + esc(c.titles[k++] || '') + '</span></div>';
+      }
+      var qr = c.code ? '<div class="scanbox"><div class="qr" style="width:26mm;height:26mm">' + qrSvg(c.code) + '</div>' +
+        '<div style="width:21mm"><div style="font-family:\'Hanken Grotesk\',Arial,sans-serif;font-weight:800;font-size:9.5pt;line-height:1.15">Host scan</div>' +
+        '<div class="k" style="font-size:7.5pt;margin-top:1.4mm;line-height:1.25">Card ' + esc(no) + '<br>' + esc(o.playlist || '') + '</div></div></div>' : '';
+      return '<div class="pcc ' + side + '"><div class="frame"><div class="head"><div class="pl"><div class="k" style="font-size:8.5pt">Playlist</div>' +
+        '<div class="play" style="font-size:' + playlistSize(o.playlist) + 'pt;margin-top:.8mm">' + esc(o.playlist || '') + '</div>' +
+        '<div class="nameln">Name <span></span></div></div>' +
+        '<div class="no"><div class="k" style="font-size:8.5pt">Card</div><div class="play" style="font-size:38pt;margin-top:1mm">' + esc(no) + '</div>' +
+        (o.printedLabel ? '<div class="pdate">Printed<br>' + esc(o.printedLabel) + '</div>' : '') + '</div></div>' +
+        '<div class="gwrap"><div class="grid">' + g + '</div></div>' +
+        '<div class="strip"><div style="flex:1;padding:3mm 4mm"><div class="how">' + how + '</div></div>' + qr + '</div></div>' + foot + '</div>';
+    }
     var html = '';
     for (var i = 0; i < cards.length; i += 2) {
-      html += '<div class="sheet">';
-      for (var j = i; j < Math.min(i + 2, cards.length); j++) {
-        var c = cards[j];
-        html += '<div class="card"><div class="head"><div class="brand">Musical bingo' + (o.venue ? ' at ' + esc(o.venue) : '') +
-          ' <b>venueplay</b></div><div class="num">Card ' + esc(c.no) + '</div></div>' +
-          '<p class="how">Mark a square when you hear that song. When you have the pattern the host calls, call out and <b>show this card to the host</b>. ' +
-          'The host checks it by typing in card number <b>' + esc(c.no) + '</b>.' + (o.playlist ? ' Playlist: ' + esc(o.playlist) + '.' : '') + '</p><div class="grid">';
-        for (var k = 0; k < 25; k++) {
-          html += (k === 12) ? '<div class="sq free">FREE</div>' : '<div class="sq">' + esc(c.titles[k] || '') + '</div>';
-        }
-        html += '</div></div>';
-      }
-      html += '</div>';
+      var two = i + 1 < cards.length;
+      html += '<div class="pcs' + (two ? '' : ' one') + '">' + one(cards[i], 'L') + (two ? one(cards[i + 1], 'R') + '<div class="pccut"></div><div class="pccutlbl">cut here</div>' : '') + '</div>';
     }
-    return fill(w, 'Musical bingo paper cards', html, cards.length, 'card');
+    return fill(w, 'Musical bingo paper cards', html, cards.length, 'card', {
+      css: CARD_CSS, head: CARD_FONTS,
+      ready: function (win) {
+        var d = win.document, fonts = d.fonts && d.fonts.ready ? d.fonts.ready : Promise.resolve();
+        var imgs = Array.prototype.slice.call(d.images || []).map(function (im) { return im.complete ? 0 : new Promise(function (r) { im.onload = im.onerror = r; }); });
+        return Promise.all([fonts].concat(imgs)).then(function () { fitCells(d); });
+      }
+    });
+  }
+
+  /* The venue's logo for white paper. Venue logos are made for a dark wall, so a pale one would vanish on a card: read the picture
+     and, when its ink is light, print it as a black silhouette. A logo that cannot be read (not allowed to be drawn, or it fails)
+     is left out and the venue's NAME is printed in its place, so a card never carries a missing-image box. */
+  function prepLogo(url) {
+    return new Promise(function (resolve) {
+      if (!/^https:\/\//i.test(String(url || ''))) return resolve(null);
+      var im = new Image(), t = setTimeout(function () { resolve(null); }, 5000);
+      im.crossOrigin = 'anonymous';
+      im.onload = function () {
+        clearTimeout(t);
+        try {
+          var cv = document.createElement('canvas'), W = Math.min(64, im.naturalWidth || 64), H = Math.max(1, Math.round(W * (im.naturalHeight || 64) / (im.naturalWidth || 64)));
+          cv.width = W; cv.height = H; var cx = cv.getContext('2d'); cx.drawImage(im, 0, 0, W, H);
+          var px = cx.getImageData(0, 0, W, H).data, sum = 0, n = 0;
+          for (var i = 0; i < px.length; i += 4) { if (px[i + 3] > 40) { sum += (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) / 255; n++; } }
+          resolve({ url: url, dark: n > 0 && (sum / n) > 0.72 });
+        } catch (e) { resolve(null); }
+      };
+      im.onerror = function () { clearTimeout(t); resolve(null); };
+      im.src = url;
+    });
   }
 
   /* o: {teams, questions, roundSize, venue}. One page per team, a strip per round, cut lines between. */
@@ -113,5 +235,5 @@
     return fill(w, 'Trivia answer sheets', html, teams, 'team sheet');
   }
 
-  window.VPPrint = { open: open, musical: musical, trivia: trivia, fail: fail };
+  window.VPPrint = { open: open, musical: musical, trivia: trivia, fail: fail, prepLogo: prepLogo, qrSvg: qrSvg };
 })();

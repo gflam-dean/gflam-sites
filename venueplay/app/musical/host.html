@@ -314,6 +314,7 @@
           </div>
           <div class="field">
             <label>Playlist / theme</label>
+            <div id="paperLockBar" class="pplockbar hidden"></div>
             <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
             <div id="plGrid" class="plgrid"><div class="plnone">Loading songs&hellip;</div></div>
             <select id="playlistSel" style="display:none"></select>
@@ -436,7 +437,9 @@
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
 
           <div id="paperCheck" class="hidden" style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:11px">
-            <label for="paperNo" style="display:block;font-size:13px;margin-bottom:8px">Someone claiming on a paper card? Type its card number.</label>
+            <label style="display:block;font-size:13px;margin-bottom:8px">Someone with a paper card at the table? Scan it to check.</label>
+            <button type="button" class="btn pink" id="paperScanBtn" style="width:100%;min-height:48px">Scan a paper card</button>
+            <label for="paperNo" style="display:block;font-size:13px;margin:12px 0 8px">Card won't scan? Type its number.</label>
             <div style="display:flex;gap:8px">
               <input type="text" id="paperNo" inputmode="numeric" placeholder="Card number" style="flex:1;min-height:44px">
               <button type="button" class="btn ghost" id="paperCheckBtn" style="flex:0 0 auto">Check card</button>
@@ -503,6 +506,18 @@
   </div>
 </div>
 
+<!-- The red warning when a host picks other songs than the paper cards on the tables (INBOX 335, foolproof playlist lock) -->
+<div id="lockModal" class="hidden vp-modal">
+  <div class="vp-modal-box" style="border-color:rgba(229,72,77,.7)">
+    <div class="vp-h" id="lockTitle" style="color:#FF8589">Those paper cards would not work</div>
+    <div class="vp-copy" id="lockBody" style="margin-bottom:14px"></div>
+    <div class="vp-row" style="margin-top:10px">
+      <button type="button" id="lockKeep" class="btn pink big vp-grow">Keep this playlist</button>
+      <button type="button" id="lockSwitch" class="btn ghost big vp-auto">Switch and print new cards</button>
+    </div>
+  </div>
+</div>
+
 <div id="carryModal" class="hidden vp-modal">
   <div class="vp-modal-box">
     <div class="vp-h" id="carryTitle" style="margin-bottom:6px">Winner!</div>
@@ -529,7 +544,9 @@
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
 <script src="/app/vp-hostedby.js"></script>   <!-- "Hosted by" on the TV (INBOX 120) -->
+<script src="/app/vendor/qrcode-1.4.4.min.js"></script>
 <script src="/app/vp-print.js"></script>
+<script src="/app/vp-papercheck.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1427,6 +1444,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   function renderConsole(){
     try{ syncCarry(); }catch(e){}
     try{ renderPaper(); }catch(e){}
+    try{ paperV2Sync(); }catch(e){}
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
@@ -1725,6 +1743,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     }).then(function(r){
       G.gameId=r.game_id;
       showDealtPlaylist(r);
+      G.paperSrvFor="";   // a game has now been played off the cards: the next render asks the Worker again, and the lock becomes final
       // Merge the Worker's songs (song_id, title, artist) with the library (previewUrl,
       // artworkUrl) by title, so playSong has both the audio clip and the DB id.
       G.songs=(r.songs||[]).map(function(w){
@@ -2209,7 +2228,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       var c=document.createElement("div"); c.className="plcard"+(o.id===G.playlistId?" on":""); c.setAttribute("data-id",o.id);
       var nm=document.createElement("div"); nm.className="nm"; nm.textContent=o.name; c.appendChild(nm);
       var ct=document.createElement("div"); ct.className="ct"; ct.textContent=playlistCountLabel(o.count); c.appendChild(ct);
-      c.addEventListener("click", function(){ selectPlaylist(this.getAttribute("data-id")); });
+      c.addEventListener("click", function(){ pickPlaylist(this.getAttribute("data-id")); });
       g.appendChild(c);
     }
     if(!shown){ var n=document.createElement("div"); n.className="plnone"; n.textContent='No theme matches "'+q+'".'; g.appendChild(n); }
@@ -2399,7 +2418,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       pr.classList.toggle("hidden", !n);
       if(n){ var k=paperPlaying(); $("paperPlayN").textContent=k+" paper card"+(k===1?"":"s"); }
     }
-    $("paperCheck").classList.toggle("hidden", !(n && G.status==="running"));
+    $("paperCheck").classList.toggle("hidden", !n);
   }
   var _paperDone=null;
   function paperModal(title, body, value, max, goLabel){
@@ -2433,7 +2452,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       paperPrintIntro(had, had ? paperPrintedFrom() : "", picked)+
       "<br><small style=\"color:var(--muted)\">Each card counts as a player once it is played or checked, the same as a phone.</small>",
       had || 4, 10, "Print").then(function(n){
-      if(n==null) return;
+      if(n==null){ G.paperSrvFor=""; paperV2Sync(); return; }   // cancelled: ask the Worker again so the lock bar comes back
       var w=window.VPPrint ? VPPrint.open("Musical bingo paper cards") : null;   // opened inside the tap, so no pop-up blocker
       G.playlistId=$("playlistSel").value;
       G.playlistName=playlistNameOf(G.playlistId);
@@ -2445,9 +2464,12 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
         var said=paperPrintOutcome(r, G.playlistName);
         if(said && r.kept) hostError(said);   // the host asked for other songs and did not get them: that must be seen
         else if(said) $("paperNote").textContent=said+" "+$("paperNote").textContent;
-        if(!window.VPPrint || !VPPrint.musical(w, r.cards, { venue:(G.venue && G.venue.name)||"", playlist:r.playlist_name||"" })){
-          hostError(printProblem(w));
-        }
+        refreshPaperState();
+        return paperLogo().then(function(logo){
+          if(!window.VPPrint || !VPPrint.musical(w, r.cards, { venue:(G.venue && G.venue.name)||"", playlist:r.playlist_name||"", printedLabel:r.printed_label||"", logo:logo })){
+            hostError(printProblem(w));
+          }
+        });
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });
   });
@@ -2459,19 +2481,87 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
        "#12" and "12" are what is printed or said; anything else is refused. */
     var _raw=String($("paperNo").value||"").trim().replace(/^[pP#]\s*/,"");
     var no=/^\d{1,5}$/.test(_raw) ? parseInt(_raw,10) : NaN;
-    if(!(no>0) || !G.gameId || G.status!=="running"){ $("paperResult").textContent="Type the number printed on the card."; return; }
+    if(!(no>0)){ $("paperResult").textContent="Type the number printed on the card."; return; }
+    if(!G.gameId || G.status!=="running"){ $("paperResult").textContent="No musical game is running yet. Start the game, then check the card."; return; }
     $("paperResult").textContent="Checking card "+no+"...";
     apiPost("/host/paper/check",{ game_id:G.gameId, card_no:no }).then(function(r){
       if(r.auto_verdict!=="valid"){ $("paperResult").textContent="Card "+no+" is not a winner yet. Play on."; return; }
       $("paperResult").textContent="Card "+no+" has "+PATTERN_NAMES[G.pattern]+". It is in your claims list.";
       $("paperNo").value="";
-      for(var i=0;i<G.claims.length;i++){ if(G.claims[i].claimId===r.claim_id) return; }
-      G.claims.push({ claimId:r.claim_id, pid:"paper-m-"+no, name:(r.display_name||("Paper card "+no)), cardNo:("P"+no), cells:(r.cells||[]), at:Date.now(), seq:(++_claimSeq) });
-      sortClaims();
-      pauseForClaim();
-      bcast(claimPendingMsg());
-      renderClaimQueue(true);
+      addPaperClaim(r, no);
     }).catch(function(e){ $("paperResult").textContent=e.message; });
+  }
+  /* A paper card that wins goes into the claims list exactly as a phone win does (typed or scanned). Returns its place in the list. */
+  function addPaperClaim(r, no){
+    for(var i=0;i<G.claims.length;i++){ if(G.claims[i].claimId===r.claim_id) return i; }
+    G.claims.push({ claimId:r.claim_id, pid:"paper-m-"+no, name:(r.display_name||("Paper card "+no)), cardNo:("P"+no), cells:(r.cells||[]), at:Date.now(), seq:(++_claimSeq) });
+    sortClaims();
+    pauseForClaim();
+    bcast(claimPendingMsg());
+    renderClaimQueue(true);
+    for(var j=0;j<G.claims.length;j++){ if(G.claims[j].claimId===r.claim_id) return j; }
+    return 0;
+  }
+
+  /* ---- PAPER CARDS V2: the scan, and the playlist lock (INBOX 335, 340, 345) ----
+     The Worker keeps the truth (what was printed, from which playlist, whether a game has been played off it); the console asks
+     it (/host/paper/state) and draws the lock bar from the answer. */
+  G.paperSrv=null; G.paperSrvFor="";
+  function paperV2Sync(){
+    if(G.sessionId && G.paperSrvFor!==G.sessionId){ G.paperSrvFor=G.sessionId; refreshPaperState(); }
+    applyPaperLock();
+  }
+  function refreshPaperState(){
+    if(!G.sessionId){ G.paperSrv=null; applyPaperLock(); return Promise.resolve(); }
+    var sid=G.sessionId;
+    return apiPost("/host/paper/state",{ session_id:sid }).then(function(r){ if(sid!==G.sessionId) return; G.paperSrv=r; applyPaperLock(); renderPaper(); }).catch(function(){});
+  }
+  function playlistIdByName(name){ for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].name===name) return PL_OPTS[i].id; } return ""; }
+  function applyPaperLock(){
+    var bar=$("paperLockBar"); if(!bar) return;
+    var st=G.paperSrv, words=(st && st.printed && window.VPPaperCheck) ? VPPaperCheck.lockWords(st, "") : null;
+    bar.classList.toggle("hidden", !words);
+    if(words) bar.innerHTML=words.bar;
+    var cards=document.querySelectorAll("#plGrid .plcard");
+    for(var i=0;i<cards.length;i++){
+      var nm=cards[i].querySelector(".nm");
+      cards[i].classList.toggle("pplock", !!(words && nm && nm.textContent!==st.playlist_name));
+    }
+    /* Whatever the picker said, the cards on the tables decide the songs: show that playlist as on. */
+    if(words && playlistNameOf(G.playlistId)!==st.playlist_name){ var pid=playlistIdByName(st.playlist_name); if(pid) selectPlaylist(pid); }
+  }
+  var _lockPick=null;
+  function pickPlaylist(id){
+    var st=G.paperSrv, name=playlistNameOf(id);
+    if(!(st && st.printed && name!==st.playlist_name) || !window.VPPaperCheck){ selectPlaylist(id); return; }
+    var w=VPPaperCheck.lockWords(st, name);
+    if(w.blocked){ hostError(w.blocked.replace(/<[^>]+>/g,"")); return; }
+    _lockPick=id;
+    $("lockTitle").textContent=w.warnTitle; $("lockBody").innerHTML=w.warn;
+    $("lockModal").classList.remove("hidden");
+  }
+  $("lockKeep").addEventListener("click", function(){ _lockPick=null; $("lockModal").classList.add("hidden"); });
+  $("lockSwitch").addEventListener("click", function(){
+    var id=_lockPick; _lockPick=null; $("lockModal").classList.add("hidden");
+    if(!id) return;
+    selectPlaylist(id);
+    G.paperSrv=null;   // the old cards are about to be binned: unlock the picker for the print that follows
+    applyPaperLock();
+    $("paperPrintBtn").click();
+  });
+  if(window.VPPaperCheck) VPPaperCheck.init({
+    scan:function(code){ return apiPost("/host/paper/scan",{ game_id:(G.gameId&&G.status==="running")?G.gameId:undefined, session_id:G.sessionId, code:code }); },
+    onWin:function(r){ return addPaperClaim(r, r.card_no); },
+    confirm:function(i){ hostConfirm(i); },
+    typed:function(){ var e=$("paperNo"); try{ e.scrollIntoView({ block:"center" }); e.focus(); }catch(x){} },
+    pattern:function(){ return PATTERN_NAMES[G.pattern]||""; }
+  });
+  (function(){ var b=$("paperScanBtn"); if(b) b.addEventListener("click", function(){ if(!G.busy && window.VPPaperCheck) VPPaperCheck.open(); }); })();
+  /* The venue's logo for the card footer: the same picture the TV reads off the public /screen feed. A venue without one prints its name. */
+  function paperLogo(){
+    if(!G.slug || !window.VPPrint || !VPPrint.prepLogo) return Promise.resolve(null);
+    return fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(G.slug)).then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){ return (j && j.logo_url) ? VPPrint.prepLogo(String(j.logo_url).trim()) : null; }).catch(function(){ return null; });
   }
   $("newGameBtn").addEventListener("click", newGame);
   /* An abandoned lobby must not recapture the wall every time the host tabs back.
