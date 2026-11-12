@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '12 Nov 2026, 11:40 · ca1d5bc9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 12:05 · aa0bd901';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5336,6 +5336,11 @@ function vpaBneLongDate(ms) {
   const d = new Date(ms + VPA_BNE_MS);
   return VPA_LONG_DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
 }
+/* "10 December", Brisbane (the subject line). */
+function vpaBneDayMonth(ms) {
+  const d = new Date(ms + VPA_BNE_MS);
+  return d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
+}
 /* The Brisbane day of the last Friday strictly before the month's last day ('2026-12-04' for an end on Thu 10 Dec). */
 function vpaTrialEndNoteDay(endMs) {
   let d = vpaAddDays(vpaBneDay(endMs), -1);
@@ -5350,26 +5355,37 @@ function vpaTrialEndNoteDueAt(prow, state) {
   if (cx >= fri) return NaN;
   return vpaSendAllowedAt(state, fri);
 }
+/* THE WORDS (Dean, 12 Nov 2026, INBOX 276.A). "Nothing to pay. Add a card if you want to keep your games going" read as
+   a contradiction ("why would I add my card if there's nothing to pay?"). Now it says what happens and when, from the
+   billing code, never an invented date: a card added during the free month starts the subscription with Stripe's
+   trial_end set to the free month's end (the /add-card handler: trialTs = free_month_ends_at, or 3 days out when the
+   end is closer than Stripe allows), so NOTHING is charged before the free month ends. The first charge comes when
+   it ends (Terms: "you are not charged until then").
+   SUBJECT: short enough for ONE line in Gmail on a laptop (about 60 to 70 characters) and ONE line in iPhone Mail
+   (about 35): "Your free month ends 10 December" is 32 characters, 33 for the longest month (September). */
+function vpaTrialEndSubject(endsShort) { return 'Your free month ends ' + endsShort; }
 function vpaRenderTrialEndNote(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const venue = o.venueName || 'your venue', when = o.endsLong || '';
-  const subject = 'Your free month ends on ' + when;
+  const subject = vpaTrialEndSubject(o.endsShort || when);
   const P = 'margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44';
+  const A = 'color:#8a8a95';
   const inner =
       '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your free month ends on ' + vpaEsc(when) + '</h1>'
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
     + '<p style="' + P + '">Just a quick note to say your free month of venueplay at ' + vpaEsc(venue) + ' runs until ' + vpaEsc(when)
-    + '. As you asked, we’ll switch it off after that. Nothing has been charged and nothing will be.</p>'
-    + '<p style="' + P + '">If you’d like to keep your games going, add a card before then and everything carries on just as it is.</p>'
+    + '. As you asked, we’ll switch it off after that. Nothing has been charged.</p>'
+    + '<p style="' + P + '">To keep your games running after that, add a card before then. Nothing is charged until your free month ends on '
+    + vpaEsc(when) + ', and everything carries on just as it is.</p>'
     + (o.cardUrl ? vpaEmailButton(vpaEsc(o.cardUrl), 'Keep it going') : '')
     + '<p style="margin:20px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Either way, thanks for giving venueplay a go. This is the last email you’ll get from us about it.</p>'
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff('') + '</p>'
-    + '<p style="margin:26px 0 10px;font-size:13px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call '
-    + '<a href="tel:' + VP_SUPPORT_TEL + '" style="color:#8a8a95;text-decoration:none">' + VP_SUPPORT_PHONE + '</a> and press 2.</p>'
-    + '<p style="margin:0;font-size:13px;line-height:1.6;color:#8a8a95">You are getting this because we set up venueplay for ' + vpaEsc(venue)
-    + ' at your request. venueplay. <a href="' + site + '/terms" style="color:#8a8a95">Terms</a> &middot; <a href="' + site + '/privacy" style="color:#8a8a95">Privacy</a> &middot; '
-    + '<a href="' + site + '/unsubscribe?e=' + encodeURIComponent(String(o.email || '')) + '" style="color:#8a8a95">Unsubscribe from product emails</a></p>';
-  return { subject: subject, html: vpaVenueEmailCard('Nothing to pay. Add a card if you’d like to keep your games going.', inner, subject) };
+    + vpaEmailFootBlock('You are getting this because we set up venueplay for ' + vpaEsc(venue) + ' at your request.', [
+        'Need a hand? Just reply to this email,',
+        'or call ' + vpaFootPhone(' and press 2.'),
+        'venueplay &middot; <a href="' + site + '/terms" style="' + A + '">Terms</a> &middot; <a href="' + site + '/privacy" style="' + A + '">Privacy</a>',
+        '<a href="' + site + '/unsubscribe?e=' + encodeURIComponent(String(o.email || '')) + '" style="' + A + '">Unsubscribe from product emails</a>']);
+  return { subject: subject, html: vpaVenueEmailCard('To keep your games running after ' + when + ', add a card. Nothing is charged until then.', inner, subject) };
 }
 async function vpaTrialEndNoteSweep(env, nowMs) {
   const out = { sent: [], held: 0, skipped: 0 };
@@ -5409,7 +5425,7 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
       { venue_id: v.id, name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
     if (!claimed) { out.skipped += 1; continue; }
     const first = String(p.contact_name || (f && f.contact_name) || '').trim().split(/\s+/)[0] || '';
-    const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, email: email, endsLong: vpaBneLongDate(end),
+    const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, email: email, endsLong: vpaBneLongDate(end), endsShort: vpaBneDayMonth(end),
       cardUrl: await vpaCardLink(env, v.founding_id) });
     let res = null;
     try {
@@ -5982,7 +5998,7 @@ function vpaRenderMembersReminder(env, o) {
     + vpaEmailButton(link, 'Update my members list')
     + '<p style="margin:20px 0 0;font-size:14px;line-height:1.6;color:#6a6a75">You asked for this reminder when you set up your games, every ' + VPA_MR_DAYWORDS[o.day] + '. To stop it, open your Account page, then Members draws, and choose No thanks under the weekly reminder.</p>'
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venueplay team</p>'
-    + '<p style="margin:18px 0 0;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:14px">Need a hand? Just reply to this email, or call ' + VP_SUPPORT_PHONE + ' and press 2.</p>';
+    + vpaReplyEmailFoot('');
   return { subject: subject, html: vpaVenueEmailCard('Your weekly members list reminder', inner, subject) };
 }
 async function vpaMembersReminderSweep(env, nowMs) {
@@ -6538,7 +6554,8 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (opts.nudge) {
     const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
-      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>';
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
+      + vpaReplyEmailFoot('');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
@@ -6555,7 +6572,8 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
-    + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>';
+    + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>'
+    + vpaReplyEmailFoot('');
   let sent = false;
   try {
     sent = await vpaSendEmail(env, email, 'Your venueplay sign-in link',
@@ -10925,21 +10943,53 @@ const VP_ABN = '35 679 383 049';   // also on venueplay/terms.html; keep them th
 const VP_SUPPORT_PHONE = '07 5228 3667';
 const VP_SUPPORT_TEL = '+61752283667';
 
-/* One line, the same in every venue email: the number, tappable, and which key a game night
-   wants. */
-function vpaSupportPhoneHtml() {
-  return '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Need us? Call '
-    + '<a href="tel:' + VP_SUPPORT_TEL + '" style="color:#9a9aa4;font-weight:700">' + VP_SUPPORT_PHONE + '</a>'
-    + '. If a game is on right now, press 2.</p>';
+/* THE FOOT OF EVERY EMAIL (Dean, 12 Nov 2026, INBOX 276.A): "You're getting this email because ..." looked stupid
+   run together with everything else. Now, in every email we send:
+     1. the "why you are getting this" line (when the email has one), on its own,
+     2. a clear gap,
+     3. the venueplay logo (the same solid logo file as the header band, so a mail app's dark mode cannot lose it),
+     4. then the remaining lines, EACH ON ONE LINE at 375 px wide (12px), split where the words split naturally,
+        and the PHONE NUMBER never broken: the number and "and press 2" sit in one white-space:nowrap span.
+   ONE builder, vpaEmailFootBlock; the site templates under /emails/ carry the same markup by hand
+   (data-vp-foot="why" / "block" / "line"), and tools/email-footer-in-chrome.test.py renders EVERY email at
+   320, 375 and 390 px and holds each line to one line and the number to one piece. */
+/* The number, tappable, with whatever follows it ("and press 2.") held to it on one line. */
+function vpaFootPhone(after, color) {
+  const c = color || '#8a8a95';
+  return '<span style="white-space:nowrap"><a href="tel:' + VP_SUPPORT_TEL + '" style="color:' + c + ';font-weight:700;text-decoration:none">'
+    + VP_SUPPORT_PHONE + '</a>' + (after || '') + '</span>';
 }
-/* THE FOOTER OF EVERY EMAIL A VENUE GETS FROM THIS WORKER. The support line, then the small
+function vpaEmailFootBlock(why, lines) {
+  const ls = (lines || []).filter(Boolean);
+  const LINE = 'margin:3px 0 0;font-size:12px;line-height:1.5;color:#8a8a95';
+  return (why
+      ? '<p data-vp-foot="why" style="margin:26px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-size:13px;line-height:1.6;color:#8a8a95">' + why + '</p>'
+      : '')
+    + '<table role="presentation" data-vp-foot="block" width="100%" cellpadding="0" cellspacing="0" style="margin:' + (why ? '30px 0 0' : '26px 0 0;border-top:1px solid #eeeeee') + '">'
+    + '<tr><td style="padding:' + (why ? '0' : '20px 0 0') + '">'
+    + '<img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="104" alt="venueplay" style="display:block;border:0;height:auto;border-radius:4px">'
+    + ls.map(function (l, i) { return '<p data-vp-foot="line" style="' + LINE + (i ? '' : ';margin-top:12px') + '">' + l + '</p>'; }).join('')
+    + '</td></tr></table>';
+}
+/* The support lines, the same in every venue email: the number, tappable, and which key a game night wants, in
+   the words they have always had, split into two lines so each is one line on a phone. */
+function vpaSupportPhoneLines() {
+  return ['Need us? Call ' + vpaFootPhone('.'), 'If a game is on right now, press 2.'];
+}
+function vpaSupportPhoneHtml() {
+  return vpaEmailFootBlock('', vpaSupportPhoneLines());
+}
+/* THE FOOTER OF EVERY EMAIL A VENUE GETS FROM THIS WORKER. The support lines, then the small
    print. withAbn: a receipt, a reminder, a failed payment or a plan change carries the business
    name line, "venueplay, ABN 35 679 383 049" (Dean, 30 Oct 2026: never Gflam Group); the leaving
-   emails do not (Dean's call, see vpaLeavingHtml). */
-function vpaVenueEmailFoot(withAbn) {
-  return vpaSupportPhoneHtml()
-    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
-    + (withAbn ? ' &middot; venueplay, ABN ' + VP_ABN : '') + '</p>';
+   emails do not (Dean's call, see vpaLeavingHtml). why: the "you are getting this because" line, above the gap. */
+function vpaVenueEmailFoot(withAbn, why) {
+  return vpaEmailFootBlock(why || '', vpaSupportPhoneLines().concat(['venueplay.com.au' + (withAbn ? ' &middot; venueplay, ABN ' + VP_ABN : '')]));
+}
+/* The foot of the emails from hello@ that a person answers (sign-in links, the members list reminder): "Need a hand?
+   Just reply to this email, or call 07 5228 3667 and press 2.", in the words the prospect emails use, on two lines. */
+function vpaReplyEmailFoot(why) {
+  return vpaEmailFootBlock(why || '', ['Need a hand? Just reply to this email,', 'or call ' + vpaFootPhone(' and press 2.'), 'venueplay.com.au']);
 }
 
 /* EVERY EMAIL IS A DOCUMENT, NOT A FRAGMENT. Email audit, 23 Oct 2026: the receipt, the
@@ -17117,12 +17167,11 @@ async function vpUnsubHeaders(env, email, campaign) {
 async function vpUnsubFooterHtml(env, email, campaign) {
   const e = String(email || '').trim().toLowerCase();
   const link = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
-  return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
+  return vpaEmailFootBlock('You are getting this because ' + vpaEsc(e)
     + ' is the contact on a venueplay account. '
-    + '<a href="' + vpaEsc(link) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a>'
-    + ' from emails like this one. Invoices and account notices are not marketing and still come.</p>'
-    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">venueplay, ABN ' + VP_ABN
-    + ' &middot; venueplay.com.au</p>';
+    + '<a href="' + vpaEsc(link) + '" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a>'
+    + ' from emails like this one. Invoices and account notices are not marketing and still come.',
+    vpaSupportPhoneLines().concat(['venueplay, ABN ' + VP_ABN, 'venueplay.com.au']));   // both are venue emails: the support lines too (12 Nov 2026)
 }
 
 /* Has this address asked us to stop? Reads the whole list through vpaUnsubscribedSet, which
@@ -18601,8 +18650,8 @@ async function vprEmailHtml(env, venue, rep, opts) {
   body += '<p style="margin:12px 0 0;font-size:12.5px;color:' + DIM + '">A night runs until 2am. Players are counted by phone, so the same phone on two nights is one person who came back. Test players are left out.</p>';
   body += vprNewsHtml(o.news);
   body += '<p style="margin:22px 0 0;font-size:12.5px;color:' + DIM + '">This is the one email we send you each month. Your report for any month is always in your account, whether or not you get this email.</p>';
-  body += vpaSupportPhoneHtml();
-  body += o.to ? await vpUnsubFooterHtml(env, o.to, 'monthly-report') : '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay, ABN ' + VP_ABN + ' &middot; venueplay.com.au</p>';
+  /* The foot (Dean, 12 Nov 2026): the why line, the gap, the logo, then the support lines and the small print. */
+  body += o.to ? await vpUnsubFooterHtml(env, o.to, 'monthly-report') : vpaVenueEmailFoot(true);
   const subject = 'Your ' + mName + ' at ' + (venue.name || 'your venue');
   const pre = a.nights ? (plural(a.player_visits, 'player', 'players') + ' over ' + plural(a.nights, 'night', 'nights') + ', ' + n(a.returning) + ' came back.')
                        : ('No games in ' + mName + '.');
@@ -22763,10 +22812,10 @@ async function vpsHandleSubscribe(request, env, json) {
 function vpsFooterHtml(env, email) {
   const e = String(email || '').trim().toLowerCase();
   const page = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
-  return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
+  return vpaEmailFootBlock('You are getting this because ' + vpaEsc(e)
     + ' signed up for the venueplay monthly email at venueplay.com.au. '
-    + '<a href="' + vpaEsc(page) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a> any time.</p>'
-    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">venueplay, ABN ' + VP_ABN + ' &middot; venueplay.com.au</p>';
+    + '<a href="' + vpaEsc(page) + '" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a> any time.',
+    ['venueplay, ABN ' + VP_ABN, 'venueplay.com.au']);
 }
 function vpsConfirmationEmail(env, email, venue, nowMs) {
   const site = vpaCustomerSite(env);

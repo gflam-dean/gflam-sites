@@ -123,6 +123,7 @@
   "draw-hold.test.js",
   "dropdowns-in-chrome.test.py",
   "email-fit-in-chrome.test.py",
+  "email-footer-in-chrome.test.py",
   "esc() is the same in all 37 file(s)",
   "every \"address in section N\" points at the section that is really Contact us",
   "every .py in the repo parses",

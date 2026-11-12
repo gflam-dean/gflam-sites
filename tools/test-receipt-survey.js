@@ -222,9 +222,9 @@ async function main() {
   check('subscribers: the venue\'s opt-ins from v_vp_player_optins (2 here), and null, never 0, when that cannot be read',
     vs1 && vs1.ok && vs1.subscribers === 2 && asked.some(function (a) { return a.indexOf('v_vp_player_optins?venue_id=eq.v1') === 0; }) && vs2 && vs2.subscribers === null, [vs1 && vs1.subscribers, vs2 && vs2.subscribers, asked]);
   var wkS = null; vpaRenderProspectReminder(ENV, clone(R, { kind: 'last', daysLeft: 8, stats: Object.assign({}, ST, { subscribers: 32 }) })).then(function (x) { wkS = x.html; }); drain();
-  check('the numbers are email-safe tiles: solid pink cells (bgcolor and CSS), big white 24px numbers, 12px words, no images; subscribers get a tile when there are some',
+  check('the numbers are email-safe tiles: solid pink cells (bgcolor and CSS), big white 24px numbers, 12px words, no images (but the logo of the shared foot); subscribers get a tile when there are some',
     (wkS.match(/<td width="33%" align="center" bgcolor="#FF1F8E" style="background:#FF1F8E;border-radius:12px;padding:14px 4px"><div style="font-size:24px;line-height:1\.1;font-weight:800;color:#ffffff">/g) || []).length === 3 &&
-    visible(wkS).indexOf('ran: 6 games 148 players 32 subscribers') !== -1 && (wkS.match(/<img/g) || []).length === 1, visible(wkS).slice(0, 600));
+    visible(wkS).indexOf('ran: 6 games 148 players 32 subscribers') !== -1 && (wkS.replace(/<table role="presentation" data-vp-foot="block"[\s\S]*?<\/table>/g, '').match(/<img/g) || []).length === 1, visible(wkS).slice(0, 600));
   var wk0 = rem('last', { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 }, 8);
   check('one week out with no games yet: "You haven\'t had your first night yet" and the sign-in button, no numbers',
     wk0.indexOf("You haven't had your first night yet, and there's still time.") !== -1 && /Open your venueplay/.test(wk0) && wk0.indexOf('In your free month') === -1, wk0.slice(0, 700));

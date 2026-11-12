@@ -203,6 +203,10 @@
   "checks": 40,
   "counted_by": "lines"
  },
+ "tools/email-footer-in-chrome.test.py": {
+  "checks": 400,
+  "counted_by": "lines"
+ },
  "tools/email-fit-in-chrome.test.py": {
   "checks": 45,
   "counted_by": "lines"
@@ -1220,7 +1224,7 @@
   "counted_by": "lines"
  },
  "tools/test-trial-end-note.js": {
-  "checks": 42,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {

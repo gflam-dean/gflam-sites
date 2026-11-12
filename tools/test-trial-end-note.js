@@ -1,6 +1,6 @@
 /* ONE FRIENDLY EMAIL FOR A FREE MONTH CANCELLED PART WAY, ON A FAKE CLOCK (Dean, 11 Nov 2026, INBOX 239.1, 258.1).
 
-   The Friday before a cancelled free month ends: one email "Your free month ends on <day> <date>", a Keep it going
+   The Friday before a cancelled free month ends: one email "Your free month ends <date>" (subject shortened 12 Nov), a Keep it going
    button (the card link), inside Dean's send window at the venue, never before the cancel, once per venue, and
    nothing after it. All their other emails stop at the cancel. Behind TRIAL_END_NOTE (off by default).
 
@@ -170,7 +170,7 @@ function audits(action, vid) { return DB.vp_admin_audit.filter(function (a) { re
 async function hq(P, ms) { var r = await withClock(ms, function () { return call('/admin/prospects', {}, AS(ADMIN)); }); return ((r.body && r.body.prospects) || []).filter(function (p) { return p.venue_id === P.v.id; })[0] || {}; }
 
 
-var NOTE = function () { return sent.filter(function (m) { return /^Your free month ends on /.test(m.subject || ''); }); };
+var NOTE = function () { return sent.filter(function (m) { return /^Your free month ends \d/.test(m.subject || ''); }); };
 function noteAudits(vid) { return DB.vp_admin_audit.filter(function (a) { return a.action === 'trial_end_note' && a.target === 'trial-end-note:' + vid; }); }
 async function sweepWalk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t <= toMs; t += (stepMs || 3600000)) { var b = sent.length; await withClock(t, function () { return vpaProspectReminderSweep(ENV, t); }); for (var i = b; i < sent.length; i++) out.push({ at: t, msg: sent[i] }); } return out; }
 /* Bodalla's row as main left it (INBOX 239): first sign-in 9 Nov 23:25 Brisbane, the cancel link 11 Nov 01:42Z (under
@@ -194,9 +194,10 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   ENV.TRIAL_END_NOTE = 'on';
   sent.length = 0;
   var w = await sweepWalk(Date.parse('2026-11-11T02:00:00Z'), Date.parse('2026-12-12T02:00:00Z'));
-  var notes = w.filter(function (x) { return /^Your free month ends on /.test(x.msg.subject || ''); });
+  var notes = w.filter(function (x) { return /^Your free month ends \d/.test(x.msg.subject || ''); });
   check('exactly ONE email in the whole walk, 11 Nov to 12 Dec', notes.length === 1, notes.map(function (x) { return [new Date(x.at).toISOString(), x.msg.subject]; }));
-  check('its subject: "Your free month ends on Thursday 10 December"', notes.length && notes[0].msg.subject === 'Your free month ends on Thursday 10 December', notes[0] && notes[0].msg.subject);
+  check('its subject: "Your free month ends 10 December" (Dean 12 Nov: shorter; 32 characters, one line in iPhone Mail and in Gmail)', notes.length && notes[0].msg.subject === 'Your free month ends 10 December', notes[0] && notes[0].msg.subject);
+  check('the longest month still fits one iPhone Mail line (35 characters): "Your free month ends 30 September"', vpaTrialEndSubject('30 September').length <= 35, vpaTrialEndSubject('30 September').length);
   check('sent Friday 4 December at 9am at the venue (NSW, Sydney time), the first hour of the window', notes.length && notes[0].at === SYD_FRI_9AM, notes[0] && new Date(notes[0].at).toISOString());
   check('to the account email, from hello@ (the same sender as the reminders)', notes.length && notes[0].msg.to[0] === A.row().email && /hello@send\.venueplay\.com\.au/.test(notes[0].msg.from), notes[0] && [notes[0].msg.to, notes[0].msg.from]);
   check('nothing else at all went to the venue after the cancel (no card reminder, no other email)', w.filter(function (x) { return !/^venueplay · /.test(x.msg.subject || ''); }).length === 1, w.map(function (x) { return x.msg.subject; }));
@@ -205,9 +206,11 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
     A.v.closed_at === '2026-12-10T14:00:00.000Z' && audits('prospect_switched_off', A.v.id).length === 1, [A.v.status, A.v.suspended_reason, A.v.closed_at]);
   check('cancelled_at was kept as it was', A.row().cancelled_at === new Date(B_CX).toISOString());
   var m = notes.length ? notes[0].msg : {}, txt = String(m.html || '').replace(/<[^>]+>/g, ' ').replace(/&middot;/g, '·').replace(/\s+/g, ' ');
-  check('the words: "Hi Paul", Bodalla\'s venue name, the date, nothing charged', /Hi Paul,/.test(txt) && /free month of venueplay at Test Bravo runs until Thursday 10 December/.test(txt) && /Nothing has been charged and nothing will be/.test(txt), txt.slice(0, 600));
+  check('the words: "Hi Paul", Bodalla\'s venue name, the date, nothing charged', /Hi Paul,/.test(txt) && /free month of venueplay at Test Bravo runs until Thursday 10 December/.test(txt) && /Nothing has been charged\./.test(txt) && !/nothing will be/.test(txt), txt.slice(0, 600));
+  check('the card line says what happens and when (Dean 12 Nov): keep going = add a card, nothing charged until the free month ends on its date; never "Nothing to pay"',
+    /To keep your games running after that, add a card before then\. Nothing is charged until your free month ends on Thursday 10 December/.test(txt) && !/Nothing to pay/.test(String(m.html)), txt.slice(0, 900));
   check('one pink "Keep it going" button, to the card link for THIS account', (String(m.html).match(/>Keep it going<\/a>/g) || []).length === 1 && String(m.html).indexOf('/add-card?f=' + encodeURIComponent(A.v.founding_id) + '&amp;t=') !== -1, String(m.html).slice(0, 200));
-  check('the footer lines the other venueplay emails carry: 07 5228 3667 and press 2, Terms, Privacy, Unsubscribe from product emails', /call 07 5228 3667 and press 2/.test(txt) && /Terms · Privacy · Unsubscribe from product emails/.test(txt) && /href="tel:\+61752283667"/.test(m.html), txt.slice(-400));
+  check('the footer lines the other venueplay emails carry: 07 5228 3667 and press 2, Terms, Privacy, Unsubscribe from product emails', /call 07 5228 3667 and press 2/.test(txt) && /Terms · Privacy Unsubscribe from product emails/.test(txt) && /href="tel:\+61752283667"/.test(m.html), txt.slice(-400));
   check('lowercase venueplay, no dashes, no workers.dev link', !/VenuePlay|VENUEPLAY/.test(m.subject + txt) && !/[—–]/.test(m.subject + txt) && !/workers\.dev/.test(m.html));
   check('a plain-text part goes with it', typeof m.text === 'string' && /Keep it going/.test(m.text) && m.text.length > 200);
 
