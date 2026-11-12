@@ -405,6 +405,7 @@
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
+<script src="/app/vp-celebrate.js"></script>   <!-- the one sound player: its "answerup" slot, when the buzzer plays on this device (12 Nov 2026) -->
 <script src="/app/vp-trivia-finale.js"></script>   <!-- the end of the night, one timeline shared with the TV (INBOX 77-79) -->
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-loved.js"></script>
@@ -1283,8 +1284,11 @@
       .catch(function(){ /* leave the board empty; finish() below refuses to show an empty podium */ });
   }
   function reveal(){
-    if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick(); clearAuto();
+    if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true;
+    var early=remainingSecs()>0;   // before clearTick: the answer is going up with time still on the clock
+    clearTick(); clearAuto();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
+      if(early && !G.defer) hostAnswerUp();
       G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[]; G.noPlayersNote=false;
       saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
@@ -2207,6 +2211,13 @@
   var _hac=null;
   function unlockHostAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_hac) _hac=new AC(); if(_hac.state==="suspended") _hac.resume(); }catch(e){} }
   document.addEventListener("pointerdown", function(){ if(G.buzzer && G.buzzWhere==="device") unlockHostAudio(); });
+  /* The answer went up before the clock reached 0 (everyone in, or an early reveal): the "answerup" slot of the one sound
+     player, on THIS device when the buzzer is set to play here (the TV plays it otherwise). Empty until Dean's sound pass. */
+  function hostAnswerUp(){
+    if(!(G.buzzer===true && G.buzzWhere==="device")) return false;
+    try{ if(window.VPCelebrate && VPCelebrate.sound) return VPCelebrate.sound("answerup", { wall:true }); }catch(e){}
+    return false;
+  }
   function hostTimesUp(){
     if(G.buzzer!==true || G.buzzWhere!=="device") return false;
     if(!window.VPBuzzer) return false;

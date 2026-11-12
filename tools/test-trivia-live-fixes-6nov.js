@@ -157,5 +157,26 @@ ok('show() hides the card on the board unless it is on, and on the podium always
 ok('the TV covers each place not yet revealed with the pink step and a question mark, and plays the fanfare only on the winner (the finale engine)', /\.pcol\.hid \.medal/.test(SCREEN) && /if\(stage==="winner"\)\{ celebrate\(9000\)/.test(SCREEN));
 ok('the TV no longer holds the leaderboard behind the podium on a timer', SCREEN.indexOf('_hold') < 0);
 
+print('ALL IN, THE ANSWER IS UP: its own sound slot, never a synth (INBOX 282.5, FINDINGS T7)');
+function makeWall(buzzOn, live, endsIn) {
+  var played = [];
+  var VP_DEMO = false, VP_PREVIEW = false, BUZZ = { on: buzzOn }, T = 5000000;
+  var curQ = { qseq: 4, live: live, buzzed: false, endsAt: T + endsIn };
+  function hostNow() { return T; } function unlockAudio() {}
+  var window = { VPCelebrate: { sound: function (n, o) { played.push([n, !!(o && o.wall)]); return true; } } };
+  var VPCelebrate = window.VPCelebrate;
+  var f = eval(liftFrom(SCREEN, 'answerUp') + ';answerUp');
+  return { up: f, played: played, curQ: curQ };
+}
+var w1 = makeWall(true, true, 12000); w1.up(); w1.up();
+ok('the answer goes up with 12 s still on the clock: the wall asks for the "answerup" slot, as the wall, once', JSON.stringify(w1.played) === '[["answerup",true]]', JSON.stringify(w1.played));
+var w2 = makeWall(true, true, 0); w2.up();
+ok('the clock already reached 0: nothing (that is the time\'s-up buzzer\'s moment)', w2.played.length === 0, JSON.stringify(w2.played));
+var w3 = makeWall(false, true, 12000); w3.up();
+ok('the buzzer switched off (or playing on the host\'s device): nothing on the wall', w3.played.length === 0);
+ok('the TV asks for it on a reveal of the question it is showing, before drawing the answer', /if\(state\.phase==="question" && curQ && m\.qseq!=null && curQ\.qseq===m\.qseq\) answerUp\(\);/.test(SCREEN));
+ok('and the console plays the same slot when the buzzer plays on the host\'s device', /if\(early && !G\.defer\) hostAnswerUp\(\);/.test(HOST) && /VPCelebrate\.sound\("answerup", \{ wall:true \}\)/.test(liftFrom(HOST, 'hostAnswerUp')) && HOST.indexOf('<script src="/app/vp-celebrate.js"></script>') > 0);
+ok('no synth stand-in: answerUp never touches the buzzer or a tone', !/VPBuzzer|oscillator|createOscillator/i.test(liftFrom(SCREEN, 'answerUp')));
+
 print('');
 print(bad ? (bad + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));

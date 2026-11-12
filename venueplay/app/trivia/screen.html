@@ -937,6 +937,19 @@
     if(window.VPBuzzer) window.VPBuzzer.play(_ac, buzzSay); else buzzSay("off");   /* the one copy of the sound: /app/vp-buzzer.js */
     return true;
   }
+  /* ALL IN, THE ANSWER IS UP (Dean, 12 Nov 2026, INBOX 282.5, FINDINGS T7: "I didn't hear any sounds"). When every team is
+     in, the answer goes up before the clock reaches 0, so the time's-up buzzer never plays. That moment has its own sound
+     now: the "answerup" slot of the one sound player (/app/vp-celebrate.js). The file is Dean's sound pass: an empty slot
+     plays nothing, and nothing is made up in its place. Same switch as the buzzer (on, and playing on the TV), once per
+     question, never in a demo or the console's preview. */
+  function answerUp(){
+    if(VP_DEMO || VP_PREVIEW || !BUZZ.on) return false;
+    if(!curQ || curQ.buzzed || !curQ.live) return false;
+    if(hostNow() >= (Number(curQ.endsAt)||0) - 300) return false;   // the clock reached 0: that is the time's-up buzzer's moment
+    curQ.buzzed=true; try{ unlockAudio(); }catch(e){}
+    try{ if(window.VPCelebrate && VPCelebrate.sound) return VPCelebrate.sound("answerup", { wall:true }); }catch(e){}
+    return false;
+  }
   function playFanfare(){
     /* One copy, in /app/vp-celebrate.js. This was written out eight times
        across the phones and the screens and had already drifted into three
@@ -1192,6 +1205,7 @@
       /* The answer already up (or the leaderboard after it), replayed to a TV that reconnected: the reveal is not played
          again (its disc grew in and its card pulsed a second time, then the board jumped straight up). */
       if(!m.fin && curQ && m.qseq!=null && curQ.qseq===m.qseq && curQ.correct===m.correctIndex && (state.phase==="reveal" || state.phase==="leaderboard")) return;
+      if(state.phase==="question" && curQ && m.qseq!=null && curQ.qseq===m.qseq) answerUp();   // the answer goes up before the clock reached 0
       if(m.fin && FIN && FIN.painted && FIN.painted!=="wait"){ finaleFrom(m, true); }   // the show has moved on: a replayed last answer does not go back over it
       else {
         state.phase="reveal";

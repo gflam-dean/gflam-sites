@@ -1296,7 +1296,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-live-fixes-6nov.js": {
-  "checks": 49,
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
@@ -1804,7 +1804,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 99,
+  "checks": 101,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
