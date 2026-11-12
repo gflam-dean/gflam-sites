@@ -20,6 +20,11 @@ at 360x740, 375x812, 390x844, 430x932 and a short phone (375x664), with the revi
 15px or more, NO hyphen ever (a title's own hyphen is not a break either), a card that cannot hold 15px on the screen's
 width made wider and swiped, nothing cut; a note under the card (the early-mark note) moves and resizes no square; Free
 has its own look. Also the card from the live check (Test Charlie, "Sur-render", "Thunder-struck").
+12 NOV 2026, OPTION C (Dean via main INBOX 323, 12 Nov; tools/MUSICAL-CARD-DECISION.md) REPLACES the 10 Nov "15px or
+more" and the wider, swiped card: all five columns on one screen, NO swipe, ever; a long word takes the WHOLE card down
+evenly to 10px (one size still; 11px could not hold the review card at 360 wide or on a short phone clear of the
+ticks, so the floor is 10px); only at 10px may a word too wide for its square be narrowed, whole. Plus the text-size
+row in the slot under the card for the first 30 seconds of the game, then in the menu, the size kept (vp-mzoom).
 Drives a real headless Chrome through verify-live.py's browser (imported via musical-newlook-in-chrome.test.py).
 Takes /tmp/vp-heavy.lock (VP_WAIT_LOCK seconds to wait).
 
@@ -78,13 +83,19 @@ SPACING_PROBE = r"""(function(){
   return JSON.stringify({ cells:out, btn:[b.left,b.top,b.right,b.bottom], H:innerHeight, scrollH:document.documentElement.scrollHeight, scrollW:document.documentElement.scrollWidth,
     aw:parseFloat(g.style.getPropertyValue("--aw")||"1"), slot:sr?[sr.left,sr.top,sr.right,sr.bottom]:null, note:(nb && !nb.classList.contains("hidden"))?nb.textContent:"",
     noteBox:(nb && !nb.classList.contains("hidden"))?(function(r){ return [r.left,r.top,r.right,r.bottom]; })(nb.getBoundingClientRect()):null,
-    hint:(function(h){ return h && !h.classList.contains("hidden") ? h.textContent : ""; })(document.getElementById("noteHint")) });
+    hint:(function(h){ return h && !h.classList.contains("hidden") ? h.textContent : ""; })(document.getElementById("noteHint")),
+    sizeNow:(function(z){ if(!z || z.classList.contains("hidden")) return null; var r=z.getBoundingClientRect(), d=document.getElementById("szDown").getBoundingClientRect(), u=document.getElementById("szUp").getBoundingClientRect();
+      return { box:[r.left,r.top,r.right,r.bottom], down:[d.left,d.top,d.right,d.bottom], up:[u.left,u.top,u.right,u.bottom], txt:z.textContent }; })(document.getElementById("sizeNow")) });
 })()"""
 LONG_CARD = ["Supercalifragilisticexpialidocious", "(I Can't Get No) Satisfaction", "Don't Go Breaking My Heart", "Californication", "Total Eclipse of the Heart",
              "I Would Do Anything for Love (But I Won't Do That)", "Misunderstanding", "Somebody That I Used to Know", "Everybody Wants to Rule the World", "Unbelievable",
              "Bohemian Rhapsody", "Sweet Child O' Mine", "FREE", "Smells Like Teen Spirit", "Livin' on a Prayer",
              "Up", "Hey Ya!", "Wonderwall", "September", "Don't Stop Believin'",
              "Islands in the Stream", "Mr. Brightside", "Hotel California", "Thunderstruck", "You Shook Me All Night Long"]
+# 12 Nov 2026 (option C): a card whose every word fits at 15px on the narrowest phone; it must stay 15px or more,
+# so a fitter that shrinks a card for nothing is red (the other three cards all hold a long word and go down evenly).
+SHORT_CARD = ["Up", "Help!", "Faith", "Jump", "Kiss", "Vogue", "Angie", "Layla", "Creep", "Torn", "Hello", "Hurt",
+              "FREE", "Fame", "Iris", "Toxic", "Waves", "Hero", "Wings", "Shout", "Mama", "Lola", "Smile", "Rio", "Gold"]
 # Test Charlie's card at Dean's 10 Nov 2026 live sign-off (shot 34): "Sur-render", "Thunder-struck", 9px titles
 LIVE_CARD = ["I'd Do Anything for Love (But I Won't Do That)", "I Want You to Want Me", "Gimme Shelter", "Life in the Fast Lane", "My Coo-Ca-Choo",
              "Take a Long Line", "Don't Stop Believin'", "You Took the Words Right Out of My Mouth (Hot Summer Night)", "Am I Ever Gonna See Your Face Again", "Surrender",
@@ -112,16 +123,29 @@ def spacing_checks(tag, x, w, h, std):
     fs = sorted(set(c['fs'] for c in C))
     ok('%s: ONE size for the whole card, Free included (%s)' % (tag, fs), len(fs) == 1, fs)
     aw = x.get('aw') or 1
-    ok('%s: 15px or more (%spx), unless even the widest card (2.2x) cannot hold a word (aw %s)' % (tag, fs[0], aw), fs[0] >= 15 or aw >= 2.19, [fs, aw])
-    ok('%s: the card is only made wider when 15px cannot fit on the screen\'s width (aw %s, %spx)' % (tag, aw, fs[0]), aw <= 1.001 or abs(fs[0] - 15) < 0.01 or aw >= 2.19, [aw, fs])
-    cut = [c['txt'] for c in T if not (c['text'][0] >= c['inner'][0] - 0.5 and c['text'][2] <= c['inner'][2] + 0.5 and c['text'][1] >= c['inner'][1] - 0.5 and c['text'][3] <= c['inner'][3] + 0.5) or (c['sq'] and not (aw >= 2.19 and c['fs'] <= 11))]
-    ok('%s: nothing cut off, and nothing narrowed but a word no phone can hold (at 11px on the widest card)' % tag, not cut, cut)
+    # REPINNED 12 Nov 2026 (option C, Dean via main INBOX 323): was "15px or more unless the widest card (2.2x) cannot hold a word"
+    ok('%s: 10px or more (%spx): a long word brings the whole card down evenly, never under 10px (option C)' % (tag, fs[0]), fs[0] >= 10 - 0.01, [fs, aw])
+    if std == 'short':
+        ok('%s: a card of short titles stays 15px or more (%spx): only a long word ever brings the card down' % (tag, fs[0]), fs[0] >= 15 - 0.01, fs)
+    # REPINNED 12 Nov 2026 (option C): was "the card is only made wider when 15px cannot fit on the screen's width"
+    right = max(c['tile'][2] for c in C)
+    ok('%s: the card is never wider than the screen: all five columns on it, no sideways swipe (aw %s, right edge %s)' % (tag, aw, round(right, 1)), aw <= 1.001 and right <= w - 16 + 1, [aw, right, w])
+    # REPINNED 12 Nov 2026 (option C): was "nothing narrowed but a word no phone can hold (at 11px on the widest card)"
+    cut = [c['txt'] for c in T if not (c['text'][0] >= c['inner'][0] - 0.5 and c['text'][2] <= c['inner'][2] + 0.5 and c['text'][1] >= c['inner'][1] - 0.5 and c['text'][3] <= c['inner'][3] + 0.5) or (c['sq'] and not c['fs'] <= 10)]
+    ok('%s: nothing cut off, and nothing narrowed but a word too wide for its square at 10px (narrowed whole, never split)' % tag, not cut, cut)
     hs = [round(c['tile'][3] - c['tile'][1], 1) for c in C]
     ok('%s: every square 64px tall or more (%s)' % (tag, min(hs)), min(hs) >= 64 - 0.5, hs[:5])
     ok('%s: Free looks different from a marked square (its own colour, no tick)' % tag, C[12]['free'] and not C[12]['tick'] and C[12]['bg'] not in ('rgb(43, 13, 29)',), [C[12]['bg'], C[12]['tick']])
-    ok('%s: the page never scrolls sideways (only the card does, inside its own frame)' % tag, (x.get('scrollW') or 9999) <= w + 1, x.get('scrollW'))
+    ok('%s: the page never scrolls sideways, and nor does the card (option C)' % tag, (x.get('scrollW') or 9999) <= w + 1, x.get('scrollW'))
     ok('%s: the card and the claim fit the screen, no scrolling' % tag, (x.get('scrollH') or 9999) <= h + 1 and (x.get('btn') or [0, 0, 0, 9999])[3] <= h, [x.get('scrollH'), x.get('btn')])
-    ok('%s: the slot under the card says "%s"' % (tag, x.get('hint')), x.get('hint') == ('Swipe the card sideways to see every song.' if aw > 1.001 else 'Tap a song when you hear it.'), [x.get('hint'), aw])
+    # REPINNED 12 Nov 2026: there is no swipe line any more; for the first 30 seconds the slot holds the text-size row instead
+    sz = x.get('sizeNow')
+    ok('%s: the slot under the card says "Tap a song when you hear it." or, in the first 30 seconds, shows the text size row (%s)' % (tag, 'size row' if sz else x.get('hint')),
+       (x.get('hint') == 'Tap a song when you hear it.' and not sz) or (bool(sz) and x.get('hint') == '' and 'Text size' in (sz or {}).get('txt', '')), [x.get('hint'), sz, aw])
+    if sz:
+        sl = x.get('slot') or [0, 0, 0, 0]
+        inside = all(b[1] >= sl[1] - 0.5 and b[3] <= sl[3] + 0.5 and b[0] >= -0.5 and b[2] <= w + 0.5 for b in (sz['box'], sz['down'], sz['up']))
+        ok('%s: the text size row sits inside the slot under the card, both buttons 44px or taller' % tag, inside and min(sz['down'][3] - sz['down'][1], sz['up'][3] - sz['up'][1]) >= 44 - 0.5, [sz, sl])
 
 
 def note_checks(tag, x0, x1):
@@ -146,6 +170,7 @@ def spacing(B, base):
     keep = list(CELLS)
     try:
         for name, cells, marks in (('the review card', keep, ["Never Gonna Give You Up", "Livin' on a Prayer", "Hey Ya!", "Bohemian Rhapsody", "Dancing Queen", "Khe Sanh", "Mr. Brightside", "The Horses", "Africa", "Wonderwall", "September"]),
+                                   ('short titles', SHORT_CARD, ["Up", "Help!", "Faith", "Jump", "Kiss"]),
                                    ('the 10 Nov live card', LIVE_CARD, ["Down Down", "Thunderstruck", "I Got You Babe", "In the Summertime", "Surrender"]),
                                    ('very long titles', LONG_CARD, ["Bohemian Rhapsody", "Sweet Child O' Mine", "Smells Like Teen Spirit", "Livin' on a Prayer", "Supercalifragilisticexpialidocious", "I Would Do Anything for Love (But I Won't Do That)", "Wonderwall", "Up"])):
             for (w, h) in ((360, 740), (375, 812), (390, 844), (430, 932), (375, 664), (390, 690)):
@@ -160,7 +185,7 @@ def spacing(B, base):
                     P.js(say('vp-' + ROOM, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'game_id': 'g1'}]))
                     P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15); time.sleep(1.2)
                     x0 = P.obj(SPACING_PROBE) or {}
-                    spacing_checks(tag, x0, w, h, cells is keep)
+                    spacing_checks(tag, x0, w, h, 'short' if cells is SHORT_CARD else (cells is keep))
                     for s_ in marks:
                         P.js('(function(){ var c=[].filter.call(document.querySelectorAll("#cardGrid .cc"),function(x){ return (x.getAttribute("aria-label")||x.textContent||"")===%s; })[0]; if(c) c.click(); return !!c; })()' % json.dumps(s_))
                     time.sleep(0.5)
@@ -182,6 +207,62 @@ def spacing(B, base):
         CELLS[:] = keep
 
 
+SIZE_PROBE = r"""(function(){ var z=document.getElementById("sizeNow"), m=document.getElementById("zoomIn"), f=[].map.call(document.querySelectorAll("#cardGrid .cc"),function(c){ return parseFloat(getComputedStyle(c).fontSize); });
+  var mz=null; try{ mz=localStorage.getItem("vp-mzoom"); }catch(e){}
+  return JSON.stringify({ on:!!(z && !z.classList.contains("hidden")), menu:!!(m && m.closest("#menuPanel")), fs:f.length?Math.min.apply(null,f):0, mz:mz, hint:document.getElementById("noteHint").classList.contains("hidden")?"":document.getElementById("noteHint").textContent }); })()"""
+
+
+def size_row(B, base):
+    """THE TEXT SIZE PLUS/MINUS (Dean via main INBOX 323, 12 Nov 2026): on the card for the first 30 seconds of the game,
+    then it hides into the menu (still there); "+" makes the whole card bigger, even on a card with a long word; the chosen
+    size is kept (a new page in the same night comes back at it); a reload does not bring the row back after 30 seconds."""
+    print('\nTHE TEXT SIZE ROW: FIRST 30 SECONDS ON THE CARD, THEN IN THE MENU, THE SIZE KEPT (Dean via main INBOX 323, 12 Nov 2026)')
+    keep = list(CELLS)
+    CELLS[:] = keep
+    w, h = 390, 844
+    P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, w, h, True, 'try{ localStorage.clear(); sessionStorage.clear(); }catch(e){}')
+    try:
+        P.until('document.getElementById("vJoin") && !document.getElementById("vJoin").classList.contains("hidden")', 20); time.sleep(0.6)
+        P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}])); time.sleep(0.3)
+        P.js('(function(){ document.getElementById("nameIn").value="Sam"; document.getElementById("joinBtn").click(); return 1; })()')
+        P.until('!document.getElementById("vWait").classList.contains("hidden")', 15); time.sleep(0.3)
+        P.js(say('vp-' + ROOM, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'game_id': 'gsize'}]))
+        ok('size row: CONTROL the card is dealt', bool(P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15)))
+        t0 = time.time(); time.sleep(1.2)
+        a = P.obj(SIZE_PROBE) or {}
+        ok('size row: on the card at the start of the game, the quiet hint out of its way', a.get('on') is True and a.get('hint') == '', a)
+        P.js('document.getElementById("szUp").click(); true'); time.sleep(0.8)
+        b = P.obj(SIZE_PROBE) or {}
+        ok('size row: "+" makes the whole card bigger (%spx to %spx), even with Wonderwall on it, and the size is kept (vp-mzoom %s)' % (a.get('fs'), b.get('fs'), b.get('mz')),
+           (b.get('fs') or 0) > (a.get('fs') or 0) + 0.4 and b.get('mz') == '1.2', [a, b])
+        P.js('document.getElementById("szDown").click(); true'); time.sleep(0.8)
+        c = P.obj(SIZE_PROBE) or {}
+        ok('size row: "-" takes it back (%spx)' % c.get('fs'), abs((c.get('fs') or 0) - (a.get('fs') or 0)) < 0.3 and c.get('mz') == '1', [a, c])
+        P.js('document.getElementById("szUp").click(); true'); time.sleep(0.5)
+        left = 30.5 - (time.time() - t0)
+        if left > 0: time.sleep(left)
+        gone = P.until('document.getElementById("sizeNow").classList.contains("hidden")', 5)
+        d = P.obj(SIZE_PROBE) or {}
+        ok('size row: gone after 30 seconds, the hint back, the card the clean main screen', bool(gone) and d.get('on') is False and d.get('hint') == 'Tap a song when you hear it.', d)
+        ok('size row: still in the menu (Text size, A / A) after it hides', d.get('menu') is True, d)
+        ok('size row: the bigger size stays after it hides', (d.get('fs') or 0) > (a.get('fs') or 0) + 0.4 and d.get('mz') == '1.2', [a, d])
+    finally:
+        P.close()
+    P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, w, h, True, '')
+    try:
+        P.until('document.getElementById("vJoin") && !document.getElementById("vJoin").classList.contains("hidden")', 20); time.sleep(0.6)
+        P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}])); time.sleep(0.3)
+        P.js('(function(){ document.getElementById("nameIn").value="Sam"; document.getElementById("joinBtn").click(); return 1; })()')
+        P.until('!document.getElementById("vWait").classList.contains("hidden")', 15); time.sleep(0.3)
+        P.js(say('vp-' + ROOM, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'game_id': 'gsize2'}]))
+        P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15); time.sleep(1.2)
+        e = P.obj(SIZE_PROBE) or {}
+        ok('size row: a new page later the same night comes back at the chosen size (vp-mzoom %s, %spx)' % (e.get('mz'), e.get('fs')), e.get('mz') == '1.2' and (e.get('fs') or 0) > (a.get('fs') or 0) + 0.4, [a, e])
+    finally:
+        P.close()
+        CELLS[:] = keep
+
+
 def main():
     import gatelib
     if not gatelib.hold_lock_or_refuse('musical-card-spacing-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
@@ -192,6 +273,7 @@ def main():
     B = MN.VL.Browser()
     try:
         spacing(B, base)
+        size_row(B, base)
     finally:
         B.close(); srv.shutdown()
     print('')

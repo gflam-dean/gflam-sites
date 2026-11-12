@@ -186,9 +186,13 @@ def musical(r):
     sz = J(r.ask(m, ('(function(){var c=Array.prototype.filter.call(document.querySelectorAll("#cardGrid .cc"),function(e){return !e.classList.contains("free");});'
                      'var f=c.map(function(e){return parseFloat(getComputedStyle(e).fontSize);}).sort(function(a,b){return a-b;});'
                      'var sq=c.filter(function(e){var s=e.querySelector(".ct");return s&&/scale/.test(s.style.transform);}).map(function(e){return e.textContent;});'
-                     'return JSON.stringify({n:f.length,min:f[0],median:f[Math.floor(f.length/2)],squashed:sq});})()')))
-    ok('390 x 690: the song titles are big (half of them 15px or more, none under 11px) and none is squashed sideways',
-       sz.get('n') == 24 and sz.get('median', 0) >= 15 and sz.get('min', 0) >= 11 and not sz.get('squashed'), sz)
+                     'var rt=Math.max.apply(null,c.map(function(e){return e.getBoundingClientRect().right;}));'
+                     'return JSON.stringify({n:f.length,min:f[0],median:f[Math.floor(f.length/2)],squashed:sq,right:rt});})()')))
+    # REPINNED 12 Nov 2026 (option C, Dean via main INBOX 323; tools/MUSICAL-CARD-DECISION.md): all five columns on one
+    # screen, no swipe, so a card with Wonderwall goes down EVENLY, one size, never under 10px; only at 10px may a word
+    # too wide for its square be narrowed (whole, never split). Was: "half of them 15px or more ... none squashed".
+    ok('390 x 690: the song titles are one size, never under 10px, all five columns on screen; a word is narrowed only at 10px',
+       sz.get('n') == 24 and sz.get('min', 0) >= 10 and sz.get('min') == sz.get('median') and (not sz.get('squashed') or sz.get('min') <= 10) and sz.get('right', 9999) <= 390 - 16 + 1, sz)
     # 4 Nov 2026 (the new look): the size and full screen controls moved into the menu sheet (Text size A / A, Full screen),
     # and the claim is a pink pill, faint until the player's marks make the pattern (Dean, 3 Nov 2026).
     r.ask(m, 'document.getElementById("menuBtn").click(); true'); time.sleep(0.4)
