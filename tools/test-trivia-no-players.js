@@ -39,6 +39,7 @@ function makeConsole(o) {
   function clearErrForAction() {}
   function saveTrivia() {}
   function isDouble() { return false; }
+  function remainingSecs() { return 0; } function hostAnswerUp() {}   // reveal()'s all-in sound slot (INBOX 282.5): the clock has closed here
   function renderConsole() { renders++; }
   function hostError(m) { errors.push(m); }
   function bcast(m) { sent.push(m); }

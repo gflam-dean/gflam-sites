@@ -199,6 +199,15 @@ pass("an empty slot plays nothing (never a synth stand-in)", VC && VC.sound("tim
 VC.SOUNDS.podium = "/sounds/podium.mp3";
 pass("dropping a file in a slot is all it takes: it then plays, after a tap", VC.sound("podium") === true && fakeRoot.played === 1, fakeRoot.played);
 VC.SOUNDS.podium = "";
+/* answerup (INBOX 282.5): a slot for the trivia answer going up before the clock reaches 0, played by the WALL (a TV is
+   driven by a remote and is never tapped), never by a phone that has not been tapped. A fresh player with no tap yet. */
+var fakeRoot2 = { document: { addEventListener: function () {}, removeEventListener: function () {} }, localStorage: { getItem: function () { return "1"; }, setItem: function () {} }, location: { pathname: "/app/trivia/screen", search: "" },
+  Audio: function () { this.play = function () { fakeRoot2.played = (fakeRoot2.played || 0) + 1; }; }, navigator: {} };
+new Function("window", "self", "root", CEL.replace(/\}\)\(typeof window !== ["']undefined["'] \? window : this\);?\s*$/, "})(window);"))(fakeRoot2, fakeRoot2, fakeRoot2);
+var VC2 = fakeRoot2.VPCelebrate;
+pass("the 'answerup' slot is there for Dean's file, empty, and empty plays nothing even on the wall", VC2 && VC2.SOUNDS.answerup === "" && VC2.sound("answerup", { wall: true }) === false && !fakeRoot2.played, VC2 && VC2.SOUNDS);
+VC2.SOUNDS.answerup = "/sounds/answerup.mp3";
+pass("with a file: a phone never tapped (and muted) stays silent, the wall plays it with no tap", VC2.sound("answerup") === false && VC2.sound("answerup", { wall: true }) === true && fakeRoot2.played === 1, fakeRoot2.played);
 pass("Time's up asks the one player for its slot and the one buzz, and has no player of its own", /c\.sound\('timesup'\)/.test(QR) && /c\.buzz\(180\)/.test(QR) && !/new root\.Audio|\.play\(\)|vibrate/.test(QR));
 print("\nTHE PODIUM (INBOX 313): IN THE LEAD OR TOP 3, THE TRIVIA NIGHT'S STEPS, THEN THE BOARD");
 var PR = {};

@@ -225,7 +225,10 @@
      file in SOUNDS is a data change, nothing else moves. An empty slot plays nothing (never a synth stand-in).
      A phone plays only after the player has tapped the page (phones refuse sound before a tap), never on a
      demo page, and never when the player turned sound off with the mute button (kept on this phone). */
-  var SOUNDS = { timesup: "", podium: "" };
+  /* answerup (Dean 12 Nov 2026, INBOX 282.5, FINDINGS T7): the trivia answer goes up BEFORE the clock reaches 0 (every
+     team is in, or the host revealed early), the moment the time's-up buzzer never gets to play. Played by the venue's
+     wall (or the host's device when the buzzer is set to play there), never the phones. Empty until Dean's sound pass. */
+  var SOUNDS = { timesup: "", podium: "", answerup: "" };
   var _tapped = false, _audio = null;
   if (root.document && root.document.addEventListener) {
     var _onTap = function () { _tapped = true; root.document.removeEventListener("pointerdown", _onTap, true); };
@@ -233,9 +236,11 @@
   }
   function muted() { try { return root.localStorage.getItem("vpqMute") === "1"; } catch (e) { return false; } }
   function setMuted(m) { try { root.localStorage.setItem("vpqMute", m ? "1" : "0"); } catch (e) {} }
-  function sound(name) {
-    var src = SOUNDS[name];
-    if (!src || !_tapped || muted() || isDemoPage()) return false;
+  /* opts.wall: the venue's own speaker (a TV, or the host's console), not a punter's phone: no tap is asked for (a TV
+     is driven by a remote and is never tapped) and the phone's mute button does not apply. */
+  function sound(name, opts) {
+    var src = SOUNDS[name], wall = !!(opts && opts.wall);
+    if (!src || isDemoPage() || (!wall && (!_tapped || muted()))) return false;
     try { _audio = _audio || new root.Audio(); _audio.src = src; var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
     catch (e) { return false; }
   }
