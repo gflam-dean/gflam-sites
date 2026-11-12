@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 02:00 · d1561c1c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 12:51 · 77427a53';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2718,8 +2718,16 @@ const COASTER_FIND_LIMIT = 8;        // picks shown at once; "keep typing" past 
 const COASTER_LISTED_READ = 60;      // rows read from our licensed list per search, before scoring
 const COASTER_OPTIN_MAX_PER_IP = 10; // sign-ups per 10 minutes per network
 const COASTER_LIVE_HOURS = 10;       // a game opened longer ago than this is not "game on now"
-/* Dean's target words: only listed venues whose NAME has one of these show from our licensed list. */
-const COASTER_LISTED_WORDS = /(?:^|[^a-z])(hotel|hotels|pub|pubs|tavern|taverns|rsl|club|clubs)(?![a-z])/i;
+/* WHICH NAMES FROM OUR LICENSED LIST SHOW IN THE PICKER (Dean, 12 Nov 2026, INBOX 304/305). By NAME words, whole
+   words only, never a substring and never the licence Type column (CLAUDE.md): pubs, taverns, hotels, clubs, RSLs,
+   bowls clubs, leagues clubs, inns and arms. Every venueplay venue and every HQ coaster venue shows whatever its
+   name (coasterRows), so none of this ever drops one of ours. */
+const COASTER_LISTED_WORDS = /(?:^|[^a-z])(hotel|hotels|pub|pubs|tavern|taverns|rsl|club|clubs|bowls|leagues|inn|inns|arms)(?![a-z])/i;
+/* ...and not the ACCOMMODATION hotels (INBOX 305), while the country pub called "X Hotel" stays: (a) the hotel
+   chains and brands, whole words; (b) a name with Motel, Motor Inn, Apartments, Serviced, Suites, Backpackers,
+   Hostel or YHA in it. Applied to our licensed list only. */
+const COASTER_LISTED_STAY = /(?:^|[^a-z])(hilton|novotel|ibis|mercure|holiday inn|crowne plaza|rydges|marriott|sheraton|westin|four points|pullman|sofitel|hyatt|radisson|intercontinental|langham|shangri-?la|ritz-?carlton|quest|oaks|meriton|adina|vibe|mantra|peppers|travelodge|best western|comfort inn|quality inn|quality hotel|ramada|wyndham|accor|crown towers|grand chancellor|motels?|motor inns?|apartments?|serviced|suites?|backpackers?|hostels?|yha)(?![a-z])/i;
+function coasterListedName(name) { const n = String(name || ''); return COASTER_LISTED_WORDS.test(n) && !COASTER_LISTED_STAY.test(n); }
 const COASTER_STATE_TZ = { NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne', TAS: 'Australia/Hobart',
   QLD: 'Australia/Brisbane', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
 const COASTER_STATES = ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'];
@@ -2792,7 +2800,7 @@ async function coasterPlace(env, place) {
     /* A venue on our licensed list: its own board, under its list id, only for the names the search shows. */
     const rows = await sbGet(env, 'vp_licensed_venues', 'id=eq.' + enc(m[4]) + '&select=id,name,suburb,au_state&limit=1');
     const l = rows && rows[0];
-    if (!l || !COASTER_LISTED_WORDS.test(l.name || '')) return null;
+    if (!l || !coasterListedName(l.name)) return null;
     return { place: 'l:' + l.id, name: l.name, suburb: l.suburb || '', logo_url: '', tz: COASTER_STATE_TZ[l.au_state] || 'Australia/Brisbane', listed: true };
   }
   let kind = m[1], id = m[2];
@@ -2867,7 +2875,7 @@ async function coasterListed(env, typed) {
     rows = (await sbGet(env, 'vp_licensed_venues', 'name=ilike.' + enc('*' + longest + '*') +
       '&select=id,name,suburb,postcode,au_state&order=name.asc,id.asc&limit=' + COASTER_LISTED_READ)) || [];
   } catch (e) { rows = []; }
-  return rows.filter((l) => l && l.id && COASTER_LISTED_WORDS.test(l.name || ''))
+  return rows.filter((l) => l && l.id && coasterListedName(l.name))
     .map((l) => ({ place: 'l:' + l.id, name: l.name || '', suburb: l.suburb || '', postcode: l.postcode || '', state: l.au_state || '', on: false, listed: true }));
 }
 
@@ -3097,7 +3105,8 @@ async function coasterOptinAsk(env, where) {
    (migration 174; tried once more without it if the column is not there, so a sign-up is never lost), in
    vp_captures with source 'coaster'. The round's secret proves this phone played the round, not that it
    was in the room, so like every sign-up that cannot prove that (/join/list, a token-less /capture) it is
-   kept with during_game false: stored, and left out of the venue's export by the existing rule. */
+   kept with during_game false, and the venue's opt-in export reads source 'coaster' rows itself (vpaOptinCsv,
+   Dean 12 Nov 2026, INBOX 303): only with that venue's tick, consent_version kept with it. */
 async function handleCoasterOptin(request, env, json) {
   const b = await readJson(request);
   const playId = assertUuid(String(b.play || ''), 'round');

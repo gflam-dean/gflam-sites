@@ -175,9 +175,10 @@ var RealDate = Date;
 function FixedDate(x) { if (!(this instanceof FixedDate)) return new RealDate(NOW).toString(); return arguments.length ? new RealDate(x) : new RealDate(NOW); }
 FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; FixedDate.parse = RealDate.parse; FixedDate.prototype = RealDate.prototype;
 
-var SRC = SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
-  lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + BLOCK +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };";
+function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
+  lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
   "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", SRC)(
   sbGet, sbGetAll, sbInsertAny, sbPatchReturning, sbDelete, abuseIpHash, rateLimit, enc, MiniURL, fakeFetch, FixedDate,
@@ -196,7 +197,12 @@ function fresh() {
       { id: "77777777-7777-4777-8777-777777777773", name: "Royal Hotel", postcode: "4000", au_state: "QLD", status: "active" },
       { id: "77777777-7777-4777-8777-777777777774", name: "Royal Hotel", postcode: "5000", au_state: "SA", status: "active" },
       { id: "77777777-7777-4777-8777-777777777775", name: "Royal Hotel", postcode: "6000", au_state: "WA", status: "active" },
-      { id: "77777777-7777-4777-8777-777777777776", name: "Royal Hotel", postcode: "7000", au_state: "TAS", status: "active" }
+      { id: "77777777-7777-4777-8777-777777777776", name: "Royal Hotel", postcode: "7000", au_state: "TAS", status: "active" },
+      /* INBOX 307: venueplay venues whose names have no pub, club or hotel word, and one with an accommodation
+         word: every active venueplay venue is in the picker, whatever its name. */
+      { id: "88888888-8888-4888-8888-888888888881", name: "The Lunatic", postcode: "4217", au_state: "QLD", status: "active" },
+      { id: "88888888-8888-4888-8888-888888888882", name: "Revolver Upstairs", postcode: "3181", au_state: "VIC", status: "active" },
+      { id: "88888888-8888-4888-8888-888888888883", name: "Zeta Motel", postcode: "4350", au_state: "QLD", status: "active" }
     ],
     vp_venue_screen: [{ venue_id: V_MINI, slug: "the-mini-bar", logo_url: "https://x.supabase.co/storage/v1/object/public/venue-logos/mini.png" }],
     vp_coaster_venues: [
@@ -690,6 +696,60 @@ step(function () {
   pass("the sign-up goes through the phones' own gate (gatedCapture) and the venue's own settings (venueCollectCfg), never a copy",
     /gatedCapture\(cfg, /.test(BLOCK) && /venueCollectCfg\(env, where\.venue_id\)/.test(BLOCK) && BLOCK.indexOf("function gatedCapture") < 0);
   return Promise.resolve();
+});
+
+step(function () {
+  print("\nTHE PICKER'S LIST (Dean 12 Nov, INBOX 304-307): EVERY VENUEPLAY VENUE, AND ONLY PUBS AND CLUBS FROM OUR LIST");
+  fresh(); NOW = FRI_830PM;
+  DB.vp_licensed_venues = DB.vp_licensed_venues.concat([
+      /* INBOX 304/305: the family words, and the accommodation hotels left out (the country "X Hotel" kept). */
+      { id: 120, name: "Zeta Hotel", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 121, name: "Zeta Leagues", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 122, name: "Zeta Bowls", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 123, name: "Zeta Arms", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 124, name: "Zeta Inn", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 125, name: "Hilton Zeta Hotel", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 126, name: "Novotel Zeta", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 127, name: "Zeta Motor Inn", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 128, name: "Zeta Suites Hotel", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 129, name: "Zeta Backpackers Hotel", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 130, name: "Zeta Serviced Apartments", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 131, name: "Zetabowls Cafe", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 132, name: "Quest Zeta Hotel", suburb: "Zeta", postcode: "2650", au_state: "NSW" },
+      { id: 133, name: "Zeta Bowling Greens", suburb: "Zeta", postcode: "2650", au_state: "NSW" }
+  ]);
+  var active = DB.vp_venues.filter(function (v) { return v.status === "active"; });
+  var missing = [];
+  var chainP = Promise.resolve();
+  active.forEach(function (v) {
+    chainP = chainP.then(function () { W.reset(); return get(W.venues, "?q=" + encodeURIComponent(v.name)); }).then(function (r) {
+      if (!r.body.matches.some(function (m) { return m.place === "v:" + v.id && m.on === true; })) missing.push(v.name);
+    });
+  });
+  return chainP.then(function () {
+    pass("EVERY active venueplay venue (" + active.length + ") is in the picker under its own name, whatever the name", active.length >= 10 && missing.length === 0, missing);
+    pass("...including The Mini Bar, The Lunatic and Revolver Upstairs (no pub, club or hotel word)",
+      ["The Mini Bar", "The Lunatic", "Revolver Upstairs"].every(function (n) { return active.some(function (v) { return v.name === n; }) && missing.indexOf(n) < 0; }), missing);
+    W.reset();
+    return get(W.venues, "?q=zeta");
+  }).then(function (r) {
+    var names = r.body.matches.map(function (m) { return m.name; });
+    pass("a venueplay venue with an accommodation word ('Zeta Motel') is never dropped", r.body.matches.some(function (m) { return m.place === "v:88888888-8888-4888-8888-888888888883"; }), names);
+    pass("our list keeps the country pub called 'X Hotel' ('Zeta Hotel')", names.indexOf("Zeta Hotel") >= 0, names);
+    pass("our list keeps leagues, bowls, arms and inn names (whole words)",
+      ["Zeta Leagues", "Zeta Bowls", "Zeta Arms", "Zeta Inn"].every(function (n) { return names.indexOf(n) >= 0; }), names);
+    pass("our list drops the hotel chains (Hilton, Novotel, Quest)", !names.some(function (n) { return /hilton|novotel|quest/i.test(n); }), names);
+    pass("our list drops motor inns, suites, backpackers and serviced apartments", !names.some(function (n) { return /motor inn|suites|backpackers|serviced/i.test(n); }), names);
+    pass("whole words only: 'Zetabowls Cafe' and 'Zeta Bowling Greens' are not bowls clubs", !names.some(function (n) { return /zetabowls|bowling/i.test(n); }), names);
+    pass("exactly the venueplay venue and the five kept names", names.length === 6, names);
+    calls = [];
+    return post(W.start, { name: "Jo", place: "l:125", qids: five(0) });
+  }).then(function (r) {
+    pass("a chain hotel's board 'l:<id>' is refused even when typed in by address", r.status >= 400 && !DB.vp_coaster_plays.length, [r.status, r.body]);
+    return post(W.start, { name: "Jo", place: "l:120", qids: five(0) });
+  }).then(function (r) {
+    pass("...while the kept country pub's board opens", r.status === 200 && r.body.place === "l:120", [r.status, r.body]);
+  });
 });
 
 var chain = Promise.resolve();

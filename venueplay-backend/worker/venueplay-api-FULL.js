@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '12 Nov 2026, 01:52 · aff804b3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 12:45 · ac590db9';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -19188,6 +19188,21 @@ async function vprMonthlySweep(env, nowMs, opts) {
    filtered to o.venues only (resolved from the login), never from anything the browser sends,
    so an owner can never pull another venue's or account's contacts. --- */
 
+/* The view's rows (already in the export's order) with the coaster's sign-ups put among them in that same
+   order: opted_in_at newest first (no time first, as Postgres puts NULLs in a DESC sort), then email, then
+   mobile (no value last). No coaster rows: the view's rows exactly as read. */
+function vpaOptinMerge(viewRows, extra) {
+  const a = (viewRows || []).slice();
+  if (!extra || !extra.length) return a;
+  const cmpAsc = (x, y) => (x == null ? (y == null ? 0 : 1) : (y == null ? -1 : (x < y ? -1 : (x > y ? 1 : 0))));
+  return a.concat(extra).sort((p, q) => {
+    const at = (r) => (r.opted_in_at == null ? null : new Date(r.opted_in_at).getTime());
+    const pa = at(p), qa = at(q);
+    const t = pa == null ? (qa == null ? 0 : -1) : (qa == null ? 1 : qa - pa);   // newest first, no time first
+    return t || cmpAsc(p.email, q.email) || cmpAsc(p.mobile, q.mobile);
+  });
+}
+
 /* The opt-in CSV for a set of venues. One builder, two callers: the owner's own download and
    HQ's download of anybody's. A second copy would have drifted the moment the header changed,
    and the header is the bit a venue pastes into a mail tool. */
@@ -19205,11 +19220,28 @@ async function vpaOptinCsv(env, venues) {
       /* opted_in_at is NOT unique, and offset paging over a non-unique order can skip a
          row at a page boundary when two timestamps tie. The tiebreakers make it total. */
       + '&order=opted_in_at.desc,email.asc,mobile.asc');
+    /* THE DRINK COASTER'S SIGN-UPS (Dean, 12 Nov 2026, INBOX 303: "coaster / live here now sign-ups MUST
+       show in the venue's player export, same opt-in rules as game players"). /coaster/optin keeps them in
+       vp_captures with source 'coaster' and during_game false (the round proves the phone played, not that
+       it was in the room), so the view above leaves them out. They are read here by the view's own rule
+       for a capture: THIS venue's row, and the venue's opt-in tick (marketing_optin true; gatedCapture
+       only sets it with an email or mobile, and keeps consent_version with it). No tick, never in this
+       file. Paged and fail-closed like the view: a failed read refuses the file, never a short list. */
+    const coaster = await vpaSelectAll(env, 'vp_captures',
+      'venue_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+      + '&source=eq.coaster&marketing_optin=is.true'
+      + '&select=id,venue_id,first_name,last_name,email,mobile,postcode,marketing_optin,marketing_optin_at'
+      + '&order=marketing_optin_at.desc,id.asc');
+    /* And again here, so no change to the read above can ever let an untick or another venue's row through. */
+    const mine = new Set(ids);
+    const optinRows = vpaOptinMerge(rows, (coaster || []).filter((c) => c && c.marketing_optin === true && mine.has(c.venue_id) && (c.email || c.mobile))
+      .map((c) => ({ venue_id: c.venue_id, first_name: c.first_name, last_name: c.last_name, email: c.email,
+                     mobile: c.mobile, postcode: c.postcode, opted_in_at: c.marketing_optin_at })));
     /* One person once. The same punter joins a dozen nights, and a venue pasting this into a
        mail tool must not email them a dozen times. Keyed on email, then mobile, then the name,
        which is the same order of trust the rest of this file uses. */
     const seen = {};
-    for (const r of (rows || [])) {
+    for (const r of optinRows) {
       const key = String(r.email || r.mobile || ((r.first_name || '') + '|' + (r.last_name || ''))).toLowerCase();
       if (seen[key]) continue; seen[key] = true;
       out.push([vname[r.venue_id] || '', r.first_name, r.last_name, r.email, r.mobile, r.postcode, r.opted_in_at]);
@@ -19236,7 +19268,7 @@ async function vpaOptinCsv(env, venues) {
     try {
       const h = await vpaSelectAll(env, 'vp_captures',
         'venue_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
-        + '&marketing_optin=is.true&during_game=is.false&select=id&order=id.asc');
+        + '&marketing_optin=is.true&during_game=is.false&or=(source.is.null,source.neq.coaster)&select=id&order=id.asc');
       held = (h || []).length;
     } catch (_) { held = 0; }
   }

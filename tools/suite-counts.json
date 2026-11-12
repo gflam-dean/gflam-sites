@@ -916,7 +916,7 @@
   "counted_by": "lines"
  },
  "tools/test-optin-held-back.js": {
-  "checks": 11,
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-overage-ack-covers-room.js": {
@@ -1704,7 +1704,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 138,
+  "checks": 149,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {
