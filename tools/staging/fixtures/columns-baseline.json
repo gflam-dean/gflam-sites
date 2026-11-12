@@ -1,0 +1,16 @@
+{
+ "vp_venues": [
+  "id",
+  "slug",
+  "name"
+ ],
+ "vp_members": [
+  "id",
+  "roster_id",
+  "member_number"
+ ],
+ "v_vp_trusted": [
+  "name",
+  "logo_url"
+ ]
+}
