@@ -60,20 +60,30 @@
   }
 
   /* The limits, in pixels, for a screen of W x H (kind "tv") or a phone W wide (kind "phone"). */
-  function limits(kind, W, H) {
+  /* THE TV'S SAFE BOX (Dean via main, INBOX 321.2, 12 Nov 2026: a 5% title-safe margin on every TV screen, because
+     his Kogan TV crops the edges). A TV page that loads /app/vp-tvsafe.css draws its wall in the middle 90% of the
+     window, so the logo is sized and placed against THAT box: 7% of the safe width, and the safe box's own corner
+     plus the same 1.2% in as the venueplay mark (which sits right:1.2cqw inside the box). 0 with no sheet: the
+     window, as before. tools/TV-SAFE-AREA-DECISION.md */
+  function safeShare() {
+    try { return (d && d.querySelector && d.querySelector('link[href*="vp-tvsafe.css"]')) ? 0.05 : 0; } catch (e) { return 0; }
+  }
+  function limits(kind, W, H, safe) {
     if (kind === "phone") {
       return { side: PHONE.side, maxH: PHONE.maxH, minH: PHONE.minH,
                maxW: Math.min(PHONE.maxW, Math.round((W || 390) * PHONE.maxWvw)) };
     }
     W = W || 1920; H = H || 1080;
+    var ox = (safe || 0) * W, oy = (safe || 0) * H;   /* the safe box: W x H less 5% each side when safe is 0.05 */
+    W = W - 2 * ox; H = H - 2 * oy;
     return { side: TV.side * W, maxW: TV.maxW * W, maxH: TV.maxH * H, minH: TV.minH * H,
-             inset: Math.max(14, Math.round(TV.inset * W)), insetX: TV.edge * W };
+             inset: oy + Math.max(14, Math.round(TV.inset * W)), insetX: ox + TV.edge * W };
   }
 
   function size(img, kind) {
     var W = w.innerWidth || (d.documentElement && d.documentElement.clientWidth) || 0;
     var H = w.innerHeight || (d.documentElement && d.documentElement.clientHeight) || 0;
-    var L = limits(kind, W, H);
+    var L = limits(kind, W, H, kind === "phone" ? 0 : safeShare());
     var b = box(img.naturalWidth || 0, img.naturalHeight || 0, L);
     var s = img.style;
     s.width = b.w + "px"; s.height = b.h + "px";
@@ -382,5 +392,5 @@
     el.classList.remove("hidden");
   }
 
-  w.VPVenueLogo = { alignMark: alignMark, alignName: alignName, markBox: markBox, headerName: headerName, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { safeShare: safeShare, alignMark: alignMark, alignName: alignName, markBox: markBox, headerName: headerName, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

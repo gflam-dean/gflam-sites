@@ -1,20 +1,39 @@
-/* vp-tvsafe.css  -- THE TITLE-SAFE MARGIN ON EVERY TV SCREEN (INBOX 287.1, 12 Nov 2026).
+/* vp-tvsafe.css  -- THE TITLE-SAFE MARGIN ON EVERY TV SCREEN (INBOX 287.1, 12 Nov 2026; Dean via main INBOX 321.2).
 
    Dean's photos of the Kogan TV app on 12 Nov: the venue logo top left and the called board on the right
    looked cut off. A television may crop the picture's edges (overscan), and broadcast has long kept words
    and logos inside the middle 90% of the picture for that reason: the "title-safe" area. So every TV screen
    (/tv and the trivia, musical bingo, raffle, members draw and Top Answers screens, standalone or in /tv's
-   frame) draws its whole wall inside 5% of each edge. The 5% border is the page's own dark background,
-   so nothing looks framed on a TV that does not crop.
+   frame) draws its wall inside 5% of each edge: 54px top and bottom, 96px left and right at 1920x1080.
+   The 5% border is the page's own dark background, so nothing looks framed on a TV that does not crop.
+
+   THE RULE (tools/TV-SAFE-AREA-DECISION.md): the venue logo or name, the boards, every word, the QR and the
+   venueplay mark sit inside the safe box, and their sizes are a share of the SAFE BOX, not the window.
+   Photo slides and full-screen backgrounds stay full-bleed (Dean, 9 Nov 2026: "Why would I want slides
+   with a black border?").
 
    HOW. Every screen lays itself out in container units of its .tv box, so moving the box's four edges in
    by 5% of the window scales every word, number and logo on it by the same 90% and keeps the layout
-   exactly as designed. Things placed on the WINDOW rather than the box (the venue logo, top left, the
-   corner wrap on Top Answers) move in by the same 5%. Longhand top/right/bottom/left in vh and vw, never
-   `inset` or container units: a <link> stylesheet is not rewritten by /app/vp-oldtv.js, and an old TV
-   engine must still read every line here.
+   exactly as designed. The venue logo is placed on the WINDOW, so /app/vp-venuelogo.js sizes and places it
+   against the safe box when this sheet is on the page (VPVenueLogo.safeShare). Longhand top/right/bottom/left
+   in vh and vw, never `inset` or container units: a <link> stylesheet is not rewritten by /app/vp-oldtv.js,
+   and an old TV engine must still read every line here.
 
    Loaded straight after each screen's own <style>. Checked by tools/tv-safe-area-in-chrome.test.py at
    1920x1080 and 1280x720. */
 .tv, .tv-corner-wrap{top:5vh!important;bottom:5vh!important;left:5vw!important;right:5vw!important}
-#venueLogo{top:calc(5vh + 14px)!important;left:calc(5vw + 14px)!important}
+
+/* What shows if vp-venuelogo.js never runs: the safe box's corner. The script's own px place wins (inline). */
+#venueLogo{top:calc(5vh + 14px);left:calc(5vw + 14px)}
+
+/* PHOTO SLIDES STAY FULL-BLEED. tv.html marks a slide with a picture .ad-photo; it reaches back out to the
+   window's edges over the border, and the wall box no longer clips it (the window does). The slide's words,
+   if any, keep the layer's padding, which is a share of the safe box. */
+.tv.tv-bleed{overflow:visible!important}   /* tv.html only: the window clips it (body overflow hidden) */
+#tvAds .ad-photo{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw}
+
+/* THE BINGO REVEAL BALL. It is min(56cqw, 68vh) and pops in at up to 1.3x, which on the safe box reached
+   14px from the top at 1920x1080. 68vh of the window is 61.2vh of the safe box's height share (90%), so the
+   ball and its rings are capped there: the same share of the box as it was of the window. */
+.tv .brball, .tv .brrings{max-width:61.2vh;max-height:61.2vh}
+.tv .brball{font-size:39.6vh}
