@@ -613,17 +613,20 @@
   .brdim{background:rgba(5,5,6,.9)}
   .brcall{text-shadow:none}
   /* claim */
-  #tvClaim .eyebrow{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.3em;font-size:1.3cqw;color:#8A8A95}
+  #tvClaim .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;font-size:2.2cqw;color:#8A8A95}   /* normal case, not spaced mono caps (INBOX 287.2) */
   #tvClaim .claimbig{color:var(--pink);text-shadow:none}
   #tvClaim .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#8A8A95}
   /* win, F */
   #tvWin .winrow{display:flex;align-items:center;justify-content:center;gap:5cqw;text-align:left;margin-top:3cqw}
   #tvWin .winring{flex:none;width:min(29cqw,42vh);aspect-ratio:1;border-radius:50%;border:.85cqw solid #FFD93D;background:#0A0A0B;box-shadow:0 0 3cqw rgba(255,217,61,.28);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:min(15cqw,22vh);line-height:1;color:#fff}
   #tvWin .wincol{min-width:0;max-width:44cqw}
-  #tvWin .wineye{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.5cqw;line-height:1.2;color:#FFD93D}
+  /* NORMAL CASE, NO SPACED MONO CAPS (INBOX 287.2, 12 Nov 2026: "B I N G O  O N  5 7" / "W I N S" on the Kogan = the
+     banned AI look). Plain words in the wall's own type, a size up so they still read from the bar. The cooler claim and
+     winner screen itself (B3) is a design pick for Dean; this is only the wording's look. */
+  #tvWin .wineye{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;font-size:2.4cqw;line-height:1.2;color:#FFD93D}
   #tvWin .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:min(11cqw,16vh);line-height:1.02;color:#fff;margin-top:1cqw;text-shadow:none;overflow-wrap:anywhere}
   #tvWin .winline{display:flex;align-items:baseline;gap:1.6cqw;margin-top:1.4cqw;flex-wrap:wrap}
-  #tvWin .winslabel{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.4cqw;color:#8A8A95;margin:0}
+  #tvWin .winslabel{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:min(3.2cqw,4.8vh);color:#8A8A95;margin:0}
   #tvWin .winprize{font-family:'Manrope',sans-serif;font-weight:800;font-size:min(5cqw,7.5vh);line-height:1.1;color:#fff;margin:0;filter:none}
   #tvWin .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.4cqw;color:#8A8A95;margin-top:2cqw}
   #tvWin #winCardPart{display:none!important}
