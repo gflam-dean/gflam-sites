@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/game-screens-fit-in-chrome.test.py": {
-  "checks": 338,
+  "checks": 382,
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
@@ -252,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 248,
+  "checks": 254,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {

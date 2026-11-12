@@ -229,10 +229,39 @@ def venue_logo_ok(P, tag):
        (m.get('src') or '').endswith(LOGO_FILE) and m.get('shown') is True and m.get('loaded') is True and not m.get('nameShown') and not m.get('typed'), m)
 
 
+# INBOX 320.7 (Dean, 12 Nov 2026): our logo and Help on EVERY game screen, in the SAME spot on every screen of every game.
+# Every screen fits() measures adds its logo and Help here; main() then holds each phone size to one spot.
+FOOT = {}
+FOOT_PROBE = r'''(function(){ var s=document.querySelector("#app > .pfoot svg, .app > .pfoot svg"), h=document.getElementById("vphLink");
+  function R(e){ if(!e) return null; var r=e.getBoundingClientRect(), c=getComputedStyle(e); if(!r.width || !r.height || c.visibility==="hidden" || c.display==="none") return null; return [r.left,r.top,r.right,r.bottom]; }
+  return JSON.stringify({ logo:R(s), help:R(h), H:innerHeight, W:innerWidth }); })()'''
+
+
+def foot_spot(P, tag):
+    f = P.obj(FOOT_PROBE) or {}
+    lg, hp, H = f.get('logo'), f.get('help'), f.get('H') or 0
+    ok('%s: our logo and Help are both on screen, Help on the logo\'s line, at the right of it' % tag,
+       bool(lg and hp) and lg[3] <= H + 1 and hp[3] <= H + 1 and hp[0] >= lg[2] and hp[2] <= (f.get('W') or 0) + 0.5 and abs((hp[1] + hp[3]) / 2 - (lg[1] + lg[3]) / 2) <= 3, f)
+    if lg and hp:
+        FOOT.setdefault((P.w, P.h), []).append((tag, round(H - lg[3], 1), round(H - hp[3], 1), round((lg[0] + lg[2]) / 2, 1), round(hp[2], 1)))
+
+
+def foot_same_spot(w, h):
+    rows = FOOT.get((w, h)) or []
+    games = set(r[0].split(' ')[0] for r in rows)
+    lo = [r[1] for r in rows]; hl = [r[2] for r in rows]; cx = [r[3] for r in rows]
+    hr = [r[4] for r in rows]
+    ok('%dx%d: our logo and Help sit in the SAME spot on every game screen measured (%d screens, %s): logo %s to %spx from the bottom, Help %s to %spx, centre %s to %s'
+       % (w, h, len(rows), ', '.join(sorted(games)), min(lo or [0]), max(lo or [0]), min(hl or [0]), max(hl or [0]), min(cx or [0]), max(cx or [0])),
+       len(rows) >= 10 and {'trivia', 'bingo', 'musical'} <= games and max(lo) - min(lo) <= 3 and max(hl) - min(hl) <= 3 and max(cx) - min(cx) <= 2 and max(hr) - min(hr) <= 2,
+       [r[:3] for r in rows if abs(r[1] - (sorted(lo)[len(lo) // 2])) > 3 or abs(r[2] - (sorted(hl)[len(hl) // 2])) > 3][:12] + ['median', sorted(lo)[len(lo) // 2] if lo else None])
+
+
 def fits(P, tag, need=()):
     """The screen fits: no scrolling down or sideways, nothing inside it scrolls, no spaced caps; `need` are
     selectors that must be fully on screen."""
     time.sleep(0.6)
+    foot_spot(P, tag)   # our logo and Help, in their one spot (INBOX 320.7)
     m = P.obj(MEASURE) or {}
     P.shot(tag.replace(' ', '-').replace(':', '').replace('/', '-').lower())
     ok('%s: the page does not scroll down (%s tall on a %s screen)' % (tag, m.get('sh'), m.get('H')), (m.get('sh') or 9999) <= (m.get('H') or 0) + 1, [m.get('view'), m.get('text')])
@@ -506,6 +535,7 @@ def main():
                 try: fn(B, base, w, h)
                 except Exception as e:
                     import traceback; traceback.print_exc(); ok('%s %dx%d ran to the end' % (name, w, h), False, e)
+            if not ONLY: foot_same_spot(w, h)
     finally:
         B.close(); srv.shutdown()
     print('')

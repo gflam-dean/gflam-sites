@@ -10,7 +10,9 @@
 
      VenuePlay phone pages (play, musical, trivia)
        <script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
-       add data-menu-only="1" for Help in the phone's menu only, no link at the foot (the trivia phone)
+       add data-menu-only="1" for Help in the phone's menu only, no link at the foot. A GAME phone (our logo at the
+       foot, #app > .pfoot) ignores it since 12 Nov 2026 (Dean, INBOX 320.7): Help on our logo's line, at the right,
+       on every game.
      VenuePlay console, settings, account
        <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script>
      PartyPlay guest phone
@@ -115,6 +117,10 @@
     var s = el("style"); s.id = "vphCss";
     s.textContent =
       ".vph-foot{text-align:center;padding:22px 16px calc(22px + env(safe-area-inset-bottom));clear:both}" +
+      ".pfoot .vph-foot{margin:0;padding:0}.pfoot .vph-link{padding:4px 12px 2px}" +
+      ".pfoot.vph-has{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}.pfoot.vph-has > svg{grid-column:2}" +
+      ".pfoot.vph-has .vph-foot{grid-column:3;justify-self:end}" +
+      ".pfoot.vph-has{padding-bottom:max(12px, env(safe-area-inset-bottom, 0px))!important}" +   /* one spot on every screen and game (320.7) */
       ".vph-link{background:none;border:none;color:#9A9AA4;font:600 13px/1.4 'Manrope',system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px 12px;-webkit-tap-highlight-color:transparent}" +
       ".vph-link:hover{color:#E7E7EC}" +
       ".vph-bg{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center}" +
@@ -706,9 +712,15 @@
     // patron and guest: in the flow at the very end of the page, never over the game.
     var app = doc.getElementById("app") || doc.querySelector(".app");
     var menu = doc.getElementById("menuPanel");
-    /* data-menu-only="1" (the trivia phone, Dean 3 Nov 2026): Help lives ONLY in the phone's menu (the top
-       right button), with no link at the foot of the page. Only when that menu is really there. */
-    if (!(attr("data-menu-only", "") === "1" && menu)) footLink(MODE === "guest" ? doc.body : (app || doc.body));
+    /* EVERY GAME SCREEN, THE SAME SPOT (Dean, INBOX 320.7, 12 Nov 2026): on a game phone, the one with our logo at the
+       foot (#app > .pfoot: bingo, musical bingo, trivia), Help sits on that logo's line, at the right (the button on the
+       right Dean allowed where space is tight: under the logo pushed a 375x667 trivia and musical screen past the
+       bottom), on every screen of every game, whatever data-menu-only says. That attribute (the trivia phone 3 Nov, the musical phone 4 Nov: Help in the
+       menu only) still keeps any other page's Help in its menu only. */
+    var pfoot = null;
+    if (MODE === "patron" && app) for (var k = 0; k < app.children.length; k++) { if ((" " + app.children[k].className + " ").indexOf(" pfoot ") >= 0) { pfoot = app.children[k]; break; } }
+    if (pfoot) { footLink(pfoot); pfoot.classList.add("vph-has"); }   // on our logo's line, at the right: no extra height
+    else if (!(attr("data-menu-only", "") === "1" && menu)) footLink(MODE === "guest" ? doc.body : (app || doc.body));
     // And in the phone's own menu, which is where people look.
     if (menu) {
       var mi = el("button", "menuitem", "Help and contact"); mi.type = "button"; mi.id = "vphMenu";
