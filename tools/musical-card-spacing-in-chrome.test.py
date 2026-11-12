@@ -25,6 +25,9 @@ more" and the wider, swiped card: all five columns on one screen, NO swipe, ever
 evenly to 10px (one size still; 11px could not hold the review card at 360 wide or on a short phone clear of the
 ticks, so the floor is 10px); only at 10px may a word too wide for its square be narrowed, whole. Plus the text-size
 row in the slot under the card for the first 30 seconds of the game, then in the menu, the size kept (vp-mzoom).
+12 NOV 2026 ~20:35, PER SQUARE (Dean via main INBOX 337, 12 Nov) REPLACES "one size for the whole card": every square
+takes the biggest size that fits its OWN title, broken between words; only a square that cannot fit (one long word, or a
+very long title) goes smaller, never the whole card; Free at the middle size of the titles. Real Pub Classics cards too.
 Drives a real headless Chrome through verify-live.py's browser (imported via musical-newlook-in-chrome.test.py).
 Takes /tmp/vp-heavy.lock (VP_WAIT_LOCK seconds to wait).
 
@@ -74,7 +77,15 @@ SPACING_PROBE = r"""(function(){
     }
     var a=getComputedStyle(c,"::after"), tick=null;
     if(a.content && a.content!=="none" && a.content!=="normal" && a.display!=="none"){ var tw=parseFloat(a.width), th=parseFloat(a.height), x1=inner[2]-parseFloat(a.right); tick=[x1-tw, inner[1]+parseFloat(a.top), x1, inner[1]+parseFloat(a.top)+th]; }
-    out.push({ lines_r:lr, bg:s.backgroundColor, tile:[cb.left,cb.top,cb.right,cb.bottom], raw:(node?node.nodeValue:c.textContent), txt:(node?node.nodeValue:c.textContent).replace(/­/g,""), fs:parseFloat(s.fontSize), lh:parseFloat(s.lineHeight), free:c.classList.contains("free"), daub:c.classList.contains("daub"),
+    var up=null;   /* INBOX 337: 1px bigger, would this title still sit inside its square on whole words, clear of a 10px tick? */
+    if(!c.classList.contains("free") && t!==c && node){
+      var fs0=c.style.fontSize, tf0=t.style.transform, f1=parseFloat(s.fontSize)+1; c.style.fontSize=f1+"px"; t.style.transform="";
+      var cs1=getComputedStyle(c), W1=c.clientWidth-parseFloat(cs1.paddingLeft)-parseFloat(cs1.paddingRight), H1=c.clientHeight-parseFloat(cs1.paddingTop)-parseFloat(cs1.paddingBottom);
+      var cb1=c.getBoundingClientRect(), x0=cb1.right-c.clientLeft-3-10-1, y1=cb1.top+c.clientTop+3+10+1, clear=true, rg1=document.createRange(); rg1.selectNodeContents(node);
+      [].forEach.call(rg1.getClientRects(), function(r){ if(r.width>0.5 && r.top<y1 && r.right>x0) clear=false; });
+      up = t.offsetWidth<=W1+0.5 && t.offsetHeight<=H1+0.5 && clear;
+      c.style.fontSize=fs0; t.style.transform=tf0; }
+    out.push({ up:up, lines_r:lr, bg:s.backgroundColor, tile:[cb.left,cb.top,cb.right,cb.bottom], raw:(node?node.nodeValue:c.textContent), txt:(node?node.nodeValue:c.textContent).replace(/­/g,""), fs:parseFloat(s.fontSize), lh:parseFloat(s.lineHeight), free:c.classList.contains("free"), daub:c.classList.contains("daub"),
       inner:inner, text:L<1e9?[L,T,R,B]:null, lines:ys.length, split:split, hy:hy, wholeFits:wholeFits, tick:tick, sq:/scale/.test(t.style&&t.style.transform||"") });
   });
   var b=document.getElementById("bingoBtn").getBoundingClientRect();
@@ -96,6 +107,20 @@ LONG_CARD = ["Supercalifragilisticexpialidocious", "(I Can't Get No) Satisfactio
 # so a fitter that shrinks a card for nothing is red (the other three cards all hold a long word and go down evenly).
 SHORT_CARD = ["Up", "Help!", "Faith", "Jump", "Kiss", "Vogue", "Angie", "Layla", "Creep", "Torn", "Hello", "Hurt",
               "FREE", "Fame", "Iris", "Toxic", "Waves", "Hero", "Wings", "Shout", "Mama", "Lola", "Smile", "Rio", "Gold"]
+# 12 Nov 2026 (INBOX 337): REAL cards from the Pub Classics playlist (venueplay/data/musical-library.json). PUB_CARD is a
+# card as dealt (a seeded draw of 24 Pub Classics titles); PUB_LONG holds the 20 longest Pub Classics titles as the square
+# shows them, plus the four with the longest single words.
+PUB_CARD = ["You Might Think", "Shout", "Nutbush City Limits", "In the Summertime", "Hitch Hiker", "Thunderstruck", "Wonderwall", "Wild Thing",
+            "Cathy's Clown", "Boom Boom", "Who Can It Be Now?", "Needles and Pins", "FREE", "Living Doll", "Great Southern Land",
+            "How Am I Supposed to Live Without You", "Blue Sky Mine", "Ooh La La", "Grease", "I'd Do Anything for Love (But I Won't Do That)",
+            "Because I Love You", "Overkill", "Reckless", "Bad Company", "Don't Go Breaking My Heart"]
+PUB_LONG = ["When the Going Gets Tough, The Tough Get Going", "Tie a Yellow Ribbon 'Round the Ole Oak Tree", "You Took the Words Right Out of My Mouth",
+            "(I Can't Help) Falling in Love With You", "How Am I Supposed to Live Without You", "Have You Ever Really Loved a Woman?",
+            "Am I Ever Gonna See Your Face Again", "All I Wanna Do Is Make Love to You", "Rockin' Around the Christmas Tree",
+            "(Everything I Do) I Do It for You", "I Just Want to Be Your Everything", "Can't Stop Myself from Loving You", "FREE",
+            "The Best Things In Life Are Free", "These Boots Are Made for Walkin'", "Everybody Needs Somebody to Love", "You've Lost That Lovin' Feelin'",
+            "Killing Me Softly with His Song", "I Just Called To Say I Love You", "Lay Back In the Arms of Someone", "Before the Next Teardrop Falls",
+            "Thunderstruck", "Wonderwall", "That's Entertainment", "L.A. International Airport"]
 # Test Charlie's card at Dean's 10 Nov 2026 live sign-off (shot 34): "Sur-render", "Thunder-struck", 9px titles
 LIVE_CARD = ["I'd Do Anything for Love (But I Won't Do That)", "I Want You to Want Me", "Gimme Shelter", "Life in the Fast Lane", "My Coo-Ca-Choo",
              "Take a Long Line", "Don't Stop Believin'", "You Took the Words Right Out of My Mouth (Hot Summer Night)", "Am I Ever Gonna See Your Face Again", "Surrender",
@@ -121,7 +146,14 @@ def spacing_checks(tag, x, w, h, std):
     bad_split = [(c['txt'], c['split'] + c['hy']) for c in T if c['split'] or c['hy']]
     ok('%s: NO hyphen and no word broken: lines break on spaces only (Dean, 10 Nov 2026)' % tag, not bad_split and not any('\u00ad' in (c.get('raw') or '') for c in T), bad_split)
     fs = sorted(set(c['fs'] for c in C))
-    ok('%s: ONE size for the whole card, Free included (%s)' % (tag, fs), len(fs) == 1, fs)
+    # REPINNED 12 Nov 2026 (Dean via main INBOX 337, 12 Nov): was "ONE size for the whole card, Free included". Now every
+    # square takes the biggest size that fits ITS OWN title; only a square that cannot fit goes smaller, never the card.
+    small = [(c['txt'], c['fs']) for c in T if c.get('up') and c['fs'] + 1 <= 20 + 0.01 and not c['sq']]
+    ok('%s: every title is the biggest size that fits its own square (1px bigger would not fit; sizes %s to %s)' % (tag, fs[0], fs[-1]), not small, small[:5])
+    ts = sorted(c['fs'] for c in T); mid = ts[len(ts) // 2]
+    ok('%s: Free is drawn at the middle size of the titles (%spx, middle %spx)' % (tag, C[12]['fs'], mid), abs(C[12]['fs'] - mid) < 0.01, [C[12]['fs'], ts])
+    if std is True or std == 'pub':
+        ok('%s: a long word brings only its own square down: the card is not one size (%s to %spx)' % (tag, fs[0], fs[-1]), fs[-1] >= fs[0] + 3, fs)
     aw = x.get('aw') or 1
     # REPINNED 12 Nov 2026 (option C, Dean via main INBOX 323): was "15px or more unless the widest card (2.2x) cannot hold a word"
     ok('%s: 10px or more (%spx): a long word brings the whole card down evenly, never under 10px (option C)' % (tag, fs[0]), fs[0] >= 10 - 0.01, [fs, aw])
@@ -166,12 +198,14 @@ def T_(C):
 
 
 def spacing(B, base):
-    print('\nTHE CARD: ONE SIZE, 15px, NO HYPHEN, NEVER SHRUNK BY A NOTE (Dean, 10 Nov 2026): 360, 375, 390, 430 wide and a short phone')
+    print('\nTHE CARD: EVERY SQUARE ITS OWN BIGGEST SIZE (INBOX 337), NO HYPHEN, NEVER SHRUNK BY A NOTE: 360, 375, 390, 430 wide and a short phone')
     keep = list(CELLS)
     try:
         for name, cells, marks in (('the review card', keep, ["Never Gonna Give You Up", "Livin' on a Prayer", "Hey Ya!", "Bohemian Rhapsody", "Dancing Queen", "Khe Sanh", "Mr. Brightside", "The Horses", "Africa", "Wonderwall", "September"]),
                                    ('short titles', SHORT_CARD, ["Up", "Help!", "Faith", "Jump", "Kiss"]),
                                    ('the 10 Nov live card', LIVE_CARD, ["Down Down", "Thunderstruck", "I Got You Babe", "In the Summertime", "Surrender"]),
+                                   ('the Pub Classics card', PUB_CARD, ["Thunderstruck", "Wonderwall", "Shout", "How Am I Supposed to Live Without You", "Hitch Hiker"]),
+                                   ('the 20 longest Pub Classics titles', PUB_LONG, ["Thunderstruck", "When the Going Gets Tough, The Tough Get Going", "L.A. International Airport", "Wonderwall"]),
                                    ('very long titles', LONG_CARD, ["Bohemian Rhapsody", "Sweet Child O' Mine", "Smells Like Teen Spirit", "Livin' on a Prayer", "Supercalifragilisticexpialidocious", "I Would Do Anything for Love (But I Won't Do That)", "Wonderwall", "Up"])):
             for (w, h) in ((360, 740), (375, 812), (390, 844), (430, 932), (375, 664), (390, 690)):
                 CELLS[:] = cells
@@ -185,7 +219,7 @@ def spacing(B, base):
                     P.js(say('vp-' + ROOM, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'game_id': 'g1'}]))
                     P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15); time.sleep(1.2)
                     x0 = P.obj(SPACING_PROBE) or {}
-                    spacing_checks(tag, x0, w, h, 'short' if cells is SHORT_CARD else (cells is keep))
+                    spacing_checks(tag, x0, w, h, 'short' if cells is SHORT_CARD else 'pub' if cells is PUB_CARD else (cells is keep))
                     for s_ in marks:
                         P.js('(function(){ var c=[].filter.call(document.querySelectorAll("#cardGrid .cc"),function(x){ return (x.getAttribute("aria-label")||x.textContent||"")===%s; })[0]; if(c) c.click(); return !!c; })()' % json.dumps(s_))
                     time.sleep(0.5)
@@ -200,7 +234,7 @@ def spacing(B, base):
                     P.js('document.getElementById("bingoBtn").click()'); time.sleep(0.6)
                     x2 = P.obj(SPACING_PROBE) or {}
                     note_checks(tag, x1, x2)
-                    if w == 375 and h == 664: P.shot('spacing-%s-375x664' % ('std' if cells is keep else 'live' if cells is LIVE_CARD else 'long'))
+                    if w == 375 and h == 664: P.shot('spacing-%s-375x664' % ('std' if cells is keep else 'live' if cells is LIVE_CARD else 'pub' if cells is PUB_CARD else 'publong' if cells is PUB_LONG else 'long'))
                 finally:
                     P.close()
     finally:
@@ -209,7 +243,7 @@ def spacing(B, base):
 
 SIZE_PROBE = r"""(function(){ var z=document.getElementById("sizeNow"), m=document.getElementById("zoomIn"), f=[].map.call(document.querySelectorAll("#cardGrid .cc"),function(c){ return parseFloat(getComputedStyle(c).fontSize); });
   var mz=null; try{ mz=localStorage.getItem("vp-mzoom"); }catch(e){}
-  return JSON.stringify({ on:!!(z && !z.classList.contains("hidden")), menu:!!(m && m.closest("#menuPanel")), fs:f.length?Math.min.apply(null,f):0, mz:mz, hint:document.getElementById("noteHint").classList.contains("hidden")?"":document.getElementById("noteHint").textContent }); })()"""
+  return JSON.stringify({ all:f, on:!!(z && !z.classList.contains("hidden")), menu:!!(m && m.closest("#menuPanel")), fs:f.length?Math.min.apply(null,f):0, mz:mz, hint:document.getElementById("noteHint").classList.contains("hidden")?"":document.getElementById("noteHint").textContent }); })()"""
 
 
 def size_row(B, base):
@@ -235,6 +269,10 @@ def size_row(B, base):
         b = P.obj(SIZE_PROBE) or {}
         ok('size row: "+" makes the whole card bigger (%spx to %spx), even with Wonderwall on it, and the size is kept (vp-mzoom %s)' % (a.get('fs'), b.get('fs'), b.get('mz')),
            (b.get('fs') or 0) > (a.get('fs') or 0) + 0.4 and b.get('mz') == '1.2', [a, b])
+        # 12 Nov 2026 (INBOX 337): per square, "+" raises every square's top size and the floor; no square gets smaller
+        aa, bb = a.get('all') or [], b.get('all') or []
+        ok('size row: "+" makes no square smaller, and raises the squares that were at the top size or the floor (%d of %d bigger)' % (sum(1 for u, v in zip(aa, bb) if v > u + 0.4), len(aa)),
+           len(aa) == 25 and len(bb) == 25 and all(v >= u - 0.01 for u, v in zip(aa, bb)) and any(v > u + 0.4 for u, v in zip(aa, bb)), [aa, bb])
         P.js('document.getElementById("szDown").click(); true'); time.sleep(0.8)
         c = P.obj(SIZE_PROBE) or {}
         ok('size row: "-" takes it back (%spx)' % c.get('fs'), abs((c.get('fs') or 0) - (a.get('fs') or 0)) < 0.3 and c.get('mz') == '1', [a, c])

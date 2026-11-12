@@ -324,7 +324,7 @@
   "counted_by": "lines"
  },
  "tools/musical-card-spacing-in-chrome.test.py": {
-  "checks": 542,
+  "checks": 855,
   "counted_by": "lines"
  },
  "tools/musical-host-titles-in-chrome.test.py": {

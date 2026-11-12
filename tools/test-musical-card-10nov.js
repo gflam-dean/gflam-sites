@@ -4,8 +4,8 @@
      1. no hyphen, ever: no soft-hyphen code left, the tile says hyphens:none, the card is built from plain titles
      2. the square's title: a trailing bracketed part is dropped on the phone square only ("(Hot Summer Night)",
         "[Radio Edit]"); a title that starts with brackets keeps them; the full title stays for a screen reader
-     3. the fitter: one size for every title, 15px where it fits; never wider than the screen (12 Nov 2026: no swipe),
-        so a long word brings the whole card down evenly
+     3. the fitter: every square its own biggest size (Dean via main INBOX 337, 12 Nov 2026); never wider than the
+        screen (no swipe), so a long word brings only its own square down
      4. the note has its own slot of fixed height, so the card never shrinks for it; every note is short
      5. FREE has its own look (gold, no tick), never the marked square's
      6. after End game ("idle") a won or lost phone leaves its end screen for the lobby; a new game cancels the wait
@@ -44,7 +44,7 @@ show('a hyphen the title already has gets a word joiner, so the line never break
 show('a lone dash between words is left alone ("Song - Live" style spacing is untouched)', cardTitle('A - B') === 'A - B');
 show('the square is built from cardTitle, and the full title stays as its label', /ct\.textContent=cardTitle\(titles\[i\]\); cell\.setAttribute\("aria-label", titles\[i\]\);/.test(PLAY));
 
-print('\n== 3. the fitter: one size, 15px floor, wider before smaller ==');
+print('\n== 3. the fitter: per square (INBOX 337), never wider than the screen ==');
 show('FIT_MIN is 15 and FIT_MAX 20', /var FIT_MAX=20, FIT_MIN=15,/.test(PLAY));
 (function () {
   /* a fake card: a title fits when size * its longest word (in em) <= the square's inner width, the square widening with --aw */
@@ -52,7 +52,7 @@ show('FIT_MIN is 15 and FIT_MAX 20', /var FIT_MAX=20, FIT_MIN=15,/.test(PLAY));
     var aw = 1;
     var grid = { clientWidth: 300, style: { setProperty: function (k, v) { aw = parseFloat(v); } } };
     var els = longestEm.map(function (em) {
-      var el = { classList: { contains: function () { return false; } }, style: { fontSize: '' }, get clientWidth() { return baseW * aw; }, clientHeight: 80, clientLeft: 2, clientTop: 2 };
+      var el = { classList: { contains: function () { return false; } }, style: { fontSize: '', setProperty: function () {} }, get clientWidth() { return baseW * aw; }, clientHeight: 80, clientLeft: 2, clientTop: 2 };
       var sp = { style: {}, firstChild: null, get offsetWidth() { return parseFloat(el.style.fontSize) * em; }, offsetHeight: 20 };
       el.querySelector = function () { return sp; };
       return el;
@@ -67,15 +67,19 @@ show('FIT_MIN is 15 and FIT_MAX 20', /var FIT_MAX=20, FIT_MIN=15,/.test(PLAY));
     var sizes = els.map(function (e) { return e.style.fontSize; });
     return { aw: r.aw, sizes: sizes, free: free.style.fontSize, fit: grid._fit };
   }
+  /* PER SQUARE (Dean via main INBOX 337, 12 Nov 2026: "fit per cell, not the whole card"). REPINNED: these three used to
+     say "one size for every title and Free" and "the whole card drops EVENLY". Now every square takes the biggest size
+     (0.5px steps, 20px at most) its own title fits; only the long word's square goes small; Free at the middle size. */
+  function biggest(r, ems, W) { return r.sizes.every(function (s, i) { var f = parseFloat(s); return f * ems[i] <= W + 0.5 && (f >= 20 || (f + 0.5) * ems[i] > W + 0.5); }); }
+  function mid(r) { var v = r.sizes.map(parseFloat).sort(function (x, y) { return x - y; }); return v[Math.floor(v.length / 2)] + 'px'; }
   var a = mk([3, 4, 3.5], 80);   // short words: fits on the screen
-  show('short words: no widening, one size for every title and Free', a.aw === 1 && a.sizes.every(function (s) { return s === a.sizes[0]; }) && a.free === a.sizes[0], JSON.stringify(a));
-  show('...and it is the biggest that fits, at or under 20px', parseFloat(a.sizes[0]) <= 20 && parseFloat(a.sizes[0]) >= 15, a.sizes[0]);
+  show('short words: no widening, every title the biggest size its own square holds, 20px at most', a.aw === 1 && biggest(a, [3, 4, 3.5], 72) && a.sizes.every(function (s) { return parseFloat(s) <= 20 && parseFloat(s) >= 15; }), JSON.stringify(a));
+  show('...so the sizes differ square to square (20px, 18px, 20px), and Free is at the middle size', a.sizes.join() === '20px,18px,20px' && a.free === mid(a), JSON.stringify(a));
   var b = mk([3, 7.5, 4], 62);   // "Thunderstruck": cannot make 15px on the screen's width
-  /* ALL FIVE COLUMNS ON ONE SCREEN (Dean, 12 Nov 2026, INBOX 291 / 288.8): the card is never made wider than the screen
-     any more (no swipe); a long word brings the whole card down evenly instead. */
-  show('one long word: the card stays the screen\'s width (no swipe) and the whole card drops EVENLY under 15px', b.aw === 1 && b.sizes.every(function (s) { return s === b.sizes[0]; }) && parseFloat(b.sizes[0]) < 15, JSON.stringify(b));
+  /* ALL FIVE COLUMNS ON ONE SCREEN (Dean, 12 Nov 2026, INBOX 291 / 288.8): the card is never made wider than the screen. */
+  show('one long word: the card stays the screen\'s width (no swipe) and ONLY that square goes small; the others keep their own size', b.aw === 1 && parseFloat(b.sizes[1]) < 15 && parseFloat(b.sizes[0]) === 18 && parseFloat(b.sizes[2]) === 13.5 && b.free === mid(b), JSON.stringify(b));
   var c = mk([3, 20, 4], 62);    // a word longer still
-  show('a longer word: still the screen\'s width, the whole card smaller, EVENLY (never per title)', c.aw === 1 && c.sizes.every(function (s) { return s === c.sizes[0]; }) && parseFloat(c.sizes[0]) < 15, JSON.stringify(c));
+  show('a longer word: still the screen\'s width, its square at the 10px floor, the rest untouched (never the whole card)', c.aw === 1 && c.sizes[1] === '10px' && c.sizes[0] === b.sizes[0] && c.sizes[2] === b.sizes[2], JSON.stringify(c));
 })();
 show('the card\'s width is the screen times --aw (the zoom buttons no longer stretch it by --cz)', /#vCard \.card5\{[^}]*width:calc\(100% \* var\(--aw,1\)\)/.test(flat) && /\$\("cardGrid"\)\.style\.setProperty\("--cz", 1\);/.test(PLAY));
 show('a wide card says so in the slot under it: "Swipe the card sideways to see every song."', PLAY.indexOf('"Swipe the card sideways to see every song."') > 0);

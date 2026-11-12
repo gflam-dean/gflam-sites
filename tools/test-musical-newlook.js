@@ -98,7 +98,8 @@ print('\n== 3. the phone card: NO hyphen, ever (Dean, 10 Nov 2026 sign-off; supe
   show('no soft-hyphen helper is left in the phone (softBreak, withSoftBreak)', PLAY.indexOf('function softBreak(') < 0 && PLAY.indexOf('function withSoftBreak(') < 0);
   show('the tile says hyphens:none', /#vCard \.cc\{[^}]*hyphens:none;-webkit-hyphens:none\}/.test(flat));
   show('the card is built from the plain titles (cardTitle), never a hyphenated copy', PLAY.indexOf('ct.textContent=cardTitle(titles[i]);') > 0);
-  show('the details (one size, 15px, wider card, brackets dropped) are in tools/test-musical-card-10nov.js', readFile('tools/test-musical-card-10nov.js').indexOf('one size, 15px floor') > 0);
+  // REPINNED 12 Nov 2026 (Dean via main INBOX 337, 12 Nov): the fitter is per square now; was "one size, 15px floor"
+  show('the details (each square its own size, never wider than the screen, brackets dropped) are in tools/test-musical-card-10nov.js', readFile('tools/test-musical-card-10nov.js').indexOf('the fitter: per square (INBOX 337)') > 0);
 })();
 
 /* ======================================================================================= 4 */
