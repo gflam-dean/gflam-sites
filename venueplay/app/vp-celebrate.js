@@ -221,18 +221,37 @@
   }
 
   /* THE RECORDED SOUNDS, ONE NAMED SLOT PER MOMENT (Dean 12 Nov 2026, INBOX 312/313/317/318). The file for each
-     moment comes from Dean's sound pass (~/venue-enrich/sounds-chosen-12nov, wired next release): putting a
-     file in SOUNDS is a data change, nothing else moves. An empty slot plays nothing (never a synth stand-in).
+     moment comes from Dean's sound pass (~/venue-enrich/sounds-chosen-12nov, wired 13 Nov 2026 into /app/sounds): putting a
+     file in SOUNDS is a data change, nothing else moves. An empty slot plays nothing (never a synth stand-in). Every slot sits behind its game's Game sounds switch (setGameSounds).
      A phone plays only after the player has tapped the page (phones refuse sound before a tap), never on a
      demo page, and never when the player turned sound off with the mute button (kept on this phone). */
   /* answerup (Dean 12 Nov 2026, INBOX 282.5, FINDINGS T7): the trivia answer goes up BEFORE the clock reaches 0 (every
      team is in, or the host revealed early), the moment the time's-up buzzer never gets to play. Played by the venue's
-     wall (or the host's device when the buzzer is set to play there), never the phones. Empty until Dean's sound pass. */
-  var SOUNDS = { timesup: "", podium: "", answerup: "" };
+     wall (or the host's device when the buzzer is set to play there), never the phones. */
+  var SOUNDS = { timesup: "/app/sounds/times-up.mp3", podium: "/app/sounds/podium.mp3", answerup: "/app/sounds/answer-up.mp3",
+                 /* EMPTY ON PURPOSE: the two PAID picks Dean is buying (AudioJungle 2596245 suspense drum roll, a crowd cheer pack). Drop the file in here and
+                    name the game below: nothing else moves. rafflesuspense = the long raffle build-up; crowdcheer = a bingo or musical bingo win. */
+                 rafflesuspense: "", crowdcheer: "" };
+  /* WHICH GAME EACH SLOT BELONGS TO, AND THE PER-GAME SWITCH (Dean 12 Nov 2026, INBOX 316). A slot plays only while its game's
+     "Game sounds" setting is ON (game_prefs.<game>.sounds, the host's switch). Nothing says ON until a console or the host's
+     message says so, so a venue that never touched the setting hears exactly what it heard before: nothing new. */
+  var SLOT_GAME = { timesup: "trivia", podium: "trivia", answerup: "trivia", rafflesuspense: "raffle", crowdcheer: "bingo" };
+  var VOLUME = { timesup: 0.8, podium: 0.7, answerup: 0.7, rafflesuspense: 0.7, crowdcheer: 0.7 };
+  var _gameOn = {};
+  function setGameSounds(game, on) { _gameOn[game] = (on === true); }
+  function gameSounds(game) { return _gameOn[game] === true; }
   var _tapped = false, _audio = null;
   if (root.document && root.document.addEventListener) {
-    var _onTap = function () { _tapped = true; root.document.removeEventListener("pointerdown", _onTap, true); };
+    /* The first press (a finger, or a TV remote's key) also warms the one audio element with a silent clip, so a TV or kiosk
+       browser that only lets a page make sound after a press lets the wall's sounds play later with no press of their own.
+       Played at volume 0; a browser that refuses it changes nothing (the sound just stays silent, as before). */
+    var SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+    var _onTap = function () {
+      _tapped = true; root.document.removeEventListener("pointerdown", _onTap, true); root.document.removeEventListener("keydown", _onTap, true);
+      try { _audio = _audio || new root.Audio(); if (!_audio.src) { _audio.src = SILENT; _audio.volume = 0; var pp = _audio.play(); if (pp && pp.catch) pp.catch(function () {}); } } catch (e) {}
+    };
     root.document.addEventListener("pointerdown", _onTap, true);
+    root.document.addEventListener("keydown", _onTap, true);
   }
   function muted() { try { return root.localStorage.getItem("vpqMute") === "1"; } catch (e) { return false; } }
   function setMuted(m) { try { root.localStorage.setItem("vpqMute", m ? "1" : "0"); } catch (e) {} }
@@ -240,8 +259,8 @@
      is driven by a remote and is never tapped) and the phone's mute button does not apply. */
   function sound(name, opts) {
     var src = SOUNDS[name], wall = !!(opts && opts.wall);
-    if (!src || isDemoPage() || (!wall && (!_tapped || muted()))) return false;
-    try { _audio = _audio || new root.Audio(); _audio.src = src; var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
+    if (!src || isDemoPage() || !_gameOn[SLOT_GAME[name]] || (!wall && (!_tapped || muted()))) return false;
+    try { _audio = _audio || new root.Audio(); _audio.src = src; _audio.volume = VOLUME[name] || 0.7; var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
     catch (e) { return false; }
   }
   /* The small sound on/off button: in the given row (never over an answer), else bottom right. Its look is
@@ -263,5 +282,5 @@
     (into || d.body).appendChild(btn);
   }
 
-  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz, phoneLayer: phoneLayer, sound: sound, SOUNDS: SOUNDS, muted: muted, setMuted: setMuted, muteButton: muteButton };
+  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz, phoneLayer: phoneLayer, sound: sound, SOUNDS: SOUNDS, setGameSounds: setGameSounds, gameSounds: gameSounds, SLOT_GAME: SLOT_GAME, muted: muted, setMuted: setMuted, muteButton: muteButton };
 })(window);

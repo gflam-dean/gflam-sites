@@ -235,6 +235,10 @@
   "checks": 158,
   "counted_by": "lines"
  },
+ "tools/game-sounds-in-chrome.test.py": {
+  "checks": 55,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
@@ -783,6 +787,10 @@
   "checks": 218,
   "counted_by": "lines"
  },
+ "tools/test-game-sounds.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/test-games-answers.js": {
   "checks": 91,
   "counted_by": "lines"
@@ -1328,7 +1336,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-live-fixes-6nov.js": {
-  "checks": 55,
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
@@ -1840,7 +1848,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 101,
+  "checks": 102,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {

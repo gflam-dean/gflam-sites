@@ -160,7 +160,7 @@ ok('the TV no longer holds the leaderboard behind the podium on a timer', SCREEN
 print('ALL IN, THE ANSWER IS UP: its own sound slot, never a synth (INBOX 282.5, FINDINGS T7)');
 function makeWall(buzzOn, live, endsIn) {
   var played = [];
-  var VP_DEMO = false, VP_PREVIEW = false, BUZZ = { on: buzzOn }, T = 5000000;
+  var VP_DEMO = false, VP_PREVIEW = false, SND = { where: buzzOn ? 'tv' : 'device' }, T = 5000000;   // buzzOn now means: the venue's Game sounds play on the TV (13 Nov 2026)
   var curQ = { qseq: 4, live: live, buzzed: false, endsAt: T + endsIn };
   function hostNow() { return T; } function unlockAudio() {}
   var window = { VPCelebrate: { sound: function (n, o) { played.push([n, !!(o && o.wall)]); return true; } } };
@@ -173,9 +173,17 @@ ok('the answer goes up with 12 s still on the clock: the wall asks for the "answ
 var w2 = makeWall(true, true, 0); w2.up();
 ok('the clock already reached 0: nothing (that is the time\'s-up buzzer\'s moment)', w2.played.length === 0, JSON.stringify(w2.played));
 var w3 = makeWall(false, true, 12000); w3.up();
-ok('the buzzer switched off (or playing on the host\'s device): nothing on the wall', w3.played.length === 0);
+ok('the sounds set to play on the host\'s device: nothing on the wall', w3.played.length === 0);
 ok('the TV asks for it on a reveal of the question it is showing, before drawing the answer', /if\(state\.phase==="question" && curQ && m\.qseq!=null && curQ\.qseq===m\.qseq\) answerUp\(\);/.test(SCREEN));
 ok('and the console plays the same slot when the buzzer plays on the host\'s device', /if\(early && !G\.defer\) hostAnswerUp\(\);/.test(HOST) && /VPCelebrate\.sound\("answerup", \{ wall:true \}\)/.test(liftFrom(HOST, 'hostAnswerUp')) && HOST.indexOf('<script src="/app/vp-celebrate.js"></script>') > 0);
+function makeHost(sounds, where) {
+  var played = [], G = { sounds: sounds, buzzWhere: where };
+  var window = { VPCelebrate: { sound: function (n, o) { played.push([n, !!(o && o.wall)]); return true; }, setGameSounds: function (g, on) { played.push(['set', g, on]); } } };
+  var VPCelebrate = window.VPCelebrate;
+  var f = eval(liftFrom(HOST, 'hostAnswerUp') + ';hostAnswerUp');
+  f(); return played;
+}
+ok('the console plays the answer chime only with Game sounds ON and set to play on this device', JSON.stringify(makeHost(true, 'device')) === '[["set","trivia",true],["answerup",true]]' && makeHost(true, 'tv').length === 0 && makeHost(false, 'device').length === 0, [makeHost(true, 'device'), makeHost(true, 'tv'), makeHost(false, 'device')]);
 ok('no synth stand-in: answerUp never touches the buzzer or a tone', !/VPBuzzer|oscillator|createOscillator/i.test(liftFrom(SCREEN, 'answerUp')));
 
 print('');

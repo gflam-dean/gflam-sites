@@ -99,7 +99,10 @@
       { key: "buzzer", label: "A buzz when time is up", kind: "seg", options: ONOFF2, def: false, advanced: true, line: "pb", prompt: "Buzz at time's up",
         help: "A short buzz when time runs out, so the room knows answers are closed." },
       { key: "buzzer_where", label: "Where the buzz plays", kind: "seg", options: [["tv", "TV"], ["device", "This device"]], def: "tv", showIf: { buzzer: true }, advanced: true, prompt: "Where the buzz plays",
-        help: "From the TV's sound, or from the phone or tablet you host on." }
+        help: "From the TV's sound, or from the phone or tablet you host on." },
+      /* GAME SOUNDS (Dean, 12 Nov 2026, INBOX 316): the recorded sound effects, per game, the host's switch. OFF unless switched on. */
+      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",
+        help: "This game plays its own sound effects, like a bell at time's up. Off unless you switch it on." }
     ], popovers: ["double_points", "picture_round", "speed_bonus"] },
 
     /* MUSICAL BINGO (Dean, rounds 3 to 8 and 11): rounds a night, a prize for each round (or no prize), the same each
@@ -127,7 +130,9 @@
         help: "On: songs everyone knows. Off: any song in your music." },
       { key: "sound", label: "Default place to play the music", kind: "info", soundHelp: true, advanced: true, prompt: "Default place to play the music",
         words: "The sound comes through your TV's HDMI cable automatically. Only if your sound runs through a separate amp or PA do you need to set it up.",
-        help: "The TV's own speakers play the music already, through the HDMI cable. The guide is for a venue whose sound runs through a separate amp or PA." }
+        help: "The TV's own speakers play the music already, through the HDMI cable. The guide is for a venue whose sound runs through a separate amp or PA." },
+      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",
+        help: "This game plays its own sound effects, like a bell at time's up. Off unless you switch it on." }
     ], popovers: ["playlists", "prize_same", "hits_only"] },
 
     /* BINGO FOLLOWS THE VENUE'S STATE AND WHETHER IT IS A PUB OR A CLUB (Dean, 6 Nov 2026), from the rules in
@@ -150,7 +155,9 @@
         help: "What each game's winner gets: a meat tray, a voucher, cash, anything. \"Same as above\" copies the prize above." },
       { key: "allow_early", label: "Let players call BINGO early", kind: "seg", options: ON_OFF, def: false, advanced: true, showIf: { ticket_kind: "phone" },
         prompt: "Let players call BINGO early, for a laugh?",
-        help: "A wrong call comes to you and you just tap Play on." }
+        help: "A wrong call comes to you and you just tap Play on." },
+      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false,
+        help: "This game plays its own sound effects, like a bell at time's up. Off unless you switch it on." }
     ], popovers: ["ticket_kind", "caller", "round_prizes"] },
 
     /* RAFFLES (Dean, round 8b point 7, round 11 note 6 and round 12 note 7): how many raffles they run, a NAME or NIGHT for each
