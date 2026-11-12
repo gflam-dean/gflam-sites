@@ -177,7 +177,7 @@ FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; Fixed
 
 function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
   "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", SRC)(
@@ -657,24 +657,44 @@ step(function () {
 });
 
 step(function () {
+  print("\nTHE DETAILS STEP ASKS FIRST (INBOX 309.1c): GET /coaster/ask");
+  fresh(); NOW = FRI_830PM; calls = [];
+  return get(W.ask, "?place=" + encodeURIComponent("v:" + V_MINI)).then(function (r) {
+    pass("a venue HQ switched on: what it collects and the tick, before any round", r.status === 200 && JSON.stringify(r.body.optin) === JSON.stringify({ email: true, mobile: false, marketing_optin: true, last_name: false }), r.body);
+    pass("...and it is limited per network like the search", calls.some(function (c) { return /^rl:coaster:find:iphash:30:60$/.test(c); }), calls);
+    return get(W.ask, "?place=" + encodeURIComponent("v:" + V_PERTH));
+  }).then(function (r) {
+    pass("a venue not switched on: nothing to ask", r.status === 200 && r.body.optin === null, r.body);
+    return get(W.ask, "?place=" + encodeURIComponent("c:" + C_TUGUN));
+  }).then(function (r) {
+    pass("a coaster venue (not on venueplay): nothing to ask, never an email for a venue we cannot give it to", r.status === 200 && r.body.optin === null, r.body);
+    return get(W.ask, "?place=rubbish");
+  }).then(function (r) {
+    pass("a place that is not one: nothing to ask", r.status === 200 && r.body.optin === null, r.body);
+    pass("asking stores nothing", DB.vp_coaster_plays.length === 0 && DB.vp_captures.length === 0);
+  });
+});
+
+step(function () {
   print("\nTHE VENUE'S OWN SIGN-UP: ONLY WHERE HQ SWITCHED IT ON, THE SAME GATE AND TICK AS THE PHONES");
   fresh(); NOW = FRI_830PM;
   var mini, perth;
   return post(W.start, { name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
     mini = r.body;
     pass("a round at a venue HQ switched on carries the sign-up box: what the venue collects (email, no mobile) and the tick",
-      r.status === 200 && JSON.stringify(mini.optin) === JSON.stringify({ email: true, mobile: false, marketing_optin: true }), mini.optin);
+      r.status === 200 && JSON.stringify(mini.optin) === JSON.stringify({ email: true, mobile: false, marketing_optin: true, last_name: false }), mini.optin);
     return post(W.start, { name: "Sam", place: "v:" + V_PERTH, qids: five(0) });
   }).then(function (r) {
     perth = r.body;
     pass("a venue NOT switched on gets no box (every existing venue starts OFF)", r.status === 200 && !("optin" in perth), perth);
     calls = [];
-    return post(W.optin, { play: mini.play, token: mini.token, email: "Sam@Example.com ", mobile: "0412 345 678", marketing_optin: true, consent_version: "vpc-2-6nov" });
+    return post(W.optin, { play: mini.play, token: mini.token, email: "Sam@Example.com ", mobile: "0412 345 678", marketing_optin: true, consent_version: "vpc-2-6nov", last_name: "Smith" });
   }).then(function (r) {
     var c = DB.vp_captures[0];
     pass("the sign-up is kept for THAT venue, source 'coaster', with the consent words' version", r.status === 200 && r.body.stored === true && c && c.venue_id === V_MINI &&
       c.source === "coaster" && c.email === "sam@example.com" && c.marketing_optin === true && c.consent_version === "vpc-2-6nov", c);
     pass("only what the venue collects is kept (it does not collect a mobile)", c && !("mobile" in c), c);
+    pass("the round's first name goes with it (INBOX 309.1c); a last name only where the venue collects one", c && c.first_name === "Sam" && !("last_name" in c), c);
     pass("it cannot prove the phone was in the room, so it is kept with during_game false, like every such sign-up", c && c.during_game === false, c);
     pass("the sign-up limit is counted per network", calls.some(function (x) { return /^rl:coaster:optin:iphash:10:600$/.test(x); }), calls);
     return post(W.optin, { play: mini.play, token: mini.token, email: "jo@example.com", marketing_optin: false });
@@ -713,7 +733,8 @@ step(function () {
    "if (method === 'POST' && path === '/coaster/start')      return await handleCoasterStart(request, env, json);",
    "if (method === 'POST' && path === '/coaster/answer')     return await handleCoasterAnswer(request, env, json);",
    "if (method === 'GET'  && path === '/coaster/board')      return await handleCoasterBoardRoute(request, env, json);",
-   "if (method === 'POST' && path === '/coaster/optin')      return await handleCoasterOptin(request, env, json);"].forEach(function (l) {
+   "if (method === 'POST' && path === '/coaster/optin')      return await handleCoasterOptin(request, env, json);",
+   "if (method === 'GET'  && path === '/coaster/ask')        return await handleCoasterAsk(request, env, json);"].forEach(function (l) {
     pass("the router sends " + l.split("'")[3] + " to its handler", router.indexOf(l) >= 0);
   });
   var o0 = BLOCK.indexOf("async function coasterOptinAsk("), o1 = BLOCK.indexOf("/* GET /coaster/board?", o0);

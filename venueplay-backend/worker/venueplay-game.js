@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 13:22 · 3ed8c697';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 14:05 · 5d108588';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -395,6 +395,7 @@ export default {
       if (method === 'POST' && path === '/coaster/answer')     return await handleCoasterAnswer(request, env, json);
       if (method === 'GET'  && path === '/coaster/board')      return await handleCoasterBoardRoute(request, env, json);
       if (method === 'POST' && path === '/coaster/optin')      return await handleCoasterOptin(request, env, json);
+      if (method === 'GET'  && path === '/coaster/ask')        return await handleCoasterAsk(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
@@ -3100,8 +3101,18 @@ async function coasterOptinAsk(env, where) {
     if (!on || !on.length) return null;
     const cfg = await venueCollectCfg(env, where.venue_id);
     if (!cfg.collect_email && !cfg.collect_mobile) return null;
-    return { email: !!cfg.collect_email, mobile: !!cfg.collect_mobile, marketing_optin: !!cfg.collect_marketing_optin };
+    return { email: !!cfg.collect_email, mobile: !!cfg.collect_mobile, marketing_optin: !!cfg.collect_marketing_optin, last_name: !!cfg.collect_last_name };
   } catch (e) { return null; }   // before migration 153, or the read failing: no box
+}
+
+/* GET /coaster/ask?place=..  What the details step asks BEFORE play (INBOX 309.1c): the venue's own sign-up,
+   or null (not a venueplay venue, not switched on, collects nothing). Says nothing about who has played. */
+async function handleCoasterAsk(request, env, json) {
+  if (!(await coasterLimit(request, env, 'find', COASTER_FIND_MAX_PER_IP, 60))) return json({ optin: null }, 429);
+  try {
+    const where = await coasterPlace(env, new URL(request.url).searchParams.get('place'));
+    return json({ optin: await coasterOptinAsk(env, where) });
+  } catch (e) { return json({ optin: null }); }
 }
 
 /* POST /coaster/optin { play, token, email, mobile, marketing_optin, consent_version, pid }
@@ -3122,14 +3133,17 @@ async function handleCoasterOptin(request, env, json) {
   if (!email && !mobile) return json({ error: 'Type your email.' }, 400);
   if (!(await coasterLimit(request, env, 'optin', COASTER_OPTIN_MAX_PER_IP, 600))) return json({ error: 'Too many sign-ups from this network. Wait a few minutes.' }, 429);
   try {
-    const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=id,board,token_hash&limit=1'))[0];
+    const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=id,board,token_hash,first_name&limit=1'))[0];
     const proof = await sha256Hex(String(b.token || ''));   // the round's secret, as /coaster/answer checks it
     if (!row || proof !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
     const where = await coasterPlace(env, row.board);
     const ask = await coasterOptinAsk(env, where);
     if (!ask) return json({ ok: true, stored: false });   // not switched on for this venue: nothing is kept
     const cfg = await venueCollectCfg(env, where.venue_id);
-    const cap = gatedCapture(cfg, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile || null });
+    /* the round's first name and an optional last name ride with it (INBOX 309.1c), through the venue's own gate */
+    const lastName = String(b.last_name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 40);
+    const cap = gatedCapture(cfg, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile || null,
+      first_name: row.first_name || null, last_name: lastName || null });
     if (!(cap.email || cap.mobile)) return json({ ok: true, stored: false });
     const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
     if (consentVersion && cap.marketing_optin) cap.consent_version = consentVersion;   // migration 174's column

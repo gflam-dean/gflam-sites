@@ -168,14 +168,45 @@ pass("no phone number on a public page", !/07 ?5228|5228 ?3667|04\d\d ?\d{3} ?\d
 pass("no .dev or workers.dev address", !/workers\.dev|\.dev\b/.test(PAGE));
 pass("never 'roster'", !/roster/i.test(text));
 pass("no price or offer on the coaster page itself", !/\$\d|offer/i.test(text.replace(/\/\*[\s\S]*?\*\//g, "")));
-pass("the only inputs: the first name, the venue search, the four 'Add it' boxes (name, suburb, state, website), the challenge link, and the venue's own sign-up (email, mobile)",
-  (PAGE.match(/<input /g) || []).length === 8 && (PAGE.match(/<select /g) || []).length === 1 && ["nameIn", "whereIn", "leadIn", "leadSuburb", "leadSite", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
+pass("the only inputs: the first name, the venue's own sign-up (last name, email, mobile), the venue search, the four 'Add it' boxes and the challenge link",
+  (PAGE.match(/<input /g) || []).length === 9 && (PAGE.match(/<select /g) || []).length === 1 && ["nameIn", "lastIn", "whereIn", "leadIn", "leadSuburb", "leadSite", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
   /<select id="leadState">/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE), (PAGE.match(/<input [^>]*id="[^"]+"/g) || []).map(function (x) { return /id="([^"]+)"/.exec(x)[1]; }));
-pass("the sign-up is hidden until the Worker says this venue has it switched on, and its one tick is the phones' own (VPConsent, consent_version)",
-  /<form class="optin-card" id="optinCard" novalidate hidden>/.test(PAGE) && /<script src="\/app\/vp-consent\.js"><\/script>/.test(PAGE) &&
-  /window\.VPConsent\.render\(tick, /.test(PAGE) && /body\.consent_version = window\.VPConsent\.VERSION/.test(PAGE) && /var o = S\.optin, card = \$\('optinCard'\);/.test(PAGE) && !/checked/.test(PAGE.slice(PAGE.indexOf('id="optinCard"'), PAGE.indexOf('id="optinOk"'))));
-pass("the old free-text board is gone: an added venue is sent to /coaster/lead and the round starts with NO place",
-  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = null; S\.venue = null;\n      setTimeout\(begin,/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+print("\nYOUR DETAILS BEFORE PLAY (INBOX 309.1c)");
+var det = PAGE.slice(PAGE.indexOf("  function askDetails(venueName) {"), PAGE.indexOf("  /* the details go with the round"));
+pass("the venue's rows show only when the Worker says this venue has its sign-up on (S.optin from /coaster/ask), with the phones' one tick (VPConsent), never ticked",
+  /if \(o && \(o\.email \|\| o\.mobile\) && venueName && window\.VPConsent\) \{/.test(det) && /window\.VPConsent\.render\(\$\('optinTick'\), /.test(det) &&
+  /<script src="\/app\/vp-consent\.js"><\/script>/.test(PAGE) && !/checked/.test(PAGE.slice(PAGE.indexOf('id="nameForm"'), PAGE.indexOf('id="nameBtn"'))));
+pass("the venue first, then the details: picking a venueplay venue asks the Worker what to ask (/coaster/ask), anything else asks the name only",
+  /if \(!\/\^v:\/\.test\(place\)\) return askDetails\(name\);/.test(PAGE) && /call\('GET', '\/coaster\/ask\?place=' \+ encodeURIComponent\(place\)/.test(PAGE) &&
+  /else askWhere\(\);   \/\/ the venue first/.test(PAGE));
+pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /cap\.marketing_optin = !!\(window\.VPConsent && window\.VPConsent\.optedIn\(cap\)\);\n      if \(cap\.marketing_optin\) cap\.consent_version = window\.VPConsent\.VERSION;/.test(det.concat(PAGE.slice(PAGE.indexOf("  $('nameForm').addEventListener"), PAGE.indexOf("  function sendDetails()")))));
+pass("the details go to /coaster/optin only once the round has started there (its secret proves the round), then are dropped from the page",
+  /S\.optin = d\.optin \|\| null;\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
+pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = null; S\.venue = null; S\.optin = null;\n      setTimeout\(function \(\) \{ askDetails\(null\); \}/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+pass("the end has no second sign-up card", PAGE.indexOf('id="optinCard"') < 0);
+
+print("\nONE SOUND PLAYER, A NAMED SLOT PER MOMENT (INBOX 317/318)");
+var CEL = find("venueplay/app/vp-celebrate.js"), QR = find("venueplay/app/vp-qring.js");
+var tapFns = [];
+var fakeRoot = { document: { addEventListener: function (ev, fn) { if (ev === "pointerdown") tapFns.push(fn); }, removeEventListener: function () {} }, localStorage: { getItem: function () { return null; }, setItem: function () {} }, location: { pathname: "/live-here-now", search: "" },
+  Audio: function () { this.play = function () { fakeRoot.played = (fakeRoot.played || 0) + 1; }; }, navigator: {} };
+new Function("window", "self", "root", CEL.replace(/\}\)\(typeof window !== ["']undefined["'] \? window : this\);?\s*$/, "})(window);"))(fakeRoot, fakeRoot, fakeRoot);
+var VC = fakeRoot.VPCelebrate;
+pass("vp-celebrate.js is the one sound player: named slots 'timesup' and 'podium', empty until Dean's sound pass", !!VC && VC.SOUNDS && VC.SOUNDS.timesup === "" && VC.SOUNDS.podium === "" && typeof VC.sound === "function", VC && VC.SOUNDS);
+tapFns.forEach(function (f) { f(); });   // the player has tapped the page
+pass("an empty slot plays nothing (never a synth stand-in)", VC && VC.sound("timesup") === false && !fakeRoot.played);
+VC.SOUNDS.podium = "/sounds/podium.mp3";
+pass("dropping a file in a slot is all it takes: it then plays, after a tap", VC.sound("podium") === true && fakeRoot.played === 1, fakeRoot.played);
+VC.SOUNDS.podium = "";
+pass("Time's up asks the one player for its slot and the one buzz, and has no player of its own", /c\.sound\('timesup'\)/.test(QR) && /c\.buzz\(180\)/.test(QR) && !/new root\.Audio|\.play\(\)|vibrate/.test(QR));
+var TP = find("venueplay/app/trivia/play.html");
+var lo = TP.slice(TP.indexOf("  function lockOut(moment){"), TP.indexOf("  function lockOut(moment){") + 600);
+pass("the real trivia phone plays the same Time's up moment (VPQRing.timesUp), once a question, only when its own clock ran out or the host locked everyone, never on a catch-up",
+  /if\(moment && !P\.q\.upShown && window\.VPQRing\)\{ P\.q\.upShown=true; try\{ window\.VPQRing\.timesUp\(\); \}catch\(e\)\{\} \}/.test(lo) &&
+  /if\(P\.q\.endsAt-Date\.now\(\)<=0\)\{ stopCd\(\); lockOut\(true\); \}/.test(TP) && /stopCd\(\); lockOut\(!m\.to\);/.test(TP) &&
+  /if\(lk\)\{ stopCd\(\); lockOut\(\); \}/.test(TP) && TP.indexOf('<script src="/app/vp-qring.js"></script>') > 0);
+pass("the coaster page loads the one player before the ring", PAGE.indexOf('<script src="/app/vp-celebrate.js"></script>') > 0 && PAGE.indexOf('<script src="/app/vp-celebrate.js"></script>') < PAGE.indexOf('<script src="/app/vp-qring.js"></script>'));
 
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }

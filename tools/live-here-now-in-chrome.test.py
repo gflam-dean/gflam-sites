@@ -149,6 +149,8 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
                 return self.send(200, {'matches': [], 'why': 'Type at least three letters of the name.'})
             m = [dict(p, exact=False) for p in PLACES if t in re.sub(r'[^a-z0-9]', '', p['name'].lower())]
             return self.send(200, {'matches': m})
+        if u.path == '/coaster/ask':
+            return self.send(200, {'optin': OPTIN.get(q.get('place'))})
         if u.path == '/coaster/board':
             b = fake_board(q.get('place'), q.get('period'), q.get('play'))
             b['venue'] = {'name': NAMES.get(q.get('place'), ''), 'suburb': '', 'logo_url': ''}
@@ -333,8 +335,8 @@ STATE = r'''(function(){
     leadVal:(document.getElementById("leadIn")||{}).value||"", nameVal:(document.getElementById("nameIn")||{}).value||"",
     kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
     sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
-    optin:shown("optinCard"), optinHead:txt("optinHead"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"),
-    optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked, optinOk:shown("optinOk")?txt("optinOk"):"",
+    optin:shown("optinEmailRow")||shown("optinMobileRow"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"), lastRow:shown("lastRow"),
+    nameSub:txt("nameSub"), optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
     leadDone:shown("leadDone")?txt("leadDone"):"", notListed:shown("notListed"),
     tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
     next:document.getElementById("joinGame").getAttribute("href"), owner:document.getElementById("ownerLink").getAttribute("href"),
@@ -395,10 +397,33 @@ def clear_storage(b, base, seen=None):
     b.close_tab(tid)
 
 
+PENDING = {}
+
+
 def name_step(t, name):
-    wait(t, lambda s: s.get('view') == 'vName')
-    t.type_into('nameIn', name)
-    t.tap_id('nameBtn')
+    """The venue comes first now (INBOX 309.1): the name is typed on the details step after it. On a challenge link
+       the details step is the first screen, so it is filled now; otherwise it is kept for that step."""
+    s = wait(t, lambda s: s.get('view') in ('vName', 'vWhere'))
+    if s.get('view') == 'vName':
+        t.type_into('nameIn', name)
+        t.tap_id('nameBtn')
+    else:
+        PENDING[id(t)] = name
+
+
+def details_step(t, secs=6):
+    """The details step after a venue, Add it or Play now: the kept first name (and an email where the venue's
+       sign-up shows; the tick is left alone), then Play."""
+    s = wait(t, lambda s: s.get('view') in ('vName', 'vPlay', 'score'), secs)
+    if s.get('view') == 'vName':
+        time.sleep(0.3)
+        s = state(t)
+        if PENDING.get(id(t)) or not s.get('nameVal'):
+            t.type_into('nameIn', PENDING.get(id(t)) or 'Pat')
+        if s.get('optinEmail'):
+            t.type_into('optinEmail', 'player@example.com')
+        t.tap_id('nameBtn')
+    return s
 
 
 def where_step(t, typed, pick_text):
@@ -415,6 +440,8 @@ def where_step(t, typed, pick_text):
 
 
 def wait_question(t, not_id=None, secs=12):
+    if state(t).get('view') in ('vWhere', 'vName'):
+        details_step(t)
     return wait(t, lambda s: (s.get('id') and s.get('id') != not_id and len(s.get('btns', [])) == 4 and not s['btns'][0]['disabled'])
                 or s.get('view') in ('score', 'failed'), secs)
 
@@ -512,9 +539,9 @@ def main():
         clear_storage(b, base)
         tl = Tab(b, base, api, w=390, h=844)
         tl.go('/here')
-        s = wait(tl, lambda s: s.get('view') == 'vName')
-        check('a phone that types venueplay.com.au/here lands on /live-here-now, asking for a first name',
-              tl.js('location.pathname') == '/live-here-now' and s.get('view') == 'vName', s.get('view'))
+        s = wait(tl, lambda s: s.get('view') == 'vWhere')
+        check('a phone that types venueplay.com.au/here lands on /live-here-now, asking where they are playing',
+              tl.js('location.pathname') == '/live-here-now' and s.get('view') == 'vWhere', s.get('view'))
         tl.close()
 
         print('\nA PHONE SCANS THE COASTER (375 x 740)')
@@ -522,16 +549,9 @@ def main():
         FAKE['log'][:] = []
         t = Tab(b, base, api)
         t.go('/live-here-now')
-        s = wait(t, lambda s: s.get('view') == 'vName')
-        check('the first screen asks for a first name, in one box, and nothing else', s.get('view') == 'vName' and s.get('inputs') == 1, s)
-        check('the header reads "60-second trivia" before a venue is known', s.get('hdr') == '60-second trivia' and not s.get('tag'), s.get('hdr'))
-        t.shot('lhn-name-375.png')
-        t.tap_id('nameBtn')
-        s = wait(t, lambda s: bool(s.get('nameErr')), 3)
-        check('Next with no name says "Type your first name." and stays', s.get('view') == 'vName' and s.get('nameErr') == 'Type your first name.', s.get('nameErr'))
-        name_step(t, 'sam smith')
         s = wait(t, lambda s: s.get('view') == 'vWhere')
-        check('then "Where are you playing?", greeting the first name only: "Hi Sam"', s.get('view') == 'vWhere' and s.get('whereKick') == 'Hi Sam', s.get('whereKick'))
+        check('the first screen is "Where are you playing?" (the venue first, INBOX 309.1), one search box', s.get('view') == 'vWhere' and s.get('inputs') == 1 and s.get('whereKick') == 'Coaster trivia', (s.get('view'), s.get('inputs'), s.get('whereKick')))
+        check('the header reads "60-second trivia" before a venue is known', s.get('hdr') == '60-second trivia' and not s.get('tag'), s.get('hdr'))
         t.type_into('whereIn', 'mi')
         s = wait(t, lambda s: bool(s.get('hint')), 3)
         check('two letters asks for three, and searches nothing', 'three letters' in s.get('hint', '') and not s.get('picks') and
@@ -555,7 +575,30 @@ def main():
               word and word[0] == GREEN and word[1] != GREEN and word[2] >= 15 and 'dot' not in HTML.split('.pick .on')[1][:80], word)
         t.shot('lhn-typeahead-375.png')
         where_step(t, 'min', 'The Mini Bar')
+        s = wait(t, lambda s: s.get('view') == 'vName' and s.get('optin'))
+        check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
+              s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and not s.get('lastRow') and
+              s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
+        check('it says the details go to the venue, never on the board', 'go to The Mini Bar, never on the board' in s.get('nameSub', ''), s.get('nameSub'))
+        f = waits.as_json(t.js(FIT), {}, "FIT")
+        check('the details step fits one screen at 375 (Play on screen, nothing cut off)', not f['out'] and not f['clipped'] and
+              t.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight'), f)
+        t.shot('lhn-name-375.png')
+        t.tap_id('nameBtn')
+        s = wait(t, lambda s: bool(s.get('nameErr')), 3)
+        check('Play with no name says "Type your first name." and stays', s.get('view') == 'vName' and s.get('nameErr') == 'Type your first name.', s.get('nameErr'))
+        t.type_into('nameIn', 'sam smith')
+        t.tap_id('nameBtn')
+        s = wait(t, lambda s: s.get('nameErr') == 'Type your email.', 3)
+        check('no email asks for one and starts nothing', s.get('view') == 'vName' and not any(x[1] in ('/coaster/start', '/coaster/optin') for x in FAKE['log']), s.get('nameErr'))
+        t.type_into('optinEmail', 'sam@example.com')
+        t.tap_id('xOptin')
+        t.tap_id('nameBtn')
         s = wait_question(t)
+        sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
+        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-2-6nov) go with the round\'s secret',
+              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-2-6nov' and
+              sent[0].get('token', '').startswith('tok'), sent)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
         check('picking it starts a round on its board, sending only the first name, the place and five question ids',
               len(start) == 1 and sorted(start[0].keys()) == ['name', 'place', 'qids'] and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
@@ -589,21 +632,6 @@ def main():
         check('the board, Tonight selected, with Sam\'s row marked "(you)"',
               s.get('board') and s.get('tabNight') == 'true' and len(s.get('rows', [])) == 1 and s['rows'][0]['you'] and 'Sam (you)' in s['rows'][0]['text'], s.get('rows'))
         check('"Challenge your mates" is offered', s.get('challenge') is True)
-        check('the venue\'s own sign-up is offered (HQ switched it on): "Hear from The Mini Bar", the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
-              s.get('optin') and s.get('optinHead') == 'Hear from The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and
-              s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('optin'), s.get('optinHead'), s.get('optinTick'), s.get('optinTicked')))
-        t.shot('lhn-optin-375.png')
-        t.tap_id('optinBtn')
-        s = wait(t, lambda s: 'Type your email' in (t.js('document.getElementById("optinErr").textContent') or ''), 3)
-        check('Sign me up with no email asks for one and sends nothing', not any(x[1] == '/coaster/optin' for x in FAKE['log']))
-        t.type_into('optinEmail', 'sam@example.com')
-        t.tap_id('xOptin')
-        t.tap_id('optinBtn')
-        s = wait(t, lambda s: bool(s.get('optinOk')))
-        sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
-        check('ticked and sent: the email, the tick and the consent words\' version (vpc-2-6nov), with the round\'s secret, then "Thanks. You are on The Mini Bar\'s list."',
-              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-2-6nov' and
-              sent[0].get('token', '').startswith('tok') and s.get('optinOk') == "Thanks. You are on The Mini Bar's list.", (sent, s.get('optinOk')))
         check('"From a venue? Click here" goes to /coaster (today\'s offer), never the home page',
               s.get('owner') == '/coaster' and s.get('ownerText') == 'From a venue? Click here', (s.get('owner'), s.get('ownerText')))
         check('"Game on the TV? Join it" goes to /play when the coaster names no venue', s.get('next') == '/play', s.get('next'))
@@ -623,12 +651,14 @@ def main():
         stored = t.js('localStorage.getItem("vp-lhn-seen")')
         check('the phone keeps every question it has shown', isinstance(stored, str) and set(ids1 + ids2) <= set(json.loads(stored)), stored)
         t.go('/live-here-now')
-        s = wait(t, lambda s: s.get('view') == 'vName')
-        check('a rescan has the name ready: "Sam"', s.get('nameVal') == 'Sam', s.get('nameVal'))
-        t.tap_id('nameBtn')
         s = wait(t, lambda s: s.get('view') == 'vWhere' and s.get('picks'))
-        check('and offers the same venue first: "Still at The Mini Bar?"', bool(s.get('picks')) and s['picks'][0]['text'].startswith('Still at The Mini Bar?'), s.get('picks'))
+        check('a rescan offers the same venue first: "Still at The Mini Bar?"', bool(s.get('picks')) and s['picks'][0]['text'].startswith('Still at The Mini Bar?'), s.get('picks'))
         t.tap(s['picks'][0]['x'], s['picks'][0]['y'])
+        s = wait(t, lambda s: s.get('view') == 'vName')
+        time.sleep(0.4)
+        s = state(t)
+        check('...then has the name ready ("Sam") and does not ask for the sign-up again on this phone', s.get('nameVal') == 'Sam' and not s.get('optin'), (s.get('nameVal'), s.get('optin')))
+        t.tap_id('nameBtn')
         ids3, s, _ = play_round(t, [True] * 5)
         check('a rescan in the same hour: five more, none seen before', len(set(ids3)) == 5 and not set(ids3) & set(ids1 + ids2), ids3)
         check('a perfect round: "Perfect round, Sam", "5 of 5"', s.get('kick') == 'Perfect round, Sam' and s.get('scoreN') == '5 of 5', (s.get('kick'), s.get('scoreN')))
@@ -807,13 +837,11 @@ def main():
             clear_storage(b, base, seen=others)
             tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
-            wait(tf, lambda s: s.get('view') == 'vName')
-            f = waits.as_json(tf.js(FIT), {}, "FIT")
-            check('%d px, the name: nothing sideways, off the screen, cut off, under 15px or too small to tap' % w,
-                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
-            tf.shot('lhn-name-%d.png' % w)
-            name_step(tf, 'Christabel-Anne')
             wait(tf, lambda s: s.get('view') == 'vWhere')
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
+            check('%d px, where are you playing: nothing sideways, off the screen, cut off, under 15px or too small to tap' % w,
+                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            tf.shot('lhn-where-%d.png' % w)
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
             wait(tf, lambda s: len(s.get('picks', [])) == 3)
@@ -836,6 +864,15 @@ def main():
             # slow machine, so this tab's clock stands still while it is measured. The ring itself is tested above.
             tf.js('(function(){var t=Date.now();Date.now=function(){return t;};})()')
             where_step(tf, 'min', 'The Mini Bar')
+            wait(tf, lambda s: s.get('view') == 'vName' and s.get('optin'))
+            f = waits.as_json(tf.js(FIT), {}, "FIT")
+            on1 = tf.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight')
+            check('%d px, your details with the venue\'s sign-up (INBOX 309.1c): the same%s' % (w, ', and Play is on the first screen' if h >= 667 else ''),
+                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'] and (on1 or h < 667), (f, on1))
+            tf.shot('lhn-name-%d.png' % w)
+            tf.type_into('nameIn', 'Christabel-Anne')
+            tf.type_into('optinEmail', 'christabel@example.com')
+            tf.tap_id('nameBtn')
             s = wait_question(tf)
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))
             f = waits.as_json(tf.js(FIT), {}, "FIT")
@@ -847,12 +884,9 @@ def main():
             _, s, _ = play_round(tf, [True, False, True, True, False])
             time.sleep(0.4)
             f = waits.as_json(tf.js(FIT), {}, "FIT")
-            check('%d px, the end with the board and the venue\'s sign-up: "3 of 5", the same' % w,
-                  s.get('scoreN') == '3 of 5' and s.get('optin') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('optin'), f))
+            check('%d px, the end with the board: "3 of 5", the same' % w,
+                  s.get('scoreN') == '3 of 5' and s.get('board') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('board'), f))
             tf.shot('lhn-score-%d.png' % w)
-            tf.js('(function(){var e=document.getElementById("optinCard");if(e)e.scrollIntoView({block:"center"});})()')
-            time.sleep(0.2)
-            tf.shot('lhn-optin-%d.png' % w)
             tf.close()
     finally:
         b.close()

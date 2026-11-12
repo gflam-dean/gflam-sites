@@ -268,7 +268,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 119,
+  "checks": 125,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {
@@ -1700,11 +1700,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 81,
+  "checks": 91,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 155,
+  "checks": 163,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

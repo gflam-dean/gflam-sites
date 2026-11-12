@@ -55,9 +55,7 @@
   .linkbtn[hidden]{display:none}
   .shell{width:100%;max-width:480px;margin:0 auto;padding:0 18px}
 
-  /* ---------- THE HEADER, OPTION 5 (the trivia phone's, Dean 3 Nov 2026): the venue's logo top left, or its
-     name as text when it has none, never both; "60-second trivia" before a venue is known. Island-safe:
-     max(12px, the inset). Nothing under 15px. Our venueplay logo is small, at the BOTTOM. ---------- */
+  /* THE HEADER, OPTION 5 (Dean 3 Nov): the venue's logo top left, or its name as text, never both; our logo small at the bottom. */
   header{padding-top:max(12px, env(safe-area-inset-top, 0px));position:sticky;top:0;z-index:10;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .ptop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding-bottom:8px}
   .brand{display:flex;align-items:center;min-width:0;min-height:56px}
@@ -114,14 +112,8 @@
   .added{margin-top:14px;border-radius:16px;background:rgba(47,208,138,.08);border:1px solid rgba(47,208,138,.4);padding:16px}
   .added b{display:block;color:#fff;font-weight:800;font-size:18px;overflow-wrap:anywhere}
   .added p{color:var(--text);font-size:16px;margin-top:4px}
-  .optin-card{margin-top:22px;border-radius:18px;background:var(--card);border:1px solid var(--line-2);padding:18px}
-  .optin-card h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:#fff;overflow-wrap:anywhere}
-  .optin-card p{color:var(--muted);font-size:16px;margin-top:6px}
-  .optin-card .field{margin-top:12px}
-  .optin-card label.optin{display:flex;gap:12px;align-items:flex-start;margin-top:14px;color:var(--text);font-size:16px;line-height:1.4;cursor:pointer}
-  .optin-card label.optin input{flex:none;width:24px;height:24px;margin-top:1px;accent-color:var(--pink)}
-  .optin-card .btn{margin-top:14px}
-  .optin-card .ok{color:var(--green);font-size:17px;font-weight:700;margin-top:4px}
+  .optin-tick label.optin{display:flex;gap:12px;align-items:flex-start;margin-top:14px;color:var(--text);font-size:16px;line-height:1.4;cursor:pointer}
+  .optin-tick label.optin input{flex:none;width:24px;height:24px;margin-top:1px;accent-color:var(--pink)}
   .pick.again{border-color:rgba(255,31,142,.5);background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 70%),var(--card)}
 
   /* ---------- THE QUESTION, IN THE TRIVIA PHONE'S NEW LOOK ---------- */
@@ -244,8 +236,12 @@
     <p class="psub" id="nameSub">First name only. It goes on tonight's board at your venue.</p>
     <form id="nameForm" novalidate autocomplete="off">
       <div class="field"><input type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name"></div>
+      <div class="field" id="lastRow" hidden><input type="text" id="lastIn" maxlength="40" placeholder="Last name (optional)" autocomplete="family-name" autocapitalize="words" spellcheck="false" aria-label="Your last name, optional"></div>
+      <div class="field" id="optinEmailRow" hidden><input type="text" id="optinEmail" maxlength="200" placeholder="Your email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="Your email"></div>
+      <div class="field" id="optinMobileRow" hidden><input type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
+      <div class="optin-tick" id="optinTick"></div>
       <p class="cerr" id="nameErr" aria-live="polite"></p>
-      <button class="btn pink" id="nameBtn" type="submit">Next</button>
+      <button class="btn pink" id="nameBtn" type="submit">Play</button>
     </form>
   </section>
 
@@ -303,16 +299,6 @@
     </div>
     <button class="btn pink" id="challenge" type="button" hidden style="margin-top:20px">Challenge your mates: text them</button>
     <button class="linkbtn" id="copyLink" type="button" hidden>Or copy the link</button>
-    <form class="optin-card" id="optinCard" novalidate hidden>
-      <h2 id="optinHead">Hear from the venue</h2>
-      <p>Only if you want to. It never shows on the board.</p>
-      <div class="field" id="optinEmailRow" hidden><input type="text" id="optinEmail" maxlength="200" placeholder="Your email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="Your email"></div>
-      <div class="field" id="optinMobileRow" hidden><input type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
-      <div id="optinTick"></div>
-      <p class="cerr" id="optinErr" aria-live="polite"></p>
-      <button class="btn ghost" id="optinBtn" type="submit">Sign me up</button>
-      <p class="ok" id="optinOk" hidden></p>
-    </form>
     <p class="shared" id="shared" aria-live="polite"></p>
     <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
     <button class="btn ghost" id="again" type="button">Play again</button>
@@ -489,7 +475,7 @@ var VPCoaster = (function () {
   'use strict';
   var L = VPCoaster, PER_SCAN = L.PER_SCAN;
   var API = window.VP_GAME_API || 'https://game.venueplay.com.au';
-  var SEEN_KEY = 'vp-lhn-seen', NAME_KEY = 'vp-lhn-name', PLACE_KEY = 'vp-lhn-place';
+  var SEEN_KEY = 'vp-lhn-seen', NAME_KEY = 'vp-lhn-name', PLACE_KEY = 'vp-lhn-place', SIGNED_KEY = 'vp-lhn-signed';
   var SEEN_CAP = 400;          // well under the bank, so the next five are always fresh ones
   var PAUSE_MS = 1300;         // how long right or wrong stays up before the next question (the Worker's COASTER_REVEAL_MS)
   var WAIT_MS = 5000;          // the longest the next question waits for the board's answer
@@ -573,32 +559,63 @@ var VPCoaster = (function () {
   var BANK = null, S = { name: '', place: null, code: L.readCode(location.search), mode: 'local', play: null, token: '', myCode: '', venue: null };
   var round = [], at = 0, right = 0, results = [], total = 0, lastAnswer = null, ended = null;
 
-  /* 1. THE FIRST NAME */
-  function askName() {
+  /* 2. YOUR DETAILS, after the venue (INBOX 309.1c): the first name, and where HQ switched it on, the venue's
+     own sign-up and the phones' one tick, before play. /coaster/ask says what to ask. */
+  function askName() { askDetails(null); }
+  function askDetails(venueName) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
-    if (S.code) {
-      $('nameKick').textContent = 'You have been challenged';
-      $('nameHead').textContent = 'Same five questions. First, your name?';
-      $('nameSub').textContent = 'First name only. It goes on the same board as your mate.';
+    $('nameKick').textContent = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster trivia';
+    $('nameHead').textContent = S.code ? 'Same five questions. Your name?' : 'Five quick questions. Your name?';
+    $('nameSub').textContent = 'First name only on the board.';
+    ['lastRow', 'optinEmailRow', 'optinMobileRow'].forEach(function (id) { $(id).hidden = true; });
+    $('optinTick').textContent = '';
+    $('nameErr').textContent = '';
+    var o = S.optin, done = recall(SIGNED_KEY);
+    if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone
+    if (o && (o.email || o.mobile) && venueName && window.VPConsent) {
+      $('nameSub').textContent = 'First name only on the board. Your details go to ' + venueName + ', never on the board.';
+      $('optinEmailRow').hidden = !o.email;
+      $('optinMobileRow').hidden = !o.mobile;
+      $('lastRow').hidden = !o.last_name;
+      window.VPConsent.render($('optinTick'), { marketing_optin: o.marketing_optin, email: o.email, mobile: o.mobile }, { venueName: venueName });
     }
-    header(null);
     view('vName');
   }
   $('nameForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var n = L.firstName($('nameIn').value);
     if (!n) { $('nameErr').textContent = 'Type your first name.'; $('nameIn').focus(); return; }
+    var o = S.optin, cap = null;
+    if (o && !$('optinEmailRow').hidden || o && !$('optinMobileRow').hidden) {
+      cap = { email: o.email ? $('optinEmail').value.trim() : '', mobile: o.mobile ? $('optinMobile').value.trim() : '', last_name: o.last_name ? $('lastIn').value.trim() : '' };
+      if (!cap.email && !cap.mobile) { $('nameErr').textContent = o.email ? 'Type your email.' : 'Type your mobile.'; return; }
+      if (cap.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cap.email)) { $('nameErr').textContent = 'That email does not look right.'; return; }
+      cap.marketing_optin = !!(window.VPConsent && window.VPConsent.optedIn(cap));
+      if (cap.marketing_optin) cap.consent_version = window.VPConsent.VERSION;
+    }
     $('nameErr').textContent = '';
     S.name = n;
+    S.details = cap;
     remember(NAME_KEY, n);
-    if (S.code) return begin();
-    askWhere();
+    begin();
   });
+  /* the details go with the round: the Worker files them for the venue the round is at, never on the board */
+  function sendDetails() {
+    var c = S.details;
+    S.details = null;
+    if (!c || !S.play || !S.optin) return;
+    var place = S.place;
+    call('POST', '/coaster/optin', { play: S.play, token: S.token, email: c.email, mobile: c.mobile, last_name: c.last_name,
+      marketing_optin: c.marketing_optin, consent_version: c.consent_version }, function (st, d) {
+      if (st === 200 && d && d.stored) { var a = recall(SIGNED_KEY); a = a && a.push ? a : []; if (a.indexOf(place) < 0) a.push(place); remember(SIGNED_KEY, a.slice(-20)); }
+    });
+  }
 
   /* 2. WHERE ARE YOU PLAYING */
   function askWhere() {
-    $('whereKick').textContent = 'Hi ' + S.name;
+    $('whereKick').textContent = S.name ? 'Hi ' + S.name : 'Coaster trivia';
+    S.optin = null; S.details = null; header(null);
     var last = recall(PLACE_KEY), box = $('againBox');
     box.textContent = '';
     box.hidden = true;
@@ -634,7 +651,12 @@ var VPCoaster = (function () {
   function choose(place, name, label) {
     S.place = place;
     remember(PLACE_KEY, { place: place, name: name, label: label || '', at: Date.now() });
-    begin();
+    S.optin = null;
+    if (!/^v:/.test(place)) return askDetails(name);
+    var done = false;
+    function go(o) { if (done) return; done = true; S.optin = o || null; askDetails(name); }
+    call('GET', '/coaster/ask?place=' + encodeURIComponent(place), null, function (st, d) { go(st === 200 && d ? d.optin : null); });
+    setTimeout(function () { go(null); }, 2500);   // a slow answer never holds the player up
   }
   var searchTimer = null, searchSeq = 0;
   $('whereIn').addEventListener('input', function () {
@@ -684,11 +706,11 @@ var VPCoaster = (function () {
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
       if (st === 200) { $('leadDoneName').textContent = f.name; $('leadDone').hidden = false; }
-      S.place = null; S.venue = null;
-      setTimeout(begin, st === 200 ? 1600 : 0);   // they read the thanks, then play (no board)
+      S.place = null; S.venue = null; S.optin = null;
+      setTimeout(function () { askDetails(null); }, st === 200 ? 1600 : 0);   // they read the thanks, then their name (no board)
     });
   });
-  $('skipWhere').addEventListener('click', function () { S.place = null; S.venue = null; begin(); });
+  $('skipWhere').addEventListener('click', function () { S.place = null; S.venue = null; S.optin = null; askDetails(null); });
 
   /* 3. THE ROUND: start it on the board, or play without one */
   function begin() {
@@ -703,6 +725,7 @@ var VPCoaster = (function () {
         var five = L.byIds(BANK, d.qids);
         if (five) {
           S.play = d.play; S.token = d.token; S.myCode = d.code; S.place = d.place; S.venue = d.venue || null; S.optin = d.optin || null;
+          sendDetails();
           if (S.name !== d.name && d.name) S.name = d.name;
           return go('board', five);
         }
@@ -831,7 +854,6 @@ var VPCoaster = (function () {
     $('board').hidden = !onBoard;
     $('challenge').hidden = !onBoard;
     $('copyLink').hidden = !onBoard;
-    $('optinCard').hidden = true;
     $('shared').textContent = '';
     $('copyUrl').hidden = true;
     if (onBoard) {
@@ -840,7 +862,6 @@ var VPCoaster = (function () {
       $('scorePlace').textContent = L.placeLine(b.rank, 'night', S.venue && S.venue.name);
       $('scoreSub').textContent = 'Same five questions for your mates: send them the link and see who tops the board.';
       paintBoard(b, 'night');
-      optinCard();
     } else {
       $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
@@ -861,42 +882,6 @@ var VPCoaster = (function () {
       paintBoard(d, period);
     });
   }
-  /* THE VENUE'S OWN SIGN-UP (INBOX 232): only when the Worker says this venue has it switched on, with the fields
-     the venue collects and the phones' one tick (/app/vp-consent.js). Never ticked for them. */
-  function optinCard() {
-    var o = S.optin, card = $('optinCard');
-    card.hidden = true;
-    if (!o || !(o.email || o.mobile) || !S.venue || !S.venue.name || !window.VPConsent || S.signedUp === S.place) return;
-    $('optinHead').textContent = 'Hear from ' + S.venue.name;
-    $('optinEmailRow').hidden = !o.email;
-    $('optinMobileRow').hidden = !o.mobile;
-    var tick = $('optinTick'); tick.textContent = ''; tick.hidden = false;
-    window.VPConsent.render(tick, { marketing_optin: o.marketing_optin, email: o.email, mobile: o.mobile }, { venueName: S.venue.name });
-    $('optinErr').textContent = '';
-    $('optinBtn').disabled = false; $('optinBtn').hidden = false; $('optinOk').hidden = true;
-    card.hidden = false;
-  }
-  $('optinCard').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var cap = { email: S.optin && S.optin.email ? $('optinEmail').value.trim() : '', mobile: S.optin && S.optin.mobile ? $('optinMobile').value.trim() : '' };
-    if (!cap.email && !cap.mobile) { $('optinErr').textContent = S.optin && S.optin.email ? 'Type your email.' : 'Type your mobile.'; return; }
-    if (cap.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cap.email)) { $('optinErr').textContent = 'That email does not look right.'; return; }
-    var body = { play: S.play, token: S.token, email: cap.email, mobile: cap.mobile, marketing_optin: false };
-    if (window.VPConsent && window.VPConsent.optedIn(cap)) { body.marketing_optin = true; body.consent_version = window.VPConsent.VERSION; }
-    $('optinErr').textContent = '';
-    $('optinBtn').disabled = true;
-    call('POST', '/coaster/optin', body, function (st, d) {
-      if (st === 200 && d.stored) {
-        S.signedUp = S.place;
-        ['optinEmailRow', 'optinMobileRow', 'optinTick', 'optinBtn'].forEach(function (id) { $(id).hidden = true; });
-        $('optinOk').textContent = 'Thanks. You are on ' + S.venue.name + '\'s list.';
-        $('optinOk').hidden = false;
-        return;
-      }
-      $('optinBtn').disabled = false;
-      $('optinErr').textContent = (d && d.error) || 'That did not go through. Try again.';
-    });
-  });
   $('tabNight').addEventListener('click', function () { loadBoard('night'); });
   $('tabWeek').addEventListener('click', function () { loadBoard('week'); });
   /* "Challenge your mates" (INBOX 309.1e): a text message first, the link to copy second. */
@@ -924,7 +909,7 @@ var VPCoaster = (function () {
       try { d = JSON.parse(x.responseText); } catch (e) {}
       if (x.status !== 200 || !d || !d.q || d.q.length < PER_SCAN) return failed();
       BANK = d.q;
-      if (!S.name) askName(); else begin();
+      if (S.code) { if (!S.name) askName(); else begin(); } else askWhere();   // the venue first, then the name (INBOX 309.1)
     };
     x.onerror = x.ontimeout = failed;
     x.send();

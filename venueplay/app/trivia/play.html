@@ -735,7 +735,7 @@
     try{ phoneRing(rem); }catch(e){}
     if(P.locked){ $("pqCd").textContent="Answer locked in"; }
     else { $("pqCd").textContent="Answer in "+rem+"s"; }
-    if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
+    if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(true); }
   }
 
   // Accepts either a live broadcast (endsAt in ms) or a /snapshot question (ends_at ISO).
@@ -868,8 +868,11 @@
     }
     go();
   }
-  function lockOut(){
+  /* moment: the clock really ran out while this phone watched (never a catch-up), so the shared Time's up
+     moment plays, the drink coaster's own (VPQRing.timesUp, INBOX 312), once a question. */
+  function lockOut(moment){
     if(P.q && !P.locked){
+      if(moment && !P.q.upShown && window.VPQRing){ P.q.upShown=true; try{ window.VPQRing.timesUp(); }catch(e){} }
       var btns=document.querySelectorAll("#pAnswers .pans");
       for(var k=0;k<btns.length;k++){ btns[k].disabled=true; btns[k].classList.add("dim"); }
       $("pStatus").className="pstatus"; $("pStatus").textContent="Time's up";
@@ -1160,7 +1163,7 @@
     }
     else if(m.t==="lock"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
-      stopCd(); lockOut();
+      stopCd(); lockOut(!m.to);
     }
     else if(m.t==="reveal"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
