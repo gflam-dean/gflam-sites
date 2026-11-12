@@ -283,7 +283,8 @@
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock (12 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (members draw, 9 Nov 2026) -->
-<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks (flip board, race plate), silent (10 Nov 2026) -->
+<script src="/app/vp-drawstyle.js"></script>
+<script src="/app/vp-drawcount.js"></script>   <!-- the countdown band + final ten + claim clock band; off unless the host switched "Countdown before the draw" on (13 Nov 2026, INBOX 299b) -->   <!-- the draw looks (flip board, race plate), silent (10 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -449,8 +450,8 @@
   function makeStage(){
     destroyStyle(); var nt=$("venueNameTag");
     $("styleTitle").textContent=state.drawName || "Members draw";   // the draw's own name, never the generic words
-    styleStage=VPDrawStyle.create($("tvStyleHost"), { style:state.styleKey, mode:"members", digits:Math.max(1, String(state.spinMax||999).length), min:state.spinMin, max:state.spinMax, name:state.drawName, drawn:(state.drawnList||[]).slice(-9), prizeNo:0, prizeOf:0,
-      drawSecs:state.styleSecs||9, prize:state.jackpotCents>0 ? "Playing for "+money(state.jackpotCents) : "Members jackpot", venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
+    styleStage=VPDrawStyle.create($("tvStyleHost"), { style:state.styleKey, mode:"members", winnerBig:!!state.winBig, noClock:!!state.cdOn, digits:Math.max(1, String(state.spinMax||999).length), min:state.spinMin, max:state.spinMax, name:state.drawName, drawn:(state.drawnList||[]).slice(-9), prizeNo:0, prizeOf:0,
+      drawSecs:state.styleSecs||9, prize:(state.jackpotCents>0 && !state.winBig) ? "Playing for "+money(state.jackpotCents) : "Members jackpot", venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
     return styleStage;
   }
   function showStyleDrawing(){
@@ -467,11 +468,35 @@
     state.drawnList=state.drawnList||[]; if(number!=null && state.drawnList[state.drawnList.length-1]!==String(number)) state.drawnList.push(String(number)); state.drawnList=state.drawnList.slice(-9);
     var secs=claimSecs|0, st=styleStage;
     if(styleClockTimer){ clearInterval(styleClockTimer); styleClockTimer=null; }
-    if(secs>0){
+    if(state.cdOn){ if(cdc()){ cdc().cancel(); if(secs>0) cdc().claim(secs, secs); } }   // the claim clock in the countdown band (13 Nov 2026)
+    else if(secs>0){
       (function paint(){ st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); })();
       styleClockTimer=setInterval(function(){ secs--; st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); if(secs<=0){ clearInterval(styleClockTimer); styleClockTimer=null; } }, 1000);
     }
     setTimeout(alignTitle,0);
+  }
+
+  /* THE COUNTDOWN BEFORE THE DRAW (13 Nov 2026, INBOX 299b). Only when the host's setting is on: the console sends t:"count" with the seconds left
+     (again every 10 seconds, so a TV that loads late or drifts catches up) and t:"count_off" if it is cancelled. Members: the blank flip board under the band. */
+  var cdCtl=null;
+  function cdc(){ if(!cdCtl && window.VPDrawCount) cdCtl=VPDrawCount.make($("tv"), { mode:"members" }); return cdCtl; }
+  function onCount(m){
+    cancelBackToAds();
+    if(state.phase==="drawing" || state.phase==="winner" || state.phase==="result") return;
+    if(!cdc()) return;
+    if(state.phase!=="counting"){
+      state.phase="counting"; state.cdOn=true; state.winBig=!!m.wx;
+      stopAds(); stopSpin(); stopCelebrate(); clearHold(); $("hostLine").classList.add("hidden");
+      if(m.look==="flip" && window.VPDrawStyle){
+        state.styleKey="flip"; state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0);
+        hideAll(); $("tvStyle").classList.remove("hidden"); makeStage().showBlank(); setTimeout(alignTitle,0);
+      }
+    }
+    cdc().count(m.secs, m.total);
+  }
+  function onCountOff(){
+    if(cdCtl) cdCtl.cancel();
+    if(state.phase==="counting"){ state.phase="idle"; state.styleKey=""; startAds(); scheduleBackToAds(); }
   }
 
   // ---- drawing ----
@@ -644,9 +669,11 @@
     if(typeof nextResetCents==="number") state.jackpotCents=nextResetCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
     $("resEye").textContent="We have a winner"; $("resEye").className="lab yl"; $("resEye").classList.remove("hidden"); $("resStep").classList.remove("roll","hidden"); $("resRollHead").classList.add("hidden"); $("resMax").classList.add("hidden");
-    var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=name||"·";
+    var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=(state.winBig && window.VPDrawStyle) ? (VPDrawStyle.niceName(name)||"·") : (name||"·");
     $("resWinsLabel").classList.remove("hidden");
-    var won=$("resWon"); won.classList.remove("hidden"); countUp(won, amountCents||0);
+    var won=$("resWon");
+    if(state.winBig){ $("resWinsLabel").classList.add("hidden"); won.classList.add("hidden"); }   // THE WINNER TAKES THE SCREEN: the name is the headline, the amount is not (INBOX 285b)
+    else { won.classList.remove("hidden"); countUp(won, amountCents||0); }
     $("resNext").classList.add("hidden"); $("resJack").classList.add("hidden"); $("resMissed").classList.add("hidden");
     $("resSub").textContent="See the host to collect"; $("resSub").className="present";
     celebrate(CLAIM_HOLD_MS); holdResult(CLAIM_HOLD_MS);
@@ -833,7 +860,7 @@
          G.round is already cleared by then, so a tap behind the bar during the 60 second
          celebration used to put the draws board straight back up over the winner. Same guard
          tv.html got for bingo. A real new draw arrives as t:"drawing". */
-      if(state.phase==="winner" || holding()) return;
+      if(state.phase==="winner" || state.phase==="counting" || holding()) return;
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
       applyDraws(m);
@@ -841,11 +868,17 @@
       else if(state.phase==="idle"){ fillIdle(); }   // refresh board while still idle
       return;
     }
+    if(m.t==="count"){ onCount(m); return; }
+    if(m.t==="count_off"){ onCountOff(); return; }
     if(m.t==="idle"){
+      if(state.phase==="counting") return;   // a countdown holds the wall until count_off or the draw
       if(holding()){ state.pendingIdle=m; return; }   // the result finishes first; the idle is kept, not lost
       cancelBackToAds(); goIdle(m); return;
     }
     cancelBackToAds();
+    if(m.t==="drawing" || m.t==="winner" || m.t==="claimed"){ state.cdOn=!!m.cd; state.winBig=!!m.wx; }
+    if(m.t==="drawing" && cdCtl) cdCtl.cancel();
+    if(m.t==="claimed" || m.t==="rollover"){ if(cdCtl) cdCtl.cancel(); }
     if(m.t==="drawing"){
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       state.kind=(m.kind==="entries") ? "entries" : ""; state.entriesTotal=(m.entriesTotal|0);
@@ -858,7 +891,7 @@
     else if(m.t==="pick"){ if(styleOn() && m.number!=null){ state.pick={ number:m.number, name:(typeof m.name==="string" ? m.name : "") }; if(styleStage) styleStage.setPick(state.pick); } }
     else if(m.t==="winner" && m.kind==="entries"){ state.phase="winner"; state.kind="entries"; showEntriesWinner(m); }
     else if(m.t==="winner"){ state.phase="winner"; state.kind=""; if(styleOn()) showStyleWinner(m.number, m.name, m.claimSecs); else showWinner(m.number, m.name, m.claimSecs); }
-    else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
+    else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }  // wx: the money is not the headline
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName, !!m.capped); }
   }
 

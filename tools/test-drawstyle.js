@@ -54,7 +54,7 @@ show('the draw looks never call the fanfare', !/fanfare/i.test(MOD));
 
 print('\n== 5. the winner is the server\'s ==');
 show('the stage holds on the last near miss until a pick arrives', /freezeT/.test(MOD) && /!st\.picked && raw > freeze/.test(MOD));
-show('the winner item shows no number until picked', /var show = \(i === N && !st\.picked\) \? "" : items\[i\]\.no;/.test(MOD) && /if \(i === N && !st\.picked\) return " ";/.test(MOD));
+show('the winner item shows no number until picked', /var show = \(i === N && !st\.picked\) \? "" : items\[i\]\.no;/.test(MOD) && /if \(st\.blank \|\| \(i === N && !st\.picked\)\) return " ";/.test(MOD));
 show('the raffle host sends t:"pick" with the server ticket as soon as the API answers', /function sendPick\(r\)/.test(RH) && (RH.match(/sendPick\(r\); return wait/g) || []).length === 2);
 show('the members host sends t:"pick" the same way', /t:"pick", number:r\.member_number, name:r\.winner_name/.test(MH));
 show('the raffle TV shows the look when the draw names one, and the members TV too', /if\(styleOn\(\)\)\{ stopSpin\(\); showLayer\("tvStyle"\); makeStage\(\)\.start\(\)/.test(RS) && /if\(styleOn\(\) && state\.kind!=="entries"\) showStyleDrawing\(\)/.test(MS));
@@ -89,7 +89,7 @@ show('the raffle wall\'s heading is the raffle\'s own name (Raffle only when it 
 show('the members wall\'s heading is the draw\'s own name', /\$\("styleTitle"\)\.textContent=state\.drawName \|\| "Members draw"/.test(MS));
 show('the host sends the raffle name and Prize n of m with a new-look draw', /m\.raffle=rt/.test(RH) && /m\.prizeNo=G\.prizeIdx\+1; m\.prizeOf=G\.prizes\.length/.test(RH));
 show('Prize 1 of 32 style counter in the stage', /"Prize " \+ \(o\.prizeNo \| 0\) \+ " of " \+ \(o\.prizeOf \| 0\)/.test(MOD) && /o\.prizeOf > 1/.test(MOD));
-show('the drawn numbers stay along the bottom of the flip board: at most 10, this draw added when it lands', /\.slice\(-9\)/.test(MOD) && /list = list\.slice\(-10\)/.test(MOD) && /t >= R \+ 1\.0/.test(MOD) && /style === "flip"\) \? el\("div", "vpds-drawn"/.test(MOD));
+show('the drawn numbers stay along the bottom of the flip board: at most 10, this draw added when it lands', /\.slice\(-9\)/.test(MOD) && /list = list\.slice\(-10\)/.test(MOD) && /t >= R \+ 1\.0/.test(MOD) && /style === "flip" && !bigWin && !o\.noClock\) \? el\("div", "vpds-drawn"/.test(MOD));
 show('the raffle TV passes tonight\'s drawn tickets, the members TV its drawn list', /drawn:drawn/.test(RS) && /drawn:\(state\.drawnList/.test(MS));
 show('race plate: ONE slant for every tier (the same two lines cut all four)', /var GH = 646, SHIFT = \d+/.test(MOD) && /function lx\(y\)/.test(MOD) && /function rx\(y\)/.test(MOD) && (MOD.match(/clip\(/g) || []).length >= 3 && !/polygon\(28px/.test(MOD));
 show('fast is a draw time chip on both consoles', /data-dt="fast">Fast, 3 seconds/.test(RH) && /data-dt="fast">Fast, 3 seconds/.test(MH) && !/Skip draw|skipBtn/.test(RH + MH));

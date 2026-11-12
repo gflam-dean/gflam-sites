@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 01:39 · cad72f1f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 03:59 · 995e4ace';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4845,6 +4845,7 @@ const GAME_PREFS_KEYS = {
     announce_prize: gpBool,
     // where tickets are sold, said on the TV under GET YOUR TICKETS (Dean, 9 Nov 2026); '' is "not said"
     tickets_from:  (v) => (['', 'host', 'front', 'entrance', 'bar', 'sellers'].indexOf(v) >= 0 ? v : undefined),
+    draw_countdown: gpBool,   // the countdown before the draw, OFF unless the venue switches it on (13 Nov 2026, INBOX 299b); stored in this JSON, no column
     // the TV's draw look and draw time (Dean, 10 Nov 2026); '' / absent is the draw every venue already has
     draw_style:    (v) => (['', 'ticket', 'race'].indexOf(v) >= 0 ? v : undefined),
     draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
@@ -4854,6 +4855,8 @@ const GAME_PREFS_KEYS = {
     draw_id:       gpUuid,   // which draw the console opens on; the draw's own settings live in vp_member_draws
     draw_style:    (v) => (['', 'flip', 'race'].indexOf(v) >= 0 ? v : undefined),   // the TV's draw look and time (Dean, 10 Nov 2026)
     draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
+    draw_winner_big: gpBool,  // the winner takes the screen (INBOX 285 option 2), OFF unless switched on (13 Nov 2026); stored in this JSON, no column
+    draw_countdown:  gpBool,  // the countdown before the draw (INBOX 299b), OFF unless switched on
   },
   musical: {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,

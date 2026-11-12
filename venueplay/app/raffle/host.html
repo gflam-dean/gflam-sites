@@ -344,6 +344,14 @@
                 <button type="button" data-dt="long">Long, 12 seconds</button>
               </div>
             </div>
+            <!-- THE COUNTDOWN BEFORE THE DRAW (13 Nov 2026, INBOX 299b option 3): OFF until the venue switches it on (game_prefs draw_countdown, absent = off). -->
+            <div class="field2" id="cdField">
+              <span class="flab">Countdown before the draw<small>Shows a Draw in 5:00 clock on the TV over Get your tickets, a big final ten seconds, then the claim clock in the same band. You start it above the Draw button.</small></span>
+              <div class="chips" id="cdChips">
+                <button type="button" data-cdon="off">Off</button>
+                <button type="button" data-cdon="on">On</button>
+              </div>
+            </div>
             <div class="field" id="drawLenField">
               <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
                 <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
@@ -384,6 +392,17 @@
           <button type="button" data-once="race">Race plate</button>
         </div>
       </div>
+      <!-- THE COUNTDOWN CONTROL (13 Nov 2026): only when "Countdown before the draw" is on in Draw settings -->
+      <div class="field2 hidden" id="cdCtl">
+        <span class="flab">Count down to the draw<small id="cdState">The TV shows the clock. The draw starts by itself at 0:00.</small></span>
+        <div class="chips" id="cdMins">
+          <button type="button" data-cdm="60">1 minute</button>
+          <button type="button" data-cdm="120">2 minutes</button>
+          <button type="button" data-cdm="300">5 minutes</button>
+          <button type="button" data-cdm="600">10 minutes</button>
+        </div>
+        <button type="button" class="btn ghost hidden" id="cdCancel">Cancel countdown</button>
+      </div>
       <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
       <button class="btn pink xl" id="drawBtn">Draw the winner</button>
       <p class="hint" id="drawHint"></p>
@@ -423,7 +442,8 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-tvclaim.js"></script>   <!-- the TV is taken only by Draw, and the host is told when it is not showing the draw (12 Nov 2026) -->
 <script src="/app/vp-drawrecord.js"></script>
-<script src="/app/vp-drawstyle.js"></script>   <!-- the draw looks: ticket roll, race plate; only its draw times are read here -->
+<script src="/app/vp-drawstyle.js"></script>
+<script src="/app/vp-drawcount.js"></script>   <!-- the countdown before the draw: the console side (13 Nov 2026, INBOX 299b) -->   <!-- the draw looks: ticket roll, race plate; only its draw times are read here -->
 <script>
 (function(){
   "use strict";
@@ -472,7 +492,8 @@
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
   var ch=null, subscribed=false, sendQueue=[];
   function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
-  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
+  /* THE DRAW MOMENTS (13 Nov 2026): with the countdown on, the draw, winner and result carry cd so the TV puts the claim clock in the countdown band. Off sends nothing extra. */
+  function send(obj){ if(G.cdOn && obj && (obj.t==="drawing" || obj.t==="winner" || obj.t==="claimed")) obj.cd=1; if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   /* THE TV IS TAKEN BY DRAW, NEVER BY OPENING THIS PAGE (12 Nov 2026, INBOX 282.8 and 286; /app/vp-tvclaim.js).
      Opening the console, coming back to its tab and a TV saying hello used to put the raffle on the wall;
@@ -490,7 +511,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null, ticketsFrom:"", drawStyle:"ticket", drawTime:"normal", styleOnce:null };   // styleOnce: this draw's own look (null = the venue's usual), 11 Nov 2026   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"", cdOn:false, momentsSet:false, drawStyle:"ticket", drawTime:"normal", styleOnce:null };   // styleOnce: this draw's own look (null = the venue's usual), 11 Nov 2026   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -1284,6 +1305,7 @@
       return;
     }
 
+    if(typeof CD!=="undefined" && CD && CD.running()) CD.cancel(true);   // the draw has started: the TV leaves the countdown with it
     G.busy=true; clearTimers(); G.lastWin=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
     drawBtnBusy();
@@ -1559,6 +1581,7 @@
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, FINDINGS R6)
         send({ t:"mode", mode:"raffle", claim:1 });   // so a /tv that just reloaded mid-raffle comes back to it
         if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
+        else if(typeof CD!=="undefined" && CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }
     }
@@ -1646,6 +1669,29 @@
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); renderLook(); queueRafflePrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); renderLook(); queueRafflePrefs(); });
   renderLook();
+  /* THE COUNTDOWN: the switch, and the control above the Draw button. The clock is this console's; the TV is told the seconds left. */
+  var CD=null;
+  function renderMoments(){
+    var b=document.querySelectorAll("#cdChips button"), i;
+    for(i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-cdon")==="on")===!!G.cdOn);
+    $("cdCtl").classList.toggle("hidden", !G.cdOn);
+    renderCd();
+  }
+  function renderCd(){
+    var on=!!(CD && CD.running()), l=on ? CD.left() : 0;
+    $("cdState").textContent = on ? ("Drawing in "+Math.floor(l/60)+":"+(l%60<10?"0":"")+(l%60)+". The draw starts by itself at 0:00.") : "The TV shows the clock. The draw starts by itself at 0:00.";
+    $("cdCancel").classList.toggle("hidden", !on); $("cdMins").classList.toggle("hidden", on);
+  }
+  function cdStartDraw(){ if(G.busy) return; $("drawBtn").click(); }
+  CD=(window.VPDrawCount ? VPDrawCount.host({ send:function(m){ send(m); }, onZero:cdStartDraw, onChange:renderCd }) : null);
+  $("cdChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-cdon]"); if(!b) return; G.cdOn=b.getAttribute("data-cdon")==="on"; G.momentsSet=true; if(!G.cdOn && CD) CD.cancel(); renderMoments(); queueRafflePrefs(); });
+  $("cdMins").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-cdm]"); if(!b || !CD || G.busy) return;
+    var secs=parseInt(b.getAttribute("data-cdm"),10);
+    if(typeof TVC!=="undefined") TVC.whenShowing(function(){ CD.start(secs); renderCd(); }); else { CD.start(secs); renderCd(); }   // taking the TV is a real action
+  });
+  $("cdCancel").addEventListener("click", function(){ if(CD) CD.cancel(); renderCd(); });
+  renderMoments();
   function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce); }
   $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
   renderOnce();
@@ -1697,6 +1743,7 @@
     if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
     if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
     p.pick_order=pickOrder(); p.announce_prize=announcing(); p.tickets_from=G.ticketsFrom||"";
+    if(G.momentsSet) p.draw_countdown=!!G.cdOn;   // saved only once the venue has touched it: absent = off
     p.draw_style=G.drawStyle||""; p.draw_time=G.drawTime||"normal";
     return p;
   }
@@ -1715,7 +1762,8 @@
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
     if(typeof VPDrawStyle!=="undefined") G.drawStyle=VPDrawStyle.usual("raffle", p.draw_style);   // a stored "" (the old "As now"), or nothing, is the ticket roll (INBOX 284)
     if(typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
-    renderLook();
+    if(typeof p.draw_countdown==="boolean"){ G.cdOn=p.draw_countdown; G.momentsSet=true; }
+    renderLook(); renderMoments();
     if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
     if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();
