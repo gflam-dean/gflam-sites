@@ -3,6 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+  /* A TV INSIDE THE TV'S OWN GAME FRAME IS NOT A TV (12 Nov 2026). A game screen embedded in /tv goes back to the
+     ads by sending its frame to /tv?venue= (End game, a raffle's wind-down), and the /tv around it then takes the
+     frame down. Before it could, the /tv loading in the frame joined the venue's game channels and said hello on
+     every one, and a console still open (the raffle's, after End game) answered a hello by putting its game back
+     on: the wall went straight back to "Raffle tonight" after the host ended it (multi-raffle-in-chrome, red 2 of 3).
+     So a /tv in that frame says one thing to the /tv around it, "back to the ads", and stops loading: no channel,
+     no hello, no second copy of the ads. Only our own frame (same address, id gameFrame); a sales page that shows
+     /tv in a frame of its own is not this. */
+  (function(){ try{
+    var fe=window.frameElement;
+    if(!fe || fe.id!=="gameFrame" || window.parent===window) return;
+    window.parent.postMessage({ vp:"to-ads" }, window.location.origin);
+    window.__vpNestedTv=true;
+    if(window.stop) window.stop();
+  }catch(e){} })();
+</script>
 <title>venueplay: Venue Screen</title>
 <link rel="icon" href="/favicon.ico?v=f4" sizes="any">
 <link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
@@ -657,6 +674,25 @@
 <script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared with trivia and musical bingo (number bingo, 12 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 <script src="/app/vp-tvapp.js"></script>   <!-- the Samsung and LG apps (&app=tizen|webos); does nothing anywhere else -->
+<script>
+  /* INSIDE THE VENUEPLAY TV APP (Android TV / Google TV). The app adds "VenuePlayTV/<version>" to its
+     WebView's user agent (ScreenActivity.java, setUserAgentString) and always opens the full
+     /tv?venue=<slug> link itself, so it never needs the "get the app" line or the "save this page"
+     note: it already remembers its venue.
+     The Samsung (Tizen) and LG (webOS) apps cannot change the user agent, so they say so in the
+     address instead (&app=tizen|webos&appv=<version>) and /app/vp-tvapp.js (just above) sets window.VP_TV_APP
+     (2 Nov 2026). */
+  var VP_IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || "") || !!(window.VP_TV_APP && window.VP_TV_APP.platform); }catch(e){ return false; } })();
+  var IN_APP = VP_IN_APP;
+  /* No "GO FULLSCREEN" inside any app (4 Nov 2026: a Google Play reviewer saw it bottom left of the live venue
+     screen; the app hid it once on load and tv.html showed it again later). The app is already full screen, so
+     the class on <html> takes it off for good, whatever shows it afterwards (Android, LG, Samsung).
+     HERE IN <head>, NOT IN THE PAGE'S MAIN SCRIPT (12 Nov 2026). The main script sits after fifteen script files
+     at the foot of <body>, and the button is drawn above them: while those files loaded, the button was on the
+     wall with no class to hide it (the 100 ms watch in tv-landing-in-chrome saw it, on the venue's ads, in the
+     app). Set here, the class is on <html> before the button is ever drawn. */
+  if(IN_APP){ try{ document.documentElement.classList.add("in-tvapp"); }catch(e){} }
+</script>
 </head>
 <body>
 <div class="tv" id="tv">
@@ -884,6 +920,7 @@
 <script>
 (function(){
   "use strict";
+  if(window.__vpNestedTv) return;   // a /tv inside the TV's own game frame: see the top of <head>
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
@@ -957,18 +994,7 @@
      nothing, or another pub's name, and a scannable code belonging to a real room. So a
      demo forgets the browser entirely. Found 12 Sep 2026 by opening it. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
-  /* INSIDE THE VENUEPLAY TV APP (Android TV / Google TV). The app adds "VenuePlayTV/<version>" to its
-     WebView's user agent (ScreenActivity.java, setUserAgentString) and always opens the full
-     /tv?venue=<slug> link itself, so it never needs the "get the app" line or the "save this page"
-     note: it already remembers its venue.
-     The Samsung (Tizen) and LG (webOS) apps cannot change the user agent, so they say so in the
-     address instead (&app=tizen|webos&appv=<version>) and /app/vp-tvapp.js sets window.VP_TV_APP
-     (2 Nov 2026). */
-  var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || "") || !!(window.VP_TV_APP && window.VP_TV_APP.platform); }catch(e){ return false; } })();
-  /* No "GO FULLSCREEN" inside any app (4 Nov 2026: a Google Play reviewer saw it bottom left of the live venue
-     screen; the app hid it once on load and tv.html showed it again later). The app is already full screen, so
-     the class on <html> takes it off for good, whatever shows it afterwards (Android, LG, Samsung). */
-  if(IN_APP){ try{ document.documentElement.classList.add("in-tvapp"); }catch(e){} }
+  var IN_APP = !!window.VP_IN_APP;   // decided in <head>, before the GO FULLSCREEN button exists (12 Nov 2026)
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();
@@ -2367,6 +2393,7 @@
     if(e.origin !== window.location.origin) return;
     var d = e.data;
     if(d && d.vp === "sting"){ showState(!!d.on); return; }   // the game in the frame is playing its show
+    if(d && d.vp === "to-ads"){ if(tvMode==="embed" && e.source===document.getElementById("gameFrame").contentWindow) enterAds(); return; }   // the frame went back to /tv: the ads, here (top of <head>)
     if(!d || d.vp !== "show-game" || !d.game) return;
     if(d.game === "bingo"){ enterAds(); return; }   // bingo is drawn by this page, not in the frame
     enterEmbed(d.game);
