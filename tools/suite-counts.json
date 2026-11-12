@@ -212,7 +212,7 @@
   "counted_by": "lines"
  },
  "tools/draw-moments-console-in-chrome.test.py": {
-  "checks": 31,
+  "checks": 32,
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {
