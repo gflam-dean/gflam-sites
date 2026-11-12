@@ -3730,6 +3730,29 @@ def local_checks(which):
                why=('; '.join(b[:200] for b in bad[:3]) if bad else (lines[-1][:160] if lines else 'no output'))
                    + '. Run python3 tools/check-migrations-live.py')
 
+        # D212 (12 Nov 2026, INBOX 278): the members list download a left venue sees shipped asking vp_members for
+        # "number" (the column is member_number). The LIVE half's column check caught it after the push. This is the
+        # same extraction (tools/check-columns.py) checked before the push, with no network, against
+        # venueplay-backend/supabase/COLUMNS-BASELINE.json (written from live by dump-rls-baseline.py) plus the
+        # columns the repo's migrations add. Its own proof is built in: it stops if the baseline does not read
+        # vp_members.member_number as real and "number" as not.
+        head('D212. Every column the code names exists in the schema written down (before the push)')
+        t = os.path.join(ROOT, 'tools', 'check-columns.py')
+        if not os.path.isfile(t):
+            ok('every column the code names exists in the column baseline or a migration', False,
+               why='tools/check-columns.py is missing')
+        else:
+            r = subprocess.run([sys.executable, t, '--local'], capture_output=True, text=True, timeout=120, cwd=ROOT)
+            out = re.sub(r'\033\[[0-9;]*m', '', (r.stdout or '') + (r.stderr or '')).strip()
+            summ = [l.strip() for l in out.splitlines() if ' present,' in l]
+            miss = [l.strip() for l in out.splitlines() if 'MISSING' in l and ' present,' not in l or 'NO TABLE' in l or 'STOP' in l]
+            ok('every column the code names exists in the column baseline or a migration',
+               r.returncode == 0 and bool(summ),
+               detail=(summ[0] if summ else ''),
+               why=(('; '.join(miss[:3]) if miss else (out.splitlines()[-1][:120] if out else 'no output'))
+                    + '. Run python3 tools/check-columns.py --local. A real new column: add its migration, or re-dump '
+                      'with python3 venueplay-backend/tools/dump-rls-baseline.py after it runs'))
+
         head('D20. A host route cannot lose its staff check, nor a draw its generator')
         t = os.path.join(ROOT, 'tools', 'check-worker-guards.py')
         if not os.path.isfile(t):

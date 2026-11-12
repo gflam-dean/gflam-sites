@@ -1696,6 +1696,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_backup_186_game_prefs": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_billing_usage": {
    "enabled": true,
    "forced": false
@@ -1733,6 +1737,18 @@
    "forced": false
   },
   "vp_claims": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_coaster_optin_venues": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_coaster_plays": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_coaster_venues": {
    "enabled": true,
    "forced": false
   },

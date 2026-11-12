@@ -150,6 +150,11 @@ class Site(object):
         self.page_db = page_db or {}            # tables that REPLACE the stand-in's own (the demo's accounts)
         self.extra_pages = extra_pages or {}    # path -> html, rig-only pages (the demo's host email card)
         self.live_tables = live_tables or []    # tables the page reads from the Worker rig's database
+        # REAL COLUMNS (12 Nov 2026, INBOX 278): tables named here answer like PostgREST, by the live column list in
+        # venueplay-backend/supabase/COLUMNS-BASELINE.json: a select, filter or order naming a column the table does
+        # not have is refused (42703), and a select returns only what it names, aliases applied. Set it on the Site
+        # (S.schema_tables = [...]) before the page loads. Empty for every other suite, which keeps the old stand-in.
+        self.schema_tables = []
         self.fonts = fonts
         self.W = BillingWorker(self.root)
         site = self
@@ -226,6 +231,9 @@ class Site(object):
                         db[t] = rows
                     pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=true;window.__FAKE_UID=%s;window.__LIVE_TABLES=%s;\n' % (
                         json.dumps(db), json.dumps(site.W.info['uid']), json.dumps(site.live_tables))
+                    if site.schema_tables:
+                        cols = json.load(io.open(os.path.join(site.root, 'venueplay-backend', 'supabase', 'COLUMNS-BASELINE.json'), encoding='utf-8'))
+                        pre += 'window.__FAKE_SCHEMA=%s;\n' % json.dumps({t: cols.get(t, []) for t in site.schema_tables})
                     return self.send(200, pre + io.open(os.path.join(HERE, 'fake-supabase.js'), encoding='utf-8').read(),
                                      'application/javascript')
                 if u.path in site.extra_pages:

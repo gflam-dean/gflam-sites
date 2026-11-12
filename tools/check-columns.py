@@ -39,6 +39,17 @@ pass. It means nobody asked.
 
   check-columns.py            probe with the public key
   check-columns.py --list     print what it extracted and probe nothing
+  check-columns.py --local    no network: check the same pairs against the schema written down
+
+THE LOCAL HALF (12 Nov 2026, INBOX 278). The members list download a left venue sees shipped
+asking vp_members for "number" (the column is member_number). This tool, run by the LIVE half,
+caught it after the push; nothing in --local looked. --local checks the very same extracted
+pairs against venueplay-backend/supabase/COLUMNS-BASELINE.json (every public table and view
+and its columns, written from the live database by venueplay-backend/tools/dump-rls-baseline.py)
+PLUS what this repo's migrations add (create table, alter table add column), because a branch
+may name a column its own migration has not yet put live. A view a migration creates and the
+baseline does not list is accepted whole and named as a note. On 12 Nov it read 651 pairs
+across the Workers, the pages and PartyPlay with no false alarm.
 """
 import io
 import json
@@ -48,6 +59,7 @@ import sys
 import urllib.error
 import urllib.request
 import concurrent.futures as cf
+import glob
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUPA = "https://ijkzgmdtwtgfkedqspxm.supabase.co"
@@ -310,6 +322,74 @@ def probe(key, table, col):
         return 'skip', str(e)[:60]
 
 
+def migration_schema():
+    """{table: set(columns)} that the repo's migrations create or add, and the views they create."""
+    add, views = {}, set()
+    for f in sorted(glob.glob(os.path.join(ROOT, 'venueplay-backend', 'supabase', '*.sql')) +
+                    glob.glob(os.path.join(ROOT, 'partyplay-backend', '**', '*.sql'), recursive=True)):
+        sql = io.open(f, encoding='utf-8', errors='replace').read()
+        sql = re.sub(r'--[^\n]*', '', sql)
+        sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.S)
+        for m in re.finditer(r'create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?([a-z_][a-z0-9_]*)"?\s*\(', sql, re.I):
+            body = balanced(sql, m.end() - 1) or ''
+            cols = add.setdefault(m.group(1).lower(), set())
+            for part in top_level(body):
+                w = re.match(r'\s*"?([a-z_][a-z0-9_]*)"?', part, re.I)
+                if w and w.group(1).lower() not in ('constraint', 'primary', 'unique', 'foreign', 'check', 'exclude', 'like'):
+                    cols.add(w.group(1).lower())
+        for m in re.finditer(r'alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:public\.)?"?([a-z_][a-z0-9_]*)"?([^;]*);', sql, re.I):
+            for c in re.finditer(r'add\s+column\s+(?:if\s+not\s+exists\s+)?"?([a-z_][a-z0-9_]*)"?', m.group(2), re.I):
+                add.setdefault(m.group(1).lower(), set()).add(c.group(1).lower())
+        for m in re.finditer(r'create\s+(?:or\s+replace\s+)?(?:materialized\s+)?view\s+(?:if\s+not\s+exists\s+)?(?:public\.)?"?([a-z_][a-z0-9_]*)"?', sql, re.I):
+            views.add(m.group(1).lower())
+    return add, views
+
+
+def local(pairs):
+    """The --local half: the same pairs, against the schema written down. No network."""
+    bpath = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'COLUMNS-BASELINE.json')
+    try:
+        base = json.load(io.open(bpath, encoding='utf-8'))
+    except Exception as e:
+        print('  %sSTOP%s cannot read %s (%s). Write it: python3 venueplay-backend/tools/dump-rls-baseline.py'
+              % (RED, OFF, os.path.relpath(bpath, ROOT), type(e).__name__))
+        return 2
+    add, views = migration_schema()
+    # PROVE THE SCHEMA BEFORE BELIEVING A CLEAN RUN: the shipped mistake must read missing, and
+    # the real column present. Without this an empty or unreadable baseline passes everything.
+    if 'member_number' not in base.get('vp_members', []) or 'number' in base.get('vp_members', []) or len(base) < 50:
+        print('  %sSTOP%s the column baseline does not look like the database (vp_members.member_number '
+              'missing, a "number" column there, or under 50 tables). Every result would be meaningless.' % (RED, OFF))
+        return 2
+    print('  %sschema verified%s  %d tables and views from the baseline, %d table(s) touched by migrations\n'
+          % (DIM, OFF, len(base), len(add)))
+    missing, notable, viewed, okc = [], [], [], 0
+    for (t, c) in sorted(pairs):
+        have = set(base.get(t, [])) | add.get(t, set())
+        if c in have:
+            okc += 1
+        elif t not in base and t not in add and t in views:
+            viewed.append((t, c)); okc += 1
+        elif t not in base and t not in add:
+            notable.append((t, c))
+        else:
+            missing.append((t, c))
+    for t, c in missing:
+        print('  %sMISSING%s %s.%s' % (RED, OFF, t, c))
+        for w, why in sorted(pairs[(t, c)])[:3]:
+            print('           %s  (%s)' % (w, why))
+    for t, c in notable:
+        print('  %sNO TABLE%s %s (asked for %s)' % (RED, OFF, t, c))
+        for w, why in sorted(pairs[(t, c)])[:2]:
+            print('           %s  (%s)' % (w, why))
+    if viewed:
+        print('  %snote%s %d column(s) of view(s) a migration creates, accepted whole: %s'
+              % (DIM, OFF, len(viewed), ', '.join(sorted({t for t, _ in viewed}))))
+    print('\n  %d present, %s%d MISSING%s, %d no such table, 0 skipped (local: against the schema written down)'
+          % (okc, RED if missing else DIM, len(missing), OFF, len(notable)))
+    return 1 if (missing or notable) else 0
+
+
 def main():
     pairs = {}
     for f in files():
@@ -322,6 +402,8 @@ def main():
         for (t, c), where in sorted(pairs.items()):
             print('   %-34s %-28s %s' % (t, c, sorted(where)[0][1]))
         return 0
+    if '--local' in sys.argv:
+        return local(pairs)
 
     key = anon_key()
     # PROVE THE PROBE WORKS BEFORE BELIEVING A CLEAN RUN. A name that cannot exist

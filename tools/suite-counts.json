@@ -156,7 +156,7 @@
   "counted_by": "lines"
  },
  "tools/cancelled-account-in-chrome.test.py": {
-  "checks": 32,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/cancelled-prospect-hq-in-chrome.test.py": {
@@ -849,6 +849,10 @@
  },
  "tools/test-members-console.js": {
   "checks": 47,
+  "counted_by": "lines"
+ },
+ "tools/test-members-csv-columns.js": {
+  "checks": 12,
   "counted_by": "lines"
  },
  "tools/test-members-csv.js": {
