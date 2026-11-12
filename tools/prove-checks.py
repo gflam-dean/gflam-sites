@@ -20909,6 +20909,10 @@ MUTATIONS = [
     ('game-screens-fit-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '  #vQ,#vRes{padding-top:0}', '  #vQ,#vRes{padding-top:90px}',
      'in Chrome, the trivia countdown sits far down the screen with nothing above it again (INBOX 320.3)'),
+    # 12 Nov 2026 (INBOX 320.5): one clean late-join line
+    ('game-screens-fit-in-chrome.test.py', 'venueplay/app/trivia/play.html',
+     '". "+(live ? "This one\\u2019s yours." : "The next one\\u2019s yours.");', '". Jump in, "+(live ? "this one\\u2019s yours." : "the next one\\u2019s yours.");',
+     'in Chrome, the late-join line says "Jump in, this one\'s yours." again (INBOX 320.5)'),
     ('ai-look-cleanup.test.py', 'venueplay/tv.html',
      "#tvWin .winslabel{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;text-indent:0;font-size:2cqw;", "#tvWin .winslabel{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.4cqw;",
      'the bingo wall says "W I N S" in spaced mono capitals again'),

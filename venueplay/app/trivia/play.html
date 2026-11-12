@@ -859,7 +859,9 @@
   function seenKey(){ return "vp-tseen-"+(P.room||"")+"-"+(P.gameId||""); }
   function sawAny(){ try{ return !!localStorage.getItem(seenKey()); }catch(e){ return false; } }
   function markSeen(){ try{ localStorage.setItem(seenKey(), "1"); }catch(e){} }
-  function lateLine(n, live){ return "You\u2019ve joined at question "+n+". Jump in, "+(live ? "this one\u2019s yours." : "the next one\u2019s yours."); }
+  /* ONE CLEAN LINE (Dean, INBOX 320.5, 12 Nov 2026): "You've joined at question 4. This one's yours." (no "Jump in", no
+     "Just tap your answer"); between questions "You've joined at question 4. The next one's yours." */
+  function lateLine(n, live){ return "You\u2019ve joined at question "+n+". "+(live ? "This one\u2019s yours." : "The next one\u2019s yours."); }
   function ansKey(){ return "vp-tans-"+(P.room||"")+"-"+(P.gameId||""); }
   function saveAns(qseq, i){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); o[qseq]=i; localStorage.setItem(ansKey(), JSON.stringify(o)); }catch(e){} }
   function loadAns(qseq){ try{ var o=JSON.parse(localStorage.getItem(ansKey())||"{}"); return (o[qseq]==null) ? null : o[qseq]; }catch(e){ return null; } }
@@ -1247,7 +1249,7 @@
       /* a finished question this phone never saw: no "No answer" result for it, the late-join line instead (293) */
       if((typeof sawAny==="function") && !sawAny() && (!P.q || P.q.qseq!==m.qseq) && loadAns(m.qseq)==null){
         stopCd(); P.q=null;
-        showWait(m.qi ? lateLine(+m.qi, false) : "Jump in, the next one\u2019s yours.", "You\u2019re in");
+        showWait(m.qi ? lateLine(+m.qi, false) : "The next one\u2019s yours.", "You\u2019re in");
         return;
       }
       showResult(m);

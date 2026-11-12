@@ -327,8 +327,9 @@ def trivia_late(B, base, w, h):
             if live:
                 P.say({'t': 'question', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 4, 'qi': 4, 'qtotal': 11, 'secs': 30, 'to': 'pid1',
                        'endsAt': int(time.time() * 1000) + 600000, 'text': 'What is the capital of Australia?', 'options': opts})
-                ok(t + ': a question is live: it is up, with "You\u2019ve joined at question 4. Jump in, this one\u2019s yours."',
-                   P.until('document.getElementById("pStatus").textContent==="You\u2019ve joined at question 4. Jump in, this one\u2019s yours."', 8),
+                # REPINNED 12 Nov 2026 (Dean, INBOX 320.5): one clean line, no "Jump in"
+                ok(t + ': a question is live: it is up, with "You\u2019ve joined at question 4. This one\u2019s yours."',
+                   P.until('document.getElementById("pStatus").textContent==="You\u2019ve joined at question 4. This one\u2019s yours."', 8),
                    P.js('document.getElementById("pStatus").textContent'))
                 fits(P, t + ' question live', ['#pAnswers .pans.c3', '#pStatus'])
                 P.say({'t': 'question', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 5, 'qi': 5, 'qtotal': 11, 'secs': 30,
@@ -339,12 +340,14 @@ def trivia_late(B, base, w, h):
                 P.say({'t': 'reveal', 'fmt': 'trivia', 'game_id': 'g-late', 'qseq': 4, 'qi': 4, 'correctIndex': 0, 'options': opts, 'to': 'pid1'})
                 time.sleep(1)
                 txt = P.js('document.body.innerText.replace(/\\s+/g," ")') or ''
-                ok(t + ': between questions: "You\u2019ve joined at question 4. Jump in, the next one\u2019s yours.", and the finished question is not replayed',
-                   'You\u2019ve joined at question 4. Jump in, the next one\u2019s yours.' in txt and P.js('document.getElementById("vRes").classList.contains("hidden")') is True
+                ok(t + ': between questions: "You\u2019ve joined at question 4. The next one\u2019s yours.", and the finished question is not replayed',
+                   'You\u2019ve joined at question 4. The next one\u2019s yours.' in txt and 'Jump in' not in txt and 'Just tap your answer' not in txt and P.js('document.getElementById("vRes").classList.contains("hidden")') is True
                    and 'No answer' not in txt, txt[:300])
                 fits(P, t + ' between questions')
         finally:
             P.close()
+
+
 
 
 def bingo(B, base, w, h):
