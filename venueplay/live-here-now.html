@@ -31,8 +31,7 @@
      on the phone from /data/live-here-now.json. Tested by coaster-page.test.js and live-here-now-in-chrome.test.py. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts never hold the first screen back: the stylesheet loads without blocking and the system
-     font stands in until it arrives (display=swap). -->
+<!-- Fonts load without blocking (display=swap) -->
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root{
@@ -48,14 +47,14 @@
     overflow-x:hidden;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
   a{color:inherit;text-decoration:none}
   [hidden]{display:none!important}
-  /* and per class, so the gate can see each one that sets its own display is still hidden by the attribute */
+  /* and per class, so the gate can see each one that sets its own display */
   .vlogo[hidden]{display:none}
   .picks[hidden]{display:none}
   .btn[hidden]{display:none}
   .linkbtn[hidden]{display:none}
   .shell{width:100%;max-width:480px;margin:0 auto;padding:0 18px}
 
-  /* THE HEADER, OPTION 5 (Dean 3 Nov): the venue's logo top left, or its name as text, never both; our logo small at the bottom. */
+  /* THE HEADER, OPTION 5 (Dean 3 Nov) */
   header{padding-top:max(12px, env(safe-area-inset-top, 0px));position:sticky;top:0;z-index:10;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .ptop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding-bottom:8px}
   .brand{display:flex;align-items:center;min-width:0;min-height:56px}
@@ -131,8 +130,7 @@
     border:3px solid rgba(255,31,142,.22);border-top-color:var(--pink);animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .answers{display:flex;flex-direction:column;gap:12px;margin-top:18px}
-  /* FULL COLOUR, the trivia phone's (Dean, 3 Nov 2026: pick by colour at a glance): each button its letter's
-     colour, the letter big in Anton in white, the answer near-black beside it. */
+  /* FULL COLOUR, the trivia phone's (Dean 3 Nov) */
   .ans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:76px;padding:10px 16px 10px 14px;border-radius:16px;border:0;
     background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.15;
     overflow-wrap:anywhere;touch-action:manipulation;transition:opacity .15s,box-shadow .15s}
@@ -159,7 +157,7 @@
   .ptotal{margin-top:8px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);min-height:22px}
   .ptotal b{color:#fff}
 
-  /* ---------- THE END: the name, the score, the points, the place, the board ---------- */
+  /* THE END: score, points, place, board */
   .score{padding-top:18px}
   .score .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;color:var(--pink)}
   .score h1{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
@@ -180,7 +178,7 @@
   .empty{color:var(--muted);font-size:16px;padding:12px}
   .shared{color:var(--green);font-size:16px;min-height:24px;margin-top:8px;text-align:center}
   .copyurl{margin-top:8px;font-family:'JetBrains Mono',monospace!important;font-size:15px!important;font-weight:500!important}
-  /* The soft call to action: the room first ("Ask the bar"), then a light link for a venue owner. */
+  /* The soft call to action */
   .bigscreen{margin-top:26px;display:flex;gap:16px;align-items:flex-start;padding:20px 18px;border-radius:18px;
     background:linear-gradient(160deg,rgba(255,31,142,.13),rgba(255,31,142,.03) 60%),var(--ink-2);border:1px solid rgba(255,31,142,.26)}
   .bigscreen .tv{flex:none;width:50px;height:38px;border-radius:9px;border:2px solid rgba(255,255,255,.75);display:grid;place-items:center;position:relative;margin-top:3px}
@@ -190,7 +188,7 @@
   .owner{display:inline-block;margin-top:12px;color:#FF8AC4;font-weight:700;font-size:16px;text-decoration:underline;text-underline-offset:4px}
   .err{color:var(--roll);text-align:center;padding:40px 0 0;font-size:18px}
 
-  /* ---------- THE FOOT: our logo small (option 5), then the links. Nothing under 15px. ---------- */
+  /* THE FOOT: our logo small, then the links */
   footer{border-top:1px solid var(--line);padding:20px 0 max(18px, env(safe-area-inset-bottom, 0px));margin-top:12px}
   .foot{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-size:15px;color:var(--muted);line-height:1.6}
   .foot .mark{color:#fff;display:block}
@@ -215,9 +213,10 @@
 <script src="/app/vp-venuelogo.js" defer></script>
 <script src="/app/vp-analytics.js" defer></script>
 <script src="/app/vp-consent.js"></script>
-<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's countdown ring and the Time's up moment, one copy (INBOX 310/312) -->
+<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
+<link rel="stylesheet" href="/app/vp-podium.css"><script src="/app/vp-trivia-finale.js"></script><script src="/app/vp-podium.js"></script>
 </head>
 <body>
 
@@ -367,7 +366,7 @@ var VPCoaster = (function () {
     }
     return out;
   }
-  /* The five a challenge link names, from the bank, in its order; null if any has left the bank. */
+  /* A challenge link's five, from the bank; null if any has gone */
   function byIds(bank, ids) {
     var at = {}, out = [];
     for (var i = 0; i < bank.length; i++) at[bank[i][0]] = bank[i];
@@ -385,7 +384,7 @@ var VPCoaster = (function () {
     var t = n % 100, u = n % 10;
     return n + ((t >= 11 && t <= 13) ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th');
   }
-  /* "Tugun 4224" for a coaster venue, "2485 NSW" for a venueplay venue, "Bodalla NSW" for our list. */
+  /* "Tugun 4224", "2485 NSW" or "Bodalla NSW" */
   function placeLabel(m) {
     var a = [];
     if (m.suburb) a.push(m.suburb);
@@ -400,7 +399,7 @@ var VPCoaster = (function () {
     if (m && m.on) return { cls: 'on', text: m.live ? 'Game on now' : 'On venueplay' };
     return { cls: 'off', text: 'Not on venueplay yet' };
   }
-  /* The "Add it" form, checked on the phone before it is sent (the Worker checks it again). */
+  /* The "Add it" form, checked here and again by the Worker */
   var STATES = ['QLD', 'NSW', 'VIC', 'SA', 'WA', 'TAS', 'NT', 'ACT'];
   function addCheck(f) {
     if (letters(f.name) < 3) return { field: 'name', error: 'Type the venue\'s name.' };
@@ -423,8 +422,7 @@ var VPCoaster = (function () {
     if (correct >= 1) return 'Good effort' + who;
     return 'Tough round' + who;
   }
-  /* THE TIME (INBOX 310/311, "Done in 2062 seconds"): each question from showing to the tap, at most its 20
-     seconds; the round is the five added up, as the Worker's ms_total. */
+  /* THE TIME (INBOX 311): each question at most 20 s, the round the five added up */
   var QUESTION_SECS = 20;
   function tookMs(shownAt, answeredAt) {
     var t = (+answeredAt) - (+shownAt);
@@ -440,6 +438,7 @@ var VPCoaster = (function () {
   function pointsLine(points, secs) {
     return points + ' point' + (points === 1 ? '' : 's') + (secs != null ? ', ' + secs + ' second' + (secs === 1 ? '' : 's') : '');
   }
+  function podiumTitle(rank) { return rank === 1 ? "You're in the lead!" : rank ? ordinal(rank) + ' tonight!' : ''; }
   function placeLine(rank, period, venue) {
     var when = period === 'week' ? 'this week' : 'tonight';
     if (!rank) return 'On the board ' + when + (venue ? ' at ' + venue : '');
@@ -466,7 +465,7 @@ var VPCoaster = (function () {
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
            ordinal: ordinal, placeLabel: placeLabel, verdict: verdict, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
            shareUrl: shareUrl, shareText: shareText, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
-           QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
+           QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
 </script>
@@ -478,6 +477,7 @@ var VPCoaster = (function () {
   var SEEN_KEY = 'vp-lhn-seen', NAME_KEY = 'vp-lhn-name', PLACE_KEY = 'vp-lhn-place', SIGNED_KEY = 'vp-lhn-signed';
   var SEEN_CAP = 400;          // well under the bank, so the next five are always fresh ones
   var PAUSE_MS = 1300;         // how long right or wrong stays up before the next question (the Worker's COASTER_REVEAL_MS)
+  var LOCK_MS = 450;           // Locked in, then the reveal, inside the 1.3 seconds
   var WAIT_MS = 5000;          // the longest the next question waits for the board's answer
   var PLACE_HOURS = 12;        // a scan within this long of the last one offers the same venue first
   var LETTERS = ['A', 'B', 'C', 'D'];
@@ -517,7 +517,7 @@ var VPCoaster = (function () {
   function recall(k) { try { var s = store(); return s ? JSON.parse(s.getItem(k) || 'null') : null; } catch (e) { return null; } }
   function hourNow() { return Math.floor(Date.now() / 3600000); }
 
-  /* ---- talking to the game Worker; every failure is a quiet fall back to playing without a board ---- */
+  /* the game Worker; a failure falls back to playing without a board */
   function call(method, path, body, cb) {
     var x = new XMLHttpRequest(), done = false;
     function end(status, data) { if (done) return; done = true; cb(status, data || {}); }
@@ -559,8 +559,7 @@ var VPCoaster = (function () {
   var BANK = null, S = { name: '', place: null, code: L.readCode(location.search), mode: 'local', play: null, token: '', myCode: '', venue: null };
   var round = [], at = 0, right = 0, results = [], total = 0, lastAnswer = null, ended = null;
 
-  /* 2. YOUR DETAILS, after the venue (INBOX 309.1c): the first name, and where HQ switched it on, the venue's
-     own sign-up and the phones' one tick, before play. /coaster/ask says what to ask. */
+  /* 2. YOUR DETAILS after the venue (INBOX 309.1c) */
   function askName() { askDetails(null); }
   function askDetails(venueName) {
     var saved = recall(NAME_KEY);
@@ -688,8 +687,7 @@ var VPCoaster = (function () {
     if (prefill) $('leadIn').value = String(prefill).trim();
   }
   $('notListed').addEventListener('click', function () { openLead($('whereIn').value); $('leadIn').focus(); });
-  /* "Can't find your venue? Add it" (INBOX 232): to HQ's review list as a possible new lead. Never a board:
-     the player plays this round without one. */
+  /* "Can't find your venue? Add it" (INBOX 232): to HQ's review list, never a board */
   var LEAD_BOX = { name: 'leadIn', suburb: 'leadSuburb', state: 'leadState', website: 'leadSite' };
   /* a stale "what is missing" line goes as soon as they fix it */
   $('leadForm').addEventListener('input', function () { $('leadErr').textContent = ''; });
@@ -809,14 +807,20 @@ var VPCoaster = (function () {
     tooks.push(L.tookMs(shownAt, Date.now()));
     results.push(good);
     if (good) right++;
-    for (var k = 0; k < btns.length; k++) {
-      btns[k].disabled = true;
-      btns[k].className = 'ans c' + k + (k === item[3] ? ' right' : (k === i ? ' mine' : ' dim'));
-      if (k === item[3]) tag(btns[k], 'Right answer');
-      else if (k === i) tag(btns[k], 'Yours');
+    /* LOCKED IN, then the reveal (INBOX 309.3) */
+    for (var k = 0; k < btns.length; k++) { btns[k].disabled = true; btns[k].className = 'ans c' + k + (k === i ? ' vpq-locked' : ' dim'); }
+    var pts = 0, shown = false;
+    function reveal() {
+      shown = true;
+      for (var k = 0; k < btns.length; k++) {
+        btns[k].className = 'ans c' + k + (k === item[3] ? ' right' : (k === i ? ' mine' : ' dim'));
+        if (k === item[3]) tag(btns[k], 'Right answer');
+        else if (k === i) tag(btns[k], 'Yours');
+      }
+      paintVerdict(i < 0 ? null : good, pts);
+      pips();
     }
-    paintVerdict(i < 0 ? null : good, 0);
-    pips();
+    if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);
     var tappedAt = Date.now(), n = at, waiting = S.mode === 'board', moved = false;
     function next() {
       if (moved) return; moved = true;
@@ -827,7 +831,7 @@ var VPCoaster = (function () {
       call('POST', '/coaster/answer', { play: S.play, token: S.token, i: n, a: i }, function (st, d) {
         if (st === 200 && d.ok) {
           total = d.total;
-          if (d.correct) paintVerdict(true, d.points);
+          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points); }
           $('ptotal').innerHTML = '<b>' + L.esc(total) + '</b> points';
           if (d.done) ended = d;
         } else {
@@ -862,11 +866,14 @@ var VPCoaster = (function () {
       $('scorePlace').textContent = L.placeLine(b.rank, 'night', S.venue && S.venue.name);
       $('scoreSub').textContent = 'Same five questions for your mates: send them the link and see who tops the board.';
       paintBoard(b, 'night');
+      /* top 3: the podium first (INBOX 313), then the board */
+      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(b.rank), onDone: toMyRow }))) toMyRow();
     } else {
       $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
   }
+  function toMyRow() { var r = document.querySelector('#rows .row.you'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   function paintBoard(b, period) {
     boardPeriod = period;
     $('tabNight').setAttribute('aria-selected', period === 'night' ? 'true' : 'false');
@@ -898,7 +905,7 @@ var VPCoaster = (function () {
   });
   $('again').addEventListener('click', function () { S.code = ''; begin(); });
 
-  /* ---- the questions: one small file, asked for by XMLHttpRequest so any phone can ---- */
+  /* the questions, by XMLHttpRequest */
   function load() {
     $('failed').hidden = true;
     var x = new XMLHttpRequest();

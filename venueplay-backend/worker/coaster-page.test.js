@@ -200,6 +200,22 @@ VC.SOUNDS.podium = "/sounds/podium.mp3";
 pass("dropping a file in a slot is all it takes: it then plays, after a tap", VC.sound("podium") === true && fakeRoot.played === 1, fakeRoot.played);
 VC.SOUNDS.podium = "";
 pass("Time's up asks the one player for its slot and the one buzz, and has no player of its own", /c\.sound\('timesup'\)/.test(QR) && /c\.buzz\(180\)/.test(QR) && !/new root\.Audio|\.play\(\)|vibrate/.test(QR));
+print("\nTHE PODIUM (INBOX 313): IN THE LEAD OR TOP 3, THE TRIVIA NIGHT'S STEPS, THEN THE BOARD");
+var PR = {};
+new Function("window", find("venueplay/app/vp-trivia-finale.js") + "\n" + find("venueplay/app/vp-podium.js"))(PR);
+var POD = PR.VPPodium;
+function rowsOf(pts, you) { return pts.map(function (p, i) { return { place: i + 1, name: "P" + i, points: p, you: i === you }; }); }
+pass("who stands where is the trivia finale's own rule (VPTriviaFinale.podiumEntries), not a copy", !!POD && /F\.podiumEntries\(/.test(find("venueplay/app/vp-podium.js")));
+pass("in the lead: the top step", POD && POD.mine(rowsOf([500, 400, 300, 200], 0)) === 1);
+pass("3rd: the third step", POD && POD.mine(rowsOf([500, 400, 300, 200], 2)) === 3);
+pass("4th: no podium, straight to the board", POD && POD.mine(rowsOf([500, 400, 300, 200], 3)) === 0);
+pass("a tie for 2nd shares the step", POD && POD.mine(rowsOf([500, 400, 400, 200], 2)) === 2);
+pass("'You're in the lead!' and '3rd tonight!'", L.podiumTitle(1) === "You're in the lead!" && L.podiumTitle(3) === "3rd tonight!");
+pass("the end shows the podium first and hands to the board with their row marked; otherwise the board straight away",
+  /if \(!\(window\.VPPodium && window\.VPPodium\.show\(b\.rows, \{ title: L\.podiumTitle\(b\.rank\), onDone: toMyRow \}\)\)\) toMyRow\(\);/.test(PAGE) &&
+  PAGE.indexOf('<script src="/app/vp-podium.js"></script>') > 0 && PAGE.indexOf('<script src="/app/vp-trivia-finale.js"></script>') > 0);
+pass("its confetti and sound are the one celebration file's (burst, the 'podium' slot)", /C\.burst\(el, 40,/.test(find("venueplay/app/vp-podium.js")) && /C\.sound\("podium"\)/.test(find("venueplay/app/vp-podium.js")));
+
 var TP = find("venueplay/app/trivia/play.html");
 var lo = TP.slice(TP.indexOf("  function lockOut(moment){"), TP.indexOf("  function lockOut(moment){") + 600);
 pass("the real trivia phone plays the same Time's up moment (VPQRing.timesUp), once a question, only when its own clock ran out or the host locked everyone, never on a catch-up",

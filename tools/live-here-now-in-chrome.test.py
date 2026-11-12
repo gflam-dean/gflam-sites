@@ -470,6 +470,8 @@ def play_round(t, pattern):
                 s = dict(s, btns=s2['btns'])
         b = s['btns'][pick]
         t.tap(b['x'], b['y'])
+        time.sleep(0.12)
+        locked = t.js('(function(){var l=document.querySelector("#answers .vpq-locked");return l?getComputedStyle(l,"::after").content:"";})()')
         after = wait(t, lambda x: bool(x.get('verdict')), 3)
         time.sleep(0.35)          # the colour lands, and the Worker's points arrive
         after = state(t)
@@ -478,9 +480,25 @@ def play_round(t, pattern):
             t.tap(other['x'], other['y'])
         late = state(t)
         seen.append({'id': s['id'], 'right': want_right, 'pick': pick, 'answer': q[3], 'before': before,
-                     'text_match': [x['text'] for x in s['btns']] == q[2], 'qtext': s['q'] == q[1], 'after': after, 'late': late})
+                     'text_match': [x['text'] for x in s['btns']] == q[2], 'qtext': s['q'] == q[1], 'after': after, 'late': late, 'locked': locked})
         s = wait_question(t, not_id=s['id'])
+    # In the lead or top 3, the podium (INBOX 313) covers the end for a few seconds: note what it said, then tap it
+    # away the way a player can, so the end's own checks read the board underneath.
+    PODIUM[id(t)] = None
+    if s.get('view') == 'score':
+        time.sleep(0.3)
+        pod = t.js('(function(){var p=document.getElementById("vpPodium");return p?JSON.stringify({t:(p.querySelector(".vpp-t")||{}).textContent,'
+                   'you:(p.querySelector(".vpp-col.you .vpp-step")||{}).textContent,n:p.querySelectorAll(".vpp-col").length,'
+                   'conf:p.querySelectorAll(".vpp-confetti").length}):"";})()')
+        if pod:
+            PODIUM[id(t)] = json.loads(pod)
+            t.js('document.getElementById("vpPodium").click()')
+            time.sleep(0.3)
+            s = state(t)
     return ids, s, seen
+
+
+PODIUM = {}
 
 
 def main():
@@ -612,6 +630,8 @@ def main():
         ids1, s, seen = play_round(t, [True, False, True, False, True])
         r = [x for x in seen if x.get('right')]
         w = [x for x in seen if x.get('right') is False]
+        check('a tap shows LOCKED IN on the pick first, as on the trivia phone, then the reveal (INBOX 309.3)',
+              len(seen) == 5 and all(x.get('locked') == '"Locked in"' for x in seen), [x.get('locked') for x in seen])
         check('each question and its four answers are the bank\'s', len(seen) == 5 and all(x.get('qtext') and x.get('text_match') for x in seen), seen[:1])
         check('a right tap turns that answer GREEN, tagged "Right answer", and the Worker\'s points follow: "Correct! +145"',
               len(r) == 3 and all(x['after']['btns'][x['pick']]['bg'] == GREEN and x['after']['btns'][x['pick']]['tag'] == 'Right answer'
@@ -629,6 +649,9 @@ def main():
         check('the end is personal: "Nice one, Sam", "3 of 5"', s.get('kick') == 'Nice one, Sam' and s.get('scoreN') == '3 of 5', (s.get('kick'), s.get('scoreN')))
         check('the points and the time: "435 points, 10 seconds"', s.get('pts') == '435 points, 10 seconds', s.get('pts'))
         check('and the place: "1st tonight at The Mini Bar"', s.get('place') == '1st tonight at The Mini Bar', s.get('place'))
+        pod = PODIUM.get(id(t)) or {}
+        check('in the lead: the podium first (INBOX 313), "You\'re in the lead!", Sam on the top step, with confetti, then the board',
+              pod.get('t') == "You're in the lead!" and pod.get('you') == '1' and pod.get('conf', 0) > 0 and s.get('board'), pod)
         check('the board, Tonight selected, with Sam\'s row marked "(you)"',
               s.get('board') and s.get('tabNight') == 'true' and len(s.get('rows', [])) == 1 and s['rows'][0]['you'] and 'Sam (you)' in s['rows'][0]['text'], s.get('rows'))
         check('"Challenge your mates" is offered', s.get('challenge') is True)

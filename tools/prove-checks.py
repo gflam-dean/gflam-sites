@@ -15564,13 +15564,14 @@ MUTATIONS = [
      '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
-     '    for (var k = 0; k < btns.length; k++) {\n'
-     '      btns[k].disabled = true;\n',
+     '    /* LOCKED IN, then the reveal (INBOX 309.3) */\n'
+     '    for (var k = 0; k < btns.length; k++) { btns[k].disabled = true; ',
      '    clearInterval(ticker);\n'
      '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
-     '    for (var k = 0; k < btns.length; k++) {\n',
+     '    /* LOCKED IN, then the reveal (INBOX 309.3) */\n'
+     '    for (var k = 0; k < btns.length; k++) { ',
      'a second tap on an answered question changes the answer'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
      "    x.open('GET', '/data/live-here-now.json', true);",
@@ -15613,7 +15614,7 @@ MUTATIONS = [
      'Date.now() - (last.at || 0) > PLACE_HOURS * 3600000',
      'a rescan asks "Where are you playing?" from scratch, though the phone knows'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
-     '          if (d.correct) paintVerdict(true, d.points);\n',
+     '          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points); }\n',
      '',
      'the Worker\'s points never show: "Correct!" with no "+145"'),
     # INBOX 229/232 (12 Nov 2026): "Add it" sends the whole form; the sign-up is never pre-ticked; "not on venueplay yet" is never the green.
@@ -15655,6 +15656,56 @@ MUTATIONS = [
      '/live         /live-here-now  302',
      'the second spelling (/live) is a temporary redirect, not a 301'),
     # /live-here-now v2: the page's own logic block, lifted and run (coaster-page.test.js).
+    # live-here-now-in-chrome (12 Nov 2026): the ring, Time's up, the mute button; the details step before play.
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "    window.VPQRing.paint($('pqRing'), $('pqCdNum'), left / L.QUESTION_SECS, left);",
+     "    window.VPQRing.paint($('pqRing'), $('pqCdNum'), left / L.QUESTION_SECS, left + 10);",
+     'the ring shows the wrong seconds'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/app/vp-qring.js',
+     "    d.body.appendChild(el);\n",
+     '',
+     'the clock runs out and no Time\'s up shows'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "    setTimeout(function () { answer(-1); }, 900);",
+     "    setTimeout(function () { answer(0); }, 900);",
+     'running out of time picks answer A for the player'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "    window.VPQRing.muteButton($('vPlay').querySelector('.top'));   // in the top row, never over an answer\n",
+     '',
+     'there is no way to turn the sound off'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "    if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone\n",
+     '',
+     'a regular is asked for their email again every round'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "      if (!cap.email && !cap.mobile) { $('nameErr').textContent = o.email ? 'Type your email.' : 'Type your mobile.'; return; }\n",
+     '',
+     'the venue\'s sign-up starts a round with no email'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "Your details go to ' + venueName + ', never on the board.'",
+     "Your details go on the board.'",
+     'the player is not told their details go to the venue, not the board'),
+    # INBOX 313: the podium on the phone, then the board.
+    ('coaster-page.test.js', 'venueplay/app/vp-podium.js',
+     "    for (var i = 0; i < e.length; i++) if (e[i].p.you) return e[i].rank;",
+     "    for (var i = 0; i < e.length; i++) if (e[i].p.you) return 1;",
+     'a player in 3rd is shown on the top step'),
+    ('coaster-page.test.js', 'venueplay/app/vp-podium.js',
+     "    return F && F.podiumEntries ? F.podiumEntries(src.slice(0, 4), src) : [];",
+     "    return src.slice(0, 4).map(function (p, i) { return { p: p, rank: i + 1 }; });",
+     'the phone\'s podium makes its own steps and a 4th place stands on one'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(b.rank), onDone: toMyRow }))) toMyRow();",
+     "      toMyRow();",
+     'the leader of the board gets no podium'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/app/vp-podium.js',
+     '    if (C) { C.burst(el, 40, { className: "vpp-confetti" }); C.sound("podium"); if (!C.muted()) C.buzz([60, 40, 60]); }',
+     '    if (C) { C.sound("podium"); if (!C.muted()) C.buzz([60, 40, 60]); }',
+     'the podium has no confetti'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
+     "    if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);",
+     "    reveal();",
+     'a tap goes straight to right or wrong, with no Locked in first'),
     # INBOX 312 on the real trivia phone: the shared Time's up moment, only when its own clock ran out.
     ('coaster-page.test.js', 'venueplay/app/trivia/play.html',
      "      if(moment && !P.q.upShown && window.VPQRing){ P.q.upShown=true; try{ window.VPQRing.timesUp(); }catch(e){} }\n",
