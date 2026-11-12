@@ -1156,6 +1156,16 @@
       else if(state.phase==="lobby"){ renderLobby(); }
     }
     else if(m.t==="question"){
+      /* THE SAME QUESTION AGAIN IS NOT A NEW QUESTION (Dean, 12 Nov 2026, INBOX 282.5, FINDINGS T6: "the TV flickered").
+         A TV that reconnects says hello and the console replays what is on, so the question it is already showing
+         arrived a second time: the cards were thrown away and drawn again and the clock ring jumped back to full.
+         The wall keeps what it has; only a moved deadline (the host added time) is taken. */
+      if(state.phase==="question" && curQ && m.qseq!=null && curQ.qseq===m.qseq){
+        var _ends=Number(m.endsAt)||0;
+        if(_ends && _ends!==curQ.endsAt){ curQ.endsAt=_ends; if(!ringTimer) ringTimer=setInterval(tickRing, 300); tickRing(); }
+        if(typeof m.buzzer==="boolean") BUZZ.on=m.buzzer;
+        return;
+      }
       state.phase="question";
       if(typeof m.colour==="boolean") state.colour=m.colour;
       if(typeof m.buzzer==="boolean") BUZZ.on=m.buzzer;
@@ -1179,6 +1189,9 @@
       if(typeof m.on==="boolean") BUZZ.on=m.on;
     }
     else if(m.t==="reveal"){
+      /* The answer already up (or the leaderboard after it), replayed to a TV that reconnected: the reveal is not played
+         again (its disc grew in and its card pulsed a second time, then the board jumped straight up). */
+      if(!m.fin && curQ && m.qseq!=null && curQ.qseq===m.qseq && curQ.correct===m.correctIndex && (state.phase==="reveal" || state.phase==="leaderboard")) return;
       if(m.fin && FIN && FIN.painted && FIN.painted!=="wait"){ finaleFrom(m, true); }   // the show has moved on: a replayed last answer does not go back over it
       else {
         state.phase="reveal";
@@ -1197,6 +1210,9 @@
       renderPaper(m);
     }
     else if(m.t==="leaderboard"){
+      /* The answer is up and its own timer brings this same board ~5 s after it (renderReveal): a board replayed to a TV
+         that reconnected in those seconds must not cut the answer short. */
+      if(state.phase==="reveal" && boardRollTimer && !/^final/i.test(String(m.title||""))) return;
       /* The final scores arrive only when the host taps "Show the leaderboard", after the podium and after first place was
          announced (6 Nov 2026). This used to be held back 9 seconds behind a podium that finish() sent in the same breath as the
          scores, which is how the leaderboard came up before the podium. Nothing is held now. */
