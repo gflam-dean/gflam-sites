@@ -1,0 +1,176 @@
+{
+ "games": {
+  "bingo": [
+   {
+    "shape": null,
+    "venues": 34
+   },
+   {
+    "shape": {
+     "allow_early": true,
+     "cards": 3,
+     "pattern": "full"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "allow_early": false,
+     "caller": false,
+     "cards": 1,
+     "pattern": "one",
+     "prize": "Prize"
+    },
+    "venues": 1
+   },
+   {
+    "shape": {
+     "cards": 2,
+     "pattern": "c:custom"
+    },
+    "venues": 1
+   }
+  ],
+  "members": [
+   {
+    "shape": null,
+    "venues": 34
+   },
+   {
+    "shape": {
+     "draw_style": "race",
+     "draw_time": "long"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "draw_style": "",
+     "draw_time": "normal"
+    },
+    "venues": 1
+   },
+   {
+    "shape": {
+     "draw_style": "flip",
+     "draw_time": "normal"
+    },
+    "venues": 1
+   }
+  ],
+  "musical": [
+   {
+    "shape": null,
+    "venues": 31
+   },
+   {
+    "shape": {
+     "hits_only": false,
+     "pattern": "two",
+     "playlist": "all",
+     "reveal": "15"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "hits_only": true,
+     "pattern": "any",
+     "playlist": "surprise",
+     "reveal": "instant"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "hits_only": true,
+     "pattern": "full",
+     "playlists": [
+      "80s-pop",
+      "90s",
+      "aussie"
+     ],
+     "reveal": "never",
+     "rounds": 3
+    },
+    "venues": 1
+   },
+   {
+    "shape": {
+     "hits_only": true,
+     "pattern": "one",
+     "playlist": "pub-classics",
+     "prize": "Prize",
+     "reveal": "end"
+    },
+    "venues": 1
+   },
+   {
+    "shape": {
+     "pattern": "corners",
+     "playlist": "retired-theme"
+    },
+    "venues": 1
+   }
+  ],
+  "raffle": [
+   {
+    "shape": null,
+    "venues": 33
+   },
+   {
+    "shape": {
+     "draw_style": "",
+     "draw_time": "short"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "draw_style": "race"
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "draw_style": "ticket",
+     "draw_time": "normal"
+    },
+    "venues": 1
+   }
+  ],
+  "trivia": [
+   {
+    "shape": null,
+    "venues": 35
+   },
+   {
+    "shape": {
+     "count": 10,
+     "double_last": 3,
+     "double_points": true,
+     "end_suspense": false,
+     "round_board": false,
+     "speed_bonus": false,
+     "time_s": 30
+    },
+    "venues": 2
+   },
+   {
+    "shape": {
+     "buzzer": true,
+     "buzzer_where": "tv",
+     "count": 20,
+     "speed_bonus": true,
+     "time_s": 20
+    },
+    "venues": 1
+   }
+  ]
+ },
+ "source": "HAND-MADE SEED, 12 Nov 2026 (INBOX 295.3), NOT a live export: shapes known from the 12 Nov live play on The Mini Bar (Pub Classics, the old \"\" draw looks), the draw-looks snapshot (43 of 44 venues had no draw look saved) and the setup wizard's keys. Main replaces it: run ~/venue-enrich/reports/real-night/export-prefs.sql (read-only), then python3 tools/prefs-shapes.py <the saved cell>.",
+ "statuses": {
+  "active": 38
+ },
+ "venues": 38
+}
