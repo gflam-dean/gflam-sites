@@ -32,7 +32,7 @@ VP_SHOTS_ONLY=1 takes the frames with no checks. Takes /tmp/vp-heavy.lock first 
 
     python3 tools/game-screens-fit-in-chrome.test.py
 """
-import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
+import re, base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
 ROOT = os.environ.get('VP_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -276,6 +276,12 @@ def trivia(B, base, w, h):
         ok(t + ': CONTROL the question is up', P.until('!document.getElementById("vQ").classList.contains("hidden") && document.querySelectorAll("#pAnswers .pans").length===4', 10), P.js('document.body.innerText.slice(0,200)'))
         fits(P, t + ' question', ['#pAnswers .pans.c3', '#pqCd', '.pfoot svg'])
         venue_logo_ok(P, t + ' question')
+        # INBOX 320.3 (Dean, 12 Nov 2026): a long clock reads m:ss (9:58), never "598 secs", and it sits up under the header
+        cd = P.obj('(function(){ var n=document.getElementById("pqCdNum"), l=n.nextElementSibling, r=n.closest(".pq-ring").getBoundingClientRect(), h=document.querySelector(".ptop").getBoundingClientRect();'
+                   ' return JSON.stringify({ num:n.textContent, label:l && getComputedStyle(l).display!=="none" ? l.textContent : "", sr:document.getElementById("pqCd").textContent, gap:Math.round(r.top-h.bottom) }); })()') or {}
+        ok(t + ': a ten-minute clock reads minutes and seconds ("%s"), no "secs" under it, the screen reader the same ("%s")' % (cd.get('num'), cd.get('sr')),
+           re.match(r'^(10:00|9:[0-5]\d)$', cd.get('num') or '') is not None and cd.get('label') == '' and re.match(r'^Answer in (10:00|9:[0-5]\d)$', cd.get('sr') or '') is not None, cd)
+        ok(t + ': the countdown sits right under the header (%spx below it), not far down the screen' % cd.get('gap'), cd.get('gap') is not None and -1 <= cd['gap'] <= 12, cd)
         ring = P.obj('(function(){ var r=document.querySelector("#vQ .pring, #vQ .ring, #pqRing"); if(!r) return null; var b=r.getBoundingClientRect(), out=[];'
                      ' [].forEach.call(r.querySelectorAll("*"), function(e){ var c=e.getBoundingClientRect(); if(c.width>0 && (c.left<b.left-1||c.right>b.right+1||c.top<b.top-1||c.bottom>b.bottom+1)) out.push((e.id||e.className)+" "+e.textContent.trim()); });'
                      ' return JSON.stringify(out); })()')
@@ -285,8 +291,10 @@ def trivia(B, base, w, h):
         P.say({'t': 'reveal', 'fmt': 'trivia', 'qseq': 4, 'correctIndex': 0, 'options': q['options'], 'game_id': 'g-triv'})
         P.until('!document.getElementById("vRes").classList.contains("hidden")', 10)
         fits(P, t + ' result, wrong', ['#pResAnswers .pans.c3'])
-        P.say(dict(q, qseq=5, qi=5, endsAt=int(time.time() * 1000) + 600000))
-        P.until('!document.getElementById("vQ").classList.contains("hidden")', 10)
+        P.say(dict(q, qseq=5, qi=5, endsAt=int(time.time() * 1000) + 25000))
+        P.until('!document.getElementById("vQ").classList.contains("hidden")', 10); time.sleep(1.2)
+        cd = P.obj('(function(){ var n=document.getElementById("pqCdNum"), l=n.nextElementSibling; return JSON.stringify({ num:n.textContent, label:l && getComputedStyle(l).display!=="none" ? l.textContent : "" }); })()') or {}
+        ok(t + ': under a minute it is the plain seconds with "secs" ("%s %s")' % (cd.get('num'), cd.get('label')), re.match(r'^\d{1,2}$', cd.get('num') or '') is not None and cd.get('label') == 'secs', cd)
         P.js('document.querySelectorAll("#pAnswers .pans")[0].click()'); time.sleep(0.4)
         P.say({'t': 'reveal', 'fmt': 'trivia', 'qseq': 5, 'correctIndex': 0, 'options': q['options'], 'game_id': 'g-triv'})
         P.until('!document.getElementById("vRes").classList.contains("hidden")', 10); time.sleep(1.5)

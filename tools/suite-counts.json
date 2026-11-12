@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/game-screens-fit-in-chrome.test.py": {
-  "checks": 328,
+  "checks": 334,
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {

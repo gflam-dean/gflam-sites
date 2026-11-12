@@ -226,6 +226,10 @@
     .pq-head{margin-bottom:8px}
     #vRes .pcard,.pcard{margin-top:6px;padding:5px 16px}
   }
+  /* THE COUNTDOWN UP TOP (Dean, INBOX 320.3, 12 Nov 2026: it "sat far down the screen with nothing above it"): the
+     question screen starts right under the header, the ring first, every phone size. */
+  #vQ,#vRes{padding-top:0}   /* the result keeps the question's place: the answers never jump at the reveal */
+  #vQ .pq-head,#vRes .pq-head{gap:6px}
   /* WHILE THE FEEDBACK FOLLOW-UP IS OPEN (/app/vp-feedback.js, body.vpfb-more): the final screen closes up so the chips,
      the line and Send fit with it, and typing never scrolls the page (Dean, 12 Nov 2026). */
   body.vpfb-more .finalwrap{padding-top:6px}
@@ -782,10 +786,21 @@
   function tickCd(){
     if(!P.q) return;
     var rem=Math.max(0, Math.ceil((P.q.endsAt-Date.now())/1000));
-    try{ phoneRing(rem); }catch(e){}
+    try{ phoneRing(rem); phoneRingLong(rem); }catch(e){}
     if(P.locked){ $("pqCd").textContent="Answer locked in"; }
     else { $("pqCd").textContent="Answer in "+rem+"s"; }
     if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
+  }
+
+  /* A LONG CLOCK READS AS MINUTES (Dean, INBOX 320.3, 12 Nov 2026: "598 seconds left" -> 9:58). A minute or more shows
+     m:ss in the ring with no "secs" under it; under a minute it is the plain seconds, as always. Runs after the ring is
+     painted each tick (the ring's own paint is shared), and the words for a screen reader say it the same way. */
+  function mmss(rem){ rem=Math.max(0, Math.floor(rem)); var m=Math.floor(rem/60), s=rem%60; return m+":"+(s<10?"0":"")+s; }
+  function phoneRingLong(rem){
+    var n=$("pqCdNum"), lab=n && n.nextElementSibling, long=rem>=60;
+    if(n && long) n.textContent=mmss(rem);
+    if(lab) lab.style.display = long ? "none" : "";
+    if(long) Promise.resolve().then(function(){ if(P.q && !P.locked && Math.max(0, Math.ceil((P.q.endsAt-Date.now())/1000))>=60) $("pqCd").textContent="Answer in "+mmss(rem); });
   }
 
   // Accepts either a live broadcast (endsAt in ms) or a /snapshot question (ends_at ISO).
