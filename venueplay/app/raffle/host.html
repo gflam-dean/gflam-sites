@@ -326,12 +326,11 @@
             <label class="check"><input type="checkbox" id="rfPickOrder"> Let me choose which prize to draw next</label>
             <label class="check"><input type="checkbox" id="rfAnnounce"> Show each prize on the TV before its draw</label>
             <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026): the TV's draw as a ticket roll or a race plate, and how long it
-                 builds (short 6, normal 9, long 12 seconds). "As now" is what every venue has today and stays lit until the venue
-                 picks another. Silent for now. -->
+                 builds (fast 3, short 6, normal 9, long 12 seconds). Every venue is on the ticket roll unless it chose the race plate
+                 (Dean, 12 Nov 2026, INBOX 284: "As now", the old draw, is no longer a choice; VPDrawStyle.usual). Silent for now. -->
             <div class="field2" id="styleField">
-              <span class="flab">Your usual draw look on the TV<small>Ticket roll is a paper raffle roll. Race plate suits racing and footy rooms. As now is the draw you have today. You can change it for one draw above the Draw button.</small></span>
+              <span class="flab">Your usual draw look on the TV<small>Ticket roll is a paper raffle roll. Race plate suits racing and footy rooms. You can change it for one draw above the Draw button.</small></span>
               <div class="chips" id="styleChips">
-                <button type="button" data-style="">As now</button>
                 <button type="button" data-style="ticket">Ticket roll</button>
                 <button type="button" data-style="race">Race plate</button>
               </div>
@@ -381,7 +380,6 @@
         <span class="flab">Look for this draw</span>
         <div class="chips" id="onceChips">
           <button type="button" data-once="">Usual</button>
-          <button type="button" data-once="classic">As now</button>
           <button type="button" data-once="ticket">Ticket roll</button>
           <button type="button" data-once="race">Race plate</button>
         </div>
@@ -492,7 +490,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null, ticketsFrom:"", drawStyle:"", drawTime:"normal", styleOnce:null };   // styleOnce: this draw's own look (null = the venue's usual), 11 Nov 2026   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"", drawStyle:"ticket", drawTime:"normal", styleOnce:null };   // styleOnce: this draw's own look (null = the venue's usual), 11 Nov 2026   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -1076,9 +1074,10 @@
     send(m);
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
-  /* THE DRAW LOOK (10 Nov 2026). A draw of more than one winning ticket keeps the draw every venue has always had; so does "As now".
+  /* THE DRAW LOOK (10 Nov 2026). A draw of more than one winning ticket keeps the classic multi-ticket draw (the looks draw one number).
+     Every other draw is the venue's usual look or this draw's own (VPDrawStyle.lookFor: never the old draw, INBOX 284).
      A new look builds for INTRO + the draw time, and the TV is told the winner (t:"pick") the moment the server has it. */
-  function lookNow(){ return G.styleOnce==null ? G.drawStyle : (G.styleOnce==="classic" ? "" : G.styleOnce); }
+  function lookNow(){ if(typeof VPDrawStyle==="undefined") return ""; return VPDrawStyle.lookFor("raffle", G.drawStyle, G.styleOnce); }   // "" only when the look script did not load at all
   function styleKey(){ var k=lookNow(); return (k==="ticket" || k==="race") && !(G.winnersCount>1) ? k : ""; }
   /* THE RAFFLE'S OWN NAME, said on the ticket and as the wall's heading ("Sunday meats"); empty when the venue has not named one */
   function raffleTitle(){ var r=G.raffleId ? raffleById(G.raffleId) : (G.raffles.length ? G.raffles[0] : null); return r && r.label ? String(r.label).replace(/\s+/g," ").trim().slice(0,60) : ""; }
@@ -1642,7 +1641,7 @@
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-style")===G.drawStyle);
     b=document.querySelectorAll("#timeChips button");
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-dt")===G.drawTime);
-    show("timeField", !!G.drawStyle); show("drawLenField", !G.drawStyle); renderAdvSum();
+    show("timeField", true); show("drawLenField", false); renderAdvSum();
   }
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); renderLook(); queueRafflePrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); renderLook(); queueRafflePrefs(); });
@@ -1714,7 +1713,7 @@
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
     var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
-    if(typeof p.draw_style==="string" && /^(|ticket|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style;
+    if(typeof VPDrawStyle!=="undefined") G.drawStyle=VPDrawStyle.usual("raffle", p.draw_style);   // a stored "" (the old "As now"), or nothing, is the ticket roll (INBOX 284)
     if(typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
     renderLook();
     if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }

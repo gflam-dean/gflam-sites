@@ -9,8 +9,8 @@
      3. ONE winner line: "Bring ticket 0472 to the host." (the number once) and "Bring your member card to the host."
      4. SILENT: no sound of any kind in the draw looks
      5. the winner is only ever the server's: the stage holds until a pick arrives; the screens take it from t:"pick"
-     6. existing venues keep what they have: "As now" is the console default, a look is only sent when one is chosen, several winning
-        tickets keep the old draw, the Worker accepts only the known looks and times
+     6. every venue on the new looks (INBOX 284, 12 Nov): the consoles start on the ticket roll / flip board, no "As now", several winning
+        tickets keep the classic multi-ticket draw, the Worker accepts only the known looks and times (tools/test-draw-looks-switch.js)
      7. older TVs: the file is ES5, and no em dash, "roster" or capital-V venueplay in it
 
    Run: jsc tools/test-drawstyle.js   (from the repo root) */
@@ -63,10 +63,10 @@ show('the title line sits after the stage, so the stage never covers it', RS.ind
 show('the raffle TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(RS) && /setPick\(\{ number:S\.pick \}\)/.test(RS));
 show('the members TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(MS) && /styleStage\.setPick\(state\.pick\)/.test(MS));
 
-print('\n== 6. existing venues keep what they have ==');
-show('the raffle console starts on "As now" (no look)', /drawStyle:"", drawTime:"normal"/.test(RH));
-show('the members console starts on "As now"', /drawStyle:"", drawTime:"normal"/.test(MH));
-show('"As now" is the first chip on both consoles', /data-style="">As now/.test(RH) && /data-style="">As now/.test(MH));
+print('\n== 6. every venue on the new looks (INBOX 284) ==');
+show('the raffle console starts on the ticket roll', /drawStyle:"ticket", drawTime:"normal"/.test(RH));
+show('the members console starts on the flip board', /drawStyle:"flip", drawTime:"normal"/.test(MH));
+show('no "As now" chip on either console (INBOX 284)', !/>As now</.test(RH) && !/>As now</.test(MH));
 show('raffle offers ticket roll and race plate; members flip board and race plate', /data-style="ticket">Ticket roll/.test(RH) && /data-style="race">Race plate/.test(RH) && /data-style="flip">Flip board/.test(MH) && /data-style="race">Race plate/.test(MH));
 show('several winning tickets keep the old draw', /!\(G\.winnersCount>1\)/.test(RH));
 show('a look is only sent with the draw when one is chosen', /if\(styleKey\(\)\)\{ m\.style=styleKey\(\)/.test(RH) && /if\(styled\)\{ dm\.style=look/.test(MH));
@@ -94,7 +94,7 @@ show('the raffle TV passes tonight\'s drawn tickets, the members TV its drawn li
 show('race plate: ONE slant for every tier (the same two lines cut all four)', /var GH = 646, SHIFT = \d+/.test(MOD) && /function lx\(y\)/.test(MOD) && /function rx\(y\)/.test(MOD) && (MOD.match(/clip\(/g) || []).length >= 3 && !/polygon\(28px/.test(MOD));
 show('fast is a draw time chip on both consoles', /data-dt="fast">Fast, 3 seconds/.test(RH) && /data-dt="fast">Fast, 3 seconds/.test(MH) && !/Skip draw|skipBtn/.test(RH + MH));
 show('a venue\'s usual look is set separately for raffles and members draws (own saved keys), changeable per draw', /p\.draw_style=G\.drawStyle/.test(RH) && /G\.lookSet/.test(MH) && /data-once="ticket">Ticket roll/.test(RH) && /data-once="flip">Flip board/.test(MH) && /styleOnce:null/.test(RH) && /styleOnce:null/.test(MH));
-show('"As now" is still the usual look until a venue changes it', /drawStyle:"", drawTime:"normal"/.test(RH) && /drawStyle:"", drawTime:"normal"/.test(MH));
+show('the usual look is the new look for every venue (ticket roll, flip board)', /drawStyle:"ticket", drawTime:"normal"/.test(RH) && /drawStyle:"flip", drawTime:"normal"/.test(MH));
 
 print('\n== 6d. 11 Nov (INBOX 207): the look keeps to its own names, so a TV page\'s CSS cannot reach into it ==');
 (function () {

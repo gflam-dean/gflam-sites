@@ -241,7 +241,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   rafWeekly(P, 0, 'false');
   check('raffles: not the same every week, so a week can be swapped, one box for each prize in order', shown(P, 'prize_swaps') && !!$(P, 'vpGsSwapAdd'));
   $(P, 'vpGsSwapAdd').click(); box(P, 'vpGsSwapWeek_0', '2026-12-09'); box(P, 'vpGsSwapP_0_0', 'Hamper'); box(P, 'vpGsSwapP_0_1', 'Voucher');
-  check('raffles: draw style offers As now, the ticket roll and the race plate (the console\'s looks); the cash prize asks its amount', $(P, 'vpGsIn_draw_style').children.map(function (o) { return o.value; }).join() === ',ticket,race' && !shown(P, 'jackpot_amount_cents'));
+  check('raffles: draw style offers the ticket roll and the race plate (the console\'s looks, no As now); the cash prize asks its amount', $(P, 'vpGsIn_draw_style').children.map(function (o) { return o.value; }).join() === 'ticket,race' && !shown(P, 'jackpot_amount_cents'));
   box(P, 'vpGsIn_draw_style', 'ticket'); seg(P, 'jackpot_on', 'true'); box(P, 'vpGsIn_jackpot_amount_cents', '250'); seg(P, 'allow_redraw', 'false'); box(P, 'vpGsIn_spin_seconds', 6);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var rp = lastPost('/host/game-prefs');
@@ -519,7 +519,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   $(P, 'vpGsExtrasNo').click(); await settle();
   check('an earlier email choice is kept, and gets today as its "since" so the sender\'s first email is after today', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'sat', time: '10:30', since: P.GS.brisbaneDate(NOW) }), lastAnswers());
   P = oldVenue(); 
-  check('hidden: the keys and defaults are still there for later (picture_round on, draw_style As now)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === '' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'race' }).draw_style === 'race' && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === undefined);
+  check('hidden: the keys and defaults are still there for later (picture_round on, draw_style the ticket roll)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'ticket' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'race' }).draw_style === 'race' && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === undefined);
   UNHIDE = true;
 
   section('7. ROUND 12 (Dean, 10 Nov 2026, INBOX 118): THE TEN NOTES');

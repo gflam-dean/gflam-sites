@@ -773,3 +773,17 @@ change). RUN IT BEFORE deploying the game Worker and the musical pages from this
 line for a venue with nothing saved. Early is safe (the live code never sends 'any_line'). RLS-BASELINE.json: one new
 table, re-dump after. NUMBER: 181, 184, 185 live or taken, 183 spoken for, checked every branch and worktree 11 Nov 2026,
 so 186. Branch `fix/any-line-15nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-191-draw-looks-every-venue.sql` (Dean, 12 Nov 2026, INBOX 284: every venue on the new draw looks, his explicit
+exception to "defaults never move existing venues" for the draw look only): (1) a snapshot table `vp_backup_191_draw_looks`
+(every venue's game_prefs and whether it had a settings row; RLS on, nothing granted; taken once), (2) a guard that stops the
+whole migration if any venue has no snapshot row, (3) `game_prefs.raffle.draw_style = 'ticket'` wherever it is not already
+'ticket' or 'race', (4) `game_prefs.members.draw_style = 'flip'` wherever it is not already 'flip' or 'race' (an explicit
+RACE PLATE is kept; only that one key per game moves, draw_time and everything else stay), (5) a venue with no settings row
+gets one holding only the two looks. One transaction. ANY ORDER with the site from `fix/draw-looks-switch-12nov` (the game
+Worker does not change: it already accepts ticket/flip/race; after the site ships a stored '' is the new look anyway). Run it
+only on Dean's yes, after `python3 tools/draw-looks-snapshot.py --live` has written the dated CSV + JSON. Rollback:
+`ROLLBACK-draw-looks-191.sql` (not numbered on purpose; puts the two looks back from the snapshot where they are still what
+191 wrote; the old draw on the TVs also needs the site change reverted). Simulated in tools/migration-191-sim.test.py (no
+database). RLS-BASELINE.json: one new table, re-dump after. NUMBER: 186 live, 187 to 190 written on branches, checked every
+branch and worktree 12 Nov 2026, so 191. NOT RUN.

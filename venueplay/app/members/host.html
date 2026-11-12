@@ -302,12 +302,12 @@
               <div class="note" id="setMaxHint" style="margin-top:4px">Leave blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve.</div>
               <div class="note hidden" id="capWarn" style="margin-top:4px;color:var(--roll)"></div>
             </div>
-            <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026), saved for the venue like the rest of the console's choices. "As now" is
-                 the draw every venue has today. Silent for now. -->
+            <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026), saved for the venue like the rest of the console's choices. Every venue
+                 is on the flip board unless it chose the race plate (Dean, 12 Nov 2026, INBOX 284: "As now", the old draw, is no longer
+                 a choice; VPDrawStyle.usual). Silent for now. -->
             <div class="field2" id="styleField">
-              <span class="flab">Your usual draw look on the TV<small>Flip board is a split-flap board with the winner's name on its own flap. Race plate suits racing and footy rooms. As now is the draw you have today. You can change it for one draw above the Draw button.</small></span>
+              <span class="flab">Your usual draw look on the TV<small>Flip board is a split-flap board with the winner's name on its own flap. Race plate suits racing and footy rooms. You can change it for one draw above the Draw button.</small></span>
               <div class="chips" id="styleChips">
-                <button type="button" data-style="">As now</button>
                 <button type="button" data-style="flip">Flip board</button>
                 <button type="button" data-style="race">Race plate</button>
               </div>
@@ -356,7 +356,6 @@
         <span class="flab">Look for this draw</span>
         <div class="chips" id="onceChips">
           <button type="button" data-once="">Usual</button>
-          <button type="button" data-once="classic">As now</button>
           <button type="button" data-once="flip">Flip board</button>
           <button type="button" data-once="race">Race plate</button>
         </div>
@@ -483,7 +482,7 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
-    drawStyle:"", drawTime:"normal", styleOnce:null,   // the TV draw look ("", "flip", "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
+    drawStyle:"flip", drawTime:"normal", styleOnce:null,   // the TV draw look ("flip" or "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
     round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null,
     lastResult:null   // the draw just paid or rolled over ({ won, name, amountCents, nextCents, capped }): step 3 until the host moves on
   };
@@ -887,8 +886,8 @@
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
-    var look=(G.styleOnce==null ? G.drawStyle : (G.styleOnce==="classic" ? "" : G.styleOnce)), styled=(look==="flip" || look==="race");
-    /* A new look builds for the intro plus the draw time (short 6, normal 9, long 12); "As now" keeps the draw's own length. */
+    var look=(typeof VPDrawStyle!=="undefined") ? VPDrawStyle.lookFor("members", G.drawStyle, G.styleOnce) : "", styled=(look==="flip" || look==="race");   // never the old draw (INBOX 284)
+    /* A new look builds for the intro plus the draw time (short 6, normal 9, long 12); the old draw's own length is only a fallback. */
     var len=styled ? Math.round((VPDrawStyle.secs(G.drawTime)+VPDrawStyle.INTRO)*1000) : Math.max(2000, ((d.draw_length_seconds||4))*1000);
     var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
     var lo=nums.length?Math.min.apply(null,nums):0, hi=nums.length?Math.max.apply(null,nums):0;
@@ -1285,7 +1284,7 @@
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-style")===G.drawStyle);
     b=document.querySelectorAll("#timeChips button");
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-dt")===G.drawTime);
-    $("timeField").classList.toggle("hidden", !G.drawStyle);
+    $("timeField").classList.toggle("hidden", false);
   }
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
@@ -1294,7 +1293,7 @@
   $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
   renderOnce();
   function applyMembersPrefs(p){
-    if(p && typeof p.draw_style==="string" && /^(|flip|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style, G.lookSet=true;
+    if(p && typeof p.draw_style==="string" && typeof VPDrawStyle!=="undefined") G.drawStyle=VPDrawStyle.usual("members", p.draw_style), G.lookSet=true;   // a stored "" (the old "As now") is the flip board (INBOX 284)
     if(p && typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
     renderLook();
     if(!p || !p.draw_id || G.round || G.busy) return;
