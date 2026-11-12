@@ -18,6 +18,9 @@ var VP_ABN=(/const VP_ABN = '([^']+)'/.exec(BILL)||[,""])[1];
    lifted senders need it and the two constants it reads, from the Worker itself. */
 var VP_SUPPORT_PHONE=(/const VP_SUPPORT_PHONE = '([^']+)'/.exec(BILL)||[,""])[1];
 var VP_SUPPORT_TEL=(/const VP_SUPPORT_TEL = '([^']+)'/.exec(BILL)||[,""])[1];
+eval(lift(BILL,"vpaFootPhone"));
+eval(lift(BILL,"vpaEmailFootBlock"));
+eval(lift(BILL,"vpaSupportPhoneLines"));   // the shared foot (Dean, 12 Nov 2026)
 eval(lift(BILL,"vpaSupportPhoneHtml"));
 eval(lift(BILL,"vpaVenueEmailFoot"));
 /* The shell (23 Oct 2026): every venue email is now a full document in the shared card. */
