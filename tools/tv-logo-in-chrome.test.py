@@ -25,6 +25,13 @@ in jsc, supabase-js stood in) at 1920 x 1080 and looks at what is painted:
 Takes the repo's heavy lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     VP_SHOTS=/some/dir python3 tools/tv-logo-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import json, os, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -94,8 +101,11 @@ def setting_up(r):
     v = look(r, t)
     ok('the venueplay tv logo is on it: the big triangle and the wordmark with "tv", drawn from the brand file',
        v.get('triMark') and v.get('tvMark') and v.get('label') == 'venueplay tv', v)
-    ok('at the approved size and place: 66.65% of the wall wide (1279.7 px at 1920), centred across, 49.8% down',
-       v.get('logo') and abs(v['logo'][2] - 1279.7) <= 1.5 and abs(v['logo'][0] + v['logo'][2] / 2 - 960) <= 1 and abs(v['logo'][1] + v['logo'][3] / 2 - 537.8) <= 1.5, v.get('logo'))
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 66.65% of the WALL, the safe box (1728x972 at 54px/96px in at 1920x1080), was
+    # 66.65% of the window (1279.7 px); centred across; 49.8% down the wall (538.1, was 537.8 of the window).
+    SX, SY, SW, SH = W * 0.05, H * 0.05, W * 0.9, H * 0.9
+    ok('at the approved size and place: 66.65%% of the wall wide (%.1f px of the %d px safe box at 1920), centred across, 49.8%% down the wall' % (0.6665 * SW, SW),
+       v.get('logo') and abs(v['logo'][2] - 0.6665 * SW) <= 1.5 and abs(v['logo'][0] + v['logo'][2] / 2 - 960) <= 1 and abs(v['logo'][1] + v['logo'][3] / 2 - (SY + 0.498 * SH)) <= 1.5, v.get('logo'))
     ok('the line under it says "Setting up this screen"', v.get('line') == 'Setting up this screen', v.get('line'))
     ok('in the TV body face, muted #8A8A95, readable across a room, and below the logo (never over it)',
        'Hanken Grotesk' in (v.get('lineFont') or '') and v.get('lineColour') == 'rgb(138, 138, 149)' and v.get('lineSize', 0) >= 32
@@ -288,7 +298,8 @@ def corner(r, t):
     ok('CONTROL: the TV has the venue\'s logo', r.until(t, '!!document.getElementById("venueLogo") && getComputedStyle(document.getElementById("venueLogo")).opacity==="1"', 15) is True, lbox(r, t))
     time.sleep(0.6)
     hold = lbox(r, t)
-    ok('it is up on the between-games card, top left (14 to 40 px in), fully shown', hold.get('disp') == 'block' and hold.get('op') == '1' and hold.get('box') and 10 <= hold['box'][0] <= 40 and 10 <= hold['box'][1] <= 40, hold)
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 10 to 40 px in from the SAFE BOX's corner (96, 54 at 1920x1080), was from the window's
+    ok('it is up on the between-games card, top left of the safe box (10 to 40 px in from its corner), fully shown', hold.get('disp') == 'block' and hold.get('op') == '1' and hold.get('box') and 10 <= hold['box'][0] - W * 0.05 <= 40 and 10 <= hold['box'][1] - H * 0.05 <= 40, hold)
     seen = r.ask(t, 'window.__vpLogo') or []
     first_on = next((i for i, x in enumerate(seen) if x[1] == 'block'), None)
     ok('it faded IN: laid out at opacity 0 first, then 1, over 0.3 s (the line\'s cross-fade), never popped on',

@@ -18,6 +18,13 @@ Worker in jsc, supabase-js replaced by a stand-in, headless Chrome. Takes the re
 (VP_WAIT_LOCK seconds to wait for it) and never clears anybody else's.
 
     VP_SHOTS=/some/dir python3 tools/reconnect-layout-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import json, os, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -136,7 +143,8 @@ def main():
             # top left like every other TV screen (Dean, 3 Nov 2026). Over the venue's own adverts it is still not painted.
             hold = r.ask(tv, '!!document.querySelector("#tvAds .ad.show .tvhold")') is True
             ok('on the venue\'s own advertising the name is NOT painted; on the between-games card it is, top left (%dx%d)' % (w, h),
-               n is not None and (n['vis'] and n['l'] <= 40 and n['t'] <= 40 if hold else not n['vis']), [hold, n])
+               # TV SAFE AREA RE-PIN (12 Nov 2026): within 40 px of the SAFE BOX's corner (5% in), was of the window's
+               n is not None and (n['vis'] and n['l'] <= w * 0.05 + 40 and n['t'] <= h * 0.05 + 40 if hold else not n['vis']), [hold, n])
             shot(r, tv, 'tv-nologo-ads-%d' % w)
             r.ask(tv, 'window.__say && window.__say({t:"mode", mode:"bingo"}); true')
             ok('a bingo lobby goes on air (%dx%d)' % (w, h), r.until(tv, '(function(){var c=document.getElementById("tvCorner");return !!c && c.style.display!=="none" && document.getElementById("adsRoot").classList.contains("hidden");})()', 20) is True,
@@ -144,7 +152,8 @@ def main():
             time.sleep(1.8)   # vp-fit's safety tick
             n, corner = tv_name(r, tv), r.ask(tv, RECT + '(document.getElementById("tvCorner"))')
             ok('the venue name is painted, in plain text, top LEFT (%dx%d)' % (w, h),
-               n and n['vis'] and n['l'] <= w * 0.05 and n['t'] <= h * 0.06 and n['r'] <= w * 0.45, n)
+               # TV SAFE AREA RE-PIN (12 Nov 2026): 5% / 6% / 45% of the SAFE BOX from its corner, were of the window
+               n and n['vis'] and n['l'] <= w * (0.05 + 0.05 * 0.9) and n['t'] <= h * (0.05 + 0.06 * 0.9) and n['r'] <= w * (0.05 + 0.45 * 0.9), n)
             ok('it is no longer in the venueplay corner on the right, and does not touch it (%dx%d)' % (w, h),
                r.ask(tv, '!document.querySelector("#tvCorner #venueNameTag")') is True and not overlap(n, corner), [n, corner])
             hits = r.ask(tv, '(function(){var n=document.getElementById("venueNameTag").getBoundingClientRect(),out=[];'
@@ -159,7 +168,8 @@ def main():
         tid, sc = r.open('/app/trivia/screen?venue=' + r.W.info['slug'], before='sessionStorage.setItem("vpTvHop", %s);' % json.dumps(r.W.info['slug']), width=1920, height=1080)
         ok('the trivia screen names the venue top left', r.until(sc, '(function(){var e=document.getElementById("venueNameTag");return !!e&&!e.hidden&&e.textContent.length>0;})()', 30) is True)
         n = tv_name(r, sc)
-        ok('top left, inside the screen, the same place tv.html paints it', n and n['vis'] and n['l'] <= 96 and n['t'] <= 65, n)
+        # TV SAFE AREA RE-PIN (12 Nov 2026): 96 and 65 px at 1920x1080 were 5% and 6% of the window; now 5% and 6% of the safe box from its corner
+        ok('top left, inside the screen, the same place tv.html paints it', n and n['vis'] and n['l'] <= 1920 * (0.05 + 0.05 * 0.9) and n['t'] <= 1080 * (0.05 + 0.06 * 0.9), n)
         ok('and not inside the corner any more', r.ask(sc, '!document.querySelector(".tv-corner #venueNameTag")') is True)
         shot(r, sc, 'trivia-screen-nologo-1920')
         r.close_tab(tid)
@@ -173,7 +183,8 @@ def main():
         r.until(tv, 'document.getElementById("adsRoot").classList.contains("hidden")', 20)
         time.sleep(1.8)
         logo, n = r.ask(tv, RECT + '(document.getElementById("venueLogo"))'), tv_name(r, tv)
-        ok('the logo is top left in a game', logo and logo['vis'] and logo['l'] <= 40 and logo['t'] <= 40, logo)
+        # TV SAFE AREA RE-PIN (12 Nov 2026): within 40 px of the safe box's corner (96, 54 at 1920x1080), was of the window's
+        ok('the logo is top left in a game', logo and logo['vis'] and logo['l'] <= 96 + 40 and logo['t'] <= 54 + 40, logo)
         ok('and the name is NOT painted beside it: one or the other, never both', not (n or {}).get('vis'), n)
         shot(r, tv, 'tv-logo-bingo-1920')
         r.close_tab(tid)

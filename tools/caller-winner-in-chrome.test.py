@@ -23,6 +23,13 @@ rig in tools/browser-rig/rig.py (the repo's pages, the real game Worker in jsc, 
      NOT on the venue's own advertising.
 
     python3 tools/caller-winner-in-chrome.test.py       screenshots go to $VP_SHOTS if set
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import json, os, sys, time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'browser-rig'))
@@ -396,9 +403,11 @@ def venue_logo_game():
         ok('with the caller grid up the logo is still in the header, the same size, and the page has no sideways scroll', after.get('vis') is True and after.get('w') == box.get('w') and after.get('h') == box.get('h') and after.get('scrollW', 999) <= after.get('vw', 0), after)
         shot(r, host, '11-phone-console-real-balls-with-venue-logo')
         ok('the TV is on the real-balls board', r.until(tv, vis('tvRun'), 10) is True, wall(r, tv))
-        tvl = r.ask(tv, '(function(){var i=document.getElementById("venueLogo"); if(!i) return {no:true}; var b=i.getBoundingClientRect(),want=VPVenueLogo.box(i.naturalWidth,i.naturalHeight,VPVenueLogo.limits("tv",innerWidth,innerHeight));'
+        tvl = r.ask(tv, '(function(){var i=document.getElementById("venueLogo"); if(!i) return {no:true}; var b=i.getBoundingClientRect(),sf=VPVenueLogo.safeShare?VPVenueLogo.safeShare():0,want=VPVenueLogo.box(i.naturalWidth,i.naturalHeight,VPVenueLogo.limits("tv",innerWidth,innerHeight,sf));'
                         'var run=document.getElementById("tvRun"),hits=[];[].forEach.call(run.querySelectorAll("*"),function(e){var q=e.getBoundingClientRect(); if(q.width&&q.height&&e.children.length===0&&(e.textContent||"").trim()&&q.left<b.right&&q.right>b.left&&q.top<b.bottom&&q.bottom>b.top) hits.push((e.id||e.className||e.tagName)+":"+(e.textContent||"").trim().slice(0,20));});'
-                        'return {vis:b.width>0&&getComputedStyle(i).display==="block",w:Math.round(b.width),h:Math.round(b.height),ww:want.w,wh:want.h,left:Math.round(b.left),top:Math.round(b.top),hits:hits};})()') or {}
+                        'return {vis:b.width>0&&getComputedStyle(i).display==="block",w:Math.round(b.width),h:Math.round(b.height),ww:want.w,wh:want.h,left:Math.round(b.left-sf*innerWidth),top:Math.round(b.top-sf*innerHeight),hits:hits};})()') or {}
+        # TV SAFE AREA RE-PIN (12 Nov 2026): sized by the TV rule against the safe box, and left/top under 40 px measured from the
+        # safe box's corner (they were from the window's)
         ok('and paints the venue logo top-left on the board, sized by the TV rule (%sx%s on this screen)' % (tvl.get('ww'), tvl.get('wh')),
            tvl.get('vis') is True and tvl.get('w') == tvl.get('ww') and tvl.get('h') == tvl.get('wh') and tvl.get('left', 999) < 40 and tvl.get('top', 999) < 40, tvl)
         ok('with nothing the board paints written under it (vp-fit keeps the wall out of the corner)', tvl.get('hits') == [], tvl.get('hits'))
