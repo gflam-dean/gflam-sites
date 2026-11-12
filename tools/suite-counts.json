@@ -1255,6 +1255,10 @@
   "checks": 96,
   "counted_by": "lines"
  },
+ "tools/test-slide-qr.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/test-stale-phone-and-end-once.js": {
   "checks": 21,
   "counted_by": "lines"
@@ -1601,6 +1605,10 @@
  },
  "tools/tv-safe-area-in-chrome.test.py": {
   "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/tv-slide-qr-in-chrome.test.py": {
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/tv-slides-fill-in-chrome.test.py": {

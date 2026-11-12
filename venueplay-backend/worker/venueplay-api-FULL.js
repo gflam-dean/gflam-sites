@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '12 Nov 2026, 17:29 · 2255ddb3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 00:49 · 921878dd';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3452,6 +3452,8 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     return json({ error: 'That is ' + slidesIn.length + ' slides. A venue can have up to ' + VPB_MAX_SLIDES + '.' + NONE }, 400);
   }
   const slideFiles = [];
+  /* slides_qr: which slides (0-based) say "scan to join", so the TV puts the venue's join QR on them (12 Nov 2026). */
+  const slidesQr = (Array.isArray(b.slides_qr) ? b.slides_qr : []).map(function (n) { return parseInt(n, 10); }).filter(function (n) { return n >= 0 && n < slidesIn.length; });
   for (let i = 0; i < slidesIn.length; i++) {
     const m = /^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=\s]+)$/.exec(String(slidesIn[i] || ''));
     if (!m) return json({ error: 'Slide ' + (i + 1) + ' is not a PNG or JPEG.' + NONE }, 400);
@@ -3564,7 +3566,9 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
           body: f.bytes,
         });
         if (!up.ok) throw new Error('slide ' + (i + 1) + ' did not upload');
-        slides.push({ image_url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path, seconds: VPA_PROSPECT_SLIDE_SECONDS });
+        const sl = { image_url: env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/' + path, seconds: VPA_PROSPECT_SLIDE_SECONDS };
+        if (slidesQr.indexOf(i) !== -1) sl.qr = true;   // a starter slide that says scan to join: the TV shows the join QR on it
+        slides.push(sl);
       }
       const row = { venue_id: venue.id, slug: slug, slides: vpbCleanSlides(slides), updated_at: new Date().toISOString() };
       const w = await vpbWriteScreen(env, row, { via: opts.via || 'hq_prospect', route: opts.via ? 'autopilot/prospect' : 'admin/prospect', user: actor.actorId || null,
@@ -15974,6 +15978,7 @@ function vpbCleanSlides(arr) {
     const ds = /^\d{4}-\d{2}-\d{2}$/;
     if (ds.test(String(s.starts || ''))) out.starts = String(s.starts);
     if (ds.test(String(s.ends || ''))) out.ends = String(s.ends);
+    if (s.qr === true) out.qr = true;   // the TV puts the venue's join QR on this slide (a slide that says scan to join, 12 Nov 2026)
     return out;
   }).filter(function (s) { return /^https:\/\//.test(s.image_url); });
 }

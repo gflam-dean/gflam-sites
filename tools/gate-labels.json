@@ -508,6 +508,7 @@
   "tv-no-counts-in-chrome.test.py",
   "tv-safe-area-in-chrome.test.py",
   "tv-screen.test.js",
+  "tv-slide-qr-in-chrome.test.py",
   "tv-slides-fill-in-chrome.test.py",
   "tv-stale-screen.test.js",
   "tv-states.test.js",
