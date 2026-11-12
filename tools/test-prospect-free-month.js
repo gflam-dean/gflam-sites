@@ -347,7 +347,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var jc = await rcall('POST', '', q2 + '&reply=json');
   check('the page\'s button (POST, reply=json, signed): cancelled, switched off, audited, "All done", CORS for our site',
     jc.body && jc.body.state === 'done' && jc.body.title === 'All done' && /Nothing was ever charged/.test(jc.body.text) && !!F2.row().cancelled_at &&
-    F2.v.status === 'suspended' && F2.v.suspended_reason === 'cancelled' && jc.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', jc.raw);
+    F2.v.status === 'suspended' && F2.v.suspended_reason === 'cancelled' && !!F2.v.closed_at && jc.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', jc.raw);
   var jd = await rcall('GET', q2 + '&reply=json');
   check('opening it again says it is done, with no button', jd.body && jd.body.state === 'done', jd.raw);
 
