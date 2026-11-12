@@ -1643,6 +1643,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "venueplay-backend/app/one-phone-one-name.test.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/phone-reconnect.test.js": {
   "checks": 22,
   "counted_by": "lines"
@@ -1794,6 +1798,10 @@
  "venueplay-backend/worker/one-game.test.js": {
   "checks": 32,
   "counted_by": "total"
+ },
+ "venueplay-backend/worker/one-phone-a-night.test.js": {
+  "checks": 48,
+  "counted_by": "lines"
  },
  "venueplay-backend/worker/one-trip-draws.test.js": {
   "checks": 81,

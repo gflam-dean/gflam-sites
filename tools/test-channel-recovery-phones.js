@@ -120,6 +120,7 @@ function triviaPhone() {
     client: world.client, window: { VPChannel: helper }, VPChannel: helper, $: dom.$, document: dom.document,
     loadPid: function () { return 'pid1'; }, randId: function () { return 'pid1'; }, savePid: function () {},
     loadToken: function () { return 'tok'; }, loadSess: function () { return 's1'; }, loadName: function () { return 'Quizzers'; },
+    deviceId: function () { return 'dev1'; },   // the trivia join names its browser since 12 Nov 2026
     rebuildFromSnapshot: function () {}, showWait: function () {}, loadJoinInfo: function () {}, show: function (v) { views.push(v); },
     onMsg: function () {},
     prKeyFor: function () {},   // connect() makes the phone's Punters Reckon key since 14 Oct 2026; not this suite's subject

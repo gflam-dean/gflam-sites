@@ -257,8 +257,8 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   /* Phones left on the bingo page from the game before answered the musical console's rollcall with
      a bingo join (pid = the bingo page's key fingerprint), and the same phones' musical pages joined
      under their own pids: PLAYERS 4, "Phone Sam, Phone Jo" twice. The real onMsg and renderPlayers run. */
-  var fns = ["rosterKey", "playerCount", "onMsg", "renderPlayers", "esc"].map(function(n){ return grab(n, host); });
-  pass("the join path is where this test lifts it from", !!fns[1] && !!fns[2] && !!fns[3]);
+  var fns = ["rosterKey", "rosterJoin", "playerCount", "onMsg", "renderPlayers", "esc"].map(function(n){ return grab(n, host); });
+  pass("the join path is where this test lifts it from", !!fns[1] && !!fns[2] && !!fns[3] && !!fns[4]);
   var list = { innerHTML: "" }, sent = [];
   var G = { status: "lobby", players: {}, order: [], peak: 0 };
   var env = { G: G, $: function(id){ return id === "playerList" ? list : { textContent: "" }; }, window: {},

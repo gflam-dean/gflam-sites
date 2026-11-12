@@ -10161,7 +10161,9 @@ async function applyOverageCharge(env, o) {
   const venue = venues && venues[0];
   if (!venue) return;
 
-  const overage = peak - cap;
+  /* o.extra (12 Nov 2026, one phone is one player a night): the extras THIS session adds to a night that
+     already counted some of its phones in an earlier game. peak is then the NIGHT's count, for the streak. */
+  const overage = (o.extra != null) ? Number(o.extra) : peak - cap;
   // Free first month: the consoles promise no charge and show no consent screen, so honour that
   // here rather than invoice it. The streak is left alone too, or a venue could be moved onto a
   // bigger plan by nights they were told were free.
@@ -10493,6 +10495,47 @@ async function recordOverageCrash(env, session, err, where) {
   } catch (e) { /* never let the audit mask the close */ }
 }
 
+/* The billing key of each vp_players row that PLAYED: its device id, or the row itself without one
+   (counted on its own, the old rule). `played` null means the format left no trace: every row counts. */
+function playerKeysWhoPlayed(rows, played) {
+  const keys = new Set();
+  for (const p of (rows || [])) {
+    if (!p || (played && !played.has(p.id))) continue;
+    keys.add(p.device_id ? 'd:' + p.device_id : 'r:' + p.id);
+  }
+  return keys;
+}
+
+/* The phones that played this venue's EARLIER sessions on the same night (2am to 2am Brisbane, the
+   night brisbaneNightKey gives the bill and the streak). Earlier = opened before this one; a try-it
+   demo never counts. Null when it cannot be told: the caller then bills this session on its own, as it
+   always did. See chargeNightOverage. */
+async function earlierNightPlayers(env, session) {
+  try {
+    const mineMs = Date.parse(session.opened_at || session.started_at || session.created_at || '');
+    if (!mineMs || !session.venue_id) return null;
+    const night = brisbaneNightKey(mineMs);
+    const from = new Date(mineMs - 26 * 60 * 60 * 1000).toISOString();
+    const rows = await sbGet(env, 'vp_sessions',
+      'venue_id=eq.' + enc(session.venue_id) + '&opened_at=gte.' + enc(from) + '&opened_at=lt.' + enc(new Date(mineMs + 1).toISOString()) +
+      '&select=id,venue_id,opened_at,started_at,created_at,is_demo&order=opened_at.asc&limit=50');
+    const keys = new Set();
+    for (const r of (rows || [])) {
+      if (!r || r.id === session.id || r.venue_id !== session.venue_id || isDemoSession(r)) continue;
+      const ms = Date.parse(r.opened_at || r.started_at || r.created_at || '');
+      if (!ms || brisbaneNightKey(ms) !== night) continue;
+      if (ms > mineMs || (ms === mineMs && String(r.id) > String(session.id))) continue;   // opened after this one
+      const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(r.id) + '&kicked=eq.false&select=id,device_id');
+      const played = await playerIdsWhoPlayed(env, r.id);
+      playerKeysWhoPlayed(players, played).forEach(function (k) { keys.add(k); });
+    }
+    return keys;
+  } catch (e) {
+    console.log('[overage] could not read the earlier games tonight for session ' + (session && session.id) + ': ' + String((e && e.message) || e));
+    return null;
+  }
+}
+
 async function chargeNightOverage(env, session) {
   /* THE DEMO IS NEVER BILLED (INBOX 84b): not charged, and returning here also leaves overage_streak alone,
      which applyOverageCharge would otherwise RESET for a night under the cap. getSession reads select=*,
@@ -10521,6 +10564,47 @@ async function chargeNightOverage(env, session) {
   // mint no vp_players). It is neither a big night nor a quiet one, so the streak is untouched:
   // otherwise bingo, then a raffle, then bingo could never add up to three in a row.
   if (peak <= 0) return;
+  /* ONE PHONE IS ONE PLAYER A NIGHT, ACROSS GAMES (Dean, live play on The Mini Bar, 12 Nov 2026).
+     Each session was billed on its own, so a host who ended trivia and opened musical bingo as a new
+     session had the same phones counted, and their extras charged, once per game. Now the phones that
+     played an EARLIER session of this venue's same night (brisbaneNightKey, the night the streak and the
+     bill use) are counted first, and this session pays only for the extras it ADDS to that night:
+       before = phones already in tonight, after = before plus this session's new phones,
+       extras  = max(0, after - cap) - max(0, before - cap), and never more than this session alone is over.
+     A phone is its device_id (vpDeviceId, one per browser): a second browser or a second phone is a
+     second player, which cannot be told apart and errs the same way it always has. Rows with no
+     device id never match across sessions. The next night starts again from nobody. No earlier
+     session, or a read that fails: exactly the old per-session count below. Pricing is untouched:
+     applyOverageCharge still decides $2, $1 the third night in a row, the free month and the approval. */
+  const earlier = await earlierNightPlayers(env, session);
+  if (earlier && earlier.size) {
+    const mine = playerKeysWhoPlayed(players, played);
+    let after = earlier.size;
+    mine.forEach(function (k) { if (!earlier.has(k)) after++; });
+    const before = earlier.size;
+    const nightExtra = Math.max(0, after - cap) - Math.max(0, before - cap);
+    /* NEVER MORE THAN THIS SESSION IS OVER ON ITS OWN (peak, already held to what the host approved here).
+       So this can only take phones away from a bill, never add any: a night of different crowds in different
+       games is billed exactly as before, and the host is never charged past the extras they were shown. */
+    const extra = Math.min(nightExtra, Math.max(0, peak - cap));
+    if (after <= cap) {
+      // The whole night is inside the plan: the quiet-night path, as before (it ends a run of big nights).
+      await applyOverageCharge(env, { venueId: session.venue_id, peak: after, cap: cap, idemKey: 'overage_' + session.id,
+        approved: !!session.overage_approved, openedAt: session.opened_at || session.started_at || null });
+      return;
+    }
+    if (extra <= 0) {
+      console.log('[overage] session ' + session.id + ': every phone over the plan tonight was already counted in an earlier game; nothing more to bill');
+      return;   // the night was already over the plan and counted: not a quiet night, not another charge
+    }
+    await applyOverageCharge(env, {
+      venueId: session.venue_id, peak: Math.max(before, cap) + extra, cap: cap, extra: extra,
+      idemKey: 'overage_' + session.id,
+      approved: !!session.overage_approved,
+      openedAt: session.opened_at || session.started_at || null,
+    });
+    return;
+  }
   await applyOverageCharge(env, {
     venueId: session.venue_id, peak: peak, cap: cap,
     idemKey: 'overage_' + session.id,

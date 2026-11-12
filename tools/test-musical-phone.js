@@ -161,7 +161,7 @@ print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)"
 print("");
 print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR A NAME");
 (function(){
-  var fns = ["loadPid", "savePid", "loadName", "saveName", "loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "connect"].map(function(n){ return grab(n, play); });
+  var fns = ["loadPid", "savePid", "loadName", "saveName", "loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "siblingIdentity", "connect"].map(function(n){ return grab(n, play); });
   pass("the identity functions and connect() are lifted from the page", fns.every(Boolean));
   fns.unshift('var OWN_TOKEN_KEY="vp-mtoken-";');   // shareToken writes this page's own key (14 Oct 2026)
   var local = fakeStore(), session = fakeStore();

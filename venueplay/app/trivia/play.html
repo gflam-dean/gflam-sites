@@ -617,6 +617,25 @@
   // the player token IS the metered server identity: persist it so a reload reuses the
   // same vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-ttoken-"+room)||""; }catch(e){ return ""; } }
+  /* ONE PHONE, ONE NAME A NIGHT (live play on The Mini Bar, 12 Nov 2026: "Your details" again on the second
+     game). Each phone page keeps its name and token under its own keys (vp-tname-, vp-mname-, vp-name-), so a
+     phone that played trivia and then followed the host to trivia had no name HERE and was asked for its
+     details a second time. The same room's name and token from the other games on this phone are taken
+     instead: the token is the same Worker player row (shareToken keeps every copy the same, and /join reuses
+     the row by device id), and a stale one is re-joined under the same device id exactly as this page's own
+     would be. Only when a sibling page has BOTH a name and a token, i.e. this phone already joined through
+     that game's join screen (and saw its details form and tick then): a name with no token is not a join. */
+  function siblingIdentity(room){
+    var SIBLING_KEYS=[["vp-mname-","vp-mtoken-","vp-msess-"],["vp-name-","vp-token-",""]];   // the other games' pages on this phone: name, token, night
+    if(!room) return null;
+    try{
+      for(var i=0;i<SIBLING_KEYS.length;i++){
+        var k=SIBLING_KEYS[i], nm=localStorage.getItem(k[0]+room)||"", tok=localStorage.getItem(k[1]+room)||"";
+        if(String(nm).trim() && tok) return { name:String(nm).trim().slice(0,20), token:tok, sess:(k[2] ? (localStorage.getItem(k[2]+room)||"") : "") };
+      }
+    }catch(e){}
+    return null;
+  }
   var OWN_TOKEN_KEY="vp-ttoken-";
   /* ONE IDENTITY PER PHONE PER ROOM, WHICHEVER PAGE MINTED IT. A /join re-mints the token on the
      same player row, so the bingo, trivia and musical pages each holding their own copy meant a
@@ -1303,7 +1322,7 @@
   /* "I am here", to the host's Players box. Tagged fmt:"trivia": the channel is the venue's own code,
      shared with the bingo and musical phones, and the console now counts only trivia phones, so a
      bingo page left open stops showing up as a trivia team (break test, 14 Oct 2026). */
-  function announce(){ send({ t:"join", pid:P.pid, name:P.name, fmt:"trivia" }); }
+  function announce(){ send({ t:"join", pid:P.pid, name:P.name, fmt:"trivia", did:deviceId() }); }   // did: the browser's one device id, the key a console seats a person on (12 Nov 2026)
   /* TWO TEAMS, ONE NAME: the console renames the later phone ("Quiz Kids 2") so the two can tell
      their chips and leaderboard rows apart. The name the leaderboard shows is the one the Worker
      holds, so the phone re-registers under it: /join with the same device id puts the new name on
@@ -1462,6 +1481,10 @@
     P.token=loadToken(room);
     P.sessionId=loadSess(room);
     var savedName=loadName(room);
+    if(!(savedName && P.token)){   // played another game here tonight: the same name, not the form again (see siblingIdentity)
+      var sib=siblingIdentity(room);
+      if(sib){ savedName=sib.name; P.token=sib.token; P.sessionId=sib.sess||""; saveName(room, savedName); saveToken(room, P.token); saveSess(room, P.sessionId); }
+    }
     if(savedName && P.token){ P.name=savedName; P.joined=true; }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key via the join code, drop
     // forged questions/reveals in enforce mode. No key / enforce off / script absent -> as before.
