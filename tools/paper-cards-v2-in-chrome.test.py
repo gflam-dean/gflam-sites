@@ -24,6 +24,7 @@ import argparse, base64, json, os, re, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
 import admin_site  # noqa: E402
+import waits  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--shots')
@@ -171,7 +172,7 @@ try:
         ok('%s: the venueplay logo ends where the bottom-right curve ends (frame right - corner radius, +-1 px)' % tag,
            abs(c['brRight'] - inside_right) <= 1.0, (c['brRight'], inside_right))
         ok('%s: the footer sits below the frame, not over it' % tag, c['vlTop'] >= c['frameBottom'] - 0.5, (c['vlTop'], c['frameBottom']))
-    dec = json.loads(S.js(sid, DECODE % json.dumps([c0['svg'], c1['svg']]), wait=True, secs=30) or '[]')
+    dec = waits.as_json(S.js(sid, DECODE % json.dumps([c0['svg'], c1['svg']]), wait=True, secs=30), [], what='the QR decode')
     ok('the QR on card 07 decodes to its own code, drawn from the SVG that prints', dec[0] == CODES[0] if len(dec) == 2 else False, dec)
     ok('the QR on card 08 decodes to ITS code (a different one)', dec[1] == CODES[1] and dec[0] != dec[1] if len(dec) == 2 else False, dec)
     ok('the code is the capitals address, so it stays a small QR (version 4 or less at level Q)',

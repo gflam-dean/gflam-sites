@@ -6094,8 +6094,8 @@ MUTATIONS = [
      'function saveName(room,nm){ try{ sessionStorage.setItem("vp-mname-"+room, nm); }catch(e){} }',
      'a musical player whose tab iOS discarded is asked for their name mid-song'),
     ('test-musical-print.js', 'venueplay-backend/worker/venueplay-game.js',
-     '    if (played) kept = true; else { set = null; replaced = true; }',
-     '    kept = true;',
+     '    if (changed && playedOff) kept = true;\n    else if (changed || (!set.set && !playedOff)) {',
+     '    if (changed) kept = true;\n    else if (changed || (!set.set && !playedOff)) {',
      'a host who printed musical cards from the wrong playlist gets the same wrong cards all night'),
     # Live play test, 24 Oct 2026: five game faults (musical, raffle, trivia consoles).
     ('test-musical-host.js', 'venueplay/app/musical/host.html',
@@ -21809,7 +21809,7 @@ MUTATIONS = [
      '        : \'<button type="button" class="b pink" data-a="back">Back to the game</button><button type="button" class="b ghost" data-a="again">Scan another</button>\');',
      'a not-yet answer leads with Back to the game instead of Scan another'),
     ('paper-cards-v2-in-chrome.test.py', 'venueplay/app/vp-papercheck.js',
-     'btns + \'</div><div class="foot">Card won\\\'t scan? <u data-a="type">Type its number</u></div>\';',
+     'btns + \'</div><div class="ppcfoot">Card won\\\'t scan? <u data-a="type">Type its number</u></div>\';',
      "btns + '</div>';",
      'the typed-number fallback is missing from a screen'),
     ('paper-lock-in-chrome.test.py', 'venueplay/app/musical/host.html',
@@ -21866,6 +21866,13 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    'a forged code is refused, a reprint is the same card, no two same-looking titles share a card, and the scan says win, not yet, wrong playlist, replaced, another night, another venue or not a card':
+        'its subject is the suite tools/test-paper-cards-v2.js itself, which is proven row by row under that suite\'s own name '
+        '(19 mutations in the table: the seal, the hash, the bracket rule, the same-looking titles, the deal, every scan answer, '
+        'the lock, the staff check, the public page). Proving it again by label would run the whole gate once per mutation.',
+    'a win leads with Confirm winner, every refusal says not to pay out, the lock says why a playlist cannot be switched':
+        'its subject is the suite tools/test-paper-scan-screens.js itself, proven row by row under that suite\'s own name '
+        '(7 mutations in the table). Proving it again by label would run the whole gate once per mutation.',
     'every migration this release adds is already on the live database':
         'it asks git which migrations this branch adds since origin/main, and scratch() copies the repo '
         'WITHOUT .git, so here it is a note (SKIPPED), never a pass; and it reads the live database, which '
