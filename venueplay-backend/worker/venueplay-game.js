@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Nov 2026, 20:39 · 209a900d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 09:25 · f7d1f254';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4398,7 +4398,7 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
 
   // Resolve the playlist to a vp_playlists id whose vp_playlist_songs the card is dealt
   // from and the host plays against. Either an existing id or an inline materialise.
-  let playlistId = null;
+  let playlistId = null, asked = null;   // asked: the inline songs the console sent, checked against what is dealt
   let playlistName = b.playlist_name ? String(b.playlist_name).slice(0, 120) : null;
   /* A night with printed cards plays the PRINTED card's songs. A card on a table cannot change, so
      every musical game this session is dealt from, and played against, the set they were printed
@@ -4426,12 +4426,26 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
     if (!playlistName) playlistName = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : 'Playlist';
     if (!clean.length) return json({ error: 'The playlist has no valid songs' }, 400);
     playlistId = await ensureMusicPlaylist(env, session.venue_id, playlistName, clean);
+    asked = clean;
   }
 
   // Read the playlist's songs (with their real uuids) once. These uuids are what the host
   // plays (/host/play) and what the claim check matches; the card stores them per cell.
-  const songs = await sbGet(env, 'vp_playlist_songs',
+  let songs = await sbGet(env, 'vp_playlist_songs',
     'playlist_id=eq.' + enc(playlistId) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
+  /* THE GUARD AT DEAL TIME (INBOX 282.3): the songs dealt are the songs the host started with, every one. If the
+     stored playlist is not exactly the set the console sent, it is logged and the console's own set is stored fresh
+     and dealt instead: never a different set, never the full library. */
+  if (asked && !sameMusicSongs(songs, asked)) {
+    const wantKeys = {}; for (const a of asked) wantKeys[musicSongKey(a)] = true;
+    const strays = songs.filter((r) => !wantKeys[musicSongKey(r)]).slice(0, 5).map((r) => r.title + ' / ' + r.artist);
+    console.error('[musical] dealt set != the playlist the host started with', session.venue_id, playlistName, strays);
+    await sbInsert(env, 'vp_admin_audit', { action: 'musical_playlist_mismatch', target: 'venue:' + session.venue_id,
+      detail: { session_id: session.id, playlist_name: playlistName, stored: songs.length, asked: asked.length, strays } }, false).catch(() => {});
+    playlistId = await ensureMusicPlaylist(env, session.venue_id, playlistName, asked, { fresh: true });
+    songs = await sbGet(env, 'vp_playlist_songs',
+      'playlist_id=eq.' + enc(playlistId) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
+  }
   if (songs.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
 
   const autoDaub = b.auto_daub !== false;   // default on; maps to reveal_mode
@@ -4493,6 +4507,7 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
   return json({
     game_id: game.id, seq, format: 'musical_bingo', pattern,
     cards_dealt: cards.length, playlist_id: playlistId, playlist_name: playlistName,
+    from_paper: !!paperSet,   // dealt from the printed cards' set: the console shows THAT playlist (INBOX 282.3)
     song_count: songs.length,
     songs: songs.map((s) => ({ song_id: s.id, title: s.title, artist: s.artist })),
   });
@@ -11989,16 +12004,34 @@ function checkMusicPattern(pattern, cells, playedSet) {
 
 // Materialise an inline library playlist into vp_playlists + vp_playlist_songs so the
 // vp_music_plays FK has real rows to point at (the library JSON is a client asset, not
-// seeded). Idempotent-ish: if this venue already has a playlist with the same title AND
-// song_count AND that many song rows, reuse it rather than duplicating on every replay.
-// songs is [{title, artist, hint?}], already validated (title + artist present).
-async function ensureMusicPlaylist(env, venueId, name, songs) {
-  const existing = await sbGet(env, 'vp_playlists',
-    'owner_venue_id=eq.' + enc(venueId) + '&title=eq.' + enc(name) +
-    '&song_count=eq.' + songs.length + '&select=id&order=created_at.desc&limit=1');
-  if (existing.length) {
-    const have = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(existing[0].id) + '&select=id');
-    if (have.length === songs.length) return existing[0].id;   // exact reuse
+// seeded). Reused rather than duplicated on every replay, but ONLY when an existing playlist of
+// this venue holds EXACTLY these songs (title and artist, the same set).
+/* WRONG SONGS ON THE NIGHT (Dean, live play on The Mini Bar, 12 Nov 2026, INBOX 282.3): the console showed
+   Pub Classics, and the room was dealt Mafumafu, Stiff Little Fingers and the Clancy Brothers, songs in NO
+   playlist. This reused ANY playlist of the venue with the same title and the same song count. Every game
+   draws a fresh 60 from its theme, so a "Pub Classics" of 60 from an earlier night (or one stored under a stale
+   name: a New game after the host picked another theme carried the old theme's name) came back in place of the
+   60 the host had just drawn. Surprise Mix, 60 random songs, was the same 60 every night it was played.
+   A reuse now has to be the same songs; anything else is stored as a new playlist. */
+function musicSongKey(s) {
+  return String((s && s.title) || '').trim().toLowerCase() + '\u0001' + String((s && s.artist) || '').trim().toLowerCase();
+}
+function sameMusicSongs(rows, songs) {
+  if (!Array.isArray(rows) || !Array.isArray(songs) || rows.length !== songs.length) return false;
+  const want = {};
+  for (const s of songs) { const k = musicSongKey(s); want[k] = (want[k] || 0) + 1; }
+  for (const r of rows) { const k = musicSongKey(r); if (!want[k]) return false; want[k]--; }
+  return true;
+}
+async function ensureMusicPlaylist(env, venueId, name, songs, opts) {
+  if (!(opts && opts.fresh)) {
+    const existing = await sbGet(env, 'vp_playlists',
+      'owner_venue_id=eq.' + enc(venueId) + '&title=eq.' + enc(name) +
+      '&song_count=eq.' + songs.length + '&select=id&order=created_at.desc&limit=5');
+    for (const e of existing) {
+      const have = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(e.id) + '&select=title,artist');
+      if (sameMusicSongs(have, songs)) return e.id;   // exact reuse: the same songs, not just the same name
+    }
   }
   const plRows = await sbInsert(env, 'vp_playlists',
     { owner_venue_id: venueId, title: name, song_count: songs.length }, true);

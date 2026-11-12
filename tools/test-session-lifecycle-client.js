@@ -172,7 +172,8 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   function $(id) { return id === 'tvAudioNote' ? note : btn; }
   function soundIsOnlyHere() { return false; }
   function syncMonitorBtn() { btn.innerHTML = G.hostMonitor ? 'playing here' : 'on the TV'; }
-  eval(['tvSoundYes', 'tvSoundNo', 'askTvSound', 'noteTvAudio'].map(function (n) { return lift(MHOST, n, 'musical/host.html'); }).join('\n'));
+  var _tvApp = '';   // a browser TV, not the venueplay TV app (INBOX 282.2)
+  eval(['tvNoSoundWords', 'tvSoundYes', 'tvSoundNo', 'askTvSound', 'noteTvAudio'].map(function (n) { return lift(MHOST, n, 'musical/host.html'); }).join('\n'));
   noteTvAudio('blocked');
   var yes = kids.filter(function (k) { return k.id === 'tvSoundYes'; })[0], no = kids.filter(function (k) { return k.id === 'tvSoundNo'; })[0];
   ok('blocked: the console ASKS first (Dean, 6 Nov 13:10), "The TV can\'t play sound. Play the songs on this device?" Yes / No, and stays quiet until answered',
@@ -197,13 +198,24 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   var clipAudio = { crossOrigin: '', src: '', paused: true, currentTime: 0, volume: 1, getAttribute: function () { return clipAudio.src; }, play: function () { return { then: function () { return { catch: function () {} }; } }; } };
   var _ac2 = null; function setTimeout(f, ms) { timers.push([f, ms]); } function audioOk() {} function audioBlocked() { warned++; } function buildBoost() {}
   var _clipFade = null, _hostPaused = false;   // no /app/vp-fade.js here: the clip plays as it always did (INBOX 260 moved the start into startClip)
+  var _clipSeq = 0, _audioHeardSrc = '', TV_APP = '', refused = [];
+  function playRefused(e) { refused.push(e); }
   eval(['playClip', 'startClip'].map(function (n) { return lift(MSCREEN, n, 'musical/screen.html'); }).join('\n'));
   playClip('https://x/a.m4a');
   var t = timers.filter(function (x) { return x[1] === 3000; })[0];
   ok('a clip is looked at again after three seconds', !!t, JSON.stringify(timers.map(function (x) { return x[1]; })));
-  if (t) { t[0](); ok('a play() that neither rejected nor moved is called blocked, so the host hears it on song 1', warned === 1, String(warned)); }
-  warned = 0; clipAudio.paused = false; clipAudio.currentTime = 2.4; if (t) t[0]();
-  ok('a clip that is playing is left alone', warned === 0);
+  if (t) { t[0](); ok('a play() that left the clip sitting PAUSED with nothing heard is called blocked on a browser TV', warned === 1, String(warned)); }
+  /* INBOX 282.2 (12 Nov 2026): a clip still loading after three seconds was called blocked while the Kogan played it. */
+  warned = 0; timers.length = 0; clipAudio.paused = false; clipAudio.currentTime = 0;
+  playClip('https://x/b.m4a');
+  t = timers.filter(function (x) { return x[1] === 3000; })[0];
+  if (t) t[0]();
+  ok('a clip asked to play and still LOADING (not paused, at 0:00) is not blocked: it is looked at again', warned === 0 && timers.length === 2, [warned, timers.length].join());
+  warned = 0; timers.length = 0; clipAudio.paused = true; TV_APP = 'tizen';
+  playClip('https://x/c.m4a');
+  t = timers.filter(function (x) { return x[1] === 3000; })[0];
+  if (t) t[0]();
+  ok('in the venueplay TV app the timer never says blocked (no click bar in an app)', warned === 0, String(warned));
 })();
 
 print('\n== 5. the TV\'s bottom left counts songs played (finding D) ==');

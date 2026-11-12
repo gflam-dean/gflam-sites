@@ -319,6 +319,10 @@
   "checks": 250,
   "counted_by": "lines"
  },
+ "tools/musical-tv-sound-in-chrome.test.py": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
  "tools/night-pass-hq-in-chrome.test.py": {
   "checks": 13,
   "counted_by": "lines"
@@ -847,12 +851,20 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/test-musical-dealt-set.js": {
+  "checks": 11,
+  "counted_by": "lines"
+ },
  "tools/test-musical-host.js": {
   "checks": 119,
   "counted_by": "lines"
  },
  "tools/test-musical-live-11nov.js": {
   "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-live2-12nov.js": {
+  "checks": 11,
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
@@ -1148,7 +1160,7 @@
   "counted_by": "lines"
  },
  "tools/test-session-lifecycle-client.js": {
-  "checks": 31,
+  "checks": 32,
   "counted_by": "lines"
  },
  "tools/test-session-lifecycle.js": {
@@ -1381,6 +1393,10 @@
  },
  "tools/test-vp-fade.js": {
   "checks": 72,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-fresh.js": {
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {

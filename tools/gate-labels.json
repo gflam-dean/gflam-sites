@@ -206,6 +206,7 @@
   "musical-host-titles-in-chrome.test.py",
   "musical-live-11nov-in-chrome.test.py",
   "musical-newlook-in-chrome.test.py",
+  "musical-tv-sound-in-chrome.test.py",
   "musical-win.test.js",
   "naming a venue you hold picks its account; naming one you do not changes nothing",
   "never \"Gflam\" in a VenuePlay or PartyPlay customer email: the templates and the help desk emails say the brand and its ABN",

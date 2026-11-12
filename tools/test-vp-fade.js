@@ -249,7 +249,9 @@ print("\n8. THE TV'S OWN GLUE (screen.html), lifted out and run");
   c.advance(0.75, el);
   pass("TV, element volume a quarter at 0.75 s", near(el.volume, 0.25, 0.02), el.volume);
   api.graph();
-  pass("TV, once the graph is built: the element goes back to 1 and the gain carries Room volume x level", el.volume === 1 && near(gainNode.gain.value, 2.4 * F.envelope(el.currentTime, 30), 0.01), [el.volume, gainNode.gain.value]);
+  /* INBOX 282.7 (12 Nov 2026): the fade STAYS on the element once the graph is built, and the gain is the Room volume
+     only. A Tizen TV plays the element straight out of its own player, so a fade on the gain was never heard there. */
+  pass("TV, once the graph is built: the fade stays on the element (0 to 1) and the gain is the Room volume only", near(el.volume, F.envelope(el.currentTime, 30), 0.01) && el.volume <= 1 && near(gainNode.gain.value, 2.4, 0.0001), [el.volume, gainNode.gain.value]);
   c.advance(5, el);
   pass("TV, the middle: gain = Room volume (240%)", near(gainNode.gain.value, 2.4, 0.0001), gainNode.gain.value);
   api.setBoost(1.0);
@@ -258,7 +260,7 @@ print("\n8. THE TV'S OWN GLUE (screen.html), lifted out and run");
   api.playClip("b.m4a");
   pass("TV, Next mid-clip: the old clip is still on for the half second", el.src === "a.m4a" && api.played.join() === "a.m4a");
   c.advance(0.6, el);
-  pass("TV, then the next clip, from 0", el.src === "b.m4a" && api.played.join() === "a.m4a,b.m4a" && gainNode.gain.value < 0.2 * 2.4, [el.src, gainNode.gain.value]);
+  pass("TV, then the next clip, from 0 on the element (the gain stays the Room volume)", el.src === "b.m4a" && api.played.join() === "a.m4a,b.m4a" && el.volume < 0.2 && near(gainNode.gain.value, 2.4, 0.0001), [el.src, el.volume, gainNode.gain.value]);
   c.advance(3, el);
   api.playClip("c.m4a"); api.pause();
   c.advance(0.6, el);
