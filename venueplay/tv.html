@@ -1834,15 +1834,31 @@
     try{
       var t=new Image();
       t.onload=function(){ delete BAD_IMG[u]; try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} };
-      t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS); };
-      t.src=u;
+      t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, allPicturesOut() ? IMG_ALL_OUT_RETRY_MS : IMG_RETRY_MS); };
+      t.src=imgFresh(u);   // a fresh request, never the failure the TV may have kept
     }catch(e){}
+  }
+  /* ONE FAILED LOAD IS NOT A BROKEN PICTURE (INBOX 292.3, 12 Nov 2026). The Mini Bar's eight photo slides played
+     on the phones and in Chrome, and the Kogan TV app showed only the plain words of the members draw card: every
+     picture had been dropped from the loop. A TV app that has only just started (its wifi still joining, its
+     first requests refused) fails every picture at once, and each failure took its slide out for ten minutes.
+     So a failed picture still leaves the loop at once (never a black slide on the wall), but it is tried again,
+     off the wall and as a fresh request, four seconds later and back in the loop the moment it loads; and while
+     every picture slide is out, they are tried every minute, not every ten: a wall of plain words must mend
+     itself within a minute of the TV getting its pictures. A picture that is really gone stays out, as before. */
+  var IMG_SECOND_TRY_MS=4000, IMG_ALL_OUT_RETRY_MS=60000, imgErrors=0;
+  function imgFresh(u){ return u+(u.indexOf("?")<0?"?":"&")+"vpr="+Date.now(); }
+  function allPicturesOut(){
+    var n=0, out=0;
+    try{ (ADS.slides||[]).forEach(function(s){ if(s && s.image_url){ n++; if(BAD_IMG[String(s.image_url)]) out++; } }); }catch(e){}
+    return n>0 && out===n;
   }
   function probeImg(u){
     if(_probed[u]) return; _probed[u]=1;
     try{
       var im=new Image();
       im.onerror=function(){
+        imgErrors++; try{ window.__vpTvImgErrors=imgErrors; }catch(e){}
         BAD_IMG[u]=1;
         /* AND START THE ROTATION AGAIN. This used to be buildAds(true) alone, and buildAds hands back
            a set of slides with nothing lit. So on any venue with one broken picture, the good slides
@@ -1851,7 +1867,7 @@
            ("Show it again", then about a minute of GAME ON HERE before the first slide). Only while
            the ads are up: a game on screen gets the fresh set from enterAds when it ends. */
         try{ buildAds(true); if(tvMode==="ads") startAds(); }catch(e){}
-        setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS);   // a wifi blip is retried in 10 minutes
+        setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_SECOND_TRY_MS);   // the first try again is four seconds off (then a minute or ten, imgRetry)
       };
       im.src=u;
     }catch(e){}

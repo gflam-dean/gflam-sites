@@ -106,7 +106,7 @@ print('\n== 5. a slide whose picture fails is dropped from the rotation ==');
   function buildAds() { rebuilt++; }
   function setTimeout() {}
   function Image() { made.push(this); }
-  var BAD_IMG = {}, _probed = {}, IMG_RETRY_MS = 600000, tvMode = 'ads', started = 0;
+  var BAD_IMG = {}, _probed = {}, IMG_RETRY_MS = 600000, IMG_SECOND_TRY_MS = 4000, imgErrors = 0, tvMode = 'ads', started = 0;
   function startAds() { started++; }
   eval(lift(TV, 'probeImg', 'tv.html'));
   probeImg('https://x/missing.png'); probeImg('https://x/missing.png');
@@ -116,6 +116,36 @@ print('\n== 5. a slide whose picture fails is dropped from the rotation ==');
   ok('and the rotation is started again, so a slide is lit, not the floor (live fault, 2 Nov 2026)', started === 1, 'startAds ran ' + started + ' times');
   ok('the slide list leaves a bad picture out', /slideVisible\(s\) && !\(s\.image_url && BAD_IMG\[String\(s\.image_url\)\]\)/.test(TV));
   ok('an image slide asks for its picture to be checked', /probeImg\(u\);\s*return '<div class="adimg"/.test(TV));
+})();
+
+print('\n== 5b. a picture that failed once is tried again in four seconds, and every minute while ALL are out (INBOX 292.3) ==');
+(function () {
+  var rebuilt = 0, made = [], timers = [];
+  function buildAds() { rebuilt++; }
+  function setTimeout(f, ms) { timers.push({ f: f, ms: ms }); }
+  function Image() { made.push(this); }
+  var Date = { now: function () { return 1234; } };
+  var BAD_IMG = {}, _probed = {}, IMG_RETRY_MS = 600000, tvMode = 'ads', started = 0;
+  var ADS = { slides: [{ image_url: 'https://x/a.png' }, { image_url: 'https://x/b.png' }] };
+  function startAds() { started++; }
+  var window = {};
+  eval(lift(TV, 'probeImg', 'tv.html')); eval(lift(TV, 'imgRetry', 'tv.html'));
+  eval(lift(TV, 'imgFresh', 'tv.html')); eval(lift(TV, 'allPicturesOut', 'tv.html'));
+  var IMG_SECOND_TRY_MS = 4000, IMG_ALL_OUT_RETRY_MS = 60000, imgErrors = 0;
+  ok('CONTROL: the numbers in tv.html are four seconds and one minute', /var IMG_SECOND_TRY_MS=4000, IMG_ALL_OUT_RETRY_MS=60000, imgErrors=0;/.test(TV));
+  probeImg('https://x/a.png'); made[0].onerror();
+  ok('a failed picture leaves the loop at once (never a black slide on the wall)', BAD_IMG['https://x/a.png'] === 1 && rebuilt === 1);
+  ok('and is tried again four seconds later, not ten minutes', timers.length === 1 && timers[0].ms === 4000, JSON.stringify(timers.map(function (x) { return x.ms; })));
+  timers[0].f();
+  ok('the try again is a fresh request', made.length === 2 && made[1].src === 'https://x/a.png?vpr=1234', made[1] && made[1].src);
+  made[1].onload();
+  ok('and it loads: back in the loop, the slides rebuilt and lit', !BAD_IMG['https://x/a.png'] && rebuilt === 2 && started === 2);
+  timers = [];
+  probeImg('https://x/b.png'); made[2].onerror(); timers[0].f(); made[3].onerror();
+  ok('one picture still out while the other plays: tried again in ten minutes', timers.length === 2 && timers[1].ms === 600000, JSON.stringify(timers.map(function (x) { return x.ms; })));
+  BAD_IMG['https://x/a.png'] = 1; timers = [];
+  made[3].onerror();
+  ok('EVERY picture out (a wall of plain words): tried again every minute', timers.length === 1 && timers[0].ms === 60000, JSON.stringify(timers.map(function (x) { return x.ms; })));
 })();
 
 print('\n== 6. an idle bingo lobby gives the wall up to a game actually being played ==');
