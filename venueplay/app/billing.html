@@ -471,6 +471,7 @@
   .hostchk span{min-width:0;overflow-wrap:anywhere}
   .hostchk input{accent-color:var(--pink);width:18px;height:18px;flex:0 0 auto}
   .hostchk.on{border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.07)}
+  .adqr{margin-top:10px}
   .hostchk:has(input:checked){border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.07)}
   .qgroup{background:var(--ink-3);border:1px solid var(--line-2);border-radius:14px;padding:13px 14px;margin-top:2px}
   .qhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;color:#fff;letter-spacing:.01em}
@@ -2723,6 +2724,8 @@
           '<div class="adf"><label class="flabel">Show from</label><input type="date" class="ad-starts" value="' + (s.starts||"") + '"></div>' +
           '<div class="adf"><label class="flabel">Show until</label><input type="date" class="ad-ends" value="' + (s.ends||"") + '"></div>' +
         '</div>' +
+        /* A slide that says "scan to join" gets the real join QR on the TV (Dean, 12 Nov 2026, INBOX 335.2). Off unless ticked. */
+        '<label class="hostchk adqr"><input type="checkbox" class="ad-qr"' + (s.qr === true ? ' checked' : '') + '><span>Show the join QR on this slide (for a slide that says scan to join)</span></label>' +
       '</div>' +
       '<input type="file" class="ad-file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">';
     var thumb0 = row.querySelector(".adthumb");
@@ -3117,6 +3120,7 @@
       if (!url) return; // a slide with no image uploaded yet is skipped
       var secs = parseInt(row.querySelector(".ad-secs").value,10) || 7;
       var s = { image_url:url, seconds:secs };
+      var qr = row.querySelector(".ad-qr"); if (qr && qr.checked) s.qr = true;
       var st = row.querySelector(".ad-starts").value; if (st) s.starts = st;
       var en = row.querySelector(".ad-ends").value; if (en) s.ends = en;
       slides.push(s);
@@ -3444,7 +3448,7 @@
     $("screenSave").addEventListener("click", function(){ saveScreen(false); });
     // A slide's seconds or dates changed: not on the TV until saved, and the bar says so.
     $("slides").addEventListener("input", function(e){ if(e.target.closest(".ad-secs, .ad-starts, .ad-ends")) markScreenDirty(); });
-    $("slides").addEventListener("change", function(e){ if(e.target.closest(".ad-secs, .ad-starts, .ad-ends")) markScreenDirty(); });
+    $("slides").addEventListener("change", function(e){ if(e.target.closest(".ad-secs, .ad-starts, .ad-ends, .ad-qr")) markScreenDirty(); });
   }
 
   // ---- Members draws: real settings + members list, wired to the game Worker + vp_member_draws ----

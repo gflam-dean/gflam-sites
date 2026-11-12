@@ -116,6 +116,14 @@
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
   .ad .adimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+  /* A SLIDE THAT SAYS "SCAN TO JOIN" CARRIES THE REAL QR (Dean, 12 Nov 2026, INBOX 335.2). A slide saved with qr:true
+     gets the venue's own join QR (the address its printed signs carry, /play?venue=<slug>) in the bottom-right corner,
+     inside the 5% safe box (tools/TV-SAFE-AREA-DECISION.md): a photo slide is full-bleed, so its corner is 5vw/5vh in
+     from the window's edge plus the wall's own 2cqw. It is part of the slide, so it fades in and out with it. */
+  .ad .slideqr{position:absolute;right:2cqw;bottom:2cqw;z-index:3;display:flex;align-items:center;gap:1cqw;background:rgba(0,0,0,.62);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw}
+  #tvAds .ad-photo .slideqr{right:calc(5vw + 2cqw);bottom:calc(5vh + 2cqw)}
+  .ad .slideqr .qrmini{width:clamp(56px,9cqw,150px);height:clamp(56px,9cqw,150px)}
+  .ad .slideqr .sqt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:clamp(12px,1.9cqw,34px);line-height:1.05;color:#fff}
   /* #tvFloor IS NOT AN .ad (it must never fade out with the rotation), so it is named beside it here.
      It was missing, and for the first 10 to 15 seconds on a slow screen the room saw "Game on here"
      in the browser's plain 16px type (UX audit 3.1, 30 Oct 2026). */
@@ -1776,6 +1784,22 @@
     }
     return { src:u, how:"wait" };
   }
+  /* The join QR's address for a slide that asks the room to scan (qr:true): the venue's own link, which opens whatever
+     game it has on (or says none is on). A demo wall uses its demo phone; a wall with no venue shows no QR at all. */
+  function slideQrURL(){
+    if(VP_DEMO) return playURL;
+    return VENUE_SLUG ? ORIGIN+"/play?venue="+encodeURIComponent(VENUE_SLUG) : "";
+  }
+  function slideQrHtml(s){
+    if(!s || s.qr!==true || !slideQrURL()) return "";
+    return '<div class="slideqr" data-vp-slideqr="1"><div class="qrmini"><canvas class="sqcan"></canvas></div><div class="sqt">Scan<br>to join</div></div>';
+  }
+  function drawSlideQrs(host){
+    try{
+      var url=slideQrURL(); if(!url) return;
+      var c=host.querySelectorAll(".slideqr canvas"); for(var i=0;i<c.length;i++){ c[i].setAttribute("data-qr-url", url); drawQR(c[i], url, 240); }
+    }catch(e){}
+  }
   function entryInner(e){
     if(e.type==="auto-draws"){
       var rows="", wd=todayAU();   // recompute the day at render so it flips correctly at midnight
@@ -1841,7 +1865,7 @@
       var u=String(s.image_url);
       if(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf("&#")===-1){
         probeImg(u);
-        return '<div class="adimg" style="background-image:url('+encodeURI(u).replace(/[()';]/g,"")+')"></div>';
+        return '<div class="adimg" style="background-image:url('+encodeURI(u).replace(/[()';]/g,"")+')"></div>'+slideQrHtml(s);
       }
       return '';   // unusable URL: show nothing rather than trust it
     }
@@ -1850,7 +1874,7 @@
     // or a "<" into a drink special and the slide renders as garbage (or worse) on the wall.
     return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+esc(s.tag)+'</div>':"")+
            '<div class="adbig">'+escBr(s.head)+'</div>'+
-           (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
+           (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"")+slideQrHtml(s);
   }
   /* A SLIDE WHOSE PICTURE WILL NOT LOAD IS DROPPED FROM THE ROTATION. A CSS background has no error
      event, so a deleted or mistyped image painted a near-black wall for its whole turn, every
@@ -2008,6 +2032,7 @@
     for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
     adBuilt=true; adsSig=sig;
     try{ if(window.VPTvHold && window.VPTvHold.drawSetupQr) window.VPTvHold.drawSetupQr(host); }catch(e){}   // the set-up slide's QR, once it is in the page
+    drawSlideQrs(host);   // a "scan to join" slide's QR (qr:true), once it is in the page (12 Nov 2026)
     if(typeof woFit==="function") woFit();   // What's on titles and times fitted to their tiles (the suites that lift buildAds alone have no woFit)
     return true;
   }
