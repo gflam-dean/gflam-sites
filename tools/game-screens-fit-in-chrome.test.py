@@ -471,12 +471,19 @@ def bingo_late(B, base, w, h):
             r = P.obj('(function(){ var c=%s, un=[], miss=[]; [].forEach.call(document.querySelectorAll("#cardStack .cc[data-n]"), function(e){ var n=+e.getAttribute("data-n"); if(c.indexOf(n)<0) return;'
                       ' if(!/\\bdaub\\b/.test(e.className)) un.push(n); if(+e.getAttribute("data-card")===0 && /\\bmissed\\b/.test(e.className)) miss.push(n); });'
                       ' return JSON.stringify({ unmarked: un, missed: miss.sort(function(a,b){return a-b;}), tension: (document.getElementById("tension")||{}).innerText||"" }); })()' % json.dumps(called)) or {}
-            if assist:
-                ok(t + ': every number called before it joined is marked on its tickets', r.get('unmarked') == [], r)
-            else:
-                ok(t + ': the ticket closest to winning outlines every called number on it still to mark (5 13 23 31 42 64 77 90)', r.get('missed') == [5, 13, 23, 31, 42, 64, 77, 90], r)
+            # REPINNED 12 Nov 2026 (Dean, INBOX 320.1): a late joiner gets every number already called marked for it ONCE,
+            # whatever "Mark numbers for me" says; then auto-marking stays off unless it is on. Was (mark-for-me off): the
+            # closest ticket outlined the called numbers still to mark.
+            ok(t + ': every number called before it joined is marked on its tickets, once, for it', r.get('unmarked') == [] and r.get('missed') == [], r)
             ok(t + ': and it says "One to go!" (ticket #401 has 5, 23, 42 and 64 of its top row)', 'One to go!' in (r.get('tension') or ''), r.get('tension'))
             fits(P, t + ' tickets', ['#bingoBtn'])
+            # the next ball after it joined: marked for it only with "Mark numbers for me" on (88 is on ticket #401)
+            P.say({'t': 'ball', 'number': 88, 'called': called + [88], 'active': True})
+            P.say({'t': 'state', 'pattern': 'one', 'prize': 'Meat tray', 'called': called + [88], 'active': True, 'session_id': SESS, 'join_code': ROOM})
+            time.sleep(1.0)
+            d88 = P.js('(function(){ var e=document.querySelector("#cardStack .cc[data-n=\'88\']"); return e ? /\\bdaub\\b/.test(e.className) : null; })()')
+            if assist: ok(t + ': the next ball (88) is marked for it, "Mark numbers for me" is on', d88 is True, d88)
+            else: ok(t + ': the next ball (88) is NOT marked for it: auto-marking switched itself off after the catch-up', d88 is False, d88)
         finally:
             P.close()
 

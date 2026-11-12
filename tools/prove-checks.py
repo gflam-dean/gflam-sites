@@ -20910,6 +20910,13 @@ MUTATIONS = [
     ('game-screens-fit-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '". "+(live ? "This one\\u2019s yours." : "The next one\\u2019s yours.");', '". Jump in, "+(live ? "this one\\u2019s yours." : "the next one\\u2019s yours.");',
      'in Chrome, the late-join line says "Jump in, this one\'s yours." again (INBOX 320.5)'),
+    # 12 Nov 2026 (INBOX 320.1): a late bingo joiner is caught up once, then marks its own
+    ('game-screens-fit-in-chrome.test.py', 'venueplay/play.html',
+     '    var set=calledSet(), any=false, k; for(k in set){ any=true; break; }\n    if(!any) return false;', '    var set=calledSet(), any=false, k; for(k in set){ any=true; break; }\n    return false;',
+     'in Chrome, a late bingo joiner\'s called numbers are not marked for it (INBOX 320.1)'),
+    ('game-screens-fit-in-chrome.test.py', 'venueplay/play.html',
+     '    P.needCatchUp=false; saveDaubs(); return true;', '    P.needCatchUp=false; P.assist=true; saveDaubs(); return true;',
+     'in Chrome, after the late joiner\'s catch-up the phone keeps marking every new ball for it (INBOX 320.1)'),
     # 12 Nov 2026 (INBOX 320.7): Help under our logo is now vp-help.js's, on every game phone; the bingo page's own move is a no-op
     ('game-screens-fit-in-chrome.test.py', 'venueplay/app/vp-help.js',
      '    if (pfoot) { footLink(pfoot); pfoot.classList.add("vph-has"); }', '    if (false) { footLink(pfoot); pfoot.classList.add("vph-has"); }',
