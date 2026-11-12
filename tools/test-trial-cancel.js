@@ -1,6 +1,6 @@
 /* RE-PINNED to Dean's words (Dean via main INBOX 331, 12 Nov 2026): no "free" in any venue email. "Your first month is on us.
-   It starts the first time you sign in", "your first month", and the welcome's slides line ends "You can keep them on or
-   swap them out. I just wanted you to see how the slides work in between your games." (INBOX 336, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
+   It starts the first time you sign in", "your first month", and the welcome's slides line ends "...so you can have a play and
+   see how the slides work in between your games. You can keep them on or swap them out." (INBOX 339, 12 Nov) Every changed pin is listed in ~/venue-enrich/reports/email-words-12nov/REPINS.md. */
 /* THE TRIAL CANCEL RULES, RUN ON A FAKE CLOCK (Dean, 11 Nov 2026, INBOX 191).
 
    1. A venue that cancels DURING its free month keeps full access until the free month's end date, then switches
