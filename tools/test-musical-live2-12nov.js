@@ -83,7 +83,9 @@ print("\n2. THE venueplay TV APP IS NEVER ASKED FOR A CLICK");
   var stub = function(){};
   var enter = new Function("window", "document", "$", "stopReveal", "stopAds", "stopCelebrate", "cancelHolding", "hideBingoLayers", "applyVenueLogo",
     "sessionStorage", "VENUE_SLUG", "gameLabel", "showBingoLayer", "cancelEmbedWatch", "enterAds", "setTimeout", "EMBED_LOAD_MS", "VPSting", "VPEndShow",
-    "var tvMode='ads', embedLoaded=false, embedT=null;\n" + grab("enterEmbed", TV) + "\nreturn enterEmbed;");
+    // embedGame and forgetLastGame came into enterEmbed with fix/tv-takeover-12nov (a later game takes the wall
+    // from last bingo's winner); stubbed here like the other helpers, the app flag is what this checks.
+    "var tvMode='ads', embedLoaded=false, embedT=null, embedGame='';\nfunction forgetLastGame(){}\n" + grab("enterEmbed", TV) + "\nreturn enterEmbed;");
   function run(w){
     f.src = "";
     var e = enter(w, { getElementById: function(){ return f; } }, function(){ return { style: {}, classList: { add: stub, remove: stub }, textContent: "" }; },
