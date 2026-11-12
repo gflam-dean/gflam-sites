@@ -109,7 +109,7 @@
   body.light .stagewin b{color:#0b7a4b}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
-  .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
+  .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:22px;text-transform:none;letter-spacing:0;padding:20px}
   .bingoBtn:active{background:var(--pink-deep)}
 
   /* ticket count picker */
@@ -374,6 +374,33 @@
   body.light .vp-h,body.light .vp-in .vp-name,body.light .vp-out .wprize,body.light .vp-prize,body.light .vp-pill{color:#191420}
   body.light .vp-menu .vp-sheet{background:#FFFFFF}
   body.light .vp-menu .menuitem,body.light .vp-menu h3{color:#191420}
+  /* ONE SCREEN, NO SCROLLING (Dean's standing rule, 12 Nov 2026, INBOX 289.4). On the card screen the page is exactly the
+     phone's height: the header, the called ring, the tickets, the button and our logo, never more. The tickets take what is
+     left and fitTickets() sizes their squares to it (up to three tickets on a 375x667 iPhone without a scroll), so nothing
+     is ever wider than the phone either: the squares are no longer square-with-a-36px-floor, which made nine columns
+     358px wide in a 351px box at 375 and slid the whole page sideways (INBOX 287.3). Text size changes the numbers only. */
+  body.vp-onescreen .app{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+  body.vp-onescreen #vCard{flex:1 1 0;min-height:0}
+  body.vp-onescreen #cardStack{flex:1 1 0;min-height:0;overflow:hidden}
+  body.vp-onescreen .pfoot{padding-top:6px}
+  #vCard .card9,#vCard .lay-pages .card9,#vCard .lay-align .card9{width:100%}
+  #vCard .card9 .cc{aspect-ratio:auto;min-height:0;height:var(--ch,36px);font-size:calc(min(21px, var(--ch,36px) * .56) * var(--cz,1))}
+  #vCard .bingobar{position:static;padding:8px 0 0;margin-top:4px}
+  #vCard .lastcalled{margin:2px 4px 6px}
+  #vCard .tension{margin:4px 0 2px}
+  #vCard .pmsg:empty{display:none}
+  #vCard .stackwrap{gap:8px}
+  body.vp-onescreen #vCard .pmsg:not(.no):not(.wait){display:none}   /* the standing how-to line; a tap's answer still shows */
+  #cardStack.accord .ticket.shut{padding:3px 8px;cursor:pointer}
+  #cardStack.accord .ticket.shut .tklabel{min-height:22px}
+  #cardStack.accord .ticket.shut .card9{display:none}
+  #cardStack.accord .ticket.shut .tklabel{margin:0}
+  #vCard .lcring{width:60px;height:60px}
+  #vCard .lcnum{font-size:32px}
+  #vCard .tension .tmiss{display:block;font-size:15px;line-height:1.3}
+  /* HELP, JUST UNDER OUR LOGO (Dean, 12 Nov 2026, INBOX 291): it sat a long way below it */
+  .pfoot .vph-foot{margin:0;padding:0}
+  .pfoot .vph-link{padding:4px 12px 2px}
 </style>
 <link rel="stylesheet" href="/app/vp-phone.css">   <!-- THE NEW LOOK frame, shared with the trivia and musical phones (12 Nov 2026) -->
 <link rel="stylesheet" href="/app/vp-safe-area.css">   <!-- AFTER the frame, as on the trivia and musical phones: its island spacing must win over the frame's header padding -->
@@ -487,7 +514,7 @@
 <div class="vp-menu hidden" id="menuPanel" role="dialog" aria-label="Menu">
   <div class="vp-sheet">
     <div class="grab"></div>
-    <h3>Menu</h3>
+    <div class="vp-mhead"><h3>Menu</h3><button type="button" class="vp-mclose" id="menuClose" aria-label="Close the menu">Close</button></div>   <!-- a way back out (Dean, 12 Nov 2026, INBOX 291) -->
     <div id="menuList">
       <div class="menuitem"><span>Text size<small class="czlbl" id="zoomLbl">Numbers on your tickets</small></span><span class="vp-sizes"><button type="button" id="zoomOut" class="czbtn" aria-label="Smaller numbers">A</button><button type="button" id="zoomIn" class="czbtn" aria-label="Bigger numbers">A</button></span></div>
       <label class="menuitem"><span>Highlight my lines<small>Outline the rows you need</small></span><input type="checkbox" class="vp-sw" id="hlChk"></label>
@@ -1016,6 +1043,8 @@
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost","vPaper"];
   function show(which){ if(_paper) which="vPaper";   /* nothing paints over the paper notice while it stands */
     for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
+    try{ document.body.classList.toggle("vp-onescreen", which==="vCard"); if(which==="vCard") fitTickets(); }catch(e){}
+    try{ paintRow2(); }catch(e){}   // the pattern and prize row is the card screen's; never over YOU WON (it showed there, 12 Nov 2026)
     try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait"); }catch(e){}   // the venue's ad: under the lobby (Dean, 6 Nov 2026)
     var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");
   }
@@ -1031,6 +1060,14 @@
   function bingoNightKey(){
     try { return P.room + ":" + new Date(Date.now() + 8*60*60*1000).toISOString().slice(0,10); }
     catch(e){ return P.room; }
+  }
+  /* ASKED AFTER THE CLAIM, NOT DURING IT (Dean, 12 Nov 2026, INBOX 287.5). "How was that?" came up on YOU WON, under
+     "Show this screen to the host to claim", while the winner was walking it to the host. A winner is asked once the host
+     ends the game (idle), or after a minute on the win screen, whichever comes first; everyone else at once, as before. */
+  var CLAIM_ASK_MS=60000;   // the timer lives on P (P.claimAskT)
+  function askAfterClaim(where){
+    if(P.claimAskT) return;
+    P.claimAskT=setTimeout(function(){ P.claimAskT=null; var v=$(where); if(P.won && v && !v.classList.contains("hidden")) askHowItWent(where); }, CLAIM_ASK_MS);
   }
   function askHowItWent(where){
     try{
@@ -1067,7 +1104,7 @@
           wa.classList.remove("hidden");
         } else { wa.classList.add("hidden"); wa.innerHTML=""; }
       }
-      show("vWon"); askHowItWent("vWon"); return;
+      show("vWon"); askAfterClaim("vWon"); return;   // after the claim, not during it (287.5)
     }
     if(P.ended){
       /* A LINE WON EARLIER IN THIS GAME IS STILL OWED (live play audit, 20 Oct 2026). Somebody else
@@ -1159,10 +1196,51 @@
   // stamp is what makes it a billable player (migration 87). Fire and forget; never blocks.
   var _alive=false;
   function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }
+  /* THE TICKETS FILL WHAT IS LEFT OF THE SCREEN, NO MORE (Dean, 12 Nov 2026: "everything on one screen"). The squares are
+     as tall as the room under the called ring allows (never taller than they are wide, never under 24px), found by trying
+     sizes against the box the tickets sit in. Run after every paint, on a turn or resize, and when the fonts land. */
+  var _fitRaf=0, _openTi=null;
+  function fitTickets(){
+    if(_fitRaf) return;
+    var raf=(typeof requestAnimationFrame==="function") ? requestAnimationFrame : function(f){ return setTimeout(f, 16); };
+    _fitRaf=raf(function(){ _fitRaf=0; try{
+      var st=$("cardStack"), wr=st && st.querySelector(".stackwrap");
+      if(!st || !wr || $("vCard").classList.contains("hidden")) return;
+      var tks=[].slice.call(wr.querySelectorAll(".ticket:not(.offpage)"));
+      tks.forEach(function(t){ t.classList.remove("shut"); });
+      st.classList.remove("accord");
+      var g=wr.querySelector(".ticket:not(.offpage) .card9"); if(!g) return;   // measured with every ticket open
+      var cw=(g.clientWidth-3*8)/9, hi=Math.max(24, Math.min(cw, 58)), avail=st.clientHeight;
+      function fits(h){ st.style.setProperty("--ch", h+"px"); return st.scrollHeight<=avail+1; }
+      function best(){ var lo=22, top=hi; if(fits(top)) return top; for(var k=0;k<7;k++){ var mid=(lo+top)/2; if(fits(mid)) lo=mid; else top=mid; } return Math.floor(lo); }
+      var h=best();
+      /* A SHORT PHONE (an iPhone SE, 375x667) cannot show three tickets at a size a thumb can hit. Then one ticket is
+         open, full size, and the others fold to a single line each ("Ticket 2 of 3 · #319   5 to go"); a tap on a
+         folded one opens it. The open one is the closest to winning unless the player picked another. */
+      if(h<27 && tks.length>1){   // 27px squares hold 15px numbers, the floor for anything on a phone (Dean, 3 Nov 2026)
+        st.classList.add("accord");
+        var open=tks.filter(function(t){ return t.getAttribute("data-ti")===String(_openTi); })[0] || tks[0];
+        var order=[open].concat(tks.filter(function(t){ return t!==open; }));
+        /* as many open as still hold 15px numbers (two on a 390x844 iPhone), at least the one */
+        for(var k=tks.length-1;k>=1;k--){
+          order.forEach(function(t, i){ t.classList.toggle("shut", i>=k); });
+          h=best(); if(h>=27 || k===1) break;
+        }
+      }
+      st.style.setProperty("--ch", h+"px");
+      st.style.overflowY = fits(h) ? "" : "auto";   // more than any phone can show at 22px: they scroll inside, never the page
+    }catch(e){} });
+  }
+  try{ document.addEventListener("click", function(e){
+    var t=e.target && e.target.closest && e.target.closest("#cardStack.accord .ticket.shut");
+    if(!t) return; _openTi=t.getAttribute("data-ti"); fitTickets();
+  }); }catch(e){}
+  try{ window.addEventListener("resize", fitTickets); }catch(e){}
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitTickets); }catch(e){}
   function renderCards(){
     sayAlive();
     autoLayoutForHand();   // six tickets stacked on a phone is a scroll, not a game
-    if(structureKey()===P.builtKey){ paintCards(); return; }
+    if(structureKey()===P.builtKey){ paintCards(); fitTickets(); return; }
     buildCards();
   }
   function buildCards(){
@@ -1238,6 +1316,7 @@
     }
     stack.appendChild(wrap);
     paintCards();
+    fitTickets();
   }
 
   /* Repaint what CHANGES, on the cards already on screen: marks, called highlights, the lit
@@ -1531,12 +1610,12 @@
       var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
       for(var i=0;i<44;i++){
         var c=document.createElement("div"); c.className="cfetti";
-        c.style.left=Math.random()*100+"vw";
+        c.style.left=(Math.random()*96)+"%";
         c.style.background=colors[i%colors.length];
         c.style.animationDuration=(2+Math.random()*1.6)+"s";
         c.style.animationDelay=(Math.random()*0.25)+"s";
         c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
-        document.body.appendChild(c);
+        ((window.VPCelebrate && VPCelebrate.phoneLayer) ? VPCelebrate.phoneLayer() : document.body).appendChild(c);   // between the header and our logo, never past the edge (12 Nov 2026)
         (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c);
       }
     }catch(e){}
@@ -1634,6 +1713,8 @@
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    var _me=(typeof VPDetails==="object" && VPDetails.mobileError) ? VPDetails.mobileError() : "";   // a real AU / NZ mobile or none (291)
+    if(_me){ $("joinErr").textContent=_me; try{ $("xMobile").focus(); }catch(e){} return; }
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     P.joined=true; saveName(P.room, P.name);
@@ -2067,6 +2148,7 @@
          already knows who won, a dropped claim and a line won earlier, which each say their own
          thing on the waiting screen, and a lobby closed before anyone was dealt. */
       var hadGame=P.cards.length>0 || P.called.length>0;
+      if(P.won){ if(P.claimAskT){ clearTimeout(P.claimAskT); P.claimAskT=null; } askHowItWent("vWon"); }   // the host ended the game: the claim is done (287.5)
       P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
       setHeaderBall(0);
       if(!P.won){
@@ -2459,8 +2541,10 @@
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
   if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden"); }); }
   /* ONE SHEET FROM THE BOTTOM (the new look): a tap on the dark round it closes it. Help (put in by /app/vp-help.js) goes first. */
-  if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel) menuPanel.classList.add("hidden"); }); }
-  function helpFirst(){ var h=$("vphMenu"), l=$("menuList"); if(h && l && h.parentNode!==l){ h.innerHTML="<span>Help</span><span class=\"chev\">&#8250;</span>"; l.insertBefore(h, l.firstChild); } }
+  if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel || (e.target && e.target.id==="menuClose")) menuPanel.classList.add("hidden"); }); }
+  function helpFirst(){ var h=$("vphMenu"), l=$("menuList"); if(h && l && h.parentNode!==l){ h.innerHTML="<span>Help</span><span class=\"chev\">&#8250;</span>"; l.insertBefore(h, l.firstChild); } 
+    /* Help sits just under our logo at the foot, not a gap below it (Dean, 12 Nov 2026, INBOX 291). */
+    var hf=$("vphFoot"), pf=document.querySelector("#app > .pfoot"); if(hf && pf && hf.parentNode!==pf) pf.appendChild(hf); }
   helpFirst(); document.addEventListener("DOMContentLoaded", helpFirst); setTimeout(helpFirst, 0);
   window.addEventListener("load", helpFirst);   /* vp-help.js mounts on DOMContentLoaded AFTER the listener above, so Help is lifted again once the page has loaded */
   var hlChk=$("hlChk");

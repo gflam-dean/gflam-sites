@@ -287,6 +287,9 @@
   body.light .vp-h,body.light .vp-in .vp-name,body.light .vp-out .wprize,body.light .vp-prize,body.light .vp-pill{color:#191420}
   body.light .vp-menu .vp-sheet{background:#FFFFFF}
   body.light .vp-menu .menuitem,body.light .vp-menu h3{color:#191420}
+  /* ONE SCREEN (Dean, 12 Nov 2026, INBOX 289.4): under the card our logo sits closer, so the card, the button and the logo
+     fit a 375x667 iPhone without a scroll */
+  .app:has(#vCard:not(.hidden)) .pfoot{padding-top:10px}
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
@@ -389,7 +392,7 @@
 <div class="vp-menu hidden" id="menuPanel" role="dialog" aria-label="Menu">
   <div class="vp-sheet">
     <div class="grab"></div>
-    <h3>Menu</h3>
+    <div class="vp-mhead"><h3>Menu</h3><button type="button" class="vp-mclose" id="menuClose" aria-label="Close the menu">Close</button></div>   <!-- a way back out (Dean, 12 Nov 2026, INBOX 291) -->
     <div id="menuList">
       <button type="button" class="menuitem" id="lastCalled"><span>Songs played<small id="lastCalledSub">No songs played yet</small></span><span class="chev">&#8250;</span></button>
       <div class="menuitem"><span>Text size</span><span class="vp-sizes"><button type="button" id="zoomOut" class="czbtn" aria-label="Smaller text">A</button><button type="button" id="zoomIn" class="czbtn" aria-label="Bigger text">A</button></span></div>
@@ -662,12 +665,13 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;   // the card number, so the host can check it (two games at once)
       // Two people got there on the same song: say so, so nobody is surprised at the host.
       $("wonSub").textContent = P.split ? "You share this one. Show your card to the host to claim." : "Show your card to the host to claim";
-      show("vWon"); askHowItWent("vWon"); return;
+      show("vWon"); askAfterClaim("vWon"); return;   // after the claim, not during it (287.5)
     }
     if(P.ended){
       /* "Not this time. Ann won the meat tray." (the prize as the host typed it); no prize set: "took this one." */
       var pz=String(P.prize||"").trim(), lw=$("lostWhat");
       if(lw) lw.textContent = (pz && pz.toLowerCase()!=="the prize") ? ("won the "+pz.charAt(0).toLowerCase()+pz.slice(1)+".") : "took this one.";
+      if(P.noWinner){ $("lostName").textContent="That game is over."; if(lw) lw.textContent="Nobody called a winning card this time."; }
       show("vLost"); askHowItWent("vLost"); return;
     }
     if(!P.room){ show("vNoRoom"); return; }
@@ -724,7 +728,11 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
        3. Only a card that still cannot fit at WIDEN_MAX goes under 15px, the whole card evenly, down to FIT_FLOOR.
      Titles are also kept clear of the tick's corner (TICK_IN, TICK_SZ, as #vCard .cc.daub::after), marked or not,
      so a tap never moves a title. The text-size buttons in the menu raise the floor and the cap together (cz). */
-  var FIT_MAX=20, FIT_MIN=15, FIT_FLOOR=11, FIT_LH=1.15, WIDEN_MAX=2.2, WIDEN_STEP=0.1, TICK_IN=3, TICK_SZ=14, _fitPending=false, _aw=1;
+  /* ALL FIVE COLUMNS ON ONE SCREEN, NO SIDEWAYS SWIPE (Dean, 12 Nov 2026, INBOX 291 / 288.8, after playing it live: "must fit
+     on one screen (all the columns), no swipe"). This supersedes step 2 above (the wider card) and so the 10 Nov "never under
+     15px": the card is never wider than the screen (WIDEN_MAX 1), and a card whose longest word cannot sit at 15px goes down
+     evenly, the whole card one size (step 3), as Dean's 3 Nov rule had it ("long song titles just drop in font size"). */
+  var FIT_MAX=20, FIT_MIN=15, FIT_FLOOR=11, FIT_LH=1.15, WIDEN_MAX=1, WIDEN_STEP=0.1, TICK_IN=3, TICK_SZ=14, _fitPending=false, _aw=1;
   function clearOfTick(el, sp){
     var tn=sp.firstChild; if(!tn || tn.nodeType!==3) return true;
     var cb=el.getBoundingClientRect(), x0=cb.right-el.clientLeft-TICK_IN-TICK_SZ-1, y1=cb.top+el.clientTop+TICK_IN+TICK_SZ+1;
@@ -807,6 +815,14 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     window.addEventListener("orientationchange", function(){ setTimeout(refit, 300); });
   })();
   var _cardSig="";   // the 25 titles as dealt, so a re-render can tell a new card from a repaint
+  /* ASKED AFTER THE CLAIM, NOT DURING IT (Dean, 12 Nov 2026, INBOX 287.5). "How was that?" came up on YOU WON, under
+     "Show this screen to the host to claim", while the winner was walking it to the host. A winner is asked once the host
+     ends the game (idle), or after a minute on the win screen, whichever comes first; everyone else at once, as before. */
+  var CLAIM_ASK_MS=60000;   // the timer lives on P (P.claimAskT)
+  function askAfterClaim(where){
+    if(P.claimAskT) return;
+    P.claimAskT=setTimeout(function(){ P.claimAskT=null; var v=$(where); if(P.won && v && !v.classList.contains("hidden")) askHowItWent(where); }, CLAIM_ASK_MS);
+  }
   function askHowItWent(where){
     try{
       if(!window.VPFeedback) return;
@@ -1064,12 +1080,12 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
       for(var i=0;i<44;i++){
         var c=document.createElement("div"); c.className="cfetti";
-        c.style.left=Math.random()*100+"vw";
+        c.style.left=(Math.random()*96)+"%";
         c.style.background=colors[i%colors.length];
         c.style.animationDuration=(2+Math.random()*1.6)+"s";
         c.style.animationDelay=(Math.random()*0.25)+"s";
         c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
-        document.body.appendChild(c);
+        ((window.VPCelebrate && VPCelebrate.phoneLayer) ? VPCelebrate.phoneLayer() : document.body).appendChild(c);   // between the header and our logo, never past the edge (12 Nov 2026)
         (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c);
       }
     }catch(e){}
@@ -1222,6 +1238,8 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    var _me=(typeof VPDetails==="object" && VPDetails.mobileError) ? VPDetails.mobileError() : "";   // a real AU / NZ mobile or none (291)
+    if(_me){ $("joinErr").textContent=_me; try{ $("xMobile").focus(); }catch(e){} return; }
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
@@ -1313,7 +1331,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
       if(m.game_id) P.gameId=m.game_id;
       // a fresh round: clear the old card and pull the new one from the Worker
-      P.played=[]; P.playedIds=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
+      P.played=[]; P.playedIds=[]; P.active=true; P.won=false; P.ended=false; P.noWinner=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
       // A stale token (last week's night) would fetch no card at all: check the night first.
       if(P.joined){ checkStaleJoin().then(fetchCard); } else { route(); }
     }
@@ -1347,7 +1365,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);
       closePlayedSheet();
       if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); route(); celebrate(); }
-      else { P.ended=true; $("lostName").textContent=(m.name||"Someone"); route(); }   // the line under it reads "took this one.", so no " won"
+      else { P.ended=true; P.noWinner=false; $("lostName").textContent=(m.name||"Someone"); route(); }   // the line under it reads "took this one.", so no " won"
     }
     else if(m.t==="carryon"){   // progressive round: same card, new pattern + prize, everyone plays on
       if(m.pattern) P.pattern=m.pattern;
@@ -1367,10 +1385,19 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
          after END_LEAVE_MS, long enough to show the host the card number and answer "how did it go". A new game
          ("started") before then takes over at once. */
       if(P.joined){
+        /* ENDED WITH NO WINNER: SAY SO, AND ASK "HOW WAS THAT?" (Dean, 12 Nov 2026, INBOX 289.1). Both musical games on
+           The Mini Bar were ended from the console with End game, and the phone went straight back to the lobby: it
+           never asked, so musical bingo had no feedback at all while trivia and bingo did. A phone that was holding a
+           card now gets the same end screen as bingo's ("That game is over"), with the ask, then the lobby as below. */
+        if(!P.won && !P.ended && P.cells){ P.ended=true; P.noWinner=true; }
+        if(P.won && typeof askHowItWent==="function"){ if(P.claimAskT){ clearTimeout(P.claimAskT); P.claimAskT=null; } askHowItWent("vWon"); }   // the host ended the game: the claim is done (287.5)
         P.active=false; P.cells=null;
         if(P.won || P.ended){
           if(_endLeaveT) clearTimeout(_endLeaveT);
-          _endLeaveT=setTimeout(function(){ _endLeaveT=null; if(!P.active){ P.won=false; P.ended=false; P.split=false; route(); } }, END_LEAVE_MS);
+          _endLeaveT=setTimeout(function leave(){ _endLeaveT=null;
+            /* never while they are typing their feedback: the screen waits for Send or No thanks (Dean, 12 Nov 2026) */
+            try{ if(document.body.classList.contains("vpfb-more")){ _endLeaveT=setTimeout(leave, 5000); return; } }catch(e){}
+            if(!P.active){ P.won=false; P.ended=false; P.split=false; P.noWinner=false; route(); } }, END_LEAVE_MS);
         }
         route();
       }   // host sent the TV back to ads; wait for the next round
@@ -1517,7 +1544,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
   /* ONE SHEET FROM THE BOTTOM (Dean, 3 Nov 2026): a tap on the dark round it closes it. Help (put in by /app/vp-help.js)
      goes first, as mocked. */
-  if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel) menuPanel.classList.add("hidden"); }); }
+  if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel || (e.target && e.target.id==="menuClose")) menuPanel.classList.add("hidden"); }); }
   function helpFirst(){ var h=$("vphMenu"), l=$("menuList"); if(h && l && h.parentNode!==l){ h.innerHTML="<span>Help</span><span class=\"chev\">&#8250;</span>"; l.insertBefore(h, l.firstChild); } }
   helpFirst(); document.addEventListener("DOMContentLoaded", helpFirst); setTimeout(helpFirst, 0);
   /* Highlight my lines: off by default, remembered on this phone. */

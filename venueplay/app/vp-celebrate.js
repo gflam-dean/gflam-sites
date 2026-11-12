@@ -198,5 +198,27 @@
     } catch (e) {}
   }
 
-  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz };
+  /* WHERE A PHONE'S CONFETTI FALLS (Dean, 12 Nov 2026, INBOX 287.5 / 287.3). It fell over the venue's logo at the top and
+     over our logo and Help at the foot, and a piece dropped at the right-hand edge stuck out past it, so the page could
+     be slid sideways on an iPhone. The bingo, musical and trivia phones drop their pieces into this one layer: between
+     the header and our logo, clipped to its own box (the transform makes it the box its fixed pieces live in). */
+  function phoneLayer() {
+    var doc = root.document, L = doc.getElementById("vpCfLayer");
+    if (!L) {
+      L = doc.createElement("div"); L.id = "vpCfLayer"; L.setAttribute("aria-hidden", "true");
+      L.style.cssText = "position:fixed;left:0;right:0;top:0;height:100%;overflow:hidden;pointer-events:none;z-index:9;transform:translateZ(0)";
+      doc.body.appendChild(L);
+    }
+    var H = root.innerHeight || 0, top = 0, bot = H;
+    try {
+      var hd = doc.querySelector(".ptop"), ft = doc.querySelector(".pfoot");
+      if (hd) top = Math.max(0, hd.getBoundingClientRect().bottom);
+      if (ft) { var fb = ft.getBoundingClientRect(); if (fb.height > 0) bot = Math.min(H, fb.top); }
+      if (bot - top < 120) { top = 0; bot = H; }
+    } catch (e) {}
+    L.style.top = top + "px"; L.style.height = Math.max(0, bot - top) + "px";
+    return L;
+  }
+
+  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz, phoneLayer: phoneLayer };
 })(window);

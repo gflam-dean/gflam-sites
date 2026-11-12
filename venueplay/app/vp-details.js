@@ -33,7 +33,7 @@
     { key: "last_name", id: "xLast", type: "text", ph: "Last name", name: "family-name", ac: "family-name", ml: 40 },
     { key: "postcode", id: "xPost", type: "text", ph: "Postcode", name: "postal-code", ac: "postal-code", ml: 4, im: "numeric", pattern: "[0-9]*" },
     { key: "email", id: "xEmail", type: "email", ph: "Email", name: "email", ac: "email", ml: 120 },
-    { key: "mobile", id: "xMobile", type: "tel", ph: "Mobile", name: "tel", ac: "tel", ml: 20, im: "tel" }
+    { key: "mobile", id: "xMobile", type: "tel", ph: "Mobile", name: "tel", ac: "tel", ml: 16, im: "tel" }
   ];
 
   function box(b) {
@@ -83,5 +83,28 @@
     return form;
   }
 
-  root.VPDetails = { wire: wire, html: html };
+  /* A REAL AUSTRALIAN OR NEW ZEALAND MOBILE (Dean, 12 Nov 2026, INBOX 291: the box took 20 characters of anything).
+     Spaces, dashes, dots and brackets are ignored. Australia: 04 and 8 more digits, or +61 4..., 61 4..., 4... (9 digits).
+     New Zealand: 02 and 7 to 9 more digits, or +64 2... / 64 2.... Answers the number in international form
+     ("+61412345678", "+64211234567"), or "" when it is not one. */
+  function mobile(raw) {
+    var d = String(raw == null ? "" : raw).replace(/[\s\-().]/g, "");
+    var plus = d.charAt(0) === "+"; if (plus) d = d.slice(1);
+    if (!/^\d+$/.test(d)) return "";
+    if (/^614\d{8}$/.test(d)) return "+" + d;
+    if (!plus && /^04\d{8}$/.test(d)) return "+61" + d.slice(1);
+    if (!plus && /^4\d{8}$/.test(d)) return "+61" + d;
+    if (/^642\d{7,9}$/.test(d)) return "+" + d;
+    if (!plus && /^02\d{7,9}$/.test(d)) return "+64" + d.slice(1);
+    return "";
+  }
+  /* What to say when the mobile box holds something that is not a mobile; "" when it is fine or empty (it is optional). */
+  var MOBILE_WRONG = "That mobile number doesn\u2019t look right. An Australian mobile starts 04 and has 10 digits; a New Zealand one starts 02.";
+  function mobileError() {
+    var b = document.getElementById("xMobile"); if (!b) return "";
+    var v = String(b.value || "").trim();
+    return (v && !mobile(v)) ? MOBILE_WRONG : "";
+  }
+
+  root.VPDetails = { wire: wire, html: html, mobile: mobile, mobileError: mobileError, MOBILE_WRONG: MOBILE_WRONG };
 })(typeof window !== "undefined" ? window : this);
