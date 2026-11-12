@@ -432,8 +432,16 @@ def play_round(t, pattern):
             seen.append({'id': s['id'], 'unknown': True})
             break
         pick = q[3] if want_right else (q[3] + 1) % 4
-        b = s['btns'][pick]
         before = s
+        if s['btns'][pick]['y'] > t.js('window.innerHeight') - 4:
+            # a 320x568 phone: the ring row (INBOX 310) pushes the fourth answer just under the fold; a thumb
+            # scrolls to it. 375x667 and up are held to all four on the first screen below.
+            t.js('document.querySelectorAll("#answers .ans")[%d].scrollIntoView({block:"center"})' % pick)
+            time.sleep(0.15)
+            s2 = state(t)
+            if s2.get('btns'):
+                s = dict(s, btns=s2['btns'])
+        b = s['btns'][pick]
         t.tap(b['x'], b['y'])
         after = wait(t, lambda x: bool(x.get('verdict')), 3)
         time.sleep(0.35)          # the colour lands, and the Worker's points arrive
@@ -725,6 +733,27 @@ def main():
         to.close()
         FAKE['off'] = False
 
+        print('\nTHE RING RUNS OUT (INBOX 310-312): TIME\'S UP, THEN THE RIGHT ANSWER')
+        clear_storage(b, base)
+        tr = Tab(b, base, api)
+        tr.go('/live-here-now')
+        name_step(tr, 'Rex')
+        where_step(tr, 'min', 'The Mini Bar')
+        s = wait_question(tr)
+        ring0 = tr.js('document.getElementById("pqCdNum").textContent')
+        check('the question shows the trivia phone\'s ring at 20', ring0 in ('20', '19'), ring0)
+        n_ans = len([x for x in FAKE['log'] if x[1] == '/coaster/answer'])
+        tr.js('(function(){var o=Date.now;Date.now=function(){return o()+21000;};})()')   # 21 seconds later
+        saw_up = []
+        wait(tr, lambda x: saw_up.append(tr.js('(document.querySelector(".vpq-up")||{}).textContent||""')) or "Time's up!" in saw_up, 3)
+        check('at 0 the "Time\'s up!" moment shows', "Time's up!" in saw_up, saw_up[-3:])
+        s = wait(tr, lambda x: x.get('verdict') == "Time's up", 4)
+        sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/answer'][n_ans:]
+        check('then it reads "Time\'s up", the right answer is marked, and the board gets a -1 (time\'s up)',
+              s.get('verdict') == "Time's up" and sent and sent[0].get('a') == -1 and tr.js('!!document.querySelector("#answers .ans.right")'), (s.get('verdict'), sent))
+        check('a small mute button is on the screen', tr.js('!!document.getElementById("vpqMute")'))
+        tr.close()
+
         print('\nTHE HOUR CHANGES THE SET')
         def first_five(clock):
             clear_storage(b, base)
@@ -803,6 +832,9 @@ def main():
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             tf.js('window.scrollTo(0, 0)')
             tf.shot('lhn-addit-%d.png' % w)
+            # The ring gives each question 20 seconds (INBOX 310); the shots below can take longer than that on a
+            # slow machine, so this tab's clock stands still while it is measured. The ring itself is tested above.
+            tf.js('(function(){var t=Date.now();Date.now=function(){return t;};})()')
             where_step(tf, 'min', 'The Mini Bar')
             s = wait_question(tf)
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))

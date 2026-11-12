@@ -8,7 +8,8 @@
      once the player has tapped the page (phones refuse sound before a tap) unless they muted it.
      THE SOUND ITSELF comes from Dean's sound pass (INBOX 313: real recorded sounds, never a synth beep).
      Until he picks one, VPQRing.SOUNDS.timesUp is '' and nothing plays: a hook, not a placeholder noise.
-   VPQRing.muteButton(): the small speaker button, bottom right; the choice is kept on this phone. */
+   VPQRing.muteButton(into): the small speaker button, in the given row (or bottom right); kept on this phone.
+     In a row, never over an answer button. */
 (function (root) {
   var C = 2 * Math.PI * 34;   // the ring's circle, r=34 in a 76 box
   var SOUNDS = { timesUp: '' };
@@ -41,12 +42,12 @@
     d.body.appendChild(el);
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 950);
     play('timesUp');
-    if (!muted()) { try { if (root.navigator && root.navigator.vibrate) root.navigator.vibrate(180); } catch (e) {} }
+    if (!muted() && root.VPCelebrate) root.VPCelebrate.buzz(180);   // the one place a phone is buzzed (vp-celebrate.js)
   }
-  function muteButton() {
+  function muteButton(into) {
     var d = root.document; if (!d || !d.body || d.getElementById('vpqMute')) return;
     var btn = d.createElement('button');
-    btn.type = 'button'; btn.id = 'vpqMute'; btn.className = 'vpq-mute';
+    btn.type = 'button'; btn.id = 'vpqMute'; btn.className = 'vpq-mute' + (into ? ' inline' : '');
     var SPK = '<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
     function label() {
       var m = muted();
@@ -57,7 +58,7 @@
     }
     btn.addEventListener('click', function () { setMuted(!muted()); label(); });
     label();
-    d.body.appendChild(btn);
+    (into || d.body).appendChild(btn);
   }
   root.VPQRing = { paint: paint, timesUp: timesUp, muteButton: muteButton, SOUNDS: SOUNDS, muted: muted, CIRCLE: C };
 })(typeof window !== 'undefined' ? window : this);

@@ -25,46 +25,10 @@
 <!-- The questions, asked for before anything else so they are on their way while the page paints. -->
 <link rel="preload" href="/data/live-here-now.json" as="fetch" crossorigin="anonymous">
 
-<!-- THE DRINK-COASTER PAGE, v2 (/live-here-now; /here, the short address printed on the coaster, and /live
-     are 301s to it in _redirects). v1 31 Oct to 1 Nov 2026; v2 Dean 4 Nov 2026
-     (reports/live-here-now-v2/DEAN-NOTES.md, later items override earlier):
-
-       1. the new look: the trivia phone's (option 5 header: the venue's logo top left, or its name as
-          text; our venueplay logo small at the bottom; the answers in the TV's full colours, coral,
-          blue, amber, violet; the right answer GREEN, a wrong pick outlined in its own colour)
-       2. FIRST NAME at the start, so the end is personal: "Nice one, Sam"
-       3. "Challenge your mates": a link (?c=CODE) that puts friends on the same five questions and
-          the same board
-       4. "From a venue? Click here" goes to venueplay.com.au/coaster, today's offer (vp-offer.js),
-          tagged utm_source=coaster, never the home page's
-       6. POINTS like a real trivia night: the game Worker scores every answer by triviaAnswerPoints,
-          the trivia rule ("Correct! +130"); the end shows points, the number right and the place
-       7. one board PER VENUE, Tonight and This week, first names only
-       8 to 10. ALL coasters share ONE QR, so after the name: "Where are you playing?", type three
-          letters of the pub's name. No location, ever.
-       INBOX 229 and 232 (Dean 11 Nov 2026, over item 10): the picker uses OUR WHOLE VENUE LIST and the
-          player PICKS one (typed free text is junk): venueplay venues, marked "on venueplay" (or "game
-          on now" while a game is open there); our licensed venues list (HOTEL, PUB, TAVERN, RSL or
-          CLUB names only) and coaster venues, plainly marked "not on venueplay yet", never dressed up
-          as if they were on venueplay. "Can't find your venue? Add it": name, suburb, state, optional
-          website, to HQ's review list as a possible new lead (never cold email); they play with no
-          board. At a venueplay venue HQ has switched on, the end offers that venue's own sign-up,
-          with the phones' one tick (/app/vp-consent.js, consent_version).
-
-     WHAT IS SENT. The first name (the Worker keeps its first word only), the place picked, the five
-     question ids, and each answer as it is tapped. No surname. A contact detail only when the player
-     fills in the venue's own sign-up at the end, and a venue's name only when they add one. The
-     phone remembers the name and the place (localStorage) so the next scan does not ask again.
-
-     WHEN THE BOARD IS DOWN (migration 153 not run, the Worker or the network failing): the page plays
-     exactly as v1 did, from the static question file, right or wrong at once, the score out of five,
-     no points and no board. The coaster never fails because a server did.
-
-     The questions are still one static file, /data/live-here-now.json, built by
-     tools/live-here-now-bank.py (never edit it by hand), in an order seeded by the hour, the first
-     five this phone has not seen. The Worker checks the ids and the answers against the same file.
-     Tested by venueplay-backend/worker/coaster-page.test.js (the logic below, run) and
-     tools/live-here-now-in-chrome.test.py (played by tapping, 320 / 375 / 390 / 430 and desktop). -->
+<!-- THE DRINK-COASTER PAGE, v2 (/live-here-now; /here and /live 301 to it). Dean's spec, later items over earlier:
+     reports/live-here-now-v2/DEAN-NOTES.md and INBOX 222, 229, 232, 302-313. The board, the points, the picker
+     and the venue's own sign-up come from the game Worker's /coaster routes; with the board down the round plays
+     on the phone from /data/live-here-now.json. Tested by coaster-page.test.js and live-here-now-in-chrome.test.py. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts never hold the first screen back: the stylesheet loads without blocking and the system
@@ -251,6 +215,7 @@
     .bigscreen .tv{width:42px;height:32px}
     .vlogo{max-width:150px}
   }
+  @media(max-height:700px){ .pq-ring{width:48px;height:48px} .pq-ring .n b{font-size:20px} .pq-ring .n span{display:none} }   /* a short phone keeps all four answers on screen */
   @media(min-width:700px){ .view{padding-top:36px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
@@ -259,6 +224,7 @@
 <script src="/app/vp-analytics.js" defer></script>
 <script src="/app/vp-consent.js"></script>
 <link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's countdown ring and the Time's up moment, one copy (INBOX 310/312) -->
+<script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
 </head>
 <body>
@@ -471,10 +437,8 @@ var VPCoaster = (function () {
     if (correct >= 1) return 'Good effort' + who;
     return 'Tough round' + who;
   }
-  /* THE TIME (INBOX 310/311, Dean 12 Nov 2026: "Done in 2062 seconds" on a 60-second round). Each question has
-     the trivia night's 20 seconds on the ring; a question's time is from it showing to the tap (or the ring
-     running out), never more than its 20 seconds, so a phone left on the table, a later visit or a stored start
-     can never add to it. The round's time is the five added up, as the Worker adds its ms_total. */
+  /* THE TIME (INBOX 310/311, "Done in 2062 seconds"): each question from showing to the tap, at most its 20
+     seconds; the round is the five added up, as the Worker's ms_total. */
   var QUESTION_SECS = 20;
   function tookMs(shownAt, answeredAt) {
     var t = (+answeredAt) - (+shownAt);
@@ -772,7 +736,7 @@ var VPCoaster = (function () {
     header(S.venue);
     round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
-    window.VPQRing.muteButton();
+    window.VPQRing.muteButton($('vPlay').querySelector('.top'));   // in the top row, never over an answer
     show();
   }
   function pips() {
