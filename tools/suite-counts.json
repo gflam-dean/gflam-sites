@@ -1488,7 +1488,7 @@
   "counted_by": "lines"
  },
  "tools/tv-in-step-in-chrome.test.py": {
-  "checks": 21,
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/tv-landing-in-chrome.test.py": {

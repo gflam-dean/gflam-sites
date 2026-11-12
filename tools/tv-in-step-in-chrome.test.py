@@ -128,6 +128,9 @@ def night(label, tv_query='', throttle=0, deaf_test=False):
         click(r, host, 'startBtn')
         ok('the TV is on the bingo board', r.until(tv, '!document.getElementById("tvRun").classList.contains("hidden") || !document.getElementById("tvLobby").classList.contains("hidden")', 15) is True)
         time.sleep(1)
+        # The first ball, as a warm-up: the phone is still drawing its ticket and the TV its board for it. Not timed.
+        call_one(r, host)
+        ok('CONTROL: the first ball reaches the TV and the phone', in_step(r, tv, ph, host, 12.0)[0] is True, in_step(r, tv, ph, host, 0.1)[1])
         worst = 0; behind_at = []; tries = 0
         while (r.ask(host, HOST_N) or 0) < CALLS and tries < CALLS * 3:
             tries += 1
