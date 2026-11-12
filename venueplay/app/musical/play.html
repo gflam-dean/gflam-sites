@@ -250,8 +250,9 @@
   #vCard .cc .ct{text-wrap:balance}
   #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
   #vCard .cc.daub::after{content:"";position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px 14px no-repeat}   /* in its own corner, 3px in; the title's lines are kept out of it by fitCells (TICK_IN, TICK_SZ) */
-  /* A SMALL CARD, A SMALL TICK (option C, 12 Nov 2026): when a long title takes the whole card under 13px, the tick is 10px,
-     so the titles can still keep clear of it on a small phone (fitCells sets --tick on the card to what it measured with). */
+  /* A SMALL TICK (option C, 12 Nov 2026; per square since INBOX 337): a square whose title cannot clear the 14px tick
+     has a 10px tick, so its title keeps clear of it at a bigger size (fitCells sets --tick on each square to what it
+     measured that square with). */
   #vCard .cc.daub::after{width:var(--tick,14px);height:var(--tick,14px);background-size:var(--tick,14px) var(--tick,14px)}
   /* THE FREE SQUARE HAS ITS OWN LOOK (Dean, 4 Nov 2026, again at the 10 Nov live sign-off: Free looked exactly like a
      marked song, the same pink tint, edge and tick). Free is now a solid gold tile with near-black "Free" and no tick;
@@ -772,72 +773,70 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     for(var k=0;k<rs.length;k++){ var r=rs[k]; if(r.width>0.5 && r.top<y1 && r.right>x0) return false; }
     return true;
   }
-  function cellFits(el, sp, W, H){ return sp.offsetWidth<=W+0.5 && sp.offsetHeight<=H+0.5 && clearOfTick(el, sp); }
-  /* every title on the card at this one size: true when all of them fit */
-  function cardFits(todo, size){
-    _tick = size<13 ? TICK_SMALL : TICK_SZ;   // the tick this size would be drawn with (A SMALL CARD, A SMALL TICK)
-    var k, c, cs;
-    for(k=0;k<todo.length;k++) todo[k].el.style.fontSize=size+"px";
-    for(k=0;k<todo.length;k++){
-      c=todo[k]; cs=getComputedStyle(c.el);
-      var W=c.el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
-      var H=c.el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-      if(!cellFits(c.el, c.sp, W, H)) return false;
-    }
+  /* THE LETTERS AS DRAWN, NOT JUST THE LINE BOXES (INBOX 337, per square): at a square's own biggest size a three-line
+     title fills its square, and the drawn letters stand taller than the 1.15 line box, so the line boxes fit while the
+     letters touch the edge. Every line as drawn keeps 2px above and below and 3px at the sides inside the square. */
+  function glyphsIn(el, sp){
+    var tn=sp.firstChild; if(!tn || tn.nodeType!==3) return true;
+    var cb=el.getBoundingClientRect(), L=cb.left+el.clientLeft, T=cb.top+el.clientTop, R=L+el.clientWidth, B=T+el.clientHeight;
+    var rg=document.createRange(); rg.selectNodeContents(tn); var rs=rg.getClientRects();
+    for(var k=0;k<rs.length;k++){ var r=rs[k]; if(r.width>0.5 && (r.top<T+2 || r.bottom>B-2 || r.left<L+3 || r.right>R-3)) return false; }
     return true;
+  }
+  function cellFits(el, sp, W, H){ return sp.offsetWidth<=W+0.5 && sp.offsetHeight<=H+0.5 && clearOfTick(el, sp) && glyphsIn(el, sp); }
+  /* FIT PER SQUARE, NOT THE WHOLE CARD (Dean via main INBOX 337, 12 Nov 2026 ~20:35: "yes C, but the text a bit BIGGER";
+     every square takes the biggest size that fits ITS OWN title, broken between words; only a square holding one long word
+     (Wonderwall, September, Thunderstruck) goes smaller, never the whole card). Supersedes the 10 Nov "one size for the
+     whole card" (and option C's "the whole card down evenly") for this card. Still: all five columns on the screen (the card
+     never wider, WIDEN_MAX 1), no hyphen, no split word, nothing cut, titles clear of the tick, centred. The text size
+     plus/minus (cz) scales every square's top size and lifts the floor (to 15px at most), as before.
+     Free is drawn at the middle size of the card's titles, so it never shouts over them. */
+  /* one title at one size: true when it sits inside its square on whole words, clear of the tick */
+  function fitAt(t, size){
+    t.el.style.fontSize=size+"px";
+    /* the 14px tick when the title clears it, else the 10px tick at the SAME size before the title goes smaller
+       (A SMALL TICK BEFORE A SMALL TITLE, INBOX 337: on a short phone the big tick's corner cost two-line titles 5px) */
+    _tick=TICK_SZ; if(cellFits(t.el, t.sp, t.W, t.H)) return true;
+    _tick=TICK_SMALL; return cellFits(t.el, t.sp, t.W, t.H);
+  }
+  /* A WORD NO SQUARE CAN HOLD EVEN AT THE FLOOR ("Supercalifragilisticexpialidocious", or "Thunderstruck" on a 360 phone):
+     that one title is narrowed whole, never split, and if it is still too tall or under the tick it is drawn a little
+     smaller, whole, inside its square. Only that square; the others keep their own size. */
+  function squeeze(t){
+    if(t.sp.offsetWidth>t.W+0.5) t.sp.style.transform="scaleX("+Math.max(0.3, t.W/t.sp.offsetWidth).toFixed(3)+")";
+    if(t.sp.offsetHeight<=t.H+0.5 && clearOfTick(t.el, t.sp) && glyphsIn(t.el, t.sp)) return;
+    var bx=t.sp.style.transform||"";
+    for(var f=0.95; f>=0.45; f-=0.05){ t.sp.style.transform=(bx?bx+" ":"")+"scale("+f.toFixed(2)+")"; if(t.sp.offsetHeight*f<=t.H+0.5 && clearOfTick(t.el, t.sp) && glyphsIn(t.el, t.sp)) break; }
   }
   function setAw(grid, aw){ _aw=aw; grid.style.setProperty("--aw", String(aw)); }
   function fitCells(){
     var grid=document.getElementById("cardGrid");
     if(!grid || !grid.clientWidth){ _fitPending=true; return; }   // hidden: fit it when it is shown
     _fitPending=false;
+    setAw(grid, WIDEN_MAX);   // the card is the screen's width: all five columns, no sideways swipe (option C)
     var cells=document.querySelectorAll("#cardGrid .cc"), todo=[], i;
     for(i=0;i<cells.length;i++){
       var el=cells[i]; if(el.classList.contains("free")) continue;
       var sp=el.querySelector(".ct"); if(!sp) continue;
-      sp.style.transform=""; todo.push({ el:el, sp:sp });
+      sp.style.transform="";
+      var cs=getComputedStyle(el);
+      todo.push({ el:el, sp:sp, W:el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight), H:el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom) });
     }
     if(!todo.length) return;
-    /* A bigger text size chosen (cz, the plus on the card or in the menu) also lifts the floor, up to 15px, so "+" still
-       does something on a card with one long word: that one word is narrowed whole (step 3's last part), never split. */
-    var top=FIT_MAX*cz, min=FIT_MIN*cz, floor=Math.min(FIT_FLOOR*cz, FIT_MIN), size=0, aw=1, s;
-    /* 1. the screen's width: the biggest one size, 15px or more */
-    setAw(grid, 1);
-    for(s=top; s>=min; s-=0.5){ if(cardFits(todo, s)){ size=s; break; } }
-    /* 2. wider, a step at a time, at 15px */
-    if(!size){
-      for(aw=1+WIDEN_STEP; aw<=WIDEN_MAX+0.001; aw=Math.round((aw+WIDEN_STEP)*10)/10){
-        setAw(grid, aw);
-        if(cardFits(todo, min)){ size=min; break; }
-      }
-      if(!size) aw=WIDEN_MAX;
+    /* A bigger text size chosen (cz, the plus on the card or in the menu) raises every square's top size and lifts the
+       floor, up to 15px, so "+" still does something for a square with one long word: that word is narrowed whole. */
+    var top=FIT_MAX*cz, floor=Math.min(FIT_FLOOR*cz, FIT_MIN), sizes=[], s, size;
+    for(i=0;i<todo.length;i++){
+      var t=todo[i]; size=0;
+      for(s=top; s>=floor; s-=0.5){ if(fitAt(t, s)){ size=s; break; } }
+      if(!size){ size=floor; fitAt(t, floor); squeeze(t); }
+      t.el.style.setProperty("--tick", _tick+"px");   // the tick this square was fitted with
+      t.el._fit=size; sizes.push(size);
     }
-    /* 3. still not: the whole card smaller, evenly */
-    if(!size){
-      setAw(grid, WIDEN_MAX);
-      for(s=min-0.5; s>=floor; s-=0.5){ if(cardFits(todo, s)){ size=s; break; } }
-      if(!size){
-        size=floor; cardFits(todo, floor);
-        /* A WORD NO PHONE CAN HOLD ("Supercalifragilisticexpialidocious", 34 letters): at the floor on the widest card,
-           that one word is narrowed whole, never split and never spilling out of its square. */
-        for(i=0;i<todo.length;i++){
-          var t=todo[i], tcs=getComputedStyle(t.el), tW=t.el.clientWidth-parseFloat(tcs.paddingLeft)-parseFloat(tcs.paddingRight);
-          if(t.sp.offsetWidth>tW+0.5) t.sp.style.transform="scaleX("+Math.max(0.3, tW/t.sp.offsetWidth).toFixed(3)+")";
-        }
-        /* A TITLE TOO LONG FOR ITS SQUARE EVEN AT THE FLOOR (option C on a small phone, 12 Nov 2026: "You Took the Words
-           Right Out of My Mouth" at 375x664): that one title is drawn a little smaller, whole, inside its square and clear of
-           the tick, never cut; the rest of the card keeps the floor size. */
-        for(i=0;i<todo.length;i++){
-          var u=todo[i], ucs=getComputedStyle(u.el), uH=u.el.clientHeight-parseFloat(ucs.paddingTop)-parseFloat(ucs.paddingBottom);
-          if(u.sp.offsetHeight<=uH+0.5 && clearOfTick(u.el, u.sp)) continue;
-          var bx=u.sp.style.transform||"";
-          for(var f=0.95; f>=0.6; f-=0.05){ u.sp.style.transform=(bx?bx+" ":"")+"scale("+f.toFixed(2)+")"; if(u.sp.offsetHeight*f<=uH+0.5 && clearOfTick(u.el, u.sp)) break; }
-        }
-      }
-    }
-    grid._fit=size;
-    grid.style.setProperty("--tick", _tick+"px");
-    for(i=0;i<cells.length;i++){ cells[i]._fit=size; if(cells[i].classList.contains("free")) cells[i].style.fontSize=size+"px"; }
+    sizes.sort(function(a,b){ return a-b; });
+    var mid=sizes[Math.floor(sizes.length/2)];
+    grid._fit=sizes[0];
+    for(i=0;i<cells.length;i++){ if(cells[i].classList.contains("free")){ cells[i]._fit=mid; cells[i].style.fontSize=mid+"px"; } }
     paintHint();
   }
   (function(){

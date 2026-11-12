@@ -511,8 +511,12 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             ok('%s card: every title inside its tile, never cut' % tag, all(c['free'] or (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1) for c in C), [c['txt'] for c in C if not c['free'] and not (inside(c['t'], c['r'], 1) and c['sw'] <= c['cw'] + 1)])
             ww = [c for c in C if c['txt'] == 'Wonderwall'][0]
             ok('%s card: no hyphen anywhere, ever (Dean, 10 Nov 2026): Wonderwall whole' % tag, not any('­' in c['txt'] for c in C) and ww['txt'] == 'Wonderwall', repr(ww['txt']))
-            # one size for the whole card; a long single word ("Wonderwall") brings it under 15px since nothing is swiped (12 Nov 2026)
-            ok('%s card: one size for every title and Free, 10px to 20px (option C, Dean via main INBOX 323)' % tag, len(set(c['fs'] for c in C)) == 1 and 10 <= C[0]['fs'] <= 20, sorted(set(c['fs'] for c in C)))
+            # REPINNED 12 Nov 2026 (Dean via main INBOX 337, 12 Nov): was "one size for every title and Free, 10px to 20px".
+            # Every square now takes the biggest size that fits its own title; only Wonderwall's square goes small, never the card.
+            ts = sorted(c['fs'] for c in C if not c['free']); mid = ts[len(ts) // 2]
+            ww_fs = [c['fs'] for c in C if c['txt'] == 'Wonderwall'][0]
+            ok('%s card: every title 10px to 20px, sized per square (Wonderwall %spx, the biggest %spx), Free at the middle size (INBOX 337)' % (tag, ww_fs, ts[-1]),
+               10 <= ts[0] and ts[-1] <= 20 and ts[-1] >= ww_fs + 3 and abs(C[12]['fs'] - mid) < 0.01, [ts, C[12]['fs']])
             ok('%s card: Free in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
         bt = cd.get('btn') or {}
         ok('%s card: the claim is a pink pill saying the pattern, "I\'ve got a line", faint before the marks make a line' % tag, bt.get('text') == "I've got a line" and bt.get('faint') is True and float((bt.get('rad') or '0px').replace('px', '')) >= 28, bt)

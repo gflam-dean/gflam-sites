@@ -191,8 +191,10 @@ def musical(r):
     # REPINNED 12 Nov 2026 (option C, Dean via main INBOX 323; tools/MUSICAL-CARD-DECISION.md): all five columns on one
     # screen, no swipe, so a card with Wonderwall goes down EVENLY, one size, never under 10px; only at 10px may a word
     # too wide for its square be narrowed (whole, never split). Was: "half of them 15px or more ... none squashed".
-    ok('390 x 690: the song titles are one size, never under 10px, all five columns on screen; a word is narrowed only at 10px',
-       sz.get('n') == 24 and sz.get('min', 0) >= 10 and sz.get('min') == sz.get('median') and (not sz.get('squashed') or sz.get('min') <= 10) and sz.get('right', 9999) <= 390 - 16 + 1, sz)
+    # REPINNED AGAIN 12 Nov 2026 (Dean via main INBOX 337, 12 Nov: fit PER SQUARE, not the whole card): was "one size
+    # (min == median)". Now each square has its own biggest size, so the middle title is bigger than the long word's square.
+    ok('390 x 690: the song titles are sized per square (the middle one bigger than the smallest), never under 10px, all five columns on screen; a word is narrowed only at 10px',
+       sz.get('n') == 24 and sz.get('min', 0) >= 10 and sz.get('median', 0) >= sz.get('min', 0) + 2 and (not sz.get('squashed') or sz.get('min') <= 10) and sz.get('right', 9999) <= 390 - 16 + 1, sz)
     # 4 Nov 2026 (the new look): the size and full screen controls moved into the menu sheet (Text size A / A, Full screen),
     # and the claim is a pink pill, faint until the player's marks make the pattern (Dean, 3 Nov 2026).
     r.ask(m, 'document.getElementById("menuBtn").click(); true'); time.sleep(0.4)
