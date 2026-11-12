@@ -120,7 +120,7 @@ for p, e in sorted(man.items()):
     fp = os.path.join(ROOT, p)
     h = hashlib.sha256(open(fp, 'rb').read()).hexdigest() if os.path.isfile(fp) else None
     ok('%s is the file copied from %s' % (p, e['from']), h == e['sha256'], h)
-    ok('%s has its licence beside it' % p, os.path.isfile(os.path.join(ROOT, e['licence'])) and 'Permission is hereby granted' in io.open(os.path.join(ROOT, e['licence']), encoding='utf-8').read(), e['licence'])
+    ok('%s has its licence beside it' % p, os.path.isfile(os.path.join(ROOT, e['licence'])) and any(w in io.open(os.path.join(ROOT, e['licence']), encoding='utf-8').read() for w in ('Permission is hereby granted', 'Apache License')), e['licence'])   # MIT, or Apache 2.0 (jsQR, 13 Nov 2026: the host's card scanner)
 
 print('\nEVERY CHROME RIG SWAPS THE ADDRESS THE PAGES LOAD FOR ITS STAND-IN')
 want = set(supa)

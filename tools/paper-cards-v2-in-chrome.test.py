@@ -89,6 +89,7 @@ MEASURE = r'''(function(){
       vlLeft:vr.left, brRight:br.right, vlTop:vr.top, frameBottomEdge:fr.bottom,
       qrBox:qrr?{l:qrr.left,t:qrr.top,r:qrr.right,b:qrr.bottom,w:mm(qrr.width)}:null, grid:{l:g.left,t:g.top,r:g.right,b:g.bottom},
       cells:cells.length, small:small, over:over, minpt:Math.min.apply(null,sizes),
+      cols:(function(){var L={},T={};c.querySelectorAll(".pcgrid .cell").forEach(function(e){var r=e.getBoundingClientRect();L[Math.round(r.left)]=1;T[Math.round(r.top)]=1;});return [Object.keys(L).length,Object.keys(T).length];})(),
       free:!!c.querySelector(".cell.free"), cardW:mm(c.getBoundingClientRect().width), cardH:mm(c.getBoundingClientRect().height),
       svg:qr?qr.querySelector("svg").outerHTML:""
     });
@@ -146,7 +147,7 @@ try:
     S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
     S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
     time.sleep(1.2)
-    m = json.loads(S.js(sid, MEASURE))
+    m = S.json(sid, MEASURE, {})
     c0, c1 = m['cards'][0], m['cards'][1]
     ok('one A4 landscape sheet holds both cards, each 148.5 x 210 mm', m['sheets'] == 1 and len(m['cards']) == 2 and all(abs(c['cardW'] - 148.5) < 0.6 and abs(c['cardH'] - 210) < 0.6 for c in m['cards']),
        [(c['cardW'], c['cardH']) for c in m['cards']])
@@ -157,7 +158,7 @@ try:
            'Pub Classics' in t and ('%02d' % (7 + n)) in t and 'Printed Mon 16 Nov' in t, t[:200])
         ok('%s: no pattern named, no "bingo", no "Gflam", no em dash' % tag, not BANNED.search(t), sorted(set(x.group(0) for x in BANNED.finditer(t))))
         ok('%s: says hand up, show the card to the host (a winner claims from the host)' % tag, 'show this card to the host' in t and 'Hand up' in t)
-        ok('%s: 24 song squares and the FREE centre' % tag, c['cells'] == 24 and c['free'])
+        ok('%s: 24 song squares and the FREE centre, laid out five across and five down' % tag, c['cells'] == 24 and c['free'] and c['cols'] == [5, 5], c['cols'])
         ok('%s: every title fits its own square, none is under 11 pt unless it is one long word' % tag,
            not c['over'] and all(('Thunderstruck' in s or 'Wonderwall' in s) for s in c['small']), (c['over'], c['small']))
         ok('%s: the QR is 26 mm and sits outside the song grid (dabber ink never lands on it)' % tag,
@@ -188,7 +189,7 @@ try:
     S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
     S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
     time.sleep(1.2)
-    m2 = json.loads(S.js(sid, MEASURE))
+    m2 = S.json(sid, MEASURE, {})
     d0 = m2['cards'][0]
     ok('with the venue\'s own logo: it is the picture, its left edge on the curve end, and the name text is not used',
        'class="vlogo"' in d0['html'] and 'class="vname"' not in d0['html'] and abs(d0['vlLeft'] - (d0['frameLeft'] + d0['rad'])) <= 1.0, (d0['vlLeft'], d0['frameLeft'] + d0['rad']))
@@ -222,7 +223,7 @@ try:
         for name, res in STATES.items():
             S.js(sid, 'VPPaperCheck.show(%s); true' % json.dumps(res))
             time.sleep(0.25)
-            v = json.loads(S.js(sid, SCREEN))
+            v = S.json(sid, SCREEN, {})
             tag = '%s at %d' % (name, w)
             ok('%s: one screen, nothing clipped and no scroll' % tag,
                v['panelScroll'] <= v['panelClient'] + 1 and v['lastBottom'] <= v['vh'] + 1 and v['docX'] <= v['vw'] + 1, (v['panelScroll'], v['panelClient'], v['lastBottom'], v['vh'], v['docX'], v['vw']))

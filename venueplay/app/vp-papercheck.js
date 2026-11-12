@@ -16,7 +16,7 @@
    just added to the claims list, confirm(index), typed() }). */
 (function (root) {
   "use strict";
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function plural(n, one, many) { return n === 1 ? one : many; }
   function togo(n) { return n === 1 ? "one song to go" : (n === 2 ? "two songs to go" : n + " songs to go"); }
@@ -122,18 +122,18 @@
     ".ppc,.ppc *{box-sizing:border-box}" +
     ".ppc{position:fixed;inset:0;z-index:70;background:radial-gradient(1200px 600px at 80% -10%,rgba(255,31,142,.10),transparent 60%),#0A0A0B;color:#E7E7EC;display:flex;flex-direction:column;align-items:center;overflow:hidden;font-family:'Manrope',system-ui,sans-serif}" +
     ".ppc.hidden{display:none}" +
-    ".ppc .top{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.10)}" +
-    ".ppc .top .h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px}" +
+    ".ppc .ppctop{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.10)}" +
+    ".ppc .ppctop .h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px}" +
     ".ppc .x{width:44px;height:44px;border-radius:10px;background:#17171A;border:1px solid rgba(255,255,255,.10);color:#9A9AA4;font-size:18px;cursor:pointer}" +
-    ".ppc .panel{width:100%;max-width:560px;padding:16px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow:hidden}" +
-    ".ppc .res{background:#121214;border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:16px}" +
+    ".ppc .ppcpanel{width:100%;max-width:560px;padding:16px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow:hidden}" +
+    ".ppc .ppcres{background:#121214;border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:16px}" +
     ".ppc .badge{display:inline-flex;align-items:center;gap:6px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;border-radius:999px;padding:5px 11px;background:#17171A;color:#E7E7EC;border:1px solid rgba(255,255,255,.10)}" +
     ".ppc .yes{border-color:rgba(31,162,90,.5)}.ppc .yes .badge{background:rgba(31,162,90,.16);color:#5BD08F;border-color:rgba(31,162,90,.5)}" +
     ".ppc .bad{border-color:rgba(229,72,77,.55)}.ppc .bad .badge{background:rgba(229,72,77,.16);color:#FF8589;border-color:rgba(229,72,77,.55)}" +
     ".ppc .t{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;line-height:1.2;color:#fff;margin-top:10px}" +
     ".ppc .s{font-size:14px;color:#9A9AA4;margin-top:4px;line-height:1.45}.ppc .s b{color:#E7E7EC}" +
     ".ppc .w{font-size:14px;color:#FF8589;font-weight:700;margin-top:10px;line-height:1.4}" +
-    ".ppc .row{display:flex;gap:14px;align-items:flex-start;margin-top:14px}" +
+    ".ppc .ppcrow{display:flex;gap:14px;align-items:flex-start;margin-top:14px}" +
     ".ppc .map{display:grid;grid-template-columns:repeat(5,12px);gap:3px;flex:none;margin-top:3px}" +
     ".ppc .map i{width:12px;height:12px;border-radius:2px;background:#2A2A30}.ppc .map i.p{background:#4A4A52}.ppc .map i.w{background:#FF1F8E}.ppc .map i.f{background:#fff}" +
     ".ppc ol{list-style:none;flex:1;min-width:0}" +
@@ -142,12 +142,12 @@
     ".ppc .btnrow{display:flex;gap:10px}" +
     ".ppc .b{flex:1;border:none;border-radius:10px;padding:16px 12px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;text-align:center;min-height:52px;cursor:pointer}" +
     ".ppc .b.pink{background:#FF1F8E;color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}.ppc .b.ghost{background:#17171A;color:#E7E7EC;border:1px solid rgba(255,255,255,.10)}" +
-    ".ppc .foot{font-size:13px;color:#9A9AA4;text-align:center}.ppc .foot u{color:#E7E7EC;text-decoration-color:#FF1F8E;text-underline-offset:3px;cursor:pointer}" +
+    ".ppc .ppcfoot{font-size:13px;color:#9A9AA4;text-align:center}.ppc .ppcfoot u{color:#E7E7EC;text-decoration-color:#FF1F8E;text-underline-offset:3px;cursor:pointer}" +
     ".ppc .cam{position:relative;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.10);flex:1;min-height:0;display:flex;align-items:center;justify-content:center}" +
     ".ppc .cam video{width:100%;height:100%;object-fit:cover}" +
     ".ppc .cam .aim{position:absolute;inset:0;margin:auto;width:62%;aspect-ratio:1;max-height:78%;border:3px solid #FF1F8E;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}" +
     ".ppc .say{font-size:14px;color:#9A9AA4;text-align:center;line-height:1.45}" +
-    "@media (min-width:700px){.ppc .panel{max-width:620px;padding:28px 16px;gap:18px}.ppc .res{padding:22px}.ppc .t{font-size:28px}.ppc .s{font-size:16px}.ppc ol li{font-size:17px;padding:7px 0}.ppc .map{grid-template-columns:repeat(5,16px)}.ppc .map i{width:16px;height:16px}.ppc .b{font-size:17px;min-height:60px}.ppc .foot{font-size:15px}.ppc .top .h{font-size:18px}}" +
+    "@media (min-width:700px){.ppc .ppcpanel{max-width:620px;padding:28px 16px;gap:18px}.ppc .ppcres{padding:22px}.ppc .t{font-size:28px}.ppc .s{font-size:16px}.ppc ol li{font-size:17px;padding:7px 0}.ppc .map{grid-template-columns:repeat(5,16px)}.ppc .map i{width:16px;height:16px}.ppc .b{font-size:17px;min-height:60px}.ppc .ppcfoot{font-size:15px}.ppc .ppctop .h{font-size:18px}}" +
     ".plcard.pplock{opacity:.4;cursor:not-allowed}.plcard.pplock.on{opacity:1}" +
     ".pplockbar{margin:0 0 12px;padding:11px 14px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:#17171A;font-size:14px;line-height:1.45;color:#E7E7EC}" +
     ".pplockbar b{color:#fff}";
@@ -164,7 +164,7 @@
     if (el) return;
     var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
     el = document.createElement("div"); el.className = "ppc hidden"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Paper card check");
-    el.innerHTML = '<div class="top"><div class="h">Paper card check</div><button type="button" class="x" aria-label="Close" data-a="close">&#x2715;</button></div><div class="panel" id="ppcPanel"></div>';
+    el.innerHTML = '<div class="ppctop"><div class="h">Paper card check</div><button type="button" class="x" aria-label="Close" data-a="close">&#x2715;</button></div><div class="ppcpanel" id="ppcPanel"></div>';
     document.body.appendChild(el);
     el.addEventListener("click", function (e) {
       var a = e.target.getAttribute && e.target.getAttribute("data-a"); if (!a) return;
@@ -189,7 +189,7 @@
     });
   }
   function sayNoCamera(why) {
-    panel().innerHTML = '<div class="res bad"><span class="badge">Camera is off</span><div class="t">Can\'t open the camera</div><div class="s">' + esc(why) +
+    panel().innerHTML = '<div class="ppcres bad"><span class="badge">Camera is off</span><div class="t">Can\'t open the camera</div><div class="s">' + esc(why) +
       " Allow the camera for this page in your browser, or type the card number instead.</div></div>" +
       '<div class="btnrow"><button type="button" class="b pink" data-a="type">Type its number</button><button type="button" class="b ghost" data-a="again">Try the camera again</button></div>';
   }
@@ -197,7 +197,7 @@
     build(); stopCamera(); busy = false;
     el.classList.remove("hidden");
     panel().innerHTML = '<div class="cam"><video playsinline muted autoplay></video><div class="aim"></div></div><div class="say">Hold the card so the square code on it fills the pink box.</div>' +
-      '<div class="foot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
+      '<div class="ppcfoot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { sayNoCamera("This browser has no camera access."); return; }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (s) {
       stream = s;
@@ -228,34 +228,36 @@
     }
   }
   function asked(code) {
-    panel().innerHTML = '<div class="res"><span class="badge">Checking</span><div class="t">Checking the card...</div></div>';
+    panel().innerHTML = '<div class="ppcres"><span class="badge">Checking</span><div class="t">Checking the card...</div></div>';
     Promise.resolve(opts.scan(code)).then(function (res) { show(res); }, function (e) {
       show({ state: "error", message: e && e.message ? e.message : "Could not check that card." });
     });
   }
   function show(res) {
     if (res && res.state === "error") {
-      panel().innerHTML = '<div class="res bad"><span class="badge">Not checked</span><div class="t">That did not go through</div><div class="s">' + esc(res.message) + "</div></div>" +
+      panel().innerHTML = '<div class="ppcres bad"><span class="badge">Not checked</span><div class="t">That did not go through</div><div class="s">' + esc(res.message) + "</div></div>" +
         '<div class="btnrow"><button type="button" class="b pink" data-a="again">Scan another</button><button type="button" class="b ghost" data-a="back">Back to the game</button></div>' +
-        '<div class="foot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
+        '<div class="ppcfoot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
       return;
     }
     lastWinIdx = -1;
     if (res && res.state === "win" && opts.onWin) lastWinIdx = opts.onWin(res);
     var d = describe(res, { pattern: opts.pattern ? opts.pattern() : "" });
     var rows = d.list.map(function (r) { return "<li><span>" + esc(r[0]) + "</span><span>" + esc(r[1]) + "</span></li>"; }).join("");
-    var body = '<div class="res ' + d.tone + '"><span class="badge">' + d.badge + '</span><div class="t">' + esc(d.title) + '</div><div class="s">' + d.sub + "</div>" +
+    var body = '<div class="ppcres ' + d.tone + '"><span class="badge">' + d.badge + '</span><div class="t">' + esc(d.title) + '</div><div class="s">' + d.sub + "</div>" +
       (d.warn ? '<div class="w">' + d.warn + "</div>" : "") +
-      ((d.win.length || d.played.length || rows) ? '<div class="row">' + ((d.win.length || d.played.length) ? mapHtml(d) : "") + (rows ? "<ol>" + rows + "</ol>" : "") + "</div>" : "") + "</div>";
+      ((d.win.length || d.played.length || rows) ? '<div class="ppcrow">' + ((d.win.length || d.played.length) ? mapHtml(d) : "") + (rows ? "<ol>" + rows + "</ol>" : "") + "</div>" : "") + "</div>";
     var btns = d.first === "confirm"
       ? '<button type="button" class="b pink" data-a="confirm">Confirm winner</button><button type="button" class="b ghost" data-a="again">Scan another</button>'
       : (d.state === "no_game" ? '<button type="button" class="b pink" data-a="back">Back to the game</button><button type="button" class="b ghost" data-a="again">Scan another</button>'
         : '<button type="button" class="b pink" data-a="again">Scan another</button><button type="button" class="b ghost" data-a="back">Back to the game</button>');
-    panel().innerHTML = body + '<div class="btnrow">' + btns + '</div><div class="foot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
+    panel().innerHTML = body + '<div class="btnrow">' + btns + '</div><div class="ppcfoot">Card won\'t scan? <u data-a="type">Type its number</u></div>';
   }
 
   api.init = function (o) { opts = o || {}; build(); };
   api.open = function () { if (!opts) return; startCamera(); };
   api.close = close;
+  /* Check a code that was read some other way (and the way a test feeds the screen): the same path a camera read takes. */
+  api.check = function (code) { if (!opts) return; build(); stopCamera(); el.classList.remove("hidden"); asked(code); };
   api.show = function (res) { build(); el.classList.remove("hidden"); show(res); };
 })(typeof window !== "undefined" ? window : this);

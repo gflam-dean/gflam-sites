@@ -383,6 +383,14 @@
   "checks": 53,
   "counted_by": "lines"
  },
+ "tools/paper-cards-v2-in-chrome.test.py": {
+  "checks": 179,
+  "counted_by": "lines"
+ },
+ "tools/paper-lock-in-chrome.test.py": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -991,6 +999,10 @@
   "checks": 5,
   "counted_by": "lines"
  },
+ "tools/test-paper-cards-v2.js": {
+  "checks": 79,
+  "counted_by": "lines"
+ },
  "tools/test-paper-is-for-bingo-only.js": {
   "checks": 12,
   "counted_by": "lines"
@@ -1001,6 +1013,10 @@
  },
  "tools/test-paper-players.js": {
   "checks": 47,
+  "counted_by": "lines"
+ },
+ "tools/test-paper-scan-screens.js": {
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/test-paper-score-held.js": {
