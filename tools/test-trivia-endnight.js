@@ -155,7 +155,7 @@ function tvRig(opts) {
   var src = 'var curQ=null, celebrateTimer=null, answeredPids={}, ringTimer=null, boardRollTimer=null, FIN=null, BOARD_PAGE_MS=10000, boardPageTimer=null, TV_BOARD_ROWS=10, joinCode="", _prBoard=null, _endSaw=false, _ac=null;\n' +
     'var HOST_TYPES={}; var BUZZ={ on:false, said:"" };\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function applyColour(){} function unlockAudio(){} function paintNight(){} function alignTitle(){}\n' +
-    'function celebrate(){ celebrateHook(); } function triviaEndShow(){} function timesUp(){} function noteHost(){} function tvSend(){} function cancelBackToAds(){} function scheduleBackToAds(){}\n' +
+    'function celebrate(){ celebrateHook(); } function triviaEndShow(){} function timesUp(){} function answerUp(){} function noteHost(){} function tvSend(){} function cancelBackToAds(){} function scheduleBackToAds(){}\n' +
     'function renderLobby(){} function renderPaper(){} function drawLobbyQR(){} function paintLobbyName(){} function paintAnsOf(){} function countKeys(){ return 0; }\n' +
     'function renderQuestion(m){ curQ={ qseq:m.qseq, options:m.options||[], text:m.text||"" }; show("tvQ"); }\n' +
     liftAll(SCREEN, ['show', 'stopBoardPaging', 'qClass', 'ansLenClass', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries',
