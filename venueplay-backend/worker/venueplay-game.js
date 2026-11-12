@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Nov 2026, 12:51 · 77427a53';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 13:22 · 3ed8c697';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2704,6 +2704,7 @@ let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migrat
 const COASTER_BANK_URL = 'https://venueplay.com.au/data/live-here-now.json';   // the page's own question file
 const COASTER_BASE = 100;            // points for a right answer, as a trivia night's default
 const COASTER_SECS = 20;             // the speed bonus window, as a trivia night's default question
+const COASTER_LATE_MS = 3000;        // the Time's up moment and the network, after a question's 20 seconds
 const COASTER_REVEAL_MS = 1300;      // the page shows right or wrong this long before the next question
 const COASTER_ROUND = 5;
 const COASTER_KEEP_DAYS = 35;        // rounds are deleted after this; "This week" needs 7
@@ -3042,12 +3043,12 @@ async function coasterBoard(env, board, period, key, playId) {
   };
 }
 
-/* POST /coaster/answer { play, token, i, a } */
+/* POST /coaster/answer { play, token, i, a }   a is 0-3, or -1 when the question's 20 seconds ran out (INBOX 310/312) */
 async function handleCoasterAnswer(request, env, json) {
   const b = await readJson(request);
   const playId = assertUuid(String(b.play || ''), 'round');
   const i = Number(b.i), a = Number(b.a);
-  if (!Number.isInteger(i) || i < 0 || i >= COASTER_ROUND || !Number.isInteger(a) || a < 0 || a > 3) return json({ error: 'Which answer?' }, 400);
+  if (!Number.isInteger(i) || i < 0 || i >= COASTER_ROUND || !Number.isInteger(a) || a < -1 || a > 3) return json({ error: 'Which answer?' }, 400);
   if (!(await coasterLimit(request, env, 'answer', COASTER_ANSWER_MAX_PER_IP, 600))) return json({ error: 'Too many answers from this network. Wait a few minutes.' }, 429);
   try {
     const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=*&limit=1'))[0];
@@ -3059,9 +3060,13 @@ async function handleCoasterAnswer(request, env, json) {
     if (right === undefined) return json({ error: 'That question is not on the coaster any more.' }, 409);
     const now = Date.now();
     const shownAt = Date.parse(row.asked_at) + (i === 0 ? 0 : COASTER_REVEAL_MS);
-    const correct = a === right;
+    /* The phone's ring gives each question 20 seconds, then "Time's up!" (INBOX 310/312). An answer later than that
+       (plus COASTER_LATE_MS for the moment and the network) scores as time's up, never as a slow right answer. */
+    const late = now - shownAt > COASTER_SECS * 1000 + COASTER_LATE_MS;
+    const correct = !late && a === right;
     const pts = triviaAnswerPoints(correct, COASTER_BASE, COASTER_SECS, true, 1, shownAt + COASTER_SECS * 1000, now);
-    const took = Math.max(0, Math.min(120000, now - shownAt));
+    /* A question's time is at most its own 20 seconds (INBOX 311: "Done in 2062 seconds"), as the page's ring. */
+    const took = Math.max(0, Math.min(COASTER_SECS * 1000, now - shownAt));
     const last = i === COASTER_ROUND - 1;
     const patch = {
       answers: done.concat([a]), points: (row.points || 0) + pts, correct: (row.correct || 0) + (correct ? 1 : 0),

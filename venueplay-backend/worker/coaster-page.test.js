@@ -121,6 +121,29 @@ var ans = PAGE.slice(PAGE.indexOf("  function answer(i) {"), PAGE.indexOf("  /* 
 pass("each answer goes to /coaster/answer with only the round, its secret, the question and the letter", /call\('POST', '\/coaster\/answer', \{ play: S\.play, token: S\.token, i: n, a: i \}/.test(ans));
 pass("a board that stops answering mid-round finishes the round on the phone", /S\.mode = 'local';      \/\/ the board went away mid-round/.test(ans));
 
+print("\nTHE TIME (INBOX 310/311: 'Done in 2062 seconds' on a 60-second round)");
+var secsW = /const COASTER_SECS = (\d+);/.exec(GAME);
+pass("the ring's 20 seconds a question is the Worker's own", !!secsW && +secsW[1] === L.QUESTION_SECS && L.QUESTION_SECS === 20, secsW && secsW[1]);
+pass("a question's time is shown to tapped: 4.2 s", L.tookMs(1000, 5200) === 4200);
+pass("...never more than its 20 seconds (a phone left on the table for 34 minutes)", L.tookMs(1000, 1000 + 2062000) === 20000);
+pass("...and never less than nothing (a clock that went backwards)", L.tookMs(5000, 1000) === 0);
+pass("the round's time is the five added up: 2 + 10 + 5 + 20 + 4 = 41 s", L.roundSecs([2000, 10000, 5000, 20000, 4000]) === 41);
+pass("five questions can never come to more than 100 seconds, whatever is passed in", L.roundSecs([2062000, 99999999, 20000, 20000, 20000]) === 100);
+pass("the ring reads 20 at the start, 15 after 5 s, 0 at 20 s and after", L.secsLeft(0, 0) === 20 && L.secsLeft(0, 5000) === 15 && L.secsLeft(0, 20000) === 0 && L.secsLeft(0, 99000) === 0);
+pass("'Done in 41 seconds.' and 'Done in 1 second.'", L.doneLine(41) === "Done in 41 seconds." && L.doneLine(1) === "Done in 1 second.");
+var fin = PAGE.slice(PAGE.indexOf("  function finish() {"), PAGE.indexOf("  function paintBoard("));
+pass("the end's time is the questions' own times added up (roundSecs of tooks), never a start time from page load or a visit",
+  /L\.doneLine\(L\.roundSecs\(tooks\)\)/.test(fin) && !/startedAt|stoppedAt|secs\(\)/.test(PAGE), fin.slice(0, 200));
+var ansFn = PAGE.slice(PAGE.indexOf("  function answer(i) {"), PAGE.indexOf("  /* 4. THE END */"));
+pass("each answer keeps that question's own time, from when it was shown", /tooks\.push\(L\.tookMs\(shownAt, Date\.now\(\)\)\);/.test(ansFn) && /shownAt = Date\.now\(\);/.test(PAGE.slice(PAGE.indexOf("  function show() {"), PAGE.indexOf("  function tag("))));
+pass("tooks start empty for every round", /results = \[\]; total = 0; ended = null; tooks = \[\];/.test(PAGE));
+pass("the ring is the trivia phone's (one copy: /app/vp-qring.css and vp-qring.js, also loaded by the trivia phone)",
+  /<link rel="stylesheet" href="\/app\/vp-qring\.css">/.test(PAGE) && /<script src="\/app\/vp-qring\.js"><\/script>/.test(PAGE) && /id="pqRing"/.test(PAGE) &&
+  PAGE.indexOf(".pq-ring{") < 0 && /window\.VPQRing\.paint\(\$\('pqRing'\), \$\('pqCdNum'\)/.test(PAGE));
+pass("when the ring hits 0: Time's up, then the answer is sent as -1 (the Worker's time's up)",
+  /if \(left <= 0\) \{ clearInterval\(ticker\); timeUp\(\); \}/.test(PAGE) && /window\.VPQRing\.timesUp\(\);\n    setTimeout\(function \(\) \{ answer\(-1\); \}, 900\);/.test(PAGE));
+pass("Time's up reads as such, not 'Not quite'", L.verdict(null, 0).text === "Time's up" && L.verdict(false, 0).text === "Not quite");
+
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
 var small = (css.match(/font-size:\s*(\d+(?:\.\d+)?)px/g) || []).filter(function (x) { return parseFloat(x.replace(/[^\d.]/g, "")) < 15; });

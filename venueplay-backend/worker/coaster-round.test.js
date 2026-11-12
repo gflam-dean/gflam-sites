@@ -486,6 +486,30 @@ step(function () {
 });
 
 step(function () {
+  print("\nTHE RING RUNS OUT (INBOX 310-312): TIME'S UP IS AN ANSWER, AND NO QUESTION COUNTS MORE THAN ITS 20 SECONDS");
+  fresh(); NOW = FRI_830PM;
+  var q = five(0), R, start0;
+  return post(W.start, { name: "Kim", place: "v:" + V_MINI, qids: q }).then(function (r) {
+    R = r.body; start0 = NOW;
+    NOW = start0 + 20900;   // the ring hit 0 at 20 s, the phone showed Time's up, then sent it
+    return post(W.answer, { play: R.play, token: R.token, i: 0, a: -1 });
+  }).then(function (r) {
+    var row = DB.vp_coaster_plays[0];
+    pass("the phone's Time's up (a -1) is taken: not right, no points", r.status === 200 && r.body.correct === false && r.body.points === 0 && row.answers[0] === -1, r.body);
+    pass("...and it counts as 20 seconds, not 20.9", row.ms_total === 20000, row.ms_total);
+    NOW = NOW + 1300 + 22000;   // a right answer 22 s in: inside the 3 s allowance for the moment and the network
+    return post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
+  }).then(function (r) {
+    pass("a right answer just after the ring (inside the allowance) still scores the base 100", r.body.correct === true && r.body.points === 100, r.body);
+    NOW = NOW + 1300 + 23500;
+    return post(W.answer, { play: R.play, token: R.token, i: 2, a: rightOf(q[2]) });
+  }).then(function (r) {
+    pass("a right answer 23.5 s in (past the allowance) scores as time's up", r.body.correct === false && r.body.points === 0, r.body);
+    pass("each of the three counts at most 20 seconds (60 s in all)", DB.vp_coaster_plays[0].ms_total === 60000, DB.vp_coaster_plays[0].ms_total);
+  });
+});
+
+step(function () {
   print("\nANSWERING: TIMED AND SCORED HERE, BY THE TRIVIA NIGHT'S OWN RULE");
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
@@ -532,14 +556,14 @@ step(function () {
     NOW = NOW + 1300 + 60000;
     return post(W.answer, { play: R.play, token: R.token, i: 3, a: rightOf(q[3]) });
   }).then(function (r) {
-    pass("a slow right answer (a minute: there is no countdown) still scores the base 100", r.body.points === 100, r.body);
-    pass("the running total comes back", r.body.total === 145 + 125 + 0 + 100, r.body.total);
+    pass("a right answer a minute late (the ring gave it 20 seconds) scores as time's up: nothing", r.body.points === 0 && r.body.correct === false, r.body);
+    pass("the running total comes back", r.body.total === 145 + 125 + 0 + 0, r.body.total);
     NOW = NOW + 1300 + 4000;
     return post(W.answer, { play: R.play, token: R.token, i: 4, a: rightOf(q[4]) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[0];
-    pass("the fifth answer finishes the round: 4 of 5, 510 points", r.body.done === true && r.body.score.correct === 4 && r.body.score.points === 510 && !!row.finished_at, r.body);
-    pass("the total time is the thinking time only (2 + 10 + 5 + 60 + 4 = 81 s)", row.ms_total === 81000 && r.body.score.secs === 81, row.ms_total);
+    pass("the fifth answer finishes the round: 3 of 5, 410 points", r.body.done === true && r.body.score.correct === 3 && r.body.score.points === 410 && !!row.finished_at, r.body);
+    pass("the total time is each question's own, at most its 20 seconds (2 + 10 + 5 + 20 + 4 = 41 s; INBOX 311, never 2062)", row.ms_total === 41000 && r.body.score.secs === 41, row.ms_total);
     pass("the round's place on tonight's board comes back with it: 1st", r.body.board && r.body.board.rank === 1 && r.body.board.period === "tonight", r.body.board);
     return post(W.answer, { play: R.play, token: R.token, i: 4, a: 0 });
   }).then(function (r) {
@@ -547,6 +571,9 @@ step(function () {
     return post(W.answer, { play: R.play, token: R.token, i: 5, a: 0 });
   }).then(function (r) {
     pass("a sixth question is refused", r.status === 400, r);
+    return post(W.answer, { play: R.play, token: R.token, i: 0, a: -2 });
+  }).then(function (r) {
+    pass("an answer below -1 is refused", r.status === 400, r);
     return post(W.answer, { play: "not-a-uuid", token: R.token, i: 0, a: 0 }).then(function (x) { return x; }, function (e) { return { status: e.status }; });
   }).then(function (r) {
     pass("a round id that is not an id is refused before the database", r.status === 400, r);

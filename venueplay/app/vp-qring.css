@@ -1,0 +1,23 @@
+/* THE QUESTION'S COUNTDOWN RING AND THE TIME'S UP MOMENT, one copy for every phone that asks a timed question:
+   the trivia phone (/app/trivia/play.html) and the drink coaster (/live-here-now). Moved here out of the trivia
+   phone on 12 Nov 2026 (INBOX 309.3/310: "the same timer ring as the trivia phone", Dean). Paint it with
+   VPQRing.paint (/app/vp-qring.js). A page may resize the ring in its own media rules. */
+.pq-ring{flex:none;position:relative;width:72px;height:72px}
+.pq-ring svg{position:absolute;left:0;top:0;width:100%;height:100%;transform:rotate(-90deg)}
+.pq-ring .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
+.pq-ring .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+.pq-ring .n{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.pq-ring .n b{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1}
+.pq-ring .n span{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+.pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
+.pq-cd{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* the words, for a screen reader; the ring shows the time */
+
+/* TIME'S UP (INBOX 312): the ring hits 0, "Time's up!" pops in the venueplay look for under a second, then the
+   page shows the right answer the way it always does. VPQRing.timesUp() adds and removes it. */
+.vpq-up{position:fixed;left:0;top:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.vpq-up b{font-family:'Anton',sans-serif;font-weight:400;font-size:56px;line-height:1;color:#fff;background:var(--pink,#FF1F8E);
+  padding:18px 28px;border-radius:20px;box-shadow:0 18px 50px -12px rgba(255,31,142,.6);animation:vpqUp .9s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes vpqUp{0%{transform:scale(.4) rotate(-6deg);opacity:0}35%{transform:scale(1.08) rotate(2deg);opacity:1}70%{transform:scale(1) rotate(0)}100%{transform:scale(1);opacity:0}}
+.vpq-mute{position:fixed;right:12px;bottom:12px;z-index:40;width:44px;height:44px;border-radius:50%;border:0;background:#1A1A1F;color:#fff;
+  font-size:20px;line-height:44px;text-align:center;padding:0;cursor:pointer}
+@media(prefers-reduced-motion:reduce){ .vpq-up b{animation:none} }

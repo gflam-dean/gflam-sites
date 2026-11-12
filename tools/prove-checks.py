@@ -15560,14 +15560,16 @@ MUTATIONS = [
      # Two locks keep one answer a question: this guard and the buttons going disabled. Each alone
      # holds, so the proof takes both out (the suite's late second tap must then show).
      '    if (results.length > at) return;     // one answer a question, however fast the thumb\n'
+     '    clearInterval(ticker);\n'
+     '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
-     '    if (results.length === round.length) { stoppedAt = Date.now(); paintClock(); }\n'
      '    for (var k = 0; k < btns.length; k++) {\n'
      '      btns[k].disabled = true;\n',
+     '    clearInterval(ticker);\n'
+     '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
-     '    if (results.length === round.length) { stoppedAt = Date.now(); paintClock(); }\n'
      '    for (var k = 0; k < btns.length; k++) {\n',
      'a second tap on an answered question changes the answer'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
@@ -15583,8 +15585,8 @@ MUTATIONS = [
      '<script src="/app/vp-analytics.js" defer></script>\n<script src="/app/vp-pixel.js" defer></script>',
      'the coaster page starts loading the Meta pixel on punters'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
-     "      $('scoreSub').innerHTML = 'Done in <b>' + s + ' second'",
-     "      $('scoreSub').innerHTML = 'Took <b>' + s + ' second'",
+     "  function doneLine(secs) { return 'Done in ' + secs + ' second' + (secs === 1 ? '' : 's') + '.'; }",
+     "  function doneLine(secs) { return 'Took ' + secs + ' second' + (secs === 1 ? '' : 's') + '.'; }",
      'with the board down, the end no longer says how long the round took'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
      '.ans .t{min-width:0;flex:1}',
@@ -15653,6 +15655,63 @@ MUTATIONS = [
      '/live         /live-here-now  302',
      'the second spelling (/live) is a temporary redirect, not a 301'),
     # /live-here-now v2: the page's own logic block, lifted and run (coaster-page.test.js).
+    # INBOX 310-312 (Dean 12 Nov 2026): the trivia phone's ring, 20 seconds a question, Time's up; the time is each question's own.
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '    return t > 0 ? Math.min(QUESTION_SECS * 1000, t) : 0;',
+     '    return t > 0 ? t : 0;',
+     'a phone left on the table between questions says "Done in 2062 seconds" again'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '    for (var i = 0; i < (tooks || []).length; i++) ms += Math.max(0, Math.min(QUESTION_SECS * 1000, +tooks[i] || 0));',
+     '    for (var i = 0; i < (tooks || []).length; i++) ms += Math.max(0, +tooks[i] || 0);',
+     'the round time can come to more than five questions of 20 seconds'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "      $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length",
+     "      $('scoreSub').textContent = L.doneLine(Math.round((Date.now() - window.__t0) / 1000)) + ' ' + (right === round.length",
+     'the end time is counted from a start kept elsewhere, not the questions\' own times'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '    tooks.push(L.tookMs(shownAt, Date.now()));\n',
+     '',
+     'the questions\' own times are never kept, so the end says Done in 0 seconds'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '    shownAt = Date.now();\n    clearInterval(ticker);\n    tick();',
+     '    clearInterval(ticker);\n    tick();',
+     'a question\'s time starts from the first question, not from when it was shown'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '  var QUESTION_SECS = 20;',
+     '  var QUESTION_SECS = 30;',
+     'the phone\'s ring and the Worker\'s scoring window disagree'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '  function secsLeft(shownAt, now) { return Math.max(0, Math.ceil((QUESTION_SECS * 1000 - ((+now) - (+shownAt))) / 1000)); }',
+     '  function secsLeft(shownAt, now) { return Math.ceil((QUESTION_SECS * 1000 - ((+now) - (+shownAt))) / 1000); }',
+     'the ring counts below zero and never runs out'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     '    if (left <= 0) { clearInterval(ticker); timeUp(); }',
+     '    if (left < 0) { clearInterval(ticker); timeUp(); }',
+     'the ring hits 0 and nothing happens: no Time\'s up, the question waits for ever'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "    window.VPQRing.timesUp();\n    setTimeout(function () { answer(-1); }, 900);",
+     "    setTimeout(function () { answer(-1); }, 900);",
+     'the ring runs out with no Time\'s up moment'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "    if (good === null) return { text: \"Time's up\", pts: '' };\n",
+     '',
+     'running out of time reads as a wrong answer, Not quite'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "results = []; total = 0; ended = null; tooks = [];",
+     "results = []; total = 0; ended = null;",
+     'Play again adds the last round\'s times to the new one'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '    const took = Math.max(0, Math.min(COASTER_SECS * 1000, now - shownAt));',
+     '    const took = Math.max(0, Math.min(120000, now - shownAt));',
+     'the board\'s time counts a question as up to two minutes, not its 20 seconds'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '    const correct = !late && a === right;',
+     '    const correct = a === right;',
+     'a right answer long after the ring ran out still scores'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "a < -1 || a > 3) return json({ error: 'Which answer?' }, 400);",
+     "a < 0 || a > 3) return json({ error: 'Which answer?' }, 400);",
+     'the phone\'s Time\'s up is refused, so the round drops off the board'),
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
      '      if (seen.indexOf(bank[order[i]][0]) < 0) out.push(bank[order[i]]);',
      '      out.push(bank[order[i]]);',

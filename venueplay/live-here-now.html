@@ -164,7 +164,6 @@
   .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .count{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--muted)}
   .count b{color:#fff}
-  .clock{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
   .pips{display:flex;gap:6px;margin:12px 0 18px}
   .pip{flex:1;height:6px;border-radius:3px;background:var(--line-2);transition:background .2s ease}
   .pip.now{background:#fff}
@@ -259,6 +258,8 @@
 <script src="/app/vp-venuelogo.js" defer></script>
 <script src="/app/vp-analytics.js" defer></script>
 <script src="/app/vp-consent.js"></script>
+<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's countdown ring and the Time's up moment, one copy (INBOX 310/312) -->
+<script src="/app/vp-qring.js"></script>
 </head>
 <body>
 
@@ -310,7 +311,7 @@
   <section class="view" id="vPlay" hidden>
     <div class="top">
       <span class="count" id="count">Question <b>1</b> of 5</span>
-      <span class="clock" id="clock" aria-hidden="true">0:00</span>
+      <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
     </div>
     <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
     <p class="loading" id="loading">Pouring your first question...</p>
@@ -457,6 +458,7 @@ var VPCoaster = (function () {
     return null;
   }
   function verdict(good, points) {
+    if (good === null) return { text: "Time's up", pts: '' };
     if (!good) return { text: 'Not quite', pts: '' };
     return { text: 'Correct!', pts: points > 0 ? '+' + points : '' };
   }
@@ -468,6 +470,22 @@ var VPCoaster = (function () {
     if (correct >= 1) return 'Good effort' + who;
     return 'Tough round' + who;
   }
+  /* THE TIME (INBOX 310/311, Dean 12 Nov 2026: "Done in 2062 seconds" on a 60-second round). Each question has
+     the trivia night's 20 seconds on the ring; a question's time is from it showing to the tap (or the ring
+     running out), never more than its 20 seconds, so a phone left on the table, a later visit or a stored start
+     can never add to it. The round's time is the five added up, as the Worker adds its ms_total. */
+  var QUESTION_SECS = 20;
+  function tookMs(shownAt, answeredAt) {
+    var t = (+answeredAt) - (+shownAt);
+    return t > 0 ? Math.min(QUESTION_SECS * 1000, t) : 0;
+  }
+  function roundSecs(tooks) {
+    var ms = 0;
+    for (var i = 0; i < (tooks || []).length; i++) ms += Math.max(0, Math.min(QUESTION_SECS * 1000, +tooks[i] || 0));
+    return Math.round(ms / 1000);
+  }
+  function secsLeft(shownAt, now) { return Math.max(0, Math.ceil((QUESTION_SECS * 1000 - ((+now) - (+shownAt))) / 1000)); }
+  function doneLine(secs) { return 'Done in ' + secs + ' second' + (secs === 1 ? '' : 's') + '.'; }
   function pointsLine(points, secs) {
     return points + ' point' + (points === 1 ? '' : 's') + (secs != null ? ', ' + secs + ' second' + (secs === 1 ? '' : 's') : '');
   }
@@ -494,7 +512,8 @@ var VPCoaster = (function () {
   }
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
            ordinal: ordinal, placeLabel: placeLabel, verdict: verdict, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
-           shareUrl: shareUrl, shareText: shareText, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES };
+           shareUrl: shareUrl, shareText: shareText, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
+           QUESTION_SECS: QUESTION_SECS, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
 </script>
@@ -727,18 +746,27 @@ var VPCoaster = (function () {
       go('local', local);
     });
   }
-  /* the clock: counts up, never down */
-  var startedAt = 0, stoppedAt = 0, ticker = null;
-  function secs() { return Math.max(0, Math.round(((stoppedAt || Date.now()) - startedAt) / 1000)); }
-  function paintClock() { var s = secs(); $('clock').textContent = Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
+  /* the clock: the trivia phone's ring, 20 seconds a question (INBOX 310); the time kept is each question's own,
+     shown to tapped, at most its 20 seconds (INBOX 311) */
+  var shownAt = 0, tooks = [], ticker = null;
+  function tick() {
+    if (!round || at >= round.length || results.length > at) return;
+    var left = L.secsLeft(shownAt, Date.now());
+    window.VPQRing.paint($('pqRing'), $('pqCdNum'), left / L.QUESTION_SECS, left);
+    if (left <= 0) { clearInterval(ticker); timeUp(); }
+  }
+  function timeUp() {
+    if (results.length > at) return;
+    window.VPQRing.timesUp();
+    setTimeout(function () { answer(-1); }, 900);   // the moment, then the right answer shows as in trivia
+  }
   function go(mode, five) {
     S.mode = mode;
     if (mode === 'local') { S.play = null; }
     header(S.venue);
-    round = five; at = 0; right = 0; results = []; total = 0; ended = null;
-    startedAt = Date.now(); stoppedAt = 0; paintClock();
+    round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
-    ticker = setInterval(paintClock, 500);
+    window.VPQRing.muteButton();
     show();
   }
   function pips() {
@@ -770,6 +798,10 @@ var VPCoaster = (function () {
       box.appendChild(b);
     });
     pips();
+    shownAt = Date.now();
+    clearInterval(ticker);
+    tick();
+    ticker = setInterval(tick, 250);
   }
   function tag(btn, words) { var s = document.createElement('span'); s.className = 'tg'; s.textContent = words; btn.appendChild(s); }
   function paintVerdict(good, points) {
@@ -780,16 +812,17 @@ var VPCoaster = (function () {
   function answer(i) {
     var item = round[at], good = i === item[3], btns = $('answers').children;
     if (results.length > at) return;     // one answer a question, however fast the thumb
+    clearInterval(ticker);
+    tooks.push(L.tookMs(shownAt, Date.now()));
     results.push(good);
     if (good) right++;
-    if (results.length === round.length) { stoppedAt = Date.now(); paintClock(); }
     for (var k = 0; k < btns.length; k++) {
       btns[k].disabled = true;
       btns[k].className = 'ans c' + k + (k === item[3] ? ' right' : (k === i ? ' mine' : ' dim'));
       if (k === item[3]) tag(btns[k], 'Right answer');
       else if (k === i) tag(btns[k], 'Yours');
     }
-    paintVerdict(good, 0);
+    paintVerdict(i < 0 ? null : good, 0);
     pips();
     var tappedAt = Date.now(), n = at, waiting = S.mode === 'board', moved = false;
     function next() {
@@ -838,8 +871,7 @@ var VPCoaster = (function () {
       paintBoard(b, 'night');
       optinCard();
     } else {
-      var s = secs();
-      $('scoreSub').innerHTML = 'Done in <b>' + s + ' second' + (s === 1 ? '' : 's') + '</b>. ' + (right === round.length ? 'A perfect round. Beat the table?'
+      $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
   }
