@@ -19,7 +19,7 @@ var ALL = [
 print('\nevery answer is said in plain words');
 var all = ALL.map(function(r){ return P.describe(r, { pattern:'One line across' }); });
 var text = all.map(function(d){ return plain(d.badge + ' ' + d.title + ' ' + d.sub + ' ' + d.warn + ' ' + d.list.join(' ')); }).join(' | ');
-show('no em dash, no "VenuePlay", no .dev, no "bingo", no "roster", no "call out" anywhere', !/[—–]|VenuePlay|\.dev\b|bingo|roster|call out/i.test(text), text.slice(0, 100));
+show('no em dash, no "VenuePlay", no .dev, no "bingo", no "roster", no "call out" anywhere', !/[\u2014\u2013]|VenuePlay|\.dev\b/.test(text) && !/bingo|roster|call out/i.test(text), text.slice(0, 100));
 var win = all[0];
 show('a win leads with Confirm winner (first = confirm); every other answer leads with Scan another', win.first === 'confirm' && all.slice(1).every(function(d){ return d.first === 'scan'; }));
 show('a win says which line, the pattern and the printed date', plain(win.sub) === 'Row 3 across, the pattern tonight. Printed Mon 16 Nov.', plain(win.sub));
