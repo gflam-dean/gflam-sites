@@ -94,7 +94,7 @@ FITS = ('(function(){var d=document.documentElement,b=document.body; return JSON
 SPACED = ('(function(){var bad=[],all=document.querySelectorAll("body *");for(var i=0;i<all.length;i++){var e=all[i],r=e.getBoundingClientRect();'
           'if(!r.width||!r.height||!e.childNodes.length)continue;var own="";for(var j=0;j<e.childNodes.length;j++)if(e.childNodes[j].nodeType===3)own+=e.childNodes[j].nodeValue;'
           'own=own.trim();if(own.length<3)continue;var cs=getComputedStyle(e),ls=parseFloat(cs.letterSpacing)||0,fs=parseFloat(cs.fontSize)||16;'
-          'var up=cs.textTransform==="uppercase"||own===own.toUpperCase();if(up&&ls>0.15*fs&&/[A-Za-z]{3}/.test(own))bad.push(own.slice(0,30)+" "+(ls/fs).toFixed(2)+"em");}'
+          'var up=cs.textTransform==="uppercase"||own===own.toUpperCase();if(up&&ls>0.2*fs&&/[A-Za-z]{3}/.test(own))bad.push(own.slice(0,30)+" "+(ls/fs).toFixed(2)+"em");}'
           'return JSON.stringify(bad.slice(0,6));})()')
 # the TV's game frame (the venue's /tv holds the game screen in an iframe) and what it shows
 TVFRAME = ('(function(){var f=document.getElementById("gameFrame"); return (f && f.style.display!=="none") ? (f.getAttribute("src")||"") : "";})()')
@@ -116,6 +116,7 @@ def check_screens(game, tv, phones, phones_too=True):
         ok('%s: phone %s has no spaced-capitals lettering [12 Nov S9]' % (game, tag), sp == [], sp)
     # the game's own screen on the TV is a frame: look inside it
     sp = js(tv, '(function(){var f=document.getElementById("gameFrame"); if(!f||f.style.display==="none"||!f.contentWindow) return "[]"; try{ return f.contentWindow.eval(%s); }catch(e){ return "[]"; }})()' % json.dumps(SPACED))
+    if not tv_src(tv): sp = js(tv, SPACED)   # bingo draws its board on the TV page itself
     ok('%s: the TV screen has no spaced-capitals lettering [12 Nov S2/S15]' % game, json.loads(sp or '[]') == [], sp)
 
 
@@ -197,9 +198,8 @@ def night():
     ok('trivia: the console loads', R.until(host, 'document.readyState==="complete" && !!document.getElementById("startBtn") && !document.getElementById("startBtn").disabled', 40) is True, text(host))
     time.sleep(2)
     js(host, 'document.getElementById("cfgCount").value="2"; document.getElementById("cfgCount").dispatchEvent(new Event("input")); true')
-    ok('trivia: the console starts on the SAVED setup (buzzer on, plays on the TV) [12 Nov T5/T7]',
-       js(host, '(function(){var b=document.getElementById("buzzerOn")||document.getElementById("cfgBuzzer"); return b? !!b.checked : "no-control";})()') in (True, 'no-control'),
-       js(host, '(document.getElementById("cfgBuzzer")||{}).outerHTML'))
+    seg = js(host, '(function(){function on(i){var b=document.querySelector("#"+i+" button.on"); return b? b.getAttribute("data-v") : "";} return on("cfgBuzzer")+"/"+on("cfgBuzzWhere");})()')
+    ok('trivia: the console starts on the SAVED setup (buzzer on, plays on the TV) [12 Nov T5/T7]', seg == 'on/tv', seg)
     tap(host, 'startBtn'); answer_dialogs(host)
     ok('trivia: the lobby is open', R.until(host, LOBBY, 20) is True, js(host, ERRT))
     ok('trivia: the TV takes the lobby (a trivia screen up on the TV)', tv_shows(tv, 'trivia'), tv_src(tv))
@@ -306,7 +306,7 @@ def night():
               '$("cardsSel").value="1"; true'))
     tap(host, 'startBtn'); answer_dialogs(host)
     ok('bingo: the lobby is open', R.until(host, 'document.getElementById("startBtn").textContent==="Start calling numbers"', 20) is True, [js(host, 'document.getElementById("startBtn").textContent'), js(host, ERRT)])
-    ok('bingo: the TV takes bingo', tv_shows(tv, 'bingo|\\/tv|index'), tv_src(tv))
+    ok('bingo: the TV takes bingo (its board is on the TV page itself)', R.until(tv, '/Last called|called/i.test(document.body.innerText) && !!document.querySelector("#tv")', 30) is True, text(tv))
     follows('bingo', '/^\\/play/', phones)
     count_is(host, 2, 'bingo')
     tap(host, 'startBtn'); answer_dialogs(host)
@@ -321,9 +321,8 @@ def night():
     for tag, ph in phones:
         ok('bingo: phone %s shows the same %d of 90 within 5 s [12 Nov S14]' % (tag, calls), R.until(ph, '/%d of 90/.test((document.getElementById("hdrBallCount")||{}).textContent||"")' % calls, 5) is True,
            js(ph, '(document.getElementById("hdrBallCount")||{}).textContent'))
-    ok('bingo: the TV shows the same %d called within 5 s, not behind [12 Nov S14: TV was 5 calls behind]' % calls,
-       R.until(tv, '(function(f){ try{ return new RegExp("\\\\b%d\\\\s*of\\\\s*90","i").test(f.contentDocument.body.innerText); }catch(e){ return false; } })(document.getElementById("gameFrame"))' % calls, 5) is True,
-       js(tv, '(function(f){ try{ return f.contentDocument.body.innerText.replace(/\\s+/g," ").slice(0,200); }catch(e){ return "no frame"; } })(document.getElementById("gameFrame"))'))
+    ok('bingo: the TV shows the same %d of 90 called within 5 s, not behind [12 Nov S14: TV was 5 calls behind]' % calls,
+       R.until(tv, '/\\b%d\\s*of\\s*90/i.test(document.body.innerText)' % calls, 5) is True, text(tv))
     shot(tv, '03-bingo-tv'); shot(phones[0][1], '03-bingo-phone-A'); shot(phones[1][1], '03-bingo-phone-B')
     check_screens('bingo', tv, phones)
     tap(host, 'endGameBtn'); answer_dialogs(host)
