@@ -17880,8 +17880,8 @@ MUTATIONS = [
      '  #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}', '  #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700;padding-top:14px}',
      'in Chrome, a title jumps down when its square is tapped'),
     ('musical-card-spacing-in-chrome.test.py', 'venueplay/app/musical/play.html',
-     '    if(t.sp.offsetWidth>t.W+0.5) t.sp.style.transform=', '    if(true) t.sp.style.transform=',
-     'in Chrome, titles that fit are narrowed sideways anyway'),
+     '      t.el._fit=size; sizes.push(size);', '      t.sp.style.transform="scaleX(0.9)"; t.el._fit=size; sizes.push(size);',
+     'in Chrome, titles that fit are narrowed sideways anyway (re-aimed INBOX 337: only a square that cannot fit is ever narrowed)'),
     # REPINNED 12 Nov 2026 (option C, Dean via main INBOX 323): the card never widens; short titles stay 15px or more.
     ('musical-card-spacing-in-chrome.test.py', 'venueplay/app/musical/play.html',
      'var FIT_MAX=20, FIT_MIN=15, ', 'var FIT_MAX=12, FIT_MIN=12, ',
