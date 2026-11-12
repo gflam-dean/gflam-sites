@@ -70,6 +70,29 @@
      form by phoneFor(ctx), because the help page draws a venue form and a player form side by side. */
   var SUPPORT_PHONE = BRAND === "venueplay" ? { show: "07 5228 3667", tel: "+61752283667" } : null;
   function phoneFor(ctx) { return ctx && ctx.mode === "venue" ? SUPPORT_PHONE : null; }
+  /* THE NUMBER IN THE WORDS (INBOX 332, 12 Nov 2026). The venue FAQ answer "Contacting us" names the
+     landline, and it comes from vp_help_faq, which Dean can edit in HQ. So the words are cleaned where
+     they are drawn, not in the database: for every form phoneFor() gives no number to (the public
+     /help page, players, PartyPlay), each FAQ question and answer, issue title and step loses the
+     number, written any way (07 5228 3667, 0752283667, (07) 5228 3667, +61 7 5228 3667), and any
+     "or call and press 4". A signed-in venue (phoneFor gives a number) sees the words as written. */
+  var LINE_RX = "(?:\\+\\s*61[\\s.-]*(?:\\(0\\)[\\s.-]*)?|\\b61[\\s.-]*|\\(\\s*0\\s*|\\b0)7\\)?[\\s.-]*5[\\s.-]*2[\\s.-]*2[\\s.-]*8[\\s.-]*3[\\s.-]*6[\\s.-]*6[\\s.-]*7(?!\\d)";
+  var PRESS_RX = "(?:\\s+and\\s+press\\s+\\d|\\s*\\(press\\s+\\d[^)]*\\))?";
+  function wordsFor(s, ctx) {
+    s = String(s == null ? "" : s);
+    if (phoneFor(ctx)) return s;
+    var call = "call\\s+(?:us\\s+)?(?:on\\s+)?(?:tel:\\s*)?" + LINE_RX + PRESS_RX;
+    return s
+      // "..., or call 07 5228 3667 (and press 2)": the other way to reach us goes, the sentence stays.
+      .replace(new RegExp(",?\\s+or\\s+" + call, "gi"), "")
+      // "..., or call and press 4" (billing): no number in it, but it only means the line.
+      .replace(/,?\s+or\s+call\s+(?:us\s+)?and\s+press\s+\d/gi, "")
+      // "If a game is on right now ..., call 07 5228 3667 and press 2.": the urgent way in for a venue.
+      .replace(new RegExp("\\b(c)" + call.slice(1) + "(?=[ \\t]*(?:[.;!?]|$))", "gim"), function (m, c) { return (c === "C" ? "S" : "s") + "ign in and use Help in your console; we answer urgent ones first"; })
+      // Anything else that still names it, however worded: that whole sentence goes.
+      .replace(new RegExp("[^.!?\\n]*" + LINE_RX + "[^.!?\\n]*[.!?]?[ \\t]*", "gi"), "")
+      .replace(/[ \t]{2,}/g, " ").replace(/[ \t]+([.,;])/g, "$1").replace(/^[ \t]+|[ \t]+$/gm, "").replace(/^\s+|\s+$/g, "");
+  }
   /* Who a form is for. The panel has one, from the script tag; the help page has one per audience. */
   var CTX = { mode: MODE, faq: FAQ_KEY, page: false };
 
@@ -593,7 +616,7 @@
         flow.appendChild(el("h3", "vph-q", "What's your issue?"));
         var list = el("div", "vph-issues");
         issues.forEach(function (it) {
-          var b = el("button", "vph-issue", it.title); b.type = "button"; b.setAttribute("data-issue", it.id);
+          var b = el("button", "vph-issue", wordsFor(it.title, ctx)); b.type = "button"; b.setAttribute("data-issue", it.id);
           on(b, "click", function () { triage(it, null, "start"); if (it.steps && it.steps.length) showStep(it, 0); else showForm(it); });
           list.appendChild(b);
         });
@@ -606,7 +629,7 @@
         if (!issues.length) det.open = true;
         if (ctx.page) det.open = true;   // on the help page the answers ARE the page: open
         faq.forEach(function (it) {
-          var d = el("details"); d.appendChild(el("summary", "", it.q)); d.appendChild(lines(el("p"), it.a)); det.appendChild(d);
+          var d = el("details"); d.appendChild(el("summary", "", wordsFor(it.q, ctx))); d.appendChild(lines(el("p"), wordsFor(it.a, ctx))); det.appendChild(d);
         });
         flow.appendChild(det);
       }
@@ -619,10 +642,10 @@
     function showStep(issue, i) {
       clear();
       var step = issue.steps[i], n = issue.steps.length;
-      flow.appendChild(el("div", "vph-issuename", issue.title));
+      flow.appendChild(el("div", "vph-issuename", wordsFor(issue.title, ctx)));
       var card = el("div", "vph-step"); card.setAttribute("data-step", step.id);
       card.appendChild(el("div", "vph-stepno", "Step " + (i + 1) + " of " + n));
-      card.appendChild(el("div", "vph-stepbody", fillStep(step.body, ctx)));
+      card.appendChild(el("div", "vph-stepbody", wordsFor(fillStep(step.body, ctx), ctx)));
       var row = el("div", "vph-steprow");
       var fixed = el("button", "vph-go vph-fixed", "Fixed it"); fixed.type = "button";
       var still = el("button", "vph-still", "Still not working"); still.type = "button";

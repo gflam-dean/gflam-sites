@@ -287,6 +287,25 @@ def no_phone_in(t, sel):
                 'return !e.querySelector("a[href^=\'tel:\']") && x.indexOf("5228 3667")===-1 && x.indexOf("52283667")===-1;})()' % json.dumps(sel))
 
 
+# INBOX 332 (12 Nov 2026): the support landline written ANY way (07 5228 3667, 0752283667, (07) 5228 3667,
+# +61 7 5228 3667, 07-5228-3667): its last nine digits with any spaces, dots, dashes or brackets between.
+# Returns the matches in the visible text and the text of the part named, so a red line shows what leaked.
+ANY_LINE_JS = r'/7[\s().-]*5[\s().-]*2[\s().-]*2[\s().-]*8[\s().-]*3[\s().-]*6[\s().-]*6[\s().-]*7/g'
+
+
+def line_leaks(t, sel):
+    return t.js('(function(){var e=document.querySelector(%s);if(!e)return ["no "+%s];var x=(e.innerText||"")+"\\n"+(e.textContent||"");'
+                'return (x.match(%s)||[]).concat([].map.call(e.querySelectorAll("a[href^=\'tel:\']"),function(a){return a.getAttribute("href");}));})()'
+                % (json.dumps(sel), json.dumps(sel), ANY_LINE_JS))
+
+
+# The venue FAQ answer "Contacting us" as a public page draws it (INBOX 332): the number swapped for sign-in
+# Help, and the billing "or call and press 4" gone. The signed-in panel still draws the answer as written.
+PUBLIC_CONTACT = ('If a game is on right now and something is going wrong, sign in and use Help in your console; we answer urgent ones first. '
+                  'For anything else, use the form below and we will reply by email (sent from your console while a game is on, it comes to us marked urgent), '
+                  'or email support@venueplay.com.au. For billing, email accounts@venueplay.com.au.')
+
+
 # Errors a page throws or logs, and any of its own files that failed to load. Installed before the
 # page's first script, so nothing it does on load is missed.
 ERRWATCH = ('window.__errs=[];window.addEventListener("error",function(e){__errs.push("error: "+(e.message||(e.target&&(e.target.src||e.target.href))||"?"));},true);'
@@ -453,6 +472,32 @@ def help_page_checks(b, VP):
           pv == {'name': '', 'email': '', 'phone': '', 'venue': '', 'who': False}, pv)
     check('/help signed out: and the Worker is never asked what it knows', not [x for x in posts(t) if x['path'] == ME], [x['path'] for x in posts(t)])
     t.close()
+    # INBOX 332 (12 Nov 2026): the FAQ comes from vp_help_faq, which Dean edits in HQ, so a re-worded answer
+    # must not put the landline back on this public page, however it is written. Live-style data with the
+    # number in every common spacing, in answers, a question, an issue title and a step.
+    print('THE HELP PAGE, SIGNED OUT: A RE-WORDED FAQ NEVER SHOWS THE LANDLINE')
+    rw_faq = [{'q': 'Contacting us', 'a': 'Call us on (07) 5228 3667 any time. Or use the form below.'},
+              {'q': 'Ring 0752283667?', 'a': 'Our line is +61 7 5228 3667 and we answer it. Billing is accounts@venueplay.com.au, or call and press 4.'},
+              {'q': 'Urgent', 'a': 'If a game is on right now, call 07-5228-3667 and press 2.\nOtherwise email support@venueplay.com.au.'}]
+    rw_iss = [{'id': ISSUES['venueplay:venue'][0]['id'], 'title': 'TV down? 07 5228 3667',
+               'steps': [{'id': 's-rw', 'body': 'Reload the TV. Still stuck? Call +61752283667.'}]}]
+    t = Tab(b, 375, 740, routes={'/help/content?brand=venueplay&audience=venue': _content(rw_faq, rw_iss)})
+    t.go(VP + '/help#venue')
+    t.until('document.querySelectorAll("#vphFaq-venue details").length || 0', 15)
+    t.js('Array.prototype.forEach.call(document.querySelectorAll("#vphFaq-venue details"),function(d){d.open=true;})')
+    check('/help, re-worded FAQ: no landline in the venue FAQ or issues, written any way, and no tel: link',
+          t.js('document.querySelectorAll("#vphFaq-venue details").length') == 3 and line_leaks(t, '#vphFlow-venue') == [], line_leaks(t, '#vphFlow-venue'))
+    check('/help, re-worded FAQ: the urgent line points to Help in the console, and the rest of each answer stays',
+          [x.strip() for x in (t.js('Array.prototype.map.call(document.querySelectorAll("#vphFaq-venue details>p"),function(p){return p.innerText;})') or [])]
+          == ['Or use the form below.', 'Billing is accounts@venueplay.com.au.',
+              'If a game is on right now, sign in and use Help in your console; we answer urgent ones first.\nOtherwise email support@venueplay.com.au.'],
+          t.js('Array.prototype.map.call(document.querySelectorAll("#vphFaq-venue details>p"),function(p){return p.innerText;})'))
+    t.js('document.querySelector("#vphFlow-venue .vph-issue").click()')
+    t.until('!!document.querySelector("#vphFlow-venue .vph-stepbody")', 5)
+    check('/help, re-worded FAQ: an issue step that says to call the line says to use Help in the console instead, the rest stays',
+          (t.js('document.querySelector("#vphFlow-venue .vph-stepbody").textContent') or '') == 'Reload the TV. Still stuck? Sign in and use Help in your console; we answer urgent ones first.' and line_leaks(t, '#vphFlow-venue') == [],
+          [t.js('document.querySelector("#vphFlow-venue .vph-stepbody").textContent'), line_leaks(t, '#vphFlow-venue')])
+    t.close()
     for w, h, mobile, tag in ((1280, 900, False, 'desktop'), (375, 740, True, 'phone')):
         print('THE HELP PAGE, /help, ' + tag.upper())
         t = Tab(b, w, h, mobile=mobile, pre=ERRWATCH)
@@ -476,6 +521,13 @@ def help_page_checks(b, VP):
         check(tag + ' venue: the venue issues and the venue FAQ (%d), open on the page' % len(vp_faq['venue']['items']),
               got == len(vp_faq['venue']['items']) and t.js('document.getElementById("vphFaq-venue").open') is True and
               t.js('Array.prototype.map.call(document.querySelectorAll("#vphFlow-venue .vph-issue"),function(x){return x.textContent;}).join("|")') == '|'.join(i['title'] for i in ISSUES['venueplay:venue']), got)
+        # INBOX 332 (12 Nov 2026): the live FAQ (the JSON here is the same words as vp_help_faq) names the landline in
+        # "Contacting us"; on this public page it must not, in any spacing, and nor may anything else on the page.
+        ca = t.js('(function(){var d=[].filter.call(document.querySelectorAll("#vphFaq-venue details"),function(x){return x.querySelector("summary").textContent==="Contacting us";})[0];return d?d.querySelector("p").textContent:null;})()')
+        check(tag + ' venue: the public FAQ "Contacting us" says to sign in and use Help in the console, never the landline, and no "call and press 4"',
+              ca == PUBLIC_CONTACT and line_leaks(t, '#vphFaq-venue') == [], [ca, line_leaks(t, '#vphFaq-venue')])
+        check(tag + ': the whole public /help page, visible text and all, has no landline in any spacing and no tel: link',
+              line_leaks(t, 'body') == [], line_leaks(t, 'body'))
         # THE FAQ MARKERS (4 Nov 2026): the outer "Questions and answers" is open on the page, so it shows
         # the minus; every question inside it is shut and must show a plus. Until 4 Nov the open outer
         # details turned every summary inside it to a minus, so a shut question looked open.
@@ -783,6 +835,9 @@ def main():
         t.js('document.getElementById("vphFaq").open=true;Array.prototype.forEach.call(document.querySelectorAll("#vphFaq details"),function(d){d.open=true;})')
         check('venue: the FAQ says to call 07 5228 3667 and press 2 if a game is on right now',
               'call 07 5228 3667 and press 2' in (t.js('document.getElementById("vphFaq").textContent') or ''))
+        ca = t.js('(function(){var d=[].filter.call(document.querySelectorAll("#vphFaq details"),function(x){return x.querySelector("summary").textContent==="Contacting us";})[0];return d?d.querySelector("p").textContent:null;})()')
+        check('venue: signed in, "Contacting us" is drawn exactly as written, the landline and "or call and press 4" kept (only public pages lose them)',
+              ca == [i['a'] for i in vp_faq['venue']['items'] if i['q'] == 'Contacting us'][0], ca)
         t.js('document.getElementById("vphFaq").open=false')
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("[data-issue=\'%s\']").click()' % I3['id'])
