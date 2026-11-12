@@ -1852,7 +1852,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 102,
+  "checks": 103,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
