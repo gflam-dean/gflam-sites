@@ -37,6 +37,13 @@ VP_SHOTS=<dir> saves every picture (the Hosted by review set). Takes /tmp/vp-hea
 seconds to wait) and never clears anybody else's.
 
     VP_WAIT_LOCK=1800 python3 tools/hosted-by-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, importlib.util, io, json, os, sys, tempfile, threading, time, urllib.parse
 
@@ -284,8 +291,9 @@ def wall_checks(tag, m, base, host_logo, venue):
     ok('%s: a little clear room under the line before the slide starts (%.0fpx, at least %.0f)' % (tag, (top or 0) - hb[3], MIN_GAP * H),
        top is not None and top - hb[3] >= MIN_GAP * H - 0.5, [top, hb])
     ink = m.get('ink')
-    ok('%s: and the same clear room under the line to the first thing the room reads, the heading, the timer or the first row (%.0fpx, at least %.0f)' % (tag, (ink or 0) - hb[3], MIN_INK * H),
-       ink is not None and ink - hb[3] >= MIN_INK * H - 0.5, [ink, hb])
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 3.5% of the SAFE BOX's height (90% of the window), was of the window's
+    ok('%s: and the same clear room under the line to the first thing the room reads, the heading, the timer or the first row (%.0fpx, at least %.0f)' % (tag, (ink or 0) - hb[3], MIN_INK * 0.9 * H),
+       ink is not None and ink - hb[3] >= MIN_INK * 0.9 * H - 0.5, [ink, hb])
     ok('%s: the whole slide is on the screen' % tag, all(k[1] >= 0 and k[3] <= H and k[0] >= 0 and k[2] <= W for k in m.get('kids') or []), [k for k in m.get('kids') or [] if k[3] > H][:2])
     L = m.get('logo') if venue != 'none' else m.get('tag')
     img = m.get('img')
@@ -296,7 +304,8 @@ def wall_checks(tag, m, base, host_logo, venue):
            bool(box) and bool(img) and m.get('divW', 0) >= 1.5 and 'rgba(255, 255, 255' in (m.get('divA') or '') and box[0] >= (L[2] if L else 0) and img[0] > box[0] + m.get('divW', 0) and box[3] - box[1] >= (img[3] - img[1]) - 1, [box, img, m.get('divW'), m.get('divA')])
         if img:
             ih = img[3] - img[1]
-            want = max(round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' and m.get('logo') else round(0.044 * H), round(0.05 * H))
+            # TV SAFE AREA RE-PIN (12 Nov 2026): 4.4% and 5% of the SAFE BOX's height (90% of the window), were of the window's
+            want = max(round(0.7 * (m['logo'][3] - m['logo'][1])) if venue != 'none' and m.get('logo') else round(0.044 * 0.9 * H), round(0.05 * 0.9 * H))
             ok('%s: the host\'s logo is 70%% of the venue logo\'s height, never under 5%% of the screen\'s (%.0f against %.0f)' % (tag, ih, want), abs(ih - want) <= 1.5, [ih, want])
             ok('%s: BESIDE the venue\'s %s, never on it, and never over the game\'s name' % (tag, 'name' if venue == 'none' else 'logo'),
                bool(L) and img[0] >= L[2] and not overlap(img, L) and not overlap(img, ti), [img, L, ti])
@@ -375,11 +384,14 @@ def wall(B, base):
     for w, h in ((1920, 1080), (1280, 720)):
         bd = (TOPS.get((w, h, 'board')) or {}).get('crest/hostlogo') or {}
         pd = (TOPS.get((w, h, 'podium')) or {}).get('crest/hostlogo') or {}
-        want = round(0.172 * h) + round(0.006 * w)
+        # TV SAFE AREA RE-PIN (12 Nov 2026): 17.2% of the SAFE BOX's height down from the safe box's top (5% down), plus the
+        # fit's own gap, 0.6% of the safe box's width; were of the window
+        want = round(0.05 * h + 0.172 * 0.9 * h) + round(0.006 * 0.9 * w)
         ok('%dx%d: the final scores start where Dean left them (%s, want %d, within 1px)' % (w, h, bd.get('top'), want),
            bd.get('top') is not None and abs(bd['top'] - want) <= 1, bd)
+        # TV SAFE AREA RE-PIN (12 Nov 2026): 3% of the SAFE BOX's height, was of the window's
         ok('%dx%d: the winners start lower than the final scores, by at least 3%% of the height (%s against %s)' % (w, h, pd.get('top'), bd.get('top')),
-           pd.get('top') is not None and bd.get('top') is not None and pd['top'] - bd['top'] >= 0.03 * h - 0.5, [pd, bd])
+           pd.get('top') is not None and bd.get('top') is not None and pd['top'] - bd['top'] >= 0.03 * 0.9 * h - 0.5, [pd, bd])
 
 
 def snap(B, base, path, w, h, states, stem):

@@ -30,6 +30,13 @@ Tugun Bowls Club's crest), served from this checkout, on Chrome's virtual clock,
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     python3 tools/trivia-newlook-in-chrome.test.py
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
@@ -233,7 +240,8 @@ def title_checks(tag, frames, w):
         g = x.get('game') or {}
         ok('%s, %s: the game\'s name says TRIVIA, in Anton, white' % (tag, name),
            g.get('text', '').strip().lower() == 'trivia' and 'Anton' in g.get('ff', '') and g.get('col') in ('rgb(255, 255, 255)',), g)
-        ok('%s, %s: and big enough to read from the back of the room (at least 2.4%% of the width)' % (tag, name), g.get('fs', 0) >= 0.024 * w, g.get('fs'))
+        # TV SAFE AREA RE-PIN (12 Nov 2026): 2.4% of the SAFE BOX's width (the wall, 90% of the window), was of the window
+        ok('%s, %s: and big enough to read from the back of the room (at least 2.4%% of the width)' % (tag, name), g.get('fs', 0) >= 0.024 * (0.9 * w) - 0.01, g.get('fs'))
         L, M, I = x.get('logo'), x.get('mark'), x.get('lblInk')
         G = (x.get('game') or {}).get('r')
         ok('%s, %s: TRIVIA is on the same centre line as the corner logos (within 2px of ours)' % (tag, name),
@@ -290,7 +298,9 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': no counts on the reveal at all, the right answer included', all(c['sc'] == '' for c in rv.get('cards') or []) and len(rv.get('cards') or []) == 4,
        [(c['cls'], c['sc']) for c in rv.get('cards') or []])
     S_, Q_ = lb.get('scan'), lb.get('qr')
-    ok(tag + ': the join: the QR big on the left (as approved: x 10.6%, 31% of the width)', lb.get('layer') == 'tvLobby' and bool(Q_) and abs(Q_[0] - 0.106 * w) <= 0.01 * w and abs((Q_[2] - Q_[0]) - 0.3125 * w) <= 0.01 * w,
+    # TV SAFE AREA RE-PIN (12 Nov 2026): x 10.6% and 31.25% of the SAFE BOX's width, from the safe box's left edge (5% in); were of the window
+    SW_, SX_, SY_ = 0.9 * w, 0.05 * w, 0.05 * h
+    ok(tag + ': the join: the QR big on the left (as approved: x 10.6%, 31% of the width)', lb.get('layer') == 'tvLobby' and bool(Q_) and abs(Q_[0] - SX_ - 0.106 * SW_) <= 0.01 * SW_ and abs((Q_[2] - Q_[0]) - 0.3125 * SW_) <= 0.01 * SW_,
        [lb.get('layer'), Q_])
     ok(tag + ': SCAN TO PLAY huge on the right of it', bool(S_ and Q_) and S_[0] >= Q_[2] and (S_[3] - S_[1]) >= 0.06 * w, [S_, Q_])
     CB_, UR_ = lb.get('cbox'), lb.get('urlR')
@@ -313,8 +323,10 @@ def tv(B, base, w, h, logo=''):
        [QR_, qc_ and qc_[-1]['r'], q.get('qroundText')])
     ok(tag + ': the question is centred on the ring\'s centre line (as approved, 5 Nov)', bool(q.get('q') and RG_) and abs((q['q'][1] + q['q'][3]) / 2 - (RG_[1] + RG_[3]) / 2) <= 0.004 * w, [q.get('q'), RG_])
     ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and start a normal gap under the ring (463px at 1920)',
-       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and abs(min(c['r'][1] for c in qc_) - 0.2411 * w) <= 0.002 * w
-       and bool(RG_) and min(c['r'][1] for c in qc_) > RG_[3] and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
+       # TV SAFE AREA RE-PIN (12 Nov 2026): 11.875% and 24.11% of the SAFE BOX's width, the top from the safe box's top, the
+       # bottom 2% of its width inside its bottom; were of the window (tolerances scale with it)
+       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * SW_) <= 0.003 * SW_ for c in qc_) and abs(min(c['r'][1] for c in qc_) - SY_ - 0.2411 * SW_) <= 0.002 * SW_
+       and bool(RG_) and min(c['r'][1] for c in qc_) > RG_[3] and max(c['r'][3] for c in qc_) <= h - SY_ - 0.02 * SW_,
        [c['r'] for c in qc_])
     ok(tag + ': a long two-line question and long answers fit: the question clear of the boxes, every answer inside its box',
        lq.get('layer') == 'tvQ' and bool(lq.get('q')) and lq['q'][3] <= min(c['r'][1] for c in lq.get('cards') or [[0, 0]]) - 0.005 * w and not any(c['ovf'] for c in lq.get('cards') or []) and len(lq.get('cards') or []) == 4,
@@ -322,7 +334,8 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the scores (now only at the round\'s end, after the podium): the heading is just "Final scores", and no small "Scores" label', bd.get('btitle', '').lower() == 'final scores' and 'scores' not in bd.get('lblText', '').lower(),
        [bd.get('btitle'), bd.get('lblText')])
     ok(tag + ': the podium: "Winners tonight", with the winning yellow on it', pd.get('btitle', '').lower() == 'winners tonight' and pd.get('wcol') == 'rgb(255, 217, 61)', [pd.get('btitle'), pd.get('wcol')])
-    ok(tag + ': the answer letters are big again (at least the old wall\'s 4.5% of the width)', len(qc) == 4 and all(c['lfs'] >= 0.045 * w for c in qc), [c['lfs'] for c in qc])
+    # TV SAFE AREA RE-PIN (12 Nov 2026): 4.5% of the SAFE BOX's width, was of the window
+    ok(tag + ': the answer letters are big again (at least the old wall\'s 4.5% of the width)', len(qc) == 4 and all(c['lfs'] >= 0.045 * (0.9 * w) - 0.01 for c in qc), [c['lfs'] for c in qc])
     ok(tag + ': the letters are WHITE on their colour chips, at least 3:1 (large text), and amber\'s, which cannot be, has a firm dark shadow',
        len(qc) == 4 and all(c['lfg'] == 'rgb(255, 255, 255)' and (contrast(c['lbg'], c['lfg']) >= 3.0 or (i == 2 and 'rgba(0, 0, 0, 0.45)' in c['lts'])) for i, c in enumerate(qc)),
        [(c['lbg'], c['lfg'], round(contrast(c['lbg'], c['lfg']), 2) if c['lbg'] else None, c['lts'][:40]) for c in qc])

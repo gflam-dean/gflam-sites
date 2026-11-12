@@ -653,6 +653,7 @@
   #tv .confetti,#tv .winburst{display:none!important}
   .in-tvapp #tvFsBtn{display:none!important}   /* never in an app: see IN_APP (4 Nov 2026) */
 </style>
+<link rel="stylesheet" href="/app/vp-tvsafe.css">   <!-- every TV screen inside a 5% title-safe margin (INBOX 287.1, 12 Nov 2026) -->
 <script src="/app/vp-venueurl.js"></script>   <!-- which venue is in the address: here in <head> so the paired-screen step below can ask it -->
 <script src="/app/vp-tvpaired.js"></script>   <!-- the venue this screen was paired to by its screen code (5 Nov 2026) -->
 <script>
@@ -701,7 +702,7 @@
 </script>
 </head>
 <body>
-<div class="tv" id="tv">
+<div class="tv tv-bleed" id="tv">   <!-- tv-bleed: photo slides reach the window edges over the safe margin (/app/vp-tvsafe.css, 12 Nov 2026) -->
   <div class="winburst" id="winBurst"></div>
 
   <div class="tv-status" id="tvStatus" hidden><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
@@ -1984,7 +1985,11 @@
            the screen, as the holding card always was (HOLD_FIT_SELF, see #tvFloor). They were shrunk to 82% and kept
            there after the logo had gone (vp-fit kept one shared entry for every slide; fixed there too). */
         div.setAttribute("data-fit-self","");
-        div.innerHTML=entryInner(e); pending.appendChild(div); built++;
+        div.innerHTML=entryInner(e);
+        /* A PHOTO SLIDE STAYS FULL-BLEED on the TV's 5% safe margin (Dean via main, INBOX 321.2, 12 Nov 2026):
+           /app/vp-tvsafe.css takes .ad-photo back out to the window's edges; words stay in the safe box. */
+        if(div.querySelector(".adimg")) div.className+=" ad-photo";
+        pending.appendChild(div); built++;
       }catch(err){}
     });
     if(!built){

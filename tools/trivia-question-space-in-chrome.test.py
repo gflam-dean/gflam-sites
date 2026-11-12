@@ -21,6 +21,13 @@ and on the reveal.
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     python3 tools/trivia-question-space-in-chrome.test.py      screenshots go to $VP_SHOTS if set
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
@@ -182,11 +189,14 @@ def wall(B, base, w, h):
     ok(tag + ': the short question paints on ONE line', oq.get('lines') == 1 and oq.get('text') == 'Who wrote Hamlet?', [oq.get('lines'), oq.get('text')])
     ok(tag + ': the demo question paints on TWO lines', tq.get('lines') == 2, tq.get('lines'))
     ok(tag + ': the library\'s longest question paints on THREE or more lines', (lq.get('lines') or 0) >= 3, lq.get('lines'))
-    ok(tag + ': the short questions are at the short-question size (3.96% of the width)', abs((tq.get('fs') or 0) - 0.0396 * w) <= 0.6 and oq.get('fs') == tq.get('fs'), [oq.get('fs'), tq.get('fs')])
+    # TV SAFE AREA RE-PIN (12 Nov 2026): every "% of the width" here is of the SAFE BOX's width (the wall, 90% of the window),
+    # and a place down the screen is from the safe box's top (5% down); they were of the window
+    SW, SY = 0.9 * w, 0.05 * h
+    ok(tag + ': the short questions are at the short-question size (3.96% of the width)', abs((tq.get('fs') or 0) - 0.0396 * SW) <= 0.6 and oq.get('fs') == tq.get('fs'), [oq.get('fs'), tq.get('fs')])
 
     RV, MK, HD = tq.get('ringVis'), tq.get('mark'), tq.get('head')
     cards = tq.get('cards') or []
-    ok(tag + ': the ring is full size (14.58% of the width)', bool(tq.get('ring')) and abs((tq['ring'][2] - tq['ring'][0]) - 0.1458 * w) <= 1.5, tq.get('ring'))
+    ok(tag + ': the ring is full size (14.58% of the width)', bool(tq.get('ring')) and abs((tq['ring'][2] - tq['ring'][0]) - 0.1458 * SW) <= 1.5, tq.get('ring'))
     top_gap = (RV[1] - MK[3]) if (RV and MK) else None
     low_gap = (min(c['r'][1] for c in cards) - RV[3]) if (RV and cards) else None
     ok(tag + ': the gap from the venueplay logo to the ring equals the gap from the ring to the answers (within 3px)',
@@ -220,7 +230,7 @@ def wall(B, base, w, h):
     ok(tag + ': the answers sit at the same fixed spot for every question length',
        len(oc) == len(tc) == len(lc) == 4 and all(same(oc[i]['r'], tc[i]['r']) and same(lc[i]['r'], tc[i]['r']) for i in range(4)),
        [[c['r'] for c in oc], [c['r'] for c in tc], [c['r'] for c in lc]])
-    ok(tag + ': the answers start at 24.11% of the width (463px at 1920)', bool(tc) and abs(min(c['r'][1] for c in tc) - 0.2411 * w) <= 1.5, tc and tc[0]['r'])
+    ok(tag + ': the answers start at 24.11% of the width (463px at 1920)', bool(tc) and abs(min(c['r'][1] for c in tc) - SY - 0.2411 * SW) <= 1.5, tc and tc[0]['r'])
 
     # A PICTURE QUESTION (fault found 5 Nov 2026, INBOX 43): "Question N of 20" sat behind the picture round's ring.
     pz = load(B, base, '/app/trivia/screen.html?demo=1&sting=0&pic=1', w, h, states, 'picture')

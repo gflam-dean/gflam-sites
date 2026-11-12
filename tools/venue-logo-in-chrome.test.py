@@ -30,6 +30,13 @@ here (a 4:1 wordmark, a square crest, a near-round badge, a 1:3 tall one):
          dimmer the ball call throws over the room.
 
     python3 tools/venue-logo-in-chrome.test.py          screenshots go to $VP_SHOTS if set
+
+TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): on a TV the venue
+logo or name, boards, words, QR and the venueplay mark sit inside a 5% safe box (54px top and bottom, 96px left
+and right at 1920x1080, scaling with the window), and sizes are measured against the SAFE BOX (the .tv wall), not
+the window. Photo slides and full-screen backgrounds stay full-bleed. This suite's layout pins were re-pinned to
+the safe box that day (each one listed in ~/venue-enrich/reports/tv-safe-area-12nov/REPINS.md); every other check
+is unchanged.
 """
 import base64, http.server, importlib.util, io, json, os, re, sys, tempfile, threading, time, urllib.parse
 
@@ -181,7 +188,7 @@ MEASURE = r'''(function(){
     return !e.classList.contains("hidden") && !e.hidden && s.display!=="none" && s.visibility!=="hidden" && b.width>0 && b.height>0; }
   var lg=document.getElementById("venueLogo");
   if(!lg || !vis(lg) || !lg.complete || !lg.naturalWidth) return JSON.stringify({ready:false});
-  var want=VPVenueLogo.box(lg.naturalWidth, lg.naturalHeight, VPVenueLogo.limits("tv", innerWidth, innerHeight));
+  var want=VPVenueLogo.box(lg.naturalWidth, lg.naturalHeight, VPVenueLogo.limits("tv", innerWidth, innerHeight, VPVenueLogo.safeShare ? VPVenueLogo.safeShare() : 0));
   var wall=[], layers=document.querySelectorAll(".layer");
   for(var i=0;i<layers.length;i++){ var L=layers[i]; if(!vis(L)) continue;
     for(var k=0;k<L.children.length;k++){ var c=L.children[k]; if(vis(c)) wall.push({id:(L.id||"")+">"+(c.id||c.className||c.tagName), r:R(c)}); } }
@@ -190,7 +197,7 @@ MEASURE = r'''(function(){
   var tc=document.querySelectorAll(".tv-corner, #tvCorner");
   for(var j=0;j<tc.length;j++){ var kids=tc[j].children; for(var q=0;q<kids.length;q++){ if(vis(kids[q])) corners.push({id:"corner>"+(kids[q].className||kids[q].tagName), r:R(kids[q])}); } }
   return JSON.stringify({ready:true, src:lg.getAttribute("src"), nat:[lg.naturalWidth,lg.naturalHeight], logo:R(lg), want:want,
-                         inset:VPVenueLogo.limits("tv", innerWidth, innerHeight).inset, insetX:VPVenueLogo.limits("tv", innerWidth, innerHeight).insetX, wall:wall, corners:corners, W:innerWidth, H:innerHeight});
+                         inset:VPVenueLogo.limits("tv", innerWidth, innerHeight, VPVenueLogo.safeShare ? VPVenueLogo.safeShare() : 0).inset, insetX:VPVenueLogo.limits("tv", innerWidth, innerHeight, VPVenueLogo.safeShare ? VPVenueLogo.safeShare() : 0).insetX, wall:wall, corners:corners, W:innerWidth, H:innerHeight});
 })()'''
 
 def colour_at(sid, x, y):
@@ -400,7 +407,9 @@ def mark_check(label, path, w, h, has_dim):
                 ok(tag + ': above the bingo call\'s dimmer, not behind it', m['dimZ'] is not None and m['z'] > m['dimZ'], (m['z'], m['dimZ']))
             return
         ok(tag + ': full opacity, white, bold (not dull)', m['opacity'] >= 0.99 and m['color'] in ('rgb(255, 255, 255)',) and int(m['weight']) >= 700, m)
-        ok(tag + ': a legible size for a TV, 24px or more at 1920', m['size'] >= 24 and m['svg'] >= 20, m)
+        # TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2): sizes are a share of the SAFE BOX (the wall,
+        # .tv), not the window: 24px and 20px of a 1920-wide wall, as before, now read against the wall's own width.
+        ok(tag + ': a legible size for a TV, 24px or more at 1920 (of the wall, the safe box)', m['size'] * 1920.0 / max(1, m['wall']) >= 24 and m['svg'] * 1920.0 / max(1, m['wall']) >= 20, m)
         ok(tag + ': with a dark halo so it reads on any slide', 'rgba(0, 0, 0' in (m['shadow'] or ''), m['shadow'])
         ok(tag + ': and still secondary: smaller than the venue logo', not m['logo'] or m['size'] * 2 < m['logo'], m)
         if has_dim:

@@ -1587,6 +1587,10 @@
   "checks": 61,
   "counted_by": "lines"
  },
+ "tools/tv-safe-area-in-chrome.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/tv-slides-fill-in-chrome.test.py": {
   "checks": 15,
   "counted_by": "lines"
