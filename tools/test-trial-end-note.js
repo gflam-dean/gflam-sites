@@ -41,7 +41,7 @@ function b64(bytes) { var s = ''; for (var i = 0; i < bytes.length; i += 3) { va
 var PNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 7, 128, 0, 0, 4, 56, 8, 2, 0, 0, 0, 1, 2, 3];
 function slide(salt) { var b = PNG.slice(); b.push(salt); return 'data:image/png;base64,' + b64(b); }
 
-var AUTH = [], CANCELS = [], RESEND_IDS = 0, SCREEN_ACTORS = [], STORE = [];
+var OUTBOUND = [], AUTH = [], CANCELS = [], RESEND_IDS = 0, SCREEN_ACTORS = [], STORE = [];
 function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
 var rigFetch = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
@@ -56,6 +56,8 @@ globalThis.fetch = function (url, opts) {
     return RS(200, { users: AUTH });
   }
   if (/\/rest\/v1\/vp_venue_screen(\?|$)/.test(u) && method === 'POST') { var hh = (opts && opts.headers) || {}; SCREEN_ACTORS.push(JSON.parse(hh['X-VP-Actor'] || '{}')); }
+  /* Anything leaving for the outside world that is not our own database (INBOX 301: nothing may be sent). */
+  if (method !== 'GET' && !/\/rest\/v1\/|\/storage\/v1\/|\/auth\/v1\//.test(u)) OUTBOUND.push(u);
   return rigFetch(url, opts);
 };
 function U(nn) { return '53000000-0000-4000-8000-' + ('000000000000' + nn).slice(-12); }
@@ -304,6 +306,20 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   check('CONTROL: not cancelled, the same reminder goes', mr2.sent.length === 1, mr2);
   var W = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   check('the monthly report skips a cancelled free month ("cancelled their free month")', /else if \(cxIds\.has\(v\.id\)\) why = 'cancelled their free month';/.test(W));
+
+  section('9. Tonight (INBOX 301): Bodalla with the switch OFF, every hourly sweep 12 Nov to 11 Dec sends NOTHING');
+  for (var shape = 0; shape < 2; shape++) {
+    var Z = await bodalla(shape === 0 ? false : undefined), zw = shape === 0 ? 'month set by hand' : 'first sign-in';
+    delete ENV.TRIAL_END_NOTE; sent.length = 0; OUTBOUND.length = 0;
+    await sweepWalk(Date.parse('2026-11-12T00:00:00Z'), Date.parse('2026-12-11T00:00:00Z'));
+    check(zw + ': not one email and not one text or other outside call, from the reminder sweep, the friendly email or the switch-off',
+      sent.length === 0 && OUTBOUND.length === 0, [sent.map(function (m) { return m.subject; }), OUTBOUND]);
+    check(zw + ': still on to 10 Dec, switched off once after it, audited once', Z.v.status === 'suspended' && Z.v.suspended_reason === 'cancelled' &&
+      audits('prospect_switched_off', Z.v.id).length === 1 && noteAudits(Z.v.id).length === 0, [Z.v.status, audits('prospect_switched_off', Z.v.id).length]);
+  }
+  var Y = await bodalla(false);
+  check('HQ reads Bodalla (month set by hand) as cancelled and on until 10 Dec', (await hq(Y, Date.parse('2026-11-12T02:00:00Z'))).on_until === new Date(B_END).toISOString(),
+    await hq(Y, Date.parse('2026-11-12T02:00:00Z')));
 
   print('');
   if (bad) throw new Error('trial end note: ' + bad + ' of ' + ran + ' failed');

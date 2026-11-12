@@ -12916,6 +12916,14 @@ MUTATIONS = [
      """'<div class="prnote" data-pr-whynote="1">&ldquo;' + prEsc(c.note) + "&rdquo;</div>\"""",
      """'<div class="prnote" data-pr-whynote="1">&ldquo;' + c.note + "&rdquo;</div>\"""",
      "the venue's own cancel words reach HQ unescaped (a tag in them is drawn as HTML)"),
+    ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!prow || prow.paused_at || !(prow.first_signin_at || prow.free_month_ends_at)) return NaN;",
+     "  if (!prow || prow.paused_at || !prow.first_signin_at) return NaN;",
+     'the Worker tells HQ a free month set by hand (Bodalla) is not on until its end date'),
+    ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }",
+     "  try { rows = await vpaSelectAll(env, 'vp_prospects', 'paused_at=is.null&select=*&order=venue_id.asc'); }",
+     'the hourly reminder sweep emails a venue that has cancelled its free month (Bodalla, INBOX 301)'),
     # ONE FRIENDLY EMAIL FOR A FREE MONTH CANCELLED PART WAY (Dean, 11 Nov 2026, INBOX 239.1/258.1), branch
     # fix/cancel-followups-sun: tools/test-trial-end-note.js.
     ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
