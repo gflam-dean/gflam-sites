@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '11 Nov 2026, 18:21 · c47131fa';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Nov 2026, 11:40 · ca1d5bc9';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5216,9 +5216,12 @@ function vpaPlainDateWords(ms) {
   return d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
 }
 /* The free month's end, while a cancel KEEPS access to it: the month has started, is not paused and has not ended.
-   NaN otherwise (never signed in, paused, or over), which is "switch off now". */
+   NaN otherwise (never signed in, paused, or over), which is "switch off now".
+   A month SET BY HAND counts as started (INBOX 301, 12 Nov 2026): Bodalla Pub's free_month_ends_at (10 Dec) was set
+   with no first_signin_at, so HQ Prospects lost "on until 10 Dec" and Billing lost its Cancelled card. The end date
+   is only ever written at the first sign-in or by hand, so a never-signed-in prospect still switches off at once. */
 function vpaTrialKeepsUntil(prow, nowMs) {
-  if (!prow || prow.paused_at || !prow.first_signin_at) return NaN;
+  if (!prow || prow.paused_at || !(prow.first_signin_at || prow.free_month_ends_at)) return NaN;
   const end = vpaProspectMonthEndMs(prow);
   return isFinite(end) && nowMs <= end ? end : NaN;
 }
@@ -5371,7 +5374,7 @@ function vpaRenderTrialEndNote(env, o) {
 async function vpaTrialEndNoteSweep(env, nowMs) {
   const out = { sent: [], held: 0, skipped: 0 };
   if (!vpaTrialEndNoteOn(env)) return Object.assign(out, { off: true });
-  if (!env.RESEND_API_KEY) return Object.assign(out, { why: 'no RESEND_API_KEY on this Worker' });
+  if (!env.RESEND_API_KEY) return Object.assign(out, { why: 'no Resend key on this Worker' });
   let rows;
   const now = new Date(nowMs).toISOString(), ceil = new Date(nowMs + 14 * 86400000).toISOString();
   try {
@@ -5384,27 +5387,27 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     if (!(nowMs <= end)) continue;
     const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id,au_state,postcode&limit=1');
     const v = vr && vr[0];
-    if (!v || v.status !== 'active') { out.skipped++; continue; }
+    if (!v || v.status !== 'active') { out.skipped += 1; continue; }
     const state = vpaSendState(v);
     const due = vpaTrialEndNoteDueAt(p, state);
-    if (!isFinite(due)) { out.skipped++; continue; }
+    if (!isFinite(due)) { out.skipped += 1; continue; }
     if (nowMs < due || !vpaInSendWindow(nowMs, state)) { out.held++; continue; }
-    if (p.no_contact === true) { out.skipped++; continue; }
+    if (p.no_contact === true) { out.skipped += 1; continue; }
     const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice,contact_email,contact_name&limit=1') : [];
     const f = fr && fr[0];
-    if (vpaProspectSignedUp(v, f)) { out.skipped++; continue; }   // a card since: nothing to say
+    if (vpaProspectSignedUp(v, f)) { out.skipped += 1; continue; }   // a card since: nothing to say
     const email = String(p.email || (f && f.contact_email) || '').trim();
-    if (!email) { out.skipped++; continue; }
+    if (!email) { out.skipped += 1; continue; }
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.held++; continue; }                  // cannot read the list: not this hour
-    if (unsub[email.toLowerCase()]) { out.skipped++; continue; }
+    if (unsub[email.toLowerCase()]) { out.skipped += 1; continue; }
     /* ONCE, EVER: look, then claim; a failed look or claim sends nothing. */
     const lock = 'trial-end-note:' + v.id;
     const done = await vpaMrGet(env, 'vp_admin_audit', 'action=eq.' + VPA_TRIAL_END_NOTE_ACTION + '&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
-    if (!done.ok || done.rows.length) { out.skipped++; continue; }
+    if (!done.ok || done.rows.length) { out.skipped += 1; continue; }
     const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, VPA_TRIAL_END_NOTE_ACTION, lock,
       { venue_id: v.id, name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
-    if (!claimed) { out.skipped++; continue; }
+    if (!claimed) { out.skipped += 1; continue; }
     const first = String(p.contact_name || (f && f.contact_name) || '').trim().split(/\s+/)[0] || '';
     const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, email: email, endsLong: vpaBneLongDate(end),
       cardUrl: await vpaCardLink(env, v.founding_id) });
@@ -5412,12 +5415,12 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     try {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',
         headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+        body: JSON.stringify({ to: [email], from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
     } catch (_) { res = null; }
     const ok = !!(res && res.ok);
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,
       { name: v.name || null, ends: vpaBneLongDate(end) });
-    if (ok) out.sent.push(v.id); else out.skipped++;
+    if (ok) out.sent.push(v.id); else out.skipped += 1;
   }
   return out;
 }

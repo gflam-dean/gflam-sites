@@ -101,6 +101,7 @@
   "caller-winner-in-chrome.test.py",
   "cancel-emails.test.js",
   "cancelled-account-in-chrome.test.py",
+  "cancelled-prospect-hq-in-chrome.test.py",
   "check-tv-watchdog.py",
   "check-venue-scoping.py",
   "clip-fade-in-chrome.test.py",

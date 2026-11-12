@@ -159,6 +159,10 @@
   "checks": 32,
   "counted_by": "lines"
  },
+ "tools/cancelled-prospect-hq-in-chrome.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/clip-fade-in-chrome.test.py": {
   "checks": 60,
   "counted_by": "lines"
