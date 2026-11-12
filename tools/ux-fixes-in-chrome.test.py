@@ -256,8 +256,10 @@ def tv(r):
     tid, t = r.open('/tv?venue=the-average-joe', width=1920, height=1080)
     fl = J(r.until(t, ('(function(){var l=document.querySelector("#tvFloor .tvlogo"),w=l&&l.querySelector("svg.tvl-word"),n=document.querySelector("#tvFloor .tvline");if(!l||!w||!n||document.readyState==="loading")return "";'
                        'var b=l.getBoundingClientRect(),c=getComputedStyle(n);return JSON.stringify({w:b.width,pos:getComputedStyle(l).position,paths:w.querySelectorAll("path").length,ff:c.fontFamily,bg:getComputedStyle(document.getElementById("tvFloor")).backgroundImage});})()'), 20))
+    # TV SAFE AREA RE-PIN (12 Nov 2026, Dean via main INBOX 321.2; tools/TV-SAFE-AREA-DECISION.md): 66.65% of the WALL, which is
+    # now the 5% safe box (1728 px wide at 1920x1080): 1151.7 px. Was 66.65% of the window, 1279.7 px.
     ok('the floor under the slides is the venueplay tv logo at its full size (66.65% of the wall), laid out, never an unstyled drawing',
-       fl.get('pos') == 'absolute' and abs(fl.get('w', 0) - 1279.7) <= 2 and fl.get('paths', 0) >= 3 and 'Hanken Grotesk' in (fl.get('ff') or '') and fl.get('bg') == 'none', fl)
+       fl.get('pos') == 'absolute' and abs(fl.get('w', 0) - 0.6665 * 0.9 * 1920) <= 2 and fl.get('paths', 0) >= 3 and 'Hanken Grotesk' in (fl.get('ff') or '') and fl.get('bg') == 'none', fl)
     LIT = '(function(){var s=document.querySelector("#tvAds .ad.show .tvline");return s?s.textContent.replace(/\\s+/g," ").trim():"";})()'
     LINE = 'Waiting for the host'   # set up, no game on (Dean, 3 Nov 2026: "so the venue knows it's on them")
     lit = r.until(t, '(function(){var t=%s;return t===%s?t:"";})()' % (LIT, json.dumps(LINE)), 30)
