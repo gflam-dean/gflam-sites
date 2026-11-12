@@ -126,7 +126,7 @@ STATES = {
     'not_card': {'state': 'not_card'},
 }
 SIZES = ((375, 667), (390, 844), (768, 1024), (1280, 800))
-BANNED = re.compile(r'[—–]|gflam|\.dev\b|\bone line\b|\bany line\b|\bfull house\b|\bfour corners\b|\btwo lines\b|\bbingo\b', re.I)
+BANNED = re.compile(r'[\u2014\u2013]|gflam|\.dev\b|\bone line\b|\bany line\b|\bfull house\b|\bfour corners\b|\btwo lines\b|\bbingo\b', re.I)
 
 
 def pdf_pages(data):
@@ -227,7 +227,7 @@ try:
             ok('%s: one screen, nothing clipped and no scroll' % tag,
                v['panelScroll'] <= v['panelClient'] + 1 and v['lastBottom'] <= v['vh'] + 1 and v['docX'] <= v['vw'] + 1, (v['panelScroll'], v['panelClient'], v['lastBottom'], v['vh'], v['docX'], v['vw']))
             ok('%s: "Card won\'t scan? Type its number" is there' % tag, v['typed'] and 'Type its number' in v['text'])
-            ok('%s: no em dash, no .dev, venueplay is lowercase' % tag, not re.search(r'[—–]|\.dev\b|VenuePlay', v['text']), v['text'][:200])
+            ok('%s: no em dash, no .dev, venueplay is lowercase' % tag, not re.search(r'[\u2014\u2013]|\.dev\b|VenuePlay', v['text']), v['text'][:200])
             names = [b['t'] for b in v['rows']]
             if name == 'win':
                 ok('%s: "Confirm winner" and "Scan another" are IN LINE: one row, side by side, same size' % tag,
