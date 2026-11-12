@@ -1296,7 +1296,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-live-fixes-6nov.js": {
-  "checks": 47,
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
@@ -1529,6 +1529,10 @@
  },
  "tools/trivia-reveal-in-chrome.test.py": {
   "checks": 54,
+  "counted_by": "lines"
+ },
+ "tools/trivia-ux-in-chrome.test.py": {
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/try-demo-in-chrome.test.py": {

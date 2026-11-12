@@ -82,7 +82,7 @@ function makePhone(rank) {
   function celebrate() { counts.celebrate++; } function confettiBurst() { counts.confetti++; } function askHowItWent() { counts.ask++; }
   var document = { querySelector: function (s) { return $('note'); } };
   function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-  eval(['decorateFinal', 'showFinal', 'quietFinal'].map(function (n) { return liftFrom(PLAY, n); }).join('\n'));
+  eval(['decorateFinal', 'showFinal', 'quietFinal', 'endedFinal'].map(function (n) { return liftFrom(PLAY, n); }).join('\n'));
   return { P: P, $: $, counts: counts, showFinal: showFinal };
 }
 var p1 = makePhone(1);
@@ -96,9 +96,16 @@ ok('the winner revealed, first-place phone: the celebration fires, once', p2.cou
 var p3 = makePhone(5);
 p3.showFinal(true, 'The host has ended this game.');
 ok('End game: the quiet final-score screen with the points, never "You\'re in"', p3.$('finalScore').textContent === '790 points' && p3.$('finalBig').textContent === "That's a wrap" && p3.counts.celebrate === 0);
+/* THE HOST ENDED IT (INBOX 282.5, Dean 12 Nov 2026): every game's end asks "How was that?", and the end screen says the place. */
+var p4 = makePhone(2);
+p4.showFinal('ended', 'The host has ended this game.');
+ok('host ended the game, a phone with points: its place ("You finished 2nd"), no celebration, and "How was that?" is asked', p4.$('finalRank').textContent === 'You finished 2nd' && p4.counts.celebrate === 0 && p4.counts.confetti === 0 && p4.counts.ask === 1, [p4.$('finalRank').textContent, JSON.stringify(p4.counts)]);
+var p5 = makePhone(1); p5.P.total = 0;
+p5.showFinal('ended', 'The host has ended this game.');
+ok('and a phone with no points yet: asked too, but no "1st place" for nothing', p5.$('finalRank').textContent === '' && p5.counts.ask === 1, [p5.$('finalRank').textContent, JSON.stringify(p5.counts)]);
 ok('the podium message on the phone is gated on what is revealed', /if\(m\.reveal>1\)\{ if\(!P\.celebrated\) showFinal\(true,/.test(PLAY) && /else \{ P\.celebrated=true; showFinal\(\); \}/.test(PLAY));
-var idle = PLAY.slice(PLAY.indexOf('else if(m.t==="idle"){'), PLAY.indexOf('else if(m.t==="idle"){') + 700);
-ok('idle (End game) never routes to the "You\'re in" screen for a player who has a score', idle.indexOf('if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");') > 0 && !/showWait\("Thanks for playing\. Sit tight/.test(idle), idle.slice(0, 300));
+var idle = PLAY.slice(PLAY.indexOf('else if(m.t==="idle"){'), PLAY.indexOf('else if(m.t==="idle"){') + 1800);
+ok('idle (End game) never routes to the "You\'re in" screen for a player who has a score', idle.indexOf('else if(P.total>0 || P.ended || sawAny()) showFinal("ended", "The host has ended this game.");') > 0 && !/showWait\("Thanks for playing\. Sit tight/.test(idle), idle.slice(0, 300));
 
 
 print('A STALE NIGHT IS "NO GAME ON RIGHT NOW", NEVER "NEXT QUESTION COMING UP" (Dean, live, 6 Nov 2026, room 4NJPNQ)');

@@ -961,7 +961,7 @@
          timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
          on the server, with no undo. */
       endb.addEventListener("click", function(){
-        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
+        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
       }); brow.appendChild(endb);
       body.appendChild(brow);
       if(isLast && G.finale){ var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite"); body.appendChild(fl); paintFinLine(); }   // "Final scores come up in 0:30"
@@ -1000,7 +1000,7 @@
   /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
      confirm, so one fat finger in a dark pub ended the night for the room mid-question. */
   function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){
-    vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
+    vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
   }); return b; }
 
   function updateLive(){
@@ -1642,6 +1642,31 @@
   function releasePodium(){
     clearTimeout(G.podiumHoldT); G.podiumHeld=false;
     send({ t:"state", phase:"lobby", colour:G.colour });
+  }
+  /* ENDING A QUIZ PARTWAY STILL CROWNS THE WINNERS (Dean, 12 Nov 2026, INBOX 282.5, FINDINGS T4: "I wanted the winners
+     podium"). End round -> OK at question 8 of 11 sent "idle": the TV went to its lobby and then the ads, and the phones
+     said "That's a wrap" with no place. Now, when there are scores (a question has been revealed), it runs the same
+     end of the night as the last question's Reveal leaderboard: the TV's reveal from 3rd to the winner, the phones told
+     their place once the TV has said it, then "How was that?". A question still open is closed first (its answers are
+     not scored: it was never revealed). With no scores yet there is nobody to crown, and it ends as before.
+     Punters Reckon and a paper night keep their own ends. */
+  function endEarly(){
+    if(G.pr || G.defer || !window.VPTriviaFinale || (G.status!=="question" && G.status!=="reveal")){ return endRound(); }
+    var gid=G.gameId, wasQ=(G.status==="question");
+    function go(){
+      if(G.gameId!==gid || (G.status!=="question" && G.status!=="reveal")) return;
+      if(!G.board.length){ endRound(); return; }
+      clearTick(); clearAuto();
+      if(wasQ){ gsend({ t:"lock" }); send({ t:"lock", to:"tv" }); }   // the phones stop answering; the TV's clock stops without the time's-up buzzer
+      stopFinale();
+      gsend({ t:"podium", reveal:3, top:[], rows:[] });   // each phone: its quiet final screen now, its place once the TV has said it
+      startFinale();
+    }
+    if(G.board.length || !gid) return go();
+    /* A console that reloaded holds no board: read it (never /host/reveal, which would score the open question). */
+    apiPost("/host/trivia/board", { game_id:gid })
+      .then(function(r){ if(r && Array.isArray(r.leaderboard) && G.gameId===gid) G.board=r.leaderboard; })
+      .catch(function(){}).then(go);
   }
   function endRound(){
     clearTick(); clearAuto();

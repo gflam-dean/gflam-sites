@@ -77,6 +77,24 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
+    # plays a 3 question quiz on the browser rig (tv.html with the wall in its frame, two phones) and keeps a timeline.
+    ('trivia-ux-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '      if(!G.board.length){ endRound(); return; }',
+     '      { endRound(); return; }',
+     'End round partway sends idle again: the TV drops to its lobby and the ads, no winners'),
+    ('trivia-ux-in-chrome.test.py', 'venueplay/app/trivia/play.html',
+     'else if(P.total>0 || P.ended || sawAny()) showFinal("ended", "The host has ended this game.");',
+     'else if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");',
+     'the host ending a quiz leaves a bare GAME ENDED with no "How was that?"'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/play.html',
+     '    if(r && P.total>0) $("finalRank").textContent = (r===1 ? "1st place" : "You finished "+ordinal(r));\n    askHowItWent();\n',
+     '    askHowItWent();\n',
+     'the host ending the game hides the place'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/play.html',
+     '    if(r && P.total>0) $("finalRank").textContent = (r===1 ? "1st place" : "You finished "+ordinal(r));\n    askHowItWent();\n',
+     '    if(r && P.total>0) $("finalRank").textContent = (r===1 ? "1st place" : "You finished "+ordinal(r));\n',
+     'the host ending the game never asks "How was that?"'),
     # ---- 12 Nov 2026 (INBOX 282.8, 282.8b, 286; live play on The Mini Bar): who has the TV. tools/test-tv-takeover-12nov.js
     ('test-tv-takeover-12nov.js', 'venueplay/app/vp-tvclaim.js',
      '    function onAir() { var l = false; try { l = !!live(); } catch (e) {} return claimed || l; }\n',
@@ -19134,10 +19152,10 @@ MUTATIONS = [
      'rv.id="revealBtn"; rv.addEventListener("click", function(){ revealTap(rv); }); body.appendChild(rv);', 'rv.id="revealBtn"; rv.addEventListener("click", function(){ revealTap(rv); }); body.appendChild(rv); body.appendChild(el("button","btn ghost","+10 seconds"));',
      'the +10 seconds button is back on the host console'),
     ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/play.html',
-     'if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");', 'if(false) showFinal(true, "The host has ended this game.");',
+     'else if(P.total>0 || P.ended || sawAny()) showFinal("ended", "The host has ended this game.");', 'else if(false) showFinal("ended", "The host has ended this game.");',
      'End game leaves the phone on "You\'re in / Good luck" over the final score'),
     ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/play.html',
-     '    function finish(){ if(done) return; done=true; if(quiet) quietFinal(note); else decorateFinal(); }', '    function finish(){ if(done) return; done=true; decorateFinal(); }',
+     '    function finish(){ if(done) return; done=true; if(quiet==="ended") endedFinal(note); else if(quiet) quietFinal(note); else decorateFinal(); }', '    function finish(){ if(done) return; done=true; decorateFinal(); }',
      'the quiet final screen still celebrates a first-place phone'),
     ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/screen.html',
      '  var JOIN_ON_RESULTS=false;', '  var JOIN_ON_RESULTS=true;',

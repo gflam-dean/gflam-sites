@@ -1119,7 +1119,7 @@
     P.ended=true; show("vFinal");
     $("finalScore").textContent=P.total+" points";
     var done=false;
-    function finish(){ if(done) return; done=true; if(quiet) quietFinal(note); else decorateFinal(); }
+    function finish(){ if(done) return; done=true; if(quiet==="ended") endedFinal(note); else if(quiet) quietFinal(note); else decorateFinal(); }
     // Decorate from the AUTHORITATIVE rank so we only ever fire the winner celebration for a real 1st.
     if(P.gameId){
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
@@ -1129,6 +1129,14 @@
         finish();
       }).catch(finish);
     } else { finish(); }
+  }
+  /* THE HOST ENDED THE GAME (showFinal("ended")): no celebration and no sound, but the place (once there are points to
+     place) and "How was that?". Nothing is still to be announced on the TV, so the place spoils nothing. */
+  function endedFinal(note){
+    quietFinal(note);
+    var r=P.rank||0;
+    if(r && P.total>0) $("finalRank").textContent = (r===1 ? "1st place" : "You finished "+ordinal(r));
+    askHowItWent();
   }
   function quietFinal(note){
     var wrap=$("vFinal"); if(wrap) wrap.classList.remove("winner");
@@ -1257,6 +1265,7 @@
     else if(m.t==="podium"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
+      stopCd(); P.q=null;   // a quiz ended mid-question (282.5): the clock stops and the question goes
       /* reveal 3 or 2: the TV is still revealing third and second place. A quiet screen, no sound, no result.
          reveal 1 (or none, an older console): the winner is up, so the celebration is allowed now. */
       if(m.reveal>1){ if(!P.celebrated) showFinal(true, "The winners are going up on the big screen."); }
@@ -1267,7 +1276,12 @@
          playing" and the score: a join screen at the end of a night. Now the quiet final-score screen, no sound. */
       if(P.joined){ P.q=null; stopCd();
         var _wasWin=P.ended && P.rank===1;   // the winner was not asked on YOU WON (287.5): the host ending the game is the moment
-        if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");
+        /* The winners are already up (the podium told this phone its place): keep that screen, place and all. It used to
+           go back to a plain "That's a wrap" with no place (Dean, 12 Nov 2026, FINDINGS T3). */
+        if(P.ended && P.celebrated){ var _pn=document.querySelector("#vFinal .pnote"); if(_pn) _pn.textContent="The host has ended this game."; }
+        /* Anyone who played gets the final screen WITH their place and "How was that?" (Dean's rule: every game's end
+           asks, INBOX 282.5); a bare GAME ENDED is only for a phone that never saw a question of this game. */
+        else if(P.total>0 || P.ended || sawAny()) showFinal("ended", "The host has ended this game.");
         else showWait("The host has ended this game. Sit tight, another round may start.", "Game ended");
         if(_wasWin){ if(P.claimAskT){ clearTimeout(P.claimAskT); P.claimAskT=null; } setTimeout(askHowItWent, 600); } }
     }
