@@ -928,6 +928,7 @@
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights, between games (INBOX 110, 6 Nov 2026) -->
+<script src="/app/vp-demo-venue.js"></script>   <!-- which venue the home page demo plays, its live slides and the What’s on fallback (INBOX 356, 13 Nov 2026) -->
 <script src="/app/vp-logo.js"></script>   <!-- the venue's logo with its plain background taken off, for the What's on slide (9 Nov 2026) -->
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
@@ -3661,30 +3662,13 @@
          Invented, like the name. No dates on the slides, so slideVisible() keeps them all
          and the loop cannot empty itself on a particular day. */
       ADS.rotationSecs = 6;
-      ADS.slides = [
-        { tag:"Tonight",   accent:"pink",  head:"Bingo from 7pm",          sub:"Free to play. $50 bar tab on the line." },
-        { tag:"Kitchen",   accent:"gold",  head:"Parma and a pot, $22",    sub:"Every night until close" },
-        { tag:"Members",   accent:"green", head:"Join the club, $5",       sub:"Members prices at the bar and the bistro" },
-        { tag:"Saturday",  accent:"blue",  head:"Live music, 8pm",         sub:"No cover charge" }
-      ];
-      ADS.draws = [
-        { day:"Thursday", jackpot:"$1,400", time:"7:30pm" },
-        { day:"Friday",   jackpot:"$3,200", time:"6:00pm" },
-        { day:"Sunday",   jackpot:"$900",   time:"5:00pm" }
-      ];
-      ADS.raffle = { label:"Meat raffle", day:"Friday", time:"6:30pm" };
-      /* AND WHAT A REAL VENUE'S SLIDES LOOK LIKE. (Absolute addresses: the image whitelist in
-         slideHtml takes only a full http(s) URL, and drops a relative path without a word.) The four Tugun Bowls Club slides already on
-         the site (logos/ad-slides) are what an uploaded promo looks like on the wall, and a
-         venue's own artwork sells the advertising better than our text slides can. Dean,
-         22 Sep 2026: "also advertising", "so they have a logo". First in the loop, so the
-         ads-only demo opens on them. */
-      ADS.slides = [
-        { tag:"Tuesday",  accent:"pink", head:"Roast night, $14.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-tuesday.jpg" },
-        { tag:"Thursday", accent:"gold", head:"Half price menu",     sub:"", image_url:location.origin+"/logos/ad-slides/tugun-thursday.jpg" },
-        { tag:"Friday",   accent:"blue", head:"Surf and turf, $24.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-friday.jpg" },
-        { tag:"Saturday", accent:"green", head:"Parmi and pints, $19.90", sub:"", image_url:location.origin+"/logos/ad-slides/tugun-saturday.jpg" }
-      ].concat(ADS.slides);
+      /* WHAT THE INVENTED PUB'S WALL PLAYS (Dean, 13 Nov 2026, INBOX 356). It used to be typed slides in the old rounded
+         type, a members draws board in the old branding and a typed raffle card, plus four photos of the venue's old
+         artwork. All of it is gone: what is left is the "What's on" list in the current TV style, from
+         /app/vp-demo-venue.js, which is also what plays when the live read below fails. The ads-only demo then reads the
+         chosen venue's own live slides (demoVenueRead, /demo-venue.json picks the venue). No draws, no raffle card. */
+      ADS.slides = []; ADS.draws = []; ADS.raffle = null; ADS.raffles = null; ADS.week = null;
+      ADS.events = VPDemoVenue.fallbackEvents(VPDemoVenue.DEFAULT.slug);
       /* ?demo=1&logo=<url>: a venue logo in the corner, so a prospect sees their own name up
          there. Same-site paths only: this is a sales page, not a place to load strangers' images. */
       /* The demo venue is Tugun Bowls Club, a real customer, with its real logo (Dean, 22 Sep
@@ -3694,7 +3678,8 @@
       try{ var lg=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lg){ var u=decodeURIComponent(lg[1]); if(/^\/[^\/]/.test(u)) demoLogo=u; } }catch(e){}
       setVenueLogo(demoLogo);
       buildAds(true); startAds();
-      return;   // and nothing else on this path runs: no fetch, no poll
+      if(DEMO_ADS_ONLY) demoVenueRead(!!lg);   // the home page's Advertising view: the chosen venue's own live slides
+      return;   // and nothing else on this path runs: no poll, no realtime, no heartbeat
     }
     if(!slug) return;
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
@@ -3829,6 +3814,34 @@
        flashes nor restarts the loop at slide one. */
     var SCREEN_REFRESH_MS = 10*60*1000;
     setInterval(function(){ try{ if(tvMode==="ads") loadScreen(); }catch(e){} }, SCREEN_REFRESH_MS);
+    /* THE HOME PAGE DEMO'S LIVE READ (INBOX 356). Declared here and called from the demo branch above, which returns
+       before this line runs: a function declaration is hoisted, so it is there. ONE public, read-only GET of
+       /screen?venue=<slug>, the Worker answer the venue's own TV reads, never the /venue poll, never realtime, so it
+       cannot make a screen look alive in HQ. Which venue: "slug" in /demo-venue.json (no code edit). Remembered ten
+       minutes in the tab. Any failure, or an account with nothing to play, is the What's on fallback. */
+    function demoVenueRead(logoGiven){
+      var ST=null; try{ ST=window.sessionStorage; }catch(e){}
+      function play(cfg, read){
+        var r=VPDemoVenue.choose(cfg, read);
+        ADS.slides=r.slides; ADS.events=r.events; ADS.draws=[]; ADS.raffle=null; ADS.raffles=null; ADS.week=null;
+        if(r.name) setVenueName(r.name);
+        if(r.logo && !logoGiven) setVenueLogo(r.logo);
+        try{ refreshAds(); }catch(e){}
+      }
+      function go(){
+        fetch("/demo-venue.json", { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
+        .then(function(raw){
+          var cfg=VPDemoVenue.config(raw), hit=ST ? VPDemoVenue.cacheGet(ST, cfg.slug, Date.now()) : null;
+          if(hit){ play(cfg, hit); return; }
+          fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(cfg.slug))
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(d){ var read=VPDemoVenue.fromScreen(d); if(read && ST) VPDemoVenue.cachePut(ST, cfg.slug, read, Date.now()); play(cfg, read); })
+            .catch(function(){ play(cfg, null); });
+        });
+      }
+      go();
+      setInterval(function(){ try{ if(tvMode==="ads") go(); }catch(e){} }, VPDemoVenue.TTL_MS);
+    }
   })();
 
   // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,

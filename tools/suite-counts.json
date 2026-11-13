@@ -191,6 +191,10 @@
   "checks": 151,
   "counted_by": "lines"
  },
+ "tools/demo-ads-in-chrome.test.py": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/demo-pairs-in-chrome.test.py": {
   "checks": 18,
   "counted_by": "lines"
@@ -741,6 +745,10 @@
  },
  "tools/test-demo-sync.js": {
   "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/test-demo-venue.js": {
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-double-points.js": {
@@ -1740,7 +1748,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/demo-hermetic.test.js": {
-  "checks": 91,
+  "checks": 94,
   "counted_by": "lines"
  },
  "venueplay-backend/app/hop-name.test.js": {

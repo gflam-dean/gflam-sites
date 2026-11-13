@@ -119,6 +119,7 @@
   "console-round3-6nov-in-chrome.test.py",
   "cryptoInt() is the same in all 12 file(s)",
   "definition check across 177 file(s)",
+  "demo-ads-in-chrome.test.py",
   "demo-hermetic.test.js",
   "demo-pairs-in-chrome.test.py",
   "deploy build parses",
