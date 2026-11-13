@@ -281,7 +281,7 @@ ok("3am Brisbane is the default for BOTH actions: no script flips the time to no
    "Dean, 3 Nov 2026: the time he sees is the time it goes");
 ok("right now is still selectable", /<option value="now">right now<\/option>/.test(HQ));
 ok("and the default is applied on load, in the markup itself",
-   /id="reloadScreensWhen">\s*<option value="3am" selected>at 3am Brisbane<\/option>/.test(HQ));
+   /id="reloadScreensWhen"[^>]*>\s*<option value="3am" selected>at 3am Brisbane<\/option>/.test(HQ));
 ok("no change handler on the action touches the time",
    !/\$\("screensAction"\)\.addEventListener\("change"/.test(HQ) && !/when\.value *= *\(act\.value/.test(HQ));
 
