@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 13:34 · 9693035a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 17:38 · bb69f435';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4368,6 +4368,23 @@ async function handleJoin(request, env, json) {
   const dedupKey = (env.RL && devIdValid)
     ? 'joindedup:' + session.id + ':' + devId
     : null;
+
+  /* A PHONE TAKEN BACK ONTO ITS OWN ROW: a fresh 256-bit token onto the SAME row (the old one stops working), the
+     name if one was given, and the room as it stands. One place for it, because two paths end here: the check above
+     that found the phone's row, and the insert below losing a race to it (migration 192, a unique index on
+     (session_id, device_id) while kicked = false: two overlapping joins from one phone can no longer make two rows). */
+  const takeBackOntoRow = async function (rowId) {
+    const token = randomTokenHex(32);
+    const patch = { token_hash: await sha256Hex(token), last_seen_at: new Date().toISOString() };
+    if (name) patch.display_name = name;
+    const venueRow = await venueCheck;   // already settled by now; the row it read carries the slug
+    const [, snapshot] = await Promise.all([
+      sbPatch(env, 'vp_players', 'id=eq.' + enc(rowId), patch),
+      getPublicSnapshot(env, session.id, { session: session, slug: venueRow && venueRow.slug, running: running }),
+    ]);
+    return json({ token, snapshot });
+  };
+
   /* The KV key above is a 120 second cache in front of the real check, which is the DB. KV alone
      could never carry a patron from trivia to musical bingo hours later in the same session, so
      the same person was inserted again and billed again. device_id (migration 39) is the durable
@@ -4391,17 +4408,7 @@ async function handleJoin(request, env, json) {
     if (priorId && UUID_RE.test(priorId)) {
       const existing = proven ? [{ id: priorId }] : await sbGet(env, 'vp_players',
         'id=eq.' + enc(priorId) + '&session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
-      if (existing.length) {
-        const token = randomTokenHex(32);            // fresh 256-bit token onto the SAME row
-        const patch = { token_hash: await sha256Hex(token), last_seen_at: new Date().toISOString() };
-        if (name) patch.display_name = name;
-        const venueRow = await venueCheck;   // already settled above; the row it read carries the slug
-        const [, snapshot] = await Promise.all([
-          sbPatch(env, 'vp_players', 'id=eq.' + enc(priorId), patch),
-          getPublicSnapshot(env, session.id, { session: session, slug: venueRow && venueRow.slug, running: running }),
-        ]);
-        return json({ token, snapshot });
-      }
+      if (existing.length) return await takeBackOntoRow(priorId);
     }
   } else {
     await venueCheck;
@@ -4429,7 +4436,21 @@ async function handleJoin(request, env, json) {
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
   if (devIdValid) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39)
   Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
-  const inserted = await sbInsert(env, 'vp_players', playerRow, true);
+  let inserted;
+  try {
+    inserted = await sbInsert(env, 'vp_players', playerRow, true);
+  } catch (e) {
+    /* THE UNIQUE INDEX SAYS THIS PHONE IS ALREADY IN (migration 192). sbInsert turns PostgREST's 409 (23505) into a
+       409 of its own; for a phone that sent a device id that is "already joined", not a fault: the other join won the
+       race, so this one is taken back onto that row, the same answer a plain re-join gets. Before the index exists
+       nothing ever throws here and the path is never taken, so the code is safe before and after it. */
+    if (!(devIdValid && e && e.status === 409)) throw e;
+    const won = await sbGet(env, 'vp_players',
+      'session_id=eq.' + enc(session.id) + '&kicked=eq.false&device_id=eq.' + enc(devId) +
+      '&select=id&order=joined_at.asc&limit=1');
+    if (!won.length || !UUID_RE.test(won[0].id)) throw e;
+    return await takeBackOntoRow(won[0].id);
+  }
   const newPlayer = Array.isArray(inserted) ? inserted[0] : inserted;
 
   // Remember this device's player_id so the next rapid re-join reuses this row.
@@ -12783,12 +12804,22 @@ async function ensurePaperPlayer(env, session, kind, no, name) {
     return rows[0];
   }
   const now = new Date().toISOString();
-  const ins = await sbInsert(env, 'vp_players', {
-    session_id: session.id,
-    token_hash: await sha256Hex(randomTokenHex(32)),   // never issued: a paper player has no phone
-    display_name: label || (kind === 'm' ? 'Paper card ' + no : 'Paper team ' + no),
-    joined_at: now, last_seen_at: now, played_at: now, device_id: dev, kicked: false,
-  }, true);
+  let ins;
+  try {
+    ins = await sbInsert(env, 'vp_players', {
+      session_id: session.id,
+      token_hash: await sha256Hex(randomTokenHex(32)),   // never issued: a paper player has no phone
+      display_name: label || (kind === 'm' ? 'Paper card ' + no : 'Paper team ' + no),
+      joined_at: now, last_seen_at: now, played_at: now, device_id: dev, kicked: false,
+    }, true);
+  } catch (e) {
+    /* Two overlapping declares: the other one wrote the row first (migration 192's unique index). It is the row. */
+    if (!(e && e.status === 409)) throw e;
+    const again = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&device_id=eq.' + enc(dev) +
+      '&kicked=eq.false&select=id,display_name&order=joined_at.asc&limit=1');
+    if (!again.length) throw e;
+    return again[0];
+  }
   return Array.isArray(ins) ? ins[0] : ins;
 }
 

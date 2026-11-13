@@ -788,6 +788,18 @@ only on Dean's yes, after `python3 tools/draw-looks-snapshot.py --live` has writ
 database). RLS-BASELINE.json: one new table, re-dump after. NUMBER: 186 live, 187 to 190 written on branches, checked every
 branch and worktree 12 Nov 2026, so 191. RUN LIVE, Thu 12 Nov 2026 (Dean ran it; main read it back: snapshot 44 rows, all 44 venues raffle draw_style 'ticket' and members draw_style 'flip'). RLS-BASELINE.json and COLUMNS-BASELINE.json carry the new table, written BY HAND from this migration file (RLS on, not forced, no policy, no grant to anon or authenticated; columns venue_id, had_row, game_prefs, taken_at), NOT from a live dump: confirm with `python3 venueplay-backend/tools/dump-rls-baseline.py --check`.
 
+`venueplay-192-one-phone-one-player-index.sql` (13 Nov 2026, branch `fix/one-phone-index-13nov`, follow-up to the one-phone race): ONE statement,
+`create unique index concurrently if not exists vp_players_session_device_uniq on vp_players (session_id, device_id) where device_id is
+not null and kicked = false`, so two truly overlapping joins from one phone cannot make two player rows (migration 39 left the constraint
+out on purpose; the Worker's join is check-then-insert). The game Worker is safe BEFORE and AFTER it: handleJoin (and ensurePaperPlayer)
+treat the database's unique violation (PostgREST 409 / 23505) as "already joined" and take the phone back onto the row that won. NOT RUN, and
+NOT TO BE RUN BLIND: main first reads the LIVE database, read-only, for existing duplicates (the exact SELECT is in the file's header). If it
+returns rows the index will not build; the header gives the clean-up (copy to a backup table, then mark the newer twins `kicked = true`,
+keeping the OLDEST row, nothing deleted) to run BEFORE the index. Paste the CREATE alone in the SQL editor (CONCURRENTLY cannot share a
+transaction). Run EARLY by hand, never on a push morning. Index only: nothing the REST probe can see, no RLS-BASELINE.json or
+COLUMNS-BASELINE.json change. NUMBER: 191 live, 190 on a branch, nothing at 192 or above on any branch or worktree, checked 13 Nov 2026.
+Proved in tools/rig-join-unique-index.test.py (the rig enforces the index and can make the other join win). Rollback in the file.
+
 `venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page; reworked 12 Nov 2026 for
 INBOX 229/232 before it was ever run): three tables, all service role only (RLS on, no policies, revoked from
 public/anon/authenticated). `vp_coaster_venues`: places on the coaster round that are NOT venueplay venues, kind 'coaster' (a
