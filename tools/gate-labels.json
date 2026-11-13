@@ -123,6 +123,7 @@
   "demo-hermetic.test.js",
   "demo-pairs-in-chrome.test.py",
   "deploy build parses",
+  "design-audit-open-13nov-in-chrome.test.py",
   "design-audit-small-13nov-in-chrome.test.py",
   "details-autofill-in-chrome.test.py",
   "drag-bingo-clubs-page.test.py",
