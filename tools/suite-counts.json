@@ -996,11 +996,11 @@
   "counted_by": "lines"
  },
  "tools/test-musical-live-11nov.js": {
-  "checks": 48,
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/test-musical-live2-12nov.js": {
-  "checks": 11,
+  "checks": 12,
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
@@ -1308,7 +1308,7 @@
   "counted_by": "lines"
  },
  "tools/test-session-lifecycle-client.js": {
-  "checks": 32,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-session-lifecycle.js": {
@@ -2177,6 +2177,10 @@
  },
  "tools/website-audit-small-batch2-13nov-in-chrome.test.py": {
   "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/musical-console-sound-in-chrome.test.py": {
+  "checks": 31,
   "counted_by": "lines"
  }
 }
