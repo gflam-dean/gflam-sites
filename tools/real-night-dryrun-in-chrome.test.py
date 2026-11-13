@@ -307,7 +307,7 @@ def night():
               '$("cardsSel").value="1"; true'))
     tap(host, 'startBtn'); answer_dialogs(host)
     ok('bingo: the lobby is open', R.until(host, 'document.getElementById("startBtn").textContent==="Start calling numbers"', 20) is True, [js(host, 'document.getElementById("startBtn").textContent'), js(host, ERRT)])
-    ok('bingo: the TV takes bingo (its board is on the TV page itself)', R.until(tv, '/Last called|called/i.test(document.body.innerText) && !!document.querySelector("#tv")', 30) is True, text(tv))
+    ok('bingo: the TV takes bingo (its board is on the TV page itself)', R.until(tv, '/BINGO/.test(document.body.innerText) && /Scan to play|Last called/i.test(document.body.innerText)', 30) is True, text(tv))
     follows('bingo', '/^\\/play/', phones)
     count_is(host, 2, 'bingo')
     tap(host, 'startBtn'); answer_dialogs(host)
