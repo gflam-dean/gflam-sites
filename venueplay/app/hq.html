@@ -393,9 +393,9 @@
     <div id="addVenuePanel" class="panel pad hidden" style="margin-bottom:16px">
       <div class="lblk" style="margin-top:0">Onboard a venue</div>
       <div class="formgrid">
-        <div class="field"><label>Venue name</label><input type="text" id="nvName" placeholder="e.g. The Royal Hotel"></div>
-        <div class="field"><label>Screen slug (venueplay.com.au/tv?venue=&lt;slug&gt;)</label><input type="text" id="nvSlug" placeholder="auto from the name" class="mono"></div>
-        <div class="field"><label>Timezone</label><select id="nvTz">
+        <div class="field"><label for="nvName">Venue name</label><input type="text" id="nvName" placeholder="e.g. The Royal Hotel"></div>
+        <div class="field"><label for="nvSlug">Screen slug (venueplay.com.au/tv?venue=&lt;slug&gt;)</label><input type="text" id="nvSlug" placeholder="auto from the name" class="mono"></div>
+        <div class="field"><label for="nvTz">Timezone</label><select id="nvTz">
           <option value="Australia/Brisbane">Australia/Brisbane (QLD)</option>
           <option value="Australia/Sydney">Australia/Sydney (NSW/ACT)</option>
           <option value="Australia/Melbourne">Australia/Melbourne (VIC)</option>
@@ -404,18 +404,18 @@
           <option value="Australia/Hobart">Australia/Hobart (TAS)</option>
           <option value="Australia/Darwin">Australia/Darwin (NT)</option>
         </select></div>
-        <div class="field"><label>Billing parent</label><select id="nvBill"><option value="founding">Independent (card)</option><option value="group">Grouped operator</option></select></div>
-        <div class="field nvGroupF hidden"><label>Operator group</label><select id="nvGroup"></select></div>
-        <div class="field nvGroupF hidden"><label>Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
-        <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
-        <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div><div class="note hidden" id="nvNoBingo" style="margin-top:6px;color:var(--roll)"></div></div>
-        <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
+        <div class="field"><label for="nvBill">Billing parent</label><select id="nvBill"><option value="founding">Independent (card)</option><option value="group">Grouped operator</option></select></div>
+        <div class="field nvGroupF hidden"><label for="nvGroup">Operator group</label><select id="nvGroup"></select></div>
+        <div class="field nvGroupF hidden"><label for="nvCap">Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
+        <div class="field nvFoundF"><label for="nvEmail">Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
+        <div class="field"><label for="nvPostcode">Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div><div class="note hidden" id="nvNoBingo" style="margin-top:6px;color:var(--roll)"></div></div>
+        <div class="field"><label for="nvMobile">First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <!-- Club or pub, and the compliance tick. Anisimoff Legal 9380, 1 Oct 2026, point 3:
              compliance is the venue's, and an active tick box confirming that is prudent. Read the line to
              them on the onboarding call and tick it in their name; the Worker refuses the onboarding without
              it. Club or pub is the SAME two-option question signup asks, and it sets entity_type (and so
              whether paid entry starts on), as signup does (audit 20 Oct 2026, C4). -->
-        <div class="field"><label>Club or pub?</label><select id="nvKind">
+        <div class="field"><label for="nvKind">Club or pub?</label><select id="nvKind">
           <option value="">Ask them...</option>
           <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
           <option value="for_profit">Pub (hotel or tavern)</option>
@@ -423,8 +423,8 @@
         <div class="field" style="grid-column:1 / -1"><label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.45"><input type="checkbox" id="nvCompliance" style="width:auto;margin:3px 0 0"> <span id="nvComplianceText">We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
           <input type="text" id="nvComplianceBy" placeholder="Name of the person at the venue who agreed (e.g. Jane Smith, licensee)" style="margin-top:8px">
           <div class="note" style="margin-top:4px">Read it to them on the call, then tick it in their name. The venue cannot be created without it, and the record says who agreed and when.</div></div>
-        <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
-        <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly"> monthly</option><option value="annual"> annual</option></select></div>
+        <div class="field nvFoundF"><label for="nvMax">Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
+        <div class="field nvFoundF"><label for="nvPlan">Plan</label><select id="nvPlan"><option value="monthly"> monthly</option><option value="annual"> annual</option></select></div>
         <div class="field nvFoundF"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvComp" style="width:auto;margin:0"> Comp / demo venue: no card, no charge, and not counted as a signed-up venue</label></div>
         <div class="field"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvWelcome" style="width:auto;margin:0" checked> Email the venue their welcome and setup guide</label><div class="note" style="margin-top:4px">Goes to the contact email. A paying venue gets a secure link to add their card (nothing is charged until they do, and their free month starts then). A comp venue gets the same email with the billing left out. Untick if you are onboarding them in person.</div></div>
       </div>
@@ -582,7 +582,7 @@
     <div class="lblk" style="margin-top:0">Group nights nobody has billed</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="filterbar" style="align-items:flex-end">
-        <div class="field" style="margin:0"><label>Look back</label>
+        <div class="field" style="margin:0"><label for="goMonths">Look back</label>
           <select id="goMonths" style="width:auto">
             <option value="1">1 month</option>
             <option value="3" selected>3 months</option>
@@ -601,8 +601,8 @@
     <div class="lblk">Export for Xero</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="filterbar" style="align-items:flex-end">
-        <div class="field" style="margin:0"><label>From (month)</label><input type="month" id="xeroFrom" style="width:auto"></div>
-        <div class="field" style="margin:0"><label>To (month)</label><input type="month" id="xeroTo" style="width:auto"></div>
+        <div class="field" style="margin:0"><label for="xeroFrom">From (month)</label><input type="month" id="xeroFrom" style="width:auto"></div>
+        <div class="field" style="margin:0"><label for="xeroTo">To (month)</label><input type="month" id="xeroTo" style="width:auto"></div>
         <button class="btn ghost" id="xeroCsv">Download CSV</button>
       </div>
       <div class="note">This download reads the invoiced-usage record, which nothing writes to yet, so it is empty for now. An empty download is not a quiet month. The live figures are in the table below. Amounts are GST-inclusive estimates using the group's negotiated rate; independent-venue amounts are worked out by the billing Worker and left blank here. For your final payment figures, cross-check the matching Stripe invoices. Columns are laid out for a Xero sales-invoice import.</div>
@@ -641,10 +641,10 @@
     </div>
     <div id="addGroupPanel" class="panel pad hidden" style="margin-bottom:16px">
       <div class="formgrid">
-        <div class="field"><label>Group name</label><input type="text" id="ngName" placeholder="e.g. Coastline Hotels"></div>
-        <div class="field"><label>Billing email</label><input type="email" id="ngEmail" placeholder="accounts@group.com.au"></div>
-        <div class="field"><label>Negotiated rate ($ per player)</label><input type="number" step="0.01" id="ngRate" placeholder="e.g. 2.20" class="mono"></div>
-        <div class="field"><label>Rack / standard rate ($ per player)</label><input type="number" step="0.01" id="ngRack" placeholder="e.g. 3.00" class="mono"></div>
+        <div class="field"><label for="ngName">Group name</label><input type="text" id="ngName" placeholder="e.g. Coastline Hotels"></div>
+        <div class="field"><label for="ngEmail">Billing email</label><input type="email" id="ngEmail" placeholder="accounts@group.com.au"></div>
+        <div class="field"><label for="ngRate">Negotiated rate ($ per player)</label><input type="number" step="0.01" id="ngRate" placeholder="e.g. 2.20" class="mono"></div>
+        <div class="field"><label for="ngRack">Rack / standard rate ($ per player)</label><input type="number" step="0.01" id="ngRack" placeholder="e.g. 3.00" class="mono"></div>
       </div>
       <button class="btn pink" id="addGroupSubmit">Create group</button>
       <div class="okflash" id="addGroupOk"><span>&#10003;</span> <span></span></div>

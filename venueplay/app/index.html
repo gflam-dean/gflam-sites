@@ -89,7 +89,7 @@
   .hact:hover{border-color:var(--pink);color:#fff}
   .gtoast{position:fixed;top:4px;left:50%;transform:translateX(-50%) translateY(-18px);background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:11px 20px;border-radius:999px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gtoast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  @media (max-width:600px){ .gtoast{white-space:normal;text-align:center;border-radius:16px;width:max-content;line-height:1.35} }   /* on a phone a long toast wraps, it is not cut off with ... (26 Oct 2026) */
+  @media (max-width:600px){ .gtoast{white-space:normal;text-align:center;border-radius:16px;width:max-content;line-height:1.35;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(18px)} .gtoast.show{transform:translateX(-50%) translateY(0)} }   /* 13 Nov 2026 website audit: on a phone the greeting sat on top of the venueplay wordmark for 6.5 s */   /* on a phone a long toast wraps, it is not cut off with ... (26 Oct 2026) */
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
@@ -552,7 +552,7 @@
             <span><b>Real balls (caller mode)</b><span class="callerpicknote">Your caller draws real balls and you tap each number. Paper books, no phones.</span></span>
           </label>
           <div class="field">
-            <label>Winning pattern</label>
+            <label for="patternSel">Winning pattern</label>
             <select id="patternSel">
               <option value="one">One line (any row)</option>
               <option value="two">Two lines</option>
@@ -564,11 +564,11 @@
             </select>
           </div>
           <div class="field">
-            <label>Prize</label>
+            <label for="prizeInput">Prize</label>
             <input type="text" class="hostinput" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
           <div class="field" id="ticketsField">
-            <label>Tickets</label>
+            <label for="paidSel">Tickets</label>
             <select id="paidSel">
               <option value="">Free &middot; everyone gets the same</option>
               <option value="card">Paid &middot; sold by the ticket</option>
@@ -583,7 +583,7 @@
             <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
             <div class="vp-adv-body">
               <div class="field" id="cardsField">
-                <label>Tickets each player</label>
+                <label for="cardsSel">Tickets each player</label>
                 <select id="cardsSel">
                   <option value="1">1 ticket</option>
                   <option value="2">2 tickets</option>

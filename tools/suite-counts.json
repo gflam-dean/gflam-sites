@@ -2130,5 +2130,9 @@
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 51,
   "counted_by": "lines"
+ },
+ "tools/website-audit-p2-13nov-in-chrome.test.py": {
+  "checks": 8,
+  "counted_by": "lines"
  }
 }
