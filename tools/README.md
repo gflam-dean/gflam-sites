@@ -27,23 +27,22 @@ The cache is keyed by suite path and holds a hash of file contents on disk, so u
 
 The whole-release order: quick checks per branch, merge, Chrome suites once on the merged tree (this queue), prove-checks for new or changed checks only, then the 05:00 gate runs release-check's standing live checks. See ~/venue-enrich/builds/ROUTINE.md.
 
-## The pre-push Chrome half from vp-tests-1, under a signed record (12 Nov 2026, INBOX 265.4)
+## The pre-push Chrome half from vp-tests-1, under a signed record (12 Nov 2026, INBOX 265.4; v2 the FAST GATE, 13 Nov 2026, INBOX 357A)
 
-The pre-push hook ran 98 Chrome suites one at a time on the Mac: 2 h 12 min. The same suites run 4 at a time on the test server vp-tests-1 in about 31 min with the same results (~/venue-enrich/builds/TEST-SERVER.md). The hook now runs `release-check.py --local --chrome-record`, and the gate leaves a Chrome suite out on the Mac ONLY when a signed record from the server covers it.
+The pre-push hook runs about 118 Chrome suites one at a time on the Mac (2 h 12 min on 12 Nov, more since). The same suites run 4 at a time on the test server vp-tests-1 in about 50 min with the same results (~/venue-enrich/builds/TEST-SERVER.md). The hook runs `release-check.py --local --chrome-record`, and the gate leaves a Chrome suite out on the Mac ONLY when a record signed ON THIS MAC covers it. Design, threat model and proofs: ~/venue-enrich/reports/fast-gate-13nov/DESIGN.md.
 
 | file | what it does |
 |---|---|
-| `gate-server.py run` | the ONE path that writes a record: on a clean checkout, sends every Chrome suite the gate runs (found the gate's way: tools/*.test.py + gatelib.uses_chrome), except signin-logo-in-chrome, to vp-tests-1 at -j 4 through ~/venue-enrich/builds/tools-remote/remote-run.sh; a suite red at -j 4 is re-run ALONE 3 times and counts only if all 3 are green; signs the result with HMAC-SHA256 and writes ~/venue-enrich/reports/gate-records/<tree>.json. Refuses to sign if the checkout is dirty, changes during the run, or anything stays red |
+| `gate-server.py run [-j N]` | the ONE path that writes a record: on a clean checkout, makes a fresh nonce and a manifest (git blob id of every file remote-run.sh sends), sends every Chrome suite the gate runs except signin-logo-in-chrome to vp-tests-1 (-j 4 by default; `-j 3` when the server is busy), no retries. The server hashes the files itself before and after and echoes the nonce. The Mac judges the server's RAW output with the tree's own passwording.verdict and check-suite-ledger.judge, and signs (HMAC-SHA256) only if the nonce, both server manifests and every suite (green, at or over its ledger count) check out and the checkout did not move. Writes ~/venue-enrich/reports/gate-records/<tree>.json |
 | `gate-server.py check` | read only: would the gate accept a record for this tree, and why |
-| `gate-server.py init-key` | once per Mac: makes ~/.gflam-gate.env (mode 600) holding GATE_RECORD_KEY. The value is never printed, never sent to the server, never committed. Deleting the file stops every record being trusted |
-| `gate-server.test.py` | 77 checks, no network, no Chrome, fake runner, throwaway keys: every bypass below is refused |
+| `gate-server.py init-key` | once per Mac: makes ~/.gflam-gate.env (mode 600) holding GATE_RECORD_KEY. Never printed, never sent to the server, never committed. Deleting it stops every record being trusted |
+| `gate-server.test.py` | no network, no Chrome, fake runner, throwaway keys: every bypass below is refused; runs the real hook |
+| `hooks/pre-push` with `VP_HOOK_DRY_RUN=1` | prints what the gate would do with the Chrome half for this push (the record verdict), runs no gate, and ALWAYS refuses the push |
 
-A record is accepted only when ALL of these hold, otherwise every Chrome suite runs on the Mac exactly as before (nothing is ever weaker than the old gate):
-- the key file exists, is mode 600 and owned by you; the record is signed with THAT key and not edited since (a changed count, suite list, time or tree breaks the signature);
-- it is for this exact tree (`git rev-parse HEAD^{tree}` of a clean checkout: any file change is another tree; a message-only amend is the same files and still matches);
-- it is under 24 hours old and not dated in the future;
-- it covers every Chrome suite the gate would run (a new suite the server never ran refuses the whole record), each green the gate's way (exit 0, last line `ALL n CHECKS PASSED` or `n of n checks passed`, no FAIL line) and at or over its count in suite-counts.json (lines where the ledger counts lines). No partial acceptance: one bad suite and the record covers none.
+A record is accepted only when ALL of these hold, otherwise every Chrome suite runs on the Mac exactly as before:
+- the key file exists, is mode 600 and yours; the record is signed with THAT key and not edited since;
+- it is for this exact tree (`git rev-parse HEAD^{tree}` of a clean checkout), and the push sends this checkout's files (the hook compares each pushed sha's tree);
+- it is under 2 hours old and not dated in the future;
+- it covers every Chrome suite the gate would run (a new suite the server never ran refuses the whole record), each green on its ONE run the gate's way and at or over its count in suite-counts.json. No partial acceptance; a record carrying re-runs (v1) is refused.
 
-signin-logo-in-chrome.test.py (flaky on Linux only) is never sent to the server and always runs on the Mac under the usual one-retry rule. `--skip-chrome` is unchanged and never combines with `--chrome-record`. The suite ledger (D30) leaves out only the Chrome suites the record covers (`--judged-elsewhere`), because gate-server already held them to the same ledger.
-
-Use: commit, `python3 tools/gate-server.py run` (about 35 min), then push (or push with `VP_GATE_SERVER=1` and the hook runs it first; a failed server run is never fatal, the Mac simply runs the Chrome suites). The key is the trust: anyone holding it can sign anything, so it stays on this Mac. No environment variable moves the key, the records or the runner.
+signin-logo-in-chrome.test.py (flaky on Linux only) is never sent to the server and always runs on the Mac. `--skip-chrome` never combines with `--chrome-record`. Use: commit, `python3 tools/release.py` (step 0b makes the record; `VP_GATE_SERVER=0` turns it off), or by hand `python3 tools/gate-server.py run` then push. A failed or unreachable server run is never fatal: the Mac runs the Chrome suites.
