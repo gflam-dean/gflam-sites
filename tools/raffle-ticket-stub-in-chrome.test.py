@@ -198,7 +198,7 @@ try:
     cfgs = [{'min': 1, 'max': 150, 'pick': 87}, {'min': 1, 'max': 150, 'pick': 1}, {'min': 1, 'max': 150, 'pick': 150}, {'min': 1, 'max': 150, 'pick': 87, 'late': True},
             {'min': 1, 'max': 40, 'pick': 7}, {'min': 1, 'max': 40, 'pick': 33, 'late': True}, {'min': 1, 'max': 12, 'pick': 5}, {'min': 1, 'max': 12, 'pick': 12, 'late': True},
             {'min': 50, 'max': 60, 'pick': 55}, {'min': 1, 'max': 9, 'pick': 9}, {'min': 1, 'max': 300, 'pick': 142}, {'min': 1, 'max': 1500, 'pick': 1087, 'digits': 4}]
-    out = json.loads(R.ask(s, SWEEP + '(%s)' % json.dumps(cfgs), 60) or '[]')
+    out = R.json(s, SWEEP + '(%s)' % json.dumps(cfgs), [], wait=60)
     ok('the sweep ran every range (%d of %d), frame after frame' % (len(out), len(cfgs)), len(out) == len(cfgs) and all(o['frames'] >= 140 for o in out), [(o['cfg'], o['frames']) for o in out])
     for o in out:
         c = o['cfg']; tag = '%d to %d, winner %d%s' % (c['min'], c['max'], c['pick'], ', arriving late' if c.get('late') else '')
@@ -266,7 +266,7 @@ try:
     ok('the console\'s winner card names the prize', won == 'Meat tray', won)
     ok('the TV lands on the server\'s ticket and says ONE winner line for it', R.until(tv, '/Bring ticket \\d{3} to the host\\./.test(' + FR + '.body.innerText)', 30) is True, R.ask(tv, FR + '.body.innerText.slice(0,200)'))
     time.sleep(3)
-    g = json.loads(R.ask(tv, '(' + GEOM + ')(' + FR + ')') or '{}')
+    g = R.json(tv, '(' + GEOM + ')(' + FR + ')', {})
     wl = R.ask(tv, FR + '.body.innerText')
     mm = re.search(r'Bring ticket (\d{3}) to the host', wl or '')
     ok('ONE winner for the prize: one "Bring ticket" line, one ticket standing', (wl or '').count('Bring ticket') == 1 and len(g.get('nums', [])) == 1, [(wl or '').count('Bring ticket'), g.get('nums')])

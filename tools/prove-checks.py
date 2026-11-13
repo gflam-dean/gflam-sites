@@ -22679,8 +22679,10 @@ MUTATIONS = [
      'const gpBool = (v) => (v ? true : false);',
      'a junk value saves as a Game sounds switch'),
     ('test-game-sounds.js', 'venueplay/app/vp-setup-help.js',
-     '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",',
-     '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: true, advanced: true, prompt: "Game sounds",',
+     '/* GAME SOUNDS (Dean, 12 Nov 2026, INBOX 316): the recorded sound effects, per game, the host\'s switch. OFF unless switched on. */\n'
+     '      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",',
+     '/* GAME SOUNDS (Dean, 12 Nov 2026, INBOX 316): the recorded sound effects, per game, the host\'s switch. OFF unless switched on. */\n'
+     '      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: true, advanced: true, prompt: "Game sounds",',
      "a venue that saves its defaults gets Game sounds ON (the first match is trivia's)"),
     ('test-game-sounds.js', 'venueplay/app/vp-setup-help.js',
      '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false,\n',
@@ -22723,8 +22725,10 @@ MUTATIONS = [
      '{ key: "sounds_gone", label: "Game sounds", kind: "seg", options: ONOFF2, def: false,\n',
      "bingo's settings panel has no Game sounds"),
     ('game-sounds-in-chrome.test.py', 'venueplay/app/vp-setup-help.js',
-     '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",',
-     '{ key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: true, advanced: true, prompt: "Game sounds",',
+     '/* GAME SOUNDS (Dean, 12 Nov 2026, INBOX 316): the recorded sound effects, per game, the host\'s switch. OFF unless switched on. */\n'
+     '      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: false, advanced: true, prompt: "Game sounds",',
+     '/* GAME SOUNDS (Dean, 12 Nov 2026, INBOX 316): the recorded sound effects, per game, the host\'s switch. OFF unless switched on. */\n'
+     '      { key: "sounds", label: "Game sounds", kind: "seg", options: ONOFF2, def: true, advanced: true, prompt: "Game sounds",',
      "trivia's Game sounds panel starts On"),
     # 13 Nov 2026, fix/design-audit-small-13nov (INBOX 353g): the TV set-up page on a phone, the host header on a phone, no spaced caps on the TV.
     ('design-audit-small-13nov-in-chrome.test.py', 'venueplay/tv.html',
@@ -22859,6 +22863,11 @@ UNPROVABLE = {
     'a win leads with Confirm winner, every refusal says not to pay out, the lock says why a playlist cannot be switched':
         'its subject is the suite tools/test-paper-scan-screens.js itself, proven row by row under that suite\'s own name '
         '(7 mutations in the table). Proving it again by label would run the whole gate once per mutation.',
+    # D215 (13 Nov 2026): the gate line release/tuesday-17nov added with Game sounds (7f9674d9) had no entry here.
+    'trivia, musical bingo and bingo each keep a Game sounds switch through the Worker (junk dropped, default Off), a slot plays nothing until its game is told ON, a phone needs a tap and the mute button, a demo page is silent':
+        'its subject is the suite tools/test-game-sounds.js itself, proven row by row under that suite\'s own name '
+        '(17 mutations in the table: the Worker keeping and dropping the switch, the setup defaults, the consoles, the TV, '
+        'the phone, the slots). Proving it again by label would run the whole gate once per mutation.',
     'every migration this release adds is already on the live database':
         'it asks git which migrations this branch adds since origin/main, and scratch() copies the repo '
         'WITHOUT .git, so here it is a note (SKIPPED), never a pass; and it reads the live database, which '

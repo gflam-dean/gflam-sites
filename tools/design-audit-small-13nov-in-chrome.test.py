@@ -44,7 +44,7 @@ try:
         tid, sid = S.open('/tv.html', w, h, mobile=phone)
         S.until(sid, 'document.readyState==="complete"', 20)
         S.js(sid, 'document.fonts?document.fonts.ready.then(function(){return 1}):1', wait=True, secs=20); time.sleep(1.5)
-        M = json.loads(S.js(sid, TV)); b, g, im = M['btn'] or {}, M['gp'] or {}, M['img'] or {}
+        M = S.json(sid, TV); b, g, im = M['btn'] or {}, M['gp'] or {}, M['img'] or {}
         ok('%d px: the TV set-up page does not scroll sideways' % w, M['sw'] <= M['vw'], M)
         ok('%d px: "Put in the screen code" is a tidy button (inside its card, one or two lines)' % w, b and b['h'] <= 90 and b['w'] >= 200 and b['r'] <= M['vw'], b)
         if im and im['w']:
@@ -57,7 +57,7 @@ try:
         for w, h in ((375, 812), (390, 844)):
             tid, sid = S.open('/app/%s.html' % page, w, h, mobile=True)
             S.until(sid, 'document.readyState==="complete"', 20); time.sleep(2.0)
-            M = json.loads(S.js(sid, HDR))
+            M = S.json(sid, HDR)
             shown = M['disp'] not in ('none', '')
             ok('%s %d px: the header buttons stay inside the screen' % (page, w), (not M['bs']) or not shown or (max(x['r'] for x in M['bs']) <= M['vw'] and M['sw'] <= M['vw']), M)
             S.close_tab(tid)
