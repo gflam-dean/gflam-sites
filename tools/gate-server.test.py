@@ -396,7 +396,7 @@ try:
     put(res, ''.join(json.dumps(l) + '\n' for l in lines))
     fake = os.path.join(TMP, 'fake-remote-run.sh')
     seen_env = os.path.join(TMP, 'seen-env')
-    put(fake, '#!/bin/bash\necho "$VP_RUN_NONCE $(tr \'\\0\' \'\\n\' < "$VP_RUN_PATHS" | wc -l)" > %s\necho "synced"\necho "results: %s"\n' % (seen_env, res), 0o755)
+    put(fake, '#!/bin/bash\necho "$VP_RUN_NONCE $(tr \'\\0\' \'\\n\' < "$VP_RUN_PATHS" | wc -l) $VP_RUN_PATHS" > %s\necho "synced"\necho "results: %s"\n' % (seen_env, res), 0o755)
     gs.REMOTE_RUN = fake
     got = gs.remote_runner(repo)(CHROME[:2] + ['charlie-in-chrome.test.py', 'delta-in-chrome.test.py'], 4, 'ab' * 16, [b'a', b'b', b'c'])
     g0 = got.get(CHROME[0], {})
@@ -410,7 +410,8 @@ try:
     ok('a suite whose output was cut: red, never green', got.get('delta-in-chrome.test.py', {}).get('verdict', [True])[0] is False)
     ok('the run facts come back for the binding check', got.get(gs.RUN_KEY, {}).get('nonce') == 'ab' * 16)
     ok('the runner hands remote-run.sh the nonce and the path list (then deletes the list)',
-       io.open(seen_env).read().split()[0] == 'ab' * 16 and not glob.glob(os.path.join(tempfile.gettempdir(), 'gate-paths-*.bin')), io.open(seen_env).read())
+       io.open(seen_env).read().split()[0] == 'ab' * 16 and os.path.basename(io.open(seen_env).read().split()[-1]).startswith('gate-paths-')
+       and not os.path.exists(io.open(seen_env).read().split()[-1]), io.open(seen_env).read())
     put(fake, '#!/bin/bash\necho "rsync failed"\nexit 2\n', 0o755)
     ok('no result file (server unreachable): nothing comes back, so nothing can be signed', gs.remote_runner(repo)(CHROME[:2], 4, 'ab' * 16, []) == {})
 

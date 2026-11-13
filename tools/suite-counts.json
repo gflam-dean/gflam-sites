@@ -1576,7 +1576,7 @@
   "counted_by": "lines"
  },
  "tools/test-whats-on.js": {
-  "checks": 103,
+  "checks": 124,
   "counted_by": "lines"
  },
  "tools/test-winner-screen-survives.js": {
@@ -1741,6 +1741,10 @@
  },
  "tools/welcome-name-in-chrome.test.py": {
   "checks": 29,
+  "counted_by": "lines"
+ },
+ "tools/whats-on-foolproof-in-chrome.test.py": {
+  "checks": 169,
   "counted_by": "lines"
  },
  "tools/whats-on-in-chrome.test.py": {
