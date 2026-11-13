@@ -99,12 +99,12 @@
     '.pcc .pcgrid{flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:.8mm}' +
     '.pcc .cell{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:0;overflow:hidden;background:#ECECEF;border-radius:.7mm;padding:1mm .1mm}' +
     '.pcc .cell .t{display:block;width:100%;font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.015em;word-break:normal;overflow-wrap:normal;hyphens:manual;text-wrap:balance}' +
-    /* THE FREE SQUARE SAYS FREE (Dean, INBOX 385, 14 Nov 2026: a pink play button alone did not tell anyone it was the free
-       square). The word FREE in black, the small pink play mark above it. The colour is set here on purpose: the old sheet's
+    /* THE FREE SQUARE SAYS FREE PLAY (Dean, INBOX 385, 14 Nov 2026: a pink play button alone did not tell anyone it was the free
+       square; "FREE PLAY" is his name for it). FREE PLAY in black on one line, the small pink play mark above it. The colour is set here on purpose: the old sheet's
        .free rule above made it white, which is how the word vanished from the first V2 card. */
     '.pcc .cell.free{flex-direction:column;gap:.9mm;background:#fff;color:#0A0A0B;box-shadow:inset 0 0 0 .5mm #0A0A0B}' +
     '.pcc .cell.free img{width:4.2mm;height:4.8mm}' +
-    '.pcc .cell.free .f{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:17pt;line-height:1;letter-spacing:.04em;color:#0A0A0B}' +
+    '.pcc .cell.free .f{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:13pt;line-height:1;letter-spacing:.03em;white-space:nowrap;color:#0A0A0B}' +
     '.pcc .pcstrip{flex:none;border-top:var(--fw) solid #0A0A0B;display:flex;align-items:center}' +
     '.pcc .pchow{font-weight:600;line-height:1.3;font-size:9pt}.pcc .pchow b{font-weight:800}' +
     '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:2.6mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
@@ -157,10 +157,14 @@
     var foot = '<div class="foot">' + PS.logoBox(o.logo, o.venue, LOGO_BOX) +
       '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:25mm;display:block"></div>';
     function one(c, side) {
-      var no = (c.no < 10 ? '0' : '') + c.no, g = '', k = 0;
+      var no = (c.no < 10 ? '0' : '') + c.no, g = '';
       for (var i = 0; i < 25; i++) {
-        if (i === 12) { g += '<div class="cell free"><img src="' + origin + '/brand/venueplay-icon-pink.svg" alt=""><span class="f">FREE</span></div>'; continue; }
-        g += '<div class="cell"><span class="t">' + esc(c.titles[k++] || '') + '</span></div>';
+        if (i === 12) { g += '<div class="cell free"><img src="' + origin + '/brand/venueplay-icon-pink.svg" alt=""><span class="f">FREE PLAY</span></div>'; continue; }
+        /* SQUARE i SHOWS TITLE i (INBOX 385 (3), 14 Nov 2026). The Worker sends 25 titles with '' at the centre, so the squares
+           are read by position. A running count here skipped the centre's '' one square late: the square right of FREE PLAY
+           printed blank on every card and every square after it showed its neighbour's song, which is not the card the scan
+           judges. Phone, TV and the host's scan all read by position already. */
+        g += '<div class="cell"><span class="t">' + esc(c.titles[i] || '') + '</span></div>';
       }
       var qr = c.code ? '<div class="scanbox"><div class="qr" style="width:26mm;height:26mm">' + qrSvg(c.code) + '</div>' +
         '<div style="width:21mm"><div style="font-family:\'Hanken Grotesk\',Arial,sans-serif;font-weight:800;font-size:9.5pt;line-height:1.15">Host scan</div>' +

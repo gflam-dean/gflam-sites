@@ -111,7 +111,7 @@ MEASURE = r'''(function(){
       vlLeft:vr.left, brRight:br.right, vlTop:vr.top, frameBottomEdge:fr.bottom,
       box:{l:vr.left,t:vr.top,r:vr.right,b:vr.bottom,w:mm(vr.width),h:mm(vr.height)}, img:lr?{l:lr.left,t:lr.top,r:lr.right,b:lr.bottom,w:lr.width,h:lr.height,nw:li.naturalWidth,nh:li.naturalHeight,ok:li.complete&&li.naturalWidth>0}:null,
       vname:(vl.querySelector(".vpp-vname")||{}).textContent||"",
-      freeText:fr0?fr0.innerText.trim():"", freeColor:ff?getComputedStyle(ff).color:"", freeMark:!!(fr0&&fr0.querySelector('img[src$="/brand/venueplay-icon-pink.svg"]')),
+      freeText:fr0?fr0.innerText.replace(/\s+/g," ").trim():"", tiles:[].map.call(c.querySelectorAll(".pcgrid .cell"),function(e){return e.classList.contains("free")?null:(e.textContent||"").trim();}), freeColor:ff?getComputedStyle(ff).color:"", freeMark:!!(fr0&&fr0.querySelector('img[src$="/brand/venueplay-icon-pink.svg"]')),
       freeFits:ff?(ff.getBoundingClientRect().right<=fr0.getBoundingClientRect().right+0.5&&ff.getBoundingClientRect().left>=fr0.getBoundingClientRect().left-0.5&&ff.getBoundingClientRect().bottom<=fr0.getBoundingClientRect().bottom+0.5):false,
       headBg:hd?getComputedStyle(hd).backgroundColor:"", numBg:nb?getComputedStyle(nb).backgroundColor:"", numText:nb?nb.innerText.replace(/\s+/g," ").trim():"",
       headText:hd?hd.innerText.replace(/\s+/g," ").trim():"", headOver:hd?(function(){var t=hd.querySelector(".vpp-t"),lh=parseFloat(getComputedStyle(t).fontSize)*0.95;return t.scrollWidth>t.clientWidth+0.5||t.getBoundingClientRect().bottom>hd.getBoundingClientRect().bottom+0.5||t.offsetHeight>lh*2+2;})():true,
@@ -187,6 +187,9 @@ try:
         ok('%s: no pattern named, no "bingo", no "Gflam", no em dash' % tag, not BANNED.search(t), sorted(set(x.group(0) for x in BANNED.finditer(t))))
         ok('%s: says hand up, show the card to the host (a winner claims from the host)' % tag, 'show this card to the host' in t and 'Hand up' in t)
         ok('%s: 24 song squares and the FREE centre, laid out five across and five down' % tag, c['cells'] == 24 and c['free'] and c['cols'] == [5, 5], c['cols'])
+        want = cards_list()[n]['titles']
+        ok('%s: EVERY square has its song, and square i shows the title the Worker dealt for square i (none blank, none shifted; INBOX 385 (3))' % tag,
+           len(c['tiles']) == 25 and c['tiles'][12] is None and all(c['tiles'][i] == want[i] and c['tiles'][i] for i in range(25) if i != 12), [(i, c['tiles'][i], want[i]) for i in range(min(25, len(c['tiles']))) if i != 12 and c['tiles'][i] != want[i]][:4])
         ok('%s: every title fits its own square, none is under 11 pt unless it is one long word' % tag,
            not c['over'] and all(('Thunderstruck' in s or 'Wonderwall' in s) for s in c['small']), (c['over'], c['small']))
         ok('%s: the QR is 26 mm and sits outside the song grid (dabber ink never lands on it)' % tag,
@@ -200,8 +203,8 @@ try:
            abs(c['brRight'] - inside_right) <= 1.0, (c['brRight'], inside_right))
         ok('%s: the footer sits below the frame, not over it' % tag, c['vlTop'] >= c['frameBottom'] - 0.5, (c['vlTop'], c['frameBottom']))
         # INBOX 385 (1): the centre square SAYS FREE, in black, with the small pink play mark, inside its square
-        ok('%s: the centre square reads FREE, in black, with the small pink play mark, all inside the square (INBOX 385)' % tag,
-           c['freeText'] == 'FREE' and c['freeColor'] == 'rgb(10, 10, 11)' and c['freeMark'] and c['freeFits'], (c['freeText'], c['freeColor'], c['freeMark'], c['freeFits']))
+        ok('%s: the centre square reads FREE PLAY, in black, with the small pink play mark, all inside the square (INBOX 385)' % tag,
+           c['freeText'] == 'FREE PLAY' and c['freeColor'] == 'rgb(10, 10, 11)' and c['freeMark'] and c['freeFits'], (c['freeText'], c['freeColor'], c['freeMark'], c['freeFits']))
         # INBOX 384/385 UPDATE: the black header band, the number big on a pink block, no word "Card"
         ok('%s: the header is the black band with the card number on the PINK block, no word "Card" (INBOX 384/385)' % tag,
            c['headBg'] == 'rgb(10, 10, 11)' and c['numBg'] == 'rgb(255, 31, 142)' and c['numText'].startswith('%02d' % (7 + n)) and 'Card' not in c['headText'] and not c['headOver'],
@@ -269,7 +272,7 @@ try:
            (abs(im['r'] - im['l'] - (b['r'] - b['l'])) <= 1.0) if bound == 'w' else (abs(im['b'] - im['t'] - (b['b'] - b['t'])) <= 1.0), (im, b))
         ok('%s: centred top to bottom in the box, its left edge on the curve end' % tag,
            abs((im['t'] + im['b']) / 2 - (b['t'] + b['b']) / 2) <= 0.6 and abs(im['l'] - (c['frameLeft'] + c['rad'])) <= 1.0, (im, b, c['frameLeft'] + c['rad']))
-        ok('%s: the FREE square still reads FREE' % tag, c['freeText'] == 'FREE')
+        ok('%s: the centre square still reads FREE PLAY' % tag, c['freeText'] == 'FREE PLAY')
         dec = waits.as_json(S.js(sid, DECODE % json.dumps([c['svg']]), wait=True, secs=30), [], what='the QR decode')
         ok('%s: the QR still decodes to the card\'s code' % tag, dec == [CODES[0]], dec)
         if kind == 'light':
@@ -303,6 +306,7 @@ try:
     for n, c in enumerate(ml['cards']):
         tag = 'long titles card %02d' % (7 + n)
         ok('%s: every title fits its own square, whole (nothing cut)' % tag, not c['over'] and c['cells'] == 24, c['over'])
+        ok('%s: every square has its own song, in the dealt order' % tag, all(c['tiles'][i] == cards_list(LONG)[n]['titles'][i] and c['tiles'][i] for i in range(25) if i != 12))
         ok('%s: the long playlist name fits the black header' % tag, not c['headOver'] and LONGPL.upper() in c['headText'].upper(), c['headText'])
     if A.shots:
         S.shot(sid, os.path.join(A.shots, 'cards-long.png'), full=False)
@@ -315,8 +319,13 @@ try:
     tid, sid = S.open('/app/musical/play.html?demo=1&sting=0', 375, 812, True)
     S.until(sid, 'document.querySelectorAll("#cardGrid .cc").length===25', 20)
     time.sleep(1.5)
-    ph = S.json(sid, '(function(){var f=document.querySelector("#cardGrid .cc.free");var r=f.getBoundingClientRect();return JSON.stringify({t:f.innerText.trim(),c:getComputedStyle(f).color,i:[].indexOf.call(f.parentNode.children,f)});})()', {})
-    ok('the phone card\'s centre square reads FREE, in black, the same word as the paper card (INBOX 385)', ph.get('t') == 'FREE' and ph.get('c') == 'rgb(10, 10, 11)' and ph.get('i') == 12, ph)
+    ph = S.json(sid, '(function(){var f=document.querySelector("#cardGrid .cc.free"),m=f.querySelector("svg.fpm path"),fr=f.getBoundingClientRect(),w=f.querySelector(".fpw"),wr=w?w.getBoundingClientRect():null;'
+                 'var empty=[].filter.call(document.querySelectorAll("#cardGrid .cc:not(.free)"),function(e){return !(e.textContent||"").trim();}).length;'
+                 'return JSON.stringify({t:f.innerText.replace(/\\s+/g," ").trim(),c:getComputedStyle(f).color,i:[].indexOf.call(f.parentNode.children,f),mark:m?m.getAttribute("fill"):"",'
+                 'fits:!!wr&&wr.left>=fr.left-0.5&&wr.right<=fr.right+0.5&&wr.bottom<=fr.bottom+0.5,empty:empty});})()', {})
+    ok('the phone card\'s centre square reads FREE PLAY in black with the small pink play mark, inside its square (INBOX 385)',
+       ph.get('t') == 'FREE PLAY' and ph.get('c') == 'rgb(10, 10, 11)' and ph.get('i') == 12 and ph.get('mark') == '#FF1F8E' and ph.get('fits'), ph)
+    ok('the phone card: every one of the 24 song squares has its song (INBOX 385 (3))', ph.get('empty') == 0, ph)
     if A.shots:
         S.shot(sid, os.path.join(A.shots, 'phone-free.png'), full=False)
     S.close_tab(tid)
@@ -351,8 +360,8 @@ try:
                 ok('%s: "Confirm winner" and "Scan another" are IN LINE: one row, side by side, same size' % tag,
                    names == ['Confirm winner', 'Scan another'] and v['rows'][0]['top'] == v['rows'][1]['top'] and v['rows'][0]['l'] < v['rows'][1]['l']
                    and abs(v['rows'][0]['w'] - v['rows'][1]['w']) <= 2 and v['rows'][0]['b'] <= v['vh'], v['rows'])
-                ok('%s: the winning songs are listed in the order they were played, with FREE' % tag,
-                   '4th' in v['text'] and '9th' in v['text'] and 'FREE' in v['text'] and 'Row 3 across' in v['text'] and 'Printed Mon 16 Nov' in v['text'], v['text'][:300])
+                ok('%s: the winning songs are listed in the order they were played, with FREE PLAY' % tag,
+                   '4th' in v['text'] and '9th' in v['text'] and 'FREE PLAY' in v['text'] and 'Row 3 across' in v['text'] and 'Printed Mon 16 Nov' in v['text'], v['text'][:300])
             elif name in ('notyet', 'wrong_playlist', 'replaced', 'other_night', 'other_venue', 'not_card'):
                 ok('%s: "Scan another" leads the row, with "Back to the game" beside it' % tag,
                    names == ['Scan another', 'Back to the game'] and v['rows'][0]['top'] == v['rows'][1]['top'], v['rows'])
@@ -370,7 +379,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 230
+EXPECTED = 235
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
