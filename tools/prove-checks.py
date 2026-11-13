@@ -22555,7 +22555,7 @@ MUTATIONS = [
      '  body{background:#0A0A0B;color:var(--text);', '  body{background:#050506;color:var(--text);',
      'the page round the wall is another colour than the floor: the lighter box in a black frame on the Kogan (shot-103)'),
     ('tv-fullbleed-in-chrome.test.py', 'venueplay/app/vp-tvsafe.css',
-     '#tvAds .ad:not(.ad-photo), .tv .badvenue{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw;', '#tvAds .ad:not(.ad-photo), .tv .badvenue{',
+     '#tvAds .ad:not(.ad-photo), .tv .badvenue, .tv .ballreveal{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw;', '#tvAds .ad:not(.ad-photo), .tv .badvenue, .tv .ballreveal{',
      "a typed slide's glow and the members draws card's ground stop at the safe box (a frame round every typed slide)"),
     ('tv-fullbleed-in-chrome.test.py', 'venueplay/app/vp-tvsafe.css',
      '.tv .ballreveal .brdim{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw}', '',
