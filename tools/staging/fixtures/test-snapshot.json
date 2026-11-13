@@ -1,0 +1,152 @@
+{
+ "kind": "venueplay-schema-snapshot",
+ "version": 1,
+ "taken_at": "2026-11-12T05:05:00+00:00",
+ "server_version": "17.4",
+ "staging_marker": "gpoolavkghnxedzrmtmc",
+ "rls": {
+  "vp_venues": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_members": {
+   "enabled": true,
+   "forced": false
+  }
+ },
+ "policies": {
+  "vp_venues.staff read": {
+   "cmd": "SELECT",
+   "permissive": "PERMISSIVE",
+   "roles": "authenticated",
+   "using": "vp_is_staff(id)",
+   "with_check": ""
+  },
+  "vp_members.staff write": {
+   "cmd": "ALL",
+   "permissive": "PERMISSIVE",
+   "roles": "authenticated",
+   "using": "vp_is_staff_roster(roster_id)",
+   "with_check": "vp_is_staff_roster(roster_id)"
+  }
+ },
+ "grants": [
+  "vp_members authenticated SELECT",
+  "vp_venues anon SELECT",
+  "vp_venues authenticated SELECT"
+ ],
+ "views": [
+  "v_vp_trusted"
+ ],
+ "security_definer_functions": {
+  "vp_is_staff(v uuid)": {
+   "anon": false,
+   "authenticated": true
+  }
+ },
+ "columns": {
+  "vp_venues": [
+   [
+    "id",
+    "uuid:uuid",
+    "NO",
+    "gen_random_uuid()"
+   ],
+   [
+    "slug",
+    "text:text",
+    "NO",
+    ""
+   ],
+   [
+    "name",
+    "text:text",
+    "NO",
+    ""
+   ]
+  ],
+  "vp_members": [
+   [
+    "id",
+    "uuid:uuid",
+    "NO",
+    "gen_random_uuid()"
+   ],
+   [
+    "roster_id",
+    "uuid:uuid",
+    "NO",
+    ""
+   ],
+   [
+    "member_number",
+    "text:text",
+    "YES",
+    ""
+   ]
+  ],
+  "v_vp_trusted": [
+   [
+    "name",
+    "text:text",
+    "YES",
+    ""
+   ],
+   [
+    "logo_url",
+    "text:text",
+    "YES",
+    ""
+   ]
+  ]
+ },
+ "functions": {
+  "vp_is_staff(v uuid)": "0f1e2d3c4b5a69788796a5b4c3d2e1f0"
+ },
+ "triggers": {
+  "vp_venues.vp_venues_touch": "CREATE TRIGGER vp_venues_touch BEFORE UPDATE ON public.vp_venues FOR EACH ROW EXECUTE FUNCTION vp_touch()"
+ },
+ "indexes": {
+  "vp_venues_slug_key": "CREATE UNIQUE INDEX vp_venues_slug_key ON public.vp_venues USING btree (slug)"
+ },
+ "constraints": {
+  "vp_venues.vp_venues_pkey": "PRIMARY KEY (id)"
+ },
+ "enums": {
+  "vp_role": [
+   "owner",
+   "manager",
+   "host",
+   "marketing"
+  ]
+ },
+ "sequences": [
+  "vp_help_tickets_ticket_no_seq"
+ ],
+ "extensions": {
+  "pgcrypto": "1.3",
+  "plpgsql": "1.0"
+ },
+ "realtime_publication": [
+  "public.vp_session_events"
+ ],
+ "storage_buckets": {
+  "venue-logos": {
+   "public": true,
+   "file_size_limit": 2097152,
+   "allowed_mime_types": [
+    "image/png",
+    "image/jpeg"
+   ]
+  }
+ },
+ "storage_policies": {
+  "objects.public read logos": {
+   "cmd": "SELECT",
+   "permissive": "PERMISSIVE",
+   "roles": "public",
+   "using": "(bucket_id = 'venue-logos'::text)",
+   "with_check": ""
+  }
+ }
+}

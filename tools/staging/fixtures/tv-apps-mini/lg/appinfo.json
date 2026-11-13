@@ -1,0 +1,17 @@
+{
+    "id": "au.com.venueplay.tv",
+    "version": "1.0.1",
+    "vendor": "venueplay",
+    "type": "web",
+    "main": "index.html",
+    "title": "venueplay TV",
+    "appDescription": "The venueplay screen for your venue's TV",
+    "icon": "icon.png",
+    "largeIcon": "largeIcon.png",
+    "splashBackground": "splash.png",
+    "bgColor": "#0A0A0B",
+    "iconColor": "#0A0A0B",
+    "resolution": "1920x1080",
+    "disableBackHistoryAPI": true,
+    "handlesRelaunch": false
+}

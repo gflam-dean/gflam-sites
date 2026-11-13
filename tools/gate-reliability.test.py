@@ -274,7 +274,7 @@ try:
     sms = dw.suites_naming('venueplay-sms-hook.js', 'venueplay-sms')
     ok('the game Worker: dozens of suites, among them the Worker rig suites and no PartyPlay ones',
        len(game) >= 30 and any('bingo-server-draw' in s for s in game) and not any('/partyplay' in s for s in game), len(game))
-    ok('the SMS hook: its two suites and nothing else', [os.path.basename(s) for s in sms] == ['sms-hook-failover.test.js', 'sms-hook-secrets.test.js'], sms)
+    ok('the SMS hook: its two suites and the outbox guard\'s (13 Nov 2026: the guard block sits in the hook), nothing else', [os.path.basename(s) for s in sms] == ['test-outbox-guard.js', 'sms-hook-failover.test.js', 'sms-hook-secrets.test.js'], sms)
     ok('the labels the full gate still judges on the file are listed by name',
        any('is whole' in l for l in dw.labels_naming('venueplay-game.js')))
     # A scratch repo with just what the fast gate needs for the SMS hook, and ONE suite naming it, broken.

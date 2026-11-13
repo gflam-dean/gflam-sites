@@ -1,0 +1,15 @@
+# Tables copied from LIVE to TEST as CONTENT (our own words and games, never people).
+# One per line: table [where clause]. Read by copy-content-from-live.sh.
+# check-schema-matches-live.py --check-content refuses this list if any table here has a column
+# that can hold a person (email, phone, mobile, names of people, addresses, IP, tokens).
+# MAIN CONFIRMS THIS LIST BEFORE THE FIRST COPY (README question 5).
+vp_question_sets where owner_venue_id is null
+vp_questions where set_id in (select id from public.vp_question_sets where owner_venue_id is null)
+vp_playlists where owner_venue_id is null
+vp_playlist_songs where playlist_id in (select id from public.vp_playlists where owner_venue_id is null)
+vp_help_issues
+vp_help_steps
+vp_help_faq
+vp_help_saved_replies
+vp_monthly_news
+vp_licensed_venues
