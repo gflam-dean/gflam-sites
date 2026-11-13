@@ -2154,5 +2154,9 @@
  "tools/kogan-shot.test.py": {
   "checks": 27,
   "counted_by": "lines"
+ },
+ "tools/lobby-refresh-in-chrome.test.py": {
+  "checks": 148,
+  "counted_by": "lines"
  }
 }

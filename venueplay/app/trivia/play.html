@@ -421,6 +421,7 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
+<script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>
 <script src="/app/vp-demo.js"></script>   <!-- the try-it demo: their own name, email and mobile from sign-up, never the tick (INBOX 82) -->   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
@@ -1832,6 +1833,7 @@
          another one, this phone moves with them instead of sitting on a trivia
          screen for the rest of the night. */
       if(window.VPFollow) VPFollow.start({ api: VP_GAME_API, room: room, format: "trivia" });
+      if(window.VP_WAITWATCH) VP_WAITWATCH.start({ api: VP_GAME_API, session:function(){ return P.sessionId; }, waiting:function(){ return P.joined && !$("vWait").classList.contains("hidden"); }, forget:dropStaleJoin });
     }
     else { $("statusText").textContent=""; var _sd=$("statusDot"); if(_sd && _sd.parentNode && _sd.parentNode.classList) _sd.parentNode.classList.add("nostatus"); show("vNoRoom"); }   // no status until a code is tried (Dean, 30 Oct 2026)
   })();

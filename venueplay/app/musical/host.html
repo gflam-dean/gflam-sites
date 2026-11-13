@@ -543,6 +543,7 @@
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
+<script src="/app/vp-lobby.js"></script>
 <script src="/app/vp-hostedby.js"></script>   <!-- "Hosted by" on the TV (INBOX 120) -->
 <script src="/app/vendor/qrcode-1.4.4.min.js"></script>
 <script src="/app/vp-print.js"></script>
@@ -978,7 +979,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   var WORKER_TO_PAT={ any_line:"any", one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
   function musicKey(){ return "vpMusicGame-"+(G.venueId||""); }
   function saveMusic(){
-    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId })); } }catch(e){}
+    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId })); clearLobby(); } }catch(e){}
   }
   function clearMusic(){ try{ localStorage.removeItem(musicKey()); }catch(e){} }
   function readMusicSave(){
@@ -1662,6 +1663,36 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   }
   // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
   // scan in and see "you're in" before any card is dealt. Then "Start game" deals + begins.
+  /* THE LOBBY SURVIVES A REFRESH (website audit part 1b, 13 Nov 2026). A lobby has a night on the server and no game
+     row, so the running-game restore never saw it: the console came back on setup, 0 players, and the phones sat on
+     "You're in" for ever. The pointer is the night (session + code) plus the setup the host had typed; the Worker is
+     asked whether that night is still open (vp-lobby.js). Same session, same code, so the same phones are the same players. */
+  function saveLobby(){
+    if(!(window.VP_LOBBY && G.status==="lobby" && G.sessionId)) return;
+    VP_LOBBY.save("musical", G.venueId, { sessionId:G.sessionId, joinCode:G.joinCode, prize:($("prizeInput").value||""), pattern:$("patternSel").value, playlistId:G.playlistId||"" });
+  }
+  function clearLobby(){ if(window.VP_LOBBY) VP_LOBBY.clear("musical", G.venueId); }
+  function restoreMusicLobby(){
+    var p=window.VP_LOBBY ? VP_LOBBY.read("musical", G.venueId) : null;
+    if(!p) return Promise.resolve(false);
+    return VP_LOBBY.live(VP_GAME_API, p).then(function(r){
+      if(r===undefined) return false;                       // could not tell: keep the pointer, the setup screen stands
+      if(!r){ clearLobby(); return false; }                 // the night is gone: a clean setup screen, no ghost lobby
+      G.sessionId=r.session_id; G.joinCode=r.join_code;
+      try{ if(p.prize) $("prizeInput").value=p.prize; }catch(e){}
+      try{ var ps=$("patternSel"); if(p.pattern && ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; } }catch(e){}
+      try{ if(p.playlistId && PL_OPTS.some(function(o){ return o.id===p.playlistId; })) selectPlaylist(p.playlistId); }catch(e){}
+      try{ VP.noteOpenSession(G.sessionId, G.venueId); }catch(e){}
+      openGameChannel(G.joinCode);                          // the players' channel; on subscribe it rolls call and the phones answer
+      G.status="lobby";
+      openSession();                                        // says "musical" again; the server reuses this night (or hands back the one it rolled)
+      bcast({ t:"mode", mode:"musical" });
+      sendState();
+      saveLobby();
+      renderConsole();
+      return true;
+    });
+  }
   function openLobby(){
     if(!libLoaded || G.busy) return;
     clearErrForAction();
@@ -1669,6 +1700,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     openSession().then(function(){
       bcast({ t:"mode", mode:"musical" });   // TV switches to the musical join screen
       G.status="lobby";
+      saveLobby();                            // a refresh from here brings this lobby back (vp-lobby.js)
       sendState();                            // active:false -> screen shows the join QR + code + player count
     }).catch(function(e){ hostError(e.message); }).then(function(){
       G.busy=false; btn.disabled=false; renderConsole();
@@ -1678,6 +1710,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     if(G.busy) return;
     clearErrForAction();
     G.status="setup";
+    clearLobby();
     bcast({ t:"idle" });   // TV back to the idle join screen
     sendState();
     closeNight(null);
@@ -1691,6 +1724,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   var _fbSid="";
   function closeNight(ended){
     var sid=G.sessionId; if(!sid) return;
+    clearLobby();
     _fbSid=sid; G.sessionId=""; G.joinCode="";
     (ended || Promise.resolve()).then(function(){ if(window.VP && VP.closeSession) VP.closeSession(sid); });
   }
@@ -2215,7 +2249,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     renderPlCards($("plSearch") ? $("plSearch").value : "");
   }
   function selectPlaylist(id){
-    G.playlistId=id; $("playlistSel").value=id; queuePrefsSave();
+    G.playlistId=id; $("playlistSel").value=id; queuePrefsSave(); saveLobby();
     var cards=document.querySelectorAll("#plGrid .plcard");
     for(var i=0;i<cards.length;i++){ cards[i].classList.toggle("on", cards[i].getAttribute("data-id")===id); }
   }
@@ -2310,7 +2344,9 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     connect(code);
   }
   $("connectBtn").addEventListener("click", tryConnect);
-  $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; });
+  $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; saveLobby(); });
+  $("prizeInput").addEventListener("input", saveLobby);      // a refresh in the lobby keeps what the host typed (vp-lobby.js)
+  $("patternSel").addEventListener("change", saveLobby);
   (function bindHits(){
     var c=$("hitsChk"); if(!c) return;
     try{ var saved=localStorage.getItem("vpMusicHitsOnly"); if(saved!==null) c.checked=(saved==="1"); }catch(e){}
@@ -2749,7 +2785,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       libReady.then(startVenuePrefs).catch(function(){});
       if(window.VPGameSetup) VPGameSetup.firstOpen("musical", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
       Promise.all([libReady, _oneTab]).then(function(){   // library must be loaded before we rebuild a game's song list
-        restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
+        restoreMusic().then(function(back){ return back ? back : restoreMusicLobby(); }).then(function(){         // recover a live game first (accidental reload), then an open lobby, then pair the TV as normal
           /* Picked up on another device: stand down and fall silent (/app/vp-pickup.js). */
           if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"musical_bingo",
             sessionId:function(){ return (G.gameId && G.status==="running") ? G.sessionId : ""; },
