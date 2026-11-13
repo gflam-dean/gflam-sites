@@ -32,8 +32,11 @@ check('a logo that is not a path on this site is refused', D.config({ slug: 'the
 print('what plays: the live slides, or the fallback');
 var SL = [{ tag: 'Drag Bingo', head: 'Feb 27', image_url: 'https://db.example/storage/v1/object/public/venue-ads/v/a.png' }, { image_url: 'https://db.example/storage/v1/object/public/venue-ads/v/b.png' }];
 var cfg = D.config(SHIPPED);
-var live = D.choose(cfg, D.fromScreen({ exists: true, name: 'Tugun Bowls Club', logo_url: 'https://db.example/logo.png', slides: SL, events: [], draws: [{ draw_day: 'Thursday', current_jackpot_cents: 140000 }], raffle: { label: 'Meat raffle', day: 'Friday' }, raffles: [{ label: 'x', day: 'Fri' }] }));
+var RAW = { exists: true, name: 'Tugun Bowls Club', logo_url: 'https://db.example/logo.png', slides: SL, events: [], draws: [{ draw_day: 'Thursday', current_jackpot_cents: 140000 }], raffle: { label: 'Meat raffle', day: 'Friday' }, raffles: [{ label: 'x', day: 'Fri' }] };
+var READ = D.fromScreen(RAW);
+var live = D.choose(cfg, READ);
 check('a full slides list is what plays, in the venue\'s order', live.source === 'live' && live.slides.length === 2 && live.slides[0].head === 'Feb 27', live);
+check('the boiled-down read holds only slides, nights, name and logo: the account\'s draws and raffles are dropped at the door', Object.keys(READ).sort().join() === 'events,logo,name,slides' && JSON.stringify(READ).indexOf('1400') < 0 && JSON.stringify(READ).indexOf('Meat raffle') < 0, Object.keys(READ));
 check('and no fallback nights are mixed in with them', live.events.length === 0);
 check('the venue\'s own logo from the read wins over the file', live.logo === 'https://db.example/logo.png');
 check('the old draws board and the raffle card are never read, whatever the account holds', !('draws' in live) && !('raffle' in live) && !('raffles' in live) && JSON.stringify(live).indexOf('1400') < 0 && JSON.stringify(live).indexOf('Meat raffle') < 0, Object.keys(live));

@@ -736,7 +736,7 @@
   "counted_by": "lines"
  },
  "tools/test-demo-venue.js": {
-  "checks": 56,
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-double-points.js": {
