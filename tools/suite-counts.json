@@ -483,6 +483,10 @@
   "checks": 47,
   "counted_by": "lines"
  },
+ "tools/real-night-free.test.py": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
  "tools/real-settings-in-chrome.test.py": {
   "checks": 217,
   "counted_by": "lines"

@@ -356,6 +356,7 @@
   "qr-fallback-in-chrome.test.py",
   "raffle-ticket-stub-in-chrome.test.py",
   "real-night-check.test.py",
+  "real-night-free.test.py",
   "real-settings-in-chrome.test.py",
   "reconnect-layout-in-chrome.test.py",
   "redirect-verdict.test.py",

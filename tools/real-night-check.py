@@ -19,6 +19,16 @@ format is tools/real-night-template.md. The check fails (exit 1, every reason li
   - a game has no "Result: PASS by <name>" line, or says FAIL
   - any line is still a template placeholder (<...>) or says TODO
 It reads one local file and never touches the network. VP_REAL_NIGHT_DIR moves the folder (the suite uses it).
+
+THE AUTOMATED, FREE RECORD (INBOX 365B, 13 Nov 2026, written by tools/real-night-free.py; its head says "Mode: automated").
+It is judged by the same game rules (five sections in order, a TV shot and a phone shot on disk, "Phones: A, B", PASS by a
+name) and, instead of the Kogan and Mini Bar lines, by what it honestly is:
+  - Venue names The Mini Bar AND says "test server" (the rig played the venue's saved settings, not the live venue)
+  - TV says "Chrome /tv (test server)" and never names the Kogan: the Kogan was not played
+  - "Kogan app shots: n of 5" with n equal to the games whose "Kogan shot:" is a file on disk (a PNG); a skipped shot
+    says "skipped (...)". The Kogan is informational: 0 of 5 passes, a count that does not match the files fails
+  - "Dry run: GREEN, <n> checks ..." (n > 0), "Verify live: GREEN ..." and a "Tree:" line with the tree id
+  - the "Look:" page is on disk
 """
 import io, os, re, sys
 
@@ -65,6 +75,54 @@ def _shot_ok(ref, base):
     return os.path.isfile(os.path.expanduser(p))
 
 
+def _png(path):
+    try:
+        with open(path, 'rb') as fh:
+            return fh.read(8) == b'\x89PNG\r\n\x1a\n'
+    except Exception:
+        return False
+
+
+def _automated_head(head, sections, base):
+    """The honest lines an automated record (tools/real-night-free.py) must carry instead of the Kogan/Mini Bar ones."""
+    why = []
+    venue = (_field(head, 'Venue') or '').lower()
+    if VENUE.lower() not in venue or 'test server' not in venue:
+        why.append('Venue is %r: an automated night names The Mini Bar\'s settings AND the test server it ran on' % _field(head, 'Venue'))
+    tv = _field(head, 'TV') or ''
+    if not tv.lower().startswith('chrome /tv (test server)'):
+        why.append('TV is %r: an automated night says "Chrome /tv (test server)"' % tv)
+    if 'kogan' in tv.lower():
+        why.append('TV is %r: an automated night never played the Kogan, so its TV line must not name it' % tv)
+    m = re.match(r'^(\d+) of (\d+)\b', (_field(head, 'Kogan app shots') or '').strip())
+    shot_files = 0
+    for name, body in sections:
+        for k in _fields(body, 'Kogan shot'):
+            if k.lower().startswith('skipped'):
+                continue
+            p = k if os.path.isabs(k) else os.path.join(base, k)
+            if _png(os.path.expanduser(p)):
+                shot_files += 1
+            else:
+                why.append('%s: the Kogan shot %r is not a PNG on disk' % (name, k))
+    if not m:
+        why.append('no "Kogan app shots: n of 5" line (say honestly how many the Kogan app gave, even 0)')
+    elif int(m.group(2)) != len(GAMES) or int(m.group(1)) != shot_files:
+        why.append('"Kogan app shots: %s of %s" does not match the %d Kogan shot file(s) on disk for the %d games'
+                   % (m.group(1), m.group(2), shot_files, len(GAMES)))
+    d = re.match(r'^GREEN, (\d+) checks\b', (_field(head, 'Dry run') or '').strip())
+    if not d or int(d.group(1)) <= 0:
+        why.append('Dry run is %r: the dry run on the test server must be "GREEN, <n> checks"' % _field(head, 'Dry run'))
+    if not (_field(head, 'Verify live') or '').strip().startswith('GREEN'):
+        why.append('Verify live is %r: verify-live --all against live must be GREEN' % _field(head, 'Verify live'))
+    if not re.match(r'^[0-9a-f]{40}\b', (_field(head, 'Tree') or '').strip()):
+        why.append('no Tree line with the tree the dry run ran')
+    look = _field(head, 'Look')
+    if _placeholder(look) or not os.path.isfile(os.path.join(base, look)):
+        why.append('the Look page %r is not there' % look)
+    return why
+
+
 def check_text(text, build, base):
     """Every reason the record does not prove a real night on `build`. [] = it does."""
     why = []
@@ -88,12 +146,16 @@ def check_text(text, build, base):
         why.append('the record is for build %s, not this release (%s)' % (got[:12], build[:12] or 'none given'))
     if _placeholder(_field(head, 'Date')):
         why.append('no Date line')
+    auto = (_field(head, 'Mode') or '').strip().lower().startswith('automated')
     venue = _field(head, 'Venue') or ''
-    if venue.strip().lower() != VENUE.lower():
-        why.append('Venue is %r, not %s' % (venue, VENUE))
     tv = _field(head, 'TV') or ''
-    if 'kogan' not in tv.lower() or TV_IP not in tv:
-        why.append('TV is %r: the night is played on the Kogan TV app at %s' % (tv, TV_IP))
+    if auto:
+        why += _automated_head(head, sections, base)
+    else:
+        if venue.strip().lower() != VENUE.lower():
+            why.append('Venue is %r, not %s' % (venue, VENUE))
+        if 'kogan' not in tv.lower() or TV_IP not in tv:
+            why.append('TV is %r: the night is played on the Kogan TV app at %s' % (tv, TV_IP))
     pa, pb = _field(head, 'Phone A'), _field(head, 'Phone B')
     if _placeholder(pa) or _placeholder(pb):
         why.append('Phone A and Phone B must both be named (two phones, kept across every game)')

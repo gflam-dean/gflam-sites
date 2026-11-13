@@ -35,6 +35,12 @@ the steps and stops at the first one that is not true:
        with the Kogan TV app and the same two phones, a TV shot, a phone shot and a PASS by a named person for each
        (tools/real-night-check.py judges it; tools/real-night-template.md is the form). Off by default because the
        night is played after the push: main and Dean switch it on.
+       SINCE 13 Nov 2026 (INBOX 364/365B, FREE: no Dean step, no SMS): ON, step 6 first runs
+       tools/real-night-free.py --build <sha>: (1) the real-night dry run on vp-tests-1 against this exact tree (the fast
+       gate's nonce + manifest), (2) verify-live --all against live, read-only, (3) the Kogan TV app shot per game IF the
+       TV answers (informational, capped, skipped with a note when dark). It writes the record and a LOOK page; the release
+       is DONE only when (1) and (2) are green and tools/real-night-check.py passes that record. Red = LIVE but NOT DONE,
+       exit 1. It never rolls back, never sends anything. VP_REAL_NIGHT_MODE=hand keeps the hand-played record instead.
     7. one plain line
 
 It calls the existing tools; it adds no judgement of its own. Secrets stay in
@@ -141,9 +147,8 @@ def main():
         if screens: print('  would run verify-live --stamp (screen files changed)')
         print('  would ' + ('run the Chrome suites on vp-tests-1 first (tools/gate-server.py run), then push'
                             if server_gate_on() else 'not use vp-tests-1 (VP_GATE_SERVER=0): the hook runs every Chrome suite on the Mac'))
-        on, _, _ = real_night(head)
-        print('  would %s' % ('want a real-night record (VP_REAL_NIGHT=1): ' + _rn().record_path(head) if on else
-                              'not ask for a real-night record (VP_REAL_NIGHT is not 1)'))
+        for l in real_night_plan(head):
+            print('  would ' + l)
         return 0
 
     step(0, 'the tree is clean and every Worker is stamped')
@@ -235,10 +240,11 @@ def main():
         stop('the full gate is red on the live release. Read it; a "this release is live" line means Pages has not finished, run python3 tools/release-check.py again.')
 
     step(6, 'a real night on this build: five games, The Mini Bar, the Kogan TV app, the same two phones')
-    on, good, lines = real_night(head)
+    on, good, lines = real_night(head, run=subprocess.run)
     for l in lines: print('  ' + l)
     if on and not good:
-        stop('LIVE, but NOT DONE: %s is not verified until a real night is recorded for it. Play the night, write the '
+        stop('LIVE, but NOT DONE: %s is not verified until a real night is green for it. Nothing was rolled back. Read the '
+             'reasons and the LOOK page above, fix, release again; or (VP_REAL_NIGHT_MODE=hand) play the night, write the '
              'record (tools/real-night-template.md), then python3 tools/real-night-check.py %s says DONE.' % (head[:8], head))
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
@@ -271,12 +277,52 @@ def _rn():
     return m
 
 
-def real_night(build, env=None):
-    """Step 6 (INBOX 295.1). (on, good, lines to print). OFF unless VP_REAL_NIGHT=1, and then it says so; ON, the
-    release is done only when tools/real-night-check.py passes the record for this build."""
+def free_mode(env):
+    """The FREE automated night (tools/real-night-free.py) unless VP_REAL_NIGHT_MODE=hand."""
+    return (env.get('VP_REAL_NIGHT_MODE') or 'free').strip().lower() != 'hand'
+
+
+def free_argv(build):
+    return [PY, 'tools/real-night-free.py', '--build', build]
+
+
+def real_night_plan(build, env=None):
+    """Lines for --plan: what step 6 would do."""
+    env = os.environ if env is None else env
+    if (env.get('VP_REAL_NIGHT') or '') != '1':
+        return ['not ask for a real night (VP_REAL_NIGHT is not 1)']
+    if not free_mode(env):
+        return ['want a hand-played real-night record (VP_REAL_NIGHT=1, VP_REAL_NIGHT_MODE=hand): ' + _rn().record_path(build)]
+    fr = _load('real_night_free_plan', 'tools/real-night-free.py')
+    return ['run the FREE real night after the gate (VP_REAL_NIGHT=1): tools/real-night-free.py --build ' + build[:8]] + \
+           ['  ' + l for l in fr.plan_lines(build, env)] + ['  then judge ' + _rn().record_path(build) + ' (never rolls back)']
+
+
+def _load(name, rel):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, os.path.join(ROOT, rel))
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    return m
+
+
+def real_night(build, env=None, run=None):
+    """Step 6 (INBOX 295.1, 364/365B). (on, good, lines to print). OFF unless VP_REAL_NIGHT=1, and then it says so.
+    ON (free mode, the default once on): tools/real-night-free.py plays the dry run on the test server, runs verify-live
+    --all and shoots the Kogan app, and writes the record; its output streams to the terminal. A red run is NOT done.
+    Then, in both modes, the release is done only when tools/real-night-check.py passes the record for this build.
+    Nothing here ever rolls back or sends anything."""
     env = os.environ if env is None else env
     if env.get('VP_REAL_NIGHT') != '1':
         return False, True, ['%soff: VP_REAL_NIGHT is not 1, so no real-night record is asked for yet (main and Dean switch it on)%s' % (DIM, OFF)]
+    if free_mode(env):
+        # ONLY main() hands a runner in (13 Nov 2026: a suite that called real_night() without one started a real
+        # verify-live --all twice). With none, nothing is started and the step is NOT done.
+        if run is None:
+            return True, False, ['the free real night was not started: real_night() was called without a runner (only release.py main passes one)']
+        r = run(free_argv(build), cwd=ROOT, env=dict(env))
+        if getattr(r, 'returncode', 1) != 0:
+            return True, False, ['the free real night is NOT green (tools/real-night-free.py exit %s, reasons above); nothing rolled back'
+                                 % getattr(r, 'returncode', '?')]
     good, why, path = _rn().check(build)
     if good:
         return True, True, ['real night recorded: ' + path]

@@ -31,8 +31,15 @@ import rig  # noqa: E402
 
 SHOTS = os.environ.get('VP_SHOTS', '')
 if not SHOTS and os.path.isdir('/home/vp/venue-enrich/reports'):
-    SHOTS = '/home/vp/venue-enrich/reports/real-night-shots'
-if SHOTS: os.makedirs(SHOTS, exist_ok=True)
+    # On the test server, one folder PER TREE (the tree's folder name under /home/vp/trees), emptied at the start, so
+    # tools/real-night-free.py fetches this run's shots and never another tree's (INBOX 365B, 13 Nov 2026).
+    SHOTS = os.path.join('/home/vp/venue-enrich/reports/real-night-shots', os.path.basename(ROOT))
+if SHOTS:
+    os.makedirs(SHOTS, exist_ok=True)
+    for f in os.listdir(SHOTS):
+        if f.endswith('.jpg') or f == 'night.json':
+            os.remove(os.path.join(SHOTS, f))
+STARTED = time.time()
 SET = '5e75e75e-0000-4000-8000-000000000003'
 ran = bad = 0
 
@@ -361,7 +368,7 @@ def night():
         js(host, ACCEPT); time.sleep(1)
     ok('raffle: the TV draws the Ticket roll [12 Nov R4]', R.until(tv, '(function(f){ try{ return !!f.contentDocument.querySelector(".vpds-tk"); }catch(e){ return false; } })(document.getElementById("gameFrame"))', 30) is True,
        [js(tv, TVFRAME), js(host, ERRT)])
-    time.sleep(2); shot(tv, '04-raffle-tv-draw')
+    time.sleep(2); shot(tv, '04-raffle-tv-draw'); shot(phones[0][1], '04-raffle-phone-A-draw')
     stub = js(tv, '(function(f){ try{ var d=f.contentDocument, t=d.querySelector(".vpds-tk"); if(!t) return "no ticket"; var st=t.querySelector(".vpds-stub"), bd=t.querySelector(".vpds-ticket-body"); if(!st||!bd) return "no stub"; return st.getBoundingClientRect().left < bd.getBoundingClientRect().left ? "left" : "right"; }catch(e){ return "err"; } })(document.getElementById("gameFrame"))')
     ok('raffle: the ticket stub sits on the LEFT of its ticket on the TV reel (INBOX 355)', stub == 'left', stub)
     ok('raffle: Countdown before the draw is OFF (draw moments default off, 299b)', 'cdCancel' not in (js(host, '(function(){var e=document.getElementById("cdCancel"); return e && !e.classList.contains("hidden") ? "cdCancel" : "";})()') or ''), text(host))
@@ -396,7 +403,7 @@ def night():
         js(host, ACCEPT); time.sleep(1)
     ok('members: the TV draws the Flip board', R.until(tv, '(function(f){ try{ return !!f.contentDocument.querySelector(".vpds-board"); }catch(e){ return false; } })(document.getElementById("gameFrame"))', 30) is True,
        [js(tv, TVFRAME), js(host, ERRT)])
-    time.sleep(2); shot(tv, '05-members-tv-draw')
+    time.sleep(2); shot(tv, '05-members-tv-draw'); shot(phones[0][1], '05-members-phone-A-draw')
     jp = js(tv, '(function(f){ try{ return f.contentDocument.body.innerText.replace(/\\s+/g," "); }catch(e){ return ""; } })(document.getElementById("gameFrame"))') or ''
     ok('members: the TV shows the jackpot the console shows, not $0 [12 Nov D1]', re.search(r'\$\s*200\b', jp) is not None and not re.search(r'\$\s*0\b(?!\.)', jp), jp[:200])
     check_screens('members draw', tv, phones)
@@ -437,6 +444,9 @@ def main():
     finally:
         if R: R.close()
     print('')
+    if SHOTS:   # what tools/real-night-free.py reads to tie these shots to the run it asked for
+        with open(os.path.join(SHOTS, 'night.json'), 'w') as fh:
+            json.dump({'tree_name': os.path.basename(ROOT), 'ran': ran, 'bad': bad, 'started': STARTED, 'finished': time.time()}, fh)
     print(('%d FAILED, %d run' % (bad, ran)) if bad else ('ALL %d CHECKS PASSED' % ran))
     sys.exit(1 if bad else 0)
 
