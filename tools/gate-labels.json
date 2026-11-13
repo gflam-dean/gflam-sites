@@ -225,6 +225,7 @@
   "move-show-images.test.py",
   "multi-raffle-in-chrome.test.py",
   "musical-card-spacing-in-chrome.test.py",
+  "musical-console-sound-in-chrome.test.py",
   "musical-draw.test.js",
   "musical-host-titles-in-chrome.test.py",
   "musical-live-11nov-in-chrome.test.py",

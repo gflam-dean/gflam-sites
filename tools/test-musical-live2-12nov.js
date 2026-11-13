@@ -60,6 +60,7 @@ print("\n3. THE SONGS SENT ARE THE THEME THE CARDS SHOW, UNDER ITS OWN NAME");
 })();
 
 print("\n2. THE venueplay TV APP IS NEVER ASKED FOR A CLICK");
+pass("host.html still defines hostSetMute and hostTvOnlyChosen (the console mutes the element AND the Room volume gain; INBOX 366), so the lifted code below runs the real ones", /function hostSetMute\(/.test(HOST) && /function hostTvOnlyChosen\(/.test(HOST));
 (function(){
   var hosted = [], note = { textContent: "", classList: { add: function(){}, remove: function(){} }, appendChild: function(k){ note.textContent += k.textContent || ""; return k; } };
   var btn = { innerHTML: "" };
@@ -67,10 +68,10 @@ print("\n2. THE venueplay TV APP IS NEVER ASKED FOR A CLICK");
   var audio = { muted: true, paused: false, src: "" };
   var document = { createElement: function(){ return { style: {}, addEventListener: function(){} }; }, createTextNode: function(t){ return { textContent: t }; } };
   function $(id){ return id === "tvAudioNote" ? note : btn; }
-  var src = ["tvNoSoundWords", "tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere"].map(function(n){ return grab(n, HOST); }).join("\n");
-  var api = new Function("$", "G", "audio", "document", "hostError", "clearHostError", "tvHere",
+  var src = ["tvNoSoundWords", "tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere", "hostSetMute", "hostTvOnlyChosen"].map(function(n){ return grab(n, HOST); }).join("\n");
+  var api = new Function("$", "G", "audio", "document", "hostError", "clearHostError", "tvHere", "sessionStorage", "hostApplyFade", "hostFadeLevel",
     "var _tvAudio='unknown', _autoMonitor=false, _soundAsked=false, _audioErrShown=false, _tvApp='';\n" + src + "\n" + grab("onMsg", HOST) + "\nreturn { onMsg: onMsg };")(
-    $, G, audio, document, function(m){ hosted.push(m); }, function(){}, function(){});
+    $, G, audio, document, function(m){ hosted.push(m); }, function(){}, function(){}, (function(){ var o = {}; return { getItem: function(k){ return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null; }, setItem: function(k, v){ o[k] = String(v); }, removeItem: function(k){ delete o[k]; } }; })(), function(){}, function(){ return 1; });
   api.onMsg({ t: "tv_audio_blocked", app: "tizen" });
   var all = hosted.join(" ") + " " + note.textContent;
   pass("the TV app has no sound: the console never says \"click\"", hosted.length === 1 && !/click/i.test(all), all);

@@ -1138,6 +1138,14 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       hostApplyFade(hostFadeLevel());   // the fade moves from the element to the gain in one step, never on both at once
     }catch(e){ _hdead=true; _hsrc=null; }
   }
+  /* THE CONSOLE IS QUIET WHEN THE SOUND IS ON THE TV (INBOX 366, 13 Nov 2026). An element feeding the Room volume graph is
+     not silenced by .muted on a phone (iPhone Safari): the clip came out of the gain node anyway. So the gain goes to 0 as
+     well, here and in hostApplyFade (which every fade step and the graph's first build go through). */
+  function hostTvOnlyChosen(){ try{ return sessionStorage.getItem("vpMusicTvOnly")==="1"; }catch(e){ return false; } }   // the host said TV only: it survives a refresh, with no screen heard yet
+  function hostSetMute(){
+    audio.muted = !(G.hostMonitor || (soundIsOnlyHere() && !hostTvOnlyChosen()));
+    hostApplyFade(hostFadeLevel());
+  }
   function setRoomVolume(pct){
     var v=Math.max(100, Math.min(400, Number(pct)||240));
     _hboost=v/100;
@@ -1150,7 +1158,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
      second on Next or Pause. On the gain after the Room volume boost (gain = Room volume x level), or on the
      element before that graph is built, never both, so it scales the slider and never overrides it. */
   function hostApplyFade(lv){
-    if(_hgain){ try{ audio.volume=1; _hgain.gain.value=_hboost*lv; }catch(e){} }
+    if(_hgain){ try{ audio.volume=1; _hgain.gain.value=audio.muted ? 0 : _hboost*lv; }catch(e){} }
     else { try{ audio.volume=lv; }catch(e){} }
   }
   var _hostFade=window.VPFade ? VPFade.create({ el:audio, apply:hostApplyFade }) : null;
@@ -1274,7 +1282,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     audio.crossOrigin="anonymous";   // before the src, or the boost graph would get silence
     audio.src=url;
     if(_hostFade) _hostFade.start(); else audio.volume=1.0;   // always from 0 at a clip's start, never left at 0 by the last one
-    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    hostSetMute();
     resetClipUI();
     var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
   }
@@ -2070,7 +2078,8 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   }
   function tvSoundYes(){
     if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
-    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    try{ sessionStorage.removeItem("vpMusicTvOnly"); }catch(e){}
+    hostSetMute();
     try{ if(audio.paused && audio.src && G.status==="running") audio.play().catch(function(){}); }catch(e){}
     var n=$("tvAudioNote"); if(n){ n.textContent="The songs are coming out of THIS device. Put it through the PA, or click once on the TV screen to turn the TV\u2019s sound on."; }
     syncMonitorBtn();
@@ -2094,10 +2103,10 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     _tvAudio=state;
     var n=$("tvAudioNote");
     if(state==="blocked"){
-      audio.muted = !(G.hostMonitor || soundIsOnlyHere());   // a TV is there (it just spoke): quiet here until the host answers
+      hostSetMute();   // a TV is there (it just spoke): quiet here until the host answers
       if(n){ if(G.hostMonitor) n.textContent=tvNoSoundWords(true); else askTvSound(n); n.classList.remove("hidden"); }
     } else {
-      if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
+      if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; hostSetMute(); }
       if(n) n.classList.add("hidden");
       if(_audioErrShown){ _audioErrShown=false; clearHostError(); }   // the TV's sound came on: the banner about it goes too
     }
@@ -2693,7 +2702,8 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
 
   $("monitorBtn").addEventListener("click", function(){
     G.hostMonitor=!G.hostMonitor;
-    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    try{ if(G.hostMonitor) sessionStorage.removeItem("vpMusicTvOnly"); else sessionStorage.setItem("vpMusicTvOnly","1"); }catch(e){}
+    hostSetMute();
     syncMonitorBtn();
   });
   $("spotifyBtn").addEventListener("click", copySpotify);

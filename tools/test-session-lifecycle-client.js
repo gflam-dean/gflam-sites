@@ -171,9 +171,13 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
                    createTextNode: function (t) { return { textContent: t }; } };
   function $(id) { return id === 'tvAudioNote' ? note : btn; }
   function soundIsOnlyHere() { return false; }
+  var _ss = {}, sessionStorage = { getItem: function(k){ return Object.prototype.hasOwnProperty.call(_ss, k) ? _ss[k] : null; }, setItem: function(k, v){ _ss[k] = String(v); }, removeItem: function(k){ delete _ss[k]; } };
+  function hostApplyFade() {}   // the Room volume graph is not built here
+  function hostFadeLevel() { return 1; }
   function syncMonitorBtn() { btn.innerHTML = G.hostMonitor ? 'playing here' : 'on the TV'; }
   var _tvApp = '';   // a browser TV, not the venueplay TV app (INBOX 282.2)
-  eval(['tvNoSoundWords', 'tvSoundYes', 'tvSoundNo', 'askTvSound', 'noteTvAudio'].map(function (n) { return lift(MHOST, n, 'musical/host.html'); }).join('\n'));
+  eval(['tvNoSoundWords', 'tvSoundYes', 'tvSoundNo', 'askTvSound', 'noteTvAudio', 'hostSetMute', 'hostTvOnlyChosen'].map(function (n) { return lift(MHOST, n, 'musical/host.html'); }).join('\n'));
+  ok('host.html still defines hostSetMute and hostTvOnlyChosen (the console mutes the element AND the Room volume gain; INBOX 366), so the lifted code runs the real ones', /function hostSetMute\(/.test(MHOST) && /function hostTvOnlyChosen\(/.test(MHOST));
   noteTvAudio('blocked');
   var yes = kids.filter(function (k) { return k.id === 'tvSoundYes'; })[0], no = kids.filter(function (k) { return k.id === 'tvSoundNo'; })[0];
   ok('blocked: the console ASKS first (Dean, 6 Nov 13:10), "The TV can\'t play sound. Play the songs on this device?" Yes / No, and stays quiet until answered',

@@ -199,6 +199,7 @@ print("\n8. A TV THAT BLOCKS SOUND SAYS HOW TO TURN IT ON, AND ONE CLICK DOES");
 })();
 (function(){
   /* THE CONSOLE: plain words, the real control names. */
+  pass("host.html still defines hostSetMute and hostTvOnlyChosen (the console mutes the element AND the Room volume gain; INBOX 366), so the lifted code below runs the real ones", /function hostSetMute\(/.test(HOST) && /function hostTvOnlyChosen\(/.test(HOST));
   var hosted = [], kids = [], note = { cls: { hidden: true }, _t: "" };
   Object.defineProperty(note, "textContent", { get: function(){ return note._t + kids.map(function(k){ return k.textContent || ""; }).join(" "); }, set: function(v){ note._t = String(v); kids = []; } });
   note.classList = { add: function(c){ note.cls[c] = true; }, remove: function(c){ delete note.cls[c]; } };
@@ -209,11 +210,11 @@ print("\n8. A TV THAT BLOCKS SOUND SAYS HOW TO TURN IT ON, AND ONE CLICK DOES");
   var document = { createElement: function(){ var h = {}; return { style: {}, addEventListener: function(e, f){ h[e] = f; }, click: function(){ h.click(); } }; },
                    createTextNode: function(t){ return { textContent: t }; } };
   function $(id){ return id === "tvAudioNote" ? note : btn; }
-  var src = ["tvNoSoundWords", "tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere"].map(function(n){ return grab(n, HOST); }).join("\n");
+  var src = ["tvNoSoundWords", "tvSoundYes", "tvSoundNo", "askTvSound", "noteTvAudio", "syncMonitorBtn", "soundIsOnlyHere", "hostSetMute", "hostTvOnlyChosen"].map(function(n){ return grab(n, HOST); }).join("\n");
   var onMsgSrc = grab("onMsg", HOST);
-  var api = new Function("$", "G", "audio", "document", "hostError", "clearHostError", "tvHere",
+  var api = new Function("$", "G", "audio", "document", "hostError", "clearHostError", "tvHere", "sessionStorage", "hostApplyFade", "hostFadeLevel",
     "var _tvAudio='unknown', _autoMonitor=false, _soundAsked=false, _audioErrShown=false, _tvApp='';\n" + src + "\n" + onMsgSrc + "\nreturn { onMsg: onMsg, note: noteTvAudio, sync: syncMonitorBtn };")(
-    $, G, audio, document, function(m){ hosted.push(m); }, function(){ cleared++; }, function(){});
+    $, G, audio, document, function(m){ hosted.push(m); }, function(){ cleared++; }, function(){}, (function(){ var o = {}; return { getItem: function(k){ return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : null; }, setItem: function(k, v){ o[k] = String(v); }, removeItem: function(k){ delete o[k]; } }; })(), function(){}, function(){ return 1; });
   api.onMsg({ t: "tv_audio_blocked" });
   var said = hosted[hosted.length - 1] || "";
   pass("the console banner says what to do: \"Click once on the TV screen to turn its sound on, or tap Yes under Now playing ...\"",
