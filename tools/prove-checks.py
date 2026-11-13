@@ -1487,6 +1487,15 @@ MUTATIONS = [
      'fetch(o.api + "/feedback", {',
      'fetch(o.api + "/feedback-gone", {',
      'the rating tapped on "How was that?" never reaches the Worker, so no row is kept (295.2e)'),
+    # THE REAL NIGHT DRY RUN (INBOX 354c, 13 Nov 2026, tools/real-night-dryrun-in-chrome.test.py; written on the test server, rows not yet proven there)
+    ('real-night-dryrun-in-chrome.test.py', 'venueplay/tv.html',
+     'if(d && d.vp === "to-ads"){ if(tvMode==="embed" && e.source===document.getElementById("gameFrame").contentWindow) enterAds(); return; }',
+     'if(d && d.vp === "to-ads"){ return; }',
+     'a game ends and the TV never goes back to the ads (12 Nov R6/B6: the TV sat on the finished game)'),
+    ('real-night-dryrun-in-chrome.test.py', 'venueplay/app/vp-drawstyle.js',
+     '".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;color:#0A0A0B}"',
+     '".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;flex-direction:row-reverse;color:#0A0A0B}"',
+     'the raffle ticket stub sits on the right of its ticket on the TV reel (INBOX 355)'),
     # THE SAVED-SETTINGS SHAPES THE REAL-SETTINGS SUITE PLAYS (INBOX 295.3, 12 Nov 2026, tools/prefs-shapes.test.py)
     ('prefs-shapes.test.py', 'tools/prefs-shapes.py',
      "            v = 'Prize' if isinstance(v, str) and v.strip() else None",
