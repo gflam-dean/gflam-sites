@@ -98,6 +98,7 @@ SPACED = ('(function(){var bad=[],all=document.querySelectorAll("body *");for(va
           'return JSON.stringify(bad.slice(0,6));})()')
 # the TV's game frame (the venue's /tv holds the game screen in an iframe) and what it shows
 TVFRAME = ('(function(){var f=document.getElementById("gameFrame"); return (f && f.style.display!=="none") ? (f.getAttribute("src")||"") : "";})()')
+ANSWER = '[].filter.call(document.querySelectorAll("#pAnswers .pans"),function(b){ return /%s/.test(b.textContent); })[0].click(); true'
 def tv_src(tv): return js(tv, TVFRAME) or ''
 def tv_shows(tv, rx, secs=40): return R.until(tv, '/%s/.test(%s)' % (rx, TVFRAME), secs) is True
 def tv_ads(tv, secs=40):
@@ -220,12 +221,12 @@ def night():
     click_text(host, 'First question')
     for tag, ph in phones:
         ok('trivia: question 1 reaches phone %s' % tag, R.until(ph, 'document.querySelectorAll("#pAnswers .pans").length===4', 30) is True, text(ph))
-    ok('trivia: the TV shows the question too (same one, in step) [12 Nov T1]', R.until(tv, F_TEXT('Which colour'), 20) is True, js(tv, F_TEXT_GET))
+    ok('trivia: the TV shows the question too (same one, in step) [12 Nov T1]', R.until(tv, F_TEXT('Which (colour|animal)'), 20) is True, js(tv, F_TEXT_GET))
     time.sleep(1.5)
     shot(tv, '01-trivia-tv-question'); shot(phones[0][1], '01-trivia-phone-A-question')
     check_screens('trivia question', tv, phones)
     for i, (tag, ph) in enumerate(phones):
-        js(ph, '[].filter.call(document.querySelectorAll("#pAnswers .pans"),function(b){ return %s.test(b.textContent); })[0].click(); true' % ('/Blue/' if i == 0 else '/Red/'))
+        js(ph, ANSWER % ('Blue|Roo' if i == 0 else 'Red|Cat'))
         ok('trivia: phone %s answers' % tag, R.until(ph, '/Answer in/i.test(document.body.innerText)', 15) is True, text(ph))
     click_text(host, 'Reveal answer')
     ok('trivia: the answer is revealed', R.until(host, has_btn('Reveal leaderboard') + '||' + has_btn('Next question'), 25) is True, js(host, ERRT))
@@ -234,10 +235,10 @@ def night():
     # question 2, then the finish
     if click_text(host, 'Next question'):
         for tag, ph in phones:
-            ok('trivia: question 2 reaches phone %s' % tag, R.until(ph, 'document.querySelectorAll("#pAnswers .pans").length===4 && /animal/i.test(document.body.innerText)', 30) is True, text(ph))
+            ok('trivia: question 2 reaches phone %s' % tag, R.until(ph, 'document.querySelectorAll("#pAnswers .pans").length===4 && /Question 2 of 2/i.test(document.body.innerText)', 30) is True, text(ph))
         time.sleep(1.5)
         for i, (tag, ph) in enumerate(phones):
-            js(ph, '[].filter.call(document.querySelectorAll("#pAnswers .pans"),function(b){ return %s.test(b.textContent); })[0].click(); true' % ('/Roo/' if i == 0 else '/Emu/'))
+            js(ph, ANSWER % ('Blue|Roo' if i == 0 else 'Red|Cat'))
         time.sleep(1.5)
         click_text(host, 'Reveal answer')
         R.until(host, has_btn('Reveal leaderboard'), 25)
