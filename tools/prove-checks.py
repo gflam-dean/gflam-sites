@@ -20897,7 +20897,7 @@ MUTATIONS = [
      '".vpds-tk{width:600px;height:320px;', '".vpds-tk{width:640px;height:320px;',
      'the ticket changes size on the roll'),
     ('raffle-ticket-stub-in-chrome.test.py', 'venueplay/app/vp-drawstyle.js',
-     'sc = 1 + ((o.noClock && !members) ? 0.45 : 0.8) * wle', 'sc = 1 + ((o.noClock && !members) ? 0.45 : 1.6) * wle',
+     'sc = 1 + ((o.noClock && !members) ? 0.45 : 0.8) * wle', 'sc = 1 + ((o.noClock && !members) ? 0.45 : 3.2) * wle',
      'the winning ticket runs out of the TV safe area'),
     ('raffle-ticket-stub-in-chrome.test.py', 'venueplay/app/vp-demo-clock.js',
      '{ ticket:87, prize:"Meat tray" }', '{ ticket:2087, prize:"Meat tray" }',
