@@ -4224,6 +4224,22 @@ MUTATIONS = [
      "      if (!(preInfo && preInfo.itemId) || !pre || pre.error) {",
      "      if (false) {",
      'Stripe refuses the quantity and a new pub is made and left running anyway'),
+    # 13 Nov 2026, B2: a player change's Stripe key carries the newest player-change row (vpbPlayersGeneration), so the same
+    # move made twice in a day is two charges and a retried request is still one. tools/test-billing-abuse-13nov.js.
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "(info.periodEnd || '0') + ':g' + gen);", "(info.periodEnd || '0'));",
+     'add 80, undo, add 80 again the same day: Stripe replays the first (deleted) charge and the players are free'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "(dinfo.periodEnd || '0') + ':g' + gen) : null;", "(dinfo.periodEnd || '0')) : null;",
+     'a yearly venue releasing the same players twice in a day loses the second credit to a replay'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    return r ? (String(r.id == null ? '' : r.id) + '@' + String(r.created_at || '')) : '0';",
+     "    return '0';",
+     'every move reads the same generation, so the key is the old key and the second add is free again'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const gen = (b.preview === true) ? '0' : await vpbPlayersGeneration(env, venueId);",
+     "  const gen = String(Date.now());",
+     'a racing duplicate of one request gets its own key and charges twice'),
     # 3 Nov 2026: tools/test-players-timing.js RUNS vpbSetPlayers (D114). Rule 2 is pinned, rule 4 (the one-hour undo)
     # sits behind VPB_BILLING_RULES_3NOV, OFF.
     ('test-players-timing.js', 'venueplay-backend/worker/venueplay-api-FULL.js',

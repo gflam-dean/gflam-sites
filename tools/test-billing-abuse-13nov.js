@@ -199,6 +199,63 @@ stripeReset({ sub: null });
 r = call('/account/add-venue', OWNER, { name: 'Brand New Pub', players: 30, postcode: '4003' });
 check('control: a free (comp) account still adds a pub, as on main (nothing on it is charged)', r.status === 200 && !!venueNamed('Brand New Pub'), r);
 
+/* ================================================================================================
+   B2. Adding the same players twice in a day charges twice. A retry of ONE request still charges once.
+   ================================================================================================ */
+section('B2 the same move made twice in a day is two charges; a retried request is still one');
+var ON = Object.assign({}, ENV, { VPB_BILLING_RULES_3NOV: '1' });
+function auditRows(action) { return DB.vp_admin_audit.filter(function (a) { return a.action === action; }); }
+
+/* a) Monthly, the one-hour undo on: add 80, undo it, add the same 80 again. The second add used to send the
+      first add's key, Stripe replayed the deleted item, nothing was charged and the page said $240. */
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+stripeReset({ quantity: 20 });
+var p1 = call('/account/players', OWNER, { venue_id: V1, players: 100 }, ON);
+check('a) monthly: the first add charges 80 x $3.00 = $240.00 (sanity)', p1.status === 200 && p1.body.charge_cents === 24000 && liveItemCents() === 24000, [p1.body, S.items]);
+var p2 = call('/account/players', OWNER, { venue_id: V1, players: 20 }, ON);
+check('a) monthly: the undo inside the hour deletes that line (sanity)', p2.body.applied === 'undone' && liveItemCents() === 0, [p2.body, S.items]);
+var p3 = call('/account/players', OWNER, { venue_id: V1, players: 100 }, ON);
+check('a) monthly: the SECOND add of the same 80 is a real, live charge', venueNamed('Home Pub').max_players === 100 && liveItemCents() === 24000, [venueNamed('Home Pub').max_players, S.items]);
+check('a) monthly: the page is told $240.00 and $240.00 is what is on the bill', p3.body.charge_cents === liveItemCents(), [p3.body.charge_cents, liveItemCents()]);
+var addKeys = S.posts.filter(function (p) { return /invoiceitems$/.test(p.url); }).map(function (p) { return p.key; });
+check('a) monthly: the two adds used DIFFERENT keys', addKeys.length === 2 && addKeys[0] !== addKeys[1], addKeys);
+
+/* b) Yearly plan, no switch needed: add 80, release them, add 80 again the same day. */
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+stripeReset({ quantity: 20, price: 'price_S_A', periodEnd: Math.floor(Date.now() / 1000) + 200 * 86400 });
+var a1 = call('/account/players', OWNER, { venue_id: V1, players: 100 });
+var firstCharge = liveItemCents();
+var a2 = call('/account/players', OWNER, { venue_id: V1, players: 20 });
+var a3 = call('/account/players', OWNER, { venue_id: V1, players: 100 });
+check('b) yearly: add, release, add again: the second add makes its OWN charge', a1.status === 200 && a3.status === 200 && firstCharge > 0 && liveItemCents() === 2 * firstCharge, [firstCharge, S.items]);
+check('b) yearly: the release still banked its credit (unchanged rule)', a2.status === 200 && S.balance < 0, [a2.body, S.balance]);
+check('b) yearly: and the page was told what was really charged', a3.body.charge_cents === firstCharge, a3.body);
+
+/* c) The same REQUEST twice (two tabs, a double click, a resent POST, both read the account before either
+      wrote): the second must reuse the first's key so Stripe charges once. Modelled by putting the venue and
+      the audit trail back exactly as the second request would have read them, then sending it again. */
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+stripeReset({ quantity: 20 });
+call('/account/players', OWNER, { venue_id: V1, players: 100 }, ON);
+var k1 = S.posts.filter(function (p) { return /invoiceitems$/.test(p.url); })[0];
+venueNamed('Home Pub').max_players = 20;
+DB.vp_admin_audit = DB.vp_admin_audit.filter(function (a) { return a.action !== 'players_increased'; });
+call('/account/players', OWNER, { venue_id: V1, players: 100 }, ON);
+var k2 = S.posts.filter(function (p) { return /invoiceitems$/.test(p.url); })[1];
+check('c) a racing duplicate of ONE request sends the SAME key', !!k1 && !!k2 && k1.key === k2.key, [k1 && k1.key, k2 && k2.key]);
+check('c) so Stripe charges it once', Object.keys(S.items).length === 1 && liveItemCents() === 24000, S.items);
+
+/* d) Yearly release made twice in a day (release 80, add them back, release 80 again): the second release
+      banks its own credit too, rather than replaying the first and losing the venue its money. */
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 100 }]);
+stripeReset({ quantity: 100, price: 'price_S_A', periodEnd: Math.floor(Date.now() / 1000) + 200 * 86400 });
+call('/account/players', OWNER, { venue_id: V1, players: 20 });
+var c1 = S.balance;
+call('/account/players', OWNER, { venue_id: V1, players: 100 });
+call('/account/players', OWNER, { venue_id: V1, players: 20 });
+var credits = S.posts.filter(function (p) { return /balance_transactions$/.test(p.url); });
+check('d) yearly: two releases of the same 80 in one day bank two credits, with two keys', credits.length === 2 && credits[0].key !== credits[1].key && S.balance === 2 * c1, [credits.map(function (p) { return p.key; }), S.balance, c1]);
+
 print('');
 if (bad) throw new Error('billing abuse: ' + bad + ' of ' + ran + ' failed');
 print('ALL ' + ran + ' CHECKS PASSED');

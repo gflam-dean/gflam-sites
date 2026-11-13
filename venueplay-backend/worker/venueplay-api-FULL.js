@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:08 · e6a8f678';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:11 · ab6e2068';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -13610,6 +13610,24 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }
 
+/* WHICH CHANGE THIS IS, NOT JUST WHAT IT LOOKS LIKE (security review 13 Nov 2026, B2). A player change's Stripe
+   idempotency key named the venue, the move and the renewal date, so the SAME move made twice in a day (add 80,
+   undo it inside the hour, add 80 again; or on a yearly plan add 80, release them, add 80 again) sent the same
+   key with the same parameters, Stripe replayed its saved answer to the FIRST charge (already deleted, or already
+   credited back) and made nothing, and the page was told it had been charged. The players were free.
+   The key now also carries the newest player-change row for the venue: a retry of the same request (a double
+   click, a resent POST) reads the same row and keeps the same key, so it still charges once; a genuinely new
+   move comes after a newer row and gets its own key. A failed read answers '0', which is the old key. */
+async function vpbPlayersGeneration(env, venueId) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+      + '&action=in.(players_increased,players_increase_undone,players_reduction_scheduled,players_reduction_cancelled)'
+      + '&order=created_at.desc,id.desc&limit=1&select=id,created_at');
+    const r = rows && rows[0];
+    return r ? (String(r.id == null ? '' : r.id) + '@' + String(r.created_at || '')) : '0';
+  } catch (_) { return '0'; }
+}
+
 async function vpbSetPlayers(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -13628,6 +13646,7 @@ async function vpbSetPlayers(request, env, json) {
   const current = parseInt(venue.max_players, 10) || 0;
   const priorPending = (venue.pending_players == null) ? null : (parseInt(venue.pending_players, 10) || null);
   const foundingId = o.account.id;
+  const gen = (b.preview === true) ? '0' : await vpbPlayersGeneration(env, venueId);   // B2: part of every money key below
   // What this account is billed for TODAY.
   const billedNow = (priorPending != null) ? priorPending : current;
   // THE BASIS a money move is measured from, and it is NOT the same on both plans.
@@ -13661,7 +13680,7 @@ async function vpbSetPlayers(request, env, json) {
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
     const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
-      venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0')) : null;
+      venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0') + ':g' + gen) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -13717,7 +13736,7 @@ async function vpbSetPlayers(request, env, json) {
        the venue ends on 150 having paid nothing. Including the delta and the
        direction makes each move its own event. Found by audit 5 Sep 2026. */
     const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
-      venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0'));
+      venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0') + ':g' + gen);
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -13816,7 +13835,7 @@ async function vpbSetPlayers(request, env, json) {
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
   const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0')) : null;
+    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0') + ':g' + gen) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
