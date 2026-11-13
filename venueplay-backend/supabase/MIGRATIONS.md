@@ -800,6 +800,18 @@ transaction). Run EARLY by hand, never on a push morning. Index only: nothing th
 COLUMNS-BASELINE.json change. NUMBER: 191 live, 190 on a branch, nothing at 192 or above on any branch or worktree, checked 13 Nov 2026.
 Proved in tools/rig-join-unique-index.test.py (the rig enforces the index and can make the other join win). Rollback in the file.
 
+`venueplay-193-manager-ticks-guard.sql` (13 Nov 2026, branch `fix/billing-security-13nov`, security review part B finding B9, INBOX 370):
+a BEFORE UPDATE trigger on vp_venue_settings beside migration 77's, same shape (it KEEPS, it does not refuse): a manager whose
+owner took away "Edit draws and raffles" (permissions draws_raffles false) or "Edit advertising" (advertising false) keeps
+the old default_draw_length_seconds / raffle_time_limit_seconds / raffle_template, or screen_rotation_seconds /
+auto_game_promos, when they save the row straight through the REST API. Owners, full-access managers (null permissions),
+platform admins and the Worker are untouched; game_prefs, trivia_* and setup_answers stay writable by everyone who runs a
+night, and no page writes the five guarded columns any more, so no honest save changes. The manager policy stays (dropping
+it would break Game settings, which saves from the browser). NOT RUN, and NOT TO BE RUN BLIND: main first runs the four
+read-only checks in the file's header against LIVE. After running: dump RLS-BASELINE.json (one new SECURITY DEFINER
+function). No column change. NUMBER: 192 is the highest on any branch or worktree, checked 13 Nov 2026, so 193. Read-back and
+rollback in the file.
+
 `venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page; reworked 12 Nov 2026 for
 INBOX 229/232 before it was ever run): three tables, all service role only (RLS on, no policies, revoked from
 public/anon/authenticated). `vp_coaster_venues`: places on the coaster round that are NOT venueplay venues, kind 'coaster' (a
