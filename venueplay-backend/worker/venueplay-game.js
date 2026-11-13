@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 10:39 · badb2735';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 13:34 · 9693035a';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1634,6 +1634,13 @@ function publicEvents(raw, now) {
   for (const e of raw) {
     if (out.length >= 30) break;
     if (!e || typeof e !== 'object') continue;
+    /* A TICKED GAME OF OUR OWN (13 Nov 2026): a link, not words. The TV reads its day, time and jackpot from the venue's real
+       schedule each time it draws (/app/vp-whatson.js). Only the fields below, only known kinds. */
+    if (e.link !== undefined && e.link !== null && e.link !== '') {
+      if (e.link === 'night' && DAYS.indexOf(e.day) !== -1 && ['trivia', 'musical', 'bingo', 'raffles', 'members'].indexOf(e.game) !== -1) out.push({ link: 'night', day: e.day, game: e.game });
+      else if ((e.link === 'draw' || e.link === 'raffle') && str(e.ref, 60)) out.push({ link: e.link, ref: str(e.ref, 60) });
+      continue;
+    }
     const title = str(e.title, 60);
     if (!title) continue;
     const o = { title: title };
@@ -4028,7 +4035,8 @@ async function handleScreen(request, env, json) {
   /* The venue's game nights for the What's on slide (Dean, 6 Nov 2026: "list our game nights too"), from its setup
      answers (migration 163), read beside the venue row and only for a venue that has What's on nights at all. A failed
      or missing read is no game nights, never a failed screen. */
-  const weekPromise = (cfg && cfg.venue_id && Array.isArray(cfg.events) && cfg.events.length)
+  const wantSched = url.searchParams.get('sched') === '1';   // the account page's tick list asks for the week even before any event exists (13 Nov 2026)
+  const weekPromise = (cfg && cfg.venue_id && ((Array.isArray(cfg.events) && cfg.events.length) || wantSched))
     ? sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(cfg.venue_id) + '&select=setup_answers&limit=1').catch(() => null)
     : Promise.resolve(null);
   if (cfg && cfg.venue_id) {

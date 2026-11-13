@@ -72,7 +72,7 @@ check('no night carries a picture: the poster layout is for a portrait picture a
 check('every night survives the What\'s on cleaner (none is silently dropped)', W.clean(FB).length === FB.length, W.clean(FB).length);
 
 print('a dated night drops itself (real vp-whatson.js)');
-function titles(today) { var out = []; (W.tvSlides(FB, today, null) || []).forEach(function (s) { (s.rows || []).forEach(function (r) { out.push(r.ev.title); }); }); return out; }
+function titles(today) { var out = []; (W.tvSlides(FB, today, null) || []).forEach(function (s) { (s.rows || []).forEach(function (r) { (r.items || [r.ev]).forEach(function (it) { out.push(it.title); }); }); }); return out; }   // a night's card lists its things (13 Nov 2026)
 check('the week before it: Greek Night is on the wall', titles('2026-11-22').indexOf('Greek Night') >= 0, titles('2026-11-22'));
 check('on the night: still there', titles('2026-11-28').indexOf('Greek Night') >= 0);
 check('the day after (29 Nov): gone', titles('2026-11-29').indexOf('Greek Night') < 0, titles('2026-11-29'));
@@ -97,7 +97,7 @@ var TV = readFile('venueplay/tv.html');
 check('tv.html loads vp-demo-venue.js before the script that uses it', TV.indexOf('<script src="/app/vp-demo-venue.js"></script>') > 0 && TV.indexOf('<script src="/app/vp-demo-venue.js"></script>') < TV.indexOf('(function loadVenueScreen(){'));
 check('the ads-only demo calls the live read', /if\(DEMO_ADS_ONLY\) demoVenueRead\(/.test(TV));
 check('the read asks /demo-venue.json which venue, then /screen for that slug', /fetch\("\/demo-venue\.json"/.test(TV) && /"\/screen\?venue="\+encodeURIComponent\(cfg\.slug\)/.test(TV));
-check('the read plays through VPDemoVenue.choose, with the draws and raffle cleared', /VPDemoVenue\.choose\(cfg, read\)/.test(TV) && /ADS\.draws=\[\]; ADS\.raffle=null; ADS\.raffles=null/.test(TV));
+check('the read plays through VPDemoVenue.choose, with the draws and raffle cleared', /VPDemoVenue\.choose\(cfg, read\)/.test(TV) && /ADS\.draws=\[\]; ADS\.drawsRaw=\[\]; ADS\.raffle=null; ADS\.raffles=null/.test(TV));
 check('no hard-coded slides list is left in the demo branch', !/head:"Roast night, \$14\.90"/.test(TV) && !/tugun-tuesday\.jpg|tugun-thursday\.jpg|tugun-friday\.jpg|tugun-saturday\.jpg/.test(TV));
 
 print(fails ? '\n' + fails + ' FAILED of ' + ran : '\nALL ' + ran + ' CHECKS PASSED');

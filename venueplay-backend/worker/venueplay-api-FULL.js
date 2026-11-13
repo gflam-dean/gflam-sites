@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 11:39 · 427c2919';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 13:34 · 87c8f20b';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -16710,6 +16710,7 @@ async function vpbScreenSave(request, env, json) {
    --------------------------------------------------------------------------------------- */
 const VPB_MAX_EVENTS = 30;
 const VPB_EVENT_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const VPB_EVENT_GAMES = ['trivia', 'musical', 'bingo', 'raffles', 'members'];   // the nights a venue can tick onto What's on
 /* "Past" is judged a day behind UTC: Australia is ahead of UTC, so anything before yesterday in UTC is over in every
    Australian time zone, and the TV and phones drop the rest on the venue's own date. */
 function vpbEventsCutoff(now) {
@@ -16733,6 +16734,24 @@ function vpbOurAdUrl(env, url, venueId) {
 /* One event, cleaned. { ev } or { error } in words. Stored fields only, nothing else is kept. */
 function vpbCleanEvent(env, e, venueId) {
   if (!e || typeof e !== 'object') return { error: 'That event did not come through. Try again.' };
+  /* A TICKED GAME OF OUR OWN (13 Nov 2026, "Show on What's on"): { link:'night', day, game } | { link:'draw'|'raffle', ref }.
+     No words of the venue's own: the TV reads the day, time and jackpot from its real schedule. */
+  if (e.link !== undefined && e.link !== null && e.link !== '') {
+    const lk = { link: String(e.link) };
+    if (e.id !== undefined && e.id !== null && e.id !== '') {
+      if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(e.id))) return { error: 'That event did not come through. Reload the page and try again.' };
+      lk.id = String(e.id);
+    }
+    if (lk.link === 'night') {
+      if (VPB_EVENT_DAYS.indexOf(e.day) === -1 || VPB_EVENT_GAMES.indexOf(e.game) === -1) return { error: 'That game night did not come through. Reload the page and try again.' };
+      lk.day = e.day; lk.game = e.game;
+    } else if (lk.link === 'draw' || lk.link === 'raffle') {
+      const ref = vpbScreenStr(e.ref, 200).replace(/\s+/g, ' ');
+      if (!ref || ref.length > 60) return { error: 'That ' + lk.link + ' did not come through. Reload the page and try again.' };
+      lk.ref = ref;
+    } else return { error: 'That event did not come through. Try again.' };
+    return { ev: lk };
+  }
   const title = vpbScreenStr(e.title, 200).replace(/\s+/g, ' ');
   if (!title) return { error: 'Give the event a title.' };
   if (title.length > 60) return { error: 'Keep the title under 60 letters.' };
@@ -16772,6 +16791,7 @@ function vpbCleanEvent(env, e, venueId) {
 function vpbKeepEvents(arr, cutoff) {
   if (!Array.isArray(arr)) return [];
   return arr.filter(function (e) {
+    if (e && typeof e === 'object' && e.link && e.id) return true;   // a ticked game of ours: no date, never over
     if (!e || typeof e !== 'object' || !e.title || !e.id) return false;
     if (e.date) return String(e.date) >= cutoff;
     if (VPB_EVENT_DAYS.indexOf(e.day) === -1) return false;
@@ -16837,6 +16857,10 @@ async function vpbWhatsOnSave(request, env, json) {
   const events = st.events.slice();
   const at = ev.id ? events.findIndex(function (x) { return x.id === ev.id; }) : -1;
   if (ev.id && at === -1) return json({ error: 'That event has gone (it may have been removed on another device). Reload the page.' }, 404);
+  if (ev.link) {   // one tick for one thing: ticking it twice is the same tick
+    const same = events.filter(function (x) { return x.link === ev.link && x.day === ev.day && x.game === ev.game && x.ref === ev.ref; })[0];
+    if (same && same.id !== ev.id) return json({ ok: true, events: events, events_max: VPB_MAX_EVENTS });
+  }
   if (at >= 0) events[at] = ev;
   else {
     if (events.length >= VPB_MAX_EVENTS) return json({ error: 'You have ' + VPB_MAX_EVENTS + ' events on, which is the most. Remove one first.' }, 400);
@@ -16844,7 +16868,7 @@ async function vpbWhatsOnSave(request, env, json) {
     while (events.some(function (x) { return x.id === ev.id; }));   // never two events with one id
     events.push(ev);
   }
-  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_saved', { id: ev.id, title: ev.title, edited: at >= 0 });
+  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_saved', { id: ev.id, title: ev.title || (ev.link + ' ' + (ev.ref || ev.game || '')), edited: at >= 0 });
 }
 async function vpbWhatsOnRemove(request, env, json) {
   const st = await vpbWhatsOnStart(request, env, json);
@@ -16853,7 +16877,7 @@ async function vpbWhatsOnRemove(request, env, json) {
   const gone = st.events.filter(function (x) { return x.id === id; })[0];
   const events = st.events.filter(function (x) { return x.id !== id; });
   if (!gone) return json({ ok: true, events: events, events_max: VPB_MAX_EVENTS });   // already gone: the list says so
-  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_removed', { id: id, title: gone.title });
+  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_removed', { id: id, title: gone.title || (gone.link + ' ' + (gone.ref || gone.game || '')) });
 }
 
 /* ---------------------------------------------------------------------------------------
