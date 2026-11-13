@@ -168,4 +168,4 @@ SECS.push(async function () {
   check('recipients are read from to / destination / nested messages', G.vpgRecipients('{"to":["a@b.c"],"messages":[{"to":"+61400"},{"destination":"x"}]}').join('|') === 'a@b.c|+61400|x');
 });
 
-(async function () { for (var i = 0; i < SECS.length; i++) await SECS[i](); print(ran + ' checks, ' + fails + ' failed'); if (fails) exit(1); })().catch(function (e) { print('CRASH ' + e + ' ' + (e && e.stack)); exit(1); });
+(async function () { for (var i = 0; i < SECS.length; i++) await SECS[i](); print(fails ? ran + ' checks, ' + fails + ' failed' : 'ALL ' + ran + ' CHECKS PASSED'); if (fails) exit(1); })().catch(function (e) { print('CRASH ' + e + ' ' + (e && e.stack)); exit(1); });

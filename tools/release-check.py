@@ -610,10 +610,13 @@ def local_checks(which):
     with other agents' suites on the same Mac). Every retry is written to tools/flake-log.jsonl
     with the load at the time, and the summary prints a one-line FLAKES tally. A suite that fails
     twice is red, exactly as before. Nothing under jsc is ever retried."""
-    for f in sorted(os.listdir(os.path.join(ROOT, 'tools'))):
+    # tools/staging/*.test.py too (13 Nov 2026, INBOX 357B): the test-database scripts' offline suites live in their own folder.
+    for _rel in ([os.path.join('tools', f) for f in sorted(os.listdir(os.path.join(ROOT, 'tools')))]
+                 + [os.path.join('tools', 'staging', f) for f in sorted(os.listdir(os.path.join(ROOT, 'tools', 'staging')))]):
+        f = os.path.basename(_rel)
         if not f.endswith('.test.py'):
             continue
-        p = os.path.join(ROOT, 'tools', f)
+        p = os.path.join(ROOT, _rel)
         chrome = gatelib.uses_chrome(p)
         if chrome and SKIP_CHROME:
             _CHROME_SKIPPED.add(os.path.abspath(p))
@@ -627,7 +630,7 @@ def local_checks(which):
         r, flake = gatelib.run_suite_with_retry(
             [sys.executable, p], f, _passed, cwd=ROOT, timeout=_suite_timeout(chrome), chrome=chrome,
             say=lambda s: print('  %s%s%s' % (DIM, s, OFF)))
-        _save_suite_output(os.path.join('tools', f), r)
+        _save_suite_output(_rel, r)
         if r.leaked:
             _LEAKED.append((f, len(r.leaked)))
         _SUITES_RUN.add(os.path.abspath(p))
@@ -4398,6 +4401,11 @@ def local_checks(which):
              'on staging (VP_ENV) every send host, the SMS hook and any write to a live venueplay address is answered "sent" and kept in an outbox; a live Stripe key, the live database address or a real-looking send key makes the Worker answer 503; the test Stripe key and the test database work; on live only a message addressed purely to +61 491 57x xxx or @example.invalid is held back, everything else goes untouched; the block is identical in all three Workers and each handler calls it first', 60,
              'A seeded test number getting a real text, staging mailing a venue, a live Stripe key charging a test card, '
              'or the guard on live blocking a real message'),
+            ('D202. A staging page can never reach a live address: the tripwire in vp-env.js refuses it, and live pages are untouched',
+             'test-vp-env.js',
+             'on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging\'s own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched', 23,
+             'A staging night that quietly reads or writes a real venue because one page kept a live address, or the tripwire '
+             'wrapping the live site'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

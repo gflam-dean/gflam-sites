@@ -74,5 +74,5 @@ print('on STAGING hosts the live addresses are refused');
   check('WebSocket constants and prototype survive the wrap', w.WebSocket.OPEN === 1 && w.WebSocket.prototype.marker === 1 && w.WebSocket.CLOSED === 3);
   check('shouldBlock is false on a staging host for staging, true for live', w.VPEnv.shouldBlock('https://api-staging.venueplay.com.au/x') === false && w.VPEnv.shouldBlock('wss://x.venueplay.com.au') === false && w.VPEnv.shouldBlock('https://game.venueplay.com.au/') === true);
 })();
-print(ran + ' checks, ' + fails + ' failed');
+print(fails ? ran + ' checks, ' + fails + ' failed' : 'ALL ' + ran + ' CHECKS PASSED');
 if (fails) exit(1);
