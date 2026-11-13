@@ -96,13 +96,16 @@ def to_play(r, sid, mode, n, other):
     clickid(r, sid, 'devYes' if other else 'devNo')
 
 
-# Every window in the rig is one browser profile, so a second "phone" would find the first one's player id and be
-# the same player (play.html keeps it in localStorage, as a real phone does). A real second phone has its own.
-OWN_PHONE = 'try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(/^vp-t(pid|name|token|sess)-/.test(k)) localStorage.removeItem(k); } }catch(e){}'
+# Every window in the rig is one browser profile, so a second "phone" would find the first one's device id, name and
+# tokens and be the same player (the phone pages keep them in localStorage, as a real phone does). A real second phone
+# has its own storage: rig.own_storage gives this window one. This used to clear only the vp-t* keys and left the shared
+# vpDeviceId, so both "phones" joined with one device id; the rig minted a second row anyway (its player ids were not
+# UUIDs) where the live Worker seats them as ONE player (13 Nov 2026, reports/one-phone-race-13nov).
 
 
 def phone_join(r, url, team=None, tick=False, own=False):
-    t, s = r.open(re.sub(r'^https?://[^/]+', '', url), width=375, height=812, before=(OWN_PHONE if own else None))
+    import rig as RIG
+    t, s = r.open(re.sub(r'^https?://[^/]+', '', url), width=375, height=812, before=(RIG.own_storage('two') if own else None))
     r.phone_ready(s, 60)
     r.until(s, '!!document.getElementById("xEmail")', 15)
     if team: r.ask(s, 'var n=document.getElementById("nameIn"); n.value=%s; true' % json.dumps(team))
