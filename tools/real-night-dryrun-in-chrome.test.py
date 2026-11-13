@@ -201,6 +201,8 @@ def night():
     js(host, 'document.getElementById("cfgCount").value="2"; document.getElementById("cfgCount").dispatchEvent(new Event("input")); true')
     seg = js(host, '(function(){function on(i){var b=document.querySelector("#"+i+" button.on"); return b? b.getAttribute("data-v") : "";} return on("cfgBuzzer")+"/"+on("cfgBuzzWhere");})()')
     ok('trivia: the console starts on the SAVED setup (buzzer on, plays on the TV) [12 Nov T5/T7]', seg == 'on/tv', seg)
+    snd = js(host, '(function(){var b=document.querySelector("#cfgSounds button.on"); return b? b.getAttribute("data-v") : "none";})()')
+    ok('trivia: Game sounds is OFF unless the venue switched it on (353b, default off)', snd == 'off', snd)
     tap(host, 'startBtn'); answer_dialogs(host)
     ok('trivia: the lobby is open', R.until(host, LOBBY, 20) is True, js(host, ERRT))
     ok('trivia: the TV takes the lobby (a trivia screen up on the TV)', tv_shows(tv, 'trivia'), tv_src(tv))
@@ -360,6 +362,9 @@ def night():
     ok('raffle: the TV draws the Ticket roll [12 Nov R4]', R.until(tv, '(function(f){ try{ return !!f.contentDocument.querySelector(".vpds-tk"); }catch(e){ return false; } })(document.getElementById("gameFrame"))', 30) is True,
        [js(tv, TVFRAME), js(host, ERRT)])
     time.sleep(2); shot(tv, '04-raffle-tv-draw')
+    stub = js(tv, '(function(f){ try{ var d=f.contentDocument, t=d.querySelector(".vpds-tk"); if(!t) return "no ticket"; var st=t.querySelector(".vpds-stub"), bd=t.querySelector(".vpds-ticket-body"); if(!st||!bd) return "no stub"; return st.getBoundingClientRect().left < bd.getBoundingClientRect().left ? "left" : "right"; }catch(e){ return "err"; } })(document.getElementById("gameFrame"))')
+    ok('raffle: the ticket stub sits on the LEFT of its ticket on the TV reel (INBOX 355)', stub == 'left', stub)
+    ok('raffle: Countdown before the draw is OFF (draw moments default off, 299b)', 'cdCancel' not in (js(host, '(function(){var e=document.getElementById("cdCancel"); return e && !e.classList.contains("hidden") ? "cdCancel" : "";})()') or ''), text(host))
     ok('raffle: the phones are not stuck on a finished game while it runs [12 Nov B6]',
        all(R.until(ph, '!/YOU WON|Show this screen to the host/i.test(document.body.innerText)', 5) is True for _, ph in phones), [text(p) for _, p in phones])
     check_screens('raffle draw', tv, phones)
