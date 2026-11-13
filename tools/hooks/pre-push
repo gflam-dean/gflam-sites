@@ -39,7 +39,18 @@ if ! python3 "$ROOT/tools/stamp-workers.py" --check; then
   exit 1
 fi
 
-if ! python3 "$ROOT/tools/release-check.py" --local; then
+# THE CHROME HALF MAY COME FROM vp-tests-1 (12 Nov 2026, INBOX 265.4). --chrome-record leaves a Chrome suite out on
+# this Mac ONLY when a signed record from the test server covers it for this exact tree (git HEAD^{tree}), under
+# 24 hours old, every Chrome suite green and at or over its ledger count (tools/gate-server.py). No record, or
+# anything wrong with one (edited, another key, another tree, stale, a suite missing or red), and every Chrome suite
+# runs here one at a time, as before. signin-logo-in-chrome always runs here. To make the record first:
+#     python3 tools/gate-server.py run        (about 35 minutes; or push with VP_GATE_SERVER=1 to have this hook do it)
+# A failed or refused server run is never fatal: the gate below simply runs the Chrome suites on the Mac.
+if [ "${VP_GATE_SERVER:-}" = "1" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
+  python3 "$ROOT/tools/gate-server.py" run || echo "  (no server record: the Chrome suites run on this Mac)"
+fi
+
+if ! python3 "$ROOT/tools/release-check.py" --local --chrome-record; then
   # A red gate leaves no record: a tree that failed can never ride an older one.
   [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear
   echo

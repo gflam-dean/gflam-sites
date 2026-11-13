@@ -182,6 +182,7 @@
   "games-night.test.js",
   "gate-record.test.py",
   "gate-reliability.test.py",
+  "gate-server.test.py",
   "gflam-unsub.test.py",
   "git-shim.test.py",
   "group-billing.test.js",

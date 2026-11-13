@@ -255,6 +255,10 @@
   "checks": 72,
   "counted_by": "lines"
  },
+ "tools/gate-server.test.py": {
+  "checks": 77,
+  "counted_by": "lines"
+ },
  "tools/gflam-unsub.test.py": {
   "checks": 25,
   "counted_by": "lines"
