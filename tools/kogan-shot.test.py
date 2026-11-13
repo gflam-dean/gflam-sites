@@ -91,6 +91,10 @@ class Fake:
         threading.Thread(target=self.loop, daemon=True).start()
 
     def close(self):
+        try:
+            self.srv.shutdown(socket.SHUT_RDWR)   # Linux: close() alone leaves a thread's accept() holding the port
+        except OSError:
+            pass
         self.srv.close()
 
     def loop(self):
