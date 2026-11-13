@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 04:51 · 562f6d92';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 09:56 · 68c1161e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -11746,7 +11746,7 @@ async function handlePraffleEntrants(request, env, json) {
   if (q) {
     const digits = q.replace(/\D/g, '');
     const parts = ['first_name.ilike.*' + q + '*', 'last_name.ilike.*' + q + '*'];
-    if (digits.length >= 3) parts.push('phone.like.*' + (digits.charAt(0) === '0' ? digits.slice(1) : digits) + '*');
+    if (digits.length >= 3) parts.push('phone.like.*' + (digits.charAt(0) === '0' ? digits.slice(1) : digits));   // the LAST digits, as the box says: 111 finds ...111, not ...1112
     filter += '&or=' + enc('(' + parts.join(',') + ')');
   }
   const offset = Math.max(0, parseInt(b.offset, 10) || 0);

@@ -342,6 +342,7 @@
   "prospects-edit-in-chrome.test.py",
   "prospects-status-in-chrome.test.py",
   "purchase-raffle-in-chrome.test.py",
+  "purchase-raffle-walk-in-chrome.test.py",
   "qr-fallback-in-chrome.test.py",
   "real-night-check.test.py",
   "real-settings-in-chrome.test.py",

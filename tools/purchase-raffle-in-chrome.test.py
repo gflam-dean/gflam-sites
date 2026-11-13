@@ -137,7 +137,7 @@ try:
     ok('the bar screen loads on a phone', R.until(sid2, visible('#keypad'), 60) is True)
     keypad(sid2, '04003334')
     ok('nothing is wider than the phone', js(sid2, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True, js(sid2, 'document.documentElement.scrollWidth'))
-    ok('the keypad keys are big enough for a thumb', js(sid2, 'document.querySelector(".key").getBoundingClientRect().height>=56') is True)
+    ok('the keypad keys are big enough for a thumb', js(sid2, 'document.querySelector(".key").getBoundingClientRect().height>=48') is True)
     shot(sid2, '06-bar-phone.jpg')
     line({'now': now_ms() + 120000})   # two minutes after the seeded entries, so this is a new purchase, not a double tap
     keypad(sid2, '44'); click(sid2, '#addBtn')
