@@ -4391,6 +4391,13 @@ def local_checks(which):
              'seven plain reasons and an optional note, stored word for word; the same Stripe sync, emails and dates as skipping; shown on the venue in HQ', 126,
              'A reason that changed what happens to the money, or a form field that stopped a venue leaving, is a billing '
              'fault; a reason nobody can read in HQ was never worth asking'),
+            # D200: the staging OUTBOX GUARD (INBOX 357B / 326, 13 Nov 2026). One block in the billing Worker, the game Worker and the
+            # SMS hook (venueplay-backend/worker/vp-outbox-guard.js is the source).
+            ('D200. Staging sends nothing real: no email, text, push or live write leaves, a live Stripe key or the live database is refused, and live is untouched',
+             'test-outbox-guard.js',
+             'on staging (VP_ENV) every send host, the SMS hook and any write to a live venueplay address is answered "sent" and kept in an outbox; a live Stripe key, the live database address or a real-looking send key makes the Worker answer 503; the test Stripe key and the test database work; on live only a message addressed purely to +61 491 57x xxx or @example.invalid is held back, everything else goes untouched; the block is identical in all three Workers and each handler calls it first', 60,
+             'A seeded test number getting a real text, staging mailing a venue, a live Stripe key charging a test card, '
+             'or the guard on live blocking a real message'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)
@@ -4404,6 +4411,20 @@ def local_checks(which):
             ok(title, passwording.judged_pass(r.returncode, out) and n >= floor and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/%s. %s' % (fn, why))
+
+        # D201 (INBOX 357B / 326, 13 Nov 2026): the TEST database (the old Supabase project) has live's shape. Offline: reads the
+        # snapshot main takes (read only) and the repo's baselines. OFF, and says so, until tools/staging/STAGING-ON is committed.
+        head('D201. The test database matches live')
+        _sg = os.path.join(ROOT, 'tools', 'staging', 'check-schema-gate.py')
+        if not os.path.isfile(_sg):
+            ok('the test database matches live (columns, locks, policies)', False, why='tools/staging/check-schema-gate.py is missing')
+        else:
+            r = subprocess.run([sys.executable, _sg, '--root', ROOT], capture_output=True, text=True, timeout=60, cwd=ROOT)
+            out = ((r.stdout or '') + (r.stderr or '')).strip()
+            ok('The TEST database matches live: columns, locks, policies and grants (OFF, and says so, until tools/staging/STAGING-ON exists)',
+               r.returncode == 0, detail=(out.splitlines()[-1][:200] if out else ''),
+               why='run python3 tools/staging/check-schema-gate.py. The test database must have live\'s exact shape or a staging night '
+                   'proves nothing; take a fresh read-only snapshot (tools/staging/README.md, "before EVERY release") and read the list of differences')
 
         head('D14. The wall heals itself after a network blip')
         t = os.path.join(ROOT, 'tools', 'test-router-heals-after-a-blip.js')

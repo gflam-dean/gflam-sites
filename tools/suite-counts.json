@@ -547,6 +547,22 @@
   "checks": 51,
   "counted_by": "lines"
  },
+ "tools/staging/check-schema-gate.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/staging/check-schema-matches-live.test.py": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
+ "tools/staging/staging-site.test.py": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/staging/tv-test-build.test.py": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
  "tools/stale-phone-and-end-once-in-chrome.test.py": {
   "checks": 27,
   "counted_by": "lines"
@@ -1039,6 +1055,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/test-outbox-guard.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
  "tools/test-overage-ack-covers-room.js": {
   "checks": 5,
   "counted_by": "lines"
@@ -1497,6 +1517,10 @@
  },
  "tools/test-vp-draw-11.js": {
   "checks": 46,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-env.js": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-vp-fade.js": {

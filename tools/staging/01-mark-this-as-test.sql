@@ -20,7 +20,7 @@
 --
 -- THE SECOND LOCK (does not depend on anyone reading the address bar). It refuses if this
 -- database looks alive: if any real person (anyone not on the fake test addresses
--- @example.invalid or phones 61400000xxx) has signed in since 1 Oct 2026, or if any venue
+-- @example.invalid or phones 6149157xxxx) has signed in since 1 Oct 2026, or if any venue
 -- or session row was created since 1 Oct 2026. The old project has been idle since about
 -- 10 Sep; live has real sign-ins every day, so on live this refuses.
 --
@@ -40,7 +40,7 @@ begin
 
   select count(*) into n from auth.users
    where greatest(coalesce(last_sign_in_at, 'epoch'::timestamptz), coalesce(created_at, 'epoch'::timestamptz)) >= '2026-10-01'
-     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '61400000%');
+     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '6149157%');
   if n > 0 then
     raise exception 'REFUSED: % real sign-in(s) since 1 Oct 2026. This looks like the LIVE project. Nothing was changed.', n;
   end if;

@@ -46,7 +46,7 @@ begin
   end if;
   select count(*) into n from auth.users
    where greatest(coalesce(last_sign_in_at, 'epoch'::timestamptz), coalesce(created_at, 'epoch'::timestamptz)) >= '2026-10-01'
-     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '61400000%');
+     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '6149157%');
   if n > 0 then
     raise exception 'REFUSED: % real person(s) signed in here since 1 Oct 2026. The TEST project only ever has fake users. Is this LIVE? Nothing was changed.', n;
   end if;

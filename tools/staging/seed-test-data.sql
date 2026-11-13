@@ -5,7 +5,7 @@
 --
 -- WHAT IT ADDS: made-up test venues and people only. Nothing here is a real person or a
 -- real pub. Every email is on example.invalid (a name that can never receive mail); every
--- phone is 0400 000 xxx (stored as 61400000xxx). Every venue slug starts "test-", so
+-- phone is 0491 57x xxx (stored as 6149157xxxx). Every venue slug starts "test-", so
 -- anything that excludes test venues on live does the same here.
 --
 --   Venues   Test Alpha (QLD, one host, plain), Test Bravo (QLD, host + manager, in the group),
@@ -13,14 +13,14 @@
 --            Mini Bar (test) (QLD, the fake Mini Bar for the real-night test on the Kogan),
 --            Test Echo (NSW) and Test Foxtrot (VIC), the other two venues in the group.
 --   Group    "Test Pub Group": Bravo, Echo, Foxtrot, one bill (example.invalid billing email).
---   People   a test host (0400 000 001), a test manager (0400 000 002), both phone sign-in.
+--   People   a test host (0491 570 001), a test manager (0491 570 002), both phone sign-in.
 --            The HQ test admin is made by hand in the dashboard (README step 7) and linked here
 --            if present: test-admin@example.invalid.
 --   Players  40 fake players with opt-ins at Test Alpha and Mini Bar (test).
 --   Members  a members list of 60 fake members at Mini Bar (test) and 25 at Test Bravo.
 --
 -- Sign-in without any text message: in the TEST project's dashboard, Authentication,
--- Providers, Phone, "Test phone numbers and OTPs", add 61400000001 and 61400000002 with a code
+-- Providers, Phone, "Test phone numbers and OTPs", add 61491570001 and 61491570002 with a code
 -- main chooses (not written in this repo). Supabase then never sends a text for them.
 --
 -- Safe to run twice: fixed ids, "on conflict do nothing". One transaction: all or nothing.
@@ -43,7 +43,7 @@ begin
   end if;
   select count(*) into n from auth.users
    where greatest(coalesce(last_sign_in_at, 'epoch'::timestamptz), coalesce(created_at, 'epoch'::timestamptz)) >= '2026-10-01'
-     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '61400000%');
+     and not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '6149157%');
   if n > 0 then
     raise exception 'REFUSED: % real person(s) signed in here since 1 Oct 2026. The TEST project only ever has fake users. Is this LIVE? Nothing was changed.', n;
   end if;
@@ -60,10 +60,10 @@ insert into auth.users (instance_id, id, aud, role, email, phone, email_confirme
                         phone_change, phone_change_token, email_change_token_current, reauthentication_token)
 values
   ('00000000-0000-0000-0000-000000000000', '5eed0001-0000-4000-8000-000000000001', 'authenticated', 'authenticated',
-   'test-host@example.invalid', '61400000001', now(), now(), now(), now(),
+   'test-host@example.invalid', '61491570001', now(), now(), now(), now(),
    '{"provider":"phone","providers":["phone"]}', '{"name":"Test Host"}', '', '', '', '', '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '5eed0001-0000-4000-8000-000000000002', 'authenticated', 'authenticated',
-   'test-manager@example.invalid', '61400000002', now(), now(), now(), now(),
+   'test-manager@example.invalid', '61491570002', now(), now(), now(), now(),
    '{"provider":"phone","providers":["phone"]}', '{"name":"Test Manager"}', '', '', '', '', '', '', '', '')
 on conflict (id) do nothing;
 
@@ -83,12 +83,12 @@ on conflict (id) do nothing;
 insert into public.venueplay_founding (id, created_at, venue_name, contact_name, contact_email, mobile, postcode,
                                        max_seats, status, marketing_opt_in, is_group)
 values
-  ('5eed0004-0000-4000-8000-000000000001', now(), 'Test Alpha',      'venueplay testing', 'test-host@example.invalid', '0400000001', '4220', 1, 'comp', false, false),
-  ('5eed0004-0000-4000-8000-000000000002', now(), 'Test Bravo',      'venueplay testing', 'test-host@example.invalid', '0400000001', '4218', 1, 'comp', false, true),
-  ('5eed0004-0000-4000-8000-000000000003', now(), 'Test Charlie',    'venueplay testing', 'test-host@example.invalid', '0400000001', '2026', 1, 'comp', false, false),
-  ('5eed0004-0000-4000-8000-000000000004', now(), 'Mini Bar (test)', 'venueplay testing', 'test-host@example.invalid', '0400000001', '4227', 1, 'comp', false, false),
-  ('5eed0004-0000-4000-8000-000000000005', now(), 'Test Echo',       'venueplay testing', 'test-host@example.invalid', '0400000001', '2000', 1, 'comp', false, true),
-  ('5eed0004-0000-4000-8000-000000000006', now(), 'Test Foxtrot',    'venueplay testing', 'test-host@example.invalid', '0400000001', '3000', 1, 'comp', false, true)
+  ('5eed0004-0000-4000-8000-000000000001', now(), 'Test Alpha',      'venueplay testing', 'test-host@example.invalid', '0491570001', '4220', 1, 'comp', false, false),
+  ('5eed0004-0000-4000-8000-000000000002', now(), 'Test Bravo',      'venueplay testing', 'test-host@example.invalid', '0491570001', '4218', 1, 'comp', false, true),
+  ('5eed0004-0000-4000-8000-000000000003', now(), 'Test Charlie',    'venueplay testing', 'test-host@example.invalid', '0491570001', '2026', 1, 'comp', false, false),
+  ('5eed0004-0000-4000-8000-000000000004', now(), 'Mini Bar (test)', 'venueplay testing', 'test-host@example.invalid', '0491570001', '4227', 1, 'comp', false, false),
+  ('5eed0004-0000-4000-8000-000000000005', now(), 'Test Echo',       'venueplay testing', 'test-host@example.invalid', '0491570001', '2000', 1, 'comp', false, true),
+  ('5eed0004-0000-4000-8000-000000000006', now(), 'Test Foxtrot',    'venueplay testing', 'test-host@example.invalid', '0491570001', '3000', 1, 'comp', false, true)
 on conflict (id) do nothing;
 
 -- ---------- venues ----------
@@ -155,7 +155,7 @@ insert into public.vp_captures (id, venue_id, first_name, last_name, email, mobi
 select ('5eed0008-0000-4000-800' || v.n || '-' || lpad(g::text, 12, '0'))::uuid, v.id,
        'Player', 'Test ' || lpad(g::text, 3, '0'),
        'player' || lpad(g::text, 3, '0') || '.' || v.slug || '@example.invalid',
-       '0400000' || lpad((100 + g)::text, 3, '0'),
+       '0491571' || lpad((100 + g)::text, 3, '0'),
        v.postcode, (g % 3 <> 0), case when g % 3 <> 0 then now() end, 'test-seed', now()
 from (values (1, '5eed0002-0000-4000-8000-000000000001'::uuid, 'test-alpha', '4220'),
              (4, '5eed0002-0000-4000-8000-000000000004'::uuid, 'test-mini-bar', '4227')) as v(n, id, slug, postcode),
@@ -170,9 +170,9 @@ begin
   if n < 6 then raise exception 'SEED SHORT: % test venue(s), expected 6. Rolled back.', n; end if;
   select count(*) into n from public.vp_venues where slug not like 'test-%';
   if n > 0 then raise exception 'SEED REFUSED: % venue(s) here that are not test- venues. Rolled back.', n; end if;
-  select count(*) into n from auth.users where not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '61400000%');
+  select count(*) into n from auth.users where not (coalesce(email, '') like '%@example.invalid' or coalesce(phone, '') like '6149157%');
   if n > 0 then raise exception 'SEED REFUSED: % auth user(s) not on the fake addresses. Rolled back.', n; end if;
-  select count(*) into n from public.vp_captures where email not like '%@example.invalid' or mobile not like '0400000%';
+  select count(*) into n from public.vp_captures where email not like '%@example.invalid' or mobile not like '049157%';
   if n > 0 then raise exception 'SEED REFUSED: % player(s) with a real-looking email or phone. Rolled back.', n; end if;
   raise notice 'SEED DONE: 6 test venues, 1 group, 2 phone users, 85 members, 80 players. All fake.';
 end
