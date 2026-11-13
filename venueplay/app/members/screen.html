@@ -220,7 +220,7 @@
 
   <!-- drawing -->
   <div id="tvDraw" class="layer hasstrip hidden">
-    <div class="toplbl"><span class="tl-night">Members draw</span></div>
+    <div class="toplbl"><span class="tl-night" id="drawTop">Members draw</span></div>
     <div class="body">
       <div class="lab pk">Drawing now</div>
       <div class="drawbig" id="drawTitle">Members Draw</div>
@@ -514,6 +514,7 @@
   function showDrawing(){
     stopAds(); stopSpin(); stopCelebrate(); clearHold(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     hideAll(); $("drawTitle").textContent=state.drawName; $("tvDraw").classList.remove("hidden");
+    $("drawTop").textContent=(state.kind==="entries") ? "Purchase raffle" : "Members draw";   // the purchase raffle's wall never says "members draw" (13 Nov 2026)
     $("drawJack").innerHTML=state.jackpotCents>0 ? "Playing for <b>"+money(state.jackpotCents)+"</b>" : "";
     var spin=$("tvSpin"), r=spinRange(), span=r.hi-r.lo+1;
     paintTiles(spin, String(r.hi), "spin"); sizeTiles(spin, 0.40);

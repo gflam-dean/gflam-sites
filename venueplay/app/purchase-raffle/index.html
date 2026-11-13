@@ -100,6 +100,28 @@
   .key.fn{font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:var(--muted)}
   .addbtn{margin-top:12px;min-height:66px;font-size:20px;text-transform:none}
   .msg{min-height:20px;margin-top:10px;font-size:14px;font-weight:700;color:var(--roll);text-align:center}
+  .msg.ok{color:var(--win)}
+  .addrow{display:flex;gap:10px;margin-top:12px}
+  .addrow .addbtn{margin-top:0;flex:1 1 auto}
+  .lookbtn{flex:0 0 34%;min-height:66px;font-size:17px;text-transform:none}
+  /* A PHONE UPRIGHT AT THE BAR (13 Nov 2026): Add entry sat at the very bottom edge of a 375x812 screen and the
+     message (a refused entry, a look-up) under it, off screen. The message is now above the number and the keypad,
+     stats and padding are slimmer so the keypad, Look up and Add entry are all on the first screen. */
+  @media (max-width:480px) and (orientation:portrait){
+    #barReady>.stats{margin-bottom:10px;gap:8px}
+    #barReady .stat{padding:7px 10px}
+    #barReady .stat .v{font-size:19px}
+    #barReady .bargrid>.panel:first-child{padding:12px 14px}
+    #barReady #barRaffleWhen{margin-bottom:8px!important;font-size:12px}
+    #stepPhone .keypad{gap:7px;margin-top:8px}
+    #stepPhone .key{min-height:50px}
+    #stepPhone .key:not(.fn){font-size:24px}
+    #stepPhone .addrow{margin-top:8px}
+    #stepPhone .addbtn,#stepPhone .lookbtn{min-height:56px}
+    input.phone{padding:9px 8px}
+    #stepPhone>.msg{margin:2px 0 8px}
+  }
+  @media (max-width:480px) and (max-height:760px) and (orientation:portrait){ #stepPhone .key{min-height:46px} }
 
   .done{text-align:center;padding:26px 16px;border-radius:16px;background:rgba(53,208,127,.10);border:1px solid rgba(53,208,127,.45)}
   .done .tick{width:64px;height:64px;border-radius:50%;background:var(--win);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
@@ -134,6 +156,8 @@
   @media (max-width:640px){ .tbl .hide-s{display:none} }
 
   .prize{display:grid;grid-template-columns:minmax(0,1fr) 140px 44px;gap:8px;margin-bottom:8px}
+  /* On a phone the prize name sat in a 90px box ("Trip for tw"): the name gets the whole row, value and remove under it (13 Nov 2026). */
+  @media (max-width:480px){ .prize{grid-template-columns:minmax(0,1fr) 44px} .prize .pt{grid-column:1 / -1} }
   .prize .x{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);color:var(--muted);cursor:pointer;font-size:18px}
   .terms{white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:16px;max-height:420px;overflow:auto}
 
@@ -172,12 +196,14 @@
     #barReady .stat .v{font-size:19px}
     #barReady .rname{font-size:15px}
     #barReady #barRaffleWhen{font-size:12px;margin-bottom:6px!important}
-    #stepPhone{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"lbl keys" "phone keys" "add keys" "msg keys";grid-template-rows:auto auto auto 1fr;column-gap:12px}
+    #stepPhone{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"lbl keys" "phone keys" "add keys" "look keys" "msg keys";grid-template-rows:auto auto auto auto 1fr;column-gap:12px}
     #stepPhone>.lbl{grid-area:lbl;margin-bottom:6px}
     #stepPhone>.phone{grid-area:phone;font-size:clamp(20px,2.7vw,26px);padding:10px 6px;letter-spacing:.03em}
-    #stepPhone>.keypad{grid-area:keys;margin-top:0;gap:6px}
+    #stepPhone>.keypad{grid-area:keys;margin-top:0;gap:6px;align-self:start}
     #stepPhone .key{min-height:46px;font-size:22px}
-    #stepPhone>.addbtn{grid-area:add;min-height:58px;font-size:18px}
+    #stepPhone>.addrow{display:contents}
+    #stepPhone .addrow .addbtn{grid-area:add;min-height:58px;font-size:18px;margin-top:12px}
+    #stepPhone .addrow .lookbtn{grid-area:look;min-height:40px;font-size:14px;margin-top:6px}
     #stepPhone>.msg{grid-area:msg}
     #barReady .recent li{flex-wrap:wrap;row-gap:2px}
     #barReady .recent .who{flex-basis:100%}   /* the narrow side column: the name gets its own line, never "Ch..." */
@@ -242,6 +268,7 @@
             <!-- step 1: the mobile -->
             <div id="stepPhone">
               <div class="lbl">One purchase, one entry. Customer's mobile</div>
+              <div class="msg" id="barMsg" role="status" aria-live="polite"></div>
               <input class="phone" id="phoneIn" type="tel" inputmode="numeric" autocomplete="off" placeholder="04__ ___ ___" maxlength="14" aria-label="Customer's mobile number">
               <div class="keypad" id="keypad">
                 <button type="button" class="key" data-k="1">1</button><button type="button" class="key" data-k="2">2</button><button type="button" class="key" data-k="3">3</button>
@@ -249,8 +276,10 @@
                 <button type="button" class="key" data-k="7">7</button><button type="button" class="key" data-k="8">8</button><button type="button" class="key" data-k="9">9</button>
                 <button type="button" class="key fn" data-k="clear">Clear</button><button type="button" class="key" data-k="0">0</button><button type="button" class="key fn" data-k="back" aria-label="Delete last digit">&#9003;</button>
               </div>
-              <button type="button" class="btn pink big addbtn" id="addBtn" disabled>Add entry</button>
-              <div class="msg" id="barMsg" role="status" aria-live="polite"></div>
+              <div class="addrow">
+                <button type="button" class="btn ghost lookbtn" id="lookBtn" disabled>Look up</button>
+                <button type="button" class="btn pink big addbtn" id="addBtn" disabled>Add entry</button>
+              </div>
             </div>
 
             <!-- step 2: someone new -->
@@ -303,7 +332,7 @@
       </div>
       <div class="panel">
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <input type="text" id="searchIn" placeholder="Search by name or the last digits of a mobile" style="flex:1;min-width:220px" autocomplete="off">
+          <input type="text" id="searchIn" placeholder="Name or last digits of mobile" style="flex:1;min-width:220px" autocomplete="off">
           <button type="button" class="btn ghost" id="exportBtn">Download people who opted in</button>
         </div>
         <div class="note" id="exportMsg" style="margin:-4px 0 10px"></div>
@@ -497,8 +526,9 @@
     var d=digits();
     $("addBtn").disabled = G.busy || !!G.openMsg || !phoneOk(d);
     $("addBtn").textContent = G.busy ? "Adding…" : "Add entry";
+    $("lookBtn").disabled = G.busy || !G.raffle || !phoneOk(d);
   }
-  function setPhone(d){ $("phoneIn").value=fmtPhone(d); $("barMsg").textContent=""; syncAdd(); }
+  function setPhone(d){ $("phoneIn").value=fmtPhone(d); $("barMsg").textContent=""; $("barMsg").classList.remove("ok"); syncAdd(); }
   $("phoneIn").addEventListener("input", function(){ setPhone(digits()); });
   $("phoneIn").addEventListener("keydown", function(e){ if(e.key==="Enter" && !$("addBtn").disabled){ e.preventDefault(); addEntry(false); } });
   $("keypad").addEventListener("click", function(e){
@@ -533,6 +563,17 @@
     });
   }
   $("addBtn").addEventListener("click", function(){ addEntry(false); });
+  /* STAFF LOOK-UP (Stewart, Deepwater, 19 Oct): a customer asks "how many have I got?". Type the mobile, tap
+     Look up: "Bob S. has 8 entries". Nothing is added. */
+  $("lookBtn").addEventListener("click", function(){
+    if(G.busy || !G.raffle || !phoneOk(digits())) return;
+    G.busy=true; syncAdd(); $("barMsg").textContent=""; $("barMsg").classList.remove("ok");
+    api("/host/praffle/lookup", { venue_id:G.venueId, raffle_id:G.raffle.id, phone:digits() }).then(function(res){
+      G.busy=false; syncAdd();
+      if(res.known){ $("barMsg").classList.add("ok"); $("barMsg").textContent=res.name+" has "+(res.entries|0)+((res.entries|0)===1?" entry":" entries")+" so far. Nothing was added."; }
+      else $("barMsg").textContent="That mobile is not in the raffle yet. Add entry will sign them up.";
+    }).catch(function(e){ G.busy=false; syncAdd(); $("barMsg").textContent=e.message; });
+  });
 
   function openNew(){
     show("stepPhone",false); show("stepDone",false); show("stepNew",true);
