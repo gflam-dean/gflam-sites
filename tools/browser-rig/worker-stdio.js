@@ -44,6 +44,11 @@ DB = { vp_venues: [{ id: VENUE, name: 'Test Alpha', slug: SLUG, status: 'active'
        vp_venue_groups: [], vp_venue_settings: [], vp_sessions: [], vp_players: [], vp_games: [], vp_cards: [], vp_claims: [],
        vp_game_reports: [], vp_gaming_declarations: [], vp_events: [], vp_captures: [],
        vp_bingo_draws: [], vp_bingo_draw_balls: [], vp_bingo_tickets: [], vp_bingo_claims: [] };
+function rigUuid() {
+  var h = '0123456789abcdef', s = '';
+  for (var i = 0; i < 32; i++) s += h[i === 12 ? 4 : (i === 16 ? (8 + Math.floor(Math.random() * 4)) : Math.floor(Math.random() * 16))];
+  return s.slice(0, 8) + '-' + s.slice(8, 12) + '-' + s.slice(12, 16) + '-' + s.slice(16, 20) + '-' + s.slice(20);
+}
 var _rf = fetch;
 fetch = async function (url, opts) {
   var u = String(url), m = String((opts && opts.method) || 'GET').toUpperCase();
@@ -66,7 +71,12 @@ fetch = async function (url, opts) {
   if (m === 'POST' && /\/rest\/v1\/(\w+)/.test(u)) {
     var t = /\/rest\/v1\/(\w+)/.exec(u)[1], b = JSON.parse(opts.body);
     (Array.isArray(b) ? b : [b]).forEach(function (r) {
-      if (t === 'vp_players') { if (r.kicked == null) r.kicked = false; if (!r.id) r.id = 'pl-' + Math.floor(Math.random() * 1e9); r.token = 'tok-' + r.id; }
+      /* A PLAYER ROW'S ID IS A UUID, AS POSTGRES MINTS IT (13 Nov 2026). It was 'pl-<n>', and handleJoin only takes a
+         phone back onto its own row when that row's id is a UUID (UUID_RE), so here, and only here, every re-join by the
+         same phone in the same session wrote a NEW row: one-phone-a-night-in-chrome went red under load whenever the musical
+         page re-joined twice (the stale /player/card answer landing after its first re-join), while the live Worker
+         reuses the row. reports/one-phone-race-13nov; proven by tools/rig-rejoin-one-row.test.py. */
+      if (t === 'vp_players') { if (r.kicked == null) r.kicked = false; if (!r.id) r.id = rigUuid(); r.token = 'tok-' + r.id; }
       if (t === 'vp_sessions') { if (r.status == null) r.status = 'lobby'; if (r.created_at == null) r.created_at = new Date().toISOString(); }
       if (t === 'vp_bingo_draws') { if (r.mode == null) r.mode = 'server'; if (r.finished_at === undefined) r.finished_at = null; }
       if (t === 'vp_bingo_tickets') { if (r.voided_at === undefined) r.voided_at = null; }

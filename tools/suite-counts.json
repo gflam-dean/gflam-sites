@@ -2142,5 +2142,9 @@
  "tools/website-audit-p2-13nov-in-chrome.test.py": {
   "checks": 8,
   "counted_by": "lines"
+ },
+ "tools/rig-rejoin-one-row.test.py": {
+  "checks": 9,
+  "counted_by": "lines"
  }
 }
