@@ -2142,5 +2142,9 @@
  "tools/website-audit-p2-13nov-in-chrome.test.py": {
   "checks": 8,
   "counted_by": "lines"
+ },
+ "tools/lobby-refresh-in-chrome.test.py": {
+  "checks": 148,
+  "counted_by": "lines"
  }
 }

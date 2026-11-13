@@ -417,6 +417,7 @@
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
+<script src="/app/vp-lobby.js"></script>
 <script src="/app/vp-hostedby.js"></script>   <!-- "Hosted by" on the TV (INBOX 120) -->
 <script src="/app/topanswers/ta-match.js"></script>
 <!-- Punters Reckon's boards are NOT a script: the console asks the game Worker for them (prLoadBoards). -->
@@ -674,7 +675,7 @@
            tablet only; it never goes on a channel. */
         var cur = (G.current && G.status==="question") ? { qseq:G.current.qseq, ci:G.current.correctIndex, pids:G.answeredPids||{} } : null;
         var fin = G.finale ? { s:G.finale.s, runAt:G.finale.runAt, auto:G.finale.auto, ph:G.finale.phones, ended:G.status==="ended" } : null;   // the end-of-night clock, this tablet only
-        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId, fin:fin }));
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cur:cur, cid:G.consoleId, fin:fin })); clearLobby();
       }
     }catch(e){}
   }
@@ -1169,6 +1170,52 @@
     paintLobbyWait(null);
   }
 
+  /* THE LOBBY SURVIVES A REFRESH (website audit part 1b, 13 Nov 2026). A lobby has a night on the server and no game row,
+     so the running-quiz restore never saw it: the console came back on setup, 0 players, and the phones sat on "You're in"
+     for ever. The pointer is the night (session + code) plus the setup the host had chosen; the Worker is asked whether
+     that night is still open (/app/vp-lobby.js). Same session, same code: the same phones are the same players. */
+  function lobbyKey(){ return DEMO ? "" : G.venueId; }
+  function saveLobby(){
+    if(DEMO || !(window.VP_LOBBY && G.status==="lobby" && G.sessionId)) return;
+    VP_LOBBY.save("trivia", lobbyKey(), { sessionId:G.sessionId, joinCode:G.joinCode, setId:($("setSel").value||""), count:($("cfgCount").value||""), time:($("cfgTime").value||""), base:($("cfgBase").value||"") });
+  }
+  function clearLobby(){ if(window.VP_LOBBY && !DEMO) VP_LOBBY.clear("trivia", lobbyKey()); }
+  /* The category list is read at boot, in parallel with the restore: wait (8 seconds at most) for it to fill. */
+  function setsReady(){
+    return new Promise(function(res){
+      var n=0, t=setInterval(function(){
+        var sel=$("setSel"); n++;
+        if(!sel || sel.options.length>1 || (sel.options[0] && !/Loading/i.test(sel.options[0].textContent)) || n>53){ clearInterval(t); res(); }
+      }, 150);
+    });
+  }
+  function restoreTriviaLobby(){
+    var p=(window.VP_LOBBY && !DEMO) ? VP_LOBBY.read("trivia", lobbyKey()) : null;
+    if(!p) return Promise.resolve(false);
+    return VP_LOBBY.live(VP_GAME_API, p).then(function(r){
+      if(r===undefined) return false;                       // could not tell: keep the pointer, the setup screen stands
+      if(!r){ clearLobby(); return false; }                 // the night is gone: a clean setup screen, no ghost lobby
+      return setsReady().then(function(){
+        var sel=$("setSel"), i;
+        if(p.setId && sel){ for(i=0;i<sel.options.length;i++){ if(sel.options[i].value===p.setId){ sel.selectedIndex=i; try{ syncSetCount(); }catch(e){} break; } } }
+        if(p.count){ $("cfgCount").value=p.count; try{ renderPaperSetup(); }catch(e){} paintRoundQs(); }
+        if(p.time) $("cfgTime").value=p.time;
+        if(p.base) $("cfgBase").value=p.base;
+        readSettings();
+        G.sessionId=r.session_id; G.joinCode=r.join_code;
+        try{ VP.noteOpenSession(G.sessionId, G.venueId); }catch(e){}
+        openGameChannel(G.joinCode);                         // the players' channel; on subscribe it rolls call and the phones answer
+        G.status="lobby";
+        openSession();                                       // says "trivia" again; the server reuses this night (or hands back the one it rolled)
+        bcast({ t:"mode", mode:"trivia", title:G.setTitle });
+        bcast({ t:"players", count:playerCount() });
+        saveLobby();
+        startLobbyWatch();
+        renderConsole();
+        return true;
+      });
+    });
+  }
   function openLobby(){
     if(G.busy) return;
     clearErrForAction();
@@ -1178,6 +1225,7 @@
       bcast({ t:"mode", mode:"trivia", title:G.setTitle });   // TV shows the trivia join screen, named after the night
       releasePodium();                                         // the last round's winners give way to this lobby
       G.status="lobby";
+      saveLobby();                                             // a refresh from here brings this lobby back (vp-lobby.js)
       startLobbyWatch();
       /* session_id: the lobby is a NEW night on the same code, so a phone still holding the last night's
          token re-joins this one now, in the lobby, not at "started" (trivia/play.html, 1 Nov 2026). */
@@ -1192,6 +1240,7 @@
     clearErrForAction();
     stopLobbyWatch();
     G.status="setup";
+    clearLobby();
     bcast({ t:"idle" });   // TV back to the idle join screen
     closeNight(null);
     renderConsole();
@@ -1201,6 +1250,7 @@
      tablet was asked about a game "on another device". The next round still reuses the session. */
   function closeNight(ended){
     var sid=G.sessionId; if(!sid) return;
+    clearLobby();
     G.sessionId=""; G.joinCode="";
     (ended || Promise.resolve()).then(function(){ if(window.VP && VP.closeSession) VP.closeSession(sid); });
   }
@@ -2010,7 +2060,7 @@
       }).catch(function(e){ if(window.VPPrint) VPPrint.fail(w, e.message); hostError(e.message); });
     });
   });
-  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });
+  $("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); saveLobby(); });
   /* THE QUESTIONS BOX SHOWS THIS ROUND, not the whole set. Dean, 27 Sep 2026: "the questions down
      the bottom don't reflect what the number is in the top". It showed the set size (2,720 for a
      bank) while the round was 10. Now it shows the round, with the set beside it when they differ. */
@@ -2157,7 +2207,7 @@
     }
     return false;
   }
-  $("setSel").addEventListener("change", function(){ syncSetCount(); var n=$("setLastNote"); if(n) n.style.display="none"; queueTriviaPrefs(); });
+  $("setSel").addEventListener("change", function(){ syncSetCount(); var n=$("setLastNote"); if(n) n.style.display="none"; queueTriviaPrefs(); saveLobby(); });
   var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
   /* COUNTS DOUBLE FINAL ROUND. Which questions it covers is decided by the Worker when the night
@@ -2345,7 +2395,7 @@
   function queueTriviaPrefs(){ if(_triviaPrefs) _triviaPrefs.queue(); }
   // Once the question sets are in the list, so the venue's last set can be chosen.
   function startTriviaPrefs(){ return _triviaPrefs ? _triviaPrefs.start() : Promise.resolve(null); }
-  ["cfgCount","cfgTime","cfgBase","cfgDoubleLast"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("input", queueTriviaPrefs); });
+  ["cfgCount","cfgTime","cfgBase","cfgDoubleLast"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("input", function(){ queueTriviaPrefs(); saveLobby(); }); });
   if(window.VP && VP.advanced) VP.advanced($("triviaAdv"), "trivia");   // closed unless this browser left it open
   /* No "Plain" answer buttons any more (Dean, 27 Sep 2026: "get rid of the setting to change the
      coloured buttons"). Phones always get the four colours, which match the TV. */
@@ -2463,7 +2513,7 @@
       if(window.VPGameSetup) VPGameSetup.firstOpen("trivia", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
       /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
          console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
-      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ if(DEMO) return false; return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ if(DEMO) return false; return restoreTrivia().then(function(ok){ return ok || restorePR(); }).then(function(ok){ return ok || restoreTriviaLobby(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
         /* Picked up on another device: stand down (/app/vp-pickup.js). Asks only while a quiz is on. */
         if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"trivia",
           sessionId:function(){ return (G.gameId && G.status!=="setup" && G.status!=="ended") ? G.sessionId : ""; },

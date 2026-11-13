@@ -775,6 +775,7 @@
 <script src="/app/vp-hold.js"></script>
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
+<script src="/app/vp-lobby.js"></script>
 <!-- The venue's logo in the console header, sized by its shape like the player phones (27 Oct 2026). -->
 <script src="/app/vp-venuelogo.js"></script>
 <!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
@@ -2050,6 +2051,35 @@
       if(!raw) return false;
       var s=JSON.parse(raw);
       if(!s) return false;
+      /* THE OPEN LOBBY COMES BACK (website audit part 1b, 13 Nov 2026). The save held the lobby (session, code, roster)
+         but only a running game was restored, so a host refreshing here came back on setup with the room still
+         scanning in and the phones on "You're in" for ever. Same night, same code, same phones: the TV is told again
+         and the roll call (on subscribe, gameOpenHere) fills the roster. Whether the night is still open on the server
+         is asked after, and a night that is gone puts the console back on a clean setup (no ghost lobby). */
+      if(s.status==="lobby" && s.sessionId && s.ts && (Date.now()-s.ts)<=SAVE_MAX_AGE){
+        G.code=code; G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
+        G.paidMode=s.paidMode||"";
+        var _lps=document.getElementById("paidSel"); if(_lps){ _lps.value=G.paidMode; }
+        G.pattern=s.pattern||"one"; G.pats=(s.pats && typeof s.pats==="object") ? s.pats : {};
+        G.prize=(typeof s.prize==="string") ? s.prize : "the prize";
+        G.defaultCards=clampCards(s.defaultCards||1);
+        var _lp=$("patternSel"); if(_lp && _lp.querySelector('option[value="'+G.pattern+'"]')) _lp.value=G.pattern;
+        var _lz=$("prizeInput"); if(_lz && G.prize && G.prize!=="the prize") _lz.value=G.prize;
+        var _lc=$("cardsSel"); if(_lc) _lc.value=String(G.defaultCards);
+        G.players=s.players||{}; G.order=Array.isArray(s.order)?s.order:[];
+        G.prizesWon=Array.isArray(s.prizesWon)?s.prizesWon:[];
+        G.startedAt=s.startedAt||null;
+        restoreNightFields(s);
+        if(window.VP_LOBBY){
+          VP_LOBBY.live(VP_GAME_API, { sessionId:G.sessionId, joinCode:G.joinCode }).then(function(r){
+            if(r!==null || G.status!=="lobby") return;            // open, could not tell, or the host has moved on
+            G.status="setup"; G.sessionId=""; G.joinCode=""; G.players={}; G.order=[];
+            try{ send({ t:"idle" }); }catch(e){}
+            saveGame(); renderConsole();
+          });
+        }
+        return true;
+      }
       if(s.status!=="running"){
         // Not a running round, but a paid night still has takings worth keeping. Bring back the
         // mode and who paid for what; the game itself stays where it was.

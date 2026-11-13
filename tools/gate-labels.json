@@ -212,6 +212,7 @@
   "live-fixes.test.js",
   "live-here-now-in-chrome.test.py",
   "livenorm.test.py",
+  "lobby-refresh-in-chrome.test.py",
   "logo-tools-in-chrome.test.py",
   "manager-permissions.test.js",
   "metering.test.js",

@@ -569,6 +569,7 @@
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared with the demo TV /tv?demo=1 (12 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>   <!-- the venue's ad under the lobby (6 Nov 2026) -->
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
+<script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script>
 (function(){
@@ -2819,6 +2820,11 @@
     if(room && CODE_RE.test(room)){ goToCode(room); }
     else if(slug){ watchVenue(slug); }
     else { setConn("none"); if(room) try{ roomIn.value=room.replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); paintCode(); }catch(e){} show("vNoRoom"); }
+    /* A phone on "You're in" for a night that is really gone says so, with a way back (/app/vp-waitwatch.js). */
+    if(window.VP_WAITWATCH) VP_WAITWATCH.start({ api: VP_GAME_API,
+      session:function(){ return /^[0-9a-f-]{36}$/i.test(_joinedFor||"") ? _joinedFor : ""; },
+      waiting:function(){ return P.joined && !P.active && !P.cards.length && !$("vWait").classList.contains("hidden"); },
+      forget:function(){ try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ localStorage.removeItem(k+P.room); }); localStorage.removeItem("vp-name-"+P.room); sessionStorage.removeItem("vp-name-"+P.room); }catch(e){} } });
   })();
 })();
 </script>
