@@ -140,7 +140,7 @@ _SUITE_OUT_DIR = tempfile.mkdtemp(prefix='gate-suite-out-')   # every suite's ou
 atexit.register(lambda: shutil.rmtree(_SUITE_OUT_DIR, ignore_errors=True))
 
 # --chrome-record (12 Nov 2026, INBOX 265.4; what the pre-push hook runs): a Chrome suite is left out HERE only when a
-# signed record from vp-tests-1 covers it for this exact tree, under 24 h old, every Chrome suite green, every count at
+# record SIGNED ON THIS MAC from a vp-tests-1 run covers it for this exact tree, under 2 h old, every Chrome suite green on its one run, every count at
 # or over the ledger (tools/gate-server.py, accepted()). No record, or any fault in it, and every Chrome suite runs on
 # this Mac exactly as before. MAC_ONLY suites (signin-logo-in-chrome) always run here. Never with --skip-chrome.
 CHROME_RECORD = '--chrome-record' in sys.argv and not SKIP_CHROME

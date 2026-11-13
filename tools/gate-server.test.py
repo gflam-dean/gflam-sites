@@ -10,21 +10,25 @@ vp-tests-1. Two throwaway keys are made in the temp folder; the real ~/.gflam-ga
 
   1. the writer     a green run is signed and accepted; signin-logo is never sent and never covered; a dirty tree
                     is refused; a tree that moves during the run is not signed; a red suite is not signed
-  2. flakes         red at -j 4 then 3 green lone re-runs: signed, all four runs kept; a red lone re-run: not signed;
-                    a signed record with only 2 lone re-runs: refused
+  2. no retries     (13 Nov 2026, INBOX 357A) the server runs each suite ONCE: one red and nothing is signed, the
+                    runner is called once; a signed record that carries re-runs is refused
+  2b. binding       results not tied to THIS request and THESE files are never signed: no run facts, another nonce,
+                    a server manifest that is not this tree's (at the start or at the end), files missing on the server
   3. every bypass   (each refused, so the gate runs that suite on the Mac): no key, a key others can read, no
                     record, an empty file, not JSON, unsigned, a zeroed signature, a tampered count, a tampered suite
                     list, a tampered time, signed with a different key, another tree (a real commit, and a record
-                    renamed to it), stale (25 h), dated in the future, a missing suite, red, a FAIL line, a last
+                    renamed to it), stale (2 h, and 3 h; 1 h 59 is fine), dated in the future, a missing suite, red, a FAIL line, a last
                     line that is not a pass, fewer checks than the ledger, a total where the ledger counts lines,
                     a suite not in the ledger, wrong version; a message-only amend keeps the same files: accepted
   4. wiring         release-check.py skips only what the record covers, never with --skip-chrome, finds Chrome suites
                     the way gate-server does; the ledger skips only named Chrome suites; no environment variable can
                     move the key, the records or the runner; the real hook runs --chrome-record and still refuses red
-  5. the runner     remote_runner reads the server's result file (last line and the ledger's own count)
+  5. the runner     remote_runner reads the server's result file and judges the RAW output on the Mac (the server's
+                    own count and verdict are never used); no output, or a cut one, is red; the run facts come back
+  5b. release.py    step 0b runs gate-server.py run unless VP_GATE_SERVER=0, and never stops the release
   6. the fence      the real repository has not moved
 """
-import importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, time
+import glob, hashlib, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.join(ROOT, 'tools')
@@ -88,14 +92,23 @@ try:
     OTHER, _ = gs.read_key(other_key_file)
     ok('two different throwaway keys', KEY and OTHER and KEY != OTHER)
 
-    GREEN = {'rc': 0, 'last': 'ALL 5 CHECKS PASSED', 'checks': 5, 'counted_by': 'lines', 'bad': [], 'seconds': 1.0}
+    GREEN = {'rc': 0, 'last': 'ALL 5 CHECKS PASSED', 'checks': 5, 'counted_by': 'lines', 'bad': [], 'seconds': 1.0,
+             'verdict': [True, 'ALL N CHECKS PASSED']}
     sent = []
 
-    def runner_from(script):
-        """script: {suite: [entry for call 1, call 2, ...]}; default green."""
+    def honest_run(nonce, paths):
+        """What an honest server says about the files it was sent: it hashes the repo's own files."""
+        h = hashlib.sha256()
+        for pth in sorted(paths):
+            data = io.open(os.path.join(repo, pth.decode()), 'rb').read()
+            h.update(hashlib.sha1(b'blob %d\0' % len(data) + data).hexdigest().encode() + b' ' + pth + b'\n')
+        return {'nonce': nonce, 'manifest_start': h.hexdigest(), 'manifest_end': h.hexdigest(), 'missing': [], 'missing_n': 0, 'wall': 1}
+
+    def runner_from(script, run_edit=None):
+        """script: {suite: [entry for call 1, call 2, ...]}; default green. run_edit(run facts) plays a lying server."""
         calls = {}
 
-        def run(suites, jobs):
+        def run(suites, jobs, nonce, paths):
             sent.append((list(suites), jobs))
             out = {}
             for s in suites:
@@ -103,6 +116,11 @@ try:
                 calls[s] = i + 1
                 seq = script.get(s) or [GREEN]
                 out[s] = dict(seq[min(i, len(seq) - 1)])
+            facts = honest_run(nonce, paths)
+            if run_edit:
+                facts = run_edit(facts)
+            if facts is not None:
+                out[gs.RUN_KEY] = facts
             return out
         return run
 
@@ -129,37 +147,55 @@ try:
     ok('a dirty checkout accepts no record', acc()[0] == set() and 'dirty' in acc()[1])
     git(repo, 'checkout', '-q', '--', 'venueplay/index.html')
 
-    def moving_runner(suites, jobs):
+    def moving_runner(suites, jobs, nonce, paths):
+        out = {s: dict(GREEN) for s in suites}
+        out[gs.RUN_KEY] = honest_run(nonce, paths)
         put(os.path.join(repo, 'venueplay', 'index.html'), '<html>moved</html>\n')
         git(repo, 'commit', '-qam', 'moved during the run')
-        return {s: dict(GREEN) for s in suites}
+        return out
     base_head = git(repo, 'rev-parse', 'HEAD').stdout.strip()
     good, text, _ = gs.make_record(repo, moving_runner, KEY, say=lambda s: None)
     ok('the checkout changed while the suites ran: not signed', not good and 'changed while' in text, text)
     git(repo, 'reset', '-q', '--hard', base_head)
 
-    red = dict(GREEN, rc=1, last='4 of 5 checks passed', bad=['FAIL the logo'])
+    red = dict(GREEN, rc=1, last='4 of 5 checks passed', bad=['FAIL the logo'], verdict=[False, 'exit 1'])
     good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red]}), KEY, say=lambda s: None)
-    ok('a suite red at -j 4 and red alone: not signed, named by the red rule itself', not good and 'red on the server: ' + CHROME[0] in text, text)
+    ok('a suite red at -j 4: not signed, named by the red rule itself', not good and 'red on the server: ' + CHROME[0] in text, text)
     ok('... and a record that fails its own check is never signed either (the second lock behind the first)',
        "return False, 'NOT SIGNED: the record would not pass its own check: ' + why, None" in io.open(os.path.join(TOOLS, 'gate-server.py'), encoding='utf-8').read())
 
-    print('\n2. flakes: red at -j 4 is green only after 3 green lone re-runs')
+    print('\n2. no retries: one red on the server and nothing is signed')
     sent[:] = []
-    good, text, frec = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN, GREEN, GREEN]}), KEY, say=lambda s: None)
-    ok('red once, then 3 green lone re-runs: signed', good, text)
-    ok('... the 3 lone re-runs ran one at a time, and only for that suite', [x for x in sent if x[1] == 1] == [([CHROME[1]], 1)] * 3, sent)
-    ok('... and all four runs are in the record', frec and frec['suites'][CHROME[1]]['rc'] == 1 and len(frec['suites'][CHROME[1]]['reruns']) == 3)
-    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN, red, GREEN]}), KEY, say=lambda s: None)
-    ok('red once, then a red lone re-run: not signed', not good, text)
-    two = json.loads(json.dumps(frec))
-    two['suites'][CHROME[1]]['reruns'] = two['suites'][CHROME[1]]['reruns'][:2]
-    two = gs.sign(two, KEY)
-    gs.write_record(two, rec_dir)
-    ok('a signed record with only 2 lone re-runs: refused', acc()[0] == set() and '2 of 3 lone re-runs' in acc()[1], acc()[1])
-    gs.write_record(frec, rec_dir)
-    c, w = acc()
-    ok('the flake record is accepted and says which suite needed the re-runs', c == set(CHROME[:2]) and 'lone re-runs: ' + CHROME[1] in w, w)
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN, GREEN, GREEN]}), KEY, say=lambda s: None)
+    ok('red once (it would have been green alone): NOT signed', not good and 'red on the server: ' + CHROME[1] in text, text)
+    ok('... and the server was asked exactly once, 4 at a time, never a lone re-run', sent == [(CHROME[:2], 4)], sent)
+    green_only = dict(GREEN)
+    green_only.pop('verdict')
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [green_only]}), KEY, say=lambda s: None)
+    ok('a suite the one pass judge never read on the Mac: not signed', not good and CHROME[0] in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [dict(GREEN, verdict=[False, 'two-line PASS pair'])]}), KEY, say=lambda s: None)
+    ok('a suite the one pass judge refuses (exit 0, last line fine): not signed', not good and CHROME[0] in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [dict(GREEN, reruns=[])]}), KEY, say=lambda s: None)
+    ok('a server entry that carries re-runs: not signed', not good, text)
+
+    print('\n2b. binding: results not tied to this request and these files are never signed')
+    good, text, _ = gs.make_record(repo, runner_from({}, lambda f: None), KEY, say=lambda s: None)
+    ok('no run facts from the server: not signed', not good and 'no run facts' in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({}, lambda f: dict(f, nonce='0' * 32)), KEY, say=lambda s: None)
+    ok('another request\'s nonce (an old results file): not signed', not good and 'another request' in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({}, lambda f: dict(f, manifest_start='a' * 64, manifest_end='a' * 64)), KEY, say=lambda s: None)
+    ok('the server ran other files (TREE MISMATCH on the server): not signed', not good and 'are not this tree' in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({}, lambda f: dict(f, manifest_end='b' * 64)), KEY, say=lambda s: None)
+    ok('the files on the server changed while the suites ran: not signed', not good and 'changed while the suites ran' in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({}, lambda f: dict(f, missing=['venueplay/index.html'], missing_n=1)), KEY, say=lambda s: None)
+    ok('a file of the tree missing on the server: not signed', not good and 'missing 1 file' in text, text)
+    dg, pl = gs.manifest(repo)
+    ok('the manifest lists every committed file and leaves out what remote-run.sh leaves out',
+       b'venueplay/index.html' in pl and b'tools/gate-server.py' in pl and not gs.synced('a/.env') and not gs.synced('x/y.pem')
+       and not gs.synced('venueplay-backend/data/archive/x.json') and not gs.synced('tools/flake-log.jsonl')
+       and gs.synced('venueplay/environment.html') and not gs.synced('node_modules/a.js'), len(pl))
+    good, text, rec2 = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
+    ok('an honest server: signed, and the record carries the manifest the server measured', good and rec2['manifest'] == dg, text)
 
     print('\n3. every bypass is refused (the gate then runs the suite on the Mac)')
 
@@ -200,7 +236,15 @@ try:
     refused('signed with a different key: refused', resigned(lambda r: None, OTHER), 'different key')
     refused('signed with a different key, key id copied across: refused',
             edited(lambda r: r.update(sig=gs.sign(json.loads(signed_good), OTHER)['sig'])), 'does not match')
-    refused('stale (25 h old): refused', resigned(lambda r: r.update(time=time.time() - 25 * 3600)), 'over the 24 h limit')
+    refused('stale (25 h old): refused', resigned(lambda r: r.update(time=time.time() - 25 * 3600)), 'over the 2 h limit')
+    refused('STALE (3 h old, the old 24 h rule would have taken it): refused', resigned(lambda r: r.update(time=time.time() - 3 * 3600)), 'over the 2 h limit')
+    refused('stale at exactly 2 h: refused', resigned(lambda r: r.update(time=time.time() - 2 * 3600 - 1)), 'over the 2 h limit')
+    io.open(path, 'w', encoding='utf-8').write(resigned(lambda r: r.update(time=time.time() - 119 * 60)))
+    ok('1 h 59 min old: still accepted', acc()[0] == set(CHROME[:2]), acc()[1])
+    refused('a validly signed record carrying re-runs (the old rule): refused',
+            resigned(lambda r: r['suites'][CHROME[1]].update(reruns=[dict(GREEN)] * 3)), 'never retries')
+    refused('a validly signed suite with no verdict from the one pass judge: refused',
+            resigned(lambda r: r['suites'][CHROME[0]].pop('verdict')), 'never read its output')
     refused('dated in the future: refused', resigned(lambda r: r.update(time=time.time() + 3600)), 'future')
     refused('a missing suite (validly signed, one left out): refused', resigned(lambda r: r['suites'].pop(CHROME[1])), 'does not cover 1 Chrome suite')
     refused('a red suite (validly signed): refused', resigned(lambda r: r['suites'][CHROME[0]].update(rc=1)), 'exit 1')
@@ -278,7 +322,8 @@ try:
     ok('no environment variable can move the key, the records or the runner',
        not re.search(r'environ\.get|getenv|environ\[', gs_src) and "KEY_FILE = os.path.expanduser('~/.gflam-gate.env')" in gs_src)
     ok('signin-logo-in-chrome stays on the Mac', "MAC_ONLY = ('signin-logo-in-chrome.test.py',)" in gs_src)
-    ok('the age limit is 24 hours and the lone re-runs are 3', 'MAX_AGE_S = 24 * 60 * 60' in gs_src and 'LONE_RERUNS = 3' in gs_src)
+    ok('the age limit is 2 hours and there are no lone re-runs', 'MAX_AGE_S = 2 * 60 * 60' in gs_src and 'LONE_RERUNS' not in gs_src)
+    ok('the record version is 2 (a v1 record, 24 h with lone re-runs, is refused)', 'VERSION = 2' in gs_src)
     ok('the signature is compared in constant time', 'hmac.compare_digest(' in gs_src)
 
     # The REAL hook, run the way git runs it, in the throwaway, with a fake gate that writes down its arguments.
@@ -295,30 +340,84 @@ try:
     git(hrepo, 'add', '-A'); git(hrepo, 'commit', '-qm', 'h')
     henv = dict(ENV)
     henv.pop('VP_GATE_SERVER', None)
-    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True)
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True, input='')
     args = io.open(os.path.join(hrepo, 'tools', 'ARGS')).read() if os.path.exists(os.path.join(hrepo, 'tools', 'ARGS')) else ''
     ok('the real hook runs release-check.py --local --chrome-record, and a green gate lets the push go', r.returncode == 0 and args == '--local --chrome-record', (r.returncode, args, r.stdout[-200:]))
     put(os.path.join(hrepo, 'tools', 'RED'), '')
-    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True)
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True, input='')
     ok('a red gate still refuses the push, record or none', r.returncode == 1 and 'PUSH REFUSED' in r.stdout, r.stdout[-200:])
+    os.remove(os.path.join(hrepo, 'tools', 'RED'))
+    hhead = git(hrepo, 'rev-parse', 'HEAD').stdout.strip()
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (hhead, '0' * 40))
+    args = io.open(os.path.join(hrepo, 'tools', 'ARGS')).read()
+    ok('pushing THIS checkout\'s commit: the record may be used', r.returncode == 0 and args == '--local --chrome-record', (args, r.stdout[-200:]))
+    put(os.path.join(hrepo, 'venueplay.txt'), 'other\n')
+    git(hrepo, 'add', '-A'); git(hrepo, 'commit', '-qm', 'other')
+    other = git(hrepo, 'rev-parse', 'HEAD').stdout.strip()
+    git(hrepo, 'reset', '-q', '--hard', 'HEAD~1')
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (other, '0' * 40))
+    args = io.open(os.path.join(hrepo, 'tools', 'ARGS')).read()
+    ok('pushing a commit whose files are NOT this checkout\'s: no record, every Chrome suite on the Mac',
+       r.returncode == 0 and args.strip() == '--local' and 'no server record is used' in r.stdout, (args, r.stdout[-300:]))
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/gone %s\n' % ('0' * 40, hhead))
+    ok('a branch delete in the push does not count as other files', io.open(os.path.join(hrepo, 'tools', 'ARGS')).read() == '--local --chrome-record')
     ok('the hook runs the server only when asked (VP_GATE_SERVER=1) and never fails the push on it',
        '[ "${VP_GATE_SERVER:-}" = "1" ]' in hook_src and 'gate-server.py" run || echo' in hook_src)
 
-    print('\n5. the runner reads the server\'s own result file')
+    print('\n5. the runner: the Mac judges the server\'s RAW output itself')
+    shutil.copy(os.path.join(TOOLS, 'check-suite-ledger.py'), os.path.join(repo, 'tools', 'check-suite-ledger.py'))
     res = os.path.join(TMP, 'res.jsonl')
-    put(res, json.dumps({'suite': 'tools/' + CHROME[0], 'rc': 0, 'seconds': 3, 'summary': 'x', 'last': 'ALL 5 CHECKS PASSED',
-                         'judge': [0, 5, [], 'lines']}) + '\n' + json.dumps({'suite': 'tools/' + CHROME[1], 'rc': 0, 'last': 'ALL 5 CHECKS PASSED'})
-        + '\n' + json.dumps({'wall': 1, 'jobs': 4}) + '\n')
+    good_out = 'ok one\nok two\nok three\nok four\nok five\nALL 5 CHECKS PASSED\n'
+    run_line = {'run': {'nonce': 'ab' * 16, 'manifest_start': 'c' * 64, 'manifest_end': 'c' * 64, 'missing': [], 'missing_n': 0}}
+    lines = [run_line,
+             {'suite': 'tools/' + CHROME[0], 'rc': 0, 'seconds': 3, 'last': 'ALL 5 CHECKS PASSED', 'out': good_out,
+              'judge': [0, 5, [], 'lines'], 'passed': True},
+             # a server that SAYS green and counted 5, over output with a FAIL line and 4 oks
+             {'suite': 'tools/' + CHROME[1], 'rc': 0, 'last': 'ALL 5 CHECKS PASSED', 'judge': [0, 5, [], 'lines'], 'passed': True,
+              'out': 'ok one\nok two\nFAIL three\nok four\nok five\nALL 5 CHECKS PASSED\n'},
+             {'suite': 'tools/charlie-in-chrome.test.py', 'rc': 0, 'last': 'ALL 5 CHECKS PASSED', 'judge': [0, 5, [], 'lines'], 'passed': True},
+             {'suite': 'tools/delta-in-chrome.test.py', 'rc': 0, 'last': 'ALL 5 CHECKS PASSED', 'judge': [0, 5, [], 'lines'], 'passed': True,
+              'out': good_out, 'out_truncated': True},
+             {'wall': 1, 'jobs': 4}]
+    put(res, ''.join(json.dumps(l) + '\n' for l in lines))
     fake = os.path.join(TMP, 'fake-remote-run.sh')
-    put(fake, '#!/bin/bash\necho "synced"\necho "results: %s"\n' % res, 0o755)
+    seen_env = os.path.join(TMP, 'seen-env')
+    put(fake, '#!/bin/bash\necho "$VP_RUN_NONCE $(tr \'\\0\' \'\\n\' < "$VP_RUN_PATHS" | wc -l)" > %s\necho "synced"\necho "results: %s"\n' % (seen_env, res), 0o755)
     gs.REMOTE_RUN = fake
-    got = gs.remote_runner(repo)(CHROME[:2], 4)
-    ok('a suite the server counted the ledger way comes back with its last line and count',
-       got.get(CHROME[0], {}).get('checks') == 5 and got[CHROME[0]]['last'] == 'ALL 5 CHECKS PASSED' and got[CHROME[0]]['counted_by'] == 'lines', got)
-    ok('a suite the server did NOT count comes back red (no checks, a reason), never green',
-       got.get(CHROME[1], {}).get('checks') == 0 and got[CHROME[1]]['bad'], got.get(CHROME[1]))
+    got = gs.remote_runner(repo)(CHROME[:2] + ['charlie-in-chrome.test.py', 'delta-in-chrome.test.py'], 4, 'ab' * 16, [b'a', b'b', b'c'])
+    g0 = got.get(CHROME[0], {})
+    ok('a green suite: counted on the Mac from its raw output, the one pass judge says green',
+       g0.get('checks') == 5 and g0.get('last') == 'ALL 5 CHECKS PASSED' and g0.get('counted_by') == 'lines' and g0.get('verdict', [0])[0] is True, g0)
+    g1 = got.get(CHROME[1], {})
+    ok('a server that claims green over output with a FAIL line: the Mac sees the FAIL and the real count (4)',
+       g1.get('checks') == 4 and g1.get('bad') and gs.suite_green(g1, {'checks': 5, 'counted_by': 'lines'}, gs.suite_passed_rule(repo)), g1)
+    ok('a suite with no raw output: red, never green',
+       got.get('charlie-in-chrome.test.py', {}).get('verdict', [True])[0] is False and got['charlie-in-chrome.test.py']['bad'])
+    ok('a suite whose output was cut: red, never green', got.get('delta-in-chrome.test.py', {}).get('verdict', [True])[0] is False)
+    ok('the run facts come back for the binding check', got.get(gs.RUN_KEY, {}).get('nonce') == 'ab' * 16)
+    ok('the runner hands remote-run.sh the nonce and the path list (then deletes the list)',
+       io.open(seen_env).read().split()[0] == 'ab' * 16 and not glob.glob(os.path.join(tempfile.gettempdir(), 'gate-paths-*.bin')), io.open(seen_env).read())
     put(fake, '#!/bin/bash\necho "rsync failed"\nexit 2\n', 0o755)
-    ok('no result file: nothing comes back, so nothing can be signed', gs.remote_runner(repo)(CHROME[:2], 4) == {})
+    ok('no result file (server unreachable): nothing comes back, so nothing can be signed', gs.remote_runner(repo)(CHROME[:2], 4, 'ab' * 16, []) == {})
+
+    print('\n5b. release.py step 0b')
+    rel = load('release_t', os.path.join(TOOLS, 'release.py'))
+    calls = []
+
+    class R:
+        def __init__(self, rc): self.returncode = rc
+    out = rel.server_gate(ROOT, env={'VP_GATE_SERVER': '0'}, run=lambda *a, **k: calls.append(a) or R(0))
+    ok('VP_GATE_SERVER=0: the server is not run, and it says the Mac runs every Chrome suite', calls == [] and 'Mac' in out[0], out)
+    out = rel.server_gate(ROOT, env={}, run=lambda *a, **k: calls.append(a[0]) or R(0))
+    ok('on by default: it runs tools/gate-server.py run', calls and calls[-1][1:] == ['tools/gate-server.py', 'run'], calls)
+    out = rel.server_gate(ROOT, env={}, run=lambda *a, **k: R(1))
+    ok('a red, refused or unreachable server run does not stop the release: the hook runs the Mac', 'no record' in out[0] and 'Mac' in out[0], out)
+    rel_src = io.open(os.path.join(TOOLS, 'release.py'), encoding='utf-8').read()
+    ok('step 0b comes before the push, and nothing in it can stop the release',
+       rel_src.index("step('0b'") < rel_src.index("step(1, 'push") and 'stop(' not in rel_src[rel_src.index('def server_gate('):rel_src.index('def _rn(')])
 
     print('\n6. the fence')
     ok('the real repository\'s HEAD and status did not move',

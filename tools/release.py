@@ -11,6 +11,11 @@ the steps and stops at the first one that is not true:
 
     0. the tree is clean and every Worker is stamped, and every migration the release adds is
        already live (tools/check-migrations-live.py, read-only, INBOX 217)
+    0b. THE FAST GATE (INBOX 357A, 13 Nov 2026), ON unless VP_GATE_SERVER=0: tools/gate-server.py run sends this
+       exact tree to vp-tests-1, runs its Chrome suites there 4 at a time (about 30 min), and this Mac signs a record
+       for the tree only if every one is green on its one run and the server's hash of the files equals this tree's.
+       The hook below then leaves those suites out on the Mac. Never fatal: a red, an unreachable server or any fault
+       in the record means the hook runs every Chrome suite on the Mac, exactly as before.
     1. push the planned commit to main BY SHA (the pre-push hook runs the local gate; a red gate
        refuses the push; the release refuses if origin/main moved, if HEAD moved during the hook,
        or if what landed is not the SHA planned: 27 Oct 2026, the "three" incident)
@@ -134,6 +139,8 @@ def main():
         for w in workers: print('  would deploy %s -> %s' % (w, LIVE_WORKERS[w]))
         for f in served[:8]: print('  would wait for %s to be served' % f)
         if screens: print('  would run verify-live --stamp (screen files changed)')
+        print('  would ' + ('run the Chrome suites on vp-tests-1 first (tools/gate-server.py run), then push'
+                            if server_gate_on() else 'not use vp-tests-1 (VP_GATE_SERVER=0): the hook runs every Chrome suite on the Mac'))
         on, _, _ = real_night(head)
         print('  would %s' % ('want a real-night record (VP_REAL_NIGHT=1): ' + _rn().record_path(head) if on else
                               'not ask for a real-night record (VP_REAL_NIGHT is not 1)'))
@@ -169,6 +176,9 @@ def main():
     if r.returncode != 0:
         stop('a migration in this release is not on the live database yet (above). Dean runs it first, '
              'then release again. Nothing was pushed.')
+    step('0b', 'the Chrome suites on vp-tests-1, 4 at a time, signed here for this exact tree')
+    for l in server_gate(ROOT):
+        print('  ' + l)
     step(1, 'push %s to main by name (the hook runs the local gate)' % head[:8])
     push_exactly(head, remote_before, 'push')
 
@@ -233,6 +243,25 @@ def main():
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0
+
+
+def server_gate_on(env=None):
+    env = os.environ if env is None else env
+    return env.get('VP_GATE_SERVER', '1') != '0' and os.path.isfile(os.path.join(ROOT, 'tools', 'gate-server.py'))
+
+
+def server_gate(root, env=None, run=subprocess.run):
+    """Step 0b. Lines to print. Runs tools/gate-server.py run unless VP_GATE_SERVER=0. NEVER stops the release and
+    never decides anything itself: the hook asks gate-server.accepted() and runs on the Mac whatever is not covered."""
+    env = os.environ if env is None else env
+    if not server_gate_on(env):
+        return ['%soff (VP_GATE_SERVER=0): the hook runs every Chrome suite on this Mac%s' % (DIM, OFF)]
+    t0 = time.time()
+    r = run([PY, 'tools/gate-server.py', 'run'], cwd=root)
+    took = '%d min' % ((time.time() - t0) // 60)
+    if getattr(r, 'returncode', 1) == 0:
+        return ['%ssigned in %s: the hook leaves the covered Chrome suites out on this Mac%s' % (GRN, took, OFF)]
+    return ['%sno record (%s, above): the hook runs every Chrome suite on this Mac, as before%s' % (YEL, took, OFF)]
 
 
 def _rn():
