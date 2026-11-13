@@ -16,7 +16,7 @@ Answers screens in their own demo nights, and the bingo demo as an older TV (Chr
 
     R   the FLOOR: the same screen with every piece of content hidden (anything with words of its own, an <img>,
         <canvas>, <video> or <svg>, in the page and its same-site frames): what is left is backgrounds, glows,
-        dims, slide photos and cards' own boxes
+        dims, slide photos and cards' own boxes (without their shadows)
     A   the screen as the room sees it
     R2  the floor again (so a look taken while something moves is not judged)
 
@@ -84,10 +84,15 @@ HIDE = r'''(function(){ var n=0; window.__fbHid=[];
       /* confetti is a celebration, not the floor: hidden with the content (14 Nov 2026) */
       if(/^(IMG|CANVAS|VIDEO|svg|SVG)$/.test(tg) || own(el) || /(^|\s)confetti(\s|$)/.test(typeof el.className==="string"?el.className:"") || el.id==="vpCfLayer"){
         window.__fbHid.push([el, el.style.getPropertyValue("visibility"), el.style.getPropertyPriority("visibility")]);
-        el.style.setProperty("visibility","hidden","important"); n++; } } }
+        el.style.setProperty("visibility","hidden","important"); n++; }
+      /* a shadow belongs to the box that casts it (a card, a ticket), never to the floor: a card near the edge cast a
+         shadow the safe box cut 2 levels deep at the line (raffle draw looks, 14 Nov 2026), so the floor picture has none */
+      else if(getComputedStyle(el).boxShadow!=="none"){
+        window.__fbHid.push([el, el.style.getPropertyValue("box-shadow"), el.style.getPropertyPriority("box-shadow"), "box-shadow"]);
+        el.style.setProperty("box-shadow","none","important"); n++; } } }
   walk(document); return n; })()'''
-SHOW = r'''(function(){ var h=window.__fbHid||[]; for(var i=0;i<h.length;i++){ var el=h[i][0];
-    if(h[i][1]) el.style.setProperty("visibility",h[i][1],h[i][2]); else el.style.removeProperty("visibility"); }
+SHOW = r'''(function(){ var h=window.__fbHid||[]; for(var i=0;i<h.length;i++){ var el=h[i][0], pr=h[i][3]||"visibility";
+    if(h[i][1]) el.style.setProperty(pr,h[i][1],h[i][2]); else el.style.removeProperty(pr); }
   window.__fbHid=[]; return h.length; })()'''
 # Full-bleed slide photos on the wall now (in window px), and what is on the wall, for the report.
 PHOTOS = r'''JSON.stringify((function(){ var out=[];
