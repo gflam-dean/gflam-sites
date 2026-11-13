@@ -350,6 +350,32 @@
   .woe-err{color:var(--gold);font-size:13px;margin:0 0 8px}
   .woe-err:empty{display:none}
   .woe-facts{display:flex;gap:8px;align-items:center}
+  /* Starts reads how people type it, and says what it understood (13 Nov 2026) */
+  .woe-startnote{min-height:1.35em;margin:4px 0 0}
+  .woe-startnote.bad{color:var(--gold)}
+  .woe-datenote:empty{display:none}
+  /* The live preview: the TV's own card at its real size, scaled down to fit (13 Nov 2026) */
+  .woe-pv{margin:2px 0 12px}
+  .woe-pvhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 6px;flex-wrap:wrap}
+  .woe-pvt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13.5px;color:#fff}
+  .woe-pvtabs{display:flex;gap:6px}
+  .woe-pvtab{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--ink-2);color:var(--muted);font:700 12.5px 'Hanken Grotesk',sans-serif;cursor:pointer}
+  .woe-pvtab.on{color:#fff;border-color:rgba(255,31,142,.6);background:rgba(255,31,142,.12)}
+  .woe-pvbox{position:relative;width:100%;overflow:hidden;border-radius:10px;border:1px solid var(--line);background:#050506}
+  .woe-pvbox .vpwo-stage{position:absolute;left:0;top:0}
+  .woe-pvwarn{display:none;margin:8px 0 0;padding:9px 12px;border-radius:10px;background:rgba(255,194,75,.12);border:1px solid rgba(255,194,75,.5);color:var(--gold);font-size:13.5px;font-weight:700;line-height:1.35}
+  .woe-pvwarn.on{display:block}
+  .woe-pvnote:empty{display:none}
+  /* Your venueplay games: a tick for each, no retyping (13 Nov 2026) */
+  .woe-ticks{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px 14px 6px;margin:6px 0}
+  .woe-ticks[hidden]{display:none}
+  .woe-tkhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14.5px;color:#fff;margin:0 0 2px}
+  .woe-tk{display:flex;align-items:center;gap:12px;min-height:48px;padding:4px 0;border-top:1px solid var(--line-2,rgba(255,255,255,.06));cursor:pointer}
+  .woe-tk input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .woe-tktx{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+  .woe-tktx b{color:#fff;font-size:14.5px}
+  .woe-tkwhen{color:var(--muted);font-size:13px}
+  .woe-tkon{color:var(--faint);font-size:12.5px;white-space:nowrap}
   .woe-facts .go,.woe-facts .addbtn{min-height:44px}
   /* From 1100px up the events sit two to a row (half the scrolling); the form and the empty line take the full width. */
   @media(min-width:1100px){
@@ -1155,6 +1181,7 @@
 <script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
+<script src="/app/vp-whatson-css.js"></script>   <!-- What's on: the TV card's look, for the editor's live preview (13 Nov 2026) -->
 <script src="/app/vp-whatson.js"></script>   <!-- What's on: the date rules the TV and phones use (INBOX 110) -->
 <script src="/app/vp-whatson-edit.js"></script>   <!-- What's on: the editor under Screen (INBOX 110) -->
 <script src="/app/vp-gaming.js"></script>
@@ -2963,6 +2990,16 @@
     VPWhatsOnEdit.mount(box, {
       events: cfg.events || [],
       venue: screenNameNow(),
+      logo: screenLogoUrl || "",
+      /* The venue's real schedule (its Nights and Draws), as the TV reads it, for the "Show on What's on" ticks and the preview. */
+      schedule: function(){
+        var slug = screenCurrent && screenCurrent.slug; if (!slug) return Promise.resolve(null);
+        return fetch(VP_GAME_API + "/screen?venue=" + encodeURIComponent(slug) + "&sched=1", { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+          if (!d) return null;
+          var rf = Array.isArray(d.raffles) && d.raffles.length ? d.raffles : (d.raffle ? [d.raffle] : []);
+          return { week: Array.isArray(d.week) ? d.week : [], draws: (Array.isArray(d.draws) ? d.draws : []).filter(function(x){ return x && x.draw_day; }), raffles: rf.filter(function(x){ return x && x.label && x.day; }) };
+        });
+      },
       save: function(ev){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-save", { venue_id: v, event: ev }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
       remove: function(id){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-remove", { venue_id: v, id: id }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
       upload: uploadEventImage,
@@ -3448,8 +3485,10 @@
     });
     $("screenSave").addEventListener("click", function(){ saveScreen(false); });
     // A slide's seconds or dates changed: not on the TV until saved, and the bar says so.
-    $("slides").addEventListener("input", function(e){ if(e.target.closest(".ad-secs, .ad-starts, .ad-ends")) markScreenDirty(); });
-    $("slides").addEventListener("change", function(e){ if(e.target.closest(".ad-secs, .ad-starts, .ad-ends, .ad-qr")) markScreenDirty(); });
+    /* Only a slide's own boxes count (13 Nov 2026, INBOX 360.4): the What's on editor saves each event by itself and never
+       touches this bar, and a slide never touches an event. */
+    $("slides").addEventListener("input", function(e){ if(e.target.closest(".adslide") && e.target.closest(".ad-secs, .ad-starts, .ad-ends")) markScreenDirty(); });
+    $("slides").addEventListener("change", function(e){ if(e.target.closest(".adslide") && e.target.closest(".ad-secs, .ad-starts, .ad-ends, .ad-qr")) markScreenDirty(); });
   }
 
   // ---- Members draws: real settings + members list, wired to the game Worker + vp_member_draws ----
