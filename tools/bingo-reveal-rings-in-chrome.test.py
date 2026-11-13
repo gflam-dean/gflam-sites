@@ -107,7 +107,7 @@ def judge(r, w, h):
     vw, vh = got.get('vw') or w, got.get('vh') or h
     out = [(s['t'], round(x['o'], 3), [round(x['l']), round(x['t']), round(x['r']), round(x['b'])]) for s in got['steps'] for x in s['rings']
            if x['o'] > 0.01 and (x['t'] < 0.05 * vh - 1 or x['b'] > 0.95 * vh + 1 or x['l'] < 0.05 * vw - 1 or x['r'] > 0.95 * vw + 1)]
-    ok(tag + ': every lit reveal ring stays inside the 5%% TV safe box, the whole pulse', not out, out[:3])
+    ok(tag + ': every lit reveal ring stays inside the 5% TV safe box, the whole pulse', not out, out[:3])
     # let it run: at 1.3 s the room comes back up and the ball glides home (the demo calls the next ball
     # 2.1 s after this one, as long as the whole reveal takes, so the layer itself is rarely hidden there)
     landed = r.until(sid, '(function(e){return !!e && !e.classList.contains("live");})(document.getElementById("ballReveal"))', 8)
