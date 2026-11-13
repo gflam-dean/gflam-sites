@@ -5298,6 +5298,12 @@ MUTATIONS = [
     ('test-platform-15-oct.js', 'venueplay/email/signature.html', '    if(mob) rows+=', '    if(false) rows+=', 'a mobile typed into the signature maker never reaches the signature'),
     ('test-platform-15-oct.js', 'venueplay/sitemap.xml', '<loc>https://venueplay.com.au/</loc>', '<loc>https://www.venueplay.com.au/</loc>', 'the sitemap sends search engines to an address that only redirects'),
     ('test-platform-15-oct.js', 'venueplay/llms.txt', 'https://venueplay.com.au/#offer', 'https://venueplay.com.au/pricing', 'llms.txt points assistants at a pricing page that does not exist'),
+    # 13 Nov 2026: the demo block reads names tv.html declares outside it (VPDemoVenue, DEMO_ADS_ONLY, demoVenueRead); the suite stands them in and checks tv.html still defines each.
+    ('test-platform-15-oct.js', 'venueplay/tv.html', 'var DEMO_ADS_ONLY = DEMO &&', 'var DEMO_ADS_ONLY_RENAMED = DEMO &&', 'the demo TV stops declaring the ads-only flag the suite stands in for'),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', 'function demoVenueRead(logoGiven){', 'function demoVenueReadRenamed(logoGiven){', 'the demo TV stops defining the live read the suite stands in for'),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', '<script src="/app/vp-demo-venue.js"></script>', '<script src="/app/vp-demo-venue-old.js"></script>', 'the demo TV stops loading the file that defines VPDemoVenue'),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', 'if(DEMO_ADS_ONLY) demoVenueRead(!!lg);', 'if(false) demoVenueRead(!!lg);', 'the home page Advertising view never starts its live read'),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', 'ADS.slides = []; ADS.draws = [];', 'ADS.slides = [{ image_url: "/logos/old.jpg" }]; ADS.draws = [];', 'the demo wall plays an old photo slide again'),
     ('test-platform-15-oct.js', 'venueplay/training.html', '<meta name="robots" content="noindex,nofollow">', '', 'the training simulator can turn up in search results (was the Jag check page, gone 19 Oct 2026)'),
     ('test-platform-15-oct.js', 'venueplay/leave-behind.html', '.sheet{width:auto;min-height:0;margin:0;padding:18px 16px 20px;box-shadow:none}', '.sheet{min-height:0;margin:0;padding:18px 16px 20px;box-shadow:none}', 'the bowls club flyer scrolls sideways on a phone again'),
     ('test-platform-15-oct.js', 'venueplay/unsubscribe.html', '    $("em").value = linkAddr;\n', '    $("em").value = linkAddr; record(linkAddr, "link");\n', 'opening an unsubscribe link unsubscribes the person, so a mail scanner does it for them'),

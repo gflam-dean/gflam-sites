@@ -54,19 +54,53 @@ var tvb = block(TV, 'if(DEMO){\n      setVenueName(');
 ok('tv.html: the demo block came out of loadVenueScreen', !!tvb);
 if (tvb) {
   var named = null, logo = null, ADS = {};
-  var runTv = new Function('setVenueName', 'setVenueLogo', 'buildAds', 'startAds', 'ADS', 'location', 'window',
-    'return (function(){' + tvb + '})();');
-  runTv(function (n) { named = n; }, function (u) { logo = u; }, function () {}, function () {}, ADS,
-        { origin: 'https://venueplay.com.au' }, { location: { search: '' } });
+  /* The demo block now also reads names that tv.html declares OUTSIDE it (13 Nov, INBOX 356): VPDemoVenue (the real
+     /app/vp-demo-venue.js, run here, not a copy), DEMO_ADS_ONLY (the real declaration line, lifted and run against the
+     same window) and demoVenueRead (the live read; stubbed to record the call, because it fetches, and test-demo-venue.js
+     runs that file's logic for real). tv.html must still define each of the three, checked below. */
+  var VPDemoVenue = (function () { var w = {}; (function () { eval(read('venueplay/app/vp-demo-venue.js')); }).call(w); return w.VPDemoVenue; })();
+  ok('tv.html: /app/vp-demo-venue.js defines VPDemoVenue (the name the demo block uses)', !!VPDemoVenue && typeof VPDemoVenue.fallbackEvents === 'function' && typeof VPDemoVenue.DEFAULT === 'object');
+  ok('tv.html: it loads /app/vp-demo-venue.js', TV.indexOf('<script src="/app/vp-demo-venue.js"></script>') > 0);
+  var adsOnlyLine = (TV.match(/var DEMO_ADS_ONLY\s*=[^\n]*;/) || [''])[0];
+  ok('tv.html: still declares DEMO_ADS_ONLY (the stand-in lifts that line)', /^var DEMO_ADS_ONLY\s*=\s*DEMO\s*&&/.test(adsOnlyLine), adsOnlyLine);
+  ok('tv.html: still defines demoVenueRead (the stand-in only records the call)', /function demoVenueRead\(logoGiven\)\{/.test(TV));
+  var adsOnlyFor = function (search) {
+    return new Function('DEMO', 'window', adsOnlyLine + '; return DEMO_ADS_ONLY;')(true, { location: { search: search } });
+  };
+  var readCalls = [];
+  var runTvWith = function (search, setName, setLogo, adsObj, origin) {
+    var win = { location: { search: search } };
+    var DEMO_ADS_ONLY = adsOnlyFor(search);
+    var fn = new Function('setVenueName', 'setVenueLogo', 'buildAds', 'startAds', 'ADS', 'location', 'window',
+      'VPDemoVenue', 'DEMO_ADS_ONLY', 'demoVenueRead', 'refreshAds', 'return (function(){' + tvb + '})();');
+    return fn(setName, setLogo, function () {}, function () {}, adsObj, { origin: origin }, win,
+      VPDemoVenue, DEMO_ADS_ONLY, function (given) { readCalls.push(given); }, function () {});
+  };
+  runTvWith('', function (n) { named = n; }, function (u) { logo = u; }, ADS, 'https://venueplay.com.au');
+  ok('tv.html: the plain demo does not start the live read', readCalls.length === 0, readCalls.length);
   ok('tv.html: the corner says Tugun Bowls Club', named === 'Tugun Bowls Club', named);
   ok('tv.html: the demo logo is Tugun\'s, and the file is there', logo === '/logos/venue-tugun-bowls.png' && exists('venueplay' + logo), logo);
   var imgs = (ADS.slides || []).filter(function (s) { return s.image_url; });
-  ok('tv.html: the photo slides are still in the loop (four)', imgs.length === 4, imgs.length);
+  /* WAS "the photo slides are still in the loop (four)". Dean, 13 Nov (INBOX 356), took the four old photo slides, the
+     draws board and the raffle card OFF this wall on purpose: the loop is now the current-style What's on list from
+     VPDemoVenue.fallbackEvents. The check follows the product: no photo slides, and the What's on list is there. */
+  var wantEvents = JSON.stringify(VPDemoVenue.fallbackEvents(VPDemoVenue.DEFAULT.slug));
+  ok('tv.html: the demo loop carries no old photo slides, draws board or raffle card (INBOX 356)', !imgs.length && !(ADS.slides || []).length && !(ADS.draws || []).length && !ADS.raffle && !ADS.raffles, imgs.length);
+  ok('tv.html: the demo loop is the Tugun What\'s on list, and it is not empty', (ADS.events || []).length > 0 && JSON.stringify(ADS.events) === wantEvents, (ADS.events || []).length);
   var missing = imgs.filter(function (s) { return !exists('venueplay' + s.image_url.replace('https://venueplay.com.au', '')); });
   ok('tv.html: every photo slide is a file on this site', !missing.length, missing.map(function (s) { return s.image_url; }).join(', '));
   var logo2 = null;
-  runTv(function () {}, function (u) { logo2 = u; }, function () {}, function () {}, {}, { origin: 'x' }, { location: { search: '?logo=%2Flogos%2Fprospect.png' } });
+  runTvWith('?logo=%2Flogos%2Fprospect.png', function () {}, function (u) { logo2 = u; }, {}, 'x');
   ok('control: ?logo=/path still puts a prospect\'s own logo up', logo2 === '/logos/prospect.png', logo2);
+  /* the ads-only flavour (?ads=1): the same block, and now it hands the live read the "logo given" flag */
+  readCalls.length = 0;
+  var adsOnlyLogo = null;
+  runTvWith('?ads=1', function () {}, function (u) { adsOnlyLogo = u; }, {}, 'x');
+  ok('tv.html: ?ads=1 starts the live read once, with no logo given', readCalls.length === 1 && readCalls[0] === false, readCalls.join(','));
+  ok('control: ?ads=1 is read as ads-only, a plain demo is not', adsOnlyFor('?ads=1') === true && adsOnlyFor('') === false && adsOnlyFor('?x=ads=1') === false);
+  readCalls.length = 0;
+  runTvWith('?ads=1&logo=%2Flogos%2Fprospect.png', function () {}, function () {}, {}, 'x');
+  ok('tv.html: ?ads=1 with a logo given tells the live read not to replace it', readCalls.length === 1 && readCalls[0] === true, readCalls.join(','));
 }
 var SAN = read('venueplay/see-a-night.html');
 var sanImgs = SAN.match(/\/logos\/ad-slides\/[a-z-]+\.jpg/g) || [];
