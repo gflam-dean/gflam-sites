@@ -254,7 +254,7 @@
 
   // ---- brand colours ----
   /* From VenuePlay Brand Guidelines v2.0 (May 2026): three core, three support, and no others. */
-  var COLOURS=[["Gflam Pink","#FF1F8E"],["Neon Yellow","#FFD93D"],["Stage Black","#0A0A0B"],["Warm cream","#F5F2ED"],["Surface dark","#1A1A1F"],["Muted text","#8A8A95"]];
+  var COLOURS=[["venueplay pink","#FF1F8E"],["Neon Yellow","#FFD93D"],["Stage Black","#0A0A0B"],["Warm cream","#F5F2ED"],["Surface dark","#1A1A1F"],["Muted text","#8A8A95"]];
   $("swatches").innerHTML=COLOURS.map(function(c){ return '<button type="button" data-hex="'+c[1]+'"><div class="chip" style="background:'+c[1]+'"></div><span><b>'+esc(c[0])+'</b>'+c[1]+'</span></button>'; }).join("");
   $("swatches").addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-hex]"):null; if(!b) return; var hex=b.getAttribute("data-hex");
     function said(){ $("swMsg").textContent="Copied "+hex; setTimeout(function(){ $("swMsg").textContent=""; }, 2500); }

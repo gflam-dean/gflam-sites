@@ -566,6 +566,7 @@
   "vpVenuePostcode() is the same in all 2 file(s)",
   "webhook-ledger.test.js",
   "website-audit-p1-13nov-in-chrome.test.py",
+  "website-audit-p2-13nov-in-chrome.test.py",
   "weekly-before-the-room.test.js",
   "welcome-name-in-chrome.test.py",
   "whats-on-in-chrome.test.py",

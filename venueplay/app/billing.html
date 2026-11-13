@@ -645,8 +645,8 @@
     <button class="addbtn" id="addToggle">+ Add another venue</button>
     <div class="addform" id="addForm">
       <input type="text" id="add-name" placeholder="Venue name" autocomplete="organization">
-      <input type="text" id="add-postcode" class="seats" inputmode="numeric" maxlength="4" placeholder="Postcode" autocomplete="postal-code">
-      <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
+      <input type="text" id="add-postcode" aria-label="Postcode" class="seats" inputmode="numeric" maxlength="4" placeholder="Postcode" autocomplete="postal-code">
+      <input type="number" class="seats" id="add-seats" min="1" aria-label="Maximum players" placeholder="Max players">
       <button class="go" id="add-go">Add venue</button>
     </div>
     <!-- THE TRUE SENTENCE ABOUT A NEW VENUE (Dean, 3 Nov 2026: "that's not true"). Written by paintAddVenueNote from
@@ -1519,7 +1519,7 @@
         '<div class="nm"><b>' + esc(v.name) + '</b><small>' + v.monthly + ' a month</small>' + pend + '</div>' +
         '<div class="stepper">' +
           '<button data-d="-1" aria-label="Fewer">−</button>' +
-          '<input type="number" min="1" value="' + v.players + '">' +
+          '<input type="number" min="1" aria-label="Maximum players at ' + esc(v.name) + '" value="' + v.players + '">' +
           '<button data-d="1" aria-label="More">+</button>' +
         '</div>' +
         '<button class="save">Save</button>' +

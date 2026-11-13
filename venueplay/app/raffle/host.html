@@ -312,9 +312,9 @@
         <details class="vp-adv" id="raffleAdv">
           <summary><span>Draw settings<small class="vp-adv-sub" id="advSum">Saved for your venue. Set once, rarely changed.</small></span></summary>
           <div class="vp-adv-body">
-            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
+            <div class="field"><label for="rfTime">Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
             <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
-            <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
+            <div class="field hidden" id="rfJackWrap"><label for="rfJackAmt">Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
               <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
                    keep; the software should not display a figure the venue's own rules do not allow). The
                    figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
