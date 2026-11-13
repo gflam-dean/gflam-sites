@@ -72,3 +72,6 @@ footer .foot-country{display:block;max-width:64ch;margin:30px auto 0;text-align:
 @media (max-width:560px){
   body:has(.vp-float-cta) footer{padding-bottom:calc(46px + 84px + env(safe-area-inset-bottom, 0px))}
 }
+
+/* KEYBOARD FOCUS (website audit, 13 Nov 2026): links, buttons and FAQ questions show the brand ring when tabbed to, so a later outline:none cannot take it away. Mouse and touch taps show nothing (:focus-visible). */
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid #FF1F8E;outline-offset:3px}

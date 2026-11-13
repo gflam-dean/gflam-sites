@@ -160,7 +160,7 @@
   /* THE END: score, points, place, board */
   .score{padding-top:18px}
   .score .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;color:var(--pink)}
-  .score h1{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
+  .score h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
   .score .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:#fff;margin-top:8px}
   .score .placeline{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:var(--green);margin-top:4px;overflow-wrap:break-word}
   .score .sub{color:var(--muted);font-size:17px;margin-top:8px}
@@ -222,7 +222,7 @@
 
 <header>
   <div class="shell ptop">
-    <div class="brand"><img id="venueLogo" class="vlogo" alt="" hidden><span class="vname" id="hdrName">60-second trivia</span></div>
+    <div class="brand"><img id="venueLogo" class="vlogo" alt="" hidden><h1 class="vname" id="hdrName">60-second trivia</h1></div>
     <span class="tag" id="hdrTag" hidden>60-second trivia</span>
   </div>
 </header>
@@ -231,7 +231,7 @@
   <!-- 1. THE FIRST NAME -->
   <section class="view" id="vName" hidden>
     <p class="kick" id="nameKick">Coaster trivia</p>
-    <h1 class="pbig" id="nameHead">Five quick questions. First, your name?</h1>
+    <h2 class="pbig" id="nameHead">Five quick questions. First, your name?</h2>
     <p class="psub" id="nameSub">First name only. It goes on tonight's board at your venue.</p>
     <form id="nameForm" novalidate autocomplete="off">
       <div class="field"><input type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name"></div>
@@ -247,7 +247,7 @@
   <!-- 2. WHERE ARE YOU PLAYING -->
   <section class="view" id="vWhere" hidden>
     <p class="kick" id="whereKick">Hi</p>
-    <h1 class="pbig" id="whereHead">What venue are you at?</h1>
+    <h2 class="pbig" id="whereHead">What venue are you at?</h2>
     <p class="psub">Type three letters of the pub or club, then pick it.</p>
     <div class="picks" id="againBox" hidden></div>
     <div class="field"><input type="search" id="whereIn" maxlength="60" placeholder="e.g. Royal" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club"></div>
@@ -276,7 +276,7 @@
     </div>
     <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
     <p class="loading" id="loading">Pouring your first question...</p>
-    <h1 class="q" id="q" hidden></h1>
+    <h2 class="q" id="q" hidden></h2>
     <div class="answers" id="answers" role="group" aria-labelledby="q"></div>
     <div class="verdict" id="verdict" aria-live="polite"></div>
     <div class="ptotal" id="ptotal"></div>
@@ -285,7 +285,7 @@
   <!-- 4. THE END -->
   <section class="view score" id="score" hidden aria-live="polite">
     <p class="fk" id="scoreKick">Round done</p>
-    <h1 id="scoreN">0 of 5</h1>
+    <h2 id="scoreN">0 of 5</h2>
     <p class="pts" id="scorePts" hidden></p>
     <p class="placeline" id="scorePlace" hidden></p>
     <p class="sub" id="scoreSub"></p>

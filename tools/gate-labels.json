@@ -573,6 +573,7 @@
   "website-audit-p1-13nov-in-chrome.test.py",
   "website-audit-p1b-13nov-in-chrome.test.py",
   "website-audit-p2-13nov-in-chrome.test.py",
+  "website-audit-small-batch2-13nov-in-chrome.test.py",
   "weekly-before-the-room.test.js",
   "welcome-name-in-chrome.test.py",
   "whats-on-foolproof-in-chrome.test.py",

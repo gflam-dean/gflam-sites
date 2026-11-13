@@ -1,0 +1,3 @@
+/* SKIP LINK (website audit, 13 Nov 2026): the first stop for a keyboard user, hidden until it has focus. One copy, for every page with a <main id="main">. */
+.vp-skip{position:absolute;left:12px;top:-60px;z-index:1000;background:#FF1F8E;color:#fff;font:700 15px/1 'Manrope',system-ui,sans-serif;padding:12px 18px;border-radius:999px;text-decoration:none;transition:none}
+.vp-skip:focus,.vp-skip:focus-visible{top:12px;outline:2px solid #fff;outline-offset:2px}

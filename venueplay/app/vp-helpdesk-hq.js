@@ -289,14 +289,14 @@
           '<div class="hdsegs" id="hdViews">' + VIEWS.map(function (v) { return '<button data-view="' + v[0] + '"' + (v[0] === "needs" ? ' class="on"' : "") + ">" + v[1] + ' <span class="n" data-n="' + v[0] + '">0</span></button>'; }).join("") + "</div>" +
           '<div class="panel pad" style="margin-bottom:12px">' +
             '<div class="hdsearch">' +
-              '<input type="search" id="hdfQ" placeholder="Search a name, email, subject, venue or number" autocomplete="off">' +
-              '<select id="hdfBrand">' + opts(BR, "Both brands") + "</select>" +
+              '<input type="search" id="hdfQ" aria-label="Search tickets" placeholder="Search a name, email, subject, venue or number" autocomplete="off">' +
+              '<select id="hdfBrand" aria-label="Brand">' + opts(BR, "Both brands") + "</select>" +
               '<button class="mini" id="hdfMore" type="button">More filters</button>' +
             "</div>" +
             '<div class="hdmore hidden" id="hdfMoreBox">' +
-              '<select id="hdfCat">' + opts(CAT, "Any kind") + "</select>" +
-              '<select id="hdfCh">' + opts(CH, "Came in any way") + "</select>" +
-              '<select id="hdfVenue"><option value="">Any venue</option></select>' +
+              '<select id="hdfCat" aria-label="Kind of ticket">' + opts(CAT, "Any kind") + "</select>" +
+              '<select id="hdfCh" aria-label="How it came in">' + opts(CH, "Came in any way") + "</select>" +
+              '<select id="hdfVenue" aria-label="Venue"><option value="">Any venue</option></select>' +
               '<label class="hdf">From <input type="date" id="hdfFrom"></label><label class="hdf">to <input type="date" id="hdfTo"></label>' +
             "</div>" +
           "</div>" +
@@ -313,7 +313,7 @@
       '<div class="panel pad"><div class="filterbar">' +
         '<label class="hdf">From <input type="date" id="hdrFrom" value="' + monthAgo + '"></label>' +
         '<label class="hdf">to <input type="date" id="hdrTo" value="' + today + '"></label>' +
-        '<select id="hdrBrand">' + opts(BR, "Both brands") + '</select>' +
+        '<select id="hdrBrand" aria-label="Brand">' + opts(BR, "Both brands") + '</select>' +
         '<button class="btn pink" id="hdrGo">Run report</button>' +
         '<button class="btn ghost" id="hdrCsv" disabled>Download CSV</button>' +
       '</div><div class="note" style="margin-top:9px">Tickets that arrived in these dates. Time to close counts the ones of those that are closed. The CSV has no names or email addresses in it.</div></div>' +
@@ -322,7 +322,7 @@
       /* HELP WORDS */
       '<div id="hdSecWords" class="hidden">' +
       '<div class="panel pad"><div class="filterbar">' +
-        '<select id="hwSet"><option value="venueplay:patron">venueplay players</option><option value="venueplay:venue">venueplay venues</option>' +
+        '<select id="hwSet" aria-label="Help content set"><option value="venueplay:patron">venueplay players</option><option value="venueplay:venue">venueplay venues</option>' +
         '<option value="partyplay:guest">PartyPlay guests</option><option value="partyplay:host">PartyPlay hosts</option></select>' +
         '<button class="btn pink" id="hwGo">Open</button>' +
       '</div><div class="note" style="margin-top:9px">What the Help panel shows, for each brand and who is asking. Changes show on phones straight away. ' +

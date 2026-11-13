@@ -29,8 +29,10 @@
      Placed in the head so a bounce still registers. -->
 <script src="/app/vp-analytics.js"></script>
 <script src="/app/vp-pixel.js"></script>
+<link rel="stylesheet" href="/app/vp-skip.css">
 </head>
 <body>
+<a class="vp-skip" href="#main">Skip to content</a>
 <style>
   :root {
     --stage: #0A0A0B;
@@ -1633,6 +1635,7 @@ block (all classes prefixed .vpa-)
   }
 </style>
 
+<main id="main">
 <div class="vp-wrap">
   <div class="vp-inner">
     <span class="vp-eyebrow">The real screens</span>
@@ -1828,6 +1831,7 @@ block (all classes prefixed .vpa-)
     </div>
   </div>
 </div>
+</main>
 <script src="/app/vp-subscribe.js"></script>
 <script>
 (function(){
