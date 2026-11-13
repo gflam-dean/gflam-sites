@@ -527,6 +527,7 @@
   "tv-drawstyle-real-pages-in-chrome.test.py",
   "tv-endshow-in-chrome.test.py",
   "tv-first-slide-in-chrome.test.py",
+  "tv-fullbleed-in-chrome.test.py",
   "tv-in-step-in-chrome.test.py",
   "tv-landing-in-chrome.test.py",
   "tv-logo-align-in-chrome.test.py",

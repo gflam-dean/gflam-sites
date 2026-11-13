@@ -16,8 +16,10 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden}
-  body{background:#050506;color:#E7E7EC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
+  /* THE GLOW IS THE PAGE'S, NOT THE WALL'S (INBOX 375, 13 Nov 2026): the wall sits 5% in on a TV (/app/vp-tvsafe.css), so a glow
+     painted on it stopped at the safe box. On the page it runs to the window's edges. */
+  body{background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;color:#E7E7EC;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .tv{position:fixed;inset:0;container-type:inline-size;background:transparent}
   /* THE PLAIN VENUEPLAY CORNER (Dean, 3 Nov 2026). Every game wall carries it, and this demo board had none.
      Same markup and size as the trivia wall's corner, where the real game is played; its own full-screen
      layer because PRBoard.mount() owns #tv. Plain venueplay: a live game never says "tv". */

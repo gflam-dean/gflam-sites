@@ -5,7 +5,8 @@
    and logos inside the middle 90% of the picture for that reason: the "title-safe" area. So every TV screen
    (/tv and the trivia, musical bingo, raffle, members draw and Top Answers screens, standalone or in /tv's
    frame) draws its wall inside 5% of each edge: 54px top and bottom, 96px left and right at 1920x1080.
-   The 5% border is the page's own dark background, so nothing looks framed on a TV that does not crop.
+   The 5% border is the floor's own colour, edge to edge (the grounds below are full-bleed, INBOX 375, 13 Nov 2026),
+   so nothing looks framed on a TV that does not crop.
 
    THE RULE (tools/TV-SAFE-AREA-DECISION.md): the venue logo or name, the boards, every word, the QR and the
    venueplay mark sit inside the safe box, and their sizes are a share of the SAFE BOX, not the window.
@@ -39,6 +40,32 @@
 .tv .brball{font-size:37.5vh}
 /* THE BALL ROLLS IN FROM THE RIGHT (brpop starts at translateX(55cqw), fading in), so for the first frames of
    every call it crossed the right 5% border, out to the window edge (gate 12 Nov 2026, 1920x1080 bingo demo:
-   #brBall at x 1567 to 1920). The reveal is clipped to the safe box, so the ball now rolls in from the safe
-   box's edge; the dim, the rings, the pop and the glide left all happen well inside it. */
-.tv .ballreveal{overflow:hidden}
+   #brBall at x 1567 to 1920). The ball's frame (.brclip, the safe box) is clipped, so the ball now rolls in from
+   the safe box's edge; the rings, the pop and the glide left all happen well inside it. The dim is NOT in that
+   frame: it is the room going dark, so it reaches the window's edges (INBOX 375, 13 Nov 2026). */
+.tv .ballreveal .brclip{overflow:hidden}
+
+/* THE FLOOR IS FULL-BLEED; ONLY CONTENT KEEPS TO THE SAFE BOX (Dean on the Kogan, 13 Nov 2026, INBOX 375: the screen "does
+   not fit the whole screen"). The wall box moved 5% in, and everything that painted a GROUND inside it (the wall's own
+   colour, the floor under the slides, a typed slide's glow, the "this screen is not set up" veil, the bingo reveal's dim)
+   stopped at the safe box, so a TV showed a lighter box inside a black frame. Every one of those grounds now reaches the
+   window's edges, in the same colour as the page round it; words, logos, QR codes and cards stay where they were.
+   HOW, without moving any content: a ground that is a box of its own is stretched back out over the 5% border and given
+   a TRANSPARENT border exactly as wide as the border. Its background paints under that border (to the window's edges)
+   while its padding box, where its content is laid out and where its absolutely placed children are measured from, is
+   still the safe box, to the pixel. The page's own background (body) is the floor's colour on every TV page.
+   Checked by tools/tv-fullbleed-in-chrome.test.py (pixels at the edge match the floor; nothing but floor in the border). */
+#tvAds .ad:not(.ad-photo), .tv .badvenue, .tv .ballreveal{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw;
+  border-style:solid;border-color:transparent;border-width:5vh 5vw;background-origin:border-box}
+/* The reveal box itself is stretched the same way, so the dim stays INSIDE its own parent's box: when it reached out past
+   the reveal's box, Chrome at 1280x720 and 960x540 kept the part over the border dark for the whole glide home after the
+   room had come back up inside (a dark frame round every call, caught by tools/tv-fullbleed-in-chrome.test.py). */
+.tv .ballreveal .brdim{top:-5vh;bottom:-5vh;left:-5vw;right:-5vw}
+/* WHAT'S ON WITH A PICTURE: its left panel (the night's photo, blurred and darkened behind the poster) is a ground too, so on
+   the wall it reaches the window's left, top and bottom edges. The panel grows out over the border by its own padding, and
+   the poster and its words are placed that much further in, so they sit exactly where they were, inside the safe box. */
+#tvAds .wo-wall.wo-b{overflow:visible}
+#tvAds .wo-b .wb-feat{margin:-5vh 0 -5vh -5vw;padding:5vh 0 5vh 5vw}
+/* (the wall is 90vw wide, so its 2.6cqw is 2.34vw: vw here, never cqw, which an old TV cannot read in a <link> sheet) */
+#tvAds .wo-b .wb-pic{left:7.34vw;top:calc(5vh + 2.34vw);bottom:calc(5vh + 11.16vw)}
+#tvAds .wo-b .wb-cap{left:7.34vw;bottom:calc(5vh + 1.98vw)}
