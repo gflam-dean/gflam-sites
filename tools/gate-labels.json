@@ -362,6 +362,7 @@
   "regulated.test.py",
   "release-push.test.py",
   "removal blanks exactly that person, and emails only a venue that downloaded them",
+  "rig-rejoin-one-row.test.py",
   "rng-evidence.test.js",
   "room-dropout-in-chrome.test.py",
   "room-fallback.test.js",
