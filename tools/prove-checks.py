@@ -24075,6 +24075,15 @@ MUTATIONS = [
      "    return json({ error: 'We could not check that login just now. Please try again in a moment.' }, 503);\n  }\n  existing = existing || [];",
      "    existing = [];\n  }\n  existing = existing || [];",
      'a failed read of the typed mobile\'s rows is read as "no rows" and the row is rewritten on a guess'),
+    # 14 Nov 2026: test-help-desk's autopilot section runs on the fixture clock; the 30-day floor has its own check.
+    ('test-help-desk.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const since = new Date(isFinite(asked) && asked > floor ? asked : floor).toISOString();',
+     '  const since = new Date(isFinite(asked) ? asked : floor).toISOString();',
+     'the autopilot is handed website sales older than 30 days when the Mac asks from long ago'),
+    ('test-help-desk.js', 'tools/test-help-desk.js',
+     '  Date.now = function () { return clock + __shift; };\n',
+     '',
+     'the autopilot section runs on the machine clock again, so it goes red as the real date moves past the fixture'),
 ]
 
 

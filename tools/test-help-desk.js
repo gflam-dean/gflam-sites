@@ -1169,6 +1169,15 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('THE PROSPECT AUTOPILOT READS AND ANSWERS WEBSITE SALES ENQUIRIES (Dean, 2 Nov 2026)');
   world();
+  /* THE WORKER'S LOOKBACK READS THE SUITE'S CLOCK, NOT THE MACHINE'S (14 Nov 2026). The fake database stamps tickets
+     from the fixed fixture clock (2026-10-19), and /autopilot/help/sales-tickets reads only the last
+     VPA_WEB_LOOKBACK_DAYS (30) days of Date.now(). On the machine's clock that floor passed the fixture on 14 Nov
+     2026 and the section went red with no product change. For this section Date.now() is the fixture clock (plus
+     the suite's own three-hour steps), so it passes on any real date; restored at the end of the section. */
+  var __machineNow = Date.now;
+  Date.now = function () { return clock + __shift; };
+  check('this section runs on the fixture clock, not the machine\'s (the 30-day lookback is measured from the tickets\' own time)',
+        Date.now() - clock === __shift, [new Date(Date.now()).toISOString(), new Date(clock).toISOString(), __shift]);
   var APKEY = 'ap-' + 'q'.repeat(40);
   ENV.PROSPECT_AUTOPILOT_KEY = APKEY;
   function apReq(path, body, key) { var h = { 'Content-Type': 'application/json' }; if (key !== null) h['X-Autopilot-Key'] = key === undefined ? APKEY : key;
@@ -1183,6 +1192,14 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var lst = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets?since=2000-01-01T00:00:00Z');
   var nos = lst.body && lst.body.tickets ? lst.body.tickets.map(function (x) { return x.ticket_no; }) : null;
   check('the autopilot reads the venueplay website sales tickets (both forms), and no patron or PartyPlay ticket', lst.status === 200 && nos && nos.join() === [webT.ticket_no, helpT.ticket_no].join(), [lst.status, nos, lst.body && lst.body.error]);
+  /* The 30-day floor itself (14 Nov 2026): a website sale from 31 days back on the same clock is not handed over,
+     even though the Mac asked from the year 2000. Taken out again so the history checks below see what they did. */
+  var oldSale = Object.assign({}, webT, { id: U(7777), ticket_no: 7777, created_at: new Date(Date.now() - 31 * 86400000).toISOString() });
+  DB.vp_help_tickets.push(oldSale);
+  var lstOld = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets?since=2000-01-01T00:00:00Z');
+  var nosOld = lstOld.body && lstOld.body.tickets ? lstOld.body.tickets.map(function (x) { return x.ticket_no; }) : null;
+  check('a website sale older than 30 days is not handed to the autopilot, whatever "since" the Mac asks for', lstOld.status === 200 && nosOld && nosOld.indexOf(7777) === -1 && nosOld.indexOf(webT.ticket_no) !== -1, [lstOld.status, nosOld]);
+  DB.vp_help_tickets = DB.vp_help_tickets.filter(function (x) { return x !== oldSale; });
   var w0 = lst.body.tickets[0], w1 = lst.body.tickets[1];
   check('each comes with what the Mac needs: name, email, phone, message, and none replied to yet, no earlier tickets', w0 && w0.contact_name === 'Mick Jones' && w0.contact_email === 'mick@shipinn.com.au' && w0.contact_phone === '0400 111 222' && /trivia nights/.test(w0.message) && w0.staff_replies === 0 && w0.earlier_tickets.length === 0, w0);
   check('the help page form also gives the venue, the suburb and the website', w1 && w1.lead_venue_name === 'The Commercial Hotel' && /Murwillumbah/.test(w1.lead_locality), w1);
@@ -1233,6 +1250,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   sent.length = 0;
   var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.', send_anyway: true });
   check('HQ\'s own Reply still works through the same one sender, and is noted as Dean\'s', hq.status === 200 && sent.length === 1 && notesOf(T(helpT.ticket_no)).some(function (n) { return n.kind === 'reply' && /^Dean \(from hello@venueplay\.com\.au to /.test(n.author); }), [hq, notesOf(T(helpT.ticket_no))]);
+
+  Date.now = __machineNow;   // the section above held the fixture clock; the rest of the suite is as before
 
   print('AUTO-SOLVE: THE SALES TICKET CLOSES ITSELF ONCE THE PROSPECT IS ANSWERED (Dean, 3 Nov 2026)');
   world();

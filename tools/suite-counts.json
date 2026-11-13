@@ -880,7 +880,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 446,
+  "checks": 448,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
