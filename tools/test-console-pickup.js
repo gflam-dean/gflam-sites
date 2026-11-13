@@ -98,7 +98,9 @@ function sess() { return DB.vp_sessions.filter(function (s) { return s.id === SE
   show('...nobody has picked it up yet', g && g.holder === null);
   show('...the open question\'s answer, for the host', g && g.current && g.current.qseq === 2 && g.current.ci === 2, JSON.stringify(g && g.current));
   show('...and the phones already in, by the id the console counts them by (Ann answered this one, Bob only the last)',
-    g && g.current && g.current.pids['dev-ann'] === true && !g.current.pids['dev-bob'] && Object.keys(g.current.pids).length === 1, JSON.stringify(g && g.current));
+    g && g.current && Object.keys(g.current.pids).length === 1 && g.current.pids[Object.keys(g.current.pids)[0]] === true &&
+    /* keyed by the PUBLIC id the phones announce (security review 13 Nov 2026, A1), never a phone's device id */
+    Object.keys(g.current.pids)[0] === 'p' + vpPubSha('vp-pub-v1:dev-ann').slice(0, 31) && !g.current.pids['dev-ann'], JSON.stringify(g && g.current));
   show('...after a staff check at THIS venue', CALLS.length === 1 && CALLS[0] === VENUE, JSON.stringify(CALLS));
   r = await running('musical_bingo');
   show('musical bingo is found the same way', r.body.running && r.body.running.game_id === MGAME && r.body.running.current === null, JSON.stringify(r.body));

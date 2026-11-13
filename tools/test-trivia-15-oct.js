@@ -207,7 +207,7 @@ await (async function () {
   var sent = [], posts = [], dom = makeDom(), P = { pid: 'p2', name: 'Quiz Kids', room: 'ACDEFG', joined: true, token: 't1' }, AR = { hash: 'h' }, saved = {};
   dom.$('vWait');
   var f = new Function('P', 'AR', '$', 'send', 'playerPost', 'deviceId', 'saveName', 'saveToken', 'ansHash', 'window',
-    liftAll(PLAY, ['announce', 'takeName', 'onMsg'], 'trivia/play.html') + '; return { announce: announce, onMsg: onMsg };');
+    liftAll(PLAY, ['announce', 'takeName', 'onMsg', 'vpPubSha', 'vpPublicId', 'vpHeldTokens'], 'trivia/play.html') + '; return { announce: announce, onMsg: onMsg };');
   var api = f(P, AR, dom.$, function (o) { sent.push(o); }, function (path, body) { posts.push([path, body]); return Promise.resolve({ token: 't2' }); },
     function () { return 'dev-123456'; }, function (r, n) { saved.name = n; }, function (r, t) { saved.token = t; }, function () {}, { location: { search: '' } });
   api.announce();

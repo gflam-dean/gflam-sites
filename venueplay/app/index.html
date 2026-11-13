@@ -2426,7 +2426,7 @@
          held, so a sale taken back on such a hand is left as it is. */
       var off=offRecord(p).length;
       if(off && want<have) continue;
-      out.push({ pid:pid, did:p.did||null, want:Math.max(0, want-off) });
+      out.push({ pid:pid, did:p.dealKey||p.did||null, want:Math.max(0, want-off) });
       if(out.length>=100) break;                  // the Worker takes 120 a request; the rest go on the next one
     }
     return out;
@@ -2528,7 +2528,7 @@
       var pid=G.order[i], p=G.players[pid]; if(!p || !p.cards) continue;
       var t=p.cards.filter(function(c){ return c.src==="tablet" && !c.rec; });
       if(!t.length) continue;
-      hands.push({ pid:pid, did:p.did||null, tablet:t.map(function(c){ return { cells:c.card, card_no:c.cardNo, dealt_at:c.at||null }; }) });
+      hands.push({ pid:pid, did:p.dealKey||p.did||null, tablet:t.map(function(c){ return { cells:c.card, card_no:c.cardNo, dealt_at:c.at||null }; }) });
       sent.push(t);
     }
     if(!hands.length) return;
@@ -2817,7 +2817,10 @@
       var seated={}; j.seated.forEach(function(d){ seated[d]=true; });
       wantP.forEach(function(pid){
         var q=G.players[pid]; if(!q) return;
-        if(seated[q.did]){ q.seatSid=sid; q.seatTries=0; q.seatNext=0; if(running && q.cards && q.cards.length) q.stampSid=sid; }
+        if(seated[q.did]){ q.seatSid=sid; q.seatTries=0; q.seatNext=0; if(running && q.cards && q.cards.length) q.stampSid=sid;
+          /* The deal key (security review 13 Nov 2026, A1): the room hears a phone's public id; the deal asks by the seat's
+             device id, which only this signed-in console is told, by /host/bingo/seat. Never sent into the room. */
+          if(j.keys && typeof j.keys[q.did]==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(j.keys[q.did])) q.dealKey=j.keys[q.did]; }
         else {
           q.seatTries=(q.seatTries||0)+1;
           q.seatNext=Date.now()+(q.seatTries<5 ? 3000 : Math.min(60000, 3000*Math.pow(2, q.seatTries-4)));
@@ -4434,7 +4437,7 @@
       if(typeof m.did==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(m.did) && _p.did!==m.did){
         var _held=false;
         for(var _o=0;_o<G.order.length;_o++){ var _q=G.players[G.order[_o]]; if(G.order[_o]!==m.pid && _q && _q.did===m.did){ _held=true; break; } }
-        if(!_held){ _p.did=m.did; _p.seatSid=null; _p.stampSid=null; }
+        if(!_held){ _p.did=m.did; _p.dealKey=null; _p.seatSid=null; _p.stampSid=null; }
       }
       // It may have just joined the server: ask now. Once per ten seconds a phone, so a stranger
       // re-signing joins cannot make this tablet ask the server several times a second.

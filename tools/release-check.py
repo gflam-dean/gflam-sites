@@ -4451,6 +4451,12 @@ def local_checks(which):
              'a login that owns a different account and holds an old full-access manager row here is refused the opt-in export here; the named owner and a ticked manager are let through; /account/manager-add is the named owner\'s only and refuses the owner\'s, a full-access login\'s or the caller\'s own mobile, and a failed read writes nothing; a host or new mobile is added as before', 14,
              'A travelling trivia host downloads a pub\'s customer list because they own their own account, or an old duty '
              'manager login turns the real owner into a restricted manager with no billing and no player list'),
+            # D244: security review 13 Nov 2026 part A, A1 (the 5 Nov F1): the seat takeover by a broadcast device id.
+            ('D244. A player\'s seat, card and win cannot be taken with a device id, and the room never hears one',
+             'test-seat-takeover.js',
+             'a phone\'s seat cannot be taken with its device id: /join naming a seat it cannot prove (a token of that seat, or a seat under 30 seconds old) gets a seat of its own with no device id and the real seat keeps its token and card; the real phone gets back on with any token it holds; the unique-index path needs the same proof; the three phone pages announce only the public id the Worker also works out, and send their tokens on /join; seat, deal and pick-up speak public ids and tickets keep the real device id', 44,
+             'A stranger in the room (or anybody with the venue code) takes a paying player\'s musical bingo card and its win, '
+             'the real player\'s phone dies mid-game, and the TV names the wrong person'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

@@ -1315,6 +1315,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/test-seat-takeover.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
  "tools/test-security-b4-b5-13nov.js": {
   "checks": 14,
   "counted_by": "lines"

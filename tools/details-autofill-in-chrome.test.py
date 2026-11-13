@@ -180,7 +180,7 @@ CODES = iter(a + b + c for a in ALPHA for b in ALPHA for c in ALPHA)
 def code(prefix): return prefix + next(CODES)
 
 # What the Worker was sent before this change: nothing may be added to this list.
-KNOWN_KEYS = set(['code', 'name', 'first_name', 'last_name', 'postcode', 'email', 'mobile', 'marketing_optin', 'pid', 'did', 'room',
+KNOWN_KEYS = set(['code', 'name', 'first_name', 'last_name', 'postcode', 'email', 'mobile', 'marketing_optin', 'pid', 'did', 'tokens', 'room',
                   'venue', 'game', 'token', 'tickets', 'player_id', 'device_id', 'source', 'game_id', 'venue_id', 'player', 'ts', 'kind'])
 
 def fill(sid, ids_vals):

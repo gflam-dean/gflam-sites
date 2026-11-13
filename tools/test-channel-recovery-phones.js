@@ -37,7 +37,7 @@ check('play.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript
 // sendJoin since 15 Oct 2026: every join announcement goes through it (the "I am 18 or over" hold);
 // nothing is held here, so the real function sends exactly what it always did.
 var _ageHold = false, _agePendingJoin = false;
-var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'sendJoin', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving', 'deviceId'], 'play.html');
+var bp = take(PLAY, ['connect', 'onChannelStatus', 'send', 'sendJoin', 'wireOut', 'flushQueue', 'setConn', 'rehome', 'finishLeaving', 'deviceId', 'vpPubSha', 'vpPublicId'], 'play.html');
 check('the real bingo phone functions came out of play.html', bp.missing.length === 0, bp.missing);
 
 function bingoPhone() {
@@ -110,7 +110,7 @@ if (!bp.missing.length) {
 print('\nthe trivia phone (app/trivia/play.html)');
 var TPLAY = readFile('venueplay/app/trivia/play.html');
 check('trivia/play.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript(TPLAY, 'vp-channel.js'));
-var tp = take(TPLAY, ['connect', 'send', 'flushQueue', 'announce'], 'trivia/play.html');   // announce: the join is tagged fmt since 14 Oct 2026
+var tp = take(TPLAY, ['connect', 'send', 'flushQueue', 'announce', 'deviceId', 'vpPubSha', 'vpPublicId'], 'trivia/play.html');   // announce: the join is tagged fmt since 14 Oct 2026
 var tpStatus = RIG.lift(TPLAY, 'onChannelStatus');     // named since 27 Sep 2026; before that it lived inside connect
 check('the real trivia phone functions came out of trivia/play.html', tp.missing.length === 0, tp.missing);
 
