@@ -22397,6 +22397,27 @@ MUTATIONS = [
      'font-weight:800;text-transform:none;letter-spacing:0;\n    font-size:clamp(10px,1.4cqw,15px);line-height:1;',
      'font-weight:800;text-transform:uppercase;letter-spacing:.12em;\n    font-size:clamp(10px,1.4cqw,15px);line-height:1;',
      'the TV go-fullscreen button brings back spaced capitals, the banned AI look'),
+    # 13 Nov 2026, fix/design-audit-open-13nov (INBOX 354a): the open design items.
+    ('design-audit-open-13nov-in-chrome.test.py', 'venueplay/training.html',
+     'text-align:center;padding:5% 7% 26%;opacity:0;',
+     'text-align:center;padding:8% 7%;opacity:0;',
+     'the training simulator pair caption sits on top of the ad text on the venue screen'),
+    ('design-audit-open-13nov-in-chrome.test.py', 'venueplay/index.html',
+     ".counter .sub{font-family:'Hanken Grotesk',sans-serif;color:var(--muted);font-size:var(--fs-sm,13px);margin-top:12px}",
+     ".counter .sub{color:var(--muted);font-size:var(--fs-xs);margin-top:12px}",
+     'the home statistic captions go back to 12px mono'),
+    ('design-audit-open-13nov-in-chrome.test.py', 'venueplay/live-here-now.html',
+     '.foot nav a{color:#C9C9D0;display:inline-block;padding:11px 8px;min-height:44px;box-sizing:border-box}',
+     '.foot nav a{color:#C9C9D0}',
+     'the live-here-now footer links are 24px tall on a phone'),
+    ('design-audit-open-13nov-in-chrome.test.py', 'venueplay/play.html',
+     '#codeBoxes.vp-code6 .box{height:84px;',
+     '#codeBoxes.vp-code6 .box{height:60px;',
+     'the /play code boxes stay small on a laptop'),
+    ('design-audit-open-13nov-in-chrome.test.py', 'venueplay/signage.html',
+     ".fld label{font-family:'Manrope',sans-serif;font-weight:700;font-size:12px",
+     ".fld label{font-family:'Manrope',sans-serif;font-weight:700;font-size:9.5px",
+     'the signage field labels shrink back to 9.5px'),
 ]
 
 
