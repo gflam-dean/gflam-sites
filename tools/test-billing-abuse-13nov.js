@@ -413,6 +413,56 @@ w = webhook(paid('manual', null));
 check('e) control: an ordinary invoice.paid with nothing off makes no extra Stripe read', w.ok && S.posts.filter(function (p) { return /subscriptions\//.test(p.url); }).length === 0, S.posts);
 vpbApplyPendingOnInvoice = _applyPending; vpaFireInvoiceEmail = _invEmail;
 
+/* ================================================================================================
+   B7. An HQ login can record only HQ's own marks; the Worker acts only on rows it could have written.
+   ================================================================================================ */
+section('B7 /admin/audit takes HQ marks only; rows the Worker acts on must be the Worker\'s');
+var STAFF = '33333333-3333-4333-8333-333333333331', HQOWN = '33333333-3333-4333-8333-333333333332';
+function hqWorld() {
+  worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+  DB.vp_platform_admins = [{ auth_user_id: STAFF, role: 'staff', label: 'Help desk' }, { auth_user_id: HQOWN, role: 'owner', label: 'Dean' }];
+  stripeReset({ quantity: 100 });
+}
+hqWorld();
+var h1 = call('/admin/audit', STAFF, { action: 'players_increased', target: 'venue:' + V1, detail: { from: 999, billing: { kind: 'charge', item: 'ii_9', cents: 1 } } });
+check('a) a help desk login cannot write a players_increased row', h1.status === 400 && DB.vp_admin_audit.length === 0, [h1, DB.vp_admin_audit]);
+var h2 = call('/admin/audit', STAFF, { action: 'payment_disputed', target: 'account:f1' });
+var h3 = call('/admin/audit', HQOWN, { action: 'permit_register_checked', target: 'venue:' + V1, detail: { kind: 'raffle' } });
+check('a) nor a chargeback marker, nor (even as HQ owner) a permit check record', h2.status === 400 && h3.status === 400 && DB.vp_admin_audit.length === 0, [h2, h3]);
+var h4 = call('/admin/audit', STAFF, { action: 'view_as', target: 'venue:' + V1, detail: { name: 'Home Pub' } });
+var h5 = call('/admin/audit', STAFF, { action: 'venue_quiet_contacted', target: 'venue:' + V1 });
+check('a) control: HQ\'s own marks (view as, contacted) are still written', h4.status === 200 && h5.status === 200 && DB.vp_admin_audit.length === 2, [h4, h5]);
+
+/* b) A players_increased row already in the table that no owner or View-as could have written (a help desk
+      login, before this fix) is never acted on: the next reduction does not delete the line it names. */
+hqWorld();
+venueNamed('Home Pub').max_players = 100;
+S.items.ii_9 = { id: 'ii_9', cents: 500, deleted: false, description: 'someone else\'s big night' };
+DB.vp_admin_audit.push({ id: 'x1', action: 'players_increased', target: 'venue:' + V1, actor_admin: STAFF, actor_label: 'Help desk',
+  detail: { from: 999, to: 100, billing: { kind: 'charge', item: 'ii_9', cents: 500 } }, created_at: new Date().toISOString() });
+var u1 = call('/account/players', OWNER, { venue_id: V1, players: 50 }, ON);
+check('b) a forged players_increased row: the reduction is ordinary and the line it names is NOT deleted', u1.status === 200 && u1.body.applied !== 'undone' && S.items.ii_9.deleted === false, [u1.body, S.items.ii_9]);
+/* Control: the same row written by HQ View as (an owner admin) is honoured, as before. */
+hqWorld();
+venueNamed('Home Pub').max_players = 100;
+S.items.ii_9 = { id: 'ii_9', cents: 24000, deleted: false, description: 'Home Pub - Extra Player' };
+DB.vp_admin_audit.push({ id: 'x2', action: 'players_increased', target: 'venue:' + V1, actor_admin: HQOWN, actor_label: 'Dean',
+  detail: { from: 20, to: 100, billing: { kind: 'charge', item: 'ii_9', cents: 24000 } }, created_at: new Date().toISOString() });
+var u2 = call('/account/players', OWNER, { venue_id: V1, players: 20 }, ON);
+check('b) control: an increase made through HQ View as (owner admin) can still be undone inside the hour', u2.body.applied === 'undone' && S.items.ii_9.deleted === true, [u2.body, S.items.ii_9]);
+
+/* c) The VIC permit check record counts only when an owner or accounts admin recorded it. */
+hqWorld();
+DB.vp_admin_audit.push({ id: 'p1', action: 'permit_register_checked', target: 'venue:' + V1, actor_admin: STAFF, actor_label: 'Help desk',
+  detail: { kind: 'raffle', number: 'R1', holder: 'venue', npo_name: '' }, created_at: '2026-11-10T00:00:00Z' });
+var permits = { raffle: { number: 'R1', holder: 'venue' } };
+var rc1 = null; vpaRegisterChecks(ENV, V1, permits).then(function (x) { rc1 = x; }); for (var i = 0; i < 200 && !rc1; i++) drainMicrotasks();
+check('c) a permit check row a help desk login wrote is not a permit check', rc1 && !rc1.raffle, rc1);
+DB.vp_admin_audit.push({ id: 'p2', action: 'permit_register_checked', target: 'venue:' + V1, actor_admin: HQOWN, actor_label: 'Dean',
+  detail: { kind: 'raffle', number: 'R1', holder: 'venue', npo_name: '' }, created_at: '2026-11-09T00:00:00Z' });
+var rc2 = null; vpaRegisterChecks(ENV, V1, permits).then(function (x) { rc2 = x; }); for (i = 0; i < 200 && !rc2; i++) drainMicrotasks();
+check('c) control: the one an owner admin recorded is', rc2 && rc2.raffle && rc2.raffle.by === 'Dean' && rc2.raffle.current === true, rc2);
+
 print('');
 if (bad) throw new Error('billing abuse: ' + bad + ' of ' + ran + ' failed');
 print('ALL ' + ran + ' CHECKS PASSED');

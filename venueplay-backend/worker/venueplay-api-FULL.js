@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:26 · 4c084ae7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:31 · 83086f7b';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -8007,9 +8007,10 @@ async function vpaHandlePermitRegisterCheck(request, env, json) {
    number A says nothing about number B, so a changed number, holder or charity reads current:false. */
 async function vpaRegisterChecks(env, venueId, permits) {
   const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
-    + '&action=eq.permit_register_checked&select=created_at,actor_label,detail&order=created_at.desc&limit=30') || [];
+    + '&action=eq.permit_register_checked&select=created_at,actor_admin,actor_label,detail&order=created_at.desc&limit=30') || [];
   const out = {};
   for (const r of rows) {
+    if (!(await vpaAuditAuthorOk(env, r, true))) continue;   // B7: only a check an owner/accounts admin recorded
     const d = r.detail || {};
     if (VPA_PERMIT_KINDS.indexOf(d.kind) === -1 || out[d.kind]) continue;
     const p = (permits || {})[d.kind] || {};
@@ -9984,6 +9985,28 @@ async function vpaHandleLoginMobile(request, env, json) {
  * 5) POST /admin/audit   (any admin)  — view-as / read logging
  *    body: { action, target?, detail? }  -> { ok:true }
  * ======================================================================== */
+/* B7 (13 Nov 2026): could the Worker itself have written this audit row? actor_admin null is the Worker on an
+   owner's behalf (or Stripe); otherwise the admin named must be an owner or accounts admin, the only roles that
+   may View as and the only roles the permit check takes. needAdmin: the row must name such an admin (a permit
+   check is always HQ's). Read once per admin per request. A failed read answers no. */
+async function vpaAuditAuthorOk(env, row, needAdmin) {
+  if (!row) return false;
+  if (row.actor_admin == null) return !needAdmin;
+  try {
+    const a = await vpaSelect(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(row.actor_admin) + '&role=in.(owner,accounts)&select=auth_user_id&limit=1');
+    return !!(a && a.length);
+  } catch (_) { return false; }
+}
+
+/* WHAT HQ MAY WRITE BY HAND (security review 13 Nov 2026, B7). This route took ANY action name from ANY HQ login,
+   help desk staff included, and the Worker ACTS on some audit rows: the one-hour undo deletes the Stripe invoice
+   item named in the newest players_increased row, a payment_disputed row blocks a restart, a
+   permit_register_checked row is the VIC permit check. So a help desk login could post a players_increased row
+   naming any pending invoice item and the next reduction deleted it. Only the marks hq.html actually writes are
+   accepted now; every row the Worker reads back is written by the Worker itself. */
+const VPA_HQ_AUDIT_ACTIONS = ['view_as', 'screen_ads', 'screens_all',
+  'venue_quiet_contacted', 'venue_quiet_uncontacted', 'venue_cancel_contacted', 'venue_cancel_uncontacted',
+  'venue_cancel_note', 'venue_marked_test', 'venue_unmarked_test'];
 async function vpaHandleAudit(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, null);
   if (actor.error) return json({ error: actor.error }, actor.status);
@@ -9993,6 +10016,7 @@ async function vpaHandleAudit(request, env, json) {
   const b = _b.body;
   const action = (b.action || '').trim();
   if (!action) return json({ error: 'action is required.' }, 400);
+  if (VPA_HQ_AUDIT_ACTIONS.indexOf(action) === -1) return json({ error: 'That is not something HQ records by hand. Nothing was written.' }, 400);
 
   await vpaInsert(env, 'vp_admin_audit', {
     actor_admin: actor.actorId,
@@ -13897,8 +13921,10 @@ async function vpbSetPlayers(request, env, json) {
   if (!annualPlan && vpbRules(env).undo_hour) {
     try {
       const lastUp = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
-        + '&action=eq.players_increased&order=created_at.desc&limit=1&select=created_at,detail');
-      const row = lastUp && lastUp[0];
+        + '&action=eq.players_increased&order=created_at.desc&limit=1&select=created_at,detail,actor_admin');
+      /* B7: a row is only acted on if the Worker could have written it: the owner (no admin), or an HQ admin
+         who may View as (owner or accounts). A row any other login wrote is never a Stripe line to delete. */
+      const row = (lastUp && lastUp[0] && await vpaAuditAuthorOk(env, lastUp[0])) ? lastUp[0] : null;
       const det = (row && row.detail) || {};
       const addedAt = row && row.created_at ? Date.parse(row.created_at) : NaN;
       const ageS = Number.isFinite(addedAt) ? (Date.now() - addedAt) / 1000 : Infinity;

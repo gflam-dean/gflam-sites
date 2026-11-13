@@ -4286,6 +4286,22 @@ MUTATIONS = [
     ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "    if (paidInvoice && !(await vpaPaidInvoiceLiftsSuspension(env, paidInvoice))) return;", "",
      'any paid invoice switches a non-payment venue back on again'),
+    # 13 Nov 2026, B7: /admin/audit takes only HQ's own marks (VPA_HQ_AUDIT_ACTIONS), and the undo and the VIC permit
+    # check act only on rows the Worker could have written (vpaAuditAuthorOk). tools/test-billing-abuse-13nov.js.
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (VPA_HQ_AUDIT_ACTIONS.indexOf(action) === -1) return json(", "  if (false) return json(",
+     'a help desk login writes a players_increased row and the next reduction deletes any pending Stripe line'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      const row = (lastUp && lastUp[0] && await vpaAuditAuthorOk(env, lastUp[0])) ? lastUp[0] : null;",
+     "      const row = lastUp && lastUp[0];",
+     'a players_increased row a help desk login wrote is acted on by the one-hour undo'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (!(await vpaAuditAuthorOk(env, r, true))) continue;   // B7", "    // B7",
+     'a permit check row a help desk login wrote counts as the VIC permit check'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "'&role=in.(owner,accounts)&select=auth_user_id&limit=1');\n    return !!(a && a.length);",
+     "'&select=auth_user_id&limit=1');\n    return !!(a && a.length);",
+     'any HQ role, help desk staff included, counts as an author the Worker trusts'),
     # 3 Nov 2026: tools/test-players-timing.js RUNS vpbSetPlayers (D114). Rule 2 is pinned, rule 4 (the one-hour undo)
     # sits behind VPB_BILLING_RULES_3NOV, OFF.
     ('test-players-timing.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
