@@ -30,7 +30,7 @@ the steps and stops at the first one that is not true:
        written by the hook, read by tools/gate-record.py) the Chrome suites are left out
        (--skip-chrome) and every other local check plus the whole live half still runs, with
        the reason printed. Any other state is the full gate, as before.
-    6. A REAL NIGHT (INBOX 295.1, 12 Nov 2026), OFF until VP_REAL_NIGHT=1: the release is LIVE but not DONE until
+    6. A REAL NIGHT (INBOX 295.1, 12 Nov 2026), ON BY DEFAULT since INBOX 374 (13 Nov 2026); only an explicit VP_REAL_NIGHT=0 plus VP_REAL_NIGHT_REASON turns it off: the release is LIVE but not DONE until
        ~/venue-enrich/reports/real-night/<build[:8]>.md records all five games played back to back on The Mini Bar
        with the Kogan TV app and the same two phones, a TV shot, a phone shot and a PASS by a named person for each
        (tools/real-night-check.py judges it; tools/real-night-template.md is the form). Off by default because the
@@ -286,15 +286,29 @@ def free_argv(build):
     return [PY, 'tools/real-night-free.py', '--build', build]
 
 
+def real_night_on(env):
+    """(on, lines). The real night is ON BY DEFAULT (INBOX 374, 13 Nov 2026). Only an explicit VP_REAL_NIGHT=0 WITH a reason
+    (VP_REAL_NIGHT_REASON) turns it off, and the reason is printed into the release log. VP_REAL_NIGHT=0 with no reason is
+    ignored (the night runs and the log says why). Anything else, unset or 1, is on."""
+    v = (env.get('VP_REAL_NIGHT') or '').strip()
+    if v == '0':
+        reason = (env.get('VP_REAL_NIGHT_REASON') or '').strip()
+        if reason:
+            return False, ['real night OFF by an explicit VP_REAL_NIGHT=0, reason: ' + reason]
+        return True, ['VP_REAL_NIGHT=0 ignored: turning the real night off needs a reason (VP_REAL_NIGHT_REASON="why") that goes in the release log, so it runs']
+    return True, []
+
+
 def real_night_plan(build, env=None):
     """Lines for --plan: what step 6 would do."""
     env = os.environ if env is None else env
-    if (env.get('VP_REAL_NIGHT') or '') != '1':
-        return ['not ask for a real night (VP_REAL_NIGHT is not 1)']
+    on, why = real_night_on(env)
+    if not on:
+        return ['not ask for a real night (' + why[0] + ')']
     if not free_mode(env):
-        return ['want a hand-played real-night record (VP_REAL_NIGHT=1, VP_REAL_NIGHT_MODE=hand): ' + _rn().record_path(build)]
+        return why + ['want a hand-played real-night record (VP_REAL_NIGHT_MODE=hand): ' + _rn().record_path(build)]
     fr = _load('real_night_free_plan', 'tools/real-night-free.py')
-    return ['run the FREE real night after the gate (VP_REAL_NIGHT=1): tools/real-night-free.py --build ' + build[:8]] + \
+    return why + ['run the FREE real night after the gate (on by default): tools/real-night-free.py --build ' + build[:8]] + \
            ['  ' + l for l in fr.plan_lines(build, env)] + ['  then judge ' + _rn().record_path(build) + ' (never rolls back)']
 
 
@@ -306,27 +320,28 @@ def _load(name, rel):
 
 
 def real_night(build, env=None, run=None):
-    """Step 6 (INBOX 295.1, 364/365B). (on, good, lines to print). OFF unless VP_REAL_NIGHT=1, and then it says so.
+    """Step 6 (INBOX 295.1, 364/365B, 374). (on, good, lines to print). ON by default; only VP_REAL_NIGHT=0 with VP_REAL_NIGHT_REASON turns it off, and the reason is printed.
     ON (free mode, the default once on): tools/real-night-free.py plays the dry run on the test server, runs verify-live
     --all and shoots the Kogan app, and writes the record; its output streams to the terminal. A red run is NOT done.
     Then, in both modes, the release is done only when tools/real-night-check.py passes the record for this build.
     Nothing here ever rolls back or sends anything."""
     env = os.environ if env is None else env
-    if env.get('VP_REAL_NIGHT') != '1':
-        return False, True, ['%soff: VP_REAL_NIGHT is not 1, so no real-night record is asked for yet (main and Dean switch it on)%s' % (DIM, OFF)]
+    on, why = real_night_on(env)
+    if not on:
+        return False, True, ['%s%s%s' % (DIM, why[0], OFF)]
     if free_mode(env):
         # ONLY main() hands a runner in (13 Nov 2026: a suite that called real_night() without one started a real
         # verify-live --all twice). With none, nothing is started and the step is NOT done.
         if run is None:
-            return True, False, ['the free real night was not started: real_night() was called without a runner (only release.py main passes one)']
+            return True, False, why + ['the free real night was not started: real_night() was called without a runner (only release.py main passes one)']
         r = run(free_argv(build), cwd=ROOT, env=dict(env))
         if getattr(r, 'returncode', 1) != 0:
-            return True, False, ['the free real night is NOT green (tools/real-night-free.py exit %s, reasons above); nothing rolled back'
+            return True, False, why + ['the free real night is NOT green (tools/real-night-free.py exit %s, reasons above); nothing rolled back'
                                  % getattr(r, 'returncode', '?')]
-    good, why, path = _rn().check(build)
+    good, missing, path = _rn().check(build)
     if good:
-        return True, True, ['real night recorded: ' + path]
-    return True, False, ['no real night for this build yet (%s):' % path] + ['  - ' + w for w in why]
+        return True, True, why + ['real night recorded: ' + path]
+    return True, False, why + ['no real night for this build yet (%s):' % path] + ['  - ' + w for w in missing]
 
 
 def gate_argv(root):
