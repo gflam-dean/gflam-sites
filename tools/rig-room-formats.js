@@ -181,7 +181,7 @@ function freshWorld(opts) {
   ROOM_ON = { musical: false, trivia: false, raffle: false, members: false };
   for (var k in (opts.formats || {})) ROOM_ON[k] = !!opts.formats[k];
   for (var f in ROOM_FORMATS_ON) ROOM_FORMATS_ON[f] = !!ROOM_ON[f];
-  ENV = { ROOM_OFF: opts.off ? '1' : '' };
+  ENV = { ROOM_OFF: opts.off ? '1' : '', ROOM_TICKET_KEY: 'rig-room-ticket-key' };   // the key a host's room ticket is signed with (A3)
   if (!opts.noBinding) ENV.ROOM = {
     idFromName: function (n) { return n; },
     get: function (n) {
@@ -257,10 +257,34 @@ function RIG_AUTH(request) {
   return Promise.resolve(h === 'Bearer tok' ? { signed: true, extra: true } : { signed: false });
 }
 var WORKER_REPLY = {};
+
+/* A HOST SOCKET NEEDS A ROOM TICKET (security review 13 Nov 2026, A3): POST /room/ticket, then &tk= on /room/ws. The
+   consoles here are signed in ("Bearer tok", as RIG_AUTH reads it), so they get one from the REAL roomTicketMake, and
+   the REAL handleRoomSocket checks it. jsc has no WebCrypto HMAC, so this stands one in: FNV over the key and the
+   message, which has the one property the rig needs (the same key and message give the same answer, any change a
+   different one). The real HMAC-SHA256 is held to the RFC vector by tools/test-room-host-ticket.js. */
+if (typeof TextEncoder === 'undefined') { TextEncoder = function () {}; TextEncoder.prototype.encode = function (s) { s = unescape(encodeURIComponent(String(s))); var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }; }
+if (typeof crypto === 'undefined') crypto = {};
+if (!crypto.subtle) crypto.subtle = {};
+if (!crypto.subtle.sign) {
+  crypto.subtle.importKey = function (fmt, raw) { return Promise.resolve({ raw: new Uint8Array(raw) }); };
+  crypto.subtle.sign = function (alg, key, data) {
+    var b = new Uint8Array(data), out = new Uint8Array(32), h = 2166136261 >>> 0, i, r;
+    for (r = 0; r < 32; r++) { for (i = 0; i < key.raw.length; i++) { h ^= key.raw[i] + r; h = Math.imul(h, 16777619) >>> 0; } for (i = 0; i < b.length; i++) { h ^= b[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; }
+    return Promise.resolve(out.buffer);
+  };
+}
+function RIG_TICKET(url, init) {
+  var h = (init && init.headers && (init.headers.Authorization || init.headers.authorization)) || '';
+  var room = decodeURIComponent((/[?&]room=([^&]+)/.exec(url) || [])[1] || '');
+  if (h !== 'Bearer tok') return Promise.resolve(wjson({ error: 'Not signed in' }, 401));
+  return roomTicketMake(ENV, room, Date.now()).then(function (t) { return t ? wjson(t) : wjson({ error: 'no key' }, 503); });
+}
 function workerFetch(url, init, who) {
   var path = (/^https?:\/\/[^\/]+(\/[^?]*)/.exec(url) || [])[1] || '';
   var method = (init && init.method) || 'GET';
   if (path === '/room/presence') return handleRoomPresence(new Request(url), ENV, wjson).then(asFetch);
+  if (path === '/room/ticket' && method === 'POST') return RIG_TICKET(url, init).then(asFetch);
   if (path === '/room/handover' && method === 'POST') {
     if (HANDOVER_DOWN) return Promise.reject(new Error('the network ate it'));
     return handleRoomHandover(new Request(url, init), ENV, wjson, RIG_AUTH).then(asFetch);

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 21:45 · e297ff21';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 22:47 · 7b24ea9e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -580,6 +580,7 @@ export default {
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
       if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
+      if (method === 'POST' && path === '/room/ticket')        return await handleRoomTicket(request, env, json);   // a host socket's ticket (A3)
       if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json, roomHandoverAuth);   // signed, or only an ask (F2)
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       /* The coaster round, /live-here-now (migration 153): public, rate limited, first names only. */
@@ -14088,6 +14089,41 @@ async function roomHandoverAuth(request, env, name, venueSlug) {
   }
 }
 
+/* POST /room/ticket?room=vp-XXXXXX[&venue=<slug>]  (security review 13 Nov 2026, A3)
+ * A console's host socket needs a ticket, so a stranger who read the venue code off the TV cannot open the room as the
+ * host. Answered only for a signed-in login that is staff at THIS room's venue (requireStaff: owner, manager, host, or
+ * an HQ owner/accounts admin, with the kill-switch): the room is the venue's own code, or one of the rooms its slug
+ * names (roomVenueRooms). Anything else, no ticket. 30 asks a minute per network. -> { ticket, exp } */
+const ROOM_TICKET_MAX_PER_IP = 30;
+async function handleRoomTicket(request, env, json) {
+  if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  if (!ROOM_NAME_RE.test(name) || name.indexOf('vp-') !== 0) return json({ error: 'bad room' }, 400);
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const rl = await rateLimit(env, 'roomticket:ip:' + (ip ? await sha256Hex((env.IP_HASH_SALT || 'venueplay') + ':' + ip) : 'none'), ROOM_TICKET_MAX_PER_IP, 60);
+  if (!rl.ok) return json({ error: 'Too many tries. Wait a minute.' }, 429);
+  const uid = await verifyHostJwt(request, env);                   // ENFORCED: valid host JWT (throws 401)
+  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase();
+  const code = name.slice(3).toUpperCase();
+  let venueId = null;
+  if (slug && roomVenueRooms(slug).indexOf(name) >= 0) {
+    const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id&limit=1');
+    venueId = (rows && rows[0] && rows[0].id) || null;
+  } else if (JOIN_CODE_RE.test(code)) {
+    venueId = await venueByCode(env, code, { includeSuspended: true });
+    if (!venueId) {
+      const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&select=venue_id&order=created_at.desc&limit=1');
+      venueId = (ss && ss[0] && ss[0].venue_id) || null;
+    }
+  }
+  if (!venueId) return json({ error: 'No venue for that room' }, 404);
+  await requireStaff(env, uid, venueId);                           // ENFORCED: staff at the room's venue (and the kill-switch)
+  const t = await roomTicketMake(env, name, Date.now());
+  if (!t) return json({ error: 'room tickets are not set up' }, 503);
+  return json(t);
+}
+
 /* ============================================================================
  * ROOM SERVER (copied from venueplay-room.js, kept identical by the gate)
  *
@@ -14128,8 +14164,19 @@ const ROOM_MAX_MSG_CHARS = 16 * 1024;        // a game message is a few hundred 
    So the host and the TV, which are the venue's own equipment and whose messages are
    signed, get room to do their job. Phones stay capped, because a phone is the thing an
    outsider can point at us. */
-const ROOM_MAX_PER_SEC   = 20;               // a phone, or anything unrecognised
-const ROOM_MAX_PER_SEC_HOST = 240;           // a host or a TV: a rollcall answers every phone at once
+const ROOM_MAX_PER_SEC   = 20;               // a phone, a TV, HQ, or anything unrecognised
+const ROOM_MAX_PER_SEC_HOST = 240;           // a SIGNED-IN host (a room ticket): a rollcall answers every phone at once
+/* ONLY A SIGNED-IN HOST IS A HOST (security review 13 Nov 2026, A3; the 3 Nov audit's M2). The role used to come from the
+   query string, so anybody who read the venue code off the TV opened /room/ws?role=host with no sign-in and could send
+   240 messages of 16 KB a second to every phone and TV. Now:
+   - role=host needs a room ticket (&tk=): POST /room/ticket with the console's own sign-in, for a room at a venue where
+     that login is staff (or HQ), answers one, good for ROOM_TICKET_S. A host socket without a good ticket is let in as a
+     phone: it still hears and speaks, at a phone's pace and size, so an old cached console degrades instead of failing.
+   - a TV is not signed in, so it no longer gets the host's pace: a TV says "tv_here" a few times a minute.
+   - every message over the role's size is dropped: a host or HQ message up to 16 KB (a full players list), anything
+     else up to ROOM_MAX_MSG_CHARS_SMALL (a phone's join, answer or claim is a few hundred characters). */
+const ROOM_MAX_MSG_CHARS_SMALL = 4 * 1024;
+const ROOM_TICKET_S = 15 * 60;
 const ROOM_ROLES         = ['tv', 'host', 'phone', 'hq'];
 const ROOM_NAME_RE       = /^[A-Za-z0-9-]{3,90}$/;   // the channel name the page already uses, e.g. vp-3A7TES
 
@@ -14353,11 +14400,12 @@ export class VenueRoom {
     if (message.length > ROOM_MAX_MSG_CHARS) return;
     const a = ws.deserializeAttachment() || { role: 'phone', since: 0, win: 0, n: 0 };
     if (a.gone) return;                                      // a socket a newer one from the same page replaced
+    if (message.length > ((a.role === 'host' || a.role === 'hq') ? ROOM_MAX_MSG_CHARS : ROOM_MAX_MSG_CHARS_SMALL)) return;
     const win = Math.floor(Date.now() / 1000);
     if (a.win !== win) { a.win = win; a.n = 0; }
     a.n += 1;
     ws.serializeAttachment(a);
-    const cap = (a.role === 'host' || a.role === 'tv') ? ROOM_MAX_PER_SEC_HOST : ROOM_MAX_PER_SEC;
+    const cap = (a.role === 'host') ? ROOM_MAX_PER_SEC_HOST : ROOM_MAX_PER_SEC;
     if (a.n > cap) return;                                   // a flood is dropped; the socket stays up
     let obj;
     try { obj = JSON.parse(message); } catch (e) { return; }
@@ -14705,14 +14753,49 @@ async function handleRoomHandover(request, env, json, auth) {
   }
 }
 
+/* A ROOM TICKET: '<expiry seconds>.<40 hex of HMAC-SHA256("vp-room-ticket-v1|<room>|<expiry>")>', keyed on
+   ROOM_TICKET_KEY, else the service key (a Worker secret either way; never sent to a page). '' when no key. */
+async function roomTicketSig(env, name, exp) {
+  const secret = String((env && (env.ROOM_TICKET_KEY || env.SUPABASE_SERVICE_KEY)) || '');
+  if (!secret) return '';
+  const te = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', te.encode('vp-room-ticket|' + secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, te.encode('vp-room-ticket-v1|' + name + '|' + exp)));
+  let hex = '';
+  for (let i = 0; i < 20; i++) hex += (sig[i] < 16 ? '0' : '') + sig[i].toString(16);
+  return hex;
+}
+async function roomTicketMake(env, name, nowMs) {
+  const exp = Math.floor((nowMs || Date.now()) / 1000) + ROOM_TICKET_S;
+  const sig = await roomTicketSig(env, name, exp);
+  return sig ? { ticket: exp + '.' + sig, exp: exp } : null;
+}
+async function roomTicketGood(env, name, tk, nowMs) {
+  const m = /^(\d{10})\.([0-9a-f]{40})$/.exec(String(tk || ''));
+  if (!m) return false;
+  const exp = parseInt(m[1], 10);
+  if (!(exp > Math.floor((nowMs || Date.now()) / 1000)) || exp > Math.floor((nowMs || Date.now()) / 1000) + ROOM_TICKET_S + 60) return false;
+  let want = '';
+  try { want = await roomTicketSig(env, name, exp); } catch (e) { return false; }
+  if (!want) return false;
+  let diff = 0;
+  for (let i = 0; i < 40; i++) diff |= want.charCodeAt(i) ^ m[2].charCodeAt(i);
+  return diff === 0;
+}
+
 async function handleRoomSocket(request, env, json) {
   if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
-  const role = String(url.searchParams.get('role') || 'phone');
+  let role = String(url.searchParams.get('role') || 'phone');
   if (ROOM_ROLES.indexOf(role) < 0) return json({ error: 'bad role' }, 400);
   if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+  /* ONLY A SIGNED-IN HOST IS A HOST (A3, above): no good ticket for THIS room, and it joins as a phone. ROOM_HOST_TICKETS
+     "off" (a Worker variable) is the release-day switch: a console still on the page from before the tickets has none,
+     so main may set it for the minutes between the Worker going up and the pages landing, then delete it. */
+  if (role === 'host' && String(env.ROOM_HOST_TICKETS || '') !== 'off' &&
+      !(await roomTicketGood(env, name, url.searchParams.get('tk'), Date.now()))) role = 'phone';
   /* The page's cid goes through (ONE PAGE, ONE SOCKET, above); the room checks its shape. */
   const cid = String(url.searchParams.get('cid') || '');
   return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role) + '&room=' + encodeURIComponent(name) +

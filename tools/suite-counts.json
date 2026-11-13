@@ -1271,6 +1271,10 @@
   "checks": 253,
   "counted_by": "lines"
  },
+ "tools/test-room-host-ticket.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-room-old-console.js": {
   "checks": 13,
   "counted_by": "lines"
@@ -2160,7 +2164,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room.test.js": {
-  "checks": 75,
+  "checks": 79,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {

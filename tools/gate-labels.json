@@ -24,6 +24,7 @@
   "a failed page throws instead of truncating the export (10 checks)",
   "a forged code is refused, a reprint is the same card, no two same-looking titles share a card, and the scan says win, not yet, wrong playlist, replaced, another night, another venue or not a card",
   "a forged join, claim or leave for another player is dropped by the bingo console",
+  "a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room's) it joins as a phone; POST /room/ticket answers only a login that is staff at the room's venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one",
   "a join code, a live code or a whole name (with the suburb or postcode when several share it) matches one venue or nothing; the lookup answers a name only and is limited per network and per device; a venue_id the page sends is ignored; a sales enquiry needs the venue and its suburb or postcode, keeps them and the website as fields, and is still made before migration 129 runs",
   "a join never rebuilds a host console",
   "a login that owns a different account and holds an old full-access manager row here is refused the opt-in export here; the named owner and a ticked manager are let through; /account/manager-add is the named owner's only and refuses the owner's, a full-access login's or the caller's own mobile, and a failed read writes nothing; a host or new mobile is added as before",

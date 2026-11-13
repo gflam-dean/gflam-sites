@@ -4457,6 +4457,12 @@ def local_checks(which):
              'a phone\'s seat cannot be taken with its device id: /join naming a seat it cannot prove (a token of that seat, or a seat under 30 seconds old) gets a seat of its own with no device id and the real seat keeps its token and card; the real phone gets back on with any token it holds; the unique-index path needs the same proof; the three phone pages announce only the public id the Worker also works out, and send their tokens on /join; seat, deal and pick-up speak public ids and tickets keep the real device id', 44,
              'A stranger in the room (or anybody with the venue code) takes a paying player\'s musical bingo card and its win, '
              'the real player\'s phone dies mid-game, and the TV names the wrong person'),
+            # D245: security review 13 Nov 2026 part A, A3 (the 3 Nov M2): the room's host role needs a sign-in.
+            ('D245. Only a signed-in host is the host in a venue\'s room',
+             'test-room-host-ticket.js',
+             'a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room\'s) it joins as a phone; POST /room/ticket answers only a login that is staff at the room\'s venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one', 21,
+             'Anybody who reads the venue code off the TV floods every phone and TV with 240 messages of 16 KB a second '
+             'and stalls a night'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)
