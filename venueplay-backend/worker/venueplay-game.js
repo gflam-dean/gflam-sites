@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 17:38 · bb69f435';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:03 · 4162cd50';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -7565,9 +7565,31 @@ async function handleHostAddTime(request, env, json) {
 }
 
 // --- Review queue admin (used by the weekly fact-check run). Gated by env.ADMIN_KEY. ---
+/* THE KEY CHECK, ONE COPY FOR BOTH ROUTES (security audit 3 Nov 2026, L3). It was `b.key !==
+   env.ADMIN_KEY`: an ordinary string compare that returns at the first wrong character, and no
+   limit on guesses. Now a constant-time compare (the same vpaSameSecret the billing Worker uses
+   for its autopilot key) and at most ADMIN_KEY_TRIES wrong keys per network per 10 minutes. A
+   right key is never counted, so the weekly run is not slowed. Answers a refusal or null. */
+const ADMIN_KEY_TRIES = 10;
+function vpaSameSecret(a, b) {
+  a = String(a || ''); b = String(b || '');
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
+}
+async function adminKeyRefusal(request, env, b, json) {
+  if (!env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  const ip = (request && request.headers && request.headers.get('cf-connecting-ip')) || 'unknown';
+  const key = 'adminkey:' + ip;
+  const seen = rlMem.get(key);
+  if (seen && seen.until > Date.now() && seen.n >= ADMIN_KEY_TRIES) return json({ error: 'Too many tries. Wait ten minutes.' }, 429);
+  if (vpaSameSecret(b && b.key, env.ADMIN_KEY)) return null;
+  await rateLimit(env, key, ADMIN_KEY_TRIES, 600);
+  return json({ error: 'Not authorised' }, 401);
+}
 async function handleAdminSubmissions(request, env, json) {
   const b = await readJson(request);
-  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  { const no = await adminKeyRefusal(request, env, b, json); if (no) return no; }
   const limit = Math.max(1, Math.min(200, parseInt(b.limit, 10) || 50));
   const rows = await sbGet(env, 'vp_question_submissions',
     'status=eq.pending&select=id,venue_id,question,options,correct_index,category,difficulty,image_url&order=created_at.asc&limit=' + limit);
@@ -7576,7 +7598,7 @@ async function handleAdminSubmissions(request, env, json) {
 
 async function handleAdminResolve(request, env, json) {
   const b = await readJson(request);
-  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  { const no = await adminKeyRefusal(request, env, b, json); if (no) return no; }
   const id = String(b.id || '').trim();
   if (!id) return json({ error: 'Missing id' }, 400);
   const status = ['approved', 'rejected', 'review'].includes(b.status) ? b.status : 'review';
@@ -10015,9 +10037,15 @@ async function handleClaimResolve(request, env, json) {
   if (games[0].format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 404);
 
   const status = decision === 'confirm' ? 'confirmed' : 'rejected';
-  await sbPatch(env, 'vp_claims', 'id=eq.' + enc(claimId), {
+  /* COMPARE AND SET (security audit 3 Nov 2026, L1). The check above and this write were two
+     steps, so two near-simultaneous taps (or confirm on one console and reject on the other) both
+     passed the check, both wrote and both broadcast music.claim_result, last write winning. Only
+     a claim that is STILL pending changes now; the loser changes nothing and broadcasts nothing,
+     the way the 90-ball path already does it. */
+  const done = await sbPatchReturning(env, 'vp_claims', 'id=eq.' + enc(claimId) + '&status=eq.pending', {
     status, resolved_by: staff.id || null, resolved_at: new Date().toISOString(),
   });
+  if (!done.length) return json({ error: 'This claim has already been resolved' }, 409);
 
   // WRITE THE RESULT. There is no separate bingo winners table: the confirmed
   // vp_claims row IS the durable winner record (who, which card, which cells,
@@ -11992,7 +12020,21 @@ async function handlePraffleDraw(request, env, json) {
     entrant_id: person.id, entry_id: hit[0].id, winner_name: formatMemberName(person.first_name, person.last_name, 'abbrev_last'),
     phone_last3: praffleLast3(person.phone), winner_entries: mine, entries_total: n, entrants_total: entrantsTotal,
     pick_index: pick, outcome: 'drawn', drawn_by: actorRef(g.staff), drawn_by_name: await praffleStaffName(env, g.staff) };
-  const saved = (await sbInsert(env, 'vp_purchase_raffle_draws', row, true))[0];
+  /* ONE WINNER PER PRIZE, held by the database (security audit 3 Nov 2026, M4). The read above
+     and this insert are not atomic: two consoles (pickup) or a double tap both read "no draws
+     yet", both pick prize 0 and both used to insert, so the legal record of a lottery showed two
+     winners for one prize. Migration 147's partial unique index on (raffle_id, prize_index)
+     where outcome = 'drawn' refuses the second; sbInsert turns that 23505 into a 409 and the
+     loser is told plainly. Nothing is recorded for the second tap. */
+  let saved;
+  try {
+    saved = (await sbInsert(env, 'vp_purchase_raffle_draws', row, true))[0];
+  } catch (e) {
+    if (e && e.status === 409) {
+      return json({ error: 'That prize has just been drawn on another screen. Nothing was recorded for this tap; the winner is on the draw list.', already_drawn: true }, 409);
+    }
+    throw e;
+  }
   const allDone = prizes.every(function (p, i) { return i === prizeIndex || won[i]; });
   if (allDone) await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id), { status: 'drawn', updated_at: new Date().toISOString() });
   await praffleAudit(env, g.staff, 'purchase_raffle_drawn', g.venue.id, { raffle_id: r.id, draw_id: saved.id, prize_index: prizeIndex,

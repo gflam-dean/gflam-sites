@@ -4430,6 +4430,27 @@ def local_checks(which):
              'on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging\'s own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched', 23,
              'A staging night that quietly reads or writes a real venue because one page kept a live address, or the tripwire '
              'wrapping the live site'),
+            # D240 to D242 (were D114 to D116 on fix/security-3nov; renumbered 13 Nov, those numbers were taken): the security audit of 3 Nov 2026 (branch fix/security-3nov; migrations 146 and 147).
+            ('D240. The account owner is the one named on the account being viewed, never "no permissions"',
+             'test-account-owner-marker.js',
+             'a marked owner stored as manager is the owner; a legacy null-permissions manager is refused cancel and players; the role is worked out on the viewed account only, so a host who owns another account cannot export this one\'s players; before migration 146 the old rule stands, any other read failure is a 503', 14,
+             'A duty manager or an old host stored as a manager charges the owner\'s card or cancels a venue, '
+             'or a trivia host downloads another pub\'s player list because they own a different account'),
+            ('D241. One winner per purchase raffle prize, even with two consoles drawing at once',
+             'test-praffle-one-winner.js',
+             'two simultaneous draws record one winner, the other is told the prize was just drawn and nothing else is written; a redrawn prize can be drawn again', 9,
+             'The legal record of a lottery shows two winners for one prize, each possibly a different person'),
+            ('D242. A claim resolves once, the public tally shows favourable counts only, and the admin key cannot be guessed',
+             'test-security-lows-3nov.js',
+             'confirm and reject at once resolve a musical claim once with one TV broadcast; /feedback/tally and the host page carry Loved it and Good counts only; the trivia admin key is constant-time and locked after ten wrong tries per network', 15,
+             'Two winners flashed on the TV for one claim, a venue or a stranger reading a night\'s poor ratings, '
+             'or the trivia review key guessed one character at a time'),
+            # D243: security review 13 Nov 2026 part B, B4 (the 3 Nov M1, through the opt-in export) and B5 (Add a manager).
+            ('D243. Owning another account never opens this one\'s player list, and Add a manager never rewrites a full-access login',
+             'test-security-b4-b5-13nov.js',
+             'a login that owns a different account and holds an old full-access manager row here is refused the opt-in export here; the named owner and a ticked manager are let through; /account/manager-add is the named owner\'s only and refuses the owner\'s, a full-access login\'s or the caller\'s own mobile, and a failed read writes nothing; a host or new mobile is added as before', 14,
+             'A travelling trivia host downloads a pub\'s customer list because they own their own account, or an old duty '
+             'manager login turns the real owner into a restricted manager with no billing and no player list'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

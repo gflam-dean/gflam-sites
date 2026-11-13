@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 13:34 · 87c8f20b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:13 · d3092454';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -12898,11 +12898,21 @@ async function vpbRequireOwner(request, env) {
   const adminActor = adminRow
     ? { id: adminRow.auth_user_id, label: adminRow.label || ('staff:' + (adminRow.role || 'admin')) }
     : null;
-  // A restricted MANAGER carries a permissions object on their staff rows; the account owner
-  // (and legacy full-access staff) carry none. perms === null therefore means full access.
-  // Best-effort: if migration 17 has not run, this select yields nothing and everyone is treated
-  // as full-access (safe) until it does.
+  // A restricted MANAGER carries a permissions object on their staff rows. Who is the OWNER is a
+  // separate question since 3 Nov 2026 (security audit H2): see isOwner below.
   let perms = null;
+  /* WHO IS THE ACCOUNT OWNER (security audit 3 Nov 2026, H2). Until then "no permissions object"
+     meant owner, and every manager or mis-stored host added before vpbAddManager wrote a
+     permissions object could charge the card, cancel venues and add managers. Now the owner is
+     named explicitly: a staff row ON THIS ACCOUNT with is_account_owner = true (migration 146,
+     backfilled from the account's real owner) or role 'owner'. Both can only be written by the
+     service role or an HQ admin. A null permissions object no longer makes anybody an owner.
+     markerKnown = false only when the database says the column does not exist (migration 146 not
+     run yet): then, and only then, the old rule stands, so running the Worker before the migration
+     locks no real owner out. Any other read failure still fails closed (503). */
+  let isOwner = false;
+  let markerKnown = true;
+  let scopedRows = [];
   // An admin viewing as a venue is not a manager OF it, so their own staff row's restrictions must
   // not follow them in. Without this guard, a Gflam admin who happened to be a restricted manager
   // somewhere would silently lose buttons on every OTHER venue they opened.
@@ -12928,11 +12938,23 @@ async function vpbRequireOwner(request, env) {
          on this one read turned a manager with billing:false into somebody who could change
          billing and add hosts. CLAUDE.md already names the trap: never build on a read that
          fails open. */
-      const pr = scopeIds.length ? await vpaSelectAll(env, 'vp_venue_staff',
-        'auth_user_id=eq.' + encodeURIComponent(authUserId) +
+      const scopeQ = 'auth_user_id=eq.' + encodeURIComponent(authUserId) +
         '&venue_id=in.(' + scopeIds.map(encodeURIComponent).join(',') + ')' +
-        '&role=in.(manager,owner)&select=permissions&order=venue_id.asc') : [];
-      for (const row of (pr || [])) {
+        '&role=in.(manager,owner)';
+      let pr = [];
+      if (scopeIds.length) {
+        try {
+          pr = await vpaSelectAll(env, 'vp_venue_staff', scopeQ + '&order=venue_id.asc,id.asc&select=venue_id,role,permissions,is_account_owner');
+        } catch (e) {
+          // ONLY "that column does not exist" (Postgres 42703) falls back. A 429 or a 503 rethrows
+          // and fails closed below, exactly as before.
+          if (!/42703|is_account_owner does not exist/.test(String((e && e.message) || e))) throw e;
+          markerKnown = false;
+          pr = await vpaSelectAll(env, 'vp_venue_staff', scopeQ + '&order=venue_id.asc,id.asc&select=venue_id,role,permissions');
+        }
+      }
+      scopedRows = pr || [];
+      for (const row of scopedRows) {
         if (!row || !row.permissions) continue;
         if (!perms) { perms = Object.assign({}, row.permissions); continue; }
         // false wins, on every key either row mentions.
@@ -12958,10 +12980,21 @@ async function vpbRequireOwner(request, env) {
      "the person who set this venue up" need to be able to say so.
      Found 17 Sep 2026 when Dean asked for the export to be owner-only and I checked who that
      currently meant. */
-  const myRole = (staff || []).some((x) => x.role === 'owner') ? 'owner'
-               : ((staff || []).length ? 'manager' : null);
+  /* SCOPED TO THIS ACCOUNT (security audit 3 Nov 2026, M1). This used to read `staff`, every
+     owner or manager row the login holds ANYWHERE, so a trivia host who owns their own account
+     and is a manager at Pub X came back as 'owner' while viewing Pub X, and the opt-in export let
+     them download Pub X's player list. Only rows on the account being viewed count now. */
+  if (actingAsAdmin) {
+    isOwner = true;   // View as from HQ: full access, audited, as before
+  } else if (markerKnown) {
+    isOwner = scopedRows.some((r) => r && (r.is_account_owner === true || r.role === 'owner'));
+  } else {
+    // Migration 146 not run yet: the old rule, so nobody is locked out in the gap.
+    isOwner = scopedRows.some((r) => r && r.role === 'owner') || !perms;
+  }
+  const myRole = isOwner ? 'owner' : (scopedRows.length ? 'manager' : null);
   return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor,
-           perms: perms, role: myRole, actingAsAdmin: actingAsAdmin, otherAccounts: otherAccounts };
+           perms: perms, role: myRole, owner: isOwner, actingAsAdmin: actingAsAdmin, otherAccounts: otherAccounts };
 }
 
 /* WHERE THE ACCOUNT STANDS, AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33). One answer, read by
@@ -12992,10 +13025,13 @@ function vpbAccountStanding(venues) {
            kept_until: first == null ? null : new Date(first + VPB_RETENTION_DAYS * 86400000).toISOString() };
 }
 
-// Full-access (account owner or legacy staff) vs a restricted manager, and per-toggle checks.
-function vpbIsOwner(o) { return !o.perms; }
-function vpbCan(o, key) { return !o.perms || o.perms[key] !== false; }
-function vpbOwnerOnly(o, json) { return o.perms ? json({ error: 'Only the account owner can do that.' }, 403) : null; }
+// The account owner is the one vpbRequireOwner NAMED (o.owner === true), never "no permissions
+// object" (security audit 3 Nov 2026, H2). Strictly true: a marketing login, a legacy manager row
+// with no permissions and any o built without the flag are not the owner. vpbCan stays generous
+// for the toggles (advertising, raffles, hosts); player data checks === true where it is used.
+function vpbIsOwner(o) { return !!o && o.owner === true; }
+function vpbCan(o, key) { return vpbIsOwner(o) || !o.perms || o.perms[key] !== false; }
+function vpbOwnerOnly(o, json) { return vpbIsOwner(o) ? null : json({ error: 'Only the account owner can do that.' }, 403); }
 
 // Audit fields for an owner-side action: the acting admin if one is behind it, else the owner.
 function vpbActorFields(o) {
@@ -17949,9 +17985,29 @@ async function vpbAddManager(request, env, json) {
   }
   if (!authUserId) return json({ error: 'Could not resolve the manager login.' }, 502);
 
-  const existing = await vpaSelect(env, 'vp_venue_staff',
-    'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=in.(' + wanted.map(encodeURIComponent).join(',') + ')&select=venue_id');
-  const have = new Set((existing || []).map((r) => r.venue_id));
+  /* NEVER REWRITE A FULL-ACCESS LOGIN (security review 13 Nov 2026, B5). This used to PATCH whatever row the mobile
+     already had into a restricted manager, so adding "a manager" with the owner's own mobile turned the real owner into a
+     manager with no billing, no managers and no player list. The owner (is_account_owner or role owner), a full-access
+     login (no permissions object) and the caller's own login are refused here; the permissions screen
+     (vpbSetManagerPerms) already refuses a full-access row the same way. A failed read refuses too: not knowing who
+     the row belongs to is never a reason to rewrite it. */
+  if (authUserId === o.authUserId) return json({ error: 'That is your own mobile. Add a manager with their own mobile.' }, 409);
+  const staffQ = 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=in.(' + wanted.map(encodeURIComponent).join(',') + ')';
+  let existing;
+  try {
+    try { existing = await vpaSelectAll(env, 'vp_venue_staff', staffQ + '&order=venue_id.asc,id.asc&select=venue_id,role,permissions,is_account_owner'); }
+    catch (e) {
+      if (!/42703|is_account_owner does not exist/.test(String((e && e.message) || e))) throw e;
+      existing = await vpaSelectAll(env, 'vp_venue_staff', staffQ + '&order=venue_id.asc,id.asc&select=venue_id,role,permissions');
+    }
+  } catch (_) {
+    return json({ error: 'We could not check that login just now. Please try again in a moment.' }, 503);
+  }
+  existing = existing || [];
+  if (existing.some((r) => r && (r.is_account_owner === true || r.role === 'owner' || (r.role === 'manager' && !r.permissions)))) {
+    return json({ error: 'That mobile already has full access to this account, so it cannot be added as a manager. Nothing was changed.' }, 409);
+  }
+  const have = new Set(existing.map((r) => r.venue_id));
   for (const vid of wanted) {
     if (have.has(vid)) {
       // display_name, NOT label: vp_venue_staff has no label column, so both of these calls
@@ -19798,7 +19854,7 @@ async function vpbOptinGate(request, env, json) {
 
      This TIGHTENS things for existing managers, on purpose: none of them has a permissions
      object, so none of them was ever granted this. They are told who to ask, not just no. */
-  const mayExport = o.actingAsAdmin || o.role === 'owner'
+  const mayExport = o.actingAsAdmin || vpbIsOwner(o)   // the owner named on THIS account (M1, H2)
                  || !!(o.perms && o.perms.players_optin === true);
   if (!mayExport) {
     return { reply: json({ error: 'Your manager access does not include player details. The venue owner '
@@ -20294,7 +20350,8 @@ async function vpbListHosts(request, env, json) {
     if (s.role !== 'host' && !s.permissions) u.full_access = true;
     if (s.display_name && !u.label) u.label = s.display_name;
   }
-  if (byUser[o.authUserId]) { byUser[o.authUserId].is_owner = true; byUser[o.authUserId].role = 'owner'; byUser[o.authUserId].full_access = true; }
+  // Only the NAMED owner is painted as Owner (security audit 3 Nov 2026, H2), not whoever is looking.
+  if (byUser[o.authUserId] && vpbIsOwner(o)) { byUser[o.authUserId].is_owner = true; byUser[o.authUserId].role = 'owner'; byUser[o.authUserId].full_access = true; }
   // Mobile digits, in parallel and bounded: a slow Auth API costs the digits, never the list.
   const ids = Object.keys(byUser).slice(0, 60);
   const users = await Promise.all(ids.map((id) => vpaAuthGetUser(env, id)));

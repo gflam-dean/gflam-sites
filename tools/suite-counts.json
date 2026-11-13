@@ -527,6 +527,10 @@
   "checks": 17,
   "counted_by": "lines"
  },
+ "tools/security-3nov-sql.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/see-a-night-phone-in-chrome.test.py": {
   "checks": 42,
   "counted_by": "lines"
@@ -609,6 +613,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-owner-marker.js": {
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-account-people-mobiles.js": {
@@ -1159,6 +1167,10 @@
   "checks": 20,
   "counted_by": "lines"
  },
+ "tools/test-praffle-one-winner.js": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
  "tools/test-print-problem.js": {
   "checks": 8,
   "counted_by": "lines"
@@ -1301,6 +1313,14 @@
  },
  "tools/test-screens-14-oct.js": {
   "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/test-security-b4-b5-13nov.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-security-lows-3nov.js": {
+  "checks": 15,
   "counted_by": "lines"
  },
  "tools/test-self-serve-restart.js": {
@@ -2008,7 +2028,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/owner-only-routes.test.js": {
-  "checks": 42,
+  "checks": 45,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/plan-uplift.test.js": {
