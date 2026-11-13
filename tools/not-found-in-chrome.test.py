@@ -291,7 +291,7 @@ def main():
             if want == '/live-here-now':
                 # INBOX 344 / 309.1a: the 404's trivia link lands on the VENUE step ("What venue are you at?", the type-ahead), never a name-first screen
                 time.sleep(1.0)
-                st = t.js('JSON.stringify({where:!document.getElementById("vWhere").hidden, name:!document.getElementById("vName").hidden, play:!document.getElementById("vPlay").hidden, input:!!document.getElementById("whereIn").offsetParent, nameInput:!!document.getElementById("nameIn").offsetParent, h1:(document.querySelector("#vWhere h1")||{}).textContent})')
+                st = t.js('JSON.stringify({where:!document.getElementById("vWhere").hidden, name:!document.getElementById("vName").hidden, play:!document.getElementById("vPlay").hidden, input:!!document.getElementById("whereIn").offsetParent, nameInput:!!document.getElementById("nameIn").offsetParent, h1:(document.getElementById("whereHead")||{}).textContent})')
                 st = json.loads(st) if st else {}
                 check('the 404 trivia link lands on the VENUE step first (type-ahead shown), and never on a name-first screen',
                       st.get('where') and st.get('input') and not st.get('name') and not st.get('nameInput') and not st.get('play'), st)

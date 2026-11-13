@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>venueplay Admin</title>
+<title>venueplay: Admin</title>
 <!-- So HQ can be added to a phone's Home Screen: an iPhone only takes help desk alerts from a site opened that way. -->
 <link rel="manifest" href="/app/hq.webmanifest">
 <meta name="apple-mobile-web-app-title" content="venueplay HQ">
@@ -75,6 +75,7 @@
   .wrap{max-width:1240px;margin:0 auto;padding:24px 22px 60px}
   .titlerow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:3px}
   .h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:22px}
+  h1.h2{margin:0}   /* the page's one h1 (website audit, 13 Nov 2026); looks as the div did */
   .subh{color:var(--muted);font-size:13px;margin-bottom:20px}
   .lblk{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin:26px 0 11px}
   .rowbetween{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -313,7 +314,7 @@
 </div></div>
 
 <div class="wrap" id="app" style="display:none">
-  <div class="titlerow"><div class="h2">venueplay Admin</div></div>
+  <div class="titlerow"><h1 class="h2">venueplay Admin</h1></div>
   <div class="subh">Every venueplay venue in one place</div>
 
   <!-- ONE VENUES NUMBER (Dean, 3 Nov 2026: "the venue count at top left jumps from 'open now' (signed up)
@@ -363,8 +364,8 @@
   <!-- ============ VENUES ============ -->
   <div id="paneVenues">
     <div class="vtools">
-        <input type="text" id="venueSearch" placeholder="Search by name or screen address&hellip;">
-        <select id="venueFilter">
+        <input type="text" id="venueSearch" aria-label="Search venues" placeholder="Search by name or screen address&hellip;">
+        <select id="venueFilter" aria-label="Filter venues">
           <option value="all">All venues</option>
           <option value="grouped">Grouped</option>
           <option value="independent">Independent</option>
@@ -421,7 +422,7 @@
           <option value="for_profit">Pub (hotel or tavern)</option>
         </select><div class="note" style="margin-top:4px">The same question the signup page asks. It sets club or pub on the venue's card.</div></div>
         <div class="field" style="grid-column:1 / -1"><label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.45"><input type="checkbox" id="nvCompliance" style="width:auto;margin:3px 0 0"> <span id="nvComplianceText">We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
-          <input type="text" id="nvComplianceBy" placeholder="Name of the person at the venue who agreed (e.g. Jane Smith, licensee)" style="margin-top:8px">
+          <input type="text" id="nvComplianceBy" aria-label="Person at the venue who agreed" placeholder="Name of the person at the venue who agreed (e.g. Jane Smith, licensee)" style="margin-top:8px">
           <div class="note" style="margin-top:4px">Read it to them on the call, then tick it in their name. The venue cannot be created without it, and the record says who agreed and when.</div></div>
         <div class="field nvFoundF"><label for="nvMax">Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label for="nvPlan">Plan</label><select id="nvPlan"><option value="monthly"> monthly</option><option value="annual"> annual</option></select></div>
@@ -493,11 +494,11 @@
       <div class="scrhead">One command, every screen</div>
       <div class="note" style="margin:0" id="screensScope">This applies to every venue screen at once: every TV showing venueplay, at every venue.</div>
       <div class="scrrow">
-        <select id="screensAction">
+        <select id="screensAction" aria-label="What to do on every screen">
           <option value="ads" selected>Put the ads back on</option>
           <option value="reload">Restart the page</option>
         </select>
-        <select id="reloadScreensWhen">
+        <select id="reloadScreensWhen" aria-label="When to restart the screens">
           <option value="3am" selected>at 3am Brisbane</option>
           <option value="now">right now</option>
         </select>
@@ -566,7 +567,7 @@
         picks it up next. Both are stored against the venue and show here for good.</div>
     </div>
     <div class="filterbar" style="margin-bottom:12px">
-      <select id="cxFilter" style="width:auto">
+      <select id="cxFilter" aria-label="Filter cancelled venues" style="width:auto">
         <option value="all" selected>Everyone (not contacted first)</option>
         <option value="uncontacted">Not contacted yet</option>
         <option value="open">Still inside their paid period</option>
@@ -651,8 +652,8 @@
       <div class="errflash" id="addGroupErr"></div>
     </div>
     <div class="filterbar" style="margin-bottom:12px">
-      <input type="text" id="gSearch" placeholder="Find a group, an account or a venue in one">
-      <select id="gFilter">
+      <input type="text" id="gSearch" aria-label="Find a group" placeholder="Find a group, an account or a venue in one">
+      <select id="gFilter" aria-label="Filter groups">
         <option value="all">All</option>
         <option value="active">Active only</option>
         <option value="inactive">Inactive only</option>
@@ -689,12 +690,12 @@
     <div class="lblk">Add a <span style="text-transform:none">venueplay</span> staff login</div>
     <div class="panel pad">
       <div class="addrow3">
-        <input type="text" id="tmName" placeholder="Full name">
-        <input type="tel" id="tmMobile" placeholder="Mobile e.g. 0412 345 678" class="mono">
-        <select id="tmRole"><option value="staff">Staff</option><option value="accounts">Accounts</option><option value="owner">Owner</option></select>
+        <input type="text" id="tmName" aria-label="Full name" placeholder="Full name">
+        <input type="tel" id="tmMobile" aria-label="Mobile number" placeholder="Mobile e.g. 0412 345 678" class="mono">
+        <select id="tmRole" aria-label="Role"><option value="staff">Staff</option><option value="accounts">Accounts</option><option value="owner">Owner</option></select>
         <button class="btn pink" id="tmAdd">Add</button>
       </div>
-      <input type="email" id="tmEmail" placeholder="Email (optional, for our records only)" style="margin-top:8px;width:100%">
+      <input type="email" id="tmEmail" aria-label="Email" placeholder="Email (optional, for our records only)" style="margin-top:8px;width:100%">
       <div class="note" style="margin:8px 0 0">They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code to this mobile. No app to install.</div>
       <div id="teamGate" class="restrict hidden">Only an Owner can add or remove venueplay staff logins.</div>
       <div class="okflash" id="tmOk"><span>&#10003;</span> <span></span></div>
@@ -790,7 +791,7 @@
     <div class="lblk" style="margin-top:26px">Remove a player who has asked</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="note" style="margin:0 0 10px">Type the <b>whole</b> email address or mobile number they gave the venue. You will see every venue that holds it before anything is removed. Where a venue has downloaded its list since they joined, we email that venue asking them to delete the person from their own copy as well.</div>
-      <input id="rpQuery" type="text" autocomplete="off" placeholder="name@example.com or 0412 345 678" style="max-width:340px">
+      <input id="rpQuery" aria-label="Email or mobile of the login" type="text" autocomplete="off" placeholder="name@example.com or 0412 345 678" style="max-width:340px">
       <button class="btn ghost sp" id="rpFind" style="margin-left:8px">Find them</button>
       <span class="note" id="rpMsg" style="margin-left:10px"></span>
       <div id="rpResults" style="margin-top:12px"></div>
@@ -801,7 +802,7 @@
     <div class="lblk" style="margin-top:26px">Remove a login</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="note" style="margin:0 0 10px">Type the <b>whole</b> email of a venueplay login to see every venue it is on. A login that is on one venue or none can be removed for good, for example an old test login. A login on any other venue, or a venueplay staff login, cannot.</div>
-      <input id="rlQuery" type="email" autocomplete="off" placeholder="name@example.com" style="max-width:340px">
+      <input id="rlQuery" aria-label="Whole email of the login" type="email" autocomplete="off" placeholder="name@example.com" style="max-width:340px">
       <button class="btn ghost sp" id="rlFind" style="margin-left:8px">Find the login</button>
       <div id="rlResults" style="margin-top:12px"></div>
     </div>
@@ -2016,14 +2017,14 @@
      a discount that needs a decision should not be applied by a screen that did not ask. */
   function discountHtml(id){
     return '<div class="cxnoteform" style="margin-top:10px">'
-      + '<select data-dcpct="'+esc(id)+'" style="width:auto">'
+      + '<select aria-label="Discount percent" data-dcpct="'+esc(id)+'" style="width:auto">'
       +   '<option value="">Give a discount\u2026</option>'
       +   '<option value="10">10% off</option>'
       +   '<option value="15">15% off</option>'
       +   '<option value="20">20% off</option>'
       +   '<option value="25">25% off</option>'
       + '</select> '
-      + '<select data-dcmon="'+esc(id)+'" style="width:auto">'
+      + '<select aria-label="Discount length" data-dcmon="'+esc(id)+'" style="width:auto">'
       +   '<option value="1">for 1 month</option>'
       +   '<option value="2">for 2 months</option>'
       +   '<option value="3" selected>for 3 months</option>'
@@ -2515,9 +2516,9 @@
       var gaming =
         '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
           '<b>Gaming</b> &middot; state '+stateTxt+' '+
-          '<input type="text" class="gampc mono" data-vid="'+esc(v.id)+'" value="'+esc(v.postcode||"")+'" maxlength="4" inputmode="numeric" placeholder="Postcode" style="width:86px;display:inline-block;padding:5px 8px;font-size:12.5px"> '+
+          '<input type="text" aria-label="Postcode" class="gampc mono" data-vid="'+esc(v.id)+'" value="'+esc(v.postcode||"")+'" maxlength="4" inputmode="numeric" placeholder="Postcode" style="width:86px;display:inline-block;padding:5px 8px;font-size:12.5px"> '+
           '<button class="mini" data-pcsave="'+esc(v.id)+'">Set</button> &middot; '+
-          '<select class="gament" data-vid="'+esc(v.id)+'" style="width:auto;display:inline-block;padding:5px 26px 5px 9px;font-size:12.5px">'+
+          '<select aria-label="Club or pub" class="gament" data-vid="'+esc(v.id)+'" style="width:auto;display:inline-block;padding:5px 26px 5px 9px;font-size:12.5px">'+
             '<option value=""'+(ent===""?" selected":"")+'>Not asked yet</option>'+
             '<option value="non_profit"'+(ent==="non_profit"?" selected":"")+'>Club (non-profit)</option>'+
             '<option value="for_profit"'+(ent==="for_profit"?" selected":"")+'>Pub (for-profit)</option>'+
@@ -3714,10 +3715,10 @@
   }
   function discountFormHtml(){
     return '<div class="dgrid">'+
-      '<div class="field" style="margin:0"><label>Type</label><select class="dcType"><option value="percent">Percentage</option><option value="dollar">Dollar amount</option></select></div>'+
-      '<div class="field" style="margin:0"><label class="dcValLbl">Percent off</label><input type="number" step="0.01" class="dcValue mono" placeholder="e.g. 10"></div>'+
-      '<div class="field dcMonthsWrap" style="margin:0"><label>For how many months</label><input type="number" class="dcMonths mono" placeholder="blank = ongoing"></div>'+
-      '<div class="field" style="margin:0"><label>Note / reason</label><input type="text" class="dcNote" placeholder="optional"></div>'+
+      '<div class="field" style="margin:0"><label>Type</label><select class="dcType" aria-label="Discount type"><option value="percent">Percentage</option><option value="dollar">Dollar amount</option></select></div>'+
+      '<div class="field" style="margin:0"><label class="dcValLbl">Percent off</label><input type="number" step="0.01" class="dcValue mono" aria-label="Discount amount" placeholder="e.g. 10"></div>'+
+      '<div class="field dcMonthsWrap" style="margin:0"><label>For how many months</label><input type="number" class="dcMonths mono" aria-label="For how many months" placeholder="blank = ongoing"></div>'+
+      '<div class="field" style="margin:0"><label>Note / reason</label><input type="text" class="dcNote" aria-label="Note or reason" placeholder="optional"></div>'+
       '</div>'+
       /* The two types are not variations on one thing, they are different mechanisms with
          different billing behaviour, and the form used to say nothing about either. */

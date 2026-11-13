@@ -2174,5 +2174,9 @@
  "tools/stale-answer-after-rejoin-in-chrome.test.py": {
   "checks": 23,
   "counted_by": "lines"
+ },
+ "tools/website-audit-small-batch2-13nov-in-chrome.test.py": {
+  "checks": 56,
+  "counted_by": "lines"
  }
 }

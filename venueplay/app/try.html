@@ -30,7 +30,7 @@
   body{ min-height:100vh; }
   .wrap{ max-width:620px; margin:0 auto; padding:28px 18px 40px; }
   .logo{ display:block; height:26px; margin:0 0 26px; }
-  h1{ font:800 28px/1.2 'Hanken Grotesk',Manrope,sans-serif; margin:0 0 10px; color:#FFFFFF; }
+  h1,.sh{ font:800 28px/1.2 'Hanken Grotesk',Manrope,sans-serif; margin:0 0 10px; color:#FFFFFF; }
   h2{ font:800 21px/1.25 'Hanken Grotesk',Manrope,sans-serif; margin:0 0 8px; color:#FFFFFF; }
   p{ margin:0 0 14px; font-size:16px; color:var(--muted); }
   .small{ font-size:15px; color:var(--faint); }
@@ -68,7 +68,7 @@
   .phonebox iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
   .driver{ position:absolute; left:-10px; top:-10px; width:1px; height:1px; opacity:0; pointer-events:none; border:0; }
   @media (min-width:900px){ .stage.tv{ grid-template-columns:minmax(0,1fr) 320px; align-items:start; } .stage.tv .tvbox{ max-height:calc(100vh - 28px); } }
-  @media (max-width:480px){ .wrap{ padding:22px 16px 34px; } h1{ font-size:25px; } .qr{ width:170px; height:170px; } }
+  @media (max-width:480px){ .wrap{ padding:22px 16px 34px; } h1,.sh{ font-size:25px; } .qr{ width:170px; height:170px; } }
   .done{ position:fixed; inset:0; background:rgba(10,10,11,.92); display:none; align-items:center; justify-content:center; padding:18px; z-index:5; }
   .done.on{ display:flex; }
   .done .card{ max-width:520px; width:100%; background:var(--ink-2); border:1px solid var(--line); border-radius:16px; padding:22px; }
@@ -82,14 +82,14 @@
 
   <!-- 1. HOW WOULD YOU LIKE TO TRY IT (INBOX 82) -->
   <div class="step" id="stepMode" data-step="mode">
-    <h1>It's your first time here. How would you like to try it?</h1>
+    <h2 class="sh">It's your first time here. How would you like to try it?</h2>
     <button class="choice" type="button" id="modePlayer" data-mode="player"><b>As a player</b><span>This screen shows the TV and your phone is the player. The game runs itself.</span></button>
     <button class="choice" type="button" id="modeHost" data-mode="host"><b>As the host too</b><span>Got another device? Use it as the host console: this screen is the TV, a tablet or second phone is the host, and your phone is the player.</span></button>
   </div>
 
   <!-- 2. HOW MANY PLAYERS (a real form, INBOX 93 autofill rules) -->
   <form class="step" id="stepCount" data-step="count" autocomplete="off" novalidate>
-    <h1>How many players will join?</h1>
+    <h2 class="sh">How many players will join?</h2>
     <p>So the game knows when everyone has answered.</p>
     <div class="count">
       <button type="button" id="countLess" aria-label="One fewer">-</button>
@@ -102,14 +102,14 @@
 
   <!-- 3. ANOTHER DEVICE? ASK, NEVER ASSUME (INBOX 92c, 93) -->
   <div class="step" id="stepDevice" data-step="device">
-    <h1>Have you got another device handy (a phone, or a laptop or TV)?</h1>
+    <h2 class="sh">Have you got another device handy (a phone, or a laptop or TV)?</h2>
     <p id="deviceHint"></p>
     <div class="row"><button class="btn" type="button" id="devYes">Yes</button><button class="btn ghost" type="button" id="devNo">No</button></div>
   </div>
 
   <!-- 4. ON A PHONE WITH A SECOND SCREEN: THE TV CODE (INBOX 92c) -->
   <div class="step" id="stepPhoneTv" data-step="phonetv">
-    <h1>This phone is your player.</h1>
+    <h2 class="sh">This phone is your player.</h2>
     <p>For the TV part, open <b>venueplay.com.au/tv</b> on a laptop or TV and type this code:</p>
     <div class="code" id="phoneTvCode">------</div>
     <div id="phoneHostLine" hidden><p>On your tablet or second phone, open the host console and sign in with your mobile:</p><p><b id="phoneHostUrl"></b></p></div>

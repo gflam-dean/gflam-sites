@@ -4881,7 +4881,7 @@ VP_PAGES = {
     '/app/musical/play':      'VPFollow.start',
     '/app/trivia/host':       'venueplay Trivia',   # the name in lowercase (Dean, 1 Nov 2026)
     '/app/musical/host':      'soundIsOnlyHere',
-    '/app/raffle/host':       'venueplay Raffle',
+    '/app/raffle/host':       'Host Console',   # in the old title (venueplay Raffle: Host Console) and the new one (13 Nov 2026: venueplay: Raffle Host Console)
     '/app/members/host':      'Members',
     '/app/settings.html':     'settings',
     '/app/billing.html':      'billing',
