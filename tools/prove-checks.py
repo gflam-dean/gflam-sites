@@ -4269,6 +4269,9 @@ MUTATIONS = [
     ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "    if (annual && !(nowS < vpbMonthOnS(atS))) return null;", "",
      'a yearly pub that kept its players through the free month has it taken back on a later release'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "'vfmt:' + venueId + ':' + mine.length + ':' + prev + ':' + owed);", "'vfmt:' + venueId + ':' + prev + ':' + owed);",
+     'drop, raise, drop the same day: the second take-back replays the first and the credit is kept'),
     # 3 Nov 2026: tools/test-players-timing.js RUNS vpbSetPlayers (D114). Rule 2 is pinned, rule 4 (the one-hour undo)
     # sits behind VPB_BILLING_RULES_3NOV, OFF.
     ('test-players-timing.js', 'venueplay-backend/worker/venueplay-api-FULL.js',

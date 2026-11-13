@@ -245,6 +245,21 @@ var k2 = S.posts.filter(function (p) { return /invoiceitems$/.test(p.url); })[1]
 check('c) a racing duplicate of ONE request sends the SAME key', !!k1 && !!k2 && k1.key === k2.key, [k1 && k1.key, k2 && k2.key]);
 check('c) so Stripe charges it once', Object.keys(S.items).length === 1 && liveItemCents() === 24000, S.items);
 
+/* e) The smallest move, add 1 / release 1 / add 1, on both plans (the second add is a real charge). */
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+stripeReset({ quantity: 20 });
+call('/account/players', OWNER, { venue_id: V1, players: 21 }, ON);
+call('/account/players', OWNER, { venue_id: V1, players: 20 }, ON);
+var e3 = call('/account/players', OWNER, { venue_id: V1, players: 21 }, ON);
+check('e) monthly (switch on): add 1, undo, add 1 again: the second add is a live $3.00 charge', venueNamed('Home Pub').max_players === 21 && liveItemCents() === 300 && e3.body.charge_cents === 300, [S.items, e3.body]);
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 20 }]);
+stripeReset({ quantity: 20, price: 'price_S_A', periodEnd: Math.floor(Date.now() / 1000) + 200 * 86400 });
+call('/account/players', OWNER, { venue_id: V1, players: 21 });
+var one = liveItemCents();
+call('/account/players', OWNER, { venue_id: V1, players: 20 });
+call('/account/players', OWNER, { venue_id: V1, players: 21 });
+check('e) yearly: add 1, release 1, add 1 again: the second add makes its own charge', one > 0 && liveItemCents() === 2 * one && Object.keys(S.items).length === 2, [one, S.items]);
+
 /* d) Yearly release made twice in a day (release 80, add them back, release 80 again): the second release
       banks its own credit too, rather than replaying the first and losing the venue its money. */
 worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 100 }]);
@@ -291,6 +306,13 @@ check('b) monthly: what is left is no more than the 1 player\'s month the next b
 /* ...and raising it back gives the credit back: an honest change of mind costs nothing. */
 call('/account/players', OWNER, { venue_id: bigPub().id, players: 2000 }, ON);
 check('b) monthly: putting the 2,000 back puts the whole credit back', S.balance === -c0, [S.balance, c0]);
+
+/* ...and the same drop made a SECOND time the same day takes the credit back again (its own Stripe key: drop,
+   raise, drop is the same before/after pair twice, and Stripe would replay the first). */
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 }, ON);
+var tk = S.posts.filter(function (p) { return /balance_transactions$/.test(p.url) && /^vfmt:/.test(p.key || ''); }).map(function (p) { return p.key; });
+check('b) monthly: drop, raise back, drop again: the second drop is taken back too, with three different keys',
+  -S.balance === Math.round(c0 / 2000) && tk.length === 3 && tk[0] !== tk[2], [S.balance, c0, tk]);
 
 /* c) Monthly, cancel the pub before the bill: its credit goes with it; un-cancel puts it back. */
 r = monthlyWorld(2000);

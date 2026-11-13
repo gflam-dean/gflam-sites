@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:19 · 19a8b2b9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:24 · 37848250';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -13675,7 +13675,8 @@ async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
         + '&action=eq.free_month_trued_up&select=id,created_at,actor_admin,detail&order=created_at.asc,id.asc');
     } catch (e) { console.log('[billing] free month true-up: audit read failed at venue ' + venueId + ', left alone'); return null; }
     /* Only the billing Worker's own rows (actor_admin null): a row an HQ login wrote is never money. */
-    const last = (prevRows || []).filter((r) => r && r.actor_admin == null).slice(-1)[0];
+    const mine = (prevRows || []).filter((r) => r && r.actor_admin == null);
+    const last = mine.slice(-1)[0];
     const prev = last && last.detail ? (parseInt(last.detail.owed_cents, 10) || 0) : 0;
     const delta = owed - prev;
     if (!delta) return null;
@@ -13685,7 +13686,11 @@ async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
       description: delta > 0
         ? name + ' - first month free: ' + n + ' of the ' + P + ' players it was given for are kept, so the free part for the other ' + (P - n) + ' comes back off'
         : name + ' - first month free: back to ' + Math.min(n, P) + ' of the ' + P + ' players it was given for, so that free part is credited again',
-    }, 'vfmt:' + venueId + ':' + prev + ':' + owed);
+    /* THE KEY CARRIES HOW MANY ADJUSTMENTS CAME BEFORE (13 Nov 2026). prev:owed alone repeats: drop to 1
+       (0 -> X), raise back (X -> 0), drop to 1 again (0 -> X) is the same pair twice in a day, Stripe would
+       replay the first and the second take-back would never happen. A retry of the same request reads the
+       same rows (its own row is written only after Stripe answers), so it keeps its key and moves money once. */
+    }, 'vfmt:' + venueId + ':' + mine.length + ':' + prev + ':' + owed);
     if (!res || res.error) {
       console.log('[billing] free month true-up FAILED at venue ' + venueId + ': ' + ((res && res.error && res.error.message) || 'unknown'));
       return { kind: 'failed', cents: delta };
