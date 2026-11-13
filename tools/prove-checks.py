@@ -24087,6 +24087,11 @@ MUTATIONS = [
      '  Date.now = function () { return clock + __shift; };\n',
      '',
      'the autopilot section runs on the machine clock again, so it goes red as the real date moves past the fixture'),
+    # 14 Nov 2026: real-settings reads the musical card once every square has painted; a square that stays empty is still red.
+    ('real-settings-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     'ct.textContent=cardTitle(titles[i]);',
+     'ct.textContent=(i===0?"":cardTitle(titles[i]));',
+     'one square of the phone\'s musical card stays empty (the wait for a painted card must not excuse it)'),
 ]
 
 

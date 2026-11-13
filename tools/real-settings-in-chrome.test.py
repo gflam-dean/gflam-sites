@@ -223,6 +223,10 @@ def musical(shape, n):
     sq = [c.get('title') for card in cards for c in (card.get('cells') or []) if isinstance(c, dict) and c.get('title')]
     off = [t for t in sq if t not in tt]
     ok('musical: every square the Worker dealt the phone (%d) is inside %s (295.2d)' % (len(sq), theme_name(want)), len(cards) == 1 and len(sq) == 24 and not off, [len(cards), len(sq), off[:4]])
+    # The card's squares are read once every square has painted its title (14 Nov 2026: under three Chrome suites at once
+    # the read landed while one square was still empty, saw [23, []]; alone it was 24). An empty square that STAYS
+    # empty still fails below: this waits up to 15 s, it does not excuse.
+    R.until(ph, '(function(){ var c=document.querySelectorAll("#cardGrid .cc:not(.free)"); return c.length===24 && [].every.call(c,function(x){ return (x.textContent||"").trim().length>0; }); })()', 15)
     shown = js(ph, 'JSON.stringify([].map.call(document.querySelectorAll("#cardGrid .cc:not(.free)"),function(c){return (c.textContent||"").replace(/\\s+/g," ").trim();}))')
     shown = [c for c in (json.loads(shown) if isinstance(shown, str) else []) if c and c.lower() != 'free']
     def norm(t): return ''.join(ch for ch in t.lower() if ch.isalnum())
