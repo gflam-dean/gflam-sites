@@ -2824,7 +2824,7 @@
     else { setConn("none"); if(room) try{ roomIn.value=room.replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); paintCode(); }catch(e){} show("vNoRoom"); }
     /* A phone on "You're in" for a night that is really gone says so, with a way back (/app/vp-waitwatch.js). */
     if(window.VP_WAITWATCH) VP_WAITWATCH.start({ api: VP_GAME_API,
-      session:function(){ return /^[0-9a-f-]{36}$/i.test(_joinedFor||"") ? _joinedFor : ""; },
+      session:function(){ var u=/^[0-9a-f-]{36}$/i; return u.test(_joinedFor||"") ? _joinedFor : (u.test(P.lastSid||"") ? P.lastSid : ""); },   /* a phone whose own /join has not landed yet (a slow night) still knows the night from the console's state messages */
       waiting:function(){ return P.joined && !P.active && !P.cards.length && !$("vWait").classList.contains("hidden"); },
       forget:function(){ try{ ["vp-token-","vp-ttoken-","vp-mtoken-"].forEach(function(k){ localStorage.removeItem(k+P.room); }); localStorage.removeItem("vp-name-"+P.room); sessionStorage.removeItem("vp-name-"+P.room); }catch(e){} } });
   })();

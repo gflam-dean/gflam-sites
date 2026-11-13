@@ -432,13 +432,29 @@ def run_game(G):
         R.close()
 
 
+def run_unit():
+    """0: the phone's night watcher itself, by hand (tools/waitwatch-unit.js runs the real vp-waitwatch.js): a failed or slow answer never
+    resets the twice-in-a-row count, only a positive "still here" does; and the bingo phone knows its night from the console's state
+    messages before its own /join has landed (the 13 Nov flake: under load that join was late, the watcher had no night id, never asked)."""
+    import subprocess
+    print('\n=== THE WATCHER, BY HAND ===')
+    p = subprocess.run(['jsc', os.path.join('tools', 'waitwatch-unit.js')], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    lines = [l for l in p.stdout.splitlines() if l.startswith('  ok   waitwatch:') or l.startswith('  FAIL waitwatch:')]
+    for l in lines:
+        ok(l[7:].strip(), l.startswith('  ok'), l)
+    ok('waitwatch: the hand-driven watcher ran all 12 checks', len(lines) == 12 and p.returncode == 0, p.stdout[-400:])
+    play = open(os.path.join(ROOT, 'venueplay', 'play.html')).read()
+    ok('waitwatch: the bingo phone falls back to the night the console named (P.lastSid) while its own join is late', 'u.test(P.lastSid||"") ? P.lastSid' in play)
+
+
 def main():
     import gatelib
     if not gatelib.hold_lock_or_refuse('lobby-refresh-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         print('\n0 of 1 checks passed'); sys.exit(1)
     args = sys.argv[1:]
-    want = [a for a in args if a in GAMES or a in DRAWS] or (list(GAMES) + list(DRAWS))
+    want = [a for a in args if a in GAMES or a in DRAWS] or ([] if 'unit' in args else (list(GAMES) + list(DRAWS)))
     try:
+        if not [a for a in args if a in GAMES or a in DRAWS] or 'unit' in args: run_unit()
         for n in want:
             try:
                 if n in DRAWS: run_draw(n)
