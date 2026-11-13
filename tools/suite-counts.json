@@ -2150,5 +2150,9 @@
  "tools/rig-rejoin-one-row.test.py": {
   "checks": 9,
   "counted_by": "lines"
+ },
+ "tools/kogan-shot.test.py": {
+  "checks": 27,
+  "counted_by": "lines"
  }
 }
