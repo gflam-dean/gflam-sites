@@ -384,10 +384,18 @@ ok('once game_prefs has them, the older columns are not what is read', POSTS.len
 resetDb({ trivia: { time_s: 12 } });
 var t6 = triviaTablet({ trivia_time_limit_s: 45 }); t6.startTriviaPrefs(); flush();
 ok('game_prefs wins over the older columns', t6.els.cfgTime.value === '12', t6.els.cfgTime.value);
+/* Since 13 Nov 2026 (fix/lobby-refresh-13nov) each listener also calls saveLobby(), the lobby pointer (/app/vp-lobby.js).
+   The REAL lobbyKey / saveLobby / clearLobby are lifted from the page; with no VP_LOBBY on the window they do nothing,
+   exactly as on a page that never loaded vp-lobby.js. Each listener is FIRED, and must queue the prefs save once. */
+ok('trivia/host.html still defines lobbyKey, saveLobby and clearLobby (the lobby pointer the listeners call)',
+   ['lobbyKey', 'saveLobby', 'clearLobby'].every(function (n) { return PAGES.trivia.indexOf('function ' + n + '(') >= 0; }));
+var LOBBY_FNS = liftFrom(PAGES.trivia, 'lobbyKey') + '\n' + liftFrom(PAGES.trivia, 'saveLobby') + '\n' + liftFrom(PAGES.trivia, 'clearLobby');
+var runQ = function () {};
 var tw = [], twl = lineWith(PAGES.trivia, '["cfgCount","cfgTime","cfgBase","cfgDoubleLast"].forEach');
-runLifted('(function(){ ' + twl + '\n})', { $: function (id) { return { addEventListener: function (ev, f) { tw.push(id + ':' + ev + ':' + (f === 'Q')); } }; }, queueTriviaPrefs: 'Q' })();
+runLifted('(function(){ ' + LOBBY_FNS + '\n' + twl + '\n})', { $: function (id) { return { value: '', addEventListener: function (ev, f) { var q = 0, threw = null; try { runQ = function () { q++; }; f(); } catch (e) { threw = e; } tw.push(id + ':' + ev + ':' + (q === 1 && !threw)); } }; },
+  queueTriviaPrefs: function () { runQ(); }, DEMO: false, G: { status: 'setup', venueId: 'v-1', sessionId: '' }, window: {} })();
 ok('the page saves as the count, time, points and double count are typed', tw.join() === 'cfgCount:input:true,cfgTime:input:true,cfgBase:input:true,cfgDoubleLast:input:true', tw);
-ok('and on the set, the speed bonus and double points', /queueTriviaPrefs\(\); \}\);/.test(PAGES.trivia) && (PAGES.trivia.match(/queueTriviaPrefs\(\);/g) || []).length >= 3);
+ok('and on the set, the speed bonus and double points', /queueTriviaPrefs\(\); (saveLobby\(\); )?\}\);/.test(PAGES.trivia) && (PAGES.trivia.match(/queueTriviaPrefs\(\);/g) || []).length >= 3);
 ok('it starts once the question sets are in the list', /Promise\.resolve\(loadQuestionSets\(\)\)\.then\(startTriviaPrefs, startTriviaPrefs\)/.test(PAGES.trivia));
 /* A NEW VENUE OPENS ON GENERAL KNOWLEDGE (Dean, 29 Oct 2026: a brand new venue opened on "Anime, Comics &
    Cartoons", the first library title). The REAL loadQuestionSets, over a fake list and select. */

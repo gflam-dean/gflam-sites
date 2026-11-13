@@ -23088,6 +23088,20 @@ MUTATIONS = [
      '    if(!p.sessionId){ restorePrizes(p); return Promise.resolve(false); }',
      '    if(!p.sessionId){ return Promise.resolve(false); }',
      "a refresh before the first raffle draw forgets tonight's prize list"),
+    # 13 Nov 2026, release/tuesday-17nov: the trivia jsc harnesses lift the lobby pointer fix/lobby-refresh-13nov put in trivia/host.html.
+    ('test-game-setup-advanced.js', 'venueplay/app/trivia/host.html',
+     '  function clearLobby(){ if(window.VP_LOBBY && !DEMO)', '  function clearLobbyGone(){ if(window.VP_LOBBY && !DEMO)',
+     'trivia/host.html no longer defines clearLobby, which the setting listeners reach'),
+    ('test-game-setup-advanced.js', 'venueplay/app/trivia/host.html',
+     'el.addEventListener("input", function(){ queueTriviaPrefs(); saveLobby(); }); });',
+     'el.addEventListener("input", function(){ saveLobby(); }); });',
+     'typing the count, time, points or double count no longer saves the venue\'s setup'),
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html',
+     '  function lobbyKey(){ return DEMO ? "" : G.venueId; }', '  function lobbyKeyGone(){ return DEMO ? "" : G.venueId; }',
+     'trivia/host.html no longer defines lobbyKey, which openLobby reaches through saveLobby'),
+    ('trivia-night.test.js', 'venueplay/app/trivia/host.html',
+     '  function saveLobby(){\n    if(DEMO', '  function saveLobbyGone(){\n    if(DEMO',
+     'trivia/host.html no longer defines saveLobby, which the round box listener calls'),
 ]
 
 

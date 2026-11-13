@@ -516,8 +516,13 @@ await (async function () {
   // The console: the real openLobby, its session opened by a stub that does what openSession does.
   var G = { venueId: 'v1', sessionId: '', joinCode: '', status: 'setup', busy: false, setTitle: 'Anime', colour: true };
   var toPhones = [];
-  var hsrc = lift(HOSTP, 'openLobby', 'trivia/host.html') + '\n; return openLobby;';
-  var henv = { G: G, $: dom.$, clearErrForAction: function () {}, readSettings: function () {}, hostError: function (e) { throw new Error('hostError: ' + e); },
+  /* openLobby also calls saveLobby() since 13 Nov 2026 (fix/lobby-refresh-13nov: the lobby pointer, /app/vp-lobby.js). The REAL
+     lobbyKey / saveLobby / clearLobby come out of the page with it; no VP_LOBBY on this window, so they do nothing, as on a
+     page that never loaded vp-lobby.js. */
+  show('trivia/host.html still defines lobbyKey, saveLobby and clearLobby (openLobby calls saveLobby)',
+       ['lobbyKey', 'saveLobby', 'clearLobby'].every(function (n) { return HOSTP.indexOf('function ' + n + '(') >= 0; }));
+  var hsrc = liftAll(HOSTP, ['lobbyKey', 'saveLobby', 'clearLobby', 'openLobby'], 'trivia/host.html') + '\n; return openLobby;';
+  var henv = { window: {}, G: G, $: dom.$, clearErrForAction: function () {}, readSettings: function () {}, hostError: function (e) { throw new Error('hostError: ' + e); },
                openSession: function () { G.sessionId = H.sid; G.joinCode = '72USMR'; return Promise.resolve({ session_id: G.sessionId, join_code: G.joinCode }); },
                bcast: function (m) { toPhones.push(m); }, gsend: function (m) { toPhones.push(m); }, send: function () {},
                releasePodium: function () {}, startLobbyWatch: function () {}, playerCount: function () { return 0; }, renderConsole: function () {} };

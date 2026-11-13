@@ -836,7 +836,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 175,
+  "checks": 176,
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
@@ -1388,7 +1388,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 114,
+  "checks": 115,
   "counted_by": "lines"
  },
  "tools/test-trivia-endnight.js": {
@@ -1868,7 +1868,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 111,
+  "checks": 112,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {

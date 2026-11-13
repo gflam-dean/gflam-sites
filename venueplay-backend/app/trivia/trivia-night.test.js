@@ -315,7 +315,11 @@ pass("the page marks itself as leaving before it goes", /addEventListener\("befo
   pass("a host action no longer hides 'Lost the connection' while the phones are still down",
        host.indexOf("function clearErrForAction(){ if(!gLostShown && !_errSticky) clearHostError(); }") > 0);
   pass("the game and the sheets read the same number (readSettings uses it)", host.indexOf("G.count=effectiveCount();") > 0);
-  pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); });') > 0);
+  /* 13 Nov 2026, fix/lobby-refresh-13nov: the same listener also keeps the lobby pointer (saveLobby, /app/vp-lobby.js), so a
+     refresh in the lobby brings back the round size the host typed. The repaint is unchanged. */
+  pass("typing in the round box repaints it", host.indexOf('$("cfgCount").addEventListener("input", function(){ renderPaperSetup(); paintRoundQs(); saveLobby(); });') > 0);
+  pass("trivia/host.html still defines lobbyKey, saveLobby and clearLobby (the round box listener calls saveLobby)",
+       ['lobbyKey', 'saveLobby', 'clearLobby'].every(function (n) { return host.indexOf('function ' + n + '(') >= 0; }));
 })();
 
 print("");
