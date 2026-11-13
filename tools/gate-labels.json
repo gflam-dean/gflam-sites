@@ -343,6 +343,7 @@
   "prospects-status-in-chrome.test.py",
   "purchase-raffle-in-chrome.test.py",
   "qr-fallback-in-chrome.test.py",
+  "raffle-ticket-stub-in-chrome.test.py",
   "real-night-check.test.py",
   "real-settings-in-chrome.test.py",
   "reconnect-layout-in-chrome.test.py",
