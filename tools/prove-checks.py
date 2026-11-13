@@ -1795,6 +1795,10 @@ MUTATIONS = [
      '    echo "  gate record: not used: the pushed files are not this checkout\'s"\n',
      '    python3 "$ROOT/tools/gate-server.py" check\n',
      'a dry run of a push of other files reports the record for this checkout as usable'),
+    ('gate-server.test.py', 'tools/gate-server.py',
+     '            os.remove(plist)\n',
+     '            pass\n',
+     'the list of every file path sent to the server is left behind in the temp folder after each run'),
     # THE TV WINDOW IS KEPT UNCOVERED, 27 Oct 2026 (the Mini Bar RECONNECTING finding of 23 Oct):
     # the venue FAQ, migration 120 and the four welcome emails all say so.
     ('tv-window-uncovered.test.py', 'venueplay/data/help-faq.json',
