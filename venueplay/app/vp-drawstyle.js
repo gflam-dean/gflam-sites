@@ -113,15 +113,17 @@
     /* ticket roll */
     ".vpds-strip{position:absolute;left:0;top:0;width:1920px;height:1080px}",
     ".vpds-it{position:absolute;top:0;left:0;will-change:transform}",
-    ".vpds-tk{width:600px;height:320px;background:#F1EDE6;border-left:3px dashed rgba(10,10,11,.28);box-sizing:border-box;display:flex;color:#0A0A0B}",
-    ".vpds-tk .vpds-ticket-body{position:relative;flex:1;padding:26px 34px 0 38px;box-sizing:border-box;min-width:0}",
-    ".vpds-tk .vpds-ticket-body:before{content:'';position:absolute;top:14px;right:12px;bottom:14px;left:16px;border:3px solid #FF1F8E;border-radius:4px}",
+    ".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;color:#0A0A0B}",
+    ".vpds-tk .vpds-ticket-body{position:relative;flex:1;padding:26px 38px 0 34px;box-sizing:border-box;min-width:0}",
+    ".vpds-tk .vpds-ticket-body:before{content:'';position:absolute;top:14px;right:16px;bottom:14px;left:12px;border:3px solid #FF1F8E;border-radius:4px}",
     ".vpds-tk .vpds-vn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".vpds-tk .vpds-rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".vpds-tk .vpds-lb{position:relative;font:600 20px/1.1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:3px}",
     ".vpds-tk .vpds-no{position:relative;font:400 150px/1 Anton,sans-serif;margin-top:4px;letter-spacing:2px;white-space:nowrap}",
-    ".vpds-tk .vpds-stub{position:relative;width:150px;border-left:3px dashed rgba(10,10,11,.34);display:flex;align-items:center;justify-content:center}",
-    ".vpds-tk .vpds-stub:before,.vpds-tk .vpds-stub:after{content:'';position:absolute;left:-15px;width:26px;height:26px;border-radius:50%;background:#0A0A0B}",
+    /* THE STUB IS THE START OF THE TICKET (Dean, 13 Nov 2026, INBOX 355): a raffle book's stub is on the left, torn off at the perforation, and the two
+       half-circle bites sit on that perforation line, top and bottom. The stub has its own number, so on the reel it always sits beside ITS ticket. */
+    ".vpds-tk .vpds-stub{position:relative;flex:none;width:150px;border-right:3px dashed rgba(10,10,11,.34);display:flex;align-items:center;justify-content:center}",
+    ".vpds-tk .vpds-stub:before,.vpds-tk .vpds-stub:after{content:'';position:absolute;right:-14.5px;width:26px;height:26px;border-radius:50%;background:#0A0A0B}",
     ".vpds-tk .vpds-stub:before{top:-13px}.vpds-tk .vpds-stub:after{bottom:-13px}",
     ".vpds-tk .vpds-sno{transform:rotate(-90deg);font:400 66px/1 Anton,sans-serif;white-space:nowrap}",
     ".vpds-tk .vpds-sl{position:absolute;top:20px;left:8px;right:8px;text-align:center;font:700 16px/1.25 'Hanken Grotesk',sans-serif;color:#55555E;overflow:hidden}",
@@ -201,11 +203,34 @@
     var view = null;
 
     function randNo() { return pad(lo + Math.floor(r() * span), n, members ? " " : "0"); }
-    /* items: random numbers; the near misses are random too (the winner is not known yet); item N is the winner, filled in on setPick */
+    /* A number that is none of `avoid` (INBOX 355): the reel never shows the same ticket twice in a row, and the winner is never also a near miss.
+       Random first; if the range is tight, the first free number in it; only a range of one ticket cannot help repeating. */
+    function freshNo(avoid) {
+      var k, no, v;
+      for (k = 0; k < 40; k++) { no = randNo(); if (avoid.indexOf(no) < 0) return no; }
+      for (v = lo; v <= hi; v++) { no = pad(v, n, members ? " " : "0"); if (avoid.indexOf(no) < 0) return no; }
+      return randNo();
+    }
+    /* items: random numbers, none repeating inside the 8 before it; the near misses are random too (the winner is not known yet); item N is the winner, filled in on setPick */
     function buildItems(N) {
       st.N = N; st.items = [];
-      for (var i = 0; i <= N + 3; i++) st.items.push({ no: randNo(), nm: "" });
+      var i, win = Math.min(8, Math.max(1, span - 2));
+      for (i = 0; i <= N + 3; i++) {
+        var avoid = []; for (var q = Math.max(0, i - win); q < i; q++) avoid.push(st.items[q].no);
+        st.items.push({ no: freshNo(avoid), nm: "" });
+      }
       st.items[N] = { no: "?", nm: "" };
+    }
+    /* the server's winner arrives after the near misses were drawn: any item that already shows that number is swapped for another, so the
+       winning ticket is not seen going past just before it lands, and no two neighbours match */
+    function clearWinFromReel() {
+      var items = st.items, i, j;
+      for (i = 0; i < items.length; i++) {
+        if (i === st.N) continue;
+        if (items[i].no !== st.winNo && !(i > 0 && items[i - 1].no === items[i].no)) continue;
+        var avoid = [st.winNo]; for (j = Math.max(0, i - 3); j <= Math.min(items.length - 1, i + 3); j++) if (j !== i) avoid.push(items[j].no);
+        items[i] = { no: freshNo(avoid), nm: "" };
+      }
     }
     function fit() {
       var w = host.clientWidth || 1280, h = host.clientHeight || 720, s = Math.min(w / 1920, h / 1080);
@@ -266,7 +291,7 @@
       setPick: function (p) {
         if (!p) return; buildItemsOnce();
         st.winNo = pad(p.number == null ? "" : p.number, n, members ? " " : "0"); st.winName = p.name ? (bigWin ? niceName(p.name) : String(p.name)) : "";
-        st.items[st.N] = { no: st.winNo, nm: st.winName }; st.picked = true;
+        st.items[st.N] = { no: st.winNo, nm: st.winName }; st.picked = true; clearWinFromReel();
         view.refresh(); applyClaim(); render(st.t);
       },
       showWin: function (p) {
@@ -294,7 +319,7 @@
 
     /* ------------------------------------------------------------------------------------------------ TICKET ROLL */
     function ticketView(c) {
-      var POOL = 9, pitch = members ? 608 : 600, W = members ? 560 : 600, H = members ? 353 : 320;
+      var POOL = 9, pitch = members ? 608 : 636, W = members ? 560 : 600, H = members ? 353 : 320;
       var v = { N: Math.round(c.DRAW * 5.2), moveDur: 0.26, freezeT: 1e9, S: null }, strip = el("div", "vpds-strip", c.world), els = [], k;
       var logo = o.logo || "", vname = o.venueName || "";
       var numFs = Math.min(150, Math.round(150 * 4 / Math.max(4, n)));
@@ -307,7 +332,7 @@
           if (o.name) d.querySelector(".vpds-ml").style.display = "none";
           d.querySelector(".vpds-no").style.fontSize = Math.min(150, Math.round(150 * 4 / Math.max(4, n))) + "px";
         } else {
-          d.innerHTML = '<div class="vpds-tk"><div class="vpds-ticket-body"><div class="vpds-vn"></div><div class="vpds-lb">Raffle ticket</div><div class="vpds-rn"></div><div class="vpds-no"></div></div><div class="vpds-stub"><div class="vpds-sl"><b></b><i></i></div><div class="vpds-sno"></div></div></div>';
+          d.innerHTML = '<div class="vpds-tk"><div class="vpds-stub"><div class="vpds-sl"><b></b><i></i></div><div class="vpds-sno"></div></div><div class="vpds-ticket-body"><div class="vpds-vn"></div><div class="vpds-lb">Raffle ticket</div><div class="vpds-rn"></div><div class="vpds-no"></div></div></div>';
           d.querySelector(".vpds-vn").textContent = vname; d.querySelector(".vpds-rn").textContent = o.name || "";
           d.querySelector(".vpds-sl b").textContent = vname; d.querySelector(".vpds-sl i").textContent = o.name || "";
           if (!vname) d.querySelector(".vpds-vn").style.display = "none"; if (!o.name) d.querySelector(".vpds-rn").style.display = "none"; d.querySelector(".vpds-no").style.fontSize = numFs + "px";

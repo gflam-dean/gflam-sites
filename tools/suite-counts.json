@@ -191,12 +191,20 @@
   "checks": 151,
   "counted_by": "lines"
  },
+ "tools/demo-ads-in-chrome.test.py": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/demo-pairs-in-chrome.test.py": {
   "checks": 18,
   "counted_by": "lines"
  },
  "tools/design-audit-small-13nov-in-chrome.test.py": {
   "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/design-audit-open-13nov-in-chrome.test.py": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/details-autofill-in-chrome.test.py": {
@@ -399,6 +407,10 @@
   "checks": 152,
   "counted_by": "lines"
  },
+ "tools/real-night-dryrun-in-chrome.test.py": {
+  "checks": 151,
+  "counted_by": "lines"
+ },
  "tools/one-phone-a-night-in-chrome.test.py": {
   "checks": 53,
   "counted_by": "lines"
@@ -455,8 +467,16 @@
   "checks": 72,
   "counted_by": "lines"
  },
+ "tools/purchase-raffle-walk-in-chrome.test.py": {
+  "checks": 67,
+  "counted_by": "lines"
+ },
  "tools/qr-fallback-in-chrome.test.py": {
   "checks": 42,
+  "counted_by": "lines"
+ },
+ "tools/raffle-ticket-stub-in-chrome.test.py": {
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/real-night-check.test.py": {
@@ -541,6 +561,22 @@
  },
  "tools/site-offer-footer-in-chrome.test.py": {
   "checks": 51,
+  "counted_by": "lines"
+ },
+ "tools/staging/check-schema-gate.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/staging/check-schema-matches-live.test.py": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
+ "tools/staging/staging-site.test.py": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/staging/tv-test-build.test.py": {
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/stale-phone-and-end-once-in-chrome.test.py": {
@@ -733,6 +769,10 @@
  },
  "tools/test-demo-sync.js": {
   "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/test-demo-venue.js": {
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-double-points.js": {
@@ -1035,6 +1075,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/test-outbox-guard.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
  "tools/test-overage-ack-covers-room.js": {
   "checks": 5,
   "counted_by": "lines"
@@ -1080,7 +1124,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 77,
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -1148,7 +1192,7 @@
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle.js": {
-  "checks": 91,
+  "checks": 92,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
@@ -1495,6 +1539,10 @@
   "checks": 46,
   "counted_by": "lines"
  },
+ "tools/test-vp-env.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
  "tools/test-vp-fade.js": {
   "checks": 72,
   "counted_by": "lines"
@@ -1687,6 +1735,10 @@
   "checks": 376,
   "counted_by": "lines"
  },
+ "tools/website-audit-p1-13nov-in-chrome.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
  "tools/welcome-name-in-chrome.test.py": {
   "checks": 29,
   "counted_by": "lines"
@@ -1732,7 +1784,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/demo-hermetic.test.js": {
-  "checks": 91,
+  "checks": 94,
   "counted_by": "lines"
  },
  "venueplay-backend/app/hop-name.test.js": {
@@ -2085,6 +2137,10 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 51,
+  "counted_by": "lines"
+ },
+ "tools/website-audit-p2-13nov-in-chrome.test.py": {
+  "checks": 8,
   "counted_by": "lines"
  }
 }

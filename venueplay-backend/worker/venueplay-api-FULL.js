@@ -36,9 +36,148 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 00:49 · 921878dd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 11:39 · 427c2919';   // tools/stamp-workers.py, do not edit by hand
+/* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
+   between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
+   file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
+
+   WHAT IT DOES
+   STAGING (env.VP_ENV === 'staging'): nothing real ever leaves. Emails, texts, push messages, the SMS hook and any
+   write to a LIVE venueplay address are caught and answered with a believable "sent", and written to an in-memory
+   outbox (globalThis.__vpOutbox, last 50) and the log. Stripe is allowed ONLY with a test key. Before it serves a
+   single request it checks its own settings and REFUSES (503) if: a live Stripe key is present; the database address
+   is LIVE's; or a send key looks real (staging keys must begin with "staging-", a placeholder that lets the send code
+   run so it can be exercised, never a working key).
+   LIVE (VP_ENV unset): changes nothing, except one thing that can never hurt a real person: a message addressed ONLY to
+   a fiction mobile (+61 491 57x xxx, the regulator's reserved range) or an @example.invalid address is answered as sent
+   and not delivered, so test rows can never cost a text or bounce an email.
+   Every setting is in VPG below. Change them there. */
+const VPG = {
+  stagingValue: 'staging',                 // env.VP_ENV
+  testMobilePrefix: '6149157',             // +61 491 57x xxx, fiction range reserved for drama (INBOX 357B Q7)
+  testEmailDomain: 'example.invalid',
+  liveSupabaseRef: 'ijkzgmdtwtgfkedqspxm', // LIVE. Never reachable from staging.
+  dummyKeyPrefix: 'staging-',              // a send key on staging must start with this
+  sendKeys: ['RESEND_API_KEY', 'MOBILEMESSAGE_USERNAME', 'MOBILEMESSAGE_PASSWORD', 'CLICKSEND_USERNAME', 'CLICKSEND_API_KEY', 'TWILIO_AUTH_TOKEN', 'SEND_SMS_HOOK_SECRET'],
+  stripeKeys: ['STRIPE_SECRET_KEY'],
+  sendHosts: /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com|api\.twilio\.com|api\.instantly\.ai|api\.sendgrid\.com|api\.mailgun\.net|fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]*notify\.windows\.com)$/i,
+  liveHosts: /^(www\.)?venueplay\.com\.au$|^(api|game)\.venueplay\.com\.au$/i,   // staging may READ these, never write
+  stagingHosts: /^[a-z0-9-]+-staging\.venueplay\.com\.au$|^staging\.venueplay\.com\.au$/i
+};
+function vpgIsStaging(env) { return !!env && String(env.VP_ENV || '') === VPG.stagingValue; }
+function vpgDigits(s) {
+  let d = String(s == null ? '' : s).replace(/[^0-9]/g, '');
+  if (d.indexOf('0') === 0) d = '61' + d.slice(1);
+  return d;
+}
+function vpgIsTestMobile(s) { const d = vpgDigits(s); return d.length >= 8 && d.indexOf(VPG.testMobilePrefix) === 0; }
+function vpgIsTestEmail(s) {
+  const t = String(s == null ? '' : s).trim().toLowerCase().replace(/[>\s]+$/, '');
+  return t.length > VPG.testEmailDomain.length && t.slice(-(VPG.testEmailDomain.length + 1)) === '@' + VPG.testEmailDomain;
+}
+/* Every recipient named in a send body (JSON): to, destination, recipient, phone, mobile, number. Strings or lists. */
+function vpgRecipients(bodyText) {
+  const out = [];
+  let j = null;
+  try { j = JSON.parse(String(bodyText)); } catch (e) { return out; }
+  const keys = { to: 1, destination: 1, recipient: 1, phone: 1, mobile: 1, number: 1 };
+  (function walk(v, depth) {
+    if (depth > 6 || v == null) return;
+    if (Array.isArray(v)) { v.forEach(function (x) { walk(x, depth + 1); }); return; }
+    if (typeof v !== 'object') return;
+    Object.keys(v).forEach(function (k) {
+      const x = v[k];
+      if (keys[k.toLowerCase()] === 1) { (Array.isArray(x) ? x : [x]).forEach(function (y) { if (typeof y === 'string' || typeof y === 'number') out.push(String(y)); }); }
+      else walk(x, depth + 1);
+    });
+  })(j, 0);
+  return out;
+}
+function vpgIsTestRecipient(r) { return vpgIsTestMobile(r) || vpgIsTestEmail(r); }
+/* '' when the settings are safe for this deployment, else why not (staging only). */
+function vpgStagingProblem(env) {
+  if (!vpgIsStaging(env)) return '';
+  const bad = [];
+  VPG.stripeKeys.forEach(function (k) { if (/^(sk|rk)_live_/.test(String(env[k] || ''))) bad.push(k + ' is a LIVE Stripe key'); });
+  if (String(env.SUPABASE_URL || '').indexOf(VPG.liveSupabaseRef) >= 0) bad.push('SUPABASE_URL is the LIVE database');
+  if (String(env.SUPABASE_SERVICE_KEY || '').indexOf(VPG.liveSupabaseRef) >= 0) bad.push('SUPABASE_SERVICE_KEY names the LIVE database');
+  VPG.sendKeys.forEach(function (k) { const v = String(env[k] || ''); if (v && v.indexOf(VPG.dummyKeyPrefix) !== 0) bad.push(k + ' looks like a real key (staging keys start "' + VPG.dummyKeyPrefix + '")'); });
+  return bad.join('; ');
+}
+/* A 503 for the whole Worker when staging is set up unsafely; null otherwise (and always null on live). */
+function vpgRefuse(env) {
+  const why = vpgStagingProblem(env);
+  if (!why) return null;
+  console.log('[outbox-guard] REFUSING to run: ' + why);
+  return new Response(JSON.stringify({ error: 'outbox guard: this staging Worker is set up unsafely and will not run', why: why }), { status: 503, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'refused' } });
+}
+function vpgFake(host, recips, n) {
+  const id = 'staging-blocked-' + n;
+  let body;
+  if (/resend/i.test(host)) body = { id: id, last_event: 'delivered' };
+  else if (/mobilemessage/i.test(host)) body = { status: 'complete', results: recips.map(function (r) { return { to: r, status: 'success', message_id: id, cost: 0 }; }) };
+  else if (/clicksend/i.test(host)) body = { response_code: 'SUCCESS', http_code: 200, data: { messages: recips.map(function (r) { return { to: r, status: 'SUCCESS', message_id: id }; }) } };
+  else body = { ok: true, id: id };
+  return new Response(JSON.stringify(Object.assign(body, { blocked_by: 'outbox guard' })), { status: 200, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } });
+}
+function vpgRecord(kind, host, method, recips, why) {
+  const box = globalThis.__vpOutbox || (globalThis.__vpOutbox = []);
+  box.push({ at: new Date().toISOString(), kind: kind, host: host, method: method, to: recips.map(function (r) { return String(r).slice(-3); }), why: why });
+  if (box.length > 50) box.shift();
+  console.log('[outbox-guard] ' + kind + ' ' + method + ' ' + host + ' (' + why + ')');
+  return box.length;
+}
+/* Wraps globalThis.fetch once per isolate. Call first thing in fetch() and scheduled(). */
+function vpgInstall(env) {
+  if (globalThis.__vpgInstalled === true) return;
+  const staging = vpgIsStaging(env);
+  const hookHost = (function () { try { return env && env.SEND_SMS_HOOK_URL ? new URL(String(env.SEND_SMS_HOOK_URL)).hostname : ''; } catch (e) { return ''; } })();
+  const real = globalThis.fetch;
+  if (typeof real !== 'function') return;
+  globalThis.__vpgInstalled = true;
+  globalThis.fetch = function (input, init) {
+    let host = '', method = 'GET', body = '', auth = '';
+    try {
+      const u = new URL(typeof input === 'string' ? input : (input && input.url) || String(input));
+      host = u.hostname;
+      method = String((init && init.method) || (input && typeof input === 'object' && input.method) || 'GET').toUpperCase();
+      body = init && init.body != null ? String(init.body) : '';
+      const h = init && init.headers;
+      auth = h ? String(typeof h.get === 'function' ? (h.get('Authorization') || '') : (h.Authorization || h.authorization || '')) : '';
+    } catch (e) { return real.apply(this, arguments); }
+    try {
+      if (staging) {
+        if (VPG.stagingHosts.test(host)) return real.apply(this, arguments);
+        if (host.indexOf(VPG.liveSupabaseRef) >= 0) return Promise.resolve(new Response(JSON.stringify({ message: 'outbox guard: the LIVE database is not reachable from staging' }), { status: 403, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+        if (host === 'api.stripe.com') {
+          if (/(sk|rk)_live_/.test(auth) || /(sk|rk)_live_/.test(body)) return Promise.resolve(new Response(JSON.stringify({ error: { type: 'invalid_request_error', message: 'outbox guard: a LIVE Stripe key is refused on staging' } }), { status: 401, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+          return real.apply(this, arguments);
+        }
+        const isSend = VPG.sendHosts.test(host) || (hookHost && host === hookHost);
+        const writesLive = VPG.liveHosts.test(host) && method !== 'GET' && method !== 'HEAD';
+        if (isSend || writesLive) {
+          const recips = vpgRecipients(body);
+          const n = vpgRecord(isSend ? 'send' : 'live-write', host, method, recips, 'staging sends nothing');
+          return Promise.resolve(vpgFake(host, recips, n));
+        }
+        return real.apply(this, arguments);
+      }
+      /* LIVE: only a message addressed purely to fiction numbers / example.invalid is caught. Anything unclear passes through. */
+      if (method === 'POST' && /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com)$/i.test(host)) {
+        const recips = vpgRecipients(body);
+        if (recips.length > 0 && recips.every(vpgIsTestRecipient)) {
+          const n = vpgRecord('test-recipient', host, method, recips, 'only fiction / example.invalid recipients');
+          return Promise.resolve(vpgFake(host, recips, n));
+        }
+      }
+    } catch (e) { /* the guard itself must never break a send: fall through */ }
+    return real.apply(this, arguments);
+  };
+}
+/* OUTBOX GUARD END */
 export default {
   async fetch(request, env) {
+    vpgInstall(env); { const vpgNo = vpgRefuse(env); if (vpgNo) return vpgNo; }   // OUTBOX GUARD (INBOX 357B)
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
     // subdomain) by reflecting the caller's Origin when it is a venueplay.com.au site. This stops
     // the "www vs no-www" mismatch that silently blocks the browser. Falls back to ALLOW_ORIGIN
@@ -372,6 +511,7 @@ export default {
      It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows
      precisely what the nightly job will do. No separate code path to drift. */
   async scheduled(event, env, ctx) {
+    vpgInstall(env); if (vpgStagingProblem(env)) { console.log("[outbox-guard] scheduled run refused: " + vpgStagingProblem(env)); return; }   // OUTBOX GUARD (INBOX 357B)
     const actor = { actorId: null, label: 'automatic (30-day archive)' };
     try {
       const res = await vpaAutoArchiveSweep(env, actor, 30, false);
@@ -6257,13 +6397,13 @@ function vpaMembersReminderChoice(answers) {
   return { day: r.day, time: m[0], hour: parseInt(m[1], 10), since: String(r.since) };
 }
 /* The most recent moment (the start of that local hour) the venue's chosen day and time came round, at or before nowMs, or null */
-function vpaMembersReminderOccurrence(state, ch, nowMs) {
+function vpaMembersReminderOccurrence(state, mrChoice, nowMs) {
   const tz = vpaSendTz(state);
   const p = vpaSendLocal(tz, nowMs);
   const start = Math.floor(nowMs) - (Math.floor(nowMs) % 1000) - (p.m * 60 + p.s) * 1000;   // the start of this local hour
   for (let i = 0; i < 24 * 8; i++) {
     const t = start - i * 3600000, q = vpaSendLocal(tz, t);
-    if (q.wd === VPA_MR_WEEKDAY[ch.day] && q.h === ch.hour) return t;
+    if (q.wd === VPA_MR_WEEKDAY[mrChoice.day] && q.h === mrChoice.hour) return t;
   }
   return null;
 }
@@ -6296,16 +6436,16 @@ async function vpaMembersReminderSweep(env, nowMs) {
   try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
   catch (e) { return Object.assign(out, { why: 'could not read the venue settings' }); }
   for (const r of rows) {
-    const ch = vpaMembersReminderChoice(r.setup_answers);
-    if (!ch) continue;
+    const mrChoice = vpaMembersReminderChoice(r.setup_answers);
+    if (!mrChoice) continue;
     out.checked++;
     const vq = await vpaMrGet(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue_id) + '&select=id,name,status,au_state,postcode,founding_id&limit=1');
     const v = vq.ok && vq.rows[0];
     if (!v || v.status !== 'active') { out.skipped++; continue; }
     const state = vpaSendState(v);
-    const at = vpaMembersReminderOccurrence(state, ch, nowMs);
+    const at = vpaMembersReminderOccurrence(state, mrChoice, nowMs);
     if (at == null) { out.skipped++; continue; }
-    if (at < vpaBneDayStartMs(ch.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
+    if (at < vpaBneDayStartMs(mrChoice.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
     const allowed = vpaSendAllowedAt(state, at);
     if (nowMs < allowed) { out.held++; continue; }
     if (!vpaInSendWindow(nowMs, state)) { out.held++; continue; }
@@ -6328,9 +6468,9 @@ async function vpaMembersReminderSweep(env, nowMs) {
     /* ONCE A WEEK: a row since this week's moment means it has gone */
     const done = await vpaMrGet(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + v.id) + '&action=eq.members_reminder_sent&created_at=gte.' + encodeURIComponent(new Date(at).toISOString()) + '&select=id&limit=1');
     if (!done.ok || done.rows.length) { out.skipped++; continue; }
-    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: ch.day, time: ch.time });
+    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: mrChoice.day, time: mrChoice.time });
     if (!claimed) { out.skipped++; continue; }
-    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: ch.day });
+    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: mrChoice.day });
     let ok = false;
     try { ok = await vpaSendEmail(env, to, msg.subject, msg.html); } catch (_) { ok = false; }
     if (ok) out.sent.push(v.id); else out.skipped++;

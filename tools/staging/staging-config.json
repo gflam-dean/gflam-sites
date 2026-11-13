@@ -1,0 +1,80 @@
+{
+  "_what": "The staging settings in one place (INBOX 357B / 326, 13 Nov 2026). Names and shapes only: NO secret value lives here. The browser side is venueplay/app/vp-env.js (a test keeps the two in agreement). Change an answer here and the tests tell you what else must move.",
+  "answers_assumed_13nov": {
+    "Q4_key_names": "TEST_ names in ~/.gflam-migrate.env: TEST_DB_URL, TEST_SUPABASE_URL, TEST_SERVICE_KEY, TEST_ANON_KEY, TEST_JWT_SECRET, TEST_STRIPE_SECRET_KEY, TEST_STRIPE_WEBHOOK_SECRET",
+    "Q7_test_phone_range": "0491 57x xxx (ACMA fiction range), E.164 prefix 6149157",
+    "Q9_names": "staging.venueplay.com.au, api-staging.venueplay.com.au, game-staging.venueplay.com.au behind a Cloudflare Access lock",
+    "Q10_stripe": "Stripe TEST mode only; the guard refuses a live key",
+    "Q11_tv": "separate 'venueplay TV (test)' app, sideloaded, never in a store"
+  },
+  "test_project_ref": "gpoolavkghnxedzrmtmc",
+  "live_project_ref_to_refuse": "ijkzgmdtwtgfkedqspxm",
+  "test_mobile_prefix": "6149157",
+  "test_email_domain": "example.invalid",
+  "key_file": "~/.gflam-migrate.env",
+  "key_file_names": {
+    "database_url": "TEST_DB_URL",
+    "supabase_url": "TEST_SUPABASE_URL",
+    "service_key": "TEST_SERVICE_KEY",
+    "anon_key": "TEST_ANON_KEY",
+    "jwt_secret": "TEST_JWT_SECRET",
+    "stripe_secret": "TEST_STRIPE_SECRET_KEY",
+    "stripe_webhook_secret": "TEST_STRIPE_WEBHOOK_SECRET"
+  },
+  "workers": {
+    "api": {
+      "name": "venueplay-api-staging",
+      "file": "venueplay-backend/worker/venueplay-api-FULL.js",
+      "hostname": "api-staging.venueplay.com.au",
+      "plain": {
+        "VP_ENV": "staging",
+        "SITE_URL": "https://staging.venueplay.com.au",
+        "API_ORIGIN": "https://api-staging.venueplay.com.au",
+        "ALLOW_ORIGIN": "https://staging.venueplay.com.au",
+        "SUBSCRIBE_EMAILS": "off",
+        "MONTHLY_REPORTS": "off"
+      },
+      "from_key_file": {
+        "SUPABASE_URL": "supabase_url",
+        "SUPABASE_SERVICE_KEY": "service_key",
+        "SUPABASE_JWT_SECRET": "jwt_secret",
+        "STRIPE_SECRET_KEY": "stripe_secret",
+        "STRIPE_WEBHOOK_SECRET": "stripe_webhook_secret"
+      },
+      "dummy_send_keys": ["RESEND_API_KEY", "MOBILEMESSAGE_USERNAME", "MOBILEMESSAGE_PASSWORD", "CLICKSEND_USERNAME", "CLICKSEND_API_KEY"],
+      "never_set": ["SEND_SMS_HOOK_URL", "SEND_SMS_HOOK_SECRET", "PROSPECT_AUTOPILOT_KEY", "VAPID_PRIVATE_JWK", "TWILIO_AUTH_TOKEN"],
+      "fresh_random": ["VP_UNSUB_SECRET", "CARD_LINK_SECRET", "SIGNIN_LINK_SECRET", "SIGNUP_CODE_SALT", "HELP_LIMIT_SALT", "HELP_TRIAGE_SECRET", "IP_HASH_SALT"]
+    },
+    "game": {
+      "name": "venueplay-game-staging",
+      "file": "venueplay-backend/worker/venueplay-game.js",
+      "hostname": "game-staging.venueplay.com.au",
+      "deploy_flags": "--do-class=VenueRoom",
+      "kv_bindings": ["RL"],
+      "plain": {
+        "VP_ENV": "staging",
+        "SITE_URL": "https://staging.venueplay.com.au",
+        "ALLOW_ORIGIN": "https://staging.venueplay.com.au"
+      },
+      "from_key_file": {
+        "SUPABASE_URL": "supabase_url",
+        "SUPABASE_SERVICE_KEY": "service_key",
+        "SUPABASE_JWT_SECRET": "jwt_secret",
+        "STRIPE_SECRET_KEY": "stripe_secret"
+      },
+      "dummy_send_keys": ["RESEND_API_KEY"],
+      "never_set": ["TWILIO_AUTH_TOKEN"],
+      "fresh_random": ["IP_HASH_SALT"]
+    }
+  },
+  "site": {
+    "hostname": "staging.venueplay.com.au",
+    "pages_branch": "staging",
+    "built_by": "tools/staging/make-staging-site.py",
+    "extra_headers": ["X-Robots-Tag: noindex, nofollow"]
+  },
+  "access_lock": {
+    "_what": "Dean/main set this in Cloudflare Zero Trust: one Access application over the three hostnames. The office address and the Kogan's address are let through without a login (a TV cannot log in).",
+    "hostnames": ["staging.venueplay.com.au", "api-staging.venueplay.com.au", "game-staging.venueplay.com.au"]
+  }
+}

@@ -42,6 +42,10 @@ footer .foot-country{display:block;max-width:64ch;margin:30px auto 0;text-align:
   footer .foot-brand{justify-content:center;align-items:center;text-align:center}
   footer .powered{text-align:center;margin-left:auto;margin-right:auto}
   footer .foot-social{justify-content:center;width:100%}
+  /* TAP TARGETS (website audit part 1, 13 Nov 2026): the Facebook and Instagram icons were 22px and the link chips 21px tall, under the 44px a thumb needs. The icon keeps its look, the box around it is 44px. */
+  footer .foot-social{gap:4px}
+  footer .foot-social a{box-sizing:border-box;min-width:44px;min-height:44px;align-items:center;justify-content:center}
+  footer .foot-links a,footer .foot-meta a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
   footer .foot-meta{text-align:center}
   footer .foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;max-width:30ch;margin:0 auto 6px}
   footer .foot-links .dot{display:none}
@@ -57,7 +61,7 @@ footer .foot-country{display:block;max-width:64ch;margin:30px auto 0;text-align:
 .foot-links .fg{display:contents}
 @media (max-width:480px){
   footer{margin-top:48px}
-  footer .foot-links{flex-direction:column;flex-wrap:nowrap;align-items:center;max-width:none;gap:6px}
+  footer .foot-links{flex-direction:column;flex-wrap:nowrap;align-items:center;max-width:none;gap:0}
   footer .foot-links .fg{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px}
   footer .foot-meta{font-size:11px}
 }

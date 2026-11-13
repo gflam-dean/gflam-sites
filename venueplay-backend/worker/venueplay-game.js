@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 04:51 · 562f6d92';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 10:39 · badb2735';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -316,8 +316,147 @@ async function closeAbandonedSession(env, sessionId) {
 }
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
+/* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
+   between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
+   file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
+
+   WHAT IT DOES
+   STAGING (env.VP_ENV === 'staging'): nothing real ever leaves. Emails, texts, push messages, the SMS hook and any
+   write to a LIVE venueplay address are caught and answered with a believable "sent", and written to an in-memory
+   outbox (globalThis.__vpOutbox, last 50) and the log. Stripe is allowed ONLY with a test key. Before it serves a
+   single request it checks its own settings and REFUSES (503) if: a live Stripe key is present; the database address
+   is LIVE's; or a send key looks real (staging keys must begin with "staging-", a placeholder that lets the send code
+   run so it can be exercised, never a working key).
+   LIVE (VP_ENV unset): changes nothing, except one thing that can never hurt a real person: a message addressed ONLY to
+   a fiction mobile (+61 491 57x xxx, the regulator's reserved range) or an @example.invalid address is answered as sent
+   and not delivered, so test rows can never cost a text or bounce an email.
+   Every setting is in VPG below. Change them there. */
+const VPG = {
+  stagingValue: 'staging',                 // env.VP_ENV
+  testMobilePrefix: '6149157',             // +61 491 57x xxx, fiction range reserved for drama (INBOX 357B Q7)
+  testEmailDomain: 'example.invalid',
+  liveSupabaseRef: 'ijkzgmdtwtgfkedqspxm', // LIVE. Never reachable from staging.
+  dummyKeyPrefix: 'staging-',              // a send key on staging must start with this
+  sendKeys: ['RESEND_API_KEY', 'MOBILEMESSAGE_USERNAME', 'MOBILEMESSAGE_PASSWORD', 'CLICKSEND_USERNAME', 'CLICKSEND_API_KEY', 'TWILIO_AUTH_TOKEN', 'SEND_SMS_HOOK_SECRET'],
+  stripeKeys: ['STRIPE_SECRET_KEY'],
+  sendHosts: /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com|api\.twilio\.com|api\.instantly\.ai|api\.sendgrid\.com|api\.mailgun\.net|fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9.-]*notify\.windows\.com)$/i,
+  liveHosts: /^(www\.)?venueplay\.com\.au$|^(api|game)\.venueplay\.com\.au$/i,   // staging may READ these, never write
+  stagingHosts: /^[a-z0-9-]+-staging\.venueplay\.com\.au$|^staging\.venueplay\.com\.au$/i
+};
+function vpgIsStaging(env) { return !!env && String(env.VP_ENV || '') === VPG.stagingValue; }
+function vpgDigits(s) {
+  let d = String(s == null ? '' : s).replace(/[^0-9]/g, '');
+  if (d.indexOf('0') === 0) d = '61' + d.slice(1);
+  return d;
+}
+function vpgIsTestMobile(s) { const d = vpgDigits(s); return d.length >= 8 && d.indexOf(VPG.testMobilePrefix) === 0; }
+function vpgIsTestEmail(s) {
+  const t = String(s == null ? '' : s).trim().toLowerCase().replace(/[>\s]+$/, '');
+  return t.length > VPG.testEmailDomain.length && t.slice(-(VPG.testEmailDomain.length + 1)) === '@' + VPG.testEmailDomain;
+}
+/* Every recipient named in a send body (JSON): to, destination, recipient, phone, mobile, number. Strings or lists. */
+function vpgRecipients(bodyText) {
+  const out = [];
+  let j = null;
+  try { j = JSON.parse(String(bodyText)); } catch (e) { return out; }
+  const keys = { to: 1, destination: 1, recipient: 1, phone: 1, mobile: 1, number: 1 };
+  (function walk(v, depth) {
+    if (depth > 6 || v == null) return;
+    if (Array.isArray(v)) { v.forEach(function (x) { walk(x, depth + 1); }); return; }
+    if (typeof v !== 'object') return;
+    Object.keys(v).forEach(function (k) {
+      const x = v[k];
+      if (keys[k.toLowerCase()] === 1) { (Array.isArray(x) ? x : [x]).forEach(function (y) { if (typeof y === 'string' || typeof y === 'number') out.push(String(y)); }); }
+      else walk(x, depth + 1);
+    });
+  })(j, 0);
+  return out;
+}
+function vpgIsTestRecipient(r) { return vpgIsTestMobile(r) || vpgIsTestEmail(r); }
+/* '' when the settings are safe for this deployment, else why not (staging only). */
+function vpgStagingProblem(env) {
+  if (!vpgIsStaging(env)) return '';
+  const bad = [];
+  VPG.stripeKeys.forEach(function (k) { if (/^(sk|rk)_live_/.test(String(env[k] || ''))) bad.push(k + ' is a LIVE Stripe key'); });
+  if (String(env.SUPABASE_URL || '').indexOf(VPG.liveSupabaseRef) >= 0) bad.push('SUPABASE_URL is the LIVE database');
+  if (String(env.SUPABASE_SERVICE_KEY || '').indexOf(VPG.liveSupabaseRef) >= 0) bad.push('SUPABASE_SERVICE_KEY names the LIVE database');
+  VPG.sendKeys.forEach(function (k) { const v = String(env[k] || ''); if (v && v.indexOf(VPG.dummyKeyPrefix) !== 0) bad.push(k + ' looks like a real key (staging keys start "' + VPG.dummyKeyPrefix + '")'); });
+  return bad.join('; ');
+}
+/* A 503 for the whole Worker when staging is set up unsafely; null otherwise (and always null on live). */
+function vpgRefuse(env) {
+  const why = vpgStagingProblem(env);
+  if (!why) return null;
+  console.log('[outbox-guard] REFUSING to run: ' + why);
+  return new Response(JSON.stringify({ error: 'outbox guard: this staging Worker is set up unsafely and will not run', why: why }), { status: 503, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'refused' } });
+}
+function vpgFake(host, recips, n) {
+  const id = 'staging-blocked-' + n;
+  let body;
+  if (/resend/i.test(host)) body = { id: id, last_event: 'delivered' };
+  else if (/mobilemessage/i.test(host)) body = { status: 'complete', results: recips.map(function (r) { return { to: r, status: 'success', message_id: id, cost: 0 }; }) };
+  else if (/clicksend/i.test(host)) body = { response_code: 'SUCCESS', http_code: 200, data: { messages: recips.map(function (r) { return { to: r, status: 'SUCCESS', message_id: id }; }) } };
+  else body = { ok: true, id: id };
+  return new Response(JSON.stringify(Object.assign(body, { blocked_by: 'outbox guard' })), { status: 200, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } });
+}
+function vpgRecord(kind, host, method, recips, why) {
+  const box = globalThis.__vpOutbox || (globalThis.__vpOutbox = []);
+  box.push({ at: new Date().toISOString(), kind: kind, host: host, method: method, to: recips.map(function (r) { return String(r).slice(-3); }), why: why });
+  if (box.length > 50) box.shift();
+  console.log('[outbox-guard] ' + kind + ' ' + method + ' ' + host + ' (' + why + ')');
+  return box.length;
+}
+/* Wraps globalThis.fetch once per isolate. Call first thing in fetch() and scheduled(). */
+function vpgInstall(env) {
+  if (globalThis.__vpgInstalled === true) return;
+  const staging = vpgIsStaging(env);
+  const hookHost = (function () { try { return env && env.SEND_SMS_HOOK_URL ? new URL(String(env.SEND_SMS_HOOK_URL)).hostname : ''; } catch (e) { return ''; } })();
+  const real = globalThis.fetch;
+  if (typeof real !== 'function') return;
+  globalThis.__vpgInstalled = true;
+  globalThis.fetch = function (input, init) {
+    let host = '', method = 'GET', body = '', auth = '';
+    try {
+      const u = new URL(typeof input === 'string' ? input : (input && input.url) || String(input));
+      host = u.hostname;
+      method = String((init && init.method) || (input && typeof input === 'object' && input.method) || 'GET').toUpperCase();
+      body = init && init.body != null ? String(init.body) : '';
+      const h = init && init.headers;
+      auth = h ? String(typeof h.get === 'function' ? (h.get('Authorization') || '') : (h.Authorization || h.authorization || '')) : '';
+    } catch (e) { return real.apply(this, arguments); }
+    try {
+      if (staging) {
+        if (VPG.stagingHosts.test(host)) return real.apply(this, arguments);
+        if (host.indexOf(VPG.liveSupabaseRef) >= 0) return Promise.resolve(new Response(JSON.stringify({ message: 'outbox guard: the LIVE database is not reachable from staging' }), { status: 403, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+        if (host === 'api.stripe.com') {
+          if (/(sk|rk)_live_/.test(auth) || /(sk|rk)_live_/.test(body)) return Promise.resolve(new Response(JSON.stringify({ error: { type: 'invalid_request_error', message: 'outbox guard: a LIVE Stripe key is refused on staging' } }), { status: 401, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+          return real.apply(this, arguments);
+        }
+        const isSend = VPG.sendHosts.test(host) || (hookHost && host === hookHost);
+        const writesLive = VPG.liveHosts.test(host) && method !== 'GET' && method !== 'HEAD';
+        if (isSend || writesLive) {
+          const recips = vpgRecipients(body);
+          const n = vpgRecord(isSend ? 'send' : 'live-write', host, method, recips, 'staging sends nothing');
+          return Promise.resolve(vpgFake(host, recips, n));
+        }
+        return real.apply(this, arguments);
+      }
+      /* LIVE: only a message addressed purely to fiction numbers / example.invalid is caught. Anything unclear passes through. */
+      if (method === 'POST' && /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com)$/i.test(host)) {
+        const recips = vpgRecipients(body);
+        if (recips.length > 0 && recips.every(vpgIsTestRecipient)) {
+          const n = vpgRecord('test-recipient', host, method, recips, 'only fiction / example.invalid recipients');
+          return Promise.resolve(vpgFake(host, recips, n));
+        }
+      }
+    } catch (e) { /* the guard itself must never break a send: fall through */ }
+    return real.apply(this, arguments);
+  };
+}
+/* OUTBOX GUARD END */
 export default {
   async fetch(request, env) {
+    vpgInstall(env); { const vpgNo = vpgRefuse(env); if (vpgNo) return vpgNo; }   // OUTBOX GUARD (INBOX 357B)
     /* Reflect any venueplay.com.au origin, the same way the billing Worker does.
        This was a single origin with no list and no reflection, set by deploy note to
        https://www.venueplay.com.au. A host who reached the apex (no www) had every game call
@@ -527,6 +666,7 @@ export default {
      session that had been open for 23 days. Nothing to fix here; the note that used to
      say the trigger had never been set was wrong and was read as evidence. */
   async scheduled(event, env, ctx) {
+    vpgInstall(env); if (vpgStagingProblem(env)) { console.log("[outbox-guard] scheduled run refused: " + vpgStagingProblem(env)); return; }   // OUTBOX GUARD (INBOX 357B)
     ctx.waitUntil(sweepStaleSessions(env, null, true).then(function (r) {
       // A sweep whose query failed used to print exactly what a quiet night prints. Say which.
       if (r.error) { console.log('[sweep] FAILED to list stale sessions: ' + r.error); return; }
@@ -11746,7 +11886,7 @@ async function handlePraffleEntrants(request, env, json) {
   if (q) {
     const digits = q.replace(/\D/g, '');
     const parts = ['first_name.ilike.*' + q + '*', 'last_name.ilike.*' + q + '*'];
-    if (digits.length >= 3) parts.push('phone.like.*' + (digits.charAt(0) === '0' ? digits.slice(1) : digits) + '*');
+    if (digits.length >= 3) parts.push('phone.like.*' + (digits.charAt(0) === '0' ? digits.slice(1) : digits));   // the LAST digits, as the box says: 111 finds ...111, not ...1112
     filter += '&or=' + enc('(' + parts.join(',') + ')');
   }
   const offset = Math.max(0, parseInt(b.offset, 10) || 0);

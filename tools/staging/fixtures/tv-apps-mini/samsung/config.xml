@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- venueplay TV for Samsung Smart TVs (Tizen web app). The app's code lives in ../shared;
+     tools/build.py copies it in here. Edit THIS file only for Samsung-specific settings.
+     Package id: 10 letters/digits, fixed for ever once the app is in Seller Office. -->
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
+        id="https://venueplay.com.au/tv-app/samsung" version="1.0.2" viewmodes="maximized">
+    <tizen:application id="VenuePlyTV.venueplayTV" package="VenuePlyTV" required_version="3.0"/>
+    <tizen:profile name="tv-samsung"/>
+
+    <name>venueplay TV</name>
+    <description>The venueplay screen for your venue's TV. Pair it once and it runs itself.</description>
+    <author href="https://venueplay.com.au" email="support@venueplay.com.au">venueplay</author>
+    <icon src="icon.png"/>
+    <content src="index.html"/>
+
+    <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+
+    <!-- Only what the app uses:
+         internet        the venue screen and the two read-only venue lookups
+         tv.inputdevice  registers the remote's number keys, so 2 to 9 type the screen code
+         application.launch  not used; tizen.application.getCurrentApplication().exit()/hide() need none -->
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+
+    <!-- The venue screen loads its pictures, fonts and songs from venueplay.com.au and the services
+         it uses, so network access is open. The app's page may only ever move to venueplay.com.au. -->
+    <access origin="*" subdomains="true"/>
+    <tizen:allow-navigation>venueplay.com.au www.venueplay.com.au</tizen:allow-navigation>
+
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
+                   encryption="disable" install-location="auto" hwkey-event="enable"/>
+    <tizen:metadata key="http://samsung.com/tv/metadata/prelaunch.support" value="false"/>
+</widget>

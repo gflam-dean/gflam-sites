@@ -188,6 +188,8 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('search by name', li.body.total === 1 && li.body.entrants[0].name === 'Bob Smith');
   li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '0111' });
   show('search by the end of the mobile', li.body.total === 1 && li.body.entrants[0].name === 'Ann Lee');
+  li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '4123' });
+  show('the search box says LAST digits: digits from the middle of a mobile find nobody', li.status === 200 && li.body.total === 0, JSON.stringify(li.body.total));
   var st = await call(handlePraffleState, { venue_id: VENUE });
   show('state: totals of entrants and live entries', st.status === 200 && st.body.totals.entrants === 2 && st.body.totals.entries === 5, JSON.stringify(st.body.totals));
   show('state: recent entries masked, with who added them', st.body.recent.length > 0 && st.body.recent[0].by === 'Tom' && JSON.stringify(st.body.recent).indexOf('345678') < 0);

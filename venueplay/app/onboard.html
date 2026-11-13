@@ -95,22 +95,22 @@
     <div class="card">
       <div class="lbl">Venue</div>
       <div class="field">
-        <label>Venue name</label>
+        <label for="vname">Venue name</label>
         <input type="text" id="vname" placeholder="The Example Tavern">
       </div>
       <div class="field">
-        <label>Slug (TV web address key)</label>
+        <label for="vslug">Slug (TV web address key)</label>
         <input type="text" id="vslug" class="mono" placeholder="example-tavern-4224">
         <div class="note">Lowercase, hyphens, no spaces. Must be unique. Auto-filled from the name and postcode, edit if needed. There are around 100 Royal Hotels in Australia, so the postcode goes on the end the same way it does when a venue signs up itself.</div>
       </div>
       <div class="field">
-        <label>Postcode</label>
+        <label for="vpostcode">Postcode</label>
         <input type="text" id="vpostcode" class="mono" inputmode="numeric" maxlength="4" placeholder="4224">
         <div class="note">Four digits, required. It sets the venue's state, which decides which gaming rules they are shown and whether phones may hold a bingo ticket, and it keeps the slug unique.</div>
         <div class="note hidden" id="vNoBingo" style="margin-top:6px;color:var(--roll,#F5A524)"></div>
       </div>
       <div class="field">
-        <label>Timezone</label>
+        <label for="vtz">Timezone</label>
         <select id="vtz">
           <option value="Australia/Brisbane" selected>Australia/Brisbane (QLD, no DST)</option>
           <option value="Australia/Sydney">Australia/Sydney (NSW/ACT)</option>
@@ -133,19 +133,19 @@
 
       <div id="groupFields">
         <div class="field">
-          <label>Operator group</label>
+          <label for="vgroup">Operator group</label>
           <select id="vgroup"><option value="">Loading groups...</option></select>
           <div class="note">Groups are set up in the admin. If a group is missing, add it first.</div>
         </div>
         <div class="field">
-          <label>Included players (this venue's cap)</label>
+          <label for="vcap">Included players (this venue's cap)</label>
           <input type="text" id="vcap" class="mono" placeholder="150" inputmode="numeric">
         </div>
       </div>
 
       <div id="foundingFields" class="hidden">
         <div class="field">
-          <label>venueplay_ record id</label>
+          <label for="vfounding">venueplay_ record id</label>
           <input type="text" id="vfounding" class="mono" placeholder="paste the founding row id (uuid)">
           <div class="note">The independent venue's paid subscription record. It is created when they sign up on the page (Worker, service role), so the browser cannot create it here. Copy its id from the Supabase Table Editor (venueplay_). The player cap is read from that record's max_seats.</div>
         </div>
@@ -159,7 +159,7 @@
     <div class="card">
       <div class="lbl">Compliance (required)</div>
       <div class="field">
-        <label>Club or pub?</label>
+        <label for="vkind">Club or pub?</label>
         <select id="vkind">
           <option value="">Ask them...</option>
           <option value="non_profit">Club (RSL, bowls, leagues, non-profit)</option>
@@ -174,7 +174,7 @@
         </label>
       </div>
       <div class="field">
-        <label>Accepted by (name of the person at the venue)</label>
+        <label for="vcomplianceby">Accepted by (name of the person at the venue)</label>
         <input type="text" id="vcomplianceby" placeholder="Jane Smith, licensee">
         <div class="note">Read the line to them, then tick it in their name. The record says who agreed and when.</div>
       </div>
@@ -184,16 +184,16 @@
       <div class="lbl">First manager (optional)</div>
       <div class="note" style="margin-bottom:14px">Enter their mobile and we set up their login the same way the venue would: they sign in at venueplay.com.au/app with a text code, no app to install. Leave it blank to add staff later from Your account.</div>
       <div class="field">
-        <label>Manager name</label>
+        <label for="mgrname">Manager name</label>
         <input type="text" id="mgrname" placeholder="Jane Smith">
       </div>
       <div class="field">
-        <label>Manager mobile</label>
+        <label for="mgrmobile">Manager mobile</label>
         <input type="tel" id="mgrmobile" placeholder="0400 000 000">
         <div class="note">Australian mobile. They get advertising, draws and raffles, player opt-ins and add-hosts; billing and the player-data rules stay with the account owner.</div>
       </div>
       <div class="field">
-        <label>Or link an existing login by Auth User UID (advanced)</label>
+        <label for="mgruid">Or link an existing login by Auth User UID (advanced)</label>
         <input type="text" id="mgruid" class="mono" placeholder="only if you already created their Supabase Auth user">
         <div class="note">Use this for an operator-group venue, where there is no venue billing account for the mobile route to bill against.</div>
       </div>
