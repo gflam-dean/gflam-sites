@@ -67,6 +67,21 @@ class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
 
 
+def own_storage(tag):
+    """A WINDOW THAT IS ITS OWN PHONE (13 Nov 2026). Every window in the rig is one browser profile, so two "phones"
+    share one localStorage: the same vpDeviceId, name and tokens, i.e. ONE phone, and the live Worker (and, since rig
+    player ids became UUIDs, the rig too) seats them as one player. Pass this as `before=` to give a window its own
+    storage under a prefix, set before any page script runs and on every page it moves to: two storages, one room, as
+    two real phones. The same shape as PHONE_STORE in tools/one-phone-a-night-in-chrome.test.py."""
+    return r'''(function(){ var P=%s, S=Storage.prototype, g=S.getItem, s=S.setItem, r=S.removeItem, k=S.key, c=S.clear;
+  function mine(st){ try{ return st===window.localStorage; }catch(e){ return false; } }
+  S.getItem=function(x){ return mine(this) ? g.call(this, P+x) : g.call(this, x); };
+  S.setItem=function(x,v){ return mine(this) ? s.call(this, P+x, v) : s.call(this, x, v); };
+  S.removeItem=function(x){ return mine(this) ? r.call(this, P+x) : r.call(this, x); };
+  S.clear=function(){ if(!mine(this)) return c.call(this); var ks=[]; for(var i=0;i<this.length;i++){ var q=k.call(this,i); if(q && q.indexOf(P)===0) ks.push(q); } ks.forEach(function(q){ r.call(window.localStorage,q); }); };
+})();''' % json.dumps('phone-' + tag + ':')
+
+
 class Rig(object):
     def __init__(self, hold=None, host_pages=(), review=False, real_qr=False, chrome_args=()):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
