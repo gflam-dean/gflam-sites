@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 22:54 · 1ea63416';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 00:35 · 70cc06b8';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -1250,8 +1250,14 @@ async function vpaHandleStripeEvent(env, event) {
     await vpaRecordDispute(env, event.data.object, event.type);
   }
   // Paid. Anything switched off for non-payment comes straight back on.
+  /* ONLY WHEN THE BILL THAT SWITCHED IT OFF IS PAID (security review 13 Nov 2026, B6). Any invoice.paid used to
+     do it, so a venue off for an unpaid SUBSCRIPTION paid a small open extras invoice instead (or any $0 or
+     credit-covered invoice settled) and its games came back on with the subscription still unpaid. Only a
+     subscription invoice counts towards switching a venue off (invoice.payment_failed above), so only a
+     subscription invoice, with the subscription itself back to active, switches it on. */
   if (event.type === 'invoice.paid') {
-    await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
+    const paid = event.data.object || {};
+    await vpaReactivateOnPayment(env, paid.customer, paid);
   }
 }
 
@@ -8012,9 +8018,10 @@ async function vpaHandlePermitRegisterCheck(request, env, json) {
    number A says nothing about number B, so a changed number, holder or charity reads current:false. */
 async function vpaRegisterChecks(env, venueId, permits) {
   const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
-    + '&action=eq.permit_register_checked&select=created_at,actor_label,detail&order=created_at.desc&limit=30') || [];
+    + '&action=eq.permit_register_checked&select=created_at,actor_admin,actor_label,detail&order=created_at.desc&limit=30') || [];
   const out = {};
   for (const r of rows) {
+    if (!(await vpaAuditAuthorOk(env, r, true))) continue;   // B7: only a check an owner/accounts admin recorded
     const d = r.detail || {};
     if (VPA_PERMIT_KINDS.indexOf(d.kind) === -1 || out[d.kind]) continue;
     const p = (permits || {})[d.kind] || {};
@@ -9989,6 +9996,28 @@ async function vpaHandleLoginMobile(request, env, json) {
  * 5) POST /admin/audit   (any admin)  — view-as / read logging
  *    body: { action, target?, detail? }  -> { ok:true }
  * ======================================================================== */
+/* B7 (13 Nov 2026): could the Worker itself have written this audit row? actor_admin null is the Worker on an
+   owner's behalf (or Stripe); otherwise the admin named must be an owner or accounts admin, the only roles that
+   may View as and the only roles the permit check takes. needAdmin: the row must name such an admin (a permit
+   check is always HQ's). Read once per admin per request. A failed read answers no. */
+async function vpaAuditAuthorOk(env, row, needAdmin) {
+  if (!row) return false;
+  if (row.actor_admin == null) return !needAdmin;
+  try {
+    const a = await vpaSelect(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(row.actor_admin) + '&role=in.(owner,accounts)&select=auth_user_id&limit=1');
+    return !!(a && a.length);
+  } catch (_) { return false; }
+}
+
+/* WHAT HQ MAY WRITE BY HAND (security review 13 Nov 2026, B7). This route took ANY action name from ANY HQ login,
+   help desk staff included, and the Worker ACTS on some audit rows: the one-hour undo deletes the Stripe invoice
+   item named in the newest players_increased row, a payment_disputed row blocks a restart, a
+   permit_register_checked row is the VIC permit check. So a help desk login could post a players_increased row
+   naming any pending invoice item and the next reduction deleted it. Only the marks hq.html actually writes are
+   accepted now; every row the Worker reads back is written by the Worker itself. */
+const VPA_HQ_AUDIT_ACTIONS = ['view_as', 'screen_ads', 'screens_all',
+  'venue_quiet_contacted', 'venue_quiet_uncontacted', 'venue_cancel_contacted', 'venue_cancel_uncontacted',
+  'venue_cancel_note', 'venue_marked_test', 'venue_unmarked_test'];
 async function vpaHandleAudit(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, null);
   if (actor.error) return json({ error: actor.error }, actor.status);
@@ -9998,6 +10027,7 @@ async function vpaHandleAudit(request, env, json) {
   const b = _b.body;
   const action = (b.action || '').trim();
   if (!action) return json({ error: 'action is required.' }, 400);
+  if (VPA_HQ_AUDIT_ACTIONS.indexOf(action) === -1) return json({ error: 'That is not something HQ records by hand. Nothing was written.' }, 400);
 
   await vpaInsert(env, 'vp_admin_audit', {
     actor_admin: actor.actorId,
@@ -12447,6 +12477,24 @@ async function vpaSuspendForNonpayment(env, customerId, reason) {
   } catch (_) { /* never throw out of a webhook */ }
 }
 
+/* B6 (13 Nov 2026): does this paid invoice settle what a non-payment suspension is about? A subscription invoice
+   (billing_reason subscription_*), and the subscription answering active or trialing now it is paid: a second
+   unpaid invoice keeps it past_due, and the venue stays off until that one is paid too. An extras invoice never
+   switched a venue off, so paying one never switches it on. A failed read of the subscription THROWS, so the
+   webhook 500s and Stripe sends it again, the same as vpaReactivateOnPayment below. */
+async function vpaPaidInvoiceLiftsSuspension(env, inv) {
+  if (!inv || vpaIsExtrasInvoice(inv)) return false;
+  const subId = (typeof inv.subscription === 'string' && inv.subscription)
+    || (inv.subscription && inv.subscription.id)
+    || (inv.parent && inv.parent.subscription_details && inv.parent.subscription_details.subscription) || null;
+  if (!subId) return true;   // a subscription invoice that does not name it: as before
+  const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(subId));
+  if (!sub || sub.error || !sub.status) throw new Error('could not read subscription ' + subId + ' for invoice ' + (inv.id || '?'));
+  if (sub.status === 'active' || sub.status === 'trialing') return true;
+  console.log('[reactivate] invoice ' + (inv.id || '?') + ' paid but subscription ' + subId + ' is still ' + sub.status + ': venues stay off');
+  return false;
+}
+
 /* Throws on a lookup failure ON PURPOSE, so the webhook 500s and Stripe redelivers.
 
    This is the ONLY automatic route back from a non-payment suspension. vpaSelect returns [] on any
@@ -12454,11 +12502,14 @@ async function vpaSuspendForNonpayment(env, customerId, reason) {
    the webhook answered 200, and Stripe never tried again. A venue that had fixed their card stayed
    dark indefinitely, until somebody noticed and turned them on by hand. A retried webhook is
    harmless here: every write below is idempotent. */
-async function vpaReactivateOnPayment(env, customerId) {
+async function vpaReactivateOnPayment(env, customerId, paidInvoice) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
     if (!venues) throw new Error('could not read venues for customer ' + customerId);
     if (!venues.length) return;
+    /* B6: asked only when something is actually off for non-payment, so an ordinary invoice.paid makes no extra call. */
+    if (!venues.some((v) => v.status === 'suspended' && v.suspended_reason === 'nonpayment')) return;
+    if (paidInvoice && !(await vpaPaidInvoiceLiftsSuspension(env, paidInvoice))) return;
     let n = 0;
     for (const v of venues) {
       // ONLY the ones we switched off for non-payment. A venue VenuePlay turned off on purpose
@@ -13481,6 +13532,8 @@ function vpbRules(env) {
   return { new_pub_free_month: on, undo_hour: on };
 }
 const VPB_UNDO_WINDOW_S = 3600;   // rule 4: one hour
+/* B3, 13 Nov 2026: the most players one Add a venue can ask for (the same ceiling HQ sets a venue up with). */
+const VPB_ADD_VENUE_MAX_PLAYERS = 2000;
 
 /* --- Whole Brisbane days, the unit Dean bills in (4 Nov 2026). --- */
 const VPB_BRIS_S = 36000;   // UTC+10, no daylight saving, the same shift vpaFmtDate uses
@@ -13657,6 +13710,115 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }
 
+/* THE FREE MONTH IS FOR THE PLAYERS KEPT THROUGH IT (security review 13 Nov 2026, B3).
+   A new pub's first month free is a credit on the customer balance, sized at the add: players x rate (x the
+   free days of the next cycle on the monthly pro rata rule; never more than was charged on a yearly plan).
+   Nothing ever took it back, so an owner could add a pub at 20,000 players, take the credit, drop the pub to
+   1 player (or cancel it) before the credit was used, and keep $54,193.55 of credit for $0 charged.
+
+   This squares it, and ONLY inside the window where the credit is still unearned:
+     - monthly, pro rata rule (VPB_BILLING_RULES_3NOV): before the renewal that uses the credit. A monthly
+       reduction lowers the NEXT bill, which the credit is set against, so the unearned part comes back off.
+       (On the old monthly rule the month charged and the month credited sit on the same next bill and
+       cancel each other whatever happens, so there is nothing to square and this does nothing.)
+     - yearly: inside the pub's free month, because a yearly release pays the unused players out as credit
+       straight away, which on top of the free month paid out the same players twice.
+   The credit is kept for every player up to the number it was given for (P, worked back from the credit
+   and the same rate and days that sized it). Below P the unearned share, credit x (P - players) / P, is
+   taken back; raising the players again gives it back. Each adjustment is the difference from the last one
+   (cumulative, in a free_month_trued_up audit row), keyed, so a retry moves no money twice.
+   Fails OPEN for the venue: anything it cannot read or work out leaves the credit alone, with a log line. */
+async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
+  try {
+    opts = opts || {};
+    const annual = o.account.plan === 'annual';
+    if (opts.monthlyOnly && annual) return null;
+    if (!annual && !vpbRules(env).new_pub_free_month) return null;
+    const customer = info && info.sub && info.sub.customer;
+    if (!customer || !info.periodEnd) return null;
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,free_month_at,free_month_cents,max_players&limit=1');
+    const v = vr && vr[0];
+    const c0 = v ? (parseInt(v.free_month_cents, 10) || 0) : 0;
+    const atMs = v && v.free_month_at ? Date.parse(v.free_month_at) : NaN;
+    if (!(c0 > 0) || !Number.isFinite(atMs)) return null;
+    const atS = Math.floor(atMs / 1000), nowS = Math.floor(Date.now() / 1000);
+    const startS = Number(info.periodStart) || 0;
+    if (!(startS > 0) || atS < startS) return null;                  // the credit was set against an earlier bill: used
+    if (annual && !(nowS < vpbMonthOnS(atS))) return null;           // yearly: only inside the free month
+    const rate = vpbRateStrict(env, info.priceId, o.account.plan);
+    if (rate == null) return null;
+    let per;
+    if (annual) {
+      const frac = Math.max(0, Math.min(1, (Number(info.periodEnd) - atS) / (365 * 86400)));
+      per = Math.min(Math.round(rate * 100), rate * 100 * 12 * frac);
+    } else {
+      const cycleStart = Number(info.periodEnd);
+      const cycleDays = vpbCycleDays(cycleStart, vpbMonthOnS(cycleStart, info.anchor));
+      const freeDays = Math.max(0, Math.min(cycleDays, vpbBrisDays(vpbMonthOnS(atS)) - vpbBrisDays(cycleStart)));
+      per = rate * 100 * freeDays / cycleDays;
+    }
+    if (!(per > 0)) return null;
+    const P = Math.round(c0 / per);
+    /* Monthly, the pub's max_players never drops inside the cycle (a reduction waits for the renewal), so a
+       credit that works back to MORE players than it has was not given on this rule: leave it alone. */
+    if (!(P >= 1) || (!annual && P > (parseInt(v.max_players, 10) || 0))) {
+      console.log('[billing] free month true-up: could not tie ' + c0 + 'c to a player count at venue ' + venueId + ', left alone');
+      return null;
+    }
+    const n = Math.max(0, parseInt(players, 10) || 0);
+    const owed = n >= P ? 0 : Math.round(c0 * (P - n) / P);
+    let prevRows;
+    try {
+      prevRows = await vpaSelectAll(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+        + '&action=eq.free_month_trued_up&select=id,created_at,actor_admin,detail&order=created_at.asc,id.asc');
+    } catch (e) { console.log('[billing] free month true-up: audit read failed at venue ' + venueId + ', left alone'); return null; }
+    /* Only the billing Worker's own rows (actor_admin null): a row an HQ login wrote is never money. */
+    const mine = (prevRows || []).filter((r) => r && r.actor_admin == null);
+    const last = mine.slice(-1)[0];
+    const prev = last && last.detail ? (parseInt(last.detail.owed_cents, 10) || 0) : 0;
+    const delta = owed - prev;
+    if (!delta) return null;
+    const name = (v.name || 'Venue');
+    const res = await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
+      amount: delta, currency: 'aud',
+      description: delta > 0
+        ? name + ' - first month free: ' + n + ' of the ' + P + ' players it was given for are kept, so the free part for the other ' + (P - n) + ' comes back off'
+        : name + ' - first month free: back to ' + Math.min(n, P) + ' of the ' + P + ' players it was given for, so that free part is credited again',
+    /* THE KEY CARRIES HOW MANY ADJUSTMENTS CAME BEFORE (13 Nov 2026). prev:owed alone repeats: drop to 1
+       (0 -> X), raise back (X -> 0), drop to 1 again (0 -> X) is the same pair twice in a day, Stripe would
+       replay the first and the second take-back would never happen. A retry of the same request reads the
+       same rows (its own row is written only after Stripe answers), so it keeps its key and moves money once. */
+    }, 'vfmt:' + venueId + ':' + mine.length + ':' + prev + ':' + owed);
+    if (!res || res.error) {
+      console.log('[billing] free month true-up FAILED at venue ' + venueId + ': ' + ((res && res.error && res.error.message) || 'unknown'));
+      return { kind: 'failed', cents: delta };
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'billing', action: 'free_month_trued_up', target: 'venue:' + venueId,
+      detail: { owed_cents: owed, prev_cents: prev, moved_cents: delta, players: n, given_for: P, credit_cents: c0, txn: res.id || null, why: opts.why || null },
+    }, false).catch(() => {});
+    return { kind: delta > 0 ? 'clawed' : 'recredited', cents: delta };
+  } catch (e) { console.log('[billing] free month true-up error: ' + (e && e.message)); return null; }
+}
+
+/* WHICH CHANGE THIS IS, NOT JUST WHAT IT LOOKS LIKE (security review 13 Nov 2026, B2). A player change's Stripe
+   idempotency key named the venue, the move and the renewal date, so the SAME move made twice in a day (add 80,
+   undo it inside the hour, add 80 again; or on a yearly plan add 80, release them, add 80 again) sent the same
+   key with the same parameters, Stripe replayed its saved answer to the FIRST charge (already deleted, or already
+   credited back) and made nothing, and the page was told it had been charged. The players were free.
+   The key now also carries the newest player-change row for the venue: a retry of the same request (a double
+   click, a resent POST) reads the same row and keeps the same key, so it still charges once; a genuinely new
+   move comes after a newer row and gets its own key. A failed read answers '0', which is the old key. */
+async function vpbPlayersGeneration(env, venueId) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+      + '&action=in.(players_increased,players_increase_undone,players_reduction_scheduled,players_reduction_cancelled)'
+      + '&order=created_at.desc,id.desc&limit=1&select=id,created_at');
+    const r = rows && rows[0];
+    return r ? (String(r.id == null ? '' : r.id) + '@' + String(r.created_at || '')) : '0';
+  } catch (_) { return '0'; }
+}
+
 async function vpbSetPlayers(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -13675,6 +13837,7 @@ async function vpbSetPlayers(request, env, json) {
   const current = parseInt(venue.max_players, 10) || 0;
   const priorPending = (venue.pending_players == null) ? null : (parseInt(venue.pending_players, 10) || null);
   const foundingId = o.account.id;
+  const gen = (b.preview === true) ? '0' : await vpbPlayersGeneration(env, venueId);   // B2: part of every money key below
   // What this account is billed for TODAY.
   const billedNow = (priorPending != null) ? priorPending : current;
   // THE BASIS a money move is measured from, and it is NOT the same on both plans.
@@ -13708,7 +13871,8 @@ async function vpbSetPlayers(request, env, json) {
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
     const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
-      venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0')) : null;
+      venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0') + ':g' + gen) : null;
+    if (rinfo) await vpbFreeMonthTrueUp(env, o, venueId, rinfo, current, { why: 'reduction_cancelled' });
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -13764,7 +13928,8 @@ async function vpbSetPlayers(request, env, json) {
        the venue ends on 150 having paid nothing. Including the delta and the
        direction makes each move its own event. Found by audit 5 Sep 2026. */
     const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
-      venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0'));
+      venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0') + ':g' + gen);
+    await vpbFreeMonthTrueUp(env, o, venueId, info, players, { why: 'increase' });
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -13803,8 +13968,10 @@ async function vpbSetPlayers(request, env, json) {
   if (!annualPlan && vpbRules(env).undo_hour) {
     try {
       const lastUp = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
-        + '&action=eq.players_increased&order=created_at.desc&limit=1&select=created_at,detail');
-      const row = lastUp && lastUp[0];
+        + '&action=eq.players_increased&order=created_at.desc&limit=1&select=created_at,detail,actor_admin');
+      /* B7: a row is only acted on if the Worker could have written it: the owner (no admin), or an HQ admin
+         who may View as (owner or accounts). A row any other login wrote is never a Stripe line to delete. */
+      const row = (lastUp && lastUp[0] && await vpaAuditAuthorOk(env, lastUp[0])) ? lastUp[0] : null;
       const det = (row && row.detail) || {};
       const addedAt = row && row.created_at ? Date.parse(row.created_at) : NaN;
       const ageS = Number.isFinite(addedAt) ? (Date.now() - addedAt) / 1000 : Infinity;
@@ -13863,7 +14030,8 @@ async function vpbSetPlayers(request, env, json) {
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
   const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0')) : null;
+    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0') + ':g' + gen) : null;
+  if (dinfo) await vpbFreeMonthTrueUp(env, o, venueId, dinfo, players, { why: 'reduction' });
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
@@ -13896,10 +14064,49 @@ async function vpbAddVenue(request, env, json) {
   const players = parseInt(b.players, 10);
   if (!name) return json({ error: 'Enter a venue name.' }, 400);
   if (!players || players < 1) return json({ error: 'Enter the max players for the new venue.' }, 400);
+  /* A CEILING ON ONE ADD (security review 13 Nov 2026, B3): there was none, and a new pub's free month is
+     worth players x rate, so 20,000 players bought a five-figure credit. The ceiling is the biggest crowd HQ
+     can set up a venue with (VPA_PROSPECT_MAX_PLAYERS); a bigger venue is a phone call. Dean confirms the
+     number (NEEDS-DEAN, DECISION: billing security). */
+  if (players > VPB_ADD_VENUE_MAX_PLAYERS) {
+    return json({ error: 'Up to ' + VPB_ADD_VENUE_MAX_PLAYERS.toLocaleString('en-AU') + ' players can be added to one venue from here. For a bigger venue, call us on ' + VP_SUPPORT_PHONE + ' or email hello@venueplay.com.au. Nothing was added or charged.' }, 400);
+  }
   // In-app venues are effectively unlimited for any real operator (larger than the biggest
   // Australian pub group). A high ceiling still guards against runaway/abuse.
   if (o.venues.length >= 500) {
     return json({ error: 'You have reached the online limit of 500 venues on one account. Email hello@venueplay.com.au and we will add more.' }, 400);
+  }
+
+  /* NO LIVE SUBSCRIPTION, NO VENUE SWITCHED ON (security review 13 Nov 2026, B1). This route used to make a
+     venue active, or switch an ended one back on, before it knew whether anything would ever be billed for
+     it: a prospect with no card added pubs that were never charged, an owner whose subscription had ENDED
+     (cancelled, or a chargeback) "added" the same pub and it came back on for nothing, and when Stripe
+     refused the quantity change the venue stayed on anyway. So, BEFORE anything is written:
+       - a free account ('comp') keeps today's path: nothing on it is charged, on Dean's say-so
+       - no subscription (a prospect who never added a card): add a card first
+       - a recorded chargeback on the account: refused, exactly as /account/restart refuses it
+       - the subscription must be active or in its free month; unpaid points at the card, ended points at us
+     and below, a refused quantity change puts the venue back exactly as it was. */
+  const addComp = o.account.status === 'comp';
+  if (!addComp) {
+    if (!o.account.stripe_subscription_id) {
+      return json({ error: 'Add your card on this page first, then you can add another venue. Nothing was added or charged.', add_card: true }, 409);
+    }
+    let disputed;
+    try { disputed = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.payment_disputed&target=eq.' + encodeURIComponent('account:' + o.account.id) + '&select=id&order=id.asc'); }
+    catch (e) { return json({ error: 'We could not check your account just now. Nothing was added or charged. Please try again in a minute.' }, 503); }
+    if (disputed && disputed.length) return json({ error: VPB_RESTART_NEUTRAL }, 409);
+    const live = await vpbSubItem(env, o.account.stripe_subscription_id);
+    const liveStatus = (live && live.sub && !live.sub.error && live.sub.status) || null;
+    if (!liveStatus || !live.itemId) {
+      return json({ error: 'We could not reach our payment provider just now. Nothing was added or charged. Please try again in a minute.' }, 503);
+    }
+    if (liveStatus === 'past_due' || liveStatus === 'unpaid' || liveStatus === 'incomplete') {
+      return json({ error: 'There is an unpaid invoice on this account. Update your card on this page to pay it, then add the venue. Nothing was added or charged.', update_card: true }, 409);
+    }
+    if (liveStatus !== 'active' && liveStatus !== 'trialing') {
+      return json({ error: 'Billing on this account has ended, so a venue cannot be added from here. ' + VPB_RESTART_CALL }, 409);
+    }
   }
 
   const foundingId = o.account.id;
@@ -13939,7 +14146,7 @@ async function vpbAddVenue(request, env, json) {
      'manual' is HQ switching a venue off on purpose, so it is not the venue's to undo either. */
   const sameName = await vpaSelect(env, 'vp_venues',
     'founding_id=eq.' + encodeURIComponent(foundingId) + '&name=eq.' + encodeURIComponent(name)
-    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,postcode,max_players');
+    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,postcode,max_players,pending_players,closed_at');
   /* A blank postcode on either side cannot tell two venues apart, so it counts as the same venue.
      That is the conservative way round: refusing an add they can retry with a postcode is a
      nuisance, while creating a second copy of a LIVE venue splits its players and its bill. */
@@ -13950,6 +14157,9 @@ async function vpbAddVenue(request, env, json) {
   const LOCKED_OFF = {
     nonpayment: 'That venue is switched off because a payment did not go through. Sort the payment out on this page and it comes back on by itself.',
     manual: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
+    /* HQ archived it (B1, 13 Nov 2026): a person switched it off on purpose, so a person switches it back on. */
+    archived: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
+    archived_cancelling: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
   };
   if (twin && twin.status === 'suspended' && LOCKED_OFF[twin.suspended_reason || '']) {
     return json({ error: LOCKED_OFF[twin.suspended_reason] }, 409);
@@ -13960,7 +14170,9 @@ async function vpbAddVenue(request, env, json) {
     return json({ error: 'You already have a venue called ' + name + ' at that postcode. If this is a different pub, put its own postcode in. If it is the same one, change its max players on the list above instead.' }, 409);
   }
 
-  let r;
+  let r, preInfo = null, preBefore = null;
+  /* The row as it was, copied BEFORE the revive writes over it, for putting it back if Stripe says no. */
+  const twinWas = twin ? Object.assign({}, twin) : null;
   if (reviving) {
     await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twin.id), {
       status: 'active',
@@ -13979,6 +14191,23 @@ async function vpbAddVenue(request, env, json) {
     });
     r = { created: false, revived: true, venue: { id: twin.id, name: name, slug: twin.slug } };
   } else {
+    /* A NEW VENUE IS BILLED BEFORE IT EXISTS (B1, 13 Nov 2026): the subscription is raised to the total WITH
+       it first, and only then is the venue made, so a Stripe refusal leaves nothing behind (no live venue,
+       no half-made one to tidy up, no free month spent). If making it then fails, the quantity goes back. */
+    if (!addComp) {
+      let before;
+      try { before = await vpbAccountTotal(env, foundingId); }
+      catch (e) { return json({ error: 'We could not check your account just now. Nothing was added or charged. Please try again in a minute.' }, 503); }
+      preInfo = await vpbSubItem(env, o.account.stripe_subscription_id);
+      const pre = (preInfo && preInfo.itemId)
+        ? await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(preInfo.itemId), { quantity: before + players, proration_behavior: 'none' })
+        : null;
+      if (!(preInfo && preInfo.itemId) || !pre || pre.error) {
+        console.log('[billing] add-venue: Stripe refused the quantity change for ' + name + ' (' + ((pre && pre.error && pre.error.message) || 'no subscription item') + '), nothing made');
+        return json({ error: 'We could not update your billing just now, so ' + name + ' was not added and nothing was charged. Please try again in a minute.' }, 502);
+      }
+      preBefore = before;
+    }
     // Provision the new venue under the same account + owner login. forceNew only when a
     // same-named venue exists at a DIFFERENT postcode, which the block above has just established.
     r = await vpaProvisionOneVenue(env, {
@@ -13986,6 +14215,9 @@ async function vpbAddVenue(request, env, json) {
       authUserId: o.authUserId, forceNew: !!(sameName && sameName.length),
     });
     if (!r || !r.created) {
+      if (preBefore != null) {
+        await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(preInfo.itemId), { quantity: Math.max(preBefore, 1), proration_behavior: 'none' });
+      }
       // Nothing was added, and there is no name clash left to explain it, so do not invent one.
       return json({ error: 'Could not add that venue just now. Nothing was charged. Please try again, and if it keeps happening email hello@venueplay.com.au.' }, 500);
     }
@@ -13993,12 +14225,35 @@ async function vpbAddVenue(request, env, json) {
 
   // Bump the subscription to the new total, pro rata.
   const newTotal = await vpbAccountTotal(env, foundingId);
-  const info = await vpbSubItem(env, o.account.stripe_subscription_id);
+  let info = await vpbSubItem(env, o.account.stripe_subscription_id);
+  if (!(info && info.itemId) && preInfo && preInfo.itemId) info = preInfo;   // a blip on the re-read: the raise above stands
   const upd = (info && info.itemId)
     ? await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
         { quantity: newTotal, proration_behavior: 'none' })
     : null;
-  const billingOk = !!(info && info.itemId) && !(upd && upd.error);
+  /* A new venue's quantity was raised before it was made (preBefore), so a failed second write of the same
+     total is not a billing failure. */
+  const billingOk = (!!(info && info.itemId) && !(upd && upd.error)) || preBefore != null;
+  /* STRIPE SAID NO: PUT IT BACK AS IT WAS (B1, 13 Nov 2026). It used to answer ok with billing_synced:false
+     and leave the venue running with nothing behind it. Only a venue COMING BACK can reach here (a new one is
+     billed before it is made, above): it goes back to exactly the row it was. A free account has nothing to bill. */
+  if (!billingOk && !addComp) {
+    const vid = r.venue && r.venue.id;
+    if (reviving) {
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twinWas.id), {
+        status: twinWas.status, suspended_reason: twinWas.suspended_reason || null, closed_at: twinWas.closed_at || null,
+        cancel_at_period_end: !!twinWas.cancel_at_period_end, max_players: twinWas.max_players,
+        pending_players: twinWas.pending_players == null ? null : twinWas.pending_players, postcode: twinWas.postcode || null,
+      }).catch(() => {});
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      ...vpbActorFields(o), action: 'venue_readd_refused_billing',
+      target: 'venue:' + vid,
+      detail: { name: name, players: players, stripe_error: (upd && upd.error && upd.error.message) || 'no subscription item', actor_user: o.authUserId },
+    }, false).catch(() => {});
+    console.log('[billing] add-venue: Stripe refused the quantity change for ' + name + ', venue put back as it was');
+    return json({ error: 'We could not update your billing just now, so ' + name + ' was not switched on and nothing was charged. Please try again in a minute.' }, 502);
+  }
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
   /* THE KEY NAMES THE VENUE, NOT WHAT IT IS CALLED. It used to be built from the name, the
@@ -14106,7 +14361,10 @@ async function vpbAddVenue(request, env, json) {
      a returning venue is now the SAME ROW rather than a new one. */
   if (!newVenueProrata && !reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
-    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
+    /* NEVER MORE THAN WAS CHARGED (B3, 13 Nov 2026). On a yearly plan the charge is pro rata to the renewal,
+       so a pub added in the last weeks of the year was charged a few days and credited a whole month: the
+       difference paid the account's other bills. Monthly the charge IS one month, so this changes nothing. */
+    const freeCents = (fRate == null) ? 0 : Math.min(Math.round(fRate * 100) * players, aAdj.cents);
     if (freeCents > 0) {
       /* KEYED ON THE VENUE ID, which is unique and permanent, so a double click or a client
          retry banks the credit once. vpaProvisionOneVenue is idempotent by name and answers 409
@@ -15564,6 +15822,13 @@ async function vpbCancelVenue(request, env, json) {
     return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email accounts@venueplay.com.au.' }, 502);
   }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
+  /* B3 (13 Nov 2026): a pub cancelled before its monthly pro rata free month credit was used takes that
+     credit with it (it is not on the next bill, so neither is its free part); un-cancelling puts it back.
+     Yearly is left alone: a cancelled yearly pub runs, and is paid for, to the renewal. */
+  if (info && info.sub) {
+    await vpbFreeMonthTrueUp(env, o, venueId, info, undo ? vpbBilledPlayers(Object.assign({}, venue, { cancel_at_period_end: false })) : 0,
+      { monthlyOnly: true, why: undo ? 'cancel_undone' : 'cancelled' });
+  }
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: undo ? 'venue_cancel_undone' : 'venue_cancel_scheduled',

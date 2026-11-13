@@ -111,7 +111,10 @@ async function main() {
   section('1. The parked work is not on this branch (INBOX 97: items 60 and 61 moved to fix/same-pub-later)');
   world();
   account({ name: 'Royal Hotel', postcode: '4000', email: 'gm@royal.example' });
-  var mine = account({ name: 'Bat and Ball', postcode: '2000', email: 'sam@batandball.example' });
+  /* A free ('comp') account (13 Nov 2026, B1): add-venue now refuses an account with no live subscription, and
+     this rig's Stripe answers nothing a subscription read can use. What this case pins is the missing
+     cross-account check, not billing, so the account is one add-venue lets through without Stripe. */
+  var mine = account({ name: 'Bat and Ball', postcode: '2000', email: 'sam@batandball.example', status: 'comp' });
   var r = await call('/account/add-venue', { name: 'The Royal Hotel', postcode: '4000', players: 10 }, AS(mine.owner));
   check('Add a venue: a pub with the same name on another account is added as on main (no cross-account check here)', r.status === 200 && r.body.ok === true, r);
   check('and no ticket was made', tickets().length === 0, tickets());

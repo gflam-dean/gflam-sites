@@ -667,6 +667,10 @@
   "checks": 52,
   "counted_by": "lines"
  },
+ "tools/test-billing-abuse-13nov.js": {
+  "checks": 65,
+  "counted_by": "lines"
+ },
  "tools/test-billing-panels.js": {
   "checks": 68,
   "counted_by": "lines"

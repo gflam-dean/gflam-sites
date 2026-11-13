@@ -36,6 +36,12 @@ function arm(opts) {
     if (table === 'vp_venues' && /name=eq/.test(q)) return Promise.resolve(opts.sameName || []);
     return Promise.resolve([]);
   };
+  /* The chargeback read add-venue makes before anything is written (B1, 13 Nov 2026). It THROWS on a failed
+     read, so it needs its own stand-in: no chargeback on these accounts unless a case says so. */
+  vpaSelectAll = function (env, table, q) {
+    if (table === 'vp_admin_audit' && /payment_disputed/.test(q)) return Promise.resolve(opts.disputed ? [{ id: 1 }] : []);
+    return Promise.resolve([]);
+  };
   var status = opts.status || 'active';
   var priceId = ('priceId' in opts) ? opts.priceId : MONTHLY;
 
