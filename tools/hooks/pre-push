@@ -66,6 +66,18 @@ while read -r _lref LSHA _rref _rsha; do
   fi
 done
 
+# VP_HOOK_DRY_RUN=1 (13 Nov 2026, INBOX 357A): say what the gate WOULD do with the Chrome half for this push, then
+# REFUSE it. It can only ever stop a push, never let one through, and it runs no suite.
+if [ "${VP_HOOK_DRY_RUN:-}" = "1" ]; then
+  if [ -n "$CHROME_FLAG" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
+    python3 "$ROOT/tools/gate-server.py" check
+  else
+    echo "  gate record: not used: the pushed files are not this checkout's"
+  fi
+  echo "DRY RUN (VP_HOOK_DRY_RUN=1): nothing gated, PUSH REFUSED."
+  exit 1
+fi
+
 if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG; then
   # A red gate leaves no record: a tree that failed can never ride an older one.
   [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear

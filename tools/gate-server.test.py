@@ -364,6 +364,17 @@ try:
     r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
                        input='refs/heads/x %s refs/heads/gone %s\n' % ('0' * 40, hhead))
     ok('a branch delete in the push does not count as other files', io.open(os.path.join(hrepo, 'tools', 'ARGS')).read() == '--local --chrome-record')
+    os.remove(os.path.join(hrepo, 'tools', 'ARGS'))
+    denv = dict(henv, VP_HOOK_DRY_RUN='1')
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=denv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (hhead, '0' * 40))
+    ok('VP_HOOK_DRY_RUN=1 REFUSES the push and runs no gate (it can never let one through)',
+       r.returncode == 1 and 'DRY RUN' in r.stdout and 'PUSH REFUSED' in r.stdout
+       and not os.path.exists(os.path.join(hrepo, 'tools', 'ARGS')), (r.returncode, r.stdout[-300:]))
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=denv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (other, '0' * 40))
+    ok('... and for other files says the record is not used, still refusing',
+       r.returncode == 1 and 'not this checkout' in r.stdout and 'DRY RUN' in r.stdout, r.stdout[-300:])
     ok('the hook runs the server only when asked (VP_GATE_SERVER=1) and never fails the push on it',
        '[ "${VP_GATE_SERVER:-}" = "1" ]' in hook_src and 'gate-server.py" run || echo' in hook_src)
 

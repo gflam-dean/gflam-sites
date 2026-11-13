@@ -3,7 +3,7 @@
 of 12 Nov 2026, tightened as the FAST GATE of 13 Nov 2026, INBOX 357A; design and threat model:
 ~/venue-enrich/reports/fast-gate-13nov/DESIGN.md).
 
-    python3 tools/gate-server.py run          the ONE trusted path that writes a record: sends this exact tree to
+    python3 tools/gate-server.py run [-j N]   the ONE trusted path that writes a record: sends this exact tree to
                                               vp-tests-1, runs every Chrome suite the gate would run (minus MAC_ONLY)
                                               there 4 at a time (about 30 min), judges the raw output HERE, signs HERE
     python3 tools/gate-server.py check        read only: would the gate accept a record for THIS tree, and why (0 yes, 1 no)
@@ -409,7 +409,7 @@ def run_bound(run, nonce, digest):
     return ''
 
 
-def make_record(root, runner, key, now=None, say=print, host=HOST, host_key=''):
+def make_record(root, runner, key, now=None, say=print, host=HOST, host_key='', jobs=JOBS):
     """THE ONLY WRITER. Returns (ok, text, record or None). Refuses over a dirty tree, refuses if the tree moved
     while the suites ran, refuses results it cannot tie to this request and these files, signs nothing unless every
     Chrome suite (MAC_ONLY aside) came back green on its first and only run."""
@@ -424,7 +424,7 @@ def make_record(root, runner, key, now=None, say=print, host=HOST, host_key=''):
         return False, 'not run: the manifest of this tree could not be read', None
     nonce = secrets.token_hex(16)
     t0 = time.time()
-    results, red, run = collect(root, runner, suites, nonce, paths, say=say)
+    results, red, run = collect(root, runner, suites, nonce, paths, jobs=jobs, say=say)
     tree2, head2, dirty2 = current_tree(root)
     if tree2 != tree:
         return False, 'NOT SIGNED: the checkout changed while the suites ran (tree %s, now %s)' % (tree[:12], (tree2 or 'dirty')[:12]), None
@@ -436,7 +436,7 @@ def make_record(root, runner, key, now=None, say=print, host=HOST, host_key=''):
     now = time.time() if now is None else now
     body = {'v': VERSION, 'tree': tree, 'head': head, 'manifest': digest, 'files': len(paths), 'time': now,
             'when': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now)), 'host': host, 'host_key': host_key,
-            'jobs': JOBS, 'mac_only': list(MAC_ONLY), 'wall_s': round(time.time() - t0),
+            'jobs': jobs, 'mac_only': list(MAC_ONLY), 'wall_s': round(time.time() - t0),
             'server_wall_s': run.get('wall'), 'suites': results}
     rec = sign(body, key)
     covered, why = verify(json.dumps(rec), tree, key, now, chrome_suites(root), ledger(root), suite_passed_rule(root))
@@ -540,7 +540,10 @@ def main(argv=None):
         if not os.path.isfile(REMOTE_RUN):
             print('  gate record: not run: %s is not on this Mac' % REMOTE_RUN)
             return 1
-        good, text, rec = make_record(ROOT, remote_runner(ROOT), key, host='vp-tests-1 ' + HOST, host_key=host_key_fingerprint())
+        # run -j N (1 to 4): fewer at once when the shared server is busy. Only how many run together, never which
+        # suites or how they are judged.
+        jobs = int(argv[2]) if len(argv) > 2 and argv[1] == '-j' and argv[2] in ('1', '2', '3', '4') else JOBS
+        good, text, rec = make_record(ROOT, remote_runner(ROOT), key, host='vp-tests-1 ' + HOST, host_key=host_key_fingerprint(), jobs=jobs)
         if good:
             text += '; written to ' + write_record(rec)
         print('  gate record: ' + text)
