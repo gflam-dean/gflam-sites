@@ -256,6 +256,104 @@ call('/account/players', OWNER, { venue_id: V1, players: 20 });
 var credits = S.posts.filter(function (p) { return /balance_transactions$/.test(p.url); });
 check('d) yearly: two releases of the same 80 in one day bank two credits, with two keys', credits.length === 2 && credits[0].key !== credits[1].key && S.balance === 2 * c1, [credits.map(function (p) { return p.key; }), S.balance, c1]);
 
+/* ================================================================================================
+   B3. The new-pub free month cannot be farmed: a ceiling on one add, the yearly credit never more than was
+   charged, and the credit squared when the players it was given for are dropped before it is used.
+   ================================================================================================ */
+section('B3 the new-pub free month is for the players kept through it');
+var DAY = 86400, NOW = Math.floor(Date.now() / 1000);
+function given() { return -S.balance - liveItemCents(); }   // what the account has been handed, net, in cents (credit minus charges)
+function bigPub() { return venueNamed('Big Barn'); }
+function monthlyWorld(players) {
+  worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+  stripeReset({ quantity: 40, periodStart: NOW - 28 * DAY, periodEnd: NOW + 2 * DAY, anchor: NOW - 28 * DAY });
+  var r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: players, postcode: '4999' }, ON);
+  return r;
+}
+
+/* a) The ceiling. */
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+stripeReset({ quantity: 40 });
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 20000, postcode: '4999' }, ON);
+check('a) 20,000 players on one add is refused, nothing made or charged', r.status === 400 && !bigPub() && S.balance === 0 && quantityPosts().length === 0, r);
+check('a) and the message says the ceiling and who to call', /2,000/.test(r.body.error || '') && /07 5228 3667/.test(r.body.error || ''), r.body.error);
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 2000, postcode: '4999' }, ON);
+check('a) 2,000 (the ceiling HQ sets venues up with) is still added', r.status === 200 && !!bigPub(), r);
+
+/* b) Monthly, pro rata rule on: add 2,000, take the credit, drop to 1 before the bill. The credit kept is
+      the free part for the 1 player still billed, never the 2,000's. */
+r = monthlyWorld(2000);
+var c0 = r.body.free_month_cents;
+check('b) monthly: the add credits the 2,000-player free part (sanity: the rule as written)', r.status === 200 && r.body.free_rule === 'prorata' && c0 > 0 && S.balance === -c0, [r.body, S.balance]);
+var d = call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 }, ON);
+check('b) monthly: dropping to 1 takes the unearned 1,999 players\' share back off', d.status === 200 && -S.balance === Math.round(c0 / 2000), [S.balance, c0]);
+check('b) monthly: what is left is no more than the 1 player\'s month the next bill charges ($3.00)', given() <= 300, given());
+/* ...and raising it back gives the credit back: an honest change of mind costs nothing. */
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 2000 }, ON);
+check('b) monthly: putting the 2,000 back puts the whole credit back', S.balance === -c0, [S.balance, c0]);
+
+/* c) Monthly, cancel the pub before the bill: its credit goes with it; un-cancel puts it back. */
+r = monthlyWorld(2000);
+c0 = r.body.free_month_cents;
+var cx = call('/account/cancel-venue', OWNER, { venue_id: bigPub().id, reason: 'other' }, ON);
+check('c) monthly: a pub cancelled inside its unused free month leaves no credit behind', cx.status === 200 && S.balance === 0, [cx, S.balance]);
+call('/account/cancel-venue', OWNER, { venue_id: bigPub().id, undo: true }, ON);
+check('c) monthly: changing their mind puts the credit back', S.balance === -c0, [S.balance, c0]);
+
+/* d) Honest controls. Add 10, raise to 20 (charged a month for the 10 extra), drop back to 10: the free month
+      for the 10 it was given for stands. */
+r = monthlyWorld(10);
+c0 = r.body.free_month_cents;
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 20 }, ON);
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 10 }, ON);
+check('d) control: add 10, raise to 20, back to 10: the 10-player free month is untouched', S.balance === -c0 && DB.vp_admin_audit.filter(function (a) { return a.action === 'free_month_trued_up'; }).length === 0, [S.balance, c0]);
+/* After the renewal that used the credit, a reduction is an ordinary reduction. */
+r = monthlyWorld(100);
+/* The bill that carried the credit has run: the cycle now starts AFTER the add. Only the start moves, so every
+   other figure the true-up works from is the add's own and the one thing that says "used" is the date. */
+S.sub.periodStart = NOW + 3600;
+var before = S.balance;
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 }, ON);
+check('d) control: after the bill that used it, dropping players takes nothing back', S.balance === before, [S.balance, before]);
+/* Switch off (today's live rule): the month charged and the month credited sit on the same next bill. */
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+stripeReset({ quantity: 40, periodStart: NOW - 28 * DAY, periodEnd: NOW + 2 * DAY });
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 2000, postcode: '4999' });
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 });
+check('d) control, switch off: the month charged and credited cancel out, nothing extra is taken', r.body.free_rule === 'month' && given() === 0 && S.balance === -600000, [r.body.free_rule, given(), S.balance]);
+
+/* Raising a pub ABOVE its number after a drop (the increase path, charged as any increase) gives the credit back too. */
+r = monthlyWorld(100);
+c0 = r.body.free_month_cents;
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 10 }, ON);
+var mid = S.balance;
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 150 }, ON);
+check('d) control: add 100, drop to 10, raise to 150: the 100-player free month is whole again', mid > -c0 && S.balance === -c0, [mid, S.balance, c0]);
+
+/* e) Yearly, a few days before renewal: the charge is a few days pro rata, the credit used to be a whole month. */
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 362 * DAY, periodEnd: NOW + 3 * DAY });
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 2000, postcode: '4999' });
+var charged = liveItemCents();
+check('e) yearly: the free month credit is never more than was charged for the pub', r.status === 200 && charged > 0 && r.body.free_month_cents === charged && S.balance === -charged, [r.body.free_month_cents, charged, S.balance]);
+d = call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 });
+check('e) yearly: dropping to 1 inside the free month leaves the account no better off than a cent of rounding', d.status === 200 && given() <= 1, [given(), charged, S.balance]);
+/* Control: a yearly pub whose free month is OVER releases players the ordinary way (the release credit only). */
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 100 * DAY, periodEnd: NOW + 265 * DAY });
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' });
+bigPub().free_month_at = new Date((NOW - 40 * DAY) * 1000).toISOString();   // added 40 days ago
+before = S.balance;
+call('/account/players', OWNER, { venue_id: bigPub().id, players: 10 });
+var rel = S.posts.filter(function (p) { return /balance_transactions$/.test(p.url); }).slice(-1)[0];
+check('e) control: yearly, free month over: dropping players takes nothing of the free month back (only the release credit moves)',
+  S.balance < before && DB.vp_admin_audit.filter(function (a) { return a.action === 'free_month_trued_up'; }).length === 0 && /released/.test(sform(rel.body).description || ''), [before, S.balance, rel && sform(rel.body).description]);
+/* Control: a yearly pub that keeps its players keeps a month free when there is more than a month to run. */
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 65 * DAY, periodEnd: NOW + 300 * DAY });
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' });
+check('e) control: yearly with 300 days to run, the pub still gets a whole month (30 x the yearly rate) as before', r.status === 200 && r.body.free_month_cents > 0 && r.body.free_month_cents < liveItemCents() && S.balance === -r.body.free_month_cents, [r.body, liveItemCents()]);
+
 print('');
 if (bad) throw new Error('billing abuse: ' + bad + ' of ' + ran + ' failed');
 print('ALL ' + ran + ' CHECKS PASSED');

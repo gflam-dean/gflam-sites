@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:11 · ab6e2068';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:19 · 19a8b2b9';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -13434,6 +13434,8 @@ function vpbRules(env) {
   return { new_pub_free_month: on, undo_hour: on };
 }
 const VPB_UNDO_WINDOW_S = 3600;   // rule 4: one hour
+/* B3, 13 Nov 2026: the most players one Add a venue can ask for (the same ceiling HQ sets a venue up with). */
+const VPB_ADD_VENUE_MAX_PLAYERS = 2000;
 
 /* --- Whole Brisbane days, the unit Dean bills in (4 Nov 2026). --- */
 const VPB_BRIS_S = 36000;   // UTC+10, no daylight saving, the same shift vpaFmtDate uses
@@ -13610,6 +13612,92 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }
 
+/* THE FREE MONTH IS FOR THE PLAYERS KEPT THROUGH IT (security review 13 Nov 2026, B3).
+   A new pub's first month free is a credit on the customer balance, sized at the add: players x rate (x the
+   free days of the next cycle on the monthly pro rata rule; never more than was charged on a yearly plan).
+   Nothing ever took it back, so an owner could add a pub at 20,000 players, take the credit, drop the pub to
+   1 player (or cancel it) before the credit was used, and keep $54,193.55 of credit for $0 charged.
+
+   This squares it, and ONLY inside the window where the credit is still unearned:
+     - monthly, pro rata rule (VPB_BILLING_RULES_3NOV): before the renewal that uses the credit. A monthly
+       reduction lowers the NEXT bill, which the credit is set against, so the unearned part comes back off.
+       (On the old monthly rule the month charged and the month credited sit on the same next bill and
+       cancel each other whatever happens, so there is nothing to square and this does nothing.)
+     - yearly: inside the pub's free month, because a yearly release pays the unused players out as credit
+       straight away, which on top of the free month paid out the same players twice.
+   The credit is kept for every player up to the number it was given for (P, worked back from the credit
+   and the same rate and days that sized it). Below P the unearned share, credit x (P - players) / P, is
+   taken back; raising the players again gives it back. Each adjustment is the difference from the last one
+   (cumulative, in a free_month_trued_up audit row), keyed, so a retry moves no money twice.
+   Fails OPEN for the venue: anything it cannot read or work out leaves the credit alone, with a log line. */
+async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
+  try {
+    opts = opts || {};
+    const annual = o.account.plan === 'annual';
+    if (opts.monthlyOnly && annual) return null;
+    if (!annual && !vpbRules(env).new_pub_free_month) return null;
+    const customer = info && info.sub && info.sub.customer;
+    if (!customer || !info.periodEnd) return null;
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,free_month_at,free_month_cents,max_players&limit=1');
+    const v = vr && vr[0];
+    const c0 = v ? (parseInt(v.free_month_cents, 10) || 0) : 0;
+    const atMs = v && v.free_month_at ? Date.parse(v.free_month_at) : NaN;
+    if (!(c0 > 0) || !Number.isFinite(atMs)) return null;
+    const atS = Math.floor(atMs / 1000), nowS = Math.floor(Date.now() / 1000);
+    const startS = Number(info.periodStart) || 0;
+    if (!(startS > 0) || atS < startS) return null;                  // the credit was set against an earlier bill: used
+    if (annual && !(nowS < vpbMonthOnS(atS))) return null;           // yearly: only inside the free month
+    const rate = vpbRateStrict(env, info.priceId, o.account.plan);
+    if (rate == null) return null;
+    let per;
+    if (annual) {
+      const frac = Math.max(0, Math.min(1, (Number(info.periodEnd) - atS) / (365 * 86400)));
+      per = Math.min(Math.round(rate * 100), rate * 100 * 12 * frac);
+    } else {
+      const cycleStart = Number(info.periodEnd);
+      const cycleDays = vpbCycleDays(cycleStart, vpbMonthOnS(cycleStart, info.anchor));
+      const freeDays = Math.max(0, Math.min(cycleDays, vpbBrisDays(vpbMonthOnS(atS)) - vpbBrisDays(cycleStart)));
+      per = rate * 100 * freeDays / cycleDays;
+    }
+    if (!(per > 0)) return null;
+    const P = Math.round(c0 / per);
+    /* Monthly, the pub's max_players never drops inside the cycle (a reduction waits for the renewal), so a
+       credit that works back to MORE players than it has was not given on this rule: leave it alone. */
+    if (!(P >= 1) || (!annual && P > (parseInt(v.max_players, 10) || 0))) {
+      console.log('[billing] free month true-up: could not tie ' + c0 + 'c to a player count at venue ' + venueId + ', left alone');
+      return null;
+    }
+    const n = Math.max(0, parseInt(players, 10) || 0);
+    const owed = n >= P ? 0 : Math.round(c0 * (P - n) / P);
+    let prevRows;
+    try {
+      prevRows = await vpaSelectAll(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+        + '&action=eq.free_month_trued_up&select=id,created_at,actor_admin,detail&order=created_at.asc,id.asc');
+    } catch (e) { console.log('[billing] free month true-up: audit read failed at venue ' + venueId + ', left alone'); return null; }
+    /* Only the billing Worker's own rows (actor_admin null): a row an HQ login wrote is never money. */
+    const last = (prevRows || []).filter((r) => r && r.actor_admin == null).slice(-1)[0];
+    const prev = last && last.detail ? (parseInt(last.detail.owed_cents, 10) || 0) : 0;
+    const delta = owed - prev;
+    if (!delta) return null;
+    const name = (v.name || 'Venue');
+    const res = await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
+      amount: delta, currency: 'aud',
+      description: delta > 0
+        ? name + ' - first month free: ' + n + ' of the ' + P + ' players it was given for are kept, so the free part for the other ' + (P - n) + ' comes back off'
+        : name + ' - first month free: back to ' + Math.min(n, P) + ' of the ' + P + ' players it was given for, so that free part is credited again',
+    }, 'vfmt:' + venueId + ':' + prev + ':' + owed);
+    if (!res || res.error) {
+      console.log('[billing] free month true-up FAILED at venue ' + venueId + ': ' + ((res && res.error && res.error.message) || 'unknown'));
+      return { kind: 'failed', cents: delta };
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'billing', action: 'free_month_trued_up', target: 'venue:' + venueId,
+      detail: { owed_cents: owed, prev_cents: prev, moved_cents: delta, players: n, given_for: P, credit_cents: c0, txn: res.id || null, why: opts.why || null },
+    }, false).catch(() => {});
+    return { kind: delta > 0 ? 'clawed' : 'recredited', cents: delta };
+  } catch (e) { console.log('[billing] free month true-up error: ' + (e && e.message)); return null; }
+}
+
 /* WHICH CHANGE THIS IS, NOT JUST WHAT IT LOOKS LIKE (security review 13 Nov 2026, B2). A player change's Stripe
    idempotency key named the venue, the move and the renewal date, so the SAME move made twice in a day (add 80,
    undo it inside the hour, add 80 again; or on a yearly plan add 80, release them, add 80 again) sent the same
@@ -13681,6 +13769,7 @@ async function vpbSetPlayers(request, env, json) {
     // reduce, pocket the credit, restore, and repeat.
     const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
       venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0') + ':g' + gen) : null;
+    if (rinfo) await vpbFreeMonthTrueUp(env, o, venueId, rinfo, current, { why: 'reduction_cancelled' });
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -13737,6 +13826,7 @@ async function vpbSetPlayers(request, env, json) {
        direction makes each move its own event. Found by audit 5 Sep 2026. */
     const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
       venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0') + ':g' + gen);
+    await vpbFreeMonthTrueUp(env, o, venueId, info, players, { why: 'increase' });
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -13836,6 +13926,7 @@ async function vpbSetPlayers(request, env, json) {
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
   const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
     venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0') + ':g' + gen) : null;
+  if (dinfo) await vpbFreeMonthTrueUp(env, o, venueId, dinfo, players, { why: 'reduction' });
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
@@ -13868,6 +13959,13 @@ async function vpbAddVenue(request, env, json) {
   const players = parseInt(b.players, 10);
   if (!name) return json({ error: 'Enter a venue name.' }, 400);
   if (!players || players < 1) return json({ error: 'Enter the max players for the new venue.' }, 400);
+  /* A CEILING ON ONE ADD (security review 13 Nov 2026, B3): there was none, and a new pub's free month is
+     worth players x rate, so 20,000 players bought a five-figure credit. The ceiling is the biggest crowd HQ
+     can set up a venue with (VPA_PROSPECT_MAX_PLAYERS); a bigger venue is a phone call. Dean confirms the
+     number (NEEDS-DEAN, DECISION: billing security). */
+  if (players > VPB_ADD_VENUE_MAX_PLAYERS) {
+    return json({ error: 'Up to ' + VPB_ADD_VENUE_MAX_PLAYERS.toLocaleString('en-AU') + ' players can be added to one venue from here. For a bigger venue, call us on ' + VP_SUPPORT_PHONE + ' or email hello@venueplay.com.au. Nothing was added or charged.' }, 400);
+  }
   // In-app venues are effectively unlimited for any real operator (larger than the biggest
   // Australian pub group). A high ceiling still guards against runaway/abuse.
   if (o.venues.length >= 500) {
@@ -14158,7 +14256,10 @@ async function vpbAddVenue(request, env, json) {
      a returning venue is now the SAME ROW rather than a new one. */
   if (!newVenueProrata && !reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
-    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
+    /* NEVER MORE THAN WAS CHARGED (B3, 13 Nov 2026). On a yearly plan the charge is pro rata to the renewal,
+       so a pub added in the last weeks of the year was charged a few days and credited a whole month: the
+       difference paid the account's other bills. Monthly the charge IS one month, so this changes nothing. */
+    const freeCents = (fRate == null) ? 0 : Math.min(Math.round(fRate * 100) * players, aAdj.cents);
     if (freeCents > 0) {
       /* KEYED ON THE VENUE ID, which is unique and permanent, so a double click or a client
          retry banks the credit once. vpaProvisionOneVenue is idempotent by name and answers 409
@@ -15616,6 +15717,13 @@ async function vpbCancelVenue(request, env, json) {
     return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email accounts@venueplay.com.au.' }, 502);
   }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
+  /* B3 (13 Nov 2026): a pub cancelled before its monthly pro rata free month credit was used takes that
+     credit with it (it is not on the next bill, so neither is its free part); un-cancelling puts it back.
+     Yearly is left alone: a cancelled yearly pub runs, and is paid for, to the renewal. */
+  if (info && info.sub) {
+    await vpbFreeMonthTrueUp(env, o, venueId, info, undo ? vpbBilledPlayers(Object.assign({}, venue, { cancel_at_period_end: false })) : 0,
+      { monthlyOnly: true, why: undo ? 'cancel_undone' : 'cancelled' });
+  }
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: undo ? 'venue_cancel_undone' : 'venue_cancel_scheduled',

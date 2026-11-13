@@ -660,7 +660,7 @@
   "counted_by": "lines"
  },
  "tools/test-billing-abuse-13nov.js": {
-  "checks": 33,
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
