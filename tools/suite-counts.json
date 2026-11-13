@@ -1120,7 +1120,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 77,
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
