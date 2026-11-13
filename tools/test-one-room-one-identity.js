@@ -59,16 +59,20 @@ print('\n== a token the Worker no longer knows is dropped and the phone re-joins
   function rejoinNow() { rejoined++; }
   function setTimeout(f) { f(); }
   eval(lift(pg[1], 'deadToken', pg[0]));
-  try { deadToken({ status: 401 }, '/player/score'); } catch (e) { thrown = e; }
+  try { deadToken({ status: 401 }, '/player/score', 'dead'); } catch (e) { thrown = e; }
   ok(pg[0] + ': a 401 drops the dead token and re-joins', dropped === 1 && rejoined === 1, 'dropped ' + dropped + ', rejoined ' + rejoined);
   ok(pg[0] + ': and the caller still hears the failure', thrown && thrown.status === 401);
+  /* A 401 for a token the page no longer holds (a re-join already put a new one on the phone) is an echo, not news (13 Nov 2026). */
+  P.token = 'new'; dropped = 0; rejoined = 0;
+  try { deadToken({ status: 401 }, '/player/score', 'old'); } catch (e) {}
+  ok(pg[0] + ': a late 401 for a token already replaced leaves the new token alone', dropped === 0 && rejoined === 0 && P.token === 'new', 'dropped ' + dropped + ', rejoined ' + rejoined);
   P.token = 'x'; dropped = 0;
-  try { deadToken({ status: 401 }, '/join'); } catch (e) {}
+  try { deadToken({ status: 401 }, '/join', 'x'); } catch (e) {}
   ok(pg[0] + ': a refused /join does not loop into another join', dropped === 0);
-  try { deadToken({ status: 409 }, '/player/answer'); } catch (e) {}
+  try { deadToken({ status: 409 }, '/player/answer', 'x'); } catch (e) {}
   ok(pg[0] + ': a 409 (too late) is not mistaken for a dead token', dropped === 0);
   ok(pg[0] + ': playerPost and playerGet both go through it',
-     (pg[1].match(/catch\(function\(e\)\{ return deadToken\(e, path\); \}\)/g) || []).length === 2);
+     (pg[1].match(/catch\(function\(e\)\{ return deadToken\(e, path, sent\); \}\)/g) || []).length === 2);
 });
 
 print('\n== the answers room hears the NEW fingerprint after a re-join ==');

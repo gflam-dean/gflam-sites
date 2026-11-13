@@ -70,6 +70,20 @@ fetch = async function (url, opts) {
   }
   if (m === 'POST' && /\/rest\/v1\/(\w+)/.test(u)) {
     var t = /\/rest\/v1\/(\w+)/.exec(u)[1], b = JSON.parse(opts.body);
+    /* THE UNIQUE INDEX ON PLAYER ROWS, ENFORCED IN TEST MODE (migration 192, 13 Nov 2026): vp_players_session_device_uniq,
+       one row per (session_id, device_id) where device_id is not null and kicked = false. A second insert is what
+       PostgREST answers 409 (23505) to; the Worker's sbInsert turns that into its own 409 and handleJoin takes the phone back onto the
+       row that won. On by default, as the live database will be; RIG_PLAYER_INDEX=false (the {rigIndex:false} message) is the
+       database BEFORE the index, so the same join can be run both ways. RIG_RACE = {device_id, row} is the other join winning:
+       a row put in the instant before this insert, which the single-threaded rig could otherwise never interleave. */
+    if (t === 'vp_players' && !Array.isArray(b)) {
+      if (globalThis.RIG_RACE && b.device_id && globalThis.RIG_RACE.device_id === b.device_id) {
+        var rr = Object.assign({ session_id: b.session_id, device_id: b.device_id, kicked: false, id: rigUuid(), display_name: 'Winner', token_hash: 'h-winner', joined_at: '2026-11-13T07:00:00Z' }, globalThis.RIG_RACE.row || {});
+        rr.token = 'tok-' + rr.id; DB.vp_players.push(rr); globalThis.RIG_RACE = null;
+      }
+      if (globalThis.RIG_PLAYER_INDEX !== false && b.device_id && b.kicked !== true && DB.vp_players.some(function (x) { return x.session_id === b.session_id && x.device_id === b.device_id && x.kicked !== true; }))
+        return resp(409, { code: '23505', message: 'duplicate key value violates unique constraint "vp_players_session_device_uniq"' });
+    }
     (Array.isArray(b) ? b : [b]).forEach(function (r) {
       /* A PLAYER ROW'S ID IS A UUID, AS POSTGRES MINTS IT (13 Nov 2026). It was 'pl-<n>', and handleJoin only takes a
          phone back onto its own row when that row's id is a UUID (UUID_RE), so here, and only here, every re-join by the
@@ -96,6 +110,8 @@ for (;;) {
   /* The test's own hands on the fake database (tools/pickup-in-chrome.test.py, 20 Oct 2026): put rows
      in before a scene, read a table back after one. Never a Worker route: the pages cannot reach it. */
   if (rq.seed) { DB[rq.seed] = (rq.replace ? [] : (DB[rq.seed] || [])).concat(rq.rows || []); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
+  if (rq.rigIndex !== undefined) { globalThis.RIG_PLAYER_INDEX = !!rq.rigIndex; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
+  if (rq.race !== undefined) { globalThis.RIG_RACE = rq.race; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   if (rq.table) { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   /* The Worker's clock, for a scene that has to happen on a given day (the purchase raffle's dates). */
   if (rq.now) { NOWMS = +rq.now; _rigAt = NOWMS; _wallAt = _D.now(); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }

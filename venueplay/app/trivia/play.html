@@ -477,12 +477,15 @@
   function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // holding a question: billable (migration 87)
   /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
      dropped and the phone re-joins quietly, instead of answering into nothing all night. */
-  function deadToken(e, path){
-    if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
+  /* AN ANSWER FOR A TOKEN THIS PAGE NO LONGER HOLDS IS NOT NEWS (13 Nov 2026). `sent` is the token the request went
+     out with. If a re-join has since put a new token on this phone, the old token's 401 (or stale) is an echo of the
+     heal that already happened: dropping now would throw away the good token and join a second time. Compare before acting. */
+  function deadToken(e, path, sent){
+    if(e && e.status===401 && P.token && path!=="/join"){ if(P.token===(sent||"")){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} } }
     throw e;
   }
-  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
-  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }, sent=P.token||""; if(sent) h["X-Player-Token"]=sent; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path, sent); }); }
+  function playerGet(path){ var h={}, sent=P.token||""; if(sent) h["X-Player-Token"]=sent; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path, sent); }); }
 
   /* THE ANSWER GOES TO THE ROOM, NOT STRAIGHT TO THE DATABASE.
      Every tap used to be its own write, and thirty phones answering every twenty five seconds
@@ -541,6 +544,7 @@
        says whether this game is that night (session_ok); when it is not, the stale token goes and the
        phone re-joins, same pid, before it is let into the room. Once per game: if the re-joined night is
        still not this game's, the phone answers the Worker directly, which is the judge. */
+    var sentTok=P.token;   // a "session_ok:false" for a token the page has since replaced is an echo of a heal already done
     fetch(VP_GAME_API+"/room/presence?room="+encodeURIComponent("vpa-"+game)+(P.sessionId ? "&s="+encodeURIComponent(P.sessionId) : ""))
       .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; })
@@ -548,7 +552,7 @@
         AR.asking=false;
         if(!d || d.answers!==true){ AR.off=true; return; }   // no room server, or one too old to hold answers
         if(d.session_ok===false){
-          if(AR.staleFor!==game && P.gameId===game){ AR.staleFor=game; dropStaleJoin(); rejoinNow().then(function(){ ansRoom(); }); }
+          if(AR.staleFor!==game && P.gameId===game && P.token===sentTok){ AR.staleFor=game; dropStaleJoin(); rejoinNow().then(function(){ ansRoom(); }); }
           return;
         }
         if(AR.room || P.gameId!==game) return;
@@ -909,7 +913,8 @@
     /* A re-join in flight (a new night, see nightChanged) finishes first, so the answer goes out
        with tonight's token rather than none: "Missing X-Player-Token" is a 401 that cannot heal. */
     var endsAt=P.q.endsAt, ready=_rejoinP||Promise.resolve(), healed=false;
-    function go(){ return ready.then(function(){ return sendAnswer(P.gameId, i, qseq, endsAt); }).then(landed).catch(refused); }
+    var sentTok="";
+    function go(){ return ready.then(function(){ sentTok=P.token||""; return sendAnswer(P.gameId, i, qseq, endsAt); }).then(landed).catch(refused); }
     function landed(r){
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
@@ -932,8 +937,9 @@
          question is still open. Once: a second refusal is shown as before. */
       if(st===403 && !healed && (e.rejoin===true || /not in this game/i.test(msg)) && P.joined){
         healed=true;
-        dropStaleJoin();
-        ready=rejoinNow();
+        /* A refusal for a token this phone has since replaced (13 Nov 2026) is an echo of a heal already done: keep the new token, ask again with it. */
+        if(!(sentTok && P.token && P.token!==sentTok)){ dropStaleJoin(); ready=rejoinNow(); }
+        else ready=Promise.resolve();
         if(P.q && P.q.qseq===qseq && P.q.endsAt-Date.now()>0) return go();
       }
       if(st===401 || st===403){   // token gone or the player was removed: tapping again cannot help

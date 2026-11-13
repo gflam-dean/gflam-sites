@@ -507,8 +507,11 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
      dropped and the phone re-joins quietly, instead of answering into nothing all night. */
-  function deadToken(e, path){
-    if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
+  /* AN ANSWER FOR A TOKEN THIS PAGE NO LONGER HOLDS IS NOT NEWS (13 Nov 2026). `sent` is the token the request went
+     out with. If a re-join has since put a new token on this phone, the old token's 401 (or stale) is an echo of the
+     heal that already happened: dropping now would throw away the good token and join a second time. Compare before acting. */
+  function deadToken(e, path, sent){
+    if(e && e.status===401 && P.token && path!=="/join"){ if(P.token===(sent||"")){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} } }
     throw e;
   }
   /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026), the same as the trivia phone: /join/list with this phone's
@@ -527,8 +530,8 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
     VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
   }
-  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
-  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }, sent=P.token||""; if(sent) h["X-Player-Token"]=sent; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path, sent); }); }
+  function playerGet(path){ var h={}, sent=P.token||""; if(sent) h["X-Player-Token"]=sent; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path, sent); }); }
 
   /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
      runs. Everything below depends on it, so the script threw here and the punter was left with a
@@ -1271,7 +1274,12 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   var _staleAt=0;
   function fetchCard(){
     if(!P.token) return Promise.resolve();
+    var sentTok=P.token;   // the token this ask goes out with: an answer for one the page no longer holds is ignored below
     return playerGet("/player/card").then(function(r){
+      /* A LATE ANSWER FOR A TOKEN THE PAGE HAS ALREADY REPLACED (13 Nov 2026). Under load a re-join (checkStaleJoin)
+         can land before the card ask sent with the old trivia token comes back "stale". That answer is about a token
+         we no longer hold: acting on it would drop the good new token and join a second time. Ignore it. */
+      if(r && r.stale===true && P.token && P.token!==sentTok) return;
       /* THE NIGHT THIS PHONE JOINED HAS ENDED (the Worker says stale:true). The token still checks out, so
          nothing else ever re-joined: a phone that joined the lobby sat on "You're in" through the whole game
          with no card (Dean, live play, 6 Nov 2026). Re-join the live night under the same device id, once

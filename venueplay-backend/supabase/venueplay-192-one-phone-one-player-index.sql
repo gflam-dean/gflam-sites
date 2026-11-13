@@ -1,0 +1,75 @@
+-- =====================================================================
+-- Migration 192: one phone is one player row, enforced by the database
+-- ---------------------------------------------------------------------
+-- STATUS: NOT RUN. Written 13 Nov 2026 (branch fix/one-phone-index-13nov), never connected to any database.
+-- The words "NOT RUN" are a note from the day it was written and can be stale: main reads the LIVE database
+-- before doing anything (is vp_players_session_device_uniq in pg_indexes?), never this comment.
+--
+-- WHY. Since migration 39 a phone's player row is found by (session_id, device_id) and reused. That is a
+-- check, then an insert: two truly overlapping /join calls from one phone can both find nothing and both insert, and
+-- the venue is shown (and billed for) two players. countPlayers() counts DISTINCT devices, so the bill is safe, but
+-- the room, the TV ticker and the host's list still show a twin. Migration 39 left the constraint out on purpose
+-- ("a failed insert means a patron cannot join"). The Worker now answers that failure itself: handleJoin treats the
+-- database's unique violation as "already joined" and takes the phone back onto the row that won (and ensurePaperPlayer
+-- does the same), so the index costs nobody a join. This file adds the index.
+--
+-- ORDER: THE WORKER CODE IS SAFE BEFORE AND AFTER THE INDEX. Run this EARLY and by hand (clipboard + SQL editor), never on
+-- a push morning. Before the index exists the Worker's new catch never fires; after it, a lost race is a plain re-join.
+--
+-- WHAT THE INDEX COVERS. One row per (session_id, device_id) among rows that
+--   * have a device_id (rows from before migration 39, and any page that sent no pid, have none and may repeat), and
+--   * are not kicked (the join dedup itself only looks at kicked = false rows, so a kicked phone can still join afresh).
+-- Paper players ('paper-m-<n>', 'paper-t-<n>') are device_ids too: one per card or team per session, as
+-- ensurePaperPlayer already keeps them.
+--
+-- ===== BEFORE RUNNING: main's READ-ONLY CHECK ON THE LIVE DATABASE (a duplicate stops the index from building) =====
+-- 1. Is it already there?
+--      select indexname from pg_indexes where tablename = 'vp_players' and indexname = 'vp_players_session_device_uniq';
+-- 2. Are there duplicates right now? (any row returned is a (session, device) with more than one live row)
+--      select session_id, device_id, count(*) as rows, min(joined_at) as oldest, max(joined_at) as newest,
+--             array_agg(id order by joined_at, id) as ids
+--        from vp_players
+--       where device_id is not null and kicked = false
+--       group by session_id, device_id
+--      having count(*) > 1
+--       order by rows desc, newest desc;
+--    Zero rows: run the CREATE below as it stands.
+--
+-- ===== IF THERE ARE DUPLICATES: CLEAN THEM FIRST, KEEPING THE OLDEST ROW =====
+-- Do NOT delete: answers, cards, tickets, claims and the leaderboard point at player ids, and a delete either fails on
+-- a foreign key or takes real history with it. Instead the newer twins are marked kicked = true, which every count and
+-- every list in the Worker already ignores, and which takes them out of the index's predicate. Nothing is lost and it
+-- can be undone. Run these three, in order, each on its own, and read the numbers back:
+--   a. A copy of what is about to change (service role only; delete it after a quiet week):
+--        create table vp_backup_192_duplicate_players as
+--          select p.* from vp_players p
+--           where p.device_id is not null and p.kicked = false
+--             and exists (select 1 from vp_players o
+--                          where o.session_id = p.session_id and o.device_id = p.device_id and o.kicked = false
+--                            and (o.joined_at, o.id) < (p.joined_at, p.id));
+--        alter table vp_backup_192_duplicate_players enable row level security;
+--   b. Kick every twin that is not the oldest (the oldest, by joined_at then id, stays):
+--        update vp_players p set kicked = true
+--         where p.device_id is not null and p.kicked = false
+--           and exists (select 1 from vp_players o
+--                        where o.session_id = p.session_id and o.device_id = p.device_id and o.kicked = false
+--                          and (o.joined_at, o.id) < (p.joined_at, p.id));
+--   c. Read it back: the duplicate query in step 2 above must now return zero rows, and
+--        select count(*) from vp_backup_192_duplicate_players;   -- equals the number of rows b changed
+--      Undo, if ever needed:  update vp_players set kicked = false where id in (select id from vp_backup_192_duplicate_players);
+--      (undo only BEFORE the index exists: with the index in place it would refuse to put a twin back.)
+--
+-- ===== THE INDEX =====
+-- CONCURRENTLY: no lock on vp_players while it builds (players are joining all night). That form cannot run inside a
+-- transaction, so paste this ONE statement on its own in the SQL editor, with nothing else selected. If it stops
+-- part-way it leaves an INVALID index of the same name behind; check with
+--   select indexrelid::regclass, indisvalid from pg_index where indexrelid = 'vp_players_session_device_uniq'::regclass;
+-- and if indisvalid is false, run  drop index concurrently if exists vp_players_session_device_uniq;  (after clearing the
+-- duplicates it complained about) and run the statement again.
+--
+-- ROLLBACK: drop index concurrently if exists vp_players_session_device_uniq;   (the Worker copes without it.)
+-- =====================================================================
+
+create unique index concurrently if not exists vp_players_session_device_uniq
+  on vp_players (session_id, device_id)
+  where device_id is not null and kicked = false;

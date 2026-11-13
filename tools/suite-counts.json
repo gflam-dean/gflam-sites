@@ -1064,7 +1064,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
-  "checks": 39,
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/test-optin-export-gate.js": {
@@ -2165,6 +2165,14 @@
  },
  "tools/lobby-refresh-in-chrome.test.py": {
   "checks": 148,
+  "counted_by": "lines"
+ },
+ "tools/rig-join-unique-index.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/stale-answer-after-rejoin-in-chrome.test.py": {
+  "checks": 23,
   "counted_by": "lines"
  }
 }
