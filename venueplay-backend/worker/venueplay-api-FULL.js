@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:13 · d3092454';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 22:54 · 1ea63416';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -6668,13 +6668,19 @@ async function vpaProspectOneLink(env, venueId, authUserId, opts) {
  * OPENING THE SHORT LINK (Dean, 6 Nov 2026: "keep it as simple as possible"), venueplay/s.html:
  *   - mobile known: the NORMAL sign-in screen with their mobile filled in (/app/?signin=sms#m=04...). They tap
  *     Send code, type it, and they are in. The mobile we hold is put on the login first, so the code reaches it.
- *   - no mobile: the same screen with the mobile empty. The number they type goes on the login (POST
- *     /short/attach, from the sign-in page) and the text code then proves it is theirs; it is their login from then.
+ *   - no mobile: the same screen with the mobile empty. The number they type is NOT put on the login (security review
+ *     13 Nov 2026, A5: whoever held the link, a forwarded email or a screenshot, could put THEIR mobile on the prospect's
+ *     login as confirmed and sign in with it). POST /short/attach now sends a one-tap sign-in link to the email already
+ *     saved on that login (vpaSendSigninLink, self: the long single-use link, never one typed here), and the page says
+ *     so. Signed in from their own inbox, they add their mobile on the first screen (vp-about-you.js), which Supabase
+ *     confirms with a text code to that mobile. The letters alone never sign anybody in, and never change the login.
  *   - once claimed (somebody has signed in to it): the link opens the normal sign-in, nothing filled in.
  *   - every open records "opened" (signin_link_used), so HQ's history and the follow-ups see it.
  * The letters are never a login key: the text code is. After the sign-in the usual first-run flow takes over.
  *   POST /short/open   { code }          { go }  where to send the browser
- *   POST /short/attach { code, mobile }  { ok }  only while unclaimed and only when we hold no mobile
+ *   POST /short/attach { code, mobile }  { ok:false, emailed:true }  only while unclaimed and only when we hold no
+ *                                         mobile: emails the login's own address a sign-in link (same answer whether or
+ *                                         not one is saved or sent); the mobile typed is never stored
  * Limits: VPA_SHORT_PER_IP an hour per network, VPA_SHORT_ALL_GLOBAL from everywhere, a burst of misses files one
  * HQ ticket. Needs migration 175 (NOT RUN). */
 const VPA_SHORT_WORDS = {
@@ -6753,9 +6759,14 @@ async function vpaShortAttach(request, env, json) {
   if (L.user.phone || (await vpaShortMobileOnFile(env, L.row, L.user))) return json({ ok: false, has_mobile: true }, 409);   // only when we hold none
   const e164 = vpaNormaliseMobileAU(_b.body && _b.body.mobile);
   if (!vpaIsAuMobileE164(e164)) return json({ error: VPA_SHORT_WORDS.mobile, field: 'mobile' }, 400);
-  if (!(await vpaShortPutMobile(env, L.user, e164))) return json({ error: VPA_SHORT_WORDS.taken, taken: true }, 409);
-  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'prospect_mobile_added', 'venue:' + L.row.venue_id, { to_last3: e164.slice(-3) });
-  return json({ ok: true });
+  /* NEVER THE TYPED MOBILE ONTO THE LOGIN (A5, above). The link's holder proves nothing about the inbox, so the login's
+     own saved email gets a one-tap link, and only that signs in. One answer whatever happens (sent, no email saved, the
+     4 a day cap), so the letters do not tell a stranger whether this account has an address. */
+  let r = null;
+  try { r = await vpaSendSigninLink(env, L.user.id, null, { self: true }); } catch (e) { r = { ok: false, reason: 'error' }; }
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, (r && r.ok) ? 'short_link_emailed' : 'short_link_email_refused',
+    'venue:' + L.row.venue_id, { typed_last3: e164.slice(-3), reason: (r && !r.ok) ? (r.reason || 'refused') : undefined }).catch(() => null);
+  return json({ ok: false, emailed: true });
 }
 async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs, opts) {
   const raw = new Uint8Array(32);

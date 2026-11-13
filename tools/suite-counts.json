@@ -1068,7 +1068,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 105,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
@@ -1364,7 +1364,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 75,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {

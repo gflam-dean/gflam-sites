@@ -1119,11 +1119,13 @@
   var SHORT_ATTACH_WORDS={
     busy: "Something went wrong. Wait a minute and try again.",
     used: "This link has already been used. Sign in with the number we have for your venue, or call us on 07 5228 3667 (press 2).",
-    has_mobile: "We already have a mobile for your venue. Sign in with that number, or call us on 07 5228 3667 (press 2) to change it."
+    has_mobile: "We already have a mobile for your venue. Sign in with that number, or call us on 07 5228 3667 (press 2) to change it.",
+    emailed: "We've emailed a sign-in link to the email address on this account. Tap it to sign in, then add your mobile. Nothing there? Check junk, or call us on 07 5228 3667 (press 2)."
   };
   function shortAttachVerdict(status, j){
     j=j||{};
     if(status===200 && j.ok===true) return { go:true };
+    if(status===200 && j.emailed===true) return { emailed:true };   // A5 (13 Nov 2026): a link to their own inbox, no code to this mobile
     if((status===400 || j.taken) && j.error) return { msg:String(j.error) };
     if(status===409 && j.has_mobile) return { msg:SHORT_ATTACH_WORDS.has_mobile, existingOnly:"has_mobile" };
     if(status===409 && j.state) return { msg:SHORT_ATTACH_WORDS.used, existingOnly:"used" };
@@ -1148,11 +1150,16 @@
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return shortAttachVerdict(r.status, j); }); }, function(){ return shortAttachVerdict(0, null); })
         .then(function(v){
           if(v.go){ try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} return; }
+          if(v.emailed){ try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} throw { shortEmailed: true }; }
           if(v.existingOnly){ existingOnly=v.existingOnly; try{ sessionStorage.removeItem("vpShortAttach"); sessionStorage.setItem("vpShortExistingOnly", v.existingOnly); }catch(e){} }
           throw { shortMsg: v.msg };   // no code, no login
         })
       : Promise.resolve();
-    attach.then(function(){ return client.auth.signInWithOtp(existingOnly ? { phone:e164, options:{ shouldCreateUser:false } } : { phone:e164 }); }, function(err){ btn.disabled=false; btn.textContent="Send code"; $("mobileErr").textContent=(err && err.shortMsg) || SHORT_ATTACH_WORDS.busy; return { _stop:true }; }).then(function(res){
+    attach.then(function(){ return client.auth.signInWithOtp(existingOnly ? { phone:e164, options:{ shouldCreateUser:false } } : { phone:e164 }); }, function(err){
+      btn.disabled=false; btn.textContent="Send code";
+      if(err && err.shortEmailed){ $("mobileErr").textContent=""; var em=$("emailAltMsg"); if(em){ em.textContent=SHORT_ATTACH_WORDS.emailed; em.classList.remove("hidden"); } return { _stop:true }; }
+      $("mobileErr").textContent=(err && err.shortMsg) || SHORT_ATTACH_WORDS.busy; return { _stop:true };
+    }).then(function(res){
       if(res && res._stop) return;
       btn.disabled=false; btn.textContent="Send code";
       if(res && res.error){
