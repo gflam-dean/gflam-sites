@@ -133,6 +133,18 @@ def main():
         skipped = [s for s in suites if gatelib.uses_chrome(os.path.join(ROOT, s))]
         suites = [s for s in suites if s not in skipped]
         print('note %d Chrome suite(s) SKIPPED by --skip-chrome, not judged: %s' % (len(skipped), ', '.join(os.path.basename(s) for s in skipped)))
+    if '--judged-elsewhere' in sys.argv:
+        # release-check.py --chrome-record (12 Nov 2026): these Chrome suites ran on vp-tests-1 under a signed record
+        # that tools/gate-server.py has already held to THIS ledger (exit 0, no FAIL line, counts at or over the
+        # floor, lines where the ledger counts lines). Only Chrome suites can be named here; anything else still runs.
+        try:
+            named = set(l.strip() for l in io.open(sys.argv[sys.argv.index('--judged-elsewhere') + 1], encoding='utf-8') if l.strip())
+        except Exception:
+            named = set()
+        elsewhere = [s for s in suites if s in named and gatelib.uses_chrome(os.path.join(ROOT, s))]
+        suites = [s for s in suites if s not in elsewhere]
+        skipped = skipped + elsewhere
+        print('note %d Chrome suite(s) judged against this ledger on vp-tests-1 (signed gate record)' % len(elsewhere))
     # VP_LEDGER_JOBS: fewer at once on a loaded Mac. Six Chrome suites at once timed tv-and-phone out at 300 s (25 Oct 2026).
     with ThreadPoolExecutor(max_workers=int(os.environ.get('VP_LEDGER_JOBS', '6'))) as ex:
         results = dict(zip(suites, ex.map(run, suites)))

@@ -39,7 +39,46 @@ if ! python3 "$ROOT/tools/stamp-workers.py" --check; then
   exit 1
 fi
 
-if ! python3 "$ROOT/tools/release-check.py" --local; then
+# THE CHROME HALF MAY COME FROM vp-tests-1 (12 Nov 2026, INBOX 265.4; the FAST GATE, 13 Nov 2026, INBOX 357A).
+# --chrome-record leaves a Chrome suite out on this Mac ONLY when a record SIGNED ON THIS MAC covers it: this exact
+# tree (git HEAD^{tree}), the server's own hash of the files it ran equal to this tree's, under 2 hours old, every
+# Chrome suite green on its one and only server run and at or over its ledger count (tools/gate-server.py). No record,
+# or anything wrong with one (edited, another key, another tree, stale, a suite missing or red, re-runs), and every
+# Chrome suite runs here one at a time, as before. signin-logo-in-chrome always runs here. tools/release.py makes the
+# record before it pushes; by hand:
+#     python3 tools/gate-server.py run        (about 30 minutes; or push with VP_GATE_SERVER=1 to have this hook do it)
+# A failed, refused or unreachable server run is never fatal: the gate below simply runs the Chrome suites on the Mac.
+if [ "${VP_GATE_SERVER:-}" = "1" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
+  python3 "$ROOT/tools/gate-server.py" run || echo "  (no server record: the Chrome suites run on this Mac)"
+fi
+
+# WHAT IS PUSHED MUST BE WHAT IS HERE for a record to count. git hands this hook "<local ref> <local sha> <remote ref>
+# <remote sha>" per ref. A push of any commit whose files are not this checkout's (git push origin other:main) gets
+# no record: the Chrome suites run on the Mac.
+CHROME_FLAG="--chrome-record"
+HERE_TREE=$(git rev-parse 'HEAD^{tree}' 2>/dev/null)
+while read -r _lref LSHA _rref _rsha; do
+  [ -z "$LSHA" ] && continue
+  case "$LSHA" in *[!0]*) ;; *) continue;; esac          # a delete pushes no files
+  if [ "$(git rev-parse "$LSHA^{tree}" 2>/dev/null)" != "$HERE_TREE" ]; then
+    CHROME_FLAG=""
+    echo "  the push sends ${LSHA:0:8}, whose files are not this checkout's: no server record is used, every Chrome suite runs here"
+  fi
+done
+
+# VP_HOOK_DRY_RUN=1 (13 Nov 2026, INBOX 357A): say what the gate WOULD do with the Chrome half for this push, then
+# REFUSE it. It can only ever stop a push, never let one through, and it runs no suite.
+if [ "${VP_HOOK_DRY_RUN:-}" = "1" ]; then
+  if [ -n "$CHROME_FLAG" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
+    python3 "$ROOT/tools/gate-server.py" check
+  else
+    echo "  gate record: not used: the pushed files are not this checkout's"
+  fi
+  echo "DRY RUN (VP_HOOK_DRY_RUN=1): nothing gated, PUSH REFUSED."
+  exit 1
+fi
+
+if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG; then
   # A red gate leaves no record: a tree that failed can never ride an older one.
   [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear
   echo
