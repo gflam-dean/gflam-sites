@@ -161,13 +161,19 @@
       busy(btn, false, "Check my code");
       if (j.ok && j.outcome === "made") return done(j);
       if (j.ok) { var h = $("st-held-words"); if (h) h.textContent = j.message || WORDS.held; show("st-held"); return; }
-      err("st-cerr", j.error || WORDS.blip);
+      /* The boxes are emptied FIRST: clearCode() also wipes the message line, and it used to run after the words
+         were set, so a wrong or run-out code cleared the boxes and said nothing (website audit P1b, 13 Nov 2026). */
       if (j.gone || j._status === 400) { clearCode(); var f = $("st-c1"); if (f) f.focus(); }
+      err("st-cerr", j.error || WORDS.blip);
     }, function () { busy(btn, false, "Check my code"); err("st-cerr", WORDS.blip); });
   }
   function resend() {
     if (!S.id) return;
-    post("/start/resend", { start_id: S.id }).then(function () { clearCode(); err("st-cerr", WORDS.resent); }, function () { err("st-cerr", WORDS.blip); });
+    /* ONE TEXT PER TAP-BURST (website audit P1b, 13 Nov 2026): three quick taps on "Send it again" sent three
+       texts, each one costs money and the newest code is the only one that works. One in flight, and not again for 20 s. */
+    if (S.resending || (S.resentAt && Date.now() - S.resentAt < 20000)) return;
+    S.resending = true; S.resentAt = Date.now();
+    post("/start/resend", { start_id: S.id }).then(function () { S.resending = false; clearCode(); err("st-cerr", WORDS.resent); }, function () { S.resending = false; S.resentAt = 0; err("st-cerr", WORDS.blip); });
   }
 
   /* ---- the done screen ---- */

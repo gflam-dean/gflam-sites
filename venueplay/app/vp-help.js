@@ -481,7 +481,7 @@
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; });
       }).then(function (res) {
-        if (!res.ok || !res.j || res.j.error) throw new Error((res.j && res.j.error) || "");
+        if (!res.ok || !res.j || res.j.error) { var we = new Error((res.j && res.j.error) || ""); we.fromWorker = true; throw we; }
         var done = el("div", "vph-done");
         done.setAttribute("role", "status");
         var no = res.j.ticket_no;
@@ -491,7 +491,9 @@
       }).catch(function (x) {
         go.disabled = false; go.textContent = "Send";
         try { if (ts.on && root.turnstile && ts.id !== null) root.turnstile.reset(ts.id); } catch (e) {}
-        err.textContent = (x && x.message) || ("We could not send that. Please try again, or email " + SUPPORT + ".");
+        /* Only words the Worker sent are shown. A dropped connection throws the browser's own "Failed to fetch" (Safari: "Load failed"),
+           which is not for a customer (website audit P1b, 13 Nov 2026). */
+        err.textContent = (x && x.fromWorker && x.message) || ("We could not send that. Please try again, or email " + SUPPORT + ".");
       });
     });
     box.appendChild(f);

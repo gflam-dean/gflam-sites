@@ -2142,5 +2142,9 @@
  "tools/website-audit-p2-13nov-in-chrome.test.py": {
   "checks": 8,
   "counted_by": "lines"
+ },
+ "tools/website-audit-p1b-13nov-in-chrome.test.py": {
+  "checks": 6,
+  "counted_by": "lines"
  }
 }
