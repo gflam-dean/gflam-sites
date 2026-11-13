@@ -40,10 +40,12 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:clip}
-  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body{background:#0A0A0B;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
-  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  /* THE WALL IS THE FLOOR'S COLOUR, FLAT, AND SO IS THE PAGE ROUND IT (INBOX 375, Dean on the Kogan, 13 Nov 2026): the wall sits 5% in
+     for the TV safe area (/app/vp-tvsafe.css), so a wall of another colour than the page showed as a box in a frame. */
+  .tv{position:fixed;inset:0;container-type:inline-size;background:#0A0A0B;overflow:hidden}
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   /* A game layer paints its own ground. These sit over the ad rotation, and while the rotation is
      display:none during a game, anything that leaves even one frame of it showing put a ghost of
@@ -127,7 +129,7 @@
   /* #tvFloor IS NOT AN .ad (it must never fade out with the rotation), so it is named beside it here.
      It was missing, and for the first 10 to 15 seconds on a slow screen the room saw "Game on here"
      in the browser's plain 16px type (UX audit 3.1, 30 Oct 2026). */
-  .ad .adtag,#tvFloor .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
+  .ad .adtag,#tvFloor .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:clamp(14px,2.8cqw,30px);color:var(--pink)}   /* sentence case, no spaced capitals (no-AI-look rule; INBOX 375, 13 Nov 2026) */
   .ad .adbig,#tvFloor .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
   .ad .adsub,#tvFloor .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
   .ad .adhelp{position:absolute;bottom:3.5cqw;font-family:'Manrope',sans-serif;font-weight:500;font-size:clamp(11px,1.5cqw,17px);color:var(--faint)}
@@ -148,9 +150,9 @@
   .wkrow{display:grid;grid-template-columns:1fr auto auto;align-items:baseline;gap:14px;padding:1.7cqw clamp(14px,2.4cqw,26px);border:1px solid var(--line);border-radius:1.2cqw;background:rgba(255,255,255,.02)}
   .wkrow.tonight{border-color:var(--gold);background:rgba(255,194,75,.08)}
   .wkday{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(15px,3.4cqw,30px);color:#fff;text-align:left}
-  .wkday .tn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.6cqw,14px);color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-left:10px}
+  .wkday .tn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.9cqw,18px);color:var(--gold);text-transform:none;letter-spacing:0;margin-left:10px}
   .wkjack{font-family:'Anton',sans-serif;font-size:clamp(20px,4.4cqw,40px);color:var(--gold);line-height:1}
-  .wktime{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2.2cqw,20px);color:var(--muted);min-width:70px;text-align:right}
+  .wktime{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.4cqw,24px);color:var(--muted);min-width:70px;text-align:right}   /* a time in normal type, not mono (INBOX 375) */
   /* WHAT'S ON: its look lives in /app/vp-whatson-css.js (one copy for this wall and the account page's preview, 13 Nov 2026). */
   /* ---- SET UP THIS SCREEN (no venue linked; ads mode only) ----
      Dean, 31 Oct 2026: "venueplay.com.au/tv ... has a link to the app download for Google play and
@@ -410,6 +412,8 @@
   .ballreveal.live .brrings i:nth-child(2){animation-delay:.48s}
   .ballreveal.live .brrings i:nth-child(3){animation-delay:.56s}
   @keyframes brring{ 0%{transform:scale(.7);opacity:.9} 100%{transform:scale(1.55);opacity:0} }
+  /* .brclip: the ball's own frame, the wall's box (the TV sheet clips it to the safe box); the dim beside it is not in it (INBOX 375) */
+  .brclip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   .brwrap{position:relative;display:flex;flex-direction:column;align-items:center}
   .brball{width:min(56cqw,68vh);height:min(56cqw,68vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
@@ -486,7 +490,7 @@
      no card number on the wall (it stays on the phone and the console). NO player count anywhere on this wall (Dean, 4 Nov
      2026 evening). Presentation only: no draw, claim or win logic is touched here. Sizes in cqw, so /app/vp-oldtv.js can work
      them out on an older set. */
-  #tvLobby,#tvRun,#tvClaim,#tvWin{background:#0A0A0B}
+  #tvLobby,#tvRun,#tvClaim,#tvWin,#tvHold{background:#0A0A0B}   /* #tvHold too: its pink haze stopped at the safe box (INBOX 375) */
   .tl-round{display:inline-block;margin-left:1.4cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:1.9cqw;line-height:1.15;color:#CFCFD6;letter-spacing:0;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:30cqw;vertical-align:baseline}
   .tl-round b{font-weight:700;color:#fff}
   .tl-round .tl-dot{color:#8A8A95}
@@ -642,7 +646,7 @@
        silently re-enter), so venues running the TV in a browser lost fullscreen every game. Loading
        the game into this iframe keeps the top page put, so fullscreen holds. Bingo still renders
        natively above this. -->
-  <iframe id="gameFrame" title="Live game" allow="fullscreen; autoplay" style="display:none;position:fixed;inset:0;width:100%;height:100%;border:0;z-index:40;background:#000"></iframe>
+  <iframe id="gameFrame" title="Live game" allow="fullscreen; autoplay" style="display:none;position:fixed;inset:0;width:100%;height:100%;border:0;z-index:40;background:#0A0A0B"></iframe>
 
   <!-- NO-VENUE PROMPT: SET UP THIS SCREEN (only shows when this screen has no venue linked).
        venueplay.com.au/tv on a TV or a laptop before any venue is chosen. Two ways in, side by side:
@@ -715,7 +719,7 @@
 
   <!-- ball reveal: a big ball pops in the centre, then flies down to the board -->
   <div class="ballreveal hidden" id="ballReveal"><div class="brdim"></div>
-    <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall"></div><div class="brcall" id="brCall"></div></div></div>
+    <div class="brclip"><div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall"></div><div class="brcall" id="brCall"></div></div></div></div>
 
   <!-- BINGO: lobby. THE JOIN SCREEN, the same as trivia's and musical bingo's (/app/vp-tvgame.js; Dean, 3 Nov 2026): BINGO on the
        logos' line, the QR big on the left, SCAN TO PLAY, the address and the code in a pink-edged box. No player count on the

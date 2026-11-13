@@ -1715,6 +1715,10 @@
   "checks": 33,
   "counted_by": "lines"
  },
+ "tools/tv-fullbleed-in-chrome.test.py": {
+  "checks": 114,
+  "counted_by": "lines"
+ },
  "tools/tv-in-step-in-chrome.test.py": {
   "checks": 23,
   "counted_by": "lines"
