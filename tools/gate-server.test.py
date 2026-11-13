@@ -374,7 +374,7 @@ try:
     r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=denv, capture_output=True, text=True,
                        input='refs/heads/x %s refs/heads/main %s\n' % (other, '0' * 40))
     ok('... and for other files says the record is not used, still refusing',
-       r.returncode == 1 and 'not this checkout' in r.stdout and 'DRY RUN' in r.stdout, r.stdout[-300:])
+       r.returncode == 1 and "gate record: not used: the pushed files are not this checkout's" in r.stdout and 'DRY RUN' in r.stdout, r.stdout[-300:])
     ok('the hook runs the server only when asked (VP_GATE_SERVER=1) and never fails the push on it',
        '[ "${VP_GATE_SERVER:-}" = "1" ]' in hook_src and 'gate-server.py" run || echo' in hook_src)
 
