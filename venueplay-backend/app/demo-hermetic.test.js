@@ -123,26 +123,34 @@ var demoAt = TV.indexOf('setVenueName("Tugun Bowls Club")');
    about a block that starts them on its last line. */
 var demoEnd = TV.indexOf("return;", demoAt);
 var demoBlock = TV.slice(TV.lastIndexOf("if(DEMO){", demoAt), demoEnd > 0 ? demoEnd : demoAt + 2600);
-var slideCount = (demoBlock.match(/head:"/g) || []).length;
-pass("the demo pub runs a rotation, not a single slide", slideCount >= 3, slideCount + " slides");
-pass("it has the weekly draws board", /ADS\.draws\s*=\s*\[/.test(demoBlock) && /jackpot:/.test(demoBlock));
-pass("and a raffle, so both auto slides are on a sales page at all",
-     /ADS\.raffle\s*=\s*\{/.test(demoBlock));
+/* THE INVENTED PUB'S WALL, 13 Nov 2026 (INBOX 356). The typed slides, the members draws board and the raffle card
+   (old rounded type, old branding) are gone; the loop is the "What's on" list in the current TV style
+   (/app/vp-demo-venue.js), and the ads-only demo reads one venue's live slides (demoVenueRead). A demo with nothing at
+   all would fall through to the broken-screen holding slide, so the fallback list must stay non-empty. */
+var DV = find("venueplay/app/vp-demo-venue.js");
+var fbCount = (DV.match(/id: "dm-/g) || []).length;
+pass("the demo pub has What's on nights to play (so it never falls to the broken-screen holding slide)", fbCount >= 6 && /ADS\.events\s*=\s*VPDemoVenue\.fallbackEvents\(/.test(demoBlock), fbCount + " nights");
+pass("the old typed slides are gone", !/head:"/.test(demoBlock) && !/Bingo from 7pm|Parma and a pot|Join the club|Live music, 8pm/.test(TV),
+     "old rounded type on a sales page");
+pass("the old members draws board is gone", !/jackpot:/.test(demoBlock) && /ADS\.draws\s*=\s*\[\]/.test(demoBlock) && !/Thursday",\s*jackpot/.test(TV));
+pass("and no raffle card: the typed raffle is the old look", /ADS\.raffle\s*=\s*null/.test(demoBlock) && !/Meat raffle", day:"Friday"/.test(TV));
+pass("the four old Tugun photo slides are not in the loop", !/ad-slides\/tugun-/.test(demoBlock) && !/ad-slides\/tugun-/.test(DV));
 pass("the ads are actually built and started, not just assigned",
      /buildAds\(true\)/.test(demoBlock) && /startAds\(\)/.test(demoBlock),
      "ADS is read by buildAds; setting it alone paints nothing");
-/* THE SLIDES MUST NEVER EXPIRE. slideVisible() drops a slide outside its starts/ends window, so
-   a dated demo slide would quietly vanish on a particular day and the loop could empty itself
-   back to the holding slide. Nothing would go red; the sales page would just get worse. */
-pass("no demo slide carries a date that could expire it",
-     !/(starts|ends):/.test(demoBlock),
-     "a dated slide disappears on its own one day and nothing says so");
-pass("the demo never shows the broken-screen holding slide",
-     slideCount >= 3, "with slides present loopEntries() cannot fall through to it");
-/* And it is still hermetic: the ads are literals in the page, not a fetch. */
-pass("the ad content is invented in the page, not fetched from a venue",
-     demoBlock.indexOf("fetch(") < 0,
-     "a demo that fetches is a demo that can show somebody's real promos");
+/* THE DATED NIGHT DROPS ITSELF: it is an event with a date (vp-whatson.js drops it the day after), never a slide with
+   starts/ends set in the demo block by hand. */
+pass("no demo slide carries a hand-set date in the block", !/(starts|ends):/.test(demoBlock));
+/* HERMETIC STILL: the demo block itself fetches nothing. The one read is demoVenueRead, below the block, and it is only
+   two GETs: /demo-venue.json on this site and /screen?venue= (the public read the venue's own TV makes). It never
+   touches the /venue poll, realtime or a heartbeat. */
+pass("the demo block itself fetches nothing", demoBlock.indexOf("fetch(") < 0, "the read lives in demoVenueRead");
+var dvr = TV.slice(TV.indexOf("function demoVenueRead("), TV.indexOf("function demoVenueRead(") + 2200);
+dvr = dvr.slice(0, dvr.indexOf("\n  })();") > 0 ? dvr.indexOf("\n  })();") : dvr.length);
+pass("the ads-only demo calls the read, and only the ads-only demo does", /if\(DEMO_ADS_ONLY\) demoVenueRead\(/.test(demoBlock));
+pass("the read is /demo-venue.json and /screen?venue= and nothing else",
+     (dvr.match(/fetch\(/g) || []).length === 2 && /fetch\("\/demo-venue\.json"/.test(dvr) && /\/screen\?venue="\+encodeURIComponent\(cfg\.slug\)/.test(dvr)
+       && !/\/venue\?|realtime|heartbeat|connectRealtime|POST/i.test(dvr), dvr.slice(0, 400));
 
 /* 5. AND THE JOIN CORNER STAYS DOWN. A prospect scanning a demo QR would be told "no room" by
       the very product being sold to them. */
