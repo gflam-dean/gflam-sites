@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 13:34 · 87c8f20b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:08 · e6a8f678';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -13855,6 +13855,38 @@ async function vpbAddVenue(request, env, json) {
     return json({ error: 'You have reached the online limit of 500 venues on one account. Email hello@venueplay.com.au and we will add more.' }, 400);
   }
 
+  /* NO LIVE SUBSCRIPTION, NO VENUE SWITCHED ON (security review 13 Nov 2026, B1). This route used to make a
+     venue active, or switch an ended one back on, before it knew whether anything would ever be billed for
+     it: a prospect with no card added pubs that were never charged, an owner whose subscription had ENDED
+     (cancelled, or a chargeback) "added" the same pub and it came back on for nothing, and when Stripe
+     refused the quantity change the venue stayed on anyway. So, BEFORE anything is written:
+       - a free account ('comp') keeps today's path: nothing on it is charged, on Dean's say-so
+       - no subscription (a prospect who never added a card): add a card first
+       - a recorded chargeback on the account: refused, exactly as /account/restart refuses it
+       - the subscription must be active or in its free month; unpaid points at the card, ended points at us
+     and below, a refused quantity change puts the venue back exactly as it was. */
+  const addComp = o.account.status === 'comp';
+  if (!addComp) {
+    if (!o.account.stripe_subscription_id) {
+      return json({ error: 'Add your card on this page first, then you can add another venue. Nothing was added or charged.', add_card: true }, 409);
+    }
+    let disputed;
+    try { disputed = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.payment_disputed&target=eq.' + encodeURIComponent('account:' + o.account.id) + '&select=id&order=id.asc'); }
+    catch (e) { return json({ error: 'We could not check your account just now. Nothing was added or charged. Please try again in a minute.' }, 503); }
+    if (disputed && disputed.length) return json({ error: VPB_RESTART_NEUTRAL }, 409);
+    const live = await vpbSubItem(env, o.account.stripe_subscription_id);
+    const liveStatus = (live && live.sub && !live.sub.error && live.sub.status) || null;
+    if (!liveStatus || !live.itemId) {
+      return json({ error: 'We could not reach our payment provider just now. Nothing was added or charged. Please try again in a minute.' }, 503);
+    }
+    if (liveStatus === 'past_due' || liveStatus === 'unpaid' || liveStatus === 'incomplete') {
+      return json({ error: 'There is an unpaid invoice on this account. Update your card on this page to pay it, then add the venue. Nothing was added or charged.', update_card: true }, 409);
+    }
+    if (liveStatus !== 'active' && liveStatus !== 'trialing') {
+      return json({ error: 'Billing on this account has ended, so a venue cannot be added from here. ' + VPB_RESTART_CALL }, 409);
+    }
+  }
+
   const foundingId = o.account.id;
   // This account bills through the founding record: venues link via founding_id, which is their
   // SINGLE billing parent. group_id stays null - setting BOTH founding_id and group_id violates
@@ -13892,7 +13924,7 @@ async function vpbAddVenue(request, env, json) {
      'manual' is HQ switching a venue off on purpose, so it is not the venue's to undo either. */
   const sameName = await vpaSelect(env, 'vp_venues',
     'founding_id=eq.' + encodeURIComponent(foundingId) + '&name=eq.' + encodeURIComponent(name)
-    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,postcode,max_players');
+    + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,postcode,max_players,pending_players,closed_at');
   /* A blank postcode on either side cannot tell two venues apart, so it counts as the same venue.
      That is the conservative way round: refusing an add they can retry with a postcode is a
      nuisance, while creating a second copy of a LIVE venue splits its players and its bill. */
@@ -13903,6 +13935,9 @@ async function vpbAddVenue(request, env, json) {
   const LOCKED_OFF = {
     nonpayment: 'That venue is switched off because a payment did not go through. Sort the payment out on this page and it comes back on by itself.',
     manual: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
+    /* HQ archived it (B1, 13 Nov 2026): a person switched it off on purpose, so a person switches it back on. */
+    archived: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
+    archived_cancelling: 'That venue was switched off by us. Email hello@venueplay.com.au and we will get it back on for you.',
   };
   if (twin && twin.status === 'suspended' && LOCKED_OFF[twin.suspended_reason || '']) {
     return json({ error: LOCKED_OFF[twin.suspended_reason] }, 409);
@@ -13913,7 +13948,9 @@ async function vpbAddVenue(request, env, json) {
     return json({ error: 'You already have a venue called ' + name + ' at that postcode. If this is a different pub, put its own postcode in. If it is the same one, change its max players on the list above instead.' }, 409);
   }
 
-  let r;
+  let r, preInfo = null, preBefore = null;
+  /* The row as it was, copied BEFORE the revive writes over it, for putting it back if Stripe says no. */
+  const twinWas = twin ? Object.assign({}, twin) : null;
   if (reviving) {
     await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twin.id), {
       status: 'active',
@@ -13932,6 +13969,23 @@ async function vpbAddVenue(request, env, json) {
     });
     r = { created: false, revived: true, venue: { id: twin.id, name: name, slug: twin.slug } };
   } else {
+    /* A NEW VENUE IS BILLED BEFORE IT EXISTS (B1, 13 Nov 2026): the subscription is raised to the total WITH
+       it first, and only then is the venue made, so a Stripe refusal leaves nothing behind (no live venue,
+       no half-made one to tidy up, no free month spent). If making it then fails, the quantity goes back. */
+    if (!addComp) {
+      let before;
+      try { before = await vpbAccountTotal(env, foundingId); }
+      catch (e) { return json({ error: 'We could not check your account just now. Nothing was added or charged. Please try again in a minute.' }, 503); }
+      preInfo = await vpbSubItem(env, o.account.stripe_subscription_id);
+      const pre = (preInfo && preInfo.itemId)
+        ? await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(preInfo.itemId), { quantity: before + players, proration_behavior: 'none' })
+        : null;
+      if (!(preInfo && preInfo.itemId) || !pre || pre.error) {
+        console.log('[billing] add-venue: Stripe refused the quantity change for ' + name + ' (' + ((pre && pre.error && pre.error.message) || 'no subscription item') + '), nothing made');
+        return json({ error: 'We could not update your billing just now, so ' + name + ' was not added and nothing was charged. Please try again in a minute.' }, 502);
+      }
+      preBefore = before;
+    }
     // Provision the new venue under the same account + owner login. forceNew only when a
     // same-named venue exists at a DIFFERENT postcode, which the block above has just established.
     r = await vpaProvisionOneVenue(env, {
@@ -13939,6 +13993,9 @@ async function vpbAddVenue(request, env, json) {
       authUserId: o.authUserId, forceNew: !!(sameName && sameName.length),
     });
     if (!r || !r.created) {
+      if (preBefore != null) {
+        await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(preInfo.itemId), { quantity: Math.max(preBefore, 1), proration_behavior: 'none' });
+      }
       // Nothing was added, and there is no name clash left to explain it, so do not invent one.
       return json({ error: 'Could not add that venue just now. Nothing was charged. Please try again, and if it keeps happening email hello@venueplay.com.au.' }, 500);
     }
@@ -13946,12 +14003,35 @@ async function vpbAddVenue(request, env, json) {
 
   // Bump the subscription to the new total, pro rata.
   const newTotal = await vpbAccountTotal(env, foundingId);
-  const info = await vpbSubItem(env, o.account.stripe_subscription_id);
+  let info = await vpbSubItem(env, o.account.stripe_subscription_id);
+  if (!(info && info.itemId) && preInfo && preInfo.itemId) info = preInfo;   // a blip on the re-read: the raise above stands
   const upd = (info && info.itemId)
     ? await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
         { quantity: newTotal, proration_behavior: 'none' })
     : null;
-  const billingOk = !!(info && info.itemId) && !(upd && upd.error);
+  /* A new venue's quantity was raised before it was made (preBefore), so a failed second write of the same
+     total is not a billing failure. */
+  const billingOk = (!!(info && info.itemId) && !(upd && upd.error)) || preBefore != null;
+  /* STRIPE SAID NO: PUT IT BACK AS IT WAS (B1, 13 Nov 2026). It used to answer ok with billing_synced:false
+     and leave the venue running with nothing behind it. Only a venue COMING BACK can reach here (a new one is
+     billed before it is made, above): it goes back to exactly the row it was. A free account has nothing to bill. */
+  if (!billingOk && !addComp) {
+    const vid = r.venue && r.venue.id;
+    if (reviving) {
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(twinWas.id), {
+        status: twinWas.status, suspended_reason: twinWas.suspended_reason || null, closed_at: twinWas.closed_at || null,
+        cancel_at_period_end: !!twinWas.cancel_at_period_end, max_players: twinWas.max_players,
+        pending_players: twinWas.pending_players == null ? null : twinWas.pending_players, postcode: twinWas.postcode || null,
+      }).catch(() => {});
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      ...vpbActorFields(o), action: 'venue_readd_refused_billing',
+      target: 'venue:' + vid,
+      detail: { name: name, players: players, stripe_error: (upd && upd.error && upd.error.message) || 'no subscription item', actor_user: o.authUserId },
+    }, false).catch(() => {});
+    console.log('[billing] add-venue: Stripe refused the quantity change for ' + name + ', venue put back as it was');
+    return json({ error: 'We could not update your billing just now, so ' + name + ' was not switched on and nothing was charged. Please try again in a minute.' }, 502);
+  }
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
   /* THE KEY NAMES THE VENUE, NOT WHAT IT IS CALLED. It used to be built from the name, the
