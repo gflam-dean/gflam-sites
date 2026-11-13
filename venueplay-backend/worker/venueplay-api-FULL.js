@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 21:24 · 37848250';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 21:26 · 4c084ae7';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -1250,8 +1250,14 @@ async function vpaHandleStripeEvent(env, event) {
     await vpaRecordDispute(env, event.data.object, event.type);
   }
   // Paid. Anything switched off for non-payment comes straight back on.
+  /* ONLY WHEN THE BILL THAT SWITCHED IT OFF IS PAID (security review 13 Nov 2026, B6). Any invoice.paid used to
+     do it, so a venue off for an unpaid SUBSCRIPTION paid a small open extras invoice instead (or any $0 or
+     credit-covered invoice settled) and its games came back on with the subscription still unpaid. Only a
+     subscription invoice counts towards switching a venue off (invoice.payment_failed above), so only a
+     subscription invoice, with the subscription itself back to active, switches it on. */
   if (event.type === 'invoice.paid') {
-    await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
+    const paid = event.data.object || {};
+    await vpaReactivateOnPayment(env, paid.customer, paid);
   }
 }
 
@@ -12436,6 +12442,24 @@ async function vpaSuspendForNonpayment(env, customerId, reason) {
   } catch (_) { /* never throw out of a webhook */ }
 }
 
+/* B6 (13 Nov 2026): does this paid invoice settle what a non-payment suspension is about? A subscription invoice
+   (billing_reason subscription_*), and the subscription answering active or trialing now it is paid: a second
+   unpaid invoice keeps it past_due, and the venue stays off until that one is paid too. An extras invoice never
+   switched a venue off, so paying one never switches it on. A failed read of the subscription THROWS, so the
+   webhook 500s and Stripe sends it again, the same as vpaReactivateOnPayment below. */
+async function vpaPaidInvoiceLiftsSuspension(env, inv) {
+  if (!inv || vpaIsExtrasInvoice(inv)) return false;
+  const subId = (typeof inv.subscription === 'string' && inv.subscription)
+    || (inv.subscription && inv.subscription.id)
+    || (inv.parent && inv.parent.subscription_details && inv.parent.subscription_details.subscription) || null;
+  if (!subId) return true;   // a subscription invoice that does not name it: as before
+  const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(subId));
+  if (!sub || sub.error || !sub.status) throw new Error('could not read subscription ' + subId + ' for invoice ' + (inv.id || '?'));
+  if (sub.status === 'active' || sub.status === 'trialing') return true;
+  console.log('[reactivate] invoice ' + (inv.id || '?') + ' paid but subscription ' + subId + ' is still ' + sub.status + ': venues stay off');
+  return false;
+}
+
 /* Throws on a lookup failure ON PURPOSE, so the webhook 500s and Stripe redelivers.
 
    This is the ONLY automatic route back from a non-payment suspension. vpaSelect returns [] on any
@@ -12443,11 +12467,14 @@ async function vpaSuspendForNonpayment(env, customerId, reason) {
    the webhook answered 200, and Stripe never tried again. A venue that had fixed their card stayed
    dark indefinitely, until somebody noticed and turned them on by hand. A retried webhook is
    harmless here: every write below is idempotent. */
-async function vpaReactivateOnPayment(env, customerId) {
+async function vpaReactivateOnPayment(env, customerId, paidInvoice) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
     if (!venues) throw new Error('could not read venues for customer ' + customerId);
     if (!venues.length) return;
+    /* B6: asked only when something is actually off for non-payment, so an ordinary invoice.paid makes no extra call. */
+    if (!venues.some((v) => v.status === 'suspended' && v.suspended_reason === 'nonpayment')) return;
+    if (paidInvoice && !(await vpaPaidInvoiceLiftsSuspension(env, paidInvoice))) return;
     let n = 0;
     for (const v of venues) {
       // ONLY the ones we switched off for non-payment. A venue VenuePlay turned off on purpose

@@ -4272,6 +4272,20 @@ MUTATIONS = [
     ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "'vfmt:' + venueId + ':' + mine.length + ':' + prev + ':' + owed);", "'vfmt:' + venueId + ':' + prev + ':' + owed);",
      'drop, raise, drop the same day: the second take-back replays the first and the credit is kept'),
+    # 13 Nov 2026, B6: only the subscription invoice being paid (and the subscription active again) lifts a non-payment
+    # suspension (vpaPaidInvoiceLiftsSuspension). tools/test-billing-abuse-13nov.js.
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!inv || vpaIsExtrasInvoice(inv)) return false;", "  if (!inv) return false;",
+     'a venue off for an unpaid subscription pays a small extras invoice and its games come back on'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (sub.status === 'active' || sub.status === 'trialing') return true;", "  return true;",
+     'paying one of two unpaid subscription invoices switches the venue back on with the other still owed'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!sub || sub.error || !sub.status) throw new Error(", "  if (!sub || sub.error || !sub.status) return true; if (0) throw new Error(",
+     'a failed read of the subscription switches the venue on instead of asking Stripe to send the event again'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (paidInvoice && !(await vpaPaidInvoiceLiftsSuspension(env, paidInvoice))) return;", "",
+     'any paid invoice switches a non-payment venue back on again'),
     # 3 Nov 2026: tools/test-players-timing.js RUNS vpbSetPlayers (D114). Rule 2 is pinned, rule 4 (the one-hour undo)
     # sits behind VPB_BILLING_RULES_3NOV, OFF.
     ('test-players-timing.js', 'venueplay-backend/worker/venueplay-api-FULL.js',

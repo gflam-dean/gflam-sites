@@ -376,6 +376,43 @@ stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 65 * DAY, per
 r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' });
 check('e) control: yearly with 300 days to run, the pub still gets a whole month (30 x the yearly rate) as before', r.status === 200 && r.body.free_month_cents > 0 && r.body.free_month_cents < liveItemCents() && S.balance === -r.body.free_month_cents, [r.body, liveItemCents()]);
 
+/* ================================================================================================
+   B6. A venue off for an unpaid SUBSCRIPTION comes back on only when that is paid.
+   ================================================================================================ */
+section('B6 only the subscription being paid lifts a non-payment suspension');
+var _applyPending = vpbApplyPendingOnInvoice, _invEmail = vpaFireInvoiceEmail;
+vpbApplyPendingOnInvoice = function () { return Promise.resolve(); };   // the renewal's own work, not the question here
+vpaFireInvoiceEmail = function () { return Promise.resolve(); };
+function webhook(evt) {
+  var out = null;
+  vpaHandleStripeEvent(ENV, evt).then(function () { out = { ok: true }; }, function (e) { out = { threw: String(e && e.message || e) }; });
+  for (var i = 0; i < 2000 && !out; i++) drainMicrotasks();
+  return out || { threw: 'never finished' };
+}
+function offWorld(subStatus) {
+  worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', status: 'suspended', suspended_reason: 'nonpayment' }]);
+  stripeReset({ sub: subStatus === null ? null : { id: 'sub_1', status: subStatus, customer: 'cus_1', price: 'price_S_M', quantity: 20, periodEnd: 1790000000 } });
+}
+function paid(reason, sub) { return { id: 'evt_' + (++S.n), type: 'invoice.paid', data: { object: { id: 'in_' + S.n, customer: 'cus_1', billing_reason: reason, subscription: sub || null, amount_paid: 3500 } } }; }
+
+offWorld('past_due');
+var w = webhook(paid('manual', null));
+check('a) a paid $35 extras invoice does NOT switch a venue off for an unpaid subscription back on', w.ok && venueNamed('Home Pub').status === 'suspended' && venueNamed('Home Pub').suspended_reason === 'nonpayment', [w, venueNamed('Home Pub')]);
+offWorld('active');
+w = webhook(paid('subscription_cycle', 'sub_1'));
+check('b) the subscription invoice paid and the subscription active again: back on (as before)', w.ok && venueNamed('Home Pub').status === 'active' && venueNamed('Home Pub').suspended_reason === null, [w, venueNamed('Home Pub')]);
+offWorld('past_due');
+w = webhook(paid('subscription_cycle', 'sub_1'));
+check('c) one subscription invoice paid but another still unpaid (still past_due): stays off', w.ok && venueNamed('Home Pub').status === 'suspended', [w, venueNamed('Home Pub')]);
+offWorld(null);
+w = webhook(paid('subscription_cycle', 'sub_1'));
+check('d) the subscription cannot be read: the webhook fails so Stripe sends it again, and nothing is switched on', !!w.threw && venueNamed('Home Pub').status === 'suspended', [w, venueNamed('Home Pub')]);
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000' }]);
+stripeReset({ sub: null });
+w = webhook(paid('manual', null));
+check('e) control: an ordinary invoice.paid with nothing off makes no extra Stripe read', w.ok && S.posts.filter(function (p) { return /subscriptions\//.test(p.url); }).length === 0, S.posts);
+vpbApplyPendingOnInvoice = _applyPending; vpaFireInvoiceEmail = _invEmail;
+
 print('');
 if (bad) throw new Error('billing abuse: ' + bad + ' of ' + ran + ' failed');
 print('ALL ' + ran + ' CHECKS PASSED');
