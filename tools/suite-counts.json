@@ -451,6 +451,10 @@
   "checks": 72,
   "counted_by": "lines"
  },
+ "tools/purchase-raffle-walk-in-chrome.test.py": {
+  "checks": 67,
+  "counted_by": "lines"
+ },
  "tools/qr-fallback-in-chrome.test.py": {
   "checks": 42,
   "counted_by": "lines"
@@ -1148,7 +1152,7 @@
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle.js": {
-  "checks": 91,
+  "checks": 92,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
