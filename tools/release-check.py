@@ -4430,6 +4430,39 @@ def local_checks(which):
              'on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging\'s own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched', 23,
              'A staging night that quietly reads or writes a real venue because one page kept a live address, or the tripwire '
              'wrapping the live site'),
+            # D240 to D242 (were D114 to D116 on fix/security-3nov; renumbered 13 Nov, those numbers were taken): the security audit of 3 Nov 2026 (branch fix/security-3nov; migrations 146 and 147).
+            ('D240. The account owner is the one named on the account being viewed, never "no permissions"',
+             'test-account-owner-marker.js',
+             'a marked owner stored as manager is the owner; a legacy null-permissions manager is refused cancel and players; the role is worked out on the viewed account only, so a host who owns another account cannot export this one\'s players; before migration 146 the old rule stands, any other read failure is a 503', 14,
+             'A duty manager or an old host stored as a manager charges the owner\'s card or cancels a venue, '
+             'or a trivia host downloads another pub\'s player list because they own a different account'),
+            ('D241. One winner per purchase raffle prize, even with two consoles drawing at once',
+             'test-praffle-one-winner.js',
+             'two simultaneous draws record one winner, the other is told the prize was just drawn and nothing else is written; a redrawn prize can be drawn again', 9,
+             'The legal record of a lottery shows two winners for one prize, each possibly a different person'),
+            ('D242. A claim resolves once, the public tally shows favourable counts only, and the admin key cannot be guessed',
+             'test-security-lows-3nov.js',
+             'confirm and reject at once resolve a musical claim once with one TV broadcast; /feedback/tally and the host page carry Loved it and Good counts only; the trivia admin key is constant-time and locked after ten wrong tries per network', 15,
+             'Two winners flashed on the TV for one claim, a venue or a stranger reading a night\'s poor ratings, '
+             'or the trivia review key guessed one character at a time'),
+            # D243: security review 13 Nov 2026 part B, B4 (the 3 Nov M1, through the opt-in export) and B5 (Add a manager).
+            ('D243. Owning another account never opens this one\'s player list, and Add a manager never rewrites a full-access login',
+             'test-security-b4-b5-13nov.js',
+             'a login that owns a different account and holds an old full-access manager row here is refused the opt-in export here; the named owner and a ticked manager are let through; /account/manager-add is the named owner\'s only and refuses the owner\'s, a full-access login\'s or the caller\'s own mobile, and a failed read writes nothing; a host or new mobile is added as before', 14,
+             'A travelling trivia host downloads a pub\'s customer list because they own their own account, or an old duty '
+             'manager login turns the real owner into a restricted manager with no billing and no player list'),
+            # D244: security review 13 Nov 2026 part A, A1 (the 5 Nov F1): the seat takeover by a broadcast device id.
+            ('D244. A player\'s seat, card and win cannot be taken with a device id, and the room never hears one',
+             'test-seat-takeover.js',
+             'a phone\'s seat cannot be taken with its device id: /join naming a seat it cannot prove (a token of that seat, or a seat under 30 seconds old) gets a seat of its own with no device id and the real seat keeps its token and card; the real phone gets back on with any token it holds; the unique-index path needs the same proof; the three phone pages announce only the public id the Worker also works out, and send their tokens on /join; seat, deal and pick-up speak public ids and tickets keep the real device id', 44,
+             'A stranger in the room (or anybody with the venue code) takes a paying player\'s musical bingo card and its win, '
+             'the real player\'s phone dies mid-game, and the TV names the wrong person'),
+            # D245: security review 13 Nov 2026 part A, A3 (the 3 Nov M2): the room's host role needs a sign-in.
+            ('D245. Only a signed-in host is the host in a venue\'s room',
+             'test-room-host-ticket.js',
+             'a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room\'s) it joins as a phone; POST /room/ticket answers only a login that is staff at the room\'s venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one', 21,
+             'Anybody who reads the venue code off the TV floods every phone and TV with 240 messages of 16 KB a second '
+             'and stalls a night'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

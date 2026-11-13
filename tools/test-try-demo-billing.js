@@ -36,7 +36,7 @@ function world() {
   DB.vp_players = [{ id: 'p1', session_id: REAL, device_id: 'd1', kicked: false }, { id: 'p2', session_id: DEMO, device_id: 'd2', kicked: false, email: 'me@x.example', marketing_optin: true }];
   DB.vp_games = [{ id: 'g1', session_id: REAL, format: 'trivia', status: 'finished', started_at: EARLY }, { id: 'g2', session_id: DEMO, format: 'trivia', status: 'finished', started_at: NOW }];
 }
-var OWNER = { venues: [{ id: V, name: 'The Royal', slug: 'royal', max_players: 50, founding_id: 'f1', created_at: EARLY }], founding: { id: 'f1', status: 'active' }, account: { id: 'f1' }, user: { id: 'u1' } };
+var OWNER = { venues: [{ id: V, name: 'The Royal', slug: 'royal', max_players: 50, founding_id: 'f1', created_at: EARLY }], founding: { id: 'f1', status: 'active' }, account: { id: 'f1' }, user: { id: 'u1' }, owner: true };
 vpaRequireAdmin = async function () { return { id: 'a1', role: 'owner', email: 'hq@example' }; };
 vpbRequireOwner = async function () { return OWNER; };
 function req(body) { return { json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(JSON.stringify(body)); }, headers: { get: function () { return ''; } }, url: 'https://api.example/x' }; }

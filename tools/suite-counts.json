@@ -527,6 +527,10 @@
   "checks": 17,
   "counted_by": "lines"
  },
+ "tools/security-3nov-sql.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "tools/see-a-night-phone-in-chrome.test.py": {
   "checks": 42,
   "counted_by": "lines"
@@ -609,6 +613,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-owner-marker.js": {
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-account-people-mobiles.js": {
@@ -1060,7 +1068,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 105,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
@@ -1157,6 +1165,10 @@
  },
  "tools/test-pr-round.js": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/test-praffle-one-winner.js": {
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/test-print-problem.js": {
@@ -1259,6 +1271,10 @@
   "checks": 253,
   "counted_by": "lines"
  },
+ "tools/test-room-host-ticket.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-room-old-console.js": {
   "checks": 13,
   "counted_by": "lines"
@@ -1303,6 +1319,18 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/test-seat-takeover.js": {
+  "checks": 44,
+  "counted_by": "lines"
+ },
+ "tools/test-security-b4-b5-13nov.js": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-security-lows-3nov.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
  "tools/test-self-serve-restart.js": {
   "checks": 143,
   "counted_by": "lines"
@@ -1336,7 +1364,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 75,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {
@@ -2008,7 +2036,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/owner-only-routes.test.js": {
-  "checks": 42,
+  "checks": 45,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/plan-uplift.test.js": {
@@ -2136,7 +2164,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room.test.js": {
-  "checks": 75,
+  "checks": 79,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {

@@ -64,7 +64,8 @@ function world() {
                   { id: 'vZ', name: 'Somebody Else Tavern', founding_id: 'f2', slug: 'else', status: 'active', max_players: 50, created_at: '2026-01-03T00:00:00Z' }];
   DB.vp_platform_admins = [{ auth_user_id: DEAN, label: 'Dean', role: 'owner' }, { auth_user_id: ACCOUNTS, label: 'Accounts', role: 'accounts' }, { auth_user_id: ADMINHOST, label: 'Harry', role: 'staff' }];
   DB.vp_venue_staff = [
-    { id: 's1', auth_user_id: OWNER, venue_id: 'vA', role: 'manager', permissions: null }, { id: 's2', auth_user_id: OWNER, venue_id: 'vB', role: 'manager', permissions: null },
+    /* The owner is NAMED (migration 146, is_account_owner; security audit 3 Nov 2026 H2), stored as manager the way provisioning writes it. */
+    { id: 's1', auth_user_id: OWNER, venue_id: 'vA', role: 'manager', permissions: null, is_account_owner: true }, { id: 's2', auth_user_id: OWNER, venue_id: 'vB', role: 'manager', permissions: null, is_account_owner: true },
     { id: 's3', auth_user_id: MGR, venue_id: 'vA', role: 'manager', permissions: { add_hosts: true, billing: false } },
     { id: 's4', auth_user_id: MGR_NO, venue_id: 'vA', role: 'manager', permissions: { add_hosts: false } },
     { id: 's5', auth_user_id: HOST, venue_id: 'vA', role: 'host', permissions: null, display_name: 'Sam' },

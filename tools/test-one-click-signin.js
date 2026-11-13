@@ -550,7 +550,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
      the typed number on that account's login (POST /short/attach) BEFORE the code is sent; without them, as always. */
   function sendCodeRun(store, attachAnswer, typed, otpAnswer) {
     var R = { posts: [], otps: [], err: '', store: store };
-    var els = {}; ['mobileIn', 'mobileErr', 'sentTo', 'stepMobile', 'stepCode', 'otpIn', 'emailAlt'].forEach(function (id) { els[id] = new El(id); els[id].focus = function () {}; });
+    var els = {}; ['mobileIn', 'mobileErr', 'sentTo', 'stepMobile', 'stepCode', 'otpIn', 'emailAlt', 'emailAltMsg'].forEach(function (id) { els[id] = new El(id); els[id].focus = function () {}; });
     els.mobileIn.value = typed || '0433 444 555';
     els.stepCode.classList.add('hidden');   // the page opens on the mobile step
     var $ = function (id) { return els[id]; };
@@ -566,12 +566,16 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
     fn.call({ disabled: false, textContent: 'Send code' });
     for (var i = 0; i < 10; i++) drainMicrotasks();
     R.err = els.mobileErr.textContent; R.stepCode = !els.stepCode.classList.contains('hidden');
+    R.note = els.emailAltMsg.classList.contains('hidden') ? '' : els.emailAltMsg.textContent;
     return R;
   }
-  var sc1 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' });
-  check('NO MOBILE HELD, the sign-in page: the typed number goes on that account first (/short/attach with the letters), THEN the normal text code; the letters are forgotten',
+  var EMAILED = "We've emailed a sign-in link to the email address on this account. Tap it to sign in, then add your mobile. Nothing there? Check junk, or call us on 07 5228 3667 (press 2).";
+  var sc1 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 200, body: { ok: false, emailed: true } });
+  check('NO MOBILE HELD, the sign-in page (A5, 13 Nov 2026): /short/attach with the letters, then NO text code; it says a sign-in link went to the email on the account; the letters are forgotten',
     sc1.posts.length === 1 && /\/short\/attach$/.test(sc1.posts[0].u) && sc1.posts[0].b.code === 'AB2CD7KMNPQR' && sc1.posts[0].b.mobile === '+61433444555' &&
-    sc1.otps.length === 1 && sc1.otps[0].phone === '+61433444555' && !('vpShortAttach' in sc1.store), sc1);
+    sc1.otps.length === 0 && !sc1.stepCode && sc1.err === '' && sc1.note === EMAILED && !('vpShortAttach' in sc1.store), sc1);
+  var sc1b = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' });
+  check('...an older Worker that still answers ok: the page behaves as it did (the text code to the typed number)', sc1b.otps.length === 1 && sc1b.otps[0].phone === '+61433444555' && !('vpShortAttach' in sc1b.store), sc1b);
   var sc2 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 409, body: { error: 'That mobile already has a venueplay login. Sign in with it, or use a different mobile.', taken: true } });
   check('...a mobile that is another login: they are told, and NO code is sent', sc2.otps.length === 0 && /already has a venueplay login/.test(sc2.err), sc2);
   /* Every OTHER attach answer stops too (Dean, 12 Nov 2026). It used to fall through to signInWithOtp({phone}), which
@@ -594,7 +598,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('...409 has_mobile (we already hold one): NO code, "' + HASM + '", letters forgotten',
     scH.otps.length === 0 && !scH.stepCode && scH.err === HASM && !('vpShortAttach' in scH.store) && scH.store.vpShortExistingOnly === 'has_mobile', scH);
   check('...the phone in all three lines is the support line, never a mobile, and none has an em or en dash',
-    SHORT_ATTACH_SRC.indexOf(BUSY) > 0 && SHORT_ATTACH_SRC.indexOf(USED) > 0 && SHORT_ATTACH_SRC.indexOf(HASM) > 0 && !/\b04\d{2}\s?\d{3}\s?\d{3}\b/.test(SHORT_ATTACH_SRC) && !/[\u2013\u2014]|&mdash;|&ndash;/.test(SHORT_ATTACH_SRC), SHORT_ATTACH_SRC.slice(0, 120));
+    SHORT_ATTACH_SRC.indexOf(BUSY) > 0 && SHORT_ATTACH_SRC.indexOf(USED) > 0 && SHORT_ATTACH_SRC.indexOf(HASM) > 0 && SHORT_ATTACH_SRC.indexOf(EMAILED) > 0 && !/\b04\d{2}\s?\d{3}\s?\d{3}\b/.test(SHORT_ATTACH_SRC) && !/[\u2013\u2014]|&mdash;|&ndash;/.test(SHORT_ATTACH_SRC), SHORT_ATTACH_SRC.slice(0, 120));
   var scN = sendCodeRun({ vpShortExistingOnly: 'has_mobile' }, null, '0452 510 904');
   check('...after that 409, Send code again (the number we hold): no call to us, a code that can only reach a login that EXISTS (shouldCreateUser:false)',
     scN.posts.length === 0 && scN.otps.length === 1 && scN.otps[0].phone === '+61452510904' && !!scN.otps[0].options && scN.otps[0].options.shouldCreateUser === false && scN.stepCode, scN.otps);

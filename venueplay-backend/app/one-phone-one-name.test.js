@@ -122,11 +122,12 @@ var TPLAY = find("venueplay/app/trivia/play.html");
 print("\nthe trivia phone says which browser it is");
 (function () {
   var sent = [];
-  var tp = pageScope(TPLAY, ["announce"], [], "var P = env.P, send = env.send, deviceId = env.deviceId;");
+  var tp = pageScope(TPLAY, ["announce", "vpPubSha", "vpPublicId"], [], "var P = env.P, send = env.send, deviceId = env.deviceId;");
   var api = tp.make({ P: { pid: "tpid01", name: "Quiz Kids" }, send: function (m) { sent.push(m); }, deviceId: function () { return "devQUIZ0000001"; } });
   api.announce();
   pass("its join carries fmt trivia (the consoles' filter)", sent.length === 1 && sent[0].fmt === "trivia", JSON.stringify(sent[0]));
-  pass("and the browser's device id", sent.length === 1 && sent[0].did === "devQUIZ0000001", JSON.stringify(sent[0]));
+  /* The PUBLIC id since the security review of 13 Nov 2026 (A1): one per browser, as before, but never the device id. */
+  pass("and the browser's public id, never its device id", sent.length === 1 && sent[0].did === api.vpPublicId() && sent[0].did !== "devQUIZ0000001" && /^p[0-9a-f]{31}$/.test(sent[0].did), JSON.stringify(sent[0]));
 })();
 
 /* ======================= the phones' second game of the night ======================= */

@@ -56,7 +56,7 @@ var window = this, _keyReady = null, _signChain = Promise.resolve();
 var _paper = false; function deviceId(){ return "dev-test-0001"; }
 // Since 15 Oct 2026 the join goes through sendJoin (the "I am 18 or over" hold); nothing is held here.
 var _ageHold = false, _agePendingJoin = false;
-var srcs = ["onChannelStatus", "send", "sendJoin", "flushQueue", "wireOut", "setConn"].map(function (n) {
+var srcs = ["onChannelStatus", "send", "sendJoin", "flushQueue", "wireOut", "setConn", "vpPubSha", "vpPublicId"].map(function (n) {   // vpPublicId: the room hears the public id (A1)
   return [n, lift(PLAY, n)];
 });
 var missing = srcs.filter(function (p) { return !p[1]; }).map(function (p) { return p[0]; });

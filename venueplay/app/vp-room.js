@@ -314,13 +314,35 @@
       }, REASSERT_MS);
     }
 
+    /* A HOST SOCKET CARRIES A ROOM TICKET (security review 13 Nov 2026, A3). The Worker lets a socket in as the host
+       only with a ticket from POST /room/ticket, which needs this console's own sign-in and staff at the room's venue.
+       Kept until a minute before it ends, so a reconnect costs nothing. No ticket (an old Worker answers 404, the
+       sign-in has lapsed, the line is down): the socket opens anyway and the Worker treats it as a phone. */
+    var tk = { t: "", exp: 0 };
+    function withTicket(cb) {
+      if (role !== "host" || !venueRoom) { cb(""); return; }
+      if (tk.t && tk.exp * 1000 - now() > 60000) { cb(tk.t); return; }
+      var done = false;
+      function give(t) { if (done) return; done = true; cb(t || ""); }
+      setTimeout(function () { give(""); }, 4000);
+      post(api + "/room/ticket?room=" + encodeURIComponent(roomName) + venueQ())
+        .then(function (r) { return (r && r.status === 200) ? readJson(r) : null; })
+        .then(function (d) {
+          if (d && typeof d.ticket === "string" && /^\d{10}\.[0-9a-f]{40}$/.test(d.ticket)) { tk = { t: d.ticket, exp: +d.exp || 0 }; give(d.ticket); }
+          else give("");
+        }, function () { give(""); });
+    }
     function open() {
       if (st.closed) return;
       setState("connecting");
+      withTicket(function (t) { if (!st.closed) openNow(t); });
+    }
+    function openNow(t) {
+      if (st.closed) return;
       var ws;
       try {
         ws = new WebSocket(wsBase + "/room/ws?room=" + encodeURIComponent(roomName) + "&role=" + encodeURIComponent(role) +
-                           (venueRoom ? "&cid=" + cid : ""));
+                           (venueRoom ? "&cid=" + cid : "") + (t ? "&tk=" + encodeURIComponent(t) : ""));
       } catch (e) { retry(); return; }
       st.ws = ws;
       /* A SOCKET THAT NEITHER OPENS NOR FAILS. Every budget below is armed by onclose or

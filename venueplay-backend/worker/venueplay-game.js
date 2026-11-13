@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 17:38 · bb69f435';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 22:47 · 7b24ea9e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -315,6 +315,61 @@ async function closeAbandonedSession(env, sessionId) {
   } catch (e) { console.log('[abandoned] could not close ' + sessionId + ': ' + String((e && e.message) || e)); }
 }
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
+/* A PHONE'S DEVICE ID IS ITS SEAT KEY, SO IT IS NEVER SAID OUT LOUD (security review 13 Nov 2026, A1; the 5 Nov F1).
+   The phones used to put their device id (vpDeviceId) in every {t:"join"} room message, so anybody in the room could
+   POST /join with it and be handed that person's seat, card and win, the real phone's token dying mid-game. Now:
+   1. the room hears only publicDeviceId(did): a one-way, versioned digest the consoles use as an opaque key (one phone,
+      one player still holds: the same phone always gives the same digest). The phones work it out themselves with the
+      same recipe (vpPublicId in play.html, app/musical/play.html, app/trivia/play.html; tools/test-seat-takeover.js
+      checks all four agree). The seat and deal routes accept either form, so a console page that is still cached works.
+   2. /join that names a device id ALREADY seated in this session must prove the seat: one of the tokens the phone sends
+      (X-Player-Token, body.tokens) is that seat's current token, or the seat is under JOIN_SEAT_GRACE_MS old (two joins
+      from one phone racing each other, migration 192). The proof is the condition on the one write a re-join makes
+      (takeBackOntoRow in handleJoin). Otherwise the caller gets a seat of its own (no device id, so the unique index is
+      untouched) and the real seat, its token and its card are left alone. */
+const JOIN_SEAT_GRACE_MS = 30000;
+const PUBLIC_DEVICE_PREFIX = 'vp-pub-v1:';
+/* The phones' own SHA-256 (plain script, so the pages, every test rig and this Worker give one answer). Word for word the
+   same as vpPubSha in play.html, app/musical/play.html and app/trivia/play.html (tools/test-seat-takeover.js). */
+function vpPubSha(s){
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=s.length, n=((l+9+63)>>6)<<6, m=[], w=[], i, o, a, b, c, d, e, f, g, h, t1, t2, out="";
+  for(i=0;i<n;i++) m[i]=0;
+  for(i=0;i<l;i++) m[i]=s.charCodeAt(i)&255;
+  m[l]=0x80; m[n-4]=(l*8>>>24)&255; m[n-3]=(l*8>>>16)&255; m[n-2]=(l*8>>>8)&255; m[n-1]=(l*8)&255;
+  function r(x,k){ return (x>>>k)|(x<<(32-k)); }
+  for(o=0;o<n;o+=64){
+    for(i=0;i<16;i++) w[i]=(m[o+4*i]<<24)|(m[o+4*i+1]<<16)|(m[o+4*i+2]<<8)|m[o+4*i+3];
+    for(i=16;i<64;i++) w[i]=(w[i-16]+(r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3))+w[i-7]+(r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10)))|0;
+    a=H[0]; b=H[1]; c=H[2]; d=H[3]; e=H[4]; f=H[5]; g=H[6]; h=H[7];
+    for(i=0;i<64;i++){
+      t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0; t2=((r(a,2)^r(a,13)^r(a,22))+((a&b)^(a&c)^(b&c)))|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0; H[1]=(H[1]+b)|0; H[2]=(H[2]+c)|0; H[3]=(H[3]+d)|0; H[4]=(H[4]+e)|0; H[5]=(H[5]+f)|0; H[6]=(H[6]+g)|0; H[7]=(H[7]+h)|0;
+  }
+  for(i=0;i<8;i++) out+=("0000000"+(H[i]>>>0).toString(16)).slice(-8);
+  return out;
+}
+async function publicDeviceId(did) { return 'p' + vpPubSha(PUBLIC_DEVICE_PREFIX + String(did || '')).slice(0, 31); }
+/* The ids a console sends (raw device ids from an older cached page, or public ids) matched to this session's live rows. */
+async function sessionSeatRows(env, sessionId, ids) {
+  const want = new Set(ids);
+  if (!want.size) return [];
+  const rows = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id,played_at&order=joined_at.asc&limit=2000');
+  const out = [];
+  for (const r of rows) {
+    if (!r.device_id || isPaperDevice(r.device_id)) continue;
+    const pub = await publicDeviceId(r.device_id);
+    if (want.has(pub)) out.push(Object.assign({}, r, { asked: pub }));
+    else if (want.has(r.device_id)) out.push(Object.assign({}, r, { asked: r.device_id }));
+  }
+  return out;
+}
 
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
@@ -525,6 +580,7 @@ export default {
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
       if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
+      if (method === 'POST' && path === '/room/ticket')        return await handleRoomTicket(request, env, json);   // a host socket's ticket (A3)
       if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json, roomHandoverAuth);   // signed, or only an ask (F2)
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       /* The coaster round, /live-here-now (migration 153): public, rate limited, first names only. */
@@ -4301,6 +4357,9 @@ async function handleJoin(request, env, json) {
   }
 
   const devId = String(b.pid || '').trim();
+  /* The tokens this phone holds for this room (its own and the other game pages'), to prove a seat it already has. */
+  const heldTokens = [request.headers.get('x-player-token') || ''].concat(Array.isArray(b.tokens) ? b.tokens : [])
+    .map((t) => String(t || '').trim()).filter((t, i, a) => /^[0-9a-f]{64}$/.test(t) && a.indexOf(t) === i).slice(0, 4);
   /* A pid starting 'paper-' is refused: that prefix belongs to printed cards (PAPER_MAX), and a
      phone sending it would be handed the paper player's row, its card and its claims. */
   const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId) && !isPaperDevice(devId);
@@ -4373,22 +4432,29 @@ async function handleJoin(request, env, json) {
      name if one was given, and the room as it stands. One place for it, because two paths end here: the check above
      that found the phone's row, and the insert below losing a race to it (migration 192, a unique index on
      (session_id, device_id) while kicked = false: two overlapping joins from one phone can no longer make two rows). */
+  /* ONLY WITH PROOF (A1, above). The token goes on the row only if the row is this phone's: a token it holds is the
+     row's current one, or the row is under JOIN_SEAT_GRACE_MS old (two joins from one phone racing). Each is a
+     conditional write, the same one write a re-join always made, so proving costs no extra read. null: not proven. */
   const takeBackOntoRow = async function (rowId) {
     const token = randomTokenHex(32);
     const patch = { token_hash: await sha256Hex(token), last_seen_at: new Date().toISOString() };
     if (name) patch.display_name = name;
     const venueRow = await venueCheck;   // already settled by now; the row it read carries the slug
-    const [, snapshot] = await Promise.all([
-      sbPatch(env, 'vp_players', 'id=eq.' + enc(rowId), patch),
-      getPublicSnapshot(env, session.id, { session: session, slug: venueRow && venueRow.slug, running: running }),
-    ]);
-    return json({ token, snapshot });
+    const held = [];
+    for (const t of heldTokens) held.push(await sha256Hex(t));
+    const snapP = getPublicSnapshot(env, session.id, { session: session, slug: venueRow && venueRow.slug, running: running });
+    const take = (proof) => sbPatchReturning(env, 'vp_players', 'id=eq.' + enc(rowId) + proof, patch);
+    let done = held.length ? await take('&token_hash=in.(' + held.join(',') + ')') : [];
+    if (!done.length) done = await take('&joined_at=gt.' + enc(new Date(Date.now() - JOIN_SEAT_GRACE_MS).toISOString()));
+    if (!done.length) { snapP.catch(function () {}); return null; }
+    return json({ token, snapshot: await snapP });
   };
 
   /* The KV key above is a 120 second cache in front of the real check, which is the DB. KV alone
      could never carry a patron from trivia to musical bingo hours later in the same session, so
      the same person was inserted again and billed again. device_id (migration 39) is the durable
      record, so look there whenever the fast path misses. */
+  let unproven = false;
   if (devIdValid) {
     /* The cache and the durable column are read at the same time, alongside the venue check:
        three trips that used to queue behind each other. The database row wins when it exists
@@ -4408,7 +4474,11 @@ async function handleJoin(request, env, json) {
     if (priorId && UUID_RE.test(priorId)) {
       const existing = proven ? [{ id: priorId }] : await sbGet(env, 'vp_players',
         'id=eq.' + enc(priorId) + '&session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
-      if (existing.length) return await takeBackOntoRow(priorId);
+      if (existing.length) {
+        const back = await takeBackOntoRow(priorId);
+        if (back) return back;
+        unproven = true;   // somebody else's seat, or a phone that lost every token: a seat of its own, below
+      }
     }
   } else {
     await venueCheck;
@@ -4434,7 +4504,7 @@ async function handleJoin(request, env, json) {
   };
   if (ipHash) playerRow.ip_hash = ipHash;          // salted hash only, never a raw IP
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
-  if (devIdValid) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39)
+  if (devIdValid && !unproven) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39); never on an unproven seat (A1)
   Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
   let inserted;
   try {
@@ -4449,7 +4519,9 @@ async function handleJoin(request, env, json) {
       'session_id=eq.' + enc(session.id) + '&kicked=eq.false&device_id=eq.' + enc(devId) +
       '&select=id&order=joined_at.asc&limit=1');
     if (!won.length || !UUID_RE.test(won[0].id)) throw e;
-    return await takeBackOntoRow(won[0].id);
+    const back = await takeBackOntoRow(won[0].id);
+    if (!back) throw e;   // the seat was not this phone's to take (A1)
+    return back;
   }
   const newPlayer = Array.isArray(inserted) ? inserted[0] : inserted;
 
@@ -4457,7 +4529,7 @@ async function handleJoin(request, env, json) {
   // Not awaited: a KV write is the slowest thing on this path (0.5 to 1 s) and the phone
   // does not need it to finish before it hears "you're in". The durable record is the
   // device_id column; this is only the cache in front of it.
-  if (dedupKey && newPlayer && newPlayer.id) {
+  if (dedupKey && !unproven && newPlayer && newPlayer.id) {
     try { env.RL.put(dedupKey, newPlayer.id, { expirationTtl: JOIN_DEDUP_TTL }).catch(function () { rlWarn(); }); } catch (e) { rlWarn(); }
   }
 
@@ -7565,9 +7637,31 @@ async function handleHostAddTime(request, env, json) {
 }
 
 // --- Review queue admin (used by the weekly fact-check run). Gated by env.ADMIN_KEY. ---
+/* THE KEY CHECK, ONE COPY FOR BOTH ROUTES (security audit 3 Nov 2026, L3). It was `b.key !==
+   env.ADMIN_KEY`: an ordinary string compare that returns at the first wrong character, and no
+   limit on guesses. Now a constant-time compare (the same vpaSameSecret the billing Worker uses
+   for its autopilot key) and at most ADMIN_KEY_TRIES wrong keys per network per 10 minutes. A
+   right key is never counted, so the weekly run is not slowed. Answers a refusal or null. */
+const ADMIN_KEY_TRIES = 10;
+function vpaSameSecret(a, b) {
+  a = String(a || ''); b = String(b || '');
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return diff === 0;
+}
+async function adminKeyRefusal(request, env, b, json) {
+  if (!env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  const ip = (request && request.headers && request.headers.get('cf-connecting-ip')) || 'unknown';
+  const key = 'adminkey:' + ip;
+  const seen = rlMem.get(key);
+  if (seen && seen.until > Date.now() && seen.n >= ADMIN_KEY_TRIES) return json({ error: 'Too many tries. Wait ten minutes.' }, 429);
+  if (vpaSameSecret(b && b.key, env.ADMIN_KEY)) return null;
+  await rateLimit(env, key, ADMIN_KEY_TRIES, 600);
+  return json({ error: 'Not authorised' }, 401);
+}
 async function handleAdminSubmissions(request, env, json) {
   const b = await readJson(request);
-  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  { const no = await adminKeyRefusal(request, env, b, json); if (no) return no; }
   const limit = Math.max(1, Math.min(200, parseInt(b.limit, 10) || 50));
   const rows = await sbGet(env, 'vp_question_submissions',
     'status=eq.pending&select=id,venue_id,question,options,correct_index,category,difficulty,image_url&order=created_at.asc&limit=' + limit);
@@ -7576,7 +7670,7 @@ async function handleAdminSubmissions(request, env, json) {
 
 async function handleAdminResolve(request, env, json) {
   const b = await readJson(request);
-  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  { const no = await adminKeyRefusal(request, env, b, json); if (no) return no; }
   const id = String(b.id || '').trim();
   if (!id) return json({ error: 'Missing id' }, 400);
   const status = ['approved', 'rejected', 'review'].includes(b.status) ? b.status : 'review';
@@ -8420,13 +8514,11 @@ async function handleBingoSeat(request, env, json) {
     d = String(d || '');
     if (want.length < SEAT_MAX_IDS && /^[A-Za-z0-9_-]{6,64}$/.test(d) && !isPaperDevice(d) && want.indexOf(d) === -1) want.push(d);
   });
-  let rows = [];
-  if (want.length) {
-    rows = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&device_id=in.(' +
-      want.map(enc).join(',') + ')&select=id,device_id,played_at&limit=' + (want.length * 4));
-  }
+  /* The console names phones by the public id they announce (A1, 13 Nov 2026) or, from a page still cached, the raw
+     device id; seated answers in the console's own words. */
+  const rows = await sessionSeatRows(env, sessionId, want);
   const seated = [];
-  rows.forEach(function (r) { if (r.device_id && seated.indexOf(r.device_id) === -1) seated.push(r.device_id); });
+  rows.forEach(function (r) { if (seated.indexOf(r.asked) === -1) seated.push(r.asked); });
   const live = session.status !== 'finished' && session.status !== 'cancelled';
   if (b.deal === true && live) {
     const ids = rows.filter(function (r) { return !r.played_at; }).map(function (r) { return r.id; });
@@ -8442,7 +8534,13 @@ async function handleBingoSeat(request, env, json) {
       await markBroadcastGameLive(env, session.venue_id, 'bingo');
     }
   }
-  const out = { ok: true, seated: seated, fallback_off_states: fallbackOffList() };
+  /* THE DEAL KEY (A1). The deal (VP-DRAW, the regulated module, unchanged) seats a ticket by the phone's device id, which
+     the room no longer hears. So the console, a signed-in member of THIS venue's staff, is told each seated phone's
+     device id here, over HTTPS, keyed by the id it asked with; it sends that on /host/bingo/deal and never into the room.
+     (A device id alone no longer takes a seat: /join asks for proof.) */
+  const keys = {};
+  rows.forEach(function (r) { keys[r.asked] = r.device_id; });
+  const out = { ok: true, seated: seated, keys: keys, fallback_off_states: fallbackOffList() };
   if (b.count === true) {
     // The very read and count chargeNightOverage makes, so the card cannot disagree with the bill.
     const all = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
@@ -10015,9 +10113,15 @@ async function handleClaimResolve(request, env, json) {
   if (games[0].format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 404);
 
   const status = decision === 'confirm' ? 'confirmed' : 'rejected';
-  await sbPatch(env, 'vp_claims', 'id=eq.' + enc(claimId), {
+  /* COMPARE AND SET (security audit 3 Nov 2026, L1). The check above and this write were two
+     steps, so two near-simultaneous taps (or confirm on one console and reject on the other) both
+     passed the check, both wrote and both broadcast music.claim_result, last write winning. Only
+     a claim that is STILL pending changes now; the loser changes nothing and broadcasts nothing,
+     the way the 90-ball path already does it. */
+  const done = await sbPatchReturning(env, 'vp_claims', 'id=eq.' + enc(claimId) + '&status=eq.pending', {
     status, resolved_by: staff.id || null, resolved_at: new Date().toISOString(),
   });
+  if (!done.length) return json({ error: 'This claim has already been resolved' }, 409);
 
   // WRITE THE RESULT. There is no separate bingo winners table: the confirmed
   // vp_claims row IS the durable winner record (who, which card, which cells,
@@ -10135,7 +10239,7 @@ async function findRunningGame(env, venueId, format, withCurrent) {
           const players = await sbGetAll(env, 'vp_players',
             'session_id=eq.' + enc(g.session_id) + '&select=id,device_id&order=id.asc');
           const dev = {};
-          players.forEach((p) => { dev[p.id] = p.device_id || p.id; });
+          for (const p of players) dev[p.id] = p.device_id ? await publicDeviceId(p.device_id) : p.id;   // never a raw device id to a console (A1)
           ans.forEach((a) => { pids[dev[a.player_id] || a.player_id] = true; });
         }
         out.current = { qseq: t.current_seq, ci: q[0].correct_index, pids: pids };
@@ -11992,7 +12096,21 @@ async function handlePraffleDraw(request, env, json) {
     entrant_id: person.id, entry_id: hit[0].id, winner_name: formatMemberName(person.first_name, person.last_name, 'abbrev_last'),
     phone_last3: praffleLast3(person.phone), winner_entries: mine, entries_total: n, entrants_total: entrantsTotal,
     pick_index: pick, outcome: 'drawn', drawn_by: actorRef(g.staff), drawn_by_name: await praffleStaffName(env, g.staff) };
-  const saved = (await sbInsert(env, 'vp_purchase_raffle_draws', row, true))[0];
+  /* ONE WINNER PER PRIZE, held by the database (security audit 3 Nov 2026, M4). The read above
+     and this insert are not atomic: two consoles (pickup) or a double tap both read "no draws
+     yet", both pick prize 0 and both used to insert, so the legal record of a lottery showed two
+     winners for one prize. Migration 147's partial unique index on (raffle_id, prize_index)
+     where outcome = 'drawn' refuses the second; sbInsert turns that 23505 into a 409 and the
+     loser is told plainly. Nothing is recorded for the second tap. */
+  let saved;
+  try {
+    saved = (await sbInsert(env, 'vp_purchase_raffle_draws', row, true))[0];
+  } catch (e) {
+    if (e && e.status === 409) {
+      return json({ error: 'That prize has just been drawn on another screen. Nothing was recorded for this tap; the winner is on the draw list.', already_drawn: true }, 409);
+    }
+    throw e;
+  }
   const allDone = prizes.every(function (p, i) { return i === prizeIndex || won[i]; });
   if (allDone) await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id), { status: 'drawn', updated_at: new Date().toISOString() });
   await praffleAudit(env, g.staff, 'purchase_raffle_drawn', g.venue.id, { raffle_id: r.id, draw_id: saved.id, prize_index: prizeIndex,
@@ -13971,6 +14089,41 @@ async function roomHandoverAuth(request, env, name, venueSlug) {
   }
 }
 
+/* POST /room/ticket?room=vp-XXXXXX[&venue=<slug>]  (security review 13 Nov 2026, A3)
+ * A console's host socket needs a ticket, so a stranger who read the venue code off the TV cannot open the room as the
+ * host. Answered only for a signed-in login that is staff at THIS room's venue (requireStaff: owner, manager, host, or
+ * an HQ owner/accounts admin, with the kill-switch): the room is the venue's own code, or one of the rooms its slug
+ * names (roomVenueRooms). Anything else, no ticket. 30 asks a minute per network. -> { ticket, exp } */
+const ROOM_TICKET_MAX_PER_IP = 30;
+async function handleRoomTicket(request, env, json) {
+  if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  if (!ROOM_NAME_RE.test(name) || name.indexOf('vp-') !== 0) return json({ error: 'bad room' }, 400);
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const rl = await rateLimit(env, 'roomticket:ip:' + (ip ? await sha256Hex((env.IP_HASH_SALT || 'venueplay') + ':' + ip) : 'none'), ROOM_TICKET_MAX_PER_IP, 60);
+  if (!rl.ok) return json({ error: 'Too many tries. Wait a minute.' }, 429);
+  const uid = await verifyHostJwt(request, env);                   // ENFORCED: valid host JWT (throws 401)
+  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase();
+  const code = name.slice(3).toUpperCase();
+  let venueId = null;
+  if (slug && roomVenueRooms(slug).indexOf(name) >= 0) {
+    const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id&limit=1');
+    venueId = (rows && rows[0] && rows[0].id) || null;
+  } else if (JOIN_CODE_RE.test(code)) {
+    venueId = await venueByCode(env, code, { includeSuspended: true });
+    if (!venueId) {
+      const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&select=venue_id&order=created_at.desc&limit=1');
+      venueId = (ss && ss[0] && ss[0].venue_id) || null;
+    }
+  }
+  if (!venueId) return json({ error: 'No venue for that room' }, 404);
+  await requireStaff(env, uid, venueId);                           // ENFORCED: staff at the room's venue (and the kill-switch)
+  const t = await roomTicketMake(env, name, Date.now());
+  if (!t) return json({ error: 'room tickets are not set up' }, 503);
+  return json(t);
+}
+
 /* ============================================================================
  * ROOM SERVER (copied from venueplay-room.js, kept identical by the gate)
  *
@@ -14011,8 +14164,19 @@ const ROOM_MAX_MSG_CHARS = 16 * 1024;        // a game message is a few hundred 
    So the host and the TV, which are the venue's own equipment and whose messages are
    signed, get room to do their job. Phones stay capped, because a phone is the thing an
    outsider can point at us. */
-const ROOM_MAX_PER_SEC   = 20;               // a phone, or anything unrecognised
-const ROOM_MAX_PER_SEC_HOST = 240;           // a host or a TV: a rollcall answers every phone at once
+const ROOM_MAX_PER_SEC   = 20;               // a phone, a TV, HQ, or anything unrecognised
+const ROOM_MAX_PER_SEC_HOST = 240;           // a SIGNED-IN host (a room ticket): a rollcall answers every phone at once
+/* ONLY A SIGNED-IN HOST IS A HOST (security review 13 Nov 2026, A3; the 3 Nov audit's M2). The role used to come from the
+   query string, so anybody who read the venue code off the TV opened /room/ws?role=host with no sign-in and could send
+   240 messages of 16 KB a second to every phone and TV. Now:
+   - role=host needs a room ticket (&tk=): POST /room/ticket with the console's own sign-in, for a room at a venue where
+     that login is staff (or HQ), answers one, good for ROOM_TICKET_S. A host socket without a good ticket is let in as a
+     phone: it still hears and speaks, at a phone's pace and size, so an old cached console degrades instead of failing.
+   - a TV is not signed in, so it no longer gets the host's pace: a TV says "tv_here" a few times a minute.
+   - every message over the role's size is dropped: a host or HQ message up to 16 KB (a full players list), anything
+     else up to ROOM_MAX_MSG_CHARS_SMALL (a phone's join, answer or claim is a few hundred characters). */
+const ROOM_MAX_MSG_CHARS_SMALL = 4 * 1024;
+const ROOM_TICKET_S = 15 * 60;
 const ROOM_ROLES         = ['tv', 'host', 'phone', 'hq'];
 const ROOM_NAME_RE       = /^[A-Za-z0-9-]{3,90}$/;   // the channel name the page already uses, e.g. vp-3A7TES
 
@@ -14236,11 +14400,12 @@ export class VenueRoom {
     if (message.length > ROOM_MAX_MSG_CHARS) return;
     const a = ws.deserializeAttachment() || { role: 'phone', since: 0, win: 0, n: 0 };
     if (a.gone) return;                                      // a socket a newer one from the same page replaced
+    if (message.length > ((a.role === 'host' || a.role === 'hq') ? ROOM_MAX_MSG_CHARS : ROOM_MAX_MSG_CHARS_SMALL)) return;
     const win = Math.floor(Date.now() / 1000);
     if (a.win !== win) { a.win = win; a.n = 0; }
     a.n += 1;
     ws.serializeAttachment(a);
-    const cap = (a.role === 'host' || a.role === 'tv') ? ROOM_MAX_PER_SEC_HOST : ROOM_MAX_PER_SEC;
+    const cap = (a.role === 'host') ? ROOM_MAX_PER_SEC_HOST : ROOM_MAX_PER_SEC;
     if (a.n > cap) return;                                   // a flood is dropped; the socket stays up
     let obj;
     try { obj = JSON.parse(message); } catch (e) { return; }
@@ -14588,14 +14753,49 @@ async function handleRoomHandover(request, env, json, auth) {
   }
 }
 
+/* A ROOM TICKET: '<expiry seconds>.<40 hex of HMAC-SHA256("vp-room-ticket-v1|<room>|<expiry>")>', keyed on
+   ROOM_TICKET_KEY, else the service key (a Worker secret either way; never sent to a page). '' when no key. */
+async function roomTicketSig(env, name, exp) {
+  const secret = String((env && (env.ROOM_TICKET_KEY || env.SUPABASE_SERVICE_KEY)) || '');
+  if (!secret) return '';
+  const te = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', te.encode('vp-room-ticket|' + secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, te.encode('vp-room-ticket-v1|' + name + '|' + exp)));
+  let hex = '';
+  for (let i = 0; i < 20; i++) hex += (sig[i] < 16 ? '0' : '') + sig[i].toString(16);
+  return hex;
+}
+async function roomTicketMake(env, name, nowMs) {
+  const exp = Math.floor((nowMs || Date.now()) / 1000) + ROOM_TICKET_S;
+  const sig = await roomTicketSig(env, name, exp);
+  return sig ? { ticket: exp + '.' + sig, exp: exp } : null;
+}
+async function roomTicketGood(env, name, tk, nowMs) {
+  const m = /^(\d{10})\.([0-9a-f]{40})$/.exec(String(tk || ''));
+  if (!m) return false;
+  const exp = parseInt(m[1], 10);
+  if (!(exp > Math.floor((nowMs || Date.now()) / 1000)) || exp > Math.floor((nowMs || Date.now()) / 1000) + ROOM_TICKET_S + 60) return false;
+  let want = '';
+  try { want = await roomTicketSig(env, name, exp); } catch (e) { return false; }
+  if (!want) return false;
+  let diff = 0;
+  for (let i = 0; i < 40; i++) diff |= want.charCodeAt(i) ^ m[2].charCodeAt(i);
+  return diff === 0;
+}
+
 async function handleRoomSocket(request, env, json) {
   if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
-  const role = String(url.searchParams.get('role') || 'phone');
+  let role = String(url.searchParams.get('role') || 'phone');
   if (ROOM_ROLES.indexOf(role) < 0) return json({ error: 'bad role' }, 400);
   if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+  /* ONLY A SIGNED-IN HOST IS A HOST (A3, above): no good ticket for THIS room, and it joins as a phone. ROOM_HOST_TICKETS
+     "off" (a Worker variable) is the release-day switch: a console still on the page from before the tickets has none,
+     so main may set it for the minutes between the Worker going up and the pages landing, then delete it. */
+  if (role === 'host' && String(env.ROOM_HOST_TICKETS || '') !== 'off' &&
+      !(await roomTicketGood(env, name, url.searchParams.get('tk'), Date.now()))) role = 'phone';
   /* The page's cid goes through (ONE PAGE, ONE SOCKET, above); the room checks its shape. */
   const cid = String(url.searchParams.get('cid') || '');
   return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role) + '&room=' + encodeURIComponent(name) +

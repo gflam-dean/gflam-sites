@@ -268,7 +268,7 @@ step(function () { print('\n== a question a VENUE writes stays at that venue unt
     });
   }).then(function () {
     var resolve = src.slice(src.indexOf('async function handleAdminResolve('), src.indexOf('async function handleAdminResolve(') + 900);
-    ok('the ONLY way into the library is the approval route, which needs our admin key (the weekly review)', /ADMIN_KEY/.test(resolve) && /status === 'approved'/.test(resolve) && /owner_venue_id=is\.null/.test(resolve), resolve.slice(0, 300));
+    ok('the ONLY way into the library is the approval route, which needs our admin key (the weekly review)', /ADMIN_KEY|adminKeyRefusal\(request, env, b, json\)/.test(resolve) && /status === 'approved'/.test(resolve) && /owner_venue_id=is\.null/.test(resolve), resolve.slice(0, 300));
     ok('every Worker read of "the library" asks for ownerless library sets', (src.match(/visibility=eq\.library/g) || []).length === (src.match(/visibility=eq\.library&owner_venue_id=is\.null/g) || []).length);
   }); });
 

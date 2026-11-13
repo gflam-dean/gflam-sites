@@ -815,3 +815,40 @@ consent_version per 174) exactly as the phones' do. Run BEFORE the game Worker (
 (/admin/coaster/*); before it, both answer "not switched on yet" and the page plays as before. After running, dump
 RLS-BASELINE.json (three new tables). NUMBER: 153 is Dean's reserved number (INBOX 222). Branch `feature/live-here-now-v2`.
 RUN LIVE (main checked the three tables and the reworked columns 12 Nov 2026, INBOX 302). Read-back and rollback in the file.
+(140 to 144 are claimed on other branches: 140 help reply lowercase, 141 subscriber postcode, 142 venue suburb, 143 help FAQ
+no public phone, 144 help alerts by team. Checked on every branch and worktree on 3 Nov 2026: 145, 146 and 147 were free and
+are claimed by `fix/security-3nov` below. 148 is the next free number.)
+
+STATE ON 13 NOV 2026 (fix/security-fixes-13nov brings these three files to the release line for the first time; the numbers
+145 to 147 are claimed by no other branch, so they keep them). Commit 1ee4cbd7 (3 Nov, 14:56) refreshed RLS-BASELINE.json from
+live "after migrations 145 to 149". 145: RUN LIVE (the baseline has no vp_venues authenticated/anon UPDATE and no
+vp_venues_manager_update). 146: the column is RUN LIVE (COLUMNS-BASELINE.json has vp_venue_staff.is_account_owner); the backfill
+and the trigger cannot be seen in a baseline. 147: PROBABLY RUN (named in 1ee4cbd7's message; an index is not in either
+baseline). Main checks all three read-only before the billing and game Workers from this branch go live (NEEDS-DEAN.md,
+"DECISION: security fixes"): the Worker treats as owner ONLY a row with is_account_owner = true or role owner, so an account
+with no marked owner would lose its owner rights on deploy. Nothing here is to be re-run without that read-back.
+
+`venueplay-145-venues-no-client-update.sql` (security audit 3 Nov 2026, H1): drops policy `vp_venues_manager_update`, revokes
+UPDATE on `vp_venues` from anon and authenticated, and grants authenticated UPDATE on `group_id` only (HQ's Groups tick, the one
+direct browser write, still limited to HQ admins by `vp_venues_admin_all` / `vp_venues_admin_write`). A manager could PATCH
+max_players, status (undoing a suspension), pending_players, overage_streak*, last_trivia_at and more on their own venue. Every
+venue-side write goes through a Worker as the service role, so no venue page changes. Self-check raises if the hole is still open
+or the group tick lost its grant. Any order with the Workers. After running: dump RLS-BASELINE.json. Branch `fix/security-3nov`.
+NOT RUN. Rollback: in the file.
+
+`venueplay-146-account-owner-marker.sql` (security audit 3 Nov 2026, H2, M1, L6): new column
+`vp_venue_staff.is_account_owner boolean not null default false`, backfilled per account (venueplay_founding) from: a role
+'owner' row; else a login with no permissions object whose sign-in email is the account's contact_email or whose mobile matches
+the account mobile (last 9 digits); else, only when neither found anyone, the earliest-created full-access login (GUESSED, shown
+as such by the pre-check). A BEFORE INSERT trigger `vp_staff_mark_account_owner` (security invoker, never raises) marks the owner
+on new accounts and venues whatever the Worker version. RUN FIRST: `PRECHECK-account-owner-146-READ-ONLY.sql` (read only: who
+becomes owner, who loses owner rights). Either order with the billing Worker; recommended 146 first, then the billing Worker
+from this branch (before 146 the new Worker gets 42703 and keeps the old rule; any other read failure is a 503). No new policy or
+grant. Branch `fix/security-3nov`. NOT RUN. Rollback: in the file.
+
+`venueplay-147-purchase-raffle-one-winner.sql` (security audit 3 Nov 2026, M4): unique partial index
+`vp_purchase_raffle_draws_one_winner` on (raffle_id, prize_index) where outcome = 'drawn'. Any existing duplicate (expect none)
+keeps the earliest draw and the rest are marked redrawn with a reason and an audit row, nothing deleted. RUN FIRST:
+`PRECHECK-raffle-double-winners-147-READ-ONLY.sql` (expect no rows). Needs 115. Any order with the game Worker; recommended 147
+first, then the game Worker from this branch (which answers 409 already_drawn). Branch `fix/security-3nov`. NOT RUN.
+Rollback: in the file.

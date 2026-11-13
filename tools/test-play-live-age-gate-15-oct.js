@@ -194,6 +194,11 @@ var P = { room: 'ROYAL1', pid: 'p1', name: 'Ann', numCards: 2 };
 var _paper = false;
 function send(m) { sent.push(m); }
 function deviceId() { return 'dev-1'; }
+/* The room hears the public id (security review 13 Nov 2026, A1): sendJoin calls vpPublicId, which lives outside the
+   slice below, so the page's own two functions are brought in here. */
+(function () { ['vpPubSha', 'vpPublicId'].forEach(function (n) { var i = PLAY.indexOf('  function ' + n + '('), d = 0, j;
+  for (j = PLAY.indexOf('{', i); j < PLAY.length; j++) { if (PLAY[j] === '{') d++; else if (PLAY[j] === '}') { d--; if (!d) break; } }
+  (0, eval)(PLAY.slice(i, j + 1)); }); })();
 var sessionStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
 function fakeEl() { var e = { attrs: {}, listeners: {}, children: [], style: {}, _html: '', _q: {},
   setAttribute: function (k, v) { this.attrs[k] = v; }, appendChild: function (c) { this.children.push(c); }, remove: function () { this._removed = true; },
@@ -215,7 +220,7 @@ else {
   sendJoin();
   show('tapping Join under the tick queues the announcement: no ticket is asked for', sent.length === 0 && _agePendingJoin === true);
   tick();
-  show('ticking it sends the one join that was waiting, with the phone\'s own pid and cards', sent.length === 1 && sent[0].t === 'join' && sent[0].pid === 'p1' && sent[0].cards === 2 && sent[0].did === 'dev-1', sent);
+  show('ticking it sends the one join that was waiting, with the phone\'s own pid and cards', sent.length === 1 && sent[0].t === 'join' && sent[0].pid === 'p1' && sent[0].cards === 2 && sent[0].did === vpPublicId() && sent[0].did !== 'dev-1', sent);   // the PUBLIC id since 13 Nov 2026 (A1)
   show('the night is remembered as ticked', store['vpAge18:ROYAL1'] === 'ok' && boxes[0]._removed === true, store);
   sendJoin();
   show('a reconnect later in the night sends straight away', sent.length === 2);

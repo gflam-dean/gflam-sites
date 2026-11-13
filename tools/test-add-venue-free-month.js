@@ -42,7 +42,7 @@ function arm(opts) {
   vpbRequireOwner = function () {
     return Promise.resolve({
       account: { id: 'acct_1', plan: opts.plan || 'monthly', stripe_subscription_id: 'sub_1', is_group: true },
-      venues: [{ id: 'v_existing' }], perms: null, adminActor: null, authUserId: 'user_1',
+      venues: [{ id: 'v_existing' }], perms: null, owner: true, adminActor: null, authUserId: 'user_1',
     });
   };
   vpaProvisionOneVenue = function (env, o) { provisioned.push(o); return Promise.resolve({ created: true, venue: { id: opts.newId || 'v_new', slug: 'new-venue' } }); };

@@ -25,6 +25,7 @@ and the game Worker is the REAL venueplay-game.js in jsc behind a pipe, with a f
 
     python3 tools/pickup-in-chrome.test.py
 """
+import hashlib
 import datetime, http.server, importlib.util, io, json, os, socket, subprocess, sys, threading, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -235,7 +236,9 @@ try:
        phone.ask('document.getElementById("statusText").getAttribute("data-conn")'))
     ps = phone.save(TKEY)
     ok('...it knows the answer to the open question, as the tablet did (Brisbane River)', ps and ps.get('cur') and ps['cur'].get('ci') == 2, ps)
-    ok('...and that the phone already in has answered', ps and ps.get('cur') and ps['cur'].get('pids', {}).get('dev-ann') is True, ps)
+    # keyed by the PUBLIC id the phones announce (security review 13 Nov 2026, A1), never the device id
+    _ann = 'p' + hashlib.sha256(b'vp-pub-v1:dev-ann').hexdigest()[:31]
+    ok('...and that the phone already in has answered', ps and ps.get('cur') and ps['cur'].get('pids', {}).get(_ann) is True and 'dev-ann' not in ps['cur'].get('pids', {}), ps)
     ok('...the scores so far are on its board', phone.until('/Quiz Kids/.test(document.getElementById("hostBoard").innerText)') is True,
        phone.ask('document.getElementById("hostBoard").innerText'))
     h = holders().get('trivia') or {}

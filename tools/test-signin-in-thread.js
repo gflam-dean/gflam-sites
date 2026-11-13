@@ -277,7 +277,8 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   check('CLAIMED (somebody has signed in): the link just opens the normal sign-in, nothing filled in; no number can be added through it',
     opC.body.go === '/app/' && opC.body.state === 'claimed' && atC.status === 409 && String(login1.phone).replace(/\D/g, '') === '61400555666', [opC.body, atC.body]);
 
-  /* NO MOBILE: the same screen, empty; the number they type becomes the login. */
+  /* NO MOBILE: the same screen, empty. The number they type is NEVER put on the login (security review 13 Nov 2026, A5):
+     the login's own saved email gets a one-tap sign-in link, and they add their mobile after signing in. */
   world(); SMS = [];
   var n1 = await call('/autopilot/prospect', body({ name: 'No Mobile Hotel', return_signin_link: true }), AP);
   var nv = n1.body.venue.id, npr = DB.vp_prospects.filter(function (x) { return x.venue_id === nv; })[0];
@@ -287,12 +288,24 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var atBad = await call('/short/attach', { code: nCode, mobile: '07 5228 3667' }, NET7());
   check('...a landline is refused, nothing put on the login', atBad.status === 400 && atBad.body.field === 'mobile' && !nLogin.phone, atBad.body);
   AUTH.push({ id: 'other-login', email: 'someone@else.example', phone: '61411222333' });
-  var atTaken = await call('/short/attach', { code: nCode, mobile: '0411 222 333' }, NET7());
-  check('...a mobile that is another venueplay login is refused (never two logins on one number)', atTaken.status === 409 && atTaken.body.taken === true && !nLogin.phone, atTaken.body);
+  var sentBefore = sent.length;
   var atOk = await call('/short/attach', { code: nCode, mobile: '0433 444 555' }, NET7());
-  check('...their mobile goes on THEIR login, so the normal code to it signs them in and it is their login from then on', atOk.status === 200 && atOk.body.ok === true && String(nLogin.phone).replace(/\D/g, '') === '61433444555', [atOk.body, nLogin.phone]);
-  var atAgain = await call('/short/attach', { code: nCode, mobile: '0433 999 999' }, NET7());
-  check('...and once a mobile is on, the link can not change it', atAgain.status === 409 && String(nLogin.phone).replace(/\D/g, '') === '61433444555', atAgain.body);
+  var mail = sent.slice(sentBefore);
+  check('...the link\'s holder can NOT put a mobile on the login: nothing is written to it (A5)', atOk.status === 200 && atOk.body.emailed === true && atOk.body.ok === false && !nLogin.phone, [atOk.body, nLogin.phone]);
+  check('...instead the login\'s OWN saved email gets one sign-in link, and never the typed mobile', mail.length === 1 && [].concat(mail[0].to).join() === String(nLogin.email) &&
+    JSON.stringify(mail[0]).indexOf('0433') === -1 && JSON.stringify(mail[0]).indexOf('433444555') === -1, mail.map(function (m) { return m.to; }));
+  var atTaken = await call('/short/attach', { code: nCode, mobile: '0411 222 333' }, NET7());
+  check('...a mobile that is another venueplay login: the same answer, and still nothing written to either login', atTaken.status === 200 && atTaken.body.emailed === true && !nLogin.phone &&
+    AUTH.filter(function (u) { return u.id === 'other-login'; })[0].phone === '61411222333', atTaken.body);
+  /* The one place the link still puts a mobile on a login: /short/open, with the mobile WE hold for the account
+     (Edit details). Never one that is already another login's. */
+  npr.phone = '0411 222 333';   // the mobile HQ holds for this prospect is, by mistake, another login's
+  var opT = await call('/short/open', { code: nCode }, NET7());
+  check('...the mobile we hold for the account is never put on its login when it is another login\'s (no two logins on one number)',
+    !nLogin.phone && !/#m=0411222333/.test(String(opT.body.go || '')), [opT.body, nLogin.phone]);
+  npr.phone = null;
+  check('...and each try is in HQ\'s audit, with the last three digits typed only', DB.vp_admin_audit.filter(function (a) { return /^short_link_email/.test(a.action) && a.target === 'venue:' + nv; }).every(function (a) { return a.detail && /^\d{3}$/.test(a.detail.typed_last3); }) &&
+    DB.vp_admin_audit.filter(function (a) { return /^short_link_email/.test(a.action) && a.target === 'venue:' + nv; }).length === 2, DB.vp_admin_audit.slice(-2));
 
   /* EXPIRED, HQ BEFORE A CLAIM, A FRESH 90 DAYS */
   world(); SMS = [];

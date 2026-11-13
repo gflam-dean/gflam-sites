@@ -26,6 +26,7 @@ function grab(name, src){
   }
   return "";
 }
+var PUBF = new Function(grab("vpPubSha", play) + "\n" + grab("vpPublicId", play) + "\nreturn function (dev) { deviceId = function () { return dev; }; return vpPublicId(); }; var deviceId;")();   // A1: the room hears the public id
 function fakeStore(){ var d = {}; return { getItem: function(k){ return Object.prototype.hasOwnProperty.call(d, k) ? d[k] : null; },
   setItem: function(k, v){ d[k] = String(v); }, removeItem: function(k){ delete d[k]; }, clear: function(){ d = {}; } }; }
 function els(){ var m = {}; return function(id){ if (!m[id]) m[id] = { textContent: "", classList: { on: false, add: function(){ this.on = true; }, remove: function(){ this.on = false; } } }; return m[id]; }; }
@@ -49,14 +50,14 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
               clearTimeout: function(id){ timers = timers.filter(function(t){ return t.id !== id; }); } };
   var names = Object.keys(env);
   var api = (new Function(names.join(","), "var ch=null, subscribed=false, sendQueue=[];" + send + flush + "var chRetryT=null, chTries=0;" + SRC +
-    "; return { open: openChannel, send: send, cur: function(){ return ch; }, sub: function(){ return subscribed; }, q: function(){ return sendQueue; } };")).apply(null, names.map(function(k){ return env[k]; }));
+    grab("vpPubSha", play) + grab("vpPublicId", play) + "; return { open: openChannel, send: send, cur: function(){ return ch; }, sub: function(){ return subscribed; }, q: function(){ return sendQueue; } };")).apply(null, names.map(function(k){ return env[k]; }));
   function fire(){ var t = timers.slice(); timers = []; t.forEach(function(x){ x.fn(); }); }
 
   api.open("ABC123"); api.cur().cb("SUBSCRIBED");
   pass("connected: the dot is green and the seat is announced", $("statusDot").classList.on && sent.some(function(m){ return m.t === "join"; }));
   /* Live play test, 24 Oct 2026: the console counted one phone twice (its bingo page and its musical
      page), because the musical join carried no device id to tell them apart by. */
-  pass("the seat announcement carries this browser's device id, the one the bingo page sends", sent.some(function(m){ return m.t === "join" && m.did === "devsam000001"; }), JSON.stringify(sent));
+  pass("the seat announcement carries this browser's PUBLIC id (never the device id), the one the bingo page sends", sent.some(function(m){ return m.t === "join" && m.did === PUBF("devsam000001"); }), JSON.stringify(sent));
   var first = api.cur(); sent.length = 0;
   first.dead = true; first.cb("CLOSED");
   pass("CLOSED is a drop: the phone stops sending into the dead socket", api.sub() === false);
@@ -115,7 +116,7 @@ print("3a. WITH THE SHARED HELPER LOADED (as the page ships since 2 Nov 2026): t
               setTimeout: st, clearTimeout: ct };
   var names = Object.keys(env);
   var api = (new Function(names.join(","), "var ch=null, subscribed=false, sendQueue=[];" + send + flush + "var chRetryT=null, chTries=0;" + SRC +
-    "; return { open: openChannel, send: send, cur: function(){ return ch && ch.current ? ch.current() : ch; }, kept: function(){ return ch; }, sub: function(){ return subscribed; } };")).apply(null, names.map(function(k){ return env[k]; }));
+    grab("vpPubSha", play) + grab("vpPublicId", play) + "; return { open: openChannel, send: send, cur: function(){ return ch && ch.current ? ch.current() : ch; }, kept: function(){ return ch; }, sub: function(){ return subscribed; } };")).apply(null, names.map(function(k){ return env[k]; }));
   api.open("ABC123");
   pass("the channel is the helper's kept channel, not a bare one", !!(api.kept() && api.kept().poke));
   api.cur().cb("SUBSCRIBED");
@@ -146,7 +147,7 @@ print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)"
   /* hideBingoNote: the note on the BINGO button goes when a game starts or someone wins (3 Nov 2026). */
   var noteHidden = 0;
   var api = (new Function("P", "$", "send", "deviceId", "fetchCard", "route", "celebrate", "closePlayedSheet", "window", "hideBingoNote",
-    fn + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){}, {}, function(){ noteHidden++; });
+    fn + grab("vpPubSha", play) + grab("vpPublicId", play) + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){}, {}, function(){ noteHidden++; });
   api({ t: "winner", pid: "pid-sam", name: "Phone Sam" });
   pass("the losing phone names the winner, then the page says \"took this one.\" (no \"won\" in front of it)", P.ended === true && $("lostName").textContent === "Phone Sam", $("lostName").textContent);
   /* The new look (Dean, 3 Nov 2026): NOT THIS TIME, then "<name> won the meat tray." (the prize as typed), or "<name>
@@ -155,7 +156,7 @@ print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)"
        /lw\.textContent = \(pz && pz\.toLowerCase\(\)!=="the prize"\) \? \("won the "/.test(play));
   pass("someone else's win also clears the note on the BINGO button", noteHidden === 1, noteHidden);
   api({ t: "rollcall" });
-  pass("a rollcall answer carries the device id too", sent.length === 1 && sent[0].t === "join" && sent[0].did === "devjo0000001", JSON.stringify(sent));
+  pass("a rollcall answer carries the public id too", sent.length === 1 && sent[0].t === "join" && sent[0].did === PUBF("devjo0000001"), JSON.stringify(sent));
 })();
 
 print("");
@@ -216,7 +217,7 @@ print("7. MUSICAL BINGO IS NOT BINGO: THE CLAIM BUTTON SAYS WHAT THE PLAYER HAS 
 print("");
 print("5. LAST WEEK'S TOKEN IS NOT THIS WEEK'S NIGHT");
 (function(){
-  var fns = ["loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "connect"].map(function(n){ return grab(n, play); });
+  var fns = ["loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "vpHeldTokens", "connect"].map(function(n){ return grab(n, play); });
   pass("dropStaleJoin, rejoinNow and checkStaleJoin are lifted from the page", fns.every(Boolean));
   fns.unshift('var OWN_TOKEN_KEY="vp-mtoken-";');   // shareToken writes this page's own key (14 Oct 2026)
   pass("connect() checks the saved night the moment it decides the phone is joined", /P\.joined=true; checkStaleJoin\(\);/.test(play));

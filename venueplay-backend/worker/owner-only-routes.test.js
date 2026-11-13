@@ -5,10 +5,10 @@
    caller was staff and stopped there, while every other money route on this Worker called
    vpbOwnerOnly. A manager with all four toggles switched off could open it.
 
-   In this Worker an OWNER is a staff row with NO permissions object (vpbIsOwner is
-   `!o.perms`), which is not the same thing as role 'owner': a real account owner's row is
-   often stored with role 'manager'. Any guard that reads the role word instead gets this
-   backwards, so the rule is tested here against the real source, not a copy.
+   Since the security audit of 3 Nov 2026 (H2) the OWNER is the one vpbRequireOwner NAMES
+   (o.owner === true: a staff row on this account with is_account_owner, migration 146, or role
+   'owner'). "No permissions object" used to mean owner, so every legacy manager row and every
+   host stored as a manager could charge the card. That shape is now tested as NOT the owner.
 
    The test lifts the real functions out of venueplay-api-FULL.js and runs them, then checks
    that the routes that must not be reachable by a restricted manager actually call them.
@@ -61,16 +61,20 @@ eval(LIFTED);
 // json() stands in for the Worker's response helper: it returns a marker we can look at.
 function json(body, status){ return { body: body, status: status || 200 }; }
 
-var OWNER      = { perms: null };                                   // no permissions object = full access
-var OWNER_UNDEF= { };                                               // migration 17 not run: also full access
-var FULL_MGR   = { perms: null };                                   // legacy full-access login
+var OWNER      = { perms: null, owner: true };                      // the owner vpbRequireOwner named
+var OWNER_UNDEF= { };                                               // nothing named: NOT the owner
+var FULL_MGR   = { perms: null };                                   // legacy manager row, no permissions object
 var ALL_ON     = { perms: { advertising:true, draws_raffles:true, players_optin:true, add_hosts:true } };
 var ALL_OFF    = { perms: { advertising:false, draws_raffles:false, players_optin:false, add_hosts:false } };
 var HOSTS_ONLY = { perms: { advertising:false, draws_raffles:false, players_optin:false, add_hosts:true } };
 
-print("\nvpbIsOwner: no permissions object means owner, an object means restricted");
+print("\nvpbIsOwner: only the NAMED owner is the owner (audit 3 Nov 2026, H2)");
 pass("owner is an owner", vpbIsOwner(OWNER) === true);
-pass("a row with no permissions column yet is an owner", vpbIsOwner(OWNER_UNDEF) === true);
+pass("an access object naming nobody is NOT the owner", vpbIsOwner(OWNER_UNDEF) === false);
+pass("a legacy manager row with no permissions object is NOT the owner", vpbIsOwner(FULL_MGR) === false);
+pass("a legacy manager row with no permissions object is REFUSED an owner-only route",
+     (vpbOwnerOnly(FULL_MGR, json) || {}).status === 403);
+pass("owner: 'yes' (anything but true) is not the owner", vpbIsOwner({ perms: null, owner: 'yes' }) === false);
 pass("a manager with everything ON is still NOT the owner", vpbIsOwner(ALL_ON) === false);
 pass("a manager with everything OFF is not the owner", vpbIsOwner(ALL_OFF) === false);
 

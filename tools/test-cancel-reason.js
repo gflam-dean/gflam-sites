@@ -45,7 +45,7 @@ function arm() {
   vpbRequireOwner = function () {
     var v = {}; for (var k in row) v[k] = row[k];
     return Promise.resolve({ account: { id: 'acct_1', plan: 'monthly', stripe_subscription_id: 'sub_1', contact_name: 'Jo' },
-                             venues: [v], perms: null, adminActor: null, authUserId: 'user_1' });
+                             venues: [v], perms: null, owner: true, adminActor: null, authUserId: 'user_1' });
   };
   vpbOwnerOnly = function () { return null; };
   vpaSelect = function () { return Promise.resolve([]); };

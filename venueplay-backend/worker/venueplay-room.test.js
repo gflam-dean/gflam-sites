@@ -22,7 +22,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var src = find('venueplay-backend/worker/venueplay-room.js');
-var EXPECT = 75;
+var EXPECT = 79;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -176,6 +176,23 @@ join('tv').then(function (r) { tv = r.webSocket.of; ok('the TV is accepted with 
   NOW += 1000; before = tv.got.length;
   room.webSocketMessage(p2, JSON.stringify({ type: 'spam', i: 99 }));
   ok('the next second it speaks again', tv.got.length === before + 1);
+
+  /* ONLY A SIGNED-IN HOST GETS THE HOST'S PACE AND SIZE (security review 13 Nov 2026, A3). The Worker lets a socket in
+     as 'host' only with a room ticket; a TV is not signed in, so it no longer gets the host's 240 a second, and only a
+     host or HQ may send more than ROOM_MAX_MSG_CHARS_SMALL. */
+  print('\n== a TV, a phone and a host: pace and size (A3) ==');
+  NOW += 1000; before = p1.got.length;
+  for (var tq = 0; tq < 30; tq++) room.webSocketMessage(tv, JSON.stringify({ t: 'tv_here', i: tq }));
+  ok('a TV sending 30 in one second gets 20 through, like any socket that is not the host', p1.got.length === before + ROOM_MAX_PER_SEC, (p1.got.length - before) + ' got through');
+  NOW += 1000; before = tv.got.length;
+  var mid = JSON.stringify({ t: 'players', pad: new Array(ROOM_MAX_MSG_CHARS_SMALL + 200).join('a') });
+  room.webSocketMessage(p1, mid);
+  ok('a phone message over ' + ROOM_MAX_MSG_CHARS_SMALL + ' characters is dropped', tv.got.length === before);
+  room.webSocketMessage(host, mid);
+  ok('the same message from the host goes through (a full players list)', tv.got.length === before + 1);
+  NOW += 1000; before = tv.got.length;
+  room.webSocketMessage(p1, JSON.stringify({ t: 'join', pad: new Array(3000).join('a') }));
+  ok('a phone message of 3,000 characters (a long name list, a claim) still goes through', tv.got.length === before + 1);
 
   print('\n== a dead socket ==');
   p1.dead = true; before = tv.got.length;

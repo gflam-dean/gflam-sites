@@ -41,7 +41,7 @@ function arm(opts) {
   vpbRequireOwner = function () {
     return Promise.resolve({
       account: { id: 'acct_1', plan: opts.plan || 'monthly', stripe_subscription_id: 'sub_1' },
-      venues: [VENUE], perms: null, adminActor: null, authUserId: 'user_1',
+      venues: [VENUE], perms: null, owner: true, adminActor: null, authUserId: 'user_1',
     });
   };
   vpbAccountTotal = function () { return Promise.resolve(opts.total || 140); };
