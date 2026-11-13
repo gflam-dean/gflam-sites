@@ -16,12 +16,13 @@ Answers screens in their own demo nights, and the bingo demo as an older TV (Chr
 
     R   the FLOOR: the same screen with every piece of content hidden (anything with words of its own, an <img>,
         <canvas>, <video> or <svg>, in the page and its same-site frames): what is left is backgrounds, glows,
-        dims, slide photos and cards' own boxes
+        dims, slide photos and cards' own boxes (without their shadows)
     A   the screen as the room sees it
     R2  the floor again (so a look taken while something moves is not judged)
 
-  1. NO FRAME: in R, walking in from each edge of the window to just inside the safe box (8 strips per edge,
-     each strip's rows or columns averaged, so a gradient's dithering is not a step), the colour never steps.
+  1. NO FRAME: in R (8 strips per edge, each strip's rows or columns averaged, so a gradient's dithering is not a
+     step), the colour 3px inside the safe line is what the colour outside it, carried on at its own slope, would be:
+     a glow or gradient crosses the line smoothly, a ground that stops at the safe box steps there.
      A floor that stops at the safe box (the 13 Nov fault: 5 levels, rgb(5,5,6) to rgb(10,10,11)) is a step.
      The outer edge's colour and the floor's colour just inside the safe box are printed for each look.
      A full-bleed slide photo is not a frame: strips over a photo that reaches every edge are skipped, and the
@@ -80,12 +81,18 @@ HIDE = r'''(function(){ var n=0; window.__fbHid=[];
     for(var i=0;i<all.length;i++){ var el=all[i], tg=el.tagName;
       if(tg==="IFRAME"){ try{ if(el.contentDocument) walk(el.contentDocument); }catch(e){} continue; }
       if(tg==="SCRIPT"||tg==="STYLE"||tg==="NOSCRIPT"||tg==="TEMPLATE") continue;
-      if(/^(IMG|CANVAS|VIDEO|svg|SVG)$/.test(tg) || own(el)){
+      /* confetti is a celebration, not the floor: hidden with the content (14 Nov 2026) */
+      if(/^(IMG|CANVAS|VIDEO|svg|SVG)$/.test(tg) || own(el) || /(^|\s)confetti(\s|$)/.test(typeof el.className==="string"?el.className:"") || el.id==="vpCfLayer"){
         window.__fbHid.push([el, el.style.getPropertyValue("visibility"), el.style.getPropertyPriority("visibility")]);
-        el.style.setProperty("visibility","hidden","important"); n++; } } }
+        el.style.setProperty("visibility","hidden","important"); n++; }
+      /* a shadow belongs to the box that casts it (a card, a ticket), never to the floor: a card near the edge cast a
+         shadow the safe box cut 2 levels deep at the line (raffle draw looks, 14 Nov 2026), so the floor picture has none */
+      else if(getComputedStyle(el).boxShadow!=="none"){
+        window.__fbHid.push([el, el.style.getPropertyValue("box-shadow"), el.style.getPropertyPriority("box-shadow"), "box-shadow"]);
+        el.style.setProperty("box-shadow","none","important"); n++; } } }
   walk(document); return n; })()'''
-SHOW = r'''(function(){ var h=window.__fbHid||[]; for(var i=0;i<h.length;i++){ var el=h[i][0];
-    if(h[i][1]) el.style.setProperty("visibility",h[i][1],h[i][2]); else el.style.removeProperty("visibility"); }
+SHOW = r'''(function(){ var h=window.__fbHid||[]; for(var i=0;i<h.length;i++){ var el=h[i][0], pr=h[i][3]||"visibility";
+    if(h[i][1]) el.style.setProperty(pr,h[i][1],h[i][2]); else el.style.removeProperty(pr); }
   window.__fbHid=[]; return h.length; })()'''
 # Full-bleed slide photos on the wall now (in window px), and what is on the wall, for the report.
 PHOTOS = r'''JSON.stringify((function(){ var out=[];
@@ -156,12 +163,17 @@ def frames(R, R2, W, H, photos):
                 prof.append(None if cnt < 8 else (acc[0] / cnt, acc[1] / cnt, acc[2] / cnt))
             if k == n // 2 and prof and prof[0] is not None and prof[-1] is not None:
                 report[edge] = [tuple(int(round(v)) for v in prof[0]), tuple(int(round(v)) for v in prof[-1])]
-            for i in range(2, len(prof)):
-                if prof[i] is None or prof[i - 2] is None: continue
-                d = max(abs(prof[i][j] - prof[i - 2][j]) for j in range(3))
+            # THE STEP IS JUDGED AT THE SAFE LINE, against the floor's own slope (14 Nov 2026, INBOX 375 follow-up). A ground
+            # inset to the safe box ends exactly there: the colour 3px inside differs from what the colour outside, carried on
+            # at its own slope, would be. A gradient, a glow or a blurred backdrop changes smoothly across the line and is not
+            # a step; a box that stops at the line is (the 13 Nov fault: 5 levels; the threshold is 2).
+            s0 = (my if horiz else mx)
+            o9, o3, i3 = s0 - 9, s0 - 3, s0 + 3
+            if i3 < len(prof) and prof[o9] is not None and prof[o3] is not None and prof[i3] is not None:
+                want = [prof[o3][j] + (prof[o3][j] - prof[o9][j]) for j in range(3)]   # 6px on at the outside's own slope
+                d = max(abs(prof[i3][j] - want[j]) for j in range(3))
                 if d >= STEP:
-                    found.append('%s strip %d at %dpx in: %s -> %s' % (edge, k, i, tuple(int(round(v)) for v in prof[i - 2]), tuple(int(round(v)) for v in prof[i])))
-                    break
+                    found.append('%s strip %d at the safe line (%dpx in): outside %s, inside %s' % (edge, k, s0, tuple(int(round(v)) for v in prof[o3]), tuple(int(round(v)) for v in prof[i3])))
     return found, report, bool(full)
 
 
