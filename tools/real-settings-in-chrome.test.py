@@ -223,7 +223,7 @@ def musical(shape, n):
     sq = [c.get('title') for card in cards for c in (card.get('cells') or []) if isinstance(c, dict) and c.get('title')]
     off = [t for t in sq if t not in tt]
     ok('musical: every square the Worker dealt the phone (%d) is inside %s (295.2d)' % (len(sq), theme_name(want)), len(cards) == 1 and len(sq) == 24 and not off, [len(cards), len(sq), off[:4]])
-    shown = js(ph, 'JSON.stringify([].map.call(document.querySelectorAll("#cardGrid .cc"),function(c){return (c.textContent||"").replace(/\\s+/g," ").trim();}))')
+    shown = js(ph, 'JSON.stringify([].map.call(document.querySelectorAll("#cardGrid .cc:not(.free)"),function(c){return (c.textContent||"").replace(/\\s+/g," ").trim();}))')
     shown = [c for c in (json.loads(shown) if isinstance(shown, str) else []) if c and c.lower() != 'free']
     def norm(t): return ''.join(ch for ch in t.lower() if ch.isalnum())
     bad_sq = [c for c in shown if not any(norm(t).startswith(norm(c).rstrip('.')[:12]) for t in sq)]

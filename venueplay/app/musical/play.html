@@ -260,6 +260,9 @@
      Still counted as marked for every pattern (P.daubs[12]). fitCells sets Free to the card's own size. */
   #vCard .cc.free,#vCard .cc.free.daub{background:var(--gold);border-color:var(--gold);color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em;text-transform:none}
   #vCard .cc.free::after{display:none}
+  #vCard .cc.free{flex-direction:column;gap:3px}
+  #vCard .cc.free .fpm{width:.62em;height:.74em;flex:none;display:block}
+  #vCard .cc.free .fpw{display:block;text-align:center}
   #vCard .cc.early{border-color:var(--roll);box-shadow:0 0 0 2px rgba(245,165,36,.22)}
   #vCard .cc.justdone{animation:justdone 1.1s ease-in-out 3}
   #vCard .pmsg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;min-height:0}   /* for a screen reader; the answer to a tap is the note on the button */
@@ -831,6 +834,8 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
      plus/minus (cz) scales every square's top size and lifts the floor (to 15px at most), as before.
      Free is drawn at the middle size of the card's titles, so it never shouts over them. */
   /* one title at one size: true when it sits inside its square on whole words, clear of the tick */
+  /* THE CENTRE SQUARE: FREE PLAY in near-black with the small pink play mark above it, the words the paper card prints (INBOX 385). */
+  var FREE_PLAY='<svg class="fpm" viewBox="0 0 10 12" aria-hidden="true"><path d="M1 1.2v9.6c0 .6.7 1 1.2.7l7.4-4.8c.5-.3.5-1.1 0-1.4L2.2.5C1.7.2 1 .6 1 1.2z" fill="#FF1F8E"/></svg><span class="fpw">FREE PLAY</span>';
   function fitAt(t, size){
     t.el.style.fontSize=size+"px";
     /* the 14px tick when the title clears it, else the 10px tick at the SAME size before the title goes smaller
@@ -997,7 +1002,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       wrap.innerHTML="";
       for(var i=0;i<25;i++){
         var cell=document.createElement("div");
-        if(i===12){ cell.className="cc free daub"; cell.textContent="Free";
+        if(i===12){ cell.className="cc free daub"; cell.innerHTML=FREE_PLAY;   /* FREE PLAY with the small pink play mark, as on the paper card (Dean, INBOX 385) */
           cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
           wrap.appendChild(cell); continue; }
         cell.className="cc";

@@ -234,6 +234,51 @@ fetch = async function(url, opts){
   r = await call(handlePaperPrint, { session_id:SESSION, kind:'musical', count:2, playlist:{ name:'Pub Classics', songs:songs(60) } });
   show('before any game: an old uncoded set is replaced by a coded one (the old cards cannot be scanned)', r.status === 200 && r.body.replaced === true && r.body.coded === true && r.body.cards.every(function(c){ return !!c.code; }), JSON.stringify(r.body).slice(0, 120));
 
+  print('\nTHE PRINTED CARD SHOWS EVERY DEALT SONG IN ITS OWN SQUARE (INBOX 385 (3), 14 Nov 2026: the square right of the centre was blank on every card)');
+  /* The REAL print (handlePaperPrint) fed to the REAL print layout (vp-print.js + vp-paper-style.js) with a stand-in print window, and the
+     squares it writes read back in order: 24 songs, none blank, square i = the Worker's title i = the stored card's square i, which is
+     what the scan judges. Every card number in a full set; playlists of exactly 24, 60 and 120 songs; long titles; titles that print the
+     same after the bracket rule (the "Bad Company" clash). */
+  try {
+  globalThis.window = globalThis;
+  load('venueplay/app/vp-paper-style.js'); load('venueplay/app/vp-print.js');
+  function printed(cards){
+    var html = '', w = { closed:false, document:{ open:function(){}, close:function(){}, write:function(h){ html += h; }, images:[], querySelectorAll:function(){ return []; } }, focus:function(){}, print:function(){} };
+    var ok = VPPrint.musical(w, cards, { venue:'The Mini Bar', playlist:'Pub Classics', printedLabel:'Mon 16 Nov', logo:null });
+    var out = [], parts = html.split('<div class="pcc ').slice(1);
+    parts.forEach(function(part){
+      var t = [], re = /<div class="cell( free)?">(?:<img[^>]*>)?<span class="(t|f)">([^<]*)<\/span><\/div>/g, m;
+      while ((m = re.exec(part))) t.push(m[1] ? null : m[3].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
+      out.push(t);
+    });
+    return { ok:ok, cards:out, html:html };
+  }
+  function clash(){ var a = songs(24, 'Tune'); a[3] = { title:'Bad Company', artist:'Bad Company' }; a.push({ title:'Bad Company (Live)', artist:'Bad Company' }); a.push({ title:'Bad Company [Remastered]', artist:'Five Finger' }); a.push({ title:'Song For Clash', artist:'X' }); a.push({ title:'Another One', artist:'Y' }); return a; }
+  function longs(n){ return songs(n, 'A Really Quite Long Song Title That Goes On For Ages Number'); }
+  var CASES = [['exactly 24 songs', songs(24, 'Only')], ['60 songs', songs(60, 'Sixty')], ['120 songs', songs(120, 'Big')], ['long titles', longs(40)], ['titles that print the same (Bad Company)', clash()]];
+  for (var ci = 0; ci < CASES.length; ci++) {
+    reset();
+    r = await call(handlePaperPrint, { session_id:SESSION, kind:'musical', count:10, playlist:{ name:'Pub Classics', songs:CASES[ci][1] } });
+    var nm = CASES[ci][0];
+    if (r.status !== 200) { show(nm + ': the set prints', false, JSON.stringify(r.body).slice(0, 160)); continue; }
+    var stored = sess().paper.musical.cards, pr = printed(r.body.cards), bad3 = [];
+    show(nm + ': a full set of 10 cards goes to the print layout and every card is drawn', pr.ok === true && r.body.cards.length === 10 && pr.cards.length === 10, pr.cards.length);
+    r.body.cards.forEach(function(c, n){
+      var tiles = pr.cards[n] || [], st = stored[n] && stored[n].cells;
+      for (var i = 0; i < 25; i++) {
+        if (i === 12) { if (tiles[i] !== null) bad3.push('card ' + c.no + ' centre is not the free square'); continue; }
+        if (!tiles[i]) bad3.push('card ' + c.no + ' square ' + i + ' blank');
+        else if (tiles[i] !== c.titles[i]) bad3.push('card ' + c.no + ' square ' + i + ' shows "' + tiles[i] + '", dealt "' + c.titles[i] + '"');
+        else if (!st || !st[i] || paperPrintTitle(st[i].title) !== tiles[i]) bad3.push('card ' + c.no + ' square ' + i + ' is not the stored square the scan judges');
+      }
+      if (tiles.length !== 25) bad3.push('card ' + c.no + ' has ' + tiles.length + ' squares');
+      if (new Set(tiles.filter(function(x){ return x; })).size !== 24) bad3.push('card ' + c.no + ' does not show 24 different titles');
+    });
+    show(nm + ': on EVERY card, every one of the 24 song squares has its song, square i is the dealt and stored square i, none blank, none twice', bad3.length === 0, bad3.slice(0, 4).join('; '));
+  }
+  show('the centre square prints FREE PLAY with the pink play mark', /<div class="cell free"><img src="[^"]*\/brand\/venueplay-icon-pink\.svg" alt=""><span class="f">FREE PLAY<\/span><\/div>/.test(printed([{ no:1, titles:songs(25).map(function(x, i){ return i === 12 ? '' : x.title; }), code:'' }]).html));
+  } catch (e3) { show('the print layout check ran', false, String(e3) + ' ' + (e3.stack || '')); }
+
   print('\n' + ran + ' checks, ' + bad + ' failed');
   if (bad) { print('FAILED'); } else { print('ALL ' + ran + ' CHECKS PASSED'); }
 })();
