@@ -1707,6 +1707,10 @@
   "checks": 376,
   "counted_by": "lines"
  },
+ "tools/website-audit-p1-13nov-in-chrome.test.py": {
+  "checks": 20,
+  "counted_by": "lines"
+ },
  "tools/welcome-name-in-chrome.test.py": {
   "checks": 29,
   "counted_by": "lines"
