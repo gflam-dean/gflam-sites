@@ -50,7 +50,7 @@
       case "win":
         out.tone = "yes"; out.badge = "&#10003; Winner"; out.first = "confirm"; out.win = res.winning_cells || [];
         out.sub = esc(lineWords(res.winning_cells, ctx.pattern)) + ", " + (ctx.pattern ? "the pattern tonight" : "a win") + "." + (printed ? " Printed " + printed + "." : "");
-        out.list = (res.win_songs || []).map(function (s) { return [s.title, s.n ? ordinal(s.n) : ""]; });
+        out.list = (res.win_songs || []).map(function (s) { return [s.n ? s.title : "FREE", s.n ? ordinal(s.n) : ""]; });   /* n 0 is the centre: it reads FREE, as on the card (INBOX 385) */
         break;
       case "notyet":
         out.badge = "Not yet";

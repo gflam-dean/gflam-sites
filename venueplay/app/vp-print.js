@@ -95,24 +95,23 @@
     '.pcc .play{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.005em;overflow-wrap:anywhere}' +
     '.pcc .qr{flex:none;background:#fff}.pcc .qr svg{display:block;width:100%;height:100%}' +
     '.pcc .frame{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:var(--fw) solid #0A0A0B;border-radius:var(--rad);overflow:hidden}' +
-    '.pcc .pchead{display:flex;align-items:stretch;flex:none}' +
-    '.pcc .pchead .pl{flex:1;padding:3.6mm 4mm 3.4mm;min-width:0}' +
-    '.pcc .pchead .no{width:27mm;border-left:var(--fw) solid #0A0A0B;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
     '.pcc .gwrap{flex:1 1 auto;min-height:0;display:flex;border-top:var(--fw) solid #0A0A0B;padding:1mm}' +
     '.pcc .pcgrid{flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:.8mm}' +
     '.pcc .cell{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;min-height:0;overflow:hidden;background:#ECECEF;border-radius:.7mm;padding:1mm .1mm}' +
     '.pcc .cell .t{display:block;width:100%;font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.015em;word-break:normal;overflow-wrap:normal;hyphens:manual;text-wrap:balance}' +
-    '.pcc .cell.free{flex-direction:column;gap:1.1mm;background:#fff;box-shadow:inset 0 0 0 .5mm #0A0A0B}' +
-    '.pcc .cell.free img{width:6.5mm;height:7.5mm}' +
-    '.pcc .cell.free .f{font-family:"Hanken Grotesk",Arial,sans-serif;font-weight:800;font-size:13pt;line-height:1}' +
+    /* THE FREE SQUARE SAYS FREE (Dean, INBOX 385, 14 Nov 2026: a pink play button alone did not tell anyone it was the free
+       square). The word FREE in black, the small pink play mark above it. The colour is set here on purpose: the old sheet's
+       .free rule above made it white, which is how the word vanished from the first V2 card. */
+    '.pcc .cell.free{flex-direction:column;gap:.9mm;background:#fff;color:#0A0A0B;box-shadow:inset 0 0 0 .5mm #0A0A0B}' +
+    '.pcc .cell.free img{width:4.2mm;height:4.8mm}' +
+    '.pcc .cell.free .f{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:17pt;line-height:1;letter-spacing:.04em;color:#0A0A0B}' +
     '.pcc .pcstrip{flex:none;border-top:var(--fw) solid #0A0A0B;display:flex;align-items:center}' +
     '.pcc .pchow{font-weight:600;line-height:1.3;font-size:9pt}.pcc .pchow b{font-weight:800}' +
-    '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:3mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
+    '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:2.6mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
     '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
-    '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}' +
-    '.pcc .vlogo{height:9mm;max-width:44mm;object-fit:contain;object-position:left center;display:block}' +
-    '.pcc .vname{font:800 10pt "Hanken Grotesk",Arial,sans-serif;max-width:60mm;line-height:1.1}' +
-    '.pcc .pdate{font-weight:700;color:#55555E;font-size:6.5pt;line-height:1.2;text-align:center;margin-top:1.4mm}';
+    '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}';
+  /* The pub's logo box in the footer (/app/vp-paper-style.js): every shape of logo fits it, contained. */
+  var LOGO_BOX = { w: 42, h: 12 };
 
   /* The QR as an SVG string, drawn here from the qrcode library the console page loads. Level Q (a quarter of it can be
      smudged and it still reads), the capitals address so it stays a small code. No margin: the box round it is the quiet zone. */
@@ -138,8 +137,9 @@
       t.style.fontSize = pt + 'pt';
       var over = function () { return t.scrollWidth > t.clientWidth + 0.5 || t.offsetHeight > box.clientHeight + 0.5; };
       while (over() && pt > 11) { pt -= 0.25; t.style.fontSize = pt + 'pt'; }
-      /* A single long word that still does not fit at 11 pt goes smaller, square by square, never the whole card. */
-      while (over() && pt > 7) { pt -= 0.25; t.style.fontSize = pt + 'pt'; }
+      /* A single long word that still does not fit at 11 pt goes smaller, square by square, never the whole card. Down to 3 pt
+         if it must (a 34-letter word, INBOX 385 long-title test): small but whole, never split and never cut off. */
+      while (over() && pt > 3) { pt -= 0.25; t.style.fontSize = pt + 'pt'; }
     }
   }
 
@@ -152,26 +152,24 @@
     var origin = '';
     try { origin = window.location.origin; } catch (e) {}
     var how = '<b>Mark a song when you hear it.</b> Got the pattern on the TV? Hand up, don\'t call out, and <b>show this card to the host</b>.';
-    var foot = '<div class="foot">' + (o.logo && o.logo.url
-        ? '<img class="vlogo" alt="' + esc(o.venue || '') + '" src="' + esc(o.logo.url) + '"' + (o.logo.dark ? ' style="filter:brightness(0)"' : '') + ' crossorigin="anonymous">'
-        : (o.venue ? '<div class="vname">' + esc(o.venue) + '</div>' : '<div></div>')) +
+    var PS = window.VPPaperStyle;
+    if (!PS) { fail(w, 'The card style did not load. Reload the page and print again.'); return false; }
+    var foot = '<div class="foot">' + PS.logoBox(o.logo, o.venue, LOGO_BOX) +
       '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:25mm;display:block"></div>';
     function one(c, side) {
       var no = (c.no < 10 ? '0' : '') + c.no, g = '', k = 0;
       for (var i = 0; i < 25; i++) {
-        if (i === 12) { g += '<div class="cell free"><img src="' + origin + '/brand/venueplay-icon-pink.svg" alt=""><span class="f">Free</span></div>'; continue; }
+        if (i === 12) { g += '<div class="cell free"><img src="' + origin + '/brand/venueplay-icon-pink.svg" alt=""><span class="f">FREE</span></div>'; continue; }
         g += '<div class="cell"><span class="t">' + esc(c.titles[k++] || '') + '</span></div>';
       }
       var qr = c.code ? '<div class="scanbox"><div class="qr" style="width:26mm;height:26mm">' + qrSvg(c.code) + '</div>' +
         '<div style="width:21mm"><div style="font-family:\'Hanken Grotesk\',Arial,sans-serif;font-weight:800;font-size:9.5pt;line-height:1.15">Host scan</div>' +
         '<div class="k" style="font-size:7.5pt;margin-top:1.4mm;line-height:1.25">Card ' + esc(no) + '<br>' + esc(o.playlist || '') + '</div></div></div>' : '';
-      return '<div class="pcc ' + side + '"><div class="frame"><div class="pchead"><div class="pl"><div class="k" style="font-size:8.5pt">Playlist</div>' +
-        '<div class="play" style="font-size:' + playlistSize(o.playlist) + 'pt;margin-top:.8mm">' + esc(o.playlist || '') + '</div>' +
-        '<div class="nameln">Name <span></span></div></div>' +
-        '<div class="no"><div class="k" style="font-size:8.5pt">Card</div><div class="play" style="font-size:38pt;margin-top:1mm">' + esc(no) + '</div>' +
-        (o.printedLabel ? '<div class="pdate">Printed<br>' + esc(o.printedLabel) + '</div>' : '') + '</div></div>' +
+      /* THE HEADER Dean likes (INBOX 384/385): the black band, the playlist big in white, the card number big on the pink block. */
+      return '<div class="pcc ' + side + '"><div class="frame">' +
+        PS.head({ kicker: 'Playlist', title: o.playlist || '', titlePt: playlistSize(o.playlist), num: no, numPt: 44, sub: o.printedLabel ? 'Printed ' + o.printedLabel : '' }) +
         '<div class="gwrap"><div class="pcgrid">' + g + '</div></div>' +
-        '<div class="pcstrip"><div style="flex:1;padding:3mm 4mm"><div class="pchow">' + how + '</div></div>' + qr + '</div></div>' + foot + '</div>';
+        '<div class="pcstrip"><div style="flex:1;padding:3mm 4mm"><div class="pchow">' + how + '</div><div class="nameln">Name <span></span></div></div>' + qr + '</div></div>' + foot + '</div>';
     }
     var html = '';
     for (var i = 0; i < cards.length; i += 2) {
@@ -179,7 +177,7 @@
       html += '<div class="pcs' + (two ? '' : ' one') + '">' + one(cards[i], 'L') + (two ? one(cards[i + 1], 'R') + '<div class="pccut"></div><div class="pccutlbl">cut here</div>' : '') + '</div>';
     }
     return fill(w, 'Musical bingo paper cards', html, cards.length, 'card', {
-      css: CARD_CSS, head: CARD_FONTS,
+      css: PS.CSS + CARD_CSS, head: CARD_FONTS,
       ready: function (win) {
         var d = win.document, fonts = d.fonts && d.fonts.ready ? d.fonts.ready : Promise.resolve();
         var imgs = Array.prototype.slice.call(d.images || []).map(function (im) { return im.complete ? 0 : new Promise(function (r) { im.onload = im.onerror = r; }); });
@@ -188,28 +186,9 @@
     });
   }
 
-  /* The venue's logo for white paper. Venue logos are made for a dark wall, so a pale one would vanish on a card: read the picture
-     and, when its ink is light, print it as a black silhouette. A logo that cannot be read (not allowed to be drawn, or it fails)
-     is left out and the venue's NAME is printed in its place, so a card never carries a missing-image box. */
-  function prepLogo(url) {
-    return new Promise(function (resolve) {
-      if (!/^https:\/\//i.test(String(url || ''))) return resolve(null);
-      var im = new Image(), t = setTimeout(function () { resolve(null); }, 5000);
-      im.crossOrigin = 'anonymous';
-      im.onload = function () {
-        clearTimeout(t);
-        try {
-          var cv = document.createElement('canvas'), W = Math.min(64, im.naturalWidth || 64), H = Math.max(1, Math.round(W * (im.naturalHeight || 64) / (im.naturalWidth || 64)));
-          cv.width = W; cv.height = H; var cx = cv.getContext('2d'); cx.drawImage(im, 0, 0, W, H);
-          var px = cx.getImageData(0, 0, W, H).data, sum = 0, n = 0;
-          for (var i = 0; i < px.length; i += 4) { if (px[i + 3] > 40) { sum += (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) / 255; n++; } }
-          resolve({ url: url, dark: n > 0 && (sum / n) > 0.72 });
-        } catch (e) { resolve(null); }
-      };
-      im.onerror = function () { clearTimeout(t); resolve(null); };
-      im.src = url;
-    });
-  }
+  /* The venue's logo for the paper: read, measured and given the ink rule by /app/vp-paper-style.js (one copy for every
+     printed page). No style file, or a logo that cannot be read: null, and the card prints the venue's NAME instead. */
+  function prepLogo(url) { return window.VPPaperStyle ? window.VPPaperStyle.prepLogo(url) : Promise.resolve(null); }
 
   /* o: {teams, questions, roundSize, venue}. One page per team, a strip per round, cut lines between. */
   function trivia(w, o) {

@@ -23,7 +23,8 @@ show('no em dash, no "VenuePlay", no .dev, no "bingo", no "roster", no "call out
 var win = all[0];
 show('a win leads with Confirm winner (first = confirm); every other answer leads with Scan another', win.first === 'confirm' && all.slice(1).every(function(d){ return d.first === 'scan'; }));
 show('a win says which line, the pattern and the printed date', plain(win.sub) === 'Row 3 across, the pattern tonight. Printed Mon 16 Nov.', plain(win.sub));
-show('a win lists the songs in order played, with "4th"', win.list[0][1] === '4th' && win.list[1][0] === 'Free');
+show('a win lists the songs in order played, with "4th"', win.list[0][1] === '4th');
+show('the centre square in a win list reads FREE, as it does on the card (INBOX 385)', win.list[1][0] === 'FREE' && win.list[1][1] === '');
 show('not yet says "one song to go" and names it, and that nothing was added to claims', /one song to go/.test(all[1].sub) && /Nothing is added to your claims/.test(all[1].sub) && all[1].list[0][0] === 'Still to play: Green and Red of Mayo');
 show('no game running says so', /No musical game is running yet/.test(all[2].sub));
 show('wrong, replaced, another night and another venue each tell the host not to pay out', [3,4,5,6].every(function(i){ return /Don't pay out/.test(all[i].warn); }));

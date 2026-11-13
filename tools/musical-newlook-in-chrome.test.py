@@ -517,7 +517,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             ww_fs = [c['fs'] for c in C if c['txt'] == 'Wonderwall'][0]
             ok('%s card: every title 10px to 20px, sized per square (Wonderwall %spx, the biggest %spx), Free at the middle size (INBOX 337)' % (tag, ww_fs, ts[-1]),
                10 <= ts[0] and ts[-1] <= 20 and ts[-1] >= ww_fs + 3 and abs(C[12]['fs'] - mid) < 0.01, [ts, C[12]['fs']])
-            ok('%s card: Free in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
+            ok('%s card: FREE in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'FREE', C[12]['txt'])
         bt = cd.get('btn') or {}
         ok('%s card: the claim is a pink pill saying the pattern, "I\'ve got a line", faint before the marks make a line' % tag, bt.get('text') == "I've got a line" and bt.get('faint') is True and float((bt.get('rad') or '0px').replace('px', '')) >= 28, bt)
         ok('%s card: card, button and our logo all fit the screen, no scrolling' % tag, (cd.get('scrollH') or 9999) <= 812 + 1 and bool(bt.get('r') and cd.get('foot')) and bt['r'][3] <= cd['foot'][1], [cd.get('scrollH'), bt.get('r'), cd.get('foot')])

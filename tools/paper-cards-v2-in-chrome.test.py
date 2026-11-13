@@ -46,7 +46,7 @@ HARNESS = ('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta 
            '<title>harness</title><style>body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,Arial,sans-serif}</style></head><body>'
            '<iframe id="pw" style="width:1123px;height:900px;border:0;background:#fff"></iframe>'
            '<script src="/app/vendor/qrcode-1.4.4.min.js"></script><script src="/app/vendor/jsQR-1.4.0.min.js"></script>'
-           '<script src="/app/vp-print.js"></script><script src="/app/vp-papercheck.js"></script></body></html>')
+           '<script src="/app/vp-paper-style.js"></script><script src="/app/vp-print.js"></script><script src="/app/vp-papercheck.js"></script></body></html>')
 
 # Two cards with real-shaped codes. 24 titles each; one is a single long word, three are long enough to need two or three lines.
 T = ['Bad Case of Loving You', 'Wonderwall', 'Thunderstruck', 'Livin\' on a Prayer', 'Don\'t Stop Believin\'', 'Sweet Caroline', 'Mr. Brightside',
@@ -56,18 +56,38 @@ T = ['Bad Case of Loving You', 'Wonderwall', 'Thunderstruck', 'Livin\' on a Pray
 CODES = ['HTTPS://VENUEPLAY.COM.AU/C/1K7Q2MX07PC4F286RGGY4', 'HTTPS://VENUEPLAY.COM.AU/C/1K7Q2MX08PC4FJ3C9T5HM']
 
 
-def cards_js(with_logo):
+def cards_list(titles=None):
     cards = []
+    src = titles or T
     for i, code in enumerate(CODES):
-        t = T[i:] + T[:i]
-        titles = t[:12] + [''] + t[12:24]
-        cards.append({'no': 7 + i, 'titles': titles, 'code': code})
-    svg = ("<svg xmlns='http://www.w3.org/2000/svg' width='300' height='90'><rect width='300' height='90' rx='12' fill='#0A5C8C'/>"
-           "<text x='150' y='58' font-size='38' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'>MINI BAR</text></svg>")
-    logo = ('{url:%s,dark:false}' % json.dumps('data:image/svg+xml;charset=utf-8,' + svg.replace('#', '%23'))) if with_logo else 'null'
+        t = src[i:] + src[:i]
+        cards.append({'no': 7 + i, 'titles': t[:12] + [''] + t[12:24], 'code': code})
+    return cards
+
+
+def cards_js(logo='null', titles=None, playlist='Pub Classics'):
+    """logo: a JS expression for the logo object (window.__lg after MAKE_LOGO), or null."""
     return ('(function(){var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};'
-            'window.__ok=VPPrint.musical(w,%s,{venue:"The Mini Bar",playlist:"Pub Classics",printedLabel:"Mon 16 Nov",logo:%s});return window.__ok;})()'
-            % (json.dumps(cards), logo))
+            'window.__ok=VPPrint.musical(w,%s,{venue:"The Mini Bar",playlist:%s,printedLabel:"Mon 16 Nov",logo:%s});return window.__ok;})()'
+            % (json.dumps(cards_list(titles)), json.dumps(playlist), logo))
+
+
+# A venue logo of a given shape, drawn as a PNG in the page and put through the REAL VPPaperStyle.prepLogo (measure + ink rule).
+# kind "solid": a blue block with a white bar (a normal logo, left alone). kind "light": white ink and a pink block on clear (made for
+# a dark wall): its WHITE must print black and its PINK must stay pink.
+MAKE_LOGO = r'''(function(w,h,kind){
+  var c=document.createElement("canvas"); c.width=w; c.height=h; var x=c.getContext("2d");
+  if(kind==="light"){ x.fillStyle="#FFFFFF"; x.fillRect(w*.05,h*.2,w*.5,h*.6); x.fillStyle="#FF1F8E"; x.fillRect(w*.65,h*.2,w*.3,h*.6); }
+  else { x.fillStyle="#0A5C8C"; x.fillRect(0,0,w,h); x.fillStyle="#FFFFFF"; x.fillRect(w*.2,h*.4,w*.6,h*.2); }
+  window.__lg=undefined;
+  return VPPaperStyle.prepLogo(c.toDataURL("image/png")).then(function(lg){ window.__lg=lg; return JSON.stringify(lg?{w:lg.w,h:lg.h,swapped:lg.swapped}:null); });
+})(%d,%d,%s)'''
+
+# The prepared light logo, sampled where the white ink was and where the pink was.
+INK = r'''(function(){ return new Promise(function(res){ var im=new Image(); im.onload=function(){ var c=document.createElement("canvas");
+  c.width=im.naturalWidth; c.height=im.naturalHeight; var x=c.getContext("2d"); x.drawImage(im,0,0);
+  var at=function(fx,fy){ var d=x.getImageData(Math.round(c.width*fx),Math.round(c.height*fy),1,1).data; return [d[0],d[1],d[2],d[3]]; };
+  res(JSON.stringify({white:at(.3,.5), pink:at(.8,.5), clear:at(.6,.05)})); }; im.src=window.__lg.url; }); })()'''
 
 
 MEASURE = r'''(function(){
@@ -78,8 +98,9 @@ MEASURE = r'''(function(){
     var c=cs[i], fr=c.querySelector(".frame").getBoundingClientRect(), g=c.querySelector(".pcgrid").getBoundingClientRect();
     var rad=parseFloat(getComputedStyle(c.querySelector(".frame")).borderTopLeftRadius);
     var fw=parseFloat(getComputedStyle(c.querySelector(".frame")).borderLeftWidth);
-    var foot=c.querySelector(".foot"), vl=c.querySelector(".vlogo")||c.querySelector(".vname"), bl=foot.querySelector('img[alt="venueplay"]');
-    var vr=vl.getBoundingClientRect(), br=bl.getBoundingClientRect();
+    var foot=c.querySelector(".foot"), vl=c.querySelector(".vpp-logobox"), bl=foot.querySelector('img[alt="venueplay"]');
+    var vr=vl.getBoundingClientRect(), br=bl.getBoundingClientRect(), li=vl.querySelector("img.vpp-logo"), lr=li?li.getBoundingClientRect():null;
+    var fr0=c.querySelector(".cell.free"), ff=fr0&&fr0.querySelector(".f"), hd=c.querySelector(".vpp-head"), nb=c.querySelector(".vpp-num");
     var qr=c.querySelector(".qr"), qrr=qr?qr.getBoundingClientRect():null;
     var cells=c.querySelectorAll(".cell:not(.free) .t"), small=[], over=[], sizes=[];
     for(var k=0;k<cells.length;k++){ var t=cells[k], box=t.parentNode, px=parseFloat(getComputedStyle(t).fontSize), pt=px*0.75; sizes.push(pt);
@@ -88,6 +109,12 @@ MEASURE = r'''(function(){
       text:c.innerText.replace(/\s+/g," "), html:c.innerHTML,
       frameLeft:fr.left, frameRight:fr.right, frameTop:fr.top, frameBottom:fr.bottom, rad:rad, fw:fw,
       vlLeft:vr.left, brRight:br.right, vlTop:vr.top, frameBottomEdge:fr.bottom,
+      box:{l:vr.left,t:vr.top,r:vr.right,b:vr.bottom,w:mm(vr.width),h:mm(vr.height)}, img:lr?{l:lr.left,t:lr.top,r:lr.right,b:lr.bottom,w:lr.width,h:lr.height,nw:li.naturalWidth,nh:li.naturalHeight,ok:li.complete&&li.naturalWidth>0}:null,
+      vname:(vl.querySelector(".vpp-vname")||{}).textContent||"",
+      freeText:fr0?fr0.innerText.trim():"", freeColor:ff?getComputedStyle(ff).color:"", freeMark:!!(fr0&&fr0.querySelector('img[src$="/brand/venueplay-icon-pink.svg"]')),
+      freeFits:ff?(ff.getBoundingClientRect().right<=fr0.getBoundingClientRect().right+0.5&&ff.getBoundingClientRect().left>=fr0.getBoundingClientRect().left-0.5&&ff.getBoundingClientRect().bottom<=fr0.getBoundingClientRect().bottom+0.5):false,
+      headBg:hd?getComputedStyle(hd).backgroundColor:"", numBg:nb?getComputedStyle(nb).backgroundColor:"", numText:nb?nb.innerText.replace(/\s+/g," ").trim():"",
+      headText:hd?hd.innerText.replace(/\s+/g," ").trim():"", headOver:hd?(function(){var t=hd.querySelector(".vpp-t"),lh=parseFloat(getComputedStyle(t).fontSize)*0.95;return t.scrollWidth>t.clientWidth+0.5||t.getBoundingClientRect().bottom>hd.getBoundingClientRect().bottom+0.5||t.offsetHeight>lh*2+2;})():true,
       qrBox:qrr?{l:qrr.left,t:qrr.top,r:qrr.right,b:qrr.bottom,w:mm(qrr.width)}:null, grid:{l:g.left,t:g.top,r:g.right,b:g.bottom},
       cells:cells.length, small:small, over:over, minpt:Math.min.apply(null,sizes),
       cols:(function(){var L={},T={};c.querySelectorAll(".pcgrid .cell").forEach(function(e){var r=e.getBoundingClientRect();L[Math.round(r.left)]=1;T[Math.round(r.top)]=1;});return [Object.keys(L).length,Object.keys(T).length];})(),
@@ -143,7 +170,7 @@ try:
     print('\nthe printed cards (A4 landscape, two to a sheet)')
     tid, sid = S.open('/__paper-harness', 1123, 920, False)
     S.until(sid, 'typeof VPPrint!=="undefined" && typeof VPPaperCheck!=="undefined" && typeof jsQR!=="undefined" && typeof QRCode!=="undefined"', 20)
-    res = S.js(sid, cards_js(False))
+    res = S.js(sid, cards_js())
     ok('VPPrint.musical writes the cards into the print window', res is True, res)
     S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
     S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
@@ -172,47 +199,136 @@ try:
         ok('%s: the venueplay logo ends where the bottom-right curve ends (frame right - corner radius, +-1 px)' % tag,
            abs(c['brRight'] - inside_right) <= 1.0, (c['brRight'], inside_right))
         ok('%s: the footer sits below the frame, not over it' % tag, c['vlTop'] >= c['frameBottom'] - 0.5, (c['vlTop'], c['frameBottom']))
+        # INBOX 385 (1): the centre square SAYS FREE, in black, with the small pink play mark, inside its square
+        ok('%s: the centre square reads FREE, in black, with the small pink play mark, all inside the square (INBOX 385)' % tag,
+           c['freeText'] == 'FREE' and c['freeColor'] == 'rgb(10, 10, 11)' and c['freeMark'] and c['freeFits'], (c['freeText'], c['freeColor'], c['freeMark'], c['freeFits']))
+        # INBOX 384/385 UPDATE: the black header band, the number big on a pink block, no word "Card"
+        ok('%s: the header is the black band with the card number on the PINK block, no word "Card" (INBOX 384/385)' % tag,
+           c['headBg'] == 'rgb(10, 10, 11)' and c['numBg'] == 'rgb(255, 31, 142)' and c['numText'].startswith('%02d' % (7 + n)) and 'Card' not in c['headText'] and not c['headOver'],
+           (c['headBg'], c['numBg'], c['numText'], c['headText'], c['headOver']))
     dec = waits.as_json(S.js(sid, DECODE % json.dumps([c0['svg'], c1['svg']]), wait=True, secs=30), [], what='the QR decode')
     ok('the QR on card 07 decodes to its own code, drawn from the SVG that prints', dec[0] == CODES[0] if len(dec) == 2 else False, dec)
     ok('the QR on card 08 decodes to ITS code (a different one)', dec[1] == CODES[1] and dec[0] != dec[1] if len(dec) == 2 else False, dec)
     ok('the code is the capitals address, so it stays a small QR (version 4 or less at level Q)',
        (c0['svg'].count('M') > 0) and re.match(r'^HTTPS://VENUEPLAY\.COM\.AU/C/[0-9A-Z]{21}$', CODES[0]) is not None)
-    ok('a venue with no logo prints its NAME in the footer, never a broken picture', 'The Mini Bar' in c0['html'] and 'class="vname"' in c0['html'] and 'class="vlogo"' not in c0['html'])
+    ok('a venue with no logo prints its NAME in the logo box, never a broken picture', c0['vname'] == 'The Mini Bar' and c0['img'] is None and 'class="vpp-vname"' in c0['html'])
     ok('the footer carries the venueplay logo file, not typed text', '/brand/venueplay-horizontal-on-light.svg' in c0['html'])
     if A.shots:
         os.makedirs(A.shots, exist_ok=True)
-        S.shot(sid, os.path.join(A.shots, 'paper-cards-v2-sheet.png'), full=False)
+        S.shot(sid, os.path.join(A.shots, 'cards-none.png'), full=False)
     S.close_tab(tid)
 
+    def pdf_of(logo_kind=None, titles=None, playlist='Pub Classics', name='none'):
+        """The cards written straight into a window of their own, as the console's print window is, printed to PDF."""
+        t2, s2 = S.open('/__paper-harness', 1123, 920, False)
+        S.until(s2, 'typeof VPPrint!=="undefined" && typeof VPPaperStyle!=="undefined"', 20)
+        lg = 'null'
+        if logo_kind:
+            S.js(s2, MAKE_LOGO % (logo_kind[0], logo_kind[1], json.dumps(logo_kind[2])), wait=True, secs=15)
+            lg = 'window.__lg'
+        S.js(s2, cards_js(lg, titles, playlist).replace('var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};', 'var w=window;w.print=function(){};'))
+        S.until(s2, 'document.querySelectorAll(".pcc").length===2', 15)
+        S.js(s2, 'document.fonts.ready.then(function(){return true})', wait=True, secs=15)
+        time.sleep(1.2)
+        S.B.call('Emulation.setEmulatedMedia', {'media': 'print'}, session=s2)
+        r = S.B.call('Page.printToPDF', {'preferCSSPageSize': True, 'printBackground': True}, session=s2)
+        data = base64.b64decode(r.get('data', ''))
+        if A.shots:
+            with open(os.path.join(A.shots, 'cards-%s.pdf' % name), 'wb') as fh:
+                fh.write(data)
+        S.close_tab(t2)
+        return pdf_pages(data), len(data)
+
+    (n, box), size = pdf_of()
+    ok('printed to PDF: ONE A4 landscape page (842 x 595 pt) holds both cards, no second page', n == 1 and box is not None and abs(box[0] - 841.9) < 2 and abs(box[1] - 595.3) < 2, (n, box, size))
+
+    # ---------------------------------------------------------------- INBOX 385 (2): every shape of venue logo
+    print('\nthe pub\'s logo box: square, tall, wide, light ink (INBOX 385)')
+    SHAPES = (('square', 400, 400, 'solid'), ('tall', 240, 600, 'solid'), ('wide', 800, 200, 'solid'), ('light', 600, 300, 'light'))
+    for (name, lw, lh, kind) in SHAPES:
+        tid, sid = S.open('/__paper-harness', 1123, 920, False)
+        S.until(sid, 'typeof VPPrint!=="undefined" && typeof VPPaperStyle!=="undefined"', 20)
+        info = waits.as_json(S.js(sid, MAKE_LOGO % (lw, lh, json.dumps(kind)), wait=True, secs=15), None, what='the logo')
+        S.js(sid, cards_js('window.__lg'))
+        S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc img.vpp-logo").length===2', 15)
+        S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
+        time.sleep(1.2)
+        mm_ = S.json(sid, MEASURE, {})
+        c = mm_['cards'][0]
+        b, im = c['box'], c['img'] or {}
+        tag = '%s logo (%dx%d)' % (name, lw, lh)
+        ok('%s: measured by prepLogo at its real size' % tag, bool(info) and info.get('w') == lw and info.get('h') == lh, info)
+        ok('%s: the box is the fixed 42 x 12 mm footer box' % tag, abs(b['w'] - 42) < 0.3 and abs(b['h'] - 12) < 0.3, b)
+        ok('%s: the logo is a picture that loaded, CONTAINED in its box (no overflow on any side)' % tag,
+           im.get('ok') and im['l'] >= b['l'] - 0.5 and im['t'] >= b['t'] - 0.5 and im['r'] <= b['r'] + 0.5 and im['b'] <= b['b'] + 0.5, (im, b))
+        ratio_drawn, ratio_real = (im.get('w', 0) / im['h']) if im.get('h') else 0, lw / float(lh)
+        ok('%s: its shape is kept (drawn width/height within 1%% of the real logo, no stretch)' % tag,
+           abs(ratio_drawn - ratio_real) / ratio_real <= 0.01, (ratio_drawn, ratio_real))
+        bound = 'w' if ratio_real >= 42 / 12.0 else 'h'
+        ok('%s: as big as the box allows (it fills the box\'s %s)' % (tag, 'width' if bound == 'w' else 'height'),
+           (abs(im['r'] - im['l'] - (b['r'] - b['l'])) <= 1.0) if bound == 'w' else (abs(im['b'] - im['t'] - (b['b'] - b['t'])) <= 1.0), (im, b))
+        ok('%s: centred top to bottom in the box, its left edge on the curve end' % tag,
+           abs((im['t'] + im['b']) / 2 - (b['t'] + b['b']) / 2) <= 0.6 and abs(im['l'] - (c['frameLeft'] + c['rad'])) <= 1.0, (im, b, c['frameLeft'] + c['rad']))
+        ok('%s: the FREE square still reads FREE' % tag, c['freeText'] == 'FREE')
+        dec = waits.as_json(S.js(sid, DECODE % json.dumps([c['svg']]), wait=True, secs=30), [], what='the QR decode')
+        ok('%s: the QR still decodes to the card\'s code' % tag, dec == [CODES[0]], dec)
+        if kind == 'light':
+            ink = waits.as_json(S.js(sid, INK, wait=True, secs=15), {}, what='the ink')
+            wh, pk, cl = ink.get('white', [0, 0, 0, 0]), ink.get('pink', [0, 0, 0, 0]), ink.get('clear', [0, 0, 0, 255])
+            ok('%s: the ink rule: its WHITE ink prints black on white paper' % tag, info.get('swapped', 0) > 0 and max(wh[:3]) <= 20 and wh[3] == 255, (info, wh))
+            ok('%s: ...and NO other colour changes: the pink stays pink, the clear stays clear' % tag, pk[:3] == [255, 31, 142] and cl[3] == 0, (pk, cl))
+        else:
+            ok('%s: a logo that already shows on white is left exactly as made (no ink swapped)' % tag, info.get('swapped') == 0, info)
+        if A.shots:
+            S.shot(sid, os.path.join(A.shots, 'cards-%s.png' % name), full=False)
+        S.close_tab(tid)
+        (n, box), size = pdf_of((lw, lh, kind), name=name)
+        ok('%s: still ONE A4 landscape page' % tag, n == 1 and box is not None and abs(box[0] - 841.9) < 2 and abs(box[1] - 595.3) < 2, (n, box, size))
+
+    # ---------------------------------------------------------------- long song titles and a long playlist name
+    print('\nlong song titles, long playlist name')
+    LONG = ['I Would Do Anything for Love But I Won\'t Do That', 'Everybody Wants to Rule the World', 'Supercalifragilisticexpialidocious',
+            'Nothing Compares 2 U', 'The Boys Light Up', 'Do You Really Want to Hurt Me', 'Love Is in the Air', 'Khe Sanh',
+            'You\'re the One That I Want', 'Bohemian Rhapsody', 'Unbelievable', 'What\'s Up', 'Beds Are Burning',
+            'Never Tear Us Apart', 'Throw Your Arms Around Me', 'Down Under', 'Working Class Man', 'Holy Grail',
+            'Am I Ever Gonna See Your Face Again', 'Two Hearts', 'Friday on My Mind', 'Solid Rock', 'Eagle Rock', 'Howzat']
+    LONGPL = 'Aussie Pub Rock Anthems of the 80s'
     tid, sid = S.open('/__paper-harness', 1123, 920, False)
     S.until(sid, 'typeof VPPrint!=="undefined"', 20)
-    S.js(sid, cards_js(True))
+    S.js(sid, cards_js('null', LONG, LONGPL))
     S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
     S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
     time.sleep(1.2)
-    m2 = S.json(sid, MEASURE, {})
-    d0 = m2['cards'][0]
-    ok('with the venue\'s own logo: it is the picture, its left edge on the curve end, and the name text is not used',
-       'class="vlogo"' in d0['html'] and 'class="vname"' not in d0['html'] and abs(d0['vlLeft'] - (d0['frameLeft'] + d0['rad'])) <= 1.0, (d0['vlLeft'], d0['frameLeft'] + d0['rad']))
+    ml = S.json(sid, MEASURE, {})
+    for n, c in enumerate(ml['cards']):
+        tag = 'long titles card %02d' % (7 + n)
+        ok('%s: every title fits its own square, whole (nothing cut)' % tag, not c['over'] and c['cells'] == 24, c['over'])
+        ok('%s: the long playlist name fits the black header' % tag, not c['headOver'] and LONGPL.upper() in c['headText'].upper(), c['headText'])
     if A.shots:
-        S.shot(sid, os.path.join(A.shots, 'paper-cards-v2-sheet-logo.png'), full=False)
+        S.shot(sid, os.path.join(A.shots, 'cards-long.png'), full=False)
     S.close_tab(tid)
+    (n, box), size = pdf_of(None, LONG, LONGPL, 'long')
+    ok('long titles: still ONE A4 landscape page', n == 1 and box is not None and abs(box[0] - 841.9) < 2, (n, box, size))
 
-    # the printed page: the cards written straight into a window of their own, as the console's print window is, printed to PDF
-    tid, sid = S.open('/__paper-harness', 1123, 920, False)
-    S.until(sid, 'typeof VPPrint!=="undefined"', 20)
-    S.js(sid, cards_js(False).replace('var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};', 'var w=window;w.print=function(){};'))
-    S.until(sid, 'document.querySelectorAll(".pcc").length===2', 15)
-    S.js(sid, 'document.fonts.ready.then(function(){return true})', wait=True, secs=15)
-    time.sleep(1.2)
-    S.B.call('Emulation.setEmulatedMedia', {'media': 'print'}, session=sid)
-    r = S.B.call('Page.printToPDF', {'preferCSSPageSize': True, 'printBackground': True}, session=sid)
-    data = base64.b64decode(r.get('data', ''))
-    n, box = pdf_pages(data)
-    ok('printed to PDF: ONE A4 landscape page (842 x 595 pt) holds both cards, no second page', n == 1 and box is not None and abs(box[0] - 841.9) < 2 and abs(box[1] - 595.3) < 2, (n, box, len(data)))
+    # ---------------------------------------------------------------- the same FREE on the phone; the TV draws no card
+    print('\nFREE on the phone; the TV')
+    tid, sid = S.open('/app/musical/play.html?demo=1&sting=0', 375, 812, True)
+    S.until(sid, 'document.querySelectorAll("#cardGrid .cc").length===25', 20)
+    time.sleep(1.5)
+    ph = S.json(sid, '(function(){var f=document.querySelector("#cardGrid .cc.free");var r=f.getBoundingClientRect();return JSON.stringify({t:f.innerText.trim(),c:getComputedStyle(f).color,i:[].indexOf.call(f.parentNode.children,f)});})()', {})
+    ok('the phone card\'s centre square reads FREE, in black, the same word as the paper card (INBOX 385)', ph.get('t') == 'FREE' and ph.get('c') == 'rgb(10, 10, 11)' and ph.get('i') == 12, ph)
     if A.shots:
-        with open(os.path.join(A.shots, 'paper-cards-v2.pdf'), 'wb') as fh:
-            fh.write(data)
+        S.shot(sid, os.path.join(A.shots, 'phone-free.png'), full=False)
+    S.close_tab(tid)
+    tid, sid = S.open('/app/musical/screen.html?demo=1&sting=0', 1920, 1080, False)
+    S.until(sid, '!document.getElementById("tvRun").classList.contains("hidden")', 20)
+    time.sleep(3)
+    tv = S.json(sid, '(function(){var n=0;[].forEach.call(document.querySelectorAll("body *"),function(e){var k=e.children.length;if(k===25)n++;});'
+                     'var lone=[].filter.call(document.querySelectorAll("body *"),function(e){return !e.children.length&&/^free$/i.test((e.textContent||"").trim())&&e.getBoundingClientRect().width>0;}).length;'
+                     'return JSON.stringify({grids:n,lone:lone,cc:document.querySelectorAll(".cc,.cell,.mc").length});})()', {})
+    ok('the TV wall draws no card at all (no 5 x 5 grid, no lone Free square), so there is no centre square on the TV to label', tv.get('grids') == 0 and tv.get('lone') == 0 and tv.get('cc') == 0, tv)
+    if A.shots:
+        S.shot(sid, os.path.join(A.shots, 'tv-wall.png'), full=False)
     S.close_tab(tid)
 
     # ---------------------------------------------------------------- the scan screens
@@ -235,8 +351,8 @@ try:
                 ok('%s: "Confirm winner" and "Scan another" are IN LINE: one row, side by side, same size' % tag,
                    names == ['Confirm winner', 'Scan another'] and v['rows'][0]['top'] == v['rows'][1]['top'] and v['rows'][0]['l'] < v['rows'][1]['l']
                    and abs(v['rows'][0]['w'] - v['rows'][1]['w']) <= 2 and v['rows'][0]['b'] <= v['vh'], v['rows'])
-                ok('%s: the winning songs are listed in the order they were played, with Free' % tag,
-                   '4th' in v['text'] and '9th' in v['text'] and 'Free' in v['text'] and 'Row 3 across' in v['text'] and 'Printed Mon 16 Nov' in v['text'], v['text'][:300])
+                ok('%s: the winning songs are listed in the order they were played, with FREE' % tag,
+                   '4th' in v['text'] and '9th' in v['text'] and 'FREE' in v['text'] and 'Row 3 across' in v['text'] and 'Printed Mon 16 Nov' in v['text'], v['text'][:300])
             elif name in ('notyet', 'wrong_playlist', 'replaced', 'other_night', 'other_venue', 'not_card'):
                 ok('%s: "Scan another" leads the row, with "Back to the game" beside it' % tag,
                    names == ['Scan another', 'Back to the game'] and v['rows'][0]['top'] == v['rows'][1]['top'], v['rows'])
@@ -254,7 +370,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 179
+EXPECTED = 230
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
