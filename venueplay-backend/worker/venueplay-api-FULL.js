@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '13 Nov 2026, 00:49 · 921878dd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '13 Nov 2026, 11:26 · c9571ab6';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6257,13 +6257,13 @@ function vpaMembersReminderChoice(answers) {
   return { day: r.day, time: m[0], hour: parseInt(m[1], 10), since: String(r.since) };
 }
 /* The most recent moment (the start of that local hour) the venue's chosen day and time came round, at or before nowMs, or null */
-function vpaMembersReminderOccurrence(state, ch, nowMs) {
+function vpaMembersReminderOccurrence(state, mrChoice, nowMs) {
   const tz = vpaSendTz(state);
   const p = vpaSendLocal(tz, nowMs);
   const start = Math.floor(nowMs) - (Math.floor(nowMs) % 1000) - (p.m * 60 + p.s) * 1000;   // the start of this local hour
   for (let i = 0; i < 24 * 8; i++) {
     const t = start - i * 3600000, q = vpaSendLocal(tz, t);
-    if (q.wd === VPA_MR_WEEKDAY[ch.day] && q.h === ch.hour) return t;
+    if (q.wd === VPA_MR_WEEKDAY[mrChoice.day] && q.h === mrChoice.hour) return t;
   }
   return null;
 }
@@ -6296,16 +6296,16 @@ async function vpaMembersReminderSweep(env, nowMs) {
   try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
   catch (e) { return Object.assign(out, { why: 'could not read the venue settings' }); }
   for (const r of rows) {
-    const ch = vpaMembersReminderChoice(r.setup_answers);
-    if (!ch) continue;
+    const mrChoice = vpaMembersReminderChoice(r.setup_answers);
+    if (!mrChoice) continue;
     out.checked++;
     const vq = await vpaMrGet(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue_id) + '&select=id,name,status,au_state,postcode,founding_id&limit=1');
     const v = vq.ok && vq.rows[0];
     if (!v || v.status !== 'active') { out.skipped++; continue; }
     const state = vpaSendState(v);
-    const at = vpaMembersReminderOccurrence(state, ch, nowMs);
+    const at = vpaMembersReminderOccurrence(state, mrChoice, nowMs);
     if (at == null) { out.skipped++; continue; }
-    if (at < vpaBneDayStartMs(ch.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
+    if (at < vpaBneDayStartMs(mrChoice.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
     const allowed = vpaSendAllowedAt(state, at);
     if (nowMs < allowed) { out.held++; continue; }
     if (!vpaInSendWindow(nowMs, state)) { out.held++; continue; }
@@ -6328,9 +6328,9 @@ async function vpaMembersReminderSweep(env, nowMs) {
     /* ONCE A WEEK: a row since this week's moment means it has gone */
     const done = await vpaMrGet(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + v.id) + '&action=eq.members_reminder_sent&created_at=gte.' + encodeURIComponent(new Date(at).toISOString()) + '&select=id&limit=1');
     if (!done.ok || done.rows.length) { out.skipped++; continue; }
-    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: ch.day, time: ch.time });
+    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: mrChoice.day, time: mrChoice.time });
     if (!claimed) { out.skipped++; continue; }
-    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: ch.day });
+    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: mrChoice.day });
     let ok = false;
     try { ok = await vpaSendEmail(env, to, msg.subject, msg.html); } catch (_) { ok = false; }
     if (ok) out.sent.push(v.id); else out.skipped++;

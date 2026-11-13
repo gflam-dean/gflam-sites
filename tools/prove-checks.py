@@ -20477,7 +20477,7 @@ MUTATIONS = [
      'if (!v) { out.skipped++; continue; }',
      'the members list reminder goes to a paused or suspended venue'),
     ('test-members-reminder.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '    if (at < vpaBneDayStartMs(ch.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that\n',
+     '    if (at < vpaBneDayStartMs(mrChoice.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that\n',
      '',
      'the first members list reminder arrives the day they chose it'),
     ('test-members-reminder.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
