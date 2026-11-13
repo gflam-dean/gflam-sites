@@ -22872,8 +22872,24 @@ MUTATIONS = [
      'the max players boxes on the account page lose their venue names'),
     ('website-audit-p2-13nov-in-chrome.test.py', 'venueplay/app/marketing.html',
      '["venueplay pink","#FF1F8E"]',
-     '["Gflam Pink","#FF1F8E"]',
      'the brand kit names the pink after Gflam again'),
+    # 13 Nov 2026, fix/website-audit-p1b-13nov (INBOX 361A): a wrong sign-up code says so, one text per tap-burst, no browser words in the help form, the scan screen above the console banner.
+    ('website-audit-p1b-13nov-in-chrome.test.py', 'venueplay/app/vp-start.js',
+     '      if (j.gone || j._status === 400) { clearCode(); var f = $("st-c1"); if (f) f.focus(); }\n      err("st-cerr", j.error || WORDS.blip);\n',
+     '      err("st-cerr", j.error || WORDS.blip);\n      if (j.gone || j._status === 400) { clearCode(); var f = $("st-c1"); if (f) f.focus(); }\n',
+     'a wrong or run-out sign-up code empties the boxes and wipes its own message again'),
+    ('website-audit-p1b-13nov-in-chrome.test.py', 'venueplay/app/vp-start.js',
+     '    if (S.resending || (S.resentAt && Date.now() - S.resentAt < 20000)) return;\n',
+     '',
+     'three taps on Send it again send three texts again'),
+    ('website-audit-p1b-13nov-in-chrome.test.py', 'venueplay/app/vp-help.js',
+     'err.textContent = (x && x.fromWorker && x.message) ||',
+     'err.textContent = (x && x.message) ||',
+     'the help form shows the browser\'s own "Failed to fetch" to a customer again'),
+    ('website-audit-p1b-13nov-in-chrome.test.py', 'venueplay/app/vp-papercheck.js',
+     '.ppc{position:fixed;inset:0;z-index:95;',
+     '.ppc{position:fixed;inset:0;z-index:70;',
+     'the paper card scan screen drops back under the console error banner'),
 ]
 
 
