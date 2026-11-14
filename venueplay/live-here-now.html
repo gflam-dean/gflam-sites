@@ -79,6 +79,7 @@
   .view .vp-field{display:block;margin-top:12px}
   input[type=search].vp-field::placeholder,input.vp-field::placeholder{color:#8E8E99;font-weight:600}
   #whereIn::placeholder{font-size:16px}
+  @media(max-width:360px){ #whereIn::placeholder{font-size:15px;letter-spacing:-.025em} }   /* the whole sentence on one line at 320 (the search box keeps room for its clear button) */
   .vp-field:focus{border-color:var(--pink);box-shadow:none}
   /* the search clear (x): grey and white, never the browser's blue, with a 44px tap area */
   input[type=search]{-webkit-appearance:none;appearance:none}
