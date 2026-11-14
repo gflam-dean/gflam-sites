@@ -79,10 +79,11 @@ w4.answers.push(liveR({ exists: true, live: false })); w4.tick(); w4.answers.pus
 w4.answers.push(liveR({ exists: true, live: false })); var m4 = w4.tick(); w4.answers.push(liveR({ exists: true, live: false })); var m5 = w4.tick();
 w4.answers.push(liveR({ exists: true, live: false })); var m6 = w4.tick(); w4.answers.push(liveR({ exists: true, live: false })); w4.tick(); w4.answers.push(liveR({ exists: true, live: false })); var m8 = w4.tick();
 check('it backs off: 30 s, then 60 s, then 120 s', m1 < 33100 && m4 >= 60000 && m4 < 63100 && m5 >= 60000 && m8 >= 120000 && m8 < 123100);
-// the same ended night still looking open (a copy a few seconds old) is never opened
-var w5 = ended(); w5.tick;
-w5.answers.push(liveR({ exists: true, live: true, join_code: 'OLD111', format: '' })); w5.tick();
-check('the join code of the night that just ended is never reopened', w5.replaced.length === 0 && w5.fetched.length === 3);
+// the ended night still looking open in a copy a few seconds old: the fresh read of the database says it is not
+var w5 = ended(); w5.answers.push(liveR({ exists: true, live: true, join_code: 'OLD111', format: '' }), liveR({ exists: true, live: false })); w5.tick();
+check('the ended night, still open in a copy a few seconds old, is not reopened (the fresh read says not live)', w5.replaced.length === 0 && w5.fetched.length === 4 && w5.fetched[3].indexOf('fresh=1') > 0);
+var w5b = ended(); w5b.answers.push(liveR({ exists: true, live: true, join_code: 'OLD111', format: 'trivia' }), liveR({ exists: true, live: true, join_code: 'OLD111', format: 'trivia' })); w5b.tick();
+check('a new night that reuses the venue code as its join code is still opened (a join code does not tell nights apart)', w5b.replaced.length === 1 && w5b.replaced[0] === '/app/trivia/play?room=OLD111');
 // a new bingo lobby: confirmed by a fresh read, then opened through the venue link
 var w6 = ended(); w6.answers.push(liveR({ exists: true, live: true, join_code: 'NEW222', format: '' }), liveR({ exists: true, live: true, join_code: 'NEW222', format: '' })); w6.tick();
 check('a new bingo lobby is confirmed with a fresh read and then opened through /play?venue=<slug>', w6.fetched[3].indexOf('fresh=1') > 0 && w6.replaced.length === 1 && w6.replaced[0] === '/play?venue=the-mini-bar' && w6.forgot() === 1);

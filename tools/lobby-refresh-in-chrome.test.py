@@ -457,7 +457,7 @@ def run_unit():
     lines = [l for l in p.stdout.splitlines() if l.startswith('  ok   waitwatch:') or l.startswith('  FAIL waitwatch:')]
     for l in lines:
         ok(l[7:].strip(), l.startswith('  ok'), l)
-    ok('waitwatch: the hand-driven watcher ran all 32 checks', len(lines) == 32 and p.returncode == 0, p.stdout[-400:])
+    ok('waitwatch: the hand-driven watcher ran all 33 checks', len(lines) == 33 and p.returncode == 0, p.stdout[-400:])
     play = open(os.path.join(ROOT, 'venueplay', 'play.html')).read()
     ok('waitwatch: the bingo phone falls back to the night the console named (P.lastSid) while its own join is late', 'u.test(P.lastSid||"") ? P.lastSid' in play)
 

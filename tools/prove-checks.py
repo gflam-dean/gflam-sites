@@ -24074,10 +24074,6 @@ MUTATIONS = [
      'the ended screen button goes back to "Join again", or its line to the old host-closed wording'),
     # 17 Nov 2026, 417B: the ended screen keeps looking for the venue's next game and opens it by itself
     ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
-     'd.join_code !== endedCode);',
-     'd.join_code);',
-     'the ended screen can reopen the very game that just ended (a few-seconds-old copy of the room still names it)'),
-    ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
      'if (candidate(e) && e.join_code === d.join_code) openIt(e); else later();',
      'openIt(d);',
      'the next game is opened on one cached read, with no fresh confirmation that it is still open and the same game'),

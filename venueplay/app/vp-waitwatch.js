@@ -47,11 +47,10 @@
     if (started || !opts || !opts.api) return;
     started = true;
     var api = String(opts.api).replace(/\/$/, ""), every = opts.every || 20000, misses = 0, shown = false;
-    var slug = "", endedCode = "";                     // the venue and the join code of the night this phone was in, learned from its own snapshots
+    var slug = "";                                     // the venue of the night this phone was in, learned from its own snapshots
     function visible() { return !(root.document.visibilityState && root.document.visibilityState !== "visible"); }
     function note(s) {
       if (s && typeof s.venue_slug === "string" && s.venue_slug) slug = s.venue_slug;
-      if (s && typeof s.join_code === "string" && s.join_code) endedCode = s.join_code;
     }
     function look() {
       if (shown) return;
@@ -73,8 +72,9 @@
         }, function () {});
     }
     /* THE ENDED SCREEN KEEPS LOOKING FOR THE VENUE'S NEXT GAME. Only a game that is open (lobby, running, paused) is ever
-       offered by /play/live, and never the join code of the night that just ended, so a finished game cannot be reopened.
-       A candidate is confirmed with one fresh read (the shared copy may be a few seconds old) and must name the same code twice. */
+       offered by /play/live, so a finished game cannot be reopened. A join code can NOT tell a new night from the old one (a venue's trivia
+       and musical nights can run on the venue's own code), so a candidate is confirmed with one fresh read of the database (the shared
+       copy may be a few seconds old, and a night that has just ended can still be in it) and must name the same code twice. */
     function watchNext() {
       var code = venueCode(slug), step = 0, looks = 0, busy = false, lastAt = 0, timer = 0, done = false;
       function later() {
@@ -87,7 +87,7 @@
           .then(function (r) { return r.ok ? r.json() : null; });
       }
       function candidate(d) {
-        return !!(d && d.exists !== false && d.live === true && typeof d.join_code === "string" && d.join_code && d.join_code !== endedCode);
+        return !!(d && d.exists !== false && d.live === true && typeof d.join_code === "string" && d.join_code);
       }
       function ask() {
         if (done || busy) return;
