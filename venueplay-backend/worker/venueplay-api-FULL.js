@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 21:34 · d5fc9c1b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 21:35 · d1c3cb93';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -1144,6 +1144,8 @@ async function vpaHandleStripeEvent(env, event) {
     if (typeof vpaProvisionFromCheckout === 'function') {
       await vpaProvisionFromCheckout(env, s);
     }
+    // A quick-game account has no real email until Stripe asked for one on its payment page (INBOX 412): keep it. Never throws.
+    if (rowId) await vpqCaptureStripeEmail(env, rowId, s);
     // A prospect the free month had paused comes straight back on with their card (migration 127).
     if (rowId && typeof vpaProspectCardAdded === 'function') await vpaProspectCardAdded(env, rowId);
   }
@@ -4436,6 +4438,35 @@ async function vpqMoreInfoBefore(env, venueId) {
     const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) + '&action=eq.quick_more_info&select=id&limit=1');
     return !!(rows && rows.length);
   } catch (e) { return true; }
+}
+
+/* THE EMAIL STRIPE ASKED FOR (INBOX 412 UPDATE 7). A quick-game account has no real email; its card page is Stripe's, which
+   asks for one. When the card lands, that address goes where a real one belongs: the account's contact email, the prospect row,
+   and the owner's login (replacing the placeholder), after which the normal reminders and emails apply. It only FILLS an empty
+   or placeholder email, never replaces a real one, never takes an address another login already has, and never throws (a
+   webhook that throws is retried by Stripe). */
+async function vpqCaptureStripeEmail(env, foundingId, session) {
+  try {
+    const cd = (session && session.customer_details) || {};
+    const email = String(cd.email || (session && session.customer_email) || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200 || /[,;()\\"]/.test(email) || vpqIsPlaceholderEmail(email)) return { skipped: 'no usable email' };
+    const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email&limit=1');
+    const f = fr && fr[0];
+    if (!f || vpqRealEmail(f.contact_email)) return { skipped: 'already has an email' };
+    const taken = await vpaFindAuthUser(env, { email: email });
+    const venues = (await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id&limit=20')) || [];
+    let owner = null;
+    for (const v of venues) {
+      const st = (await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(v.id) + '&role=eq.owner&select=auth_user_id&limit=1')) || [];
+      if (st[0] && st[0].auth_user_id) { owner = st[0].auth_user_id; break; }
+    }
+    if (taken && (!owner || taken.id !== owner)) return { skipped: 'another login has it' };
+    await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId), { contact_email: email });
+    await vpaPatch(env, 'vp_prospects', 'founding_id=eq.' + encodeURIComponent(foundingId), { email: email }).catch(() => {});
+    if (owner && !taken) await vpaAuthUpdateUser(env, owner, { email: email, email_confirm: true, user_metadata: { placeholder_email: false } }).catch(() => {});
+    await vpaAudit(env, { actorId: null, label: 'Stripe card page' }, 'quick_email_captured', 'founding:' + foundingId, { owner: !!owner }).catch(() => {});
+    return { ok: true };
+  } catch (e) { console.log('[quick] stripe email: ' + String((e && e.message) || e).slice(0, 160)); return { error: true }; }
 }
 
 /* ---- THE FUNNEL (INBOX 412 UPDATE 8): one row per step reached, no personal data, migration 195 ---- */

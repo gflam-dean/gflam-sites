@@ -24454,6 +24454,22 @@ MUTATIONS = [
      '"card_screen_seen", "card_added",',
      '"card_screen_seen",',
      'the page tracks fewer steps than the Worker keeps, so the funnel has a hole'),
+    ('test-quick-start.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (!f || vpqRealEmail(f.contact_email)) return { skipped: 'already has an email' };",
+     "    if (!f) return { skipped: 'already has an email' };",
+     "a card page's email replaces the real email an account already has"),
+    ('test-quick-start.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (taken && (!owner || taken.id !== owner)) return { skipped: 'another login has it' };\n",
+     '',
+     "a card page's email is given to a login that belongs to someone else"),
+    ('test-quick-start.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    if (rowId) await vpqCaptureStripeEmail(env, rowId, s);\n',
+     '',
+     'the email Stripe asked for is lost, so the account never gets reminders or receipts'),
+    ('test-quick-start.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     " || vpqIsPlaceholderEmail(email)) return { skipped: 'no usable email' };",
+     ") return { skipped: 'no usable email' };",
+     'the placeholder address is written back as if Stripe had collected it'),
 ]
 
 

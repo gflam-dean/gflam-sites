@@ -307,6 +307,28 @@ async function main() {
   var sn = await qstart({ lead: 'nonsense-code-that-is-not-real' });
   check('a code that is not real changes nothing: the account is made as from the website', sn.verify && sn.verify.body.outcome === 'made' && !(DB.vp_prospects[0] || {}).lead_source, sn.verify);
 
+  section('11. The email Stripe asks for on its card page is kept, safely');
+  world(); listed();
+  var PUTS = []; var f0 = globalThis.fetch;
+  globalThis.fetch = function (url, opts) { if (opts && opts.method === 'PUT' && String(url).indexOf('/auth/v1/admin/users/') !== -1) { PUTS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } }); } return f0(url, opts); };
+  var sc = await qstart({}); var fid3 = DB.venueplay_founding[0].id;
+  var c0 = await vpqCaptureStripeEmail(ENV, fid3, { customer_details: { email: 'Owner@GrandHotel.example' } });
+  check('the address Stripe collected becomes the account email, the prospect email and the login email', c0.ok === true && DB.venueplay_founding[0].contact_email === 'owner@grandhotel.example' && DB.vp_prospects[0].email === 'owner@grandhotel.example' && PUTS.length === 1 && PUTS[0].body.email === 'owner@grandhotel.example', [c0, DB.venueplay_founding[0], PUTS]);
+  var c1b = await vpqCaptureStripeEmail(ENV, fid3, { customer_details: { email: 'other@elsewhere.example' } });
+  check('a real email already on the account is never replaced', c1b.skipped && DB.venueplay_founding[0].contact_email === 'owner@grandhotel.example' && PUTS.length === 1, c1b);
+  world(); listed();
+  var sd = await qstart({}); var fid4 = DB.venueplay_founding[0].id; PUTS.length = 0;
+  AUTH.push({ id: U(777), email: 'taken@pub.example', phone: '' });
+  var c2 = await vpqCaptureStripeEmail(ENV, fid4, { customer_details: { email: 'taken@pub.example' } });
+  check('an address another login already has is not taken over', c2.skipped && DB.venueplay_founding[0].contact_email === '' && PUTS.length === 0, c2);
+  var c3 = await vpqCaptureStripeEmail(ENV, fid4, { customer_details: { email: 'not an email' } }), c4 = await vpqCaptureStripeEmail(ENV, fid4, { customer_details: { email: 'm412345678.ab@phone.venueplay.com.au' } }), c5 = await vpqCaptureStripeEmail(ENV, fid4, {});
+  check('a missing, malformed or placeholder address changes nothing', c3.skipped && c4.skipped && c5.skipped && DB.venueplay_founding[0].contact_email === '', [c3, c4, c5]);
+  var c6 = await vpqCaptureStripeEmail(ENV, U(99999), { customer_details: { email: 'x@y.example' } });
+  check('an account that does not exist changes nothing and never throws', !c6.ok, c6);
+  var WS2 = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  check('the card webhook calls it after the card lands, and before the paused-prospect step', WS2.indexOf('await vpqCaptureStripeEmail(env, rowId, s)') > WS2.indexOf('await vpaProvisionFromCheckout(env, s)') && WS2.indexOf('await vpqCaptureStripeEmail(env, rowId, s)') < WS2.indexOf('await vpaProspectCardAdded(env, rowId)'));
+  globalThis.fetch = f0;
+
   var W = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   check('the gate is one constant (off), and the words say what to do when it is on', /const VPQ_CARD_NEEDS_REAL_EMAIL = false;/.test(W) && /Account details first/.test(W));
   check('the card page asks the gate before it opens Stripe', /vpqCardGate\(f\.contact_email\)/.test(W));

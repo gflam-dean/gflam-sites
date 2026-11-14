@@ -156,6 +156,19 @@
     $("qVenue").addEventListener("input", function () { root.clearTimeout(S.timer); S.timer = root.setTimeout(search, 220); });
     doc.addEventListener("click", function (e) { if (!e.target.closest || !e.target.closest(".row")) hidePick(); });
     turnstile();
+    prefill();
+  }
+  /* A per-lead link from a cold email (/quick?l=<code>): the venue and the first name, when we have them, before they type.
+     An unknown or run-out code is silently nothing: the form is just the form. */
+  function prefill() {
+    var m = /[?&]l=([A-Za-z0-9_-]{22,64})(&|$)/.exec(root.location.search || "");
+    if (!m) return;
+    root.fetch(API + "/quick/lead?l=" + encodeURIComponent(m[1])).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.found) return;
+      if (j.first_name && !val("qName")) $("qName").value = j.first_name;
+      if (j.venue && !val("qVenue")) { $("qVenue").value = j.venue; S.typed = j.venue; S.pc = j.postcode || ""; S.suburb = j.suburb || ""; }
+      var mo = $("qMobile"); if (mo && !val("qMobile")) mo.focus();
+    }).catch(function () {});
   }
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", mount); else mount();
 })(this);
