@@ -1002,6 +1002,8 @@ def main():
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, where are you playing: nothing sideways, off the screen, cut off, under 15px or too small to tap' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            hl = waits.as_json(tf.js('(function(){var h=document.getElementById("whereHead"),cs=getComputedStyle(h);return JSON.stringify([h.getBoundingClientRect().height/parseFloat(cs.lineHeight),h.scrollWidth<=h.clientWidth+1]);})()'), [], 'HL')
+            check('%d px: "What venue are you at?" is on ONE line, not cut off (396.1)' % w, hl and hl[0] < 1.4 and hl[1], hl)
             tf.shot('lhn-where-%d.png' % w)
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
