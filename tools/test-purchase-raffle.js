@@ -11,10 +11,10 @@
 load('tools/rig-game-worker.js');
 var finished = false;
 var OTHER = '33333333-3333-4333-8333-333333333333';
-var ROLE = 'owner', STAFFID = 'staff-1', PERMS = null;
+var ROLE = 'owner', STAFFID = 'staff-1', PERMS = null, ADMIN = false;
 requireStaff = async function (env, uid, venueId) {
   if (ROLE === 'stranger') throw httpError(403, 'Not authorised: you are not staff at this venue');
-  return { id: STAFFID, role: ROLE, venue_id: venueId, auth_user_id: uid, permissions: PERMS };
+  return { id: STAFFID, role: ROLE, venue_id: venueId, auth_user_id: uid, permissions: PERMS, is_admin: ADMIN };
 };
 function req() { return { url: 'https://w/x', headers: { get: function () { return ''; } } }; }
 async function call(fn, body) {
@@ -29,7 +29,7 @@ function world(on) {
          vp_venue_groups: [], vp_venue_staff: [{ id: 'staff-1', display_name: 'Sarah' }, { id: 'staff-2', display_name: 'Tom' }],
          vp_purchase_raffles: [], vp_purchase_raffle_entrants: [], vp_purchase_raffle_entries: [], vp_purchase_raffle_draws: [],
          vp_admin_audit: [], vp_member_draws: [], vp_sessions: [], vp_bingo_draws: [] };
-  ROLE = 'owner'; STAFFID = 'staff-1'; PERMS = null;
+  ROLE = 'owner'; STAFFID = 'staff-1'; PERMS = null; ADMIN = false;
 }
 var SETUP = { venue_id: VENUE, name: 'Summer Purchase Raffle', starts_on: '2026-10-23', ends_on: '2027-04-23', draw_on: '2027-04-24',
   draw_time: '19:30', draw_place: 'the front bar', prizes: [{ title: 'A trip for two to Fiji', value_cents: 500000 }] };
@@ -103,9 +103,13 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('terms: no em dash', terms.indexOf(String.fromCharCode(0x2014)) < 0);
   show('creation is audited with who did it', audits('purchase_raffle_created').length === 1 && audits('purchase_raffle_created')[0].actor_label === 'host:staff-1');
   s = await setup({ raffle_id: r0.id, daily_cap: 3 });
+  show('the start date has passed, so a venue manager cannot change it now', s.status === 409 && /locked/.test(s.body.error) && raffle().daily_cap === null, JSON.stringify(s.body));
+  ADMIN = true;
+  s = await setup({ raffle_id: r0.id, daily_cap: 3, reason: 'venue asked: cap was wrong' });
   show('a change rewrites the terms', s.status === 200 && /no more than 3 entries a day/.test(raffle().terms_text));
   show('and the change is audited with from and to', audits('purchase_raffle_updated').length === 1 && JSON.stringify(audits('purchase_raffle_updated')[0].detail.changes.daily_cap) === '{"from":null,"to":3}', JSON.stringify(audits('purchase_raffle_updated')[0] && audits('purchase_raffle_updated')[0].detail.changes));
-  s = await setup({ raffle_id: r0.id, daily_cap: '' });
+  s = await setup({ raffle_id: r0.id, daily_cap: '', reason: 'put back' });
+  ADMIN = false;
 
   print('at the bar: a new mobile, then one tap per purchase');
   ROLE = 'host'; STAFFID = 'staff-2';
@@ -160,9 +164,9 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('a voided entry no longer counts', l.body.entries === 2);
 
   print('the daily cap counts the venue day');
-  ROLE = 'owner';
-  await setup({ raffle_id: raffle().id, daily_cap: 2 });
-  ROLE = 'host';
+  ROLE = 'owner'; ADMIN = true;
+  await setup({ raffle_id: raffle().id, daily_cap: 2, reason: 'test cap' });
+  ROLE = 'host'; ADMIN = false;
   NOWMS = Date.parse('2026-10-24T00:00:00Z');   // 11am Saturday in Sydney
   e = await enter('0412345678', null); NOWMS += 70000;
   e = await enter('0412345678', null); NOWMS += 70000;
@@ -210,8 +214,19 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   var c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id });
   show('a host cannot close entries', c.status === 403);
   ROLE = 'manager';
+  c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id, reason: 'wrong date' });
+  show('an owner or manager cannot close early either, and is told who to ring', c.status === 403 && /contact venueplay on 07 5228 3667/.test(c.body.error) && Date.parse(raffle().closes_at) > NOWMS, JSON.stringify(c));
+  ROLE = 'owner';
   c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id });
-  show('a manager closes entries early, audited', c.status === 200 && Date.parse(raffle().closes_at) <= NOWMS && audits('purchase_raffle_closed_early').length === 1);
+  show('venue owner close refused (403), nothing changed, nothing audited', c.status === 403 && Date.parse(raffle().closes_at) > NOWMS && audits('purchase_raffle_closed_early').length === 0);
+  ROLE = 'manager'; ADMIN = true;
+  c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id });
+  show('HQ close without a reason is refused', c.status === 400 && Date.parse(raffle().closes_at) > NOWMS && audits('purchase_raffle_closed_early').length === 0, JSON.stringify(c));
+  c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id, reason: 'ab' });
+  show('HQ close with a 2 character reason is refused', c.status === 400);
+  c = await call(handlePraffleClose, { venue_id: VENUE, raffle_id: raffle().id, reason: 'Venue put the wrong end date in' });
+  show('HQ close with a reason works and is audited with the reason', c.status === 200 && Date.parse(raffle().closes_at) <= NOWMS && audits('purchase_raffle_closed_early').length === 1 && audits('purchase_raffle_closed_early')[0].detail.reason === 'Venue put the wrong end date in', JSON.stringify(audits('purchase_raffle_closed_early')));
+  ADMIN = false;
   e = await call(handlePraffleEnter, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412345678' });
   show('no entries after close', e.status === 409 && /closed/.test(e.body.error));
   ROLE = 'host';
@@ -279,6 +294,27 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('no third draw for two prizes', d3.status === 409);
   var sv = await call(handlePraffleSave, Object.assign({}, SETUP, { raffle_id: R.id, name: 'Changed' }));
   show('a drawn raffle\'s settings cannot change', sv.status === 409 && R.name !== 'Changed');
+
+  print('terms are locked once the raffle starts or has an entry; HQ can still change them, with a reason');
+  world(true); ROLE = 'owner';
+  var FUT = { starts_on: '2026-10-30', ends_on: '2027-04-23', draw_on: '2027-04-24' };
+  s = await setup(FUT);
+  show('before the start with no entries: created', s.status === 200 && raffle().starts_at > new Date(NOWMS).toISOString());
+  s = await setup(Object.assign({ raffle_id: raffle().id, name: 'Renamed', prizes: [{ title: 'A Harley' }] }, FUT));
+  show('before the start with no entries: the venue edits freely', s.status === 200 && raffle().name === 'Renamed' && raffle().prizes[0].title === 'A Harley', JSON.stringify(s.body));
+  DB.vp_purchase_raffle_entries.push({ id: 'ev1', raffle_id: raffle().id, entrant_id: 'x', venue_id: VENUE, voided_at: '2026-10-23T02:00:00Z', venue_day: '2026-10-23' });
+  s = await setup(Object.assign({ raffle_id: raffle().id, name: 'Again' }, FUT));
+  show('before the start but with an entry (even a voided one): the venue is refused with the exact words', s.status === 409 && s.body.error === 'This raffle has started, so its dates, prizes and terms are locked. To change them, contact venueplay on 07 5228 3667.' && raffle().name === 'Renamed', JSON.stringify(s.body));
+  DB.vp_purchase_raffle_entries.length = 0;
+  NOWMS = Date.parse('2026-10-30T05:00:00Z');
+  s = await setup(Object.assign({ raffle_id: raffle().id, name: 'Late' }, FUT));
+  show('after the start date: the venue is refused', s.status === 409 && /locked/.test(s.body.error) && raffle().name === 'Renamed');
+  ADMIN = true;
+  s = await setup(Object.assign({ raffle_id: raffle().id, name: 'HQ no reason' }, FUT));
+  show('after the start: HQ without a reason is refused', s.status === 400 && raffle().name === 'Renamed');
+  s = await setup(Object.assign({ raffle_id: raffle().id, name: 'Fixed by HQ', reason: 'Venue typed the wrong name' }, FUT));
+  show('after the start: HQ with a reason works and the reason is audited', s.status === 200 && raffle().name === 'Fixed by HQ' && audits('purchase_raffle_updated').slice(-1)[0].detail.reason === 'Venue typed the wrong name', JSON.stringify(s.body));
+  ADMIN = false;
 
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });

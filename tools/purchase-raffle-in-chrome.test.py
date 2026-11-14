@@ -66,6 +66,14 @@ def shot(sid, name):
     if SHOTS: time.sleep(0.4); R.shot(sid, os.path.join(SHOTS, name))
 def keypad(sid, digits):
     for d in digits: click(sid, '.key[data-k="%s"]' % d)
+def hq_close(sid):
+    # Closing early is venueplay HQ only now (Dean 14 Nov). The owner has no button, so this stands in for HQ:
+    # the raffle row is closed in the fake database the way /host/praffle/close does it for an admin.
+    rows = line({'table': 'vp_purchase_raffles'})['body'] or []
+    for r in rows:
+        r['closes_at'] = datetime.datetime.utcfromtimestamp((int(time.time() * 1000) - 1000) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    line({'seed': 'vp_purchase_raffles', 'rows': rows, 'replace': True})
+    js(sid, 'location.reload()'); time.sleep(3)
 def errs(sid): return js(sid, 'JSON.stringify(window.__errs||[])')
 
 try:
@@ -80,7 +88,7 @@ try:
     setv(sid, '#prizes .pt', 'Trip for two to Fiji'); setv(sid, '#prizes .pv', '5000')
     click(sid, '#addPrize'); setv(sid, '#prizes .prize:nth-child(2) .pt', '$500 bar tab'); setv(sid, '#prizes .prize:nth-child(2) .pv', '500')
     setv(sid, '#sPlace', 'the main bar at Deepwater Hotel')
-    click(sid, '#saveBtn')
+    click(sid, '#saveBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')   # the first-create confirm
     ok('saving writes the terms onto the page', R.until(sid, '/one entry/.test(document.getElementById("termsBox").textContent)', 20) is True, text(sid, '#setupMsg'))
     terms = text(sid, '#termsBox') or ''
     ok('the terms say one entry per purchase, 18 or over, the draw place and time, and both prizes',
@@ -216,9 +224,9 @@ try:
     # The venue's ONE TV link, sitting on the ads, as it is on the wall.
     ttid, tsid = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
     R.until(tsid, 'document.readyState==="complete"', 30); time.sleep(2)
-    click(sid, '#tabs button[data-tab="setup"]'); R.until(sid, visible('#closeBtn'), 10)
-    click(sid, '#closeBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
-    time.sleep(1)
+    click(sid, '#tabs button[data-tab="setup"]'); time.sleep(1)
+    ok('a venue owner has no close-early button, and the started raffle is locked read-only', js(sid, visible('#closeBtn')) is not True and js(sid, 'document.getElementById("sName").disabled') is True, text(sid, '#setupMsg'))
+    hq_close(sid)
     click(sid, '#tabs button[data-tab="draw"]')
     ok('Draw is ready once entries are closed', R.until(sid, '!document.getElementById("drawBtn").disabled', 15) is True, text(sid, '#drawWarn'))
     ok('the button names the first prize', 'Trip for two to Fiji' in (text(sid, '#drawBtn') or ''), text(sid, '#drawBtn'))

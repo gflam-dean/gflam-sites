@@ -1220,7 +1220,7 @@
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle.js": {
-  "checks": 92,
+  "checks": 103,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {

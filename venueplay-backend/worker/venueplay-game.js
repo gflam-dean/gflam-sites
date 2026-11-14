@@ -12086,7 +12086,7 @@ async function handlePraffleState(request, env, json) {
   const tz = g.venue.timezone;
   const list = await sbGet(env, 'vp_purchase_raffles', 'venue_id=eq.' + enc(g.venue.id) + '&status=neq.archived&select=' + PRAFFLE_COLS + '&order=created_at.desc&limit=1');
   const r = list[0] || null;
-  const out = { enabled: true, can_manage: g.canManage, venue: { id: g.venue.id, name: g.venue.name, slug: g.venue.slug, timezone: tz || null },
+  const out = { enabled: true, can_manage: g.canManage, is_admin: !!g.staff.is_admin, venue: { id: g.venue.id, name: g.venue.name, slug: g.venue.slug, timezone: tz || null },
     today: praffleLocalDay(tz), raffle: null };
   if (!r) return json(out);
   out.raffle = r;
@@ -12124,10 +12124,18 @@ async function handlePraffleSave(request, env, json) {
   const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
   const tz = g.venue.timezone;
   let prior = null;
+  let lockReason = null;
   if (b.raffle_id) {
     prior = JSON.parse(JSON.stringify(await praffleLoad(env, String(b.raffle_id))));   // a copy: the audit compares before with after
     if (prior.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
     if (prior.status !== 'open') return json({ error: 'This raffle has been drawn, so its settings are part of the record and cannot change.' }, 409);
+    /* Dean 14 Nov: once a raffle has started, or has any entry (voided or not), its terms are locked for a venue login. Only HQ changes them, with a reason. */
+    const anyEntry = await sbCount(env, 'vp_purchase_raffle_entries', 'raffle_id=eq.' + enc(prior.id) + '&select=id');
+    if (new Date(prior.starts_at).getTime() <= Date.now() || anyEntry > 0) {
+      if (!g.staff.is_admin) return json({ error: 'This raffle has started, so its dates, prizes and terms are locked. To change them, contact venueplay on 07 5228 3667.' }, 409);
+      lockReason = praffleCleanText(b.reason, 300);
+      if (lockReason.length < 3) return json({ error: 'Give a reason (3 to 300 characters) for changing a raffle that has started.' }, 400);
+    }
   }
   const name = praffleCleanText(b.name, 120);
   if (!name) return json({ error: 'Give the raffle a name, for example "Summer Purchase Raffle".' }, 400);
@@ -12169,7 +12177,7 @@ async function handlePraffleSave(request, env, json) {
   const changed = {};
   if (prior) Object.keys(row).forEach(function (k) { if (k !== 'updated_at' && k !== 'terms_text' && JSON.stringify(prior[k]) !== JSON.stringify(saved[k])) changed[k] = { from: prior[k], to: saved[k] }; });
   await praffleAudit(env, g.staff, prior ? 'purchase_raffle_updated' : 'purchase_raffle_created', g.venue.id,
-    { raffle_id: saved.id, name: saved.name, changes: prior ? changed : row });
+    { raffle_id: saved.id, name: saved.name, changes: prior ? changed : row, reason: lockReason || undefined });
   return json({ ok: true, raffle: saved });
 }
 
@@ -12308,6 +12316,10 @@ async function handlePraffleClose(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  /* Dean 14 Nov: closing early is venueplay HQ only. A venue contacts us. */
+  if (!g.staff.is_admin) return json({ error: 'Entries close on the end date in your terms. To close early, contact venueplay on 07 5228 3667.' }, 403);
+  const reason = praffleCleanText(b.reason, 300);
+  if (reason.length < 3) return json({ error: 'Give a reason (3 to 300 characters) for closing early.' }, 400);
   const r = await praffleLoad(env, String(b.raffle_id || ''));
   if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
   if (r.status !== 'open') return json({ error: 'This raffle has already been drawn.' }, 409);
@@ -12317,7 +12329,7 @@ async function handlePraffleClose(request, env, json) {
   if (new Date(r.starts_at).getTime() >= Date.now()) patch.starts_at = new Date(Date.now() - 1000).toISOString();
   if (new Date(r.draw_at).getTime() < Date.now()) patch.draw_at = now;
   await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id) + '&status=eq.open', patch);
-  await praffleAudit(env, g.staff, 'purchase_raffle_closed_early', g.venue.id, { raffle_id: r.id, name: r.name, was_closing: r.closes_at, closed_at: now });
+  await praffleAudit(env, g.staff, 'purchase_raffle_closed_early', g.venue.id, { raffle_id: r.id, name: r.name, was_closing: r.closes_at, closed_at: now, reason: reason });
   return json({ ok: true });
 }
 
