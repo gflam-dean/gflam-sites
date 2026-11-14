@@ -219,7 +219,7 @@ pass("under the title, '5 questions, 20 seconds each' is the one honest line (39
   /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Start typing your pub or club"/.test(PAGE));
 print("\nINBOX 405 UPDATES 4 TO 8");
 pass("4.1 'Can't find your venue? Add it' sits straight under the search box (before the hint line), 3/4 the placeholder's size (12px of 16px), its tap area reaching past the text",
-  PAGE.indexOf('id="whereIn"') < PAGE.indexOf('id="notListed"') && PAGE.indexOf('id="notListed"') < PAGE.indexOf('id="whereHint"') && /#whereIn::placeholder\{font-size:16px\}/.test(css) && /\.addlink\{font-size:12px;/.test(css) && /\.addlink::before\{content:"";position:absolute;left:0;right:0;top:-10px;bottom:-10px\}/.test(css));
+  PAGE.indexOf('id="whereIn"') < PAGE.indexOf('id="notListed"') && PAGE.indexOf('id="notListed"') < PAGE.indexOf('id="whereHint"') && /#whereIn::placeholder\{font-size:16px\}/.test(css) && /\.addlink\{font-size:12px;/.test(css) && /\.addlink::before\{content:"";position:absolute;left:0;right:0;top:0;bottom:-28px\}/.test(css));
 pass("4.2 Add your venue is compact: no labels, two small fields and a small button (42px), a 15px heading",
   !/<label for="lead/.test(PAGE) && /\.addcard \.vp-field\{[^}]*min-height:42px/.test(css) && /\.addcard \.btn\{[^}]*min-height:42px/.test(css) && /\.addcard h2\{[^}]*font-size:15px/.test(css));
 pass("4.3 buttons are smaller than before everywhere (48px, 17px, the join step's pill; ghost 44px)", /\.btn,\.vp-step \.vp-cta\{[^}]*min-height:48px;[^}]*font-size:17px/.test(css) && /\.btn\.ghost\{[^}]*min-height:44px/.test(css));
@@ -234,6 +234,16 @@ pass("6 the END show: the real game's phone show again before the score, \"THAT'
   /if \(ST && ST\.on && !endShow\) \{/.test(PAGE) && /words: \{ big: 'THAT\\u2019S A WRAP', small: 'COASTER TRIVIA' \}, layout: 'phone'/.test(PAGE) && /\(ST\.phoneSeconds \|\| 2\.3\) \* 1000\) \+ 120\);\n      return;\n    \}\n    showScore\(\);/.test(PAGE));
 pass("8 every coaster sound is at half volume: the page sets VP_SOUND_GAIN 0.5 and vp-celebrate.js multiplies each sound by it (unchanged where no page sets it)",
   /window\.VP_SOUND_GAIN = 0\.5/.test(PAGE) && /root\.VP_SOUND_GAIN > 0 \? root\.VP_SOUND_GAIN : 1/.test(find("venueplay/app/vp-celebrate.js")));
+pass("NO DRINK words anywhere a person or a link preview can read (liquor licensing): the title, description, og and twitter text and the visible words say none of drink, shout, pour, beer, pint, booze, cheers",
+  (function () {
+    var head = (PAGE.match(/<title>[^<]*<\/title>|<meta [^>]*content="[^"]*"/g) || []).join(" ");
+    var vis = PAGE.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<style[\s\S]*?<\/style>/g, "").replace(/<!--[\s\S]*?-->/g, "");
+    return !/\b(drinks?|shouts?|pour(ing)?|beer|pints?|booze|cheers)\b/i.test(head) && !/\b(drinks?|shouts?|pour(ing)?|beer|pints?|booze|cheers)\b/i.test(vis.replace(/<[^>]+>/g, " "));
+  })() && /name="description" content="Five quick trivia questions\. Points for speed, a board for your pub tonight/.test(PAGE));
+pass("the answers use the trivia phone's sizes: 24px, 21px for a longer answer (over 22 letters), 18px for the longest (over 40)",
+  /font-size:24px;line-height:1\.12;/.test(css) && /\.panswers\.alen-2 \.ans\{font-size:21px\}/.test(css) && /\.panswers\.alen-3 \.ans\{font-size:18px\}/.test(css) && /alen > 40 \? ' alen-3' : alen > 22 \? ' alen-2' : ''/.test(PAGE));
+pass("the offers line shrinks to ONE line (down to 12px) and a name too long even then wraps at 15px, never cut; the venue name line wraps too",
+  /while \(sz > 12 && l\.scrollWidth > l\.clientWidth \+ 1\)/.test(PAGE) && /l\.style\.whiteSpace = 'normal'; t\.style\.fontSize = '15px'/.test(PAGE) && /\.vline span\{min-width:0;overflow-wrap:anywhere\}/.test(css));
 pass("the end has no second sign-up card", PAGE.indexOf('id="optinCard"') < 0);
 
 print("\nONE SOUND PLAYER, A NAMED SLOT PER MOMENT (INBOX 317/318)");
