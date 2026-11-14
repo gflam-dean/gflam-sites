@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""YOUR DETAILS: ONE TICK, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026, 6 Nov release).
+"""YOUR DETAILS: ONE TICK, "Send me offers from {venue}" (Dean, 14 Nov 2026, INBOX 405 update 3: no age words; was "... I'm 18 or over." from 4 Nov, vpc-2-6nov).
 
 The 3 Nov step had two ticks ("I'm 18 or over" and "Keep me posted"). Dean folded 18+ into the offers
 opt-in: one optional tick, built once in venueplay/app/vp-consent.js, consent version vpc-2-6nov.
@@ -167,9 +167,9 @@ def sent(code, secs=6):
     return []
 
 PAGES = [('bingo', '/play'), ('musical', '/app/musical/play.html'), ('trivia', '/app/trivia/play.html')]
-WORDS = "Send me offers from The Test Hotel. I'm 18 or over."
-NO_NAME_WORDS = "Send me offers from this venue. I'm 18 or over."
-VERSION = 'vpc-2-6nov'
+WORDS = "Send me offers from The Test Hotel"
+NO_NAME_WORDS = "Send me offers from this venue"
+VERSION = 'vpc-3-14nov'
 ISLAND = 59   # the iPhone's Dynamic Island and status bar: nothing a person taps sits in the top 59px
 # A room code is six letters from the code alphabet (no O, 0, 1, I, L, B, 8): three say the scenario,
 # three count, so every page gets codes nobody else used.
@@ -200,7 +200,7 @@ def page(game, path):
             ok('A %s %d: not ticked, in the markup or by a script' % (game, w),
                L and all(x['checked'] is False and x['defaultChecked'] is False for x in L), L)
             st = ask(sid, STEP_TEXT) or ''
-            ok('A %s %d: the step says 18 once, inside the offers tick, and nowhere else' % (game, w), st.count('18') == 1, st)
+            ok('A %s %d: the step says NOTHING about 18 or an age, anywhere (Dean, 14 Nov 2026: "we decided that ages ago")' % (game, w), '18' not in st and 'age' not in st.lower().replace('manage','').replace('page','').replace('message',''), st)
             if len(L) == 1:
                 x = L[0]
                 ok('G %s %d: on screen, inside the screen width' % (game, w), x['r']['w'] > 0 and x['r']['l'] >= 0 and x['r']['r'] <= t['W'] + 0.5, x['r'])

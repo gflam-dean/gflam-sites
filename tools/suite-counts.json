@@ -320,7 +320,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 155,
+  "checks": 184,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {
@@ -664,7 +664,7 @@
   "counted_by": "lines"
  },
  "tools/test-any-line-15nov.js": {
-  "checks": 60,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-archive-sweep-fails-closed.js": {
@@ -1992,11 +1992,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 115,
+  "checks": 128,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 163,
+  "checks": 164,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

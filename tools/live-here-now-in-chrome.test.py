@@ -15,7 +15,7 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
     to HQ's review list and the round plays with no board; "Play now" shows only while the search is down;
     the next scan offers the same venue first
   - the venue's own sign-up at the end (INBOX 232): only where the Worker says it is switched on, the
-    phones' one tick unticked ("Send me offers from The Mini Bar. I'm 18 or over."), its consent
+    phones' one tick unticked ("Send me offers from The Mini Bar", no age words, Dean 14 Nov), its consent
     version sent with it; never at a venue that is not on venueplay
   - the new look: the answers in the TV's full colours, the right one turns GREEN and says so, a
     wrong pick is outlined in its own colour and tagged; "Correct! +145" once the Worker answers;
@@ -104,7 +104,9 @@ PLACES = [
     {'place': 'l:103', 'name': 'Royal Oak Tavern', 'suburb': 'Ballarat', 'postcode': '', 'state': 'VIC', 'on': False},
     {'place': BODALLA, 'name': 'Bodalla Pub', 'suburb': 'Bodalla', 'postcode': '', 'state': 'NSW', 'on': False},
 ]
-OPTIN = {MINI: {'email': True, 'mobile': False, 'marketing_optin': True}}   # the venue HQ switched the sign-up on for
+LONGPUB = 'v:88888888-8888-4888-8888-888888888888'
+PLACES.append({'place': LONGPUB, 'name': 'The Grand Imperial Hotel Bowls Club', 'suburb': '', 'postcode': '', 'state': 'NSW', 'on': True})
+OPTIN = {LONGPUB: {'email': True, 'mobile': False, 'marketing_optin': True}, MINI: {'email': True, 'mobile': False, 'marketing_optin': True}}   # the venue HQ switched the sign-up on for
 DUCK = 'c:99999999-9999-4999-8999-999999999999'
 NAMES = dict((p['place'], p['name']) for p in PLACES)
 NAMES[DUCK] = 'Duck and Drake'
@@ -278,6 +280,7 @@ def pre(clock_ms, api, block_storage=False):
 class Tab(object):
     def __init__(self, b, base, api, w=375, h=740, clock=T0, block_storage=False, mobile=True):
         self.b, self.base, self.api, self.h = b, base, api, h
+        self.w, self.mobile = w, mobile
         self.tid = b.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
         self.sid = b.call('Target.attachToTarget', {'targetId': self.tid, 'flatten': True})['sessionId']
         b.call('Page.enable', session=self.sid)
@@ -345,6 +348,22 @@ class Tab(object):
         with open(os.path.join(A.shots, name), 'wb') as f:
             f.write(base64.b64decode(d))
 
+    def shot_full(self, name):
+        """The whole page, top to bottom (the end screen scrolls: the hero, Share and the board with the player's own row)."""
+        if not A.shots:
+            return
+        self.fonts()
+        full = self.js('Math.ceil(Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.getElementById("app").getBoundingClientRect().bottom+window.scrollY))')
+        full = int(full) if isinstance(full, (int, float)) else self.h
+        # a phone window is as tall as the page for this one picture, then goes back (a phone's own screenshot of the scrolled page)
+        self.b.call('Emulation.setDeviceMetricsOverride', {'width': self.w, 'height': min(max(full, self.h), 3000), 'deviceScaleFactor': 2, 'mobile': self.mobile}, session=self.sid)
+        time.sleep(0.4)
+        d = self.b.call('Page.captureScreenshot', {'format': 'png'}, session=self.sid)['data']
+        self.b.call('Emulation.setDeviceMetricsOverride', {'width': self.w, 'height': self.h, 'deviceScaleFactor': 2, 'mobile': self.mobile}, session=self.sid)
+        os.makedirs(A.shots, exist_ok=True)
+        with open(os.path.join(A.shots, name), 'wb') as f:
+            f.write(base64.b64decode(d))
+
     def close(self):
         self.b.close_tab(self.tid)
 
@@ -371,8 +390,8 @@ STATE = r'''(function(){
     kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
     sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
     optin:shown("optinEmailRow")||shown("optinMobileRow"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"), lastRow:shown("lastRow"),
-    nameSub:txt("nameSub"), optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
-    leadDone:shown("leadDone")?txt("leadDone"):"", notListed:shown("notListed"),
+    optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
+    notListed:shown("notListed"),
     tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
     next:document.getElementById("joinGame").getAttribute("href"), owner:document.getElementById("ownerLink").getAttribute("href"),
     ownerText:txt("ownerLink"), inputs:Array.prototype.filter.call(document.querySelectorAll("input"),function(i){return i.offsetParent!==null;}).length,
@@ -382,7 +401,7 @@ STATE = r'''(function(){
 
 FIT = r'''(function(){
   var vw=innerWidth, out=[], clipped=[], small=[];
-  Array.prototype.forEach.call(document.querySelectorAll("header *, main *, footer *"),function(e){
+  Array.prototype.forEach.call(document.querySelectorAll("#app *"),function(e){
     var r=e.getBoundingClientRect(); if(!r.width||!r.height) return;
     var cs=getComputedStyle(e); if(cs.visibility==="hidden"||cs.display==="none") return;
     if(r.left<-0.5||r.right>vw+0.5) out.push((e.id||e.className||e.tagName)+" "+Math.round(r.left)+".."+Math.round(r.right));
@@ -390,9 +409,9 @@ FIT = r'''(function(){
       clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
     if(/^(BUTTON|A)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" text wider than its button");
     var own=Array.prototype.some.call(e.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});
-    if(own && parseFloat(cs.fontSize)<15) small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
+    if(own && parseFloat(cs.fontSize)<15 && !e.closest('#optinTick') && e.id!=='notListed') small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
   });
-  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && r.height<54;})
+  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && !/linkbtn|sndtoggle/.test(b.className) && r.height<40;})
     .map(function(b){return (b.id||b.className)+" "+Math.round(b.getBoundingClientRect().height);});
   return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6), small:small.slice(0,6), short:tall.slice(0,6)});
 })()'''
@@ -561,12 +580,12 @@ def main():
     print('\nTHE PAGE FILE')
     check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
           '<script src="/app/vp-analytics.js" defer></script>' in HTML and 'vp-pixel' not in HTML and 'fbq(' not in HTML)
-    check('the foot says "(c) 2026 venueplay" and nothing of Gflam (Dean, 14 Nov 2026, INBOX 396.9: no Gflam customer-facing)',
-          '&copy; <span id="vp-year"></span> venueplay' in HTML and 'Gflam' not in HTML)
+    check('INBOX 405.5/405.6: NO footer at all (no Help, Privacy, Terms, no (c) line) and nothing of Gflam',
+          '<footer' not in HTML and '&copy;' not in HTML and 'href="/help"' not in HTML and 'href="/privacy"' not in HTML and 'href="/terms"' not in HTML and 'Gflam' not in HTML)
     check('no "60-second" and no "Coaster trivia" anywhere, and no top bar: our logo (or the venue\'s) sits at the foot (396)',
           '60-second' not in HTML and 'Coaster trivia' not in HTML and '<header' not in HTML and 'id="venueLogo"' in HTML)
-    check('the foot carries the venueplay wordmark (data-vp-mark="wordmark"), linked home',
-          'data-vp-mark="wordmark"' in HTML and 'class="mark" id="footMark" href="/" aria-label="venueplay home"' in HTML)
+    check('the game\'s own foot carries the venueplay wordmark (data-vp-mark="wordmark") at the bottom, as the trivia phone',
+          'data-vp-mark="wordmark"' in HTML and '<div class="pfoot" id="footMark">' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
            if l.strip() and not l.lstrip().startswith('#')]
     check('_redirects sends /here (and /here.html), the address printed on the coaster, to /live-here-now with a 301',
@@ -610,8 +629,8 @@ def main():
         check('...and its heading reads exactly "What venue are you at?" (never "Where are you playing?")', wh == 'What venue are you at?', wh)
         ph = t.js('document.getElementById("whereIn").getAttribute("placeholder")')
         sub = t.js('(function(){var h=document.getElementById("whereHead");var n=h.nextElementSibling;return n?n.tagName+" "+(n.className||""):"";})()')
-        check('the search box carries "Type 3 letters of your pub or club" as its placeholder and no helper line sits under the heading (396.2)',
-              ph == 'Type 3 letters of your pub or club' and not (sub or '').startswith('P psub'), (ph, sub))
+        check('the search box carries "Start typing your pub or club" as its placeholder and no helper line sits under the heading (INBOX 405.3)',
+              ph == 'Start typing your pub or club' and not (sub or '').startswith('P '), (ph, sub))
         check('our wordmark is at the foot (no venue yet), not a top bar', s.get('foot') == 'ours' and t.js('document.querySelector("header")') is None, s.get('foot'))
         one = t.js('(function(){var h=document.getElementById("whereHead"),r=h.getBoundingClientRect(),cs=getComputedStyle(h);return JSON.stringify([r.height/parseFloat(cs.lineHeight),h.scrollWidth<=h.clientWidth+1,cs.color]);})()')
         one = waits.as_json(one, [], 'ONE')
@@ -642,8 +661,9 @@ def main():
         s = wait(t, lambda s: s.get('view') == 'vName' and s.get('optin'))
         check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
               s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and not s.get('lastRow') and
-              s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
-        check('it says the details go to the venue, never on the board', 'go to The Mini Bar, never on the board' in s.get('nameSub', ''), s.get('nameSub'))
+              s.get('optinTick') == "Send me offers from The Mini Bar" and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
+        gone = t.js('document.getElementById("vName").textContent.indexOf("never on the board")<0 && document.getElementById("vName").textContent.indexOf("goes on the board")<0')
+        check('the name step does NOT carry the long "details go to the venue, never on the board" lines (INBOX 405.8)', gone is True, gone)
         f = waits.as_json(t.js(FIT), {}, "FIT")
         check('the details step fits one screen at 375 (Play on screen, nothing cut off)', not f['out'] and not f['clipped'] and
               t.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight'), f)
@@ -660,8 +680,8 @@ def main():
         t.tap_id('nameBtn')
         s = wait_question(t)
         sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
-        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-2-6nov) go with the round\'s secret',
-              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-2-6nov' and
+        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-3-14nov) go with the round\'s secret',
+              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-3-14nov' and
               sent[0].get('token', '').startswith('tok'), sent)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
         check('picking it starts a round on its board, sending only the first name, the place and five question ids',
@@ -770,11 +790,11 @@ def main():
             s = wait(tsh, lambda s: s.get('view') == 'vName' and s.get('optin'))
             if mode == 'ok' and dev == 'iphone':
                 hd = waits.as_json(tsh.js('(function(){var h=document.getElementById("nameHead"),b=document.getElementById("nameBtn"),t=document.querySelector("#optinTick input"),'
-                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,document.getElementById("nameSub").textContent.slice(0,34),'
+                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,'
                                          'getComputedStyle(b).backgroundColor,t?getComputedStyle(t).borderTopColor:"",b.getBoundingClientRect().height]);})()'), [], 'NAMEHEAD')
-                check('the name step: heading "Ready to play?" in WHITE, "5 questions, 20 seconds each", the helper "Your first name goes on the board.", the tick box ringed in the brand pink and Play the bright brand pink, 44 px or taller',
-                      hd and hd[0] == 'Ready to play?' and hd[1] == 'rgb(255, 255, 255)' and hd[2] == '5 questions, 20 seconds each' and hd[3] == 'Your first name goes on the board.' and
-                      hd[4] == 'rgb(255, 31, 142)' and hd[5] == 'rgb(255, 31, 142)' and hd[6] >= 44, hd)
+                check('the name step: heading "Ready to play?" in WHITE, "5 questions, 20 seconds each", no helper lines, the tick box ringed in the brand pink and Play the bright brand pink, 44 px or taller',
+                      hd and hd[0] == 'Ready to play?' and hd[1] == 'rgb(255, 255, 255)' and hd[2] == '5 questions, 20 seconds each' and
+                      hd[3] == 'rgb(255, 31, 142)' and hd[4] == 'rgb(255, 31, 142)' and hd[5] >= 44, hd)
             tsh.type_into('nameIn', 'Sam')
             tsh.type_into('optinEmail', 'sam@example.com')
             tsh.tap_id('nameBtn')
@@ -835,6 +855,85 @@ def main():
         check('then question 1 shows with all four answers and the round started once', s.get('id') and len(s.get('btns', [])) == 4 and len([x for x in FAKE['log'] if x[1] == '/coaster/start']) == 1, s.get('view'))
         tst.close()
 
+        print('\nA 35-LETTER VENUE NAME: THE OFFERS LINE NEVER CUT, THE TICK ALWAYS THERE (design review, MUST FIX 3)')
+        for lw, lh in ((320, 568), (375, 667)):
+            clear_storage(b, base)
+            tl = Tab(b, base, api, w=lw, h=lh)
+            tl.go('/live-here-now')
+            where_step(tl, 'grand', 'The Grand Imperial')
+            wait(tl, lambda s: s.get('view') == 'vName' and s.get('optin'))
+            time.sleep(0.3)
+            tk = waits.as_json(tl.js('(function(){var l=document.querySelector("#optinTick label.optin"),sp=l.querySelector("span"),cb=l.querySelector("input"),r=cb.getBoundingClientRect(),cs=getComputedStyle(sp);'
+                                     'return JSON.stringify([sp.textContent,l.scrollWidth<=l.clientWidth+1,Math.round(sp.getBoundingClientRect().height/parseFloat(cs.lineHeight)),r.width>=20&&r.left>=0&&r.right<=innerWidth,parseFloat(cs.fontSize)]);})()'), [], 'LONGTICK')
+            check('%d px, a 35-letter venue name: the offers line is never cut off, takes at most two lines, and the tick box is on screen' % lw,
+                  tk and tk[0] == 'Send me offers from The Grand Imperial Hotel Bowls Club' and tk[1] and tk[2] <= 2 and tk[3] and tk[4] >= 12, tk)
+            tl.shot('lhn-longname-%d.png' % lw)
+            tl.close()
+
+        print('\nBOTH SHOWS ON: ONE FULL PLAY AT 375 AND 430 (INBOX 405 updates 5 and 6), THEN THE SHOWS AT FULL BRIGHTNESS FOR THE REVIEW PAGE')
+        HOOK = ("document.addEventListener('DOMContentLoaded',function(){window.__T=[];var S=window.VPSting;"
+                "if(S){var o=S.start;S.start=function(a){window.__T.push(['show',JSON.stringify((a||{}).words||{}),performance.now()]);return o.apply(S,arguments);};}"
+                "var seen={q:0,score:0};setInterval(function(){var q=document.getElementById('q'),sc=document.getElementById('score');"
+                "if(!seen.q&&q&&!q.hidden){seen.q=1;window.__T.push(['q',document.getElementById('pqCdNum').textContent,performance.now()]);}"
+                "if(!seen.score&&sc&&!sc.hidden){seen.score=1;window.__T.push(['score','',performance.now()]);}},30);});")
+        for sw, sh in ((375, 667), (430, 932)):
+            clear_storage(b, base)
+            FAKE['log'][:] = []
+            tsw = Tab(b, base, api, w=sw, h=sh)
+            tsw.b.call('Page.addScriptToEvaluateOnNewDocument', {'source': HOOK}, session=tsw.sid)
+            tsw.go('/live-here-now', sting=True)
+            where_step(tsw, 'tug', 'Tugun Tavern')
+            s = wait(tsw, lambda s: s.get('view') == 'vName')
+            tsw.type_into('nameIn', 'Pip')
+            tsw.tap_id('nameBtn')
+            ids_sw, s, _ = play_round(tsw, [True, True, False, True, False])
+            T = waits.as_json(tsw.js('JSON.stringify(window.__T||[])'), [], 'T')
+            snd = waits.as_json(tsw.js('JSON.stringify([localStorage.getItem("vpqMute"),window.VP_SOUND_GAIN])'), [], 'SND')
+            kinds = [x[0] for x in T]
+            check('%d px, a full play with both shows on: the start show, the question, the end show, the score, in that order' % sw,
+                  kinds == ['show', 'q', 'show', 'score'] and 'TRIVIA' in T[0][1] and 'WRAP' in T[2][1], T)
+            if kinds == ['show', 'q', 'show', 'score']:
+                hold_in = T[1][2] - T[0][2]
+                hold_out = T[3][2] - T[2][2]
+                check('%d px: the START show is held about as long as the real game holds it (2.3 s) before question 1, and the 20 s clock starts only after it (the ring reads 20 or 19 at the first question)' % sw,
+                      hold_in >= 2300 and T[1][1] in ('20', '19'), (round(hold_in), T[1][1]))
+                check('%d px: the END show is held the same 2.3 s before the score, no flash-by' % sw, hold_out >= 2300, round(hold_out))
+            check('%d px: coaster sound starts ON (stored 0) and every sound is at half volume (gain 0.5)' % sw, snd and snd[0] == '0' and snd[1] == 0.5, snd)
+            tsw.close()
+        # the same shows with the show's own clock stepped to full brightness (the recorder switch), for the review page
+        for sw, sh in ((375, 667), (430, 932)):
+            clear_storage(b, base)
+            tsm = Tab(b, base, api, w=sw, h=sh)
+            tsm.b.call('Page.addScriptToEvaluateOnNewDocument', {'source': 'window.__vpStingManual=true;'}, session=tsm.sid)
+            tsm.go('/live-here-now', sting=True)
+            where_step(tsm, 'tug', 'Tugun Tavern')
+            wait(tsm, lambda s: s.get('view') == 'vName')
+            tsm.type_into('nameIn', 'Pip')
+            tsm.tap_id('nameBtn')
+            tsm.until('!!document.getElementById("vppL1")', 6)
+            tsm.js('VPSting.frame(1.0)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showstart-%d.png' % sw)
+            tsm.js('VPSting.frame(2.1)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showstart2-%d.png' % sw)
+            tsm.js('VPSting.frame(9)')
+            s = wait_question(tsm)
+            # answer the five by tapping, then catch the end show
+            for _q in range(5):
+                st = wait(tsm, lambda x: x.get('id') and len(x.get('btns', [])) == 4 and not x['btns'][0]['disabled'], 8)
+                if not st.get('btns'):
+                    break
+                b0 = st['btns'][0]
+                tsm.tap(b0['x'], b0['y'])
+                time.sleep(1.6)
+            tsm.until('!!document.getElementById("vppL1")', 8)
+            tsm.js('VPSting.frame(1.6)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showend-%d.png' % sw)
+            tsm.js('VPSting.frame(9)')
+            tsm.close()
+
         print('\nNOT ON OUR LIST: "CAN\'T FIND YOUR VENUE? ADD IT", AND JUST PLAY')
         clear_storage(b, base)
         tn = Tab(b, base, api)
@@ -855,10 +954,8 @@ def main():
         err = tn.js('document.getElementById("leadErr").textContent')
         check('no suburb: the form says so and sends nothing', err == 'Type the suburb or town.' and len([x for x in FAKE['log'] if x[1] == '/coaster/lead']) == n_lead, err)
         tn.type_into('leadSuburb', 'Fitzroy')
-        tn.js('(function(){var s=document.getElementById("leadState");s.value="VIC";s.dispatchEvent(new Event("change"));})()')
         err2 = tn.js('document.getElementById("leadErr").textContent')
         check('once the suburb is typed, the "Type the suburb or town." line goes', err2 == '', err2)
-        tn.type_into('leadSite', 'duckanddrake.com.au')
         tn.shot('lhn-addit-375.png')
         tn.js('(function(){var e=document.getElementById("leadBtn");if(e)e.scrollIntoView({block:"end"});})()')
         time.sleep(0.2)
@@ -866,8 +963,8 @@ def main():
         tn.tap_id('leadBtn')
         s = wait(tn, lambda s: s.get('view') == 'vName', 4)
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
-        check('Add it sends the name, suburb, state and website for HQ to review, and says thanks',
-              lead and lead[-1] == {'name': 'Duck and Drake', 'suburb': 'Fitzroy', 'state': 'VIC', 'website': 'duckanddrake.com.au'} and
+        check('Add it sends ONLY the name and suburb the player typed (the state is the phone own time-zone guess), for HQ to review, and says thanks',
+              lead and lead[-1].get('name') == 'Duck and Drake' and lead[-1].get('suburb') == 'Fitzroy' and lead[-1].get('state') in ('NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT') and lead[-1].get('website') == '' and sorted(lead[-1].keys()) == ['name', 'state', 'suburb', 'website'] and
               s.get('addedPill') and s.get('nameKick') == 'Playing at Duck and Drake', (lead[-1:], s.get('addedPill'), s.get('nameKick')))
         check('after Add: just "Added", straight to the name step (no "we will check it"), the old search box and its "no venue" line cleared',
               tn.js('document.getElementById("addedPill").textContent') == 'Added' and 'check it' not in (tn.js('document.getElementById("vName").textContent') or '') and
@@ -942,7 +1039,7 @@ def main():
               re.match(r"^Time's up\. The answer was [ABCD]\.$", s.get('verdict') or '') and sent and sent[0].get('a') == -1 and tr.js('!!document.querySelector("#answers .ans.right")'), (s.get('verdict'), sent))
         snd = tr.js('(function(){var b=document.getElementById("vpqMute");return b?JSON.stringify([b.textContent.trim(),b.getBoundingClientRect().height,localStorage.getItem("vpqMute")]):"";})()')
         snd = waits.as_json(snd, [], 'SND')
-        check('sound starts OFF with a visible label "Sound off" and a 44 px tap area (396.k)', snd and snd[0] == 'Sound off' and snd[1] >= 44 and snd[2] == '1', snd)
+        check('sound starts ON with a visible "Sound on" switch (top right, 44 px tall; INBOX 405 update 7, replacing 396.k)', snd and snd[0] == 'Sound on' and snd[1] >= 44 and snd[2] == '0', snd)
         tr.close()
 
         print('\nTHE HOUR CHANGES THE SET')
@@ -994,7 +1091,13 @@ def main():
         print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1440 WIDE')
         LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
         others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
+        def seed_board():
+            """The same small stand-in board for every width: Sam 725, Max 725, Mia 580 (INBOX 404: the player's own row must be on it)."""
+            FAKE['rounds'].clear()
+            for i, (nm, pts) in enumerate((('Sam', 725), ('Max', 725), ('Mia', 580))):
+                FAKE['rounds']['seed%d' % i] = {'id': 'seed%d' % i, 'token': 'x', 'place': MINI, 'qids': [], 'name': nm, 'answers': [], 'points': pts, 'correct': 5, 'ms': 1000 * (i + 1), 'done': True}
         for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1440, 900, False)):
+            seed_board()
             clear_storage(b, base, seen=others)
             tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
@@ -1004,6 +1107,12 @@ def main():
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             hl = waits.as_json(tf.js('(function(){var h=document.getElementById("whereHead"),cs=getComputedStyle(h);return JSON.stringify([h.getBoundingClientRect().height/parseFloat(cs.lineHeight),h.scrollWidth<=h.clientWidth+1]);})()'), [], 'HL')
             check('%d px: "What venue are you at?" is on ONE line, not cut off (396.1)' % w, hl and hl[0] < 1.4 and hl[1], hl)
+            ph = tf.js('(function(){var i=document.getElementById("whereIn"),cs=getComputedStyle(i),ph=getComputedStyle(i,"::placeholder"),c=document.createElement("canvas").getContext("2d");'
+                       'c.font=ph.fontWeight+" "+ph.fontSize+" "+ph.fontFamily;if("letterSpacing" in c)c.letterSpacing=ph.letterSpacing;'
+                       'return JSON.stringify([Math.round(c.measureText(i.placeholder).width),Math.round(i.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)),ph.fontSize]);})()')
+            ph = waits.as_json(ph, [], 'PH')
+            print('   (placeholder width, room, size at %d px: %s)' % (w, ph))
+            check('%d px: the whole placeholder "Start typing your pub or club" fits on one line, room kept for the clear button (not cut off)' % w, ph and ph[0] <= ph[1] - 8, ph)
             tf.shot('lhn-where-%d.png' % w)
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
@@ -1017,7 +1126,6 @@ def main():
             wait(tf, lambda s: s.get('leadOpen'))
             tf.shot('lhn-notfound-%d.png' % w)
             tf.type_into('leadSuburb', 'Fitzroy')
-            tf.js('(function(){var s=document.getElementById("leadState");s.value="VIC";})()')
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, "Add your venue" (the short form open): the same' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
@@ -1032,6 +1140,9 @@ def main():
             on1 = tf.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight')
             check('%d px, your details with the venue\'s sign-up (INBOX 309.1c): the same%s' % (w, ', and Play is on the first screen' if h >= 667 else ''),
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'] and (on1 or h < 667), (f, on1))
+            tk = waits.as_json(tf.js('(function(){var l=document.querySelector("#optinTick label.optin"),sp=l&&l.querySelector("span");if(!l)return "[]";var r=sp.getBoundingClientRect(),cs=getComputedStyle(sp);return JSON.stringify([sp.textContent,l.scrollWidth<=l.clientWidth+1,r.height/parseFloat(cs.lineHeight),parseFloat(cs.fontSize)]);})()'), [], 'TICK')
+            check('%d px: the offers line is ONE line ("Send me offers from The Mini Bar", no age words), shrunk to fit, never cut off' % w,
+                  tk and tk[0] == 'Send me offers from The Mini Bar' and tk[1] and tk[2] < 1.6 and tk[3] >= 11, tk)
             tf.shot('lhn-name-%d.png' % w)
             tf.type_into('nameIn', 'Christabel-Anne')
             tf.type_into('optinEmail', 'christabel@example.com')
@@ -1047,12 +1158,25 @@ def main():
                 check('%d px: the question and all four answers are on the first screen' % w, all(x['bottom'] <= h for x in s.get('btns', [])),
                       [round(x['bottom']) for x in s.get('btns', [])])
             tf.shot('lhn-question-%d.png' % w)
+            if w == 375:
+                # a venue with its own logo switched on: the logo takes the title spot, as the real game (the picture is simulated: no network here)
+                tf.js('(function(){var i=document.getElementById("venueLogo");i.src="data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'80\'><rect width=\'200\' height=\'80\' rx=\'14\' fill=\'%23C70F69\'/><text x=\'100\' y=\'52\' font-size=\'24\' font-family=\'Arial\' font-weight=\'700\' text-anchor=\'middle\' fill=\'white\'>THE MINI BAR</text></svg>";i.hidden=false;document.getElementById("hdrVenueName").hidden=true;if(window.VPVenueLogo)window.VPVenueLogo.fit(i,"phone");})()')
+                time.sleep(0.4)
+                tf.shot('lhn-logo-%d.png' % w)
+                tf.js('(function(){var i=document.getElementById("venueLogo");i.hidden=true;document.getElementById("hdrVenueName").hidden=false;})()')
             _, s, _ = play_round(tf, [True, False, True, True, False])
             time.sleep(0.4)
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, the end with the board: "435 pts", the same' % w,
                   s.get('scoreN') == '435 pts' and s.get('board') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('board'), f))
+            if h >= 667:
+                fold = tf.js('document.getElementById("challenge").getBoundingClientRect().bottom <= innerHeight')
+                check('%d px: the score\'s Share button is above the fold, nothing cut at the bottom edge (design review)' % w, fold is True, fold)
             tf.shot('lhn-score-%d.png' % w)
+            tf.shot_full('lhn-scorefull-%d.png' % w)
+            mine = tf.js('(function(){var r=document.querySelector("#rows .row.you");if(!r)return "";var c=getComputedStyle(r.querySelector(".rk")).backgroundColor;return r.textContent.replace(/\\s+/g," ").trim()+"|"+c;})()')
+            check('%d px: the board carries the player\'s OWN row, marked (you) and pink, so it never contradicts the hero (INBOX 404)' % w,
+                  isinstance(mine, str) and 'Christabel-ann (you)' in mine and mine.endswith('rgb(255, 31, 142)') and (s.get('place') or '').startswith('4th tonight'), (mine, s.get('place')))
             tf.close()
     finally:
         b.close()

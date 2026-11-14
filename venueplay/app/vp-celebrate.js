@@ -260,7 +260,7 @@
   function sound(name, opts) {
     var src = SOUNDS[name], wall = !!(opts && opts.wall);
     if (!src || isDemoPage() || !_gameOn[SLOT_GAME[name]] || (!wall && (!_tapped || muted()))) return false;
-    try { _audio = _audio || new root.Audio(); _audio.src = src; _audio.volume = VOLUME[name] || 0.7; var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
+    try { _audio = _audio || new root.Audio(); _audio.src = src; _audio.volume = Math.min(1, (VOLUME[name] || 0.7) * (typeof root.VP_SOUND_GAIN === "number" && root.VP_SOUND_GAIN > 0 ? root.VP_SOUND_GAIN : 1));   /* a page may set window.VP_SOUND_GAIN (the drink coaster: 0.5, INBOX 405 update 8); none set = unchanged */ var p = _audio.play(); if (p && p.catch) p.catch(function () {}); return true; }
     catch (e) { return false; }
   }
   /* The small sound on/off button: in the given row (never over an answer), else bottom right. Its look is

@@ -93,6 +93,8 @@
   .stat .box .k{font-size:12px;color:var(--faint);text-transform:none;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .box .v.g{color:var(--gold)}
+  /* the pattern's name is never cut (Dean's rule, INBOX 404b): at 390 wide "Any line" showed as "Any lin...". It wraps to a second line instead. */
+  .stat .box .v#livePattern{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.2}
 
   .nowbar{background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:14px 15px;margin-bottom:14px;text-align:center}
   .nowbar .k{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:12px;color:var(--faint)}

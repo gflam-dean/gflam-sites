@@ -66,7 +66,7 @@ try:
         ok('home %d px: no sideways scroll' % w, M.get('sw', 9) <= M.get('vw', 0), M)
     for w, h in ((375, 812), (390, 844)):
         M = page(S, '/live-here-now.html', w, h, True, LHN)
-        ok('live-here-now %d px: the footer links are 44px tall and inside the screen' % w, len(M['a']) == 3 and all(a['h'] >= 44 and a['r'] <= M['vw'] for a in M['a']) and M.get('sw', 9) <= M.get('vw', 0), M)
+        ok('live-here-now %d px: there is NO footer (no Help, Privacy or Terms links: a game screen, INBOX 405) and nothing scrolls sideways' % w, len(M['a']) == 0 and M.get('sw', 9) <= M.get('vw', 0), M)
     M = page(S, '/app/index.html', 375, 812, True, FL)
     ok('/app sign-in field label is 12px or more', M['fs'] >= 12, M)
     for w, h, ph, want in ((1280, 800, False, 80), (375, 812, True, 0)):

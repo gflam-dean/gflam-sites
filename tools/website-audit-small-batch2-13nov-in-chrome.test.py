@@ -140,8 +140,8 @@ try:
     ok('/live-here-now: one h1, the game\'s name (Coaster Trivia)', h == ['Coaster Trivia'], h)
     M = S.json(sid, 'JSON.stringify((function(){var e=document.querySelector("h1"),r=e.getBoundingClientRect();return [r.width,r.height].join("|")})())')
     ok('/live-here-now: the h1 is for screen readers only (1px, no top bar on the page)', M == '1|1' and S.json(sid, 'JSON.stringify(!document.querySelector("header"))') is True, M)
-    M = S.json(sid, '''JSON.stringify([].map.call(document.querySelectorAll("h2.pbig,h2.q,#scoreN"),function(e){e.hidden=false;var p=e.parentNode;while(p&&p!==document.body){p.hidden=false;p=p.parentNode}var c=getComputedStyle(e);return [e.id,c.marginTop,c.marginBottom,c.fontWeight].join("|")}))''')
-    ok('/live-here-now: the step headings keep their spacing and weight (the venue heading is sized to stay on one line)', M == ['nameHead|8px|0px|400', 'whereHead|8px|0px|400', 'q|0px|0px|800', 'scoreN|6px|0px|400'], M)
+    M = S.json(sid, '''JSON.stringify([].map.call(document.querySelectorAll("h2.vp-h,h2.pq-text,#scoreN"),function(e){e.hidden=false;var p=e.parentNode;while(p&&p!==document.body){p.hidden=false;p=p.parentNode}var c=getComputedStyle(e);return [e.id,c.marginTop,c.marginBottom,c.fontWeight].join("|")}))''')
+    ok('/live-here-now: the step headings keep their spacing and weight (the venue heading is sized to stay on one line)', M == ['whereHead|0px|10px|400', 'nameHead|0px|10px|400', 'q|0px|0px|800', 'scoreN|0px|14px|400'], M)
     S.close_tab(tid)
     # ---- f. titles, read from what the site serves ----
     tid, sid = load(S, '/index.html', 800, 600, False, 0.5)

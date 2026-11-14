@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 22:47 · 7b24ea9e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 21:14 · 608eb5d3';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3042,12 +3042,15 @@ async function coasterPlace(env, place) {
   }
   const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(id) + '&select=id,name,status,timezone&limit=1');
   if (!v || !v[0] || v[0].status !== 'active') return null;
-  let logo = '';
+  let logo = '', slides = [];
   try {
-    const s = await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(id) + '&select=logo_url&limit=1');
+    let s;
+    try { s = await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(id) + '&select=logo_url,slides&limit=1'); }
+    catch (e) { s = await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(id) + '&select=logo_url&limit=1'); }   // no slides column: the logo alone
     logo = (s && s[0] && s[0].logo_url) || '';
-  } catch (e) { logo = ''; }   // a logo is a nicety; the name stands in
-  return { place: 'v:' + v[0].id, name: v[0].name, suburb: '', logo_url: logo, tz: v[0].timezone || 'Australia/Brisbane', venue_id: v[0].id, on: true };
+    slides = phoneSlides(s && s[0] && s[0].slides);   // the venue's own phone ad at the foot of the score (INBOX 405 update 4.7), as the join lookup gives the real game
+  } catch (e) { logo = ''; slides = []; }   // a logo is a nicety; the name stands in
+  return { place: 'v:' + v[0].id, name: v[0].name, suburb: '', logo_url: logo, slides: slides, tz: v[0].timezone || 'Australia/Brisbane', venue_id: v[0].id, on: true };
 }
 
 /* The search, over what is in venueplay only. Rows: venueplay venues and coaster venues, kept 60 s. */
@@ -3246,7 +3249,7 @@ async function handleCoasterStart(request, env, json) {
     }
     if (!row) return json({ error: 'That did not start. Try again.' }, 500);
     const out = { ok: true, play: row.id, token: token, code: row.code, place: where.place, name: first,
-                  venue: { name: where.name, suburb: where.suburb, logo_url: where.logo_url, on: !!where.on }, qids: qids, base: COASTER_BASE };
+                  venue: { name: where.name, suburb: where.suburb, logo_url: where.logo_url, slides: where.slides || [], on: !!where.on }, qids: qids, base: COASTER_BASE };
     const ask = await coasterOptinAsk(env, where);
     if (ask) out.optin = ask;
     return json(out);
