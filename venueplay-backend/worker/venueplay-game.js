@@ -11995,7 +11995,7 @@ function purchaseRaffleTerms(r, venue) {
   lines.push('7. The draw takes place at ' + where + ' on ' + praffleLocalWords(r.draw_at, tz, true) +
     '. It is drawn by computer on the venueplay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
     (prizes.length > 1 ? 'Each entrant can win only one prize.' : 'There is one winner.'));
-  lines.push('8. Winners will be contacted by phone and email within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
+  lines.push('8. Winners will be contacted by phone, and by email if they gave one, within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
   lines.push('9. If a winner cannot be contacted within 14 days, or is not eligible, the prize is redrawn at the same place at the same time 14 days after the draw.');
   lines.push('10. Prizes are not transferable and cannot be exchanged for cash. The promoter may substitute a prize of equal or greater value if a prize becomes unavailable.');
   lines.push('11. Entrant details are collected by the promoter to run this promotion and contact winners. They are used for marketing only if the entrant ticks the box to agree, and can be removed on request.');
@@ -12195,7 +12195,7 @@ function praffleFormFields(cfg) {
    sign-up land; the venue's export reads it). Matched by NORMALISED mobile: rows come back by the last nine digits and
    are kept only if praffleNormPhone says it is the same number. Never another venue: venue_id is in every query. */
 async function praffleFindMember(env, venueId, phone) {
-  const d9 = String(phone).slice(-9);
+  const d9 = String(phone).slice(-9).split('').join('*');   // 4*9*7*...: also finds "0497 605 423" or "0497-605-423"; the exact test is the normalised compare below
   const rows = await sbGet(env, 'vp_captures', 'venue_id=eq.' + enc(venueId) + '&or=(mobile.like.*' + d9 + ')&select=id,venue_id,first_name,last_name,email,mobile,marketing_optin,marketing_optin_at,created_at&order=created_at.desc&limit=20');
   const mine = (rows || []).filter(function (r) { return r.venue_id === venueId && praffleNormPhone(r.mobile) === phone; });
   const named = mine.filter(function (r) { return praffleCleanText(r.first_name, 60); });

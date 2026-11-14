@@ -98,7 +98,7 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('terms: never per drink or by the amount of alcohol', /not earned per drink or by the amount of alcohol/.test(terms));
   show('terms: 18 or over', /aged 18 or over/.test(terms));
   show('terms: the draw date, time and place', /the front bar on Saturday 24 April 2027 at 7:30\s?pm/i.test(terms), (terms.match(/7\. .*/) || [''])[0]);
-  show('terms: how winners are told', /contacted by phone and email/.test(terms));
+  show('terms: how winners are told', /contacted by phone, and by email if they gave one, within 2 business days/.test(terms));
   show('terms: the prize and its value', /A trip for two to Fiji \(valued at \$5,000\)/.test(terms));
   show('terms: no limit stated as no limit', /no limit on the number of entries/.test(terms));
   show('terms: never "at" a date (closes on, draw on)', !/(closes|place) at (Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day/.test(terms.replace(/the front bar/, '')) && /closes on /.test(terms));
@@ -332,11 +332,14 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
     { id: 'c-alan', venue_id: VENUE, first_name: 'Alan', last_name: 'Smith', email: 'alan@x.au', mobile: '0497605423', marketing_optin: true, marketing_optin_at: '2026-09-01T00:00:00.000Z', created_at: '2026-09-01T00:00:00Z' },
     { id: 'c-bea', venue_id: VENUE, first_name: 'Bea', last_name: 'Jones', email: 'bea@x.au', mobile: '+61498111222', marketing_optin: false, marketing_optin_at: null, created_at: '2026-09-01T00:00:00Z' },
     { id: 'c-cat', venue_id: VENUE, first_name: 'Cat', last_name: 'Lee', email: null, mobile: '0499333444', marketing_optin: null, created_at: '2026-09-01T00:00:00Z' },
+    { id: 'c-spaced', venue_id: VENUE, first_name: 'Dot', last_name: 'Spaced', email: null, mobile: '0412 345 678', marketing_optin: false, created_at: '2026-09-01T00:00:00Z' },
     { id: 'c-other', venue_id: OTHER, first_name: 'Olly', last_name: 'Other', email: 'olly@x.au', mobile: '0411999888', marketing_optin: true, marketing_optin_at: '2026-09-01T00:00:00.000Z', created_at: '2026-09-01T00:00:00Z' });
   var lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0497 605 423' });
   show('a mobile on the members list is found, as first name and last initial', lk.status === 200 && lk.body.known === false && lk.body.member === true && /^Alan S\.?$/.test(lk.body.name), JSON.stringify(lk.body));
   lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '+61 498 111 222' });
   show('the match is on the NORMALISED mobile (stored +61, typed 04)', lk.body.member === true && lk.body.first_name === 'Bea', JSON.stringify(lk.body));
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412345678' });
+  show('a member stored with spaces (0412 345 678) still matches', lk.body.member === true && lk.body.first_name === 'Dot', JSON.stringify(lk.body));
   lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0411999888' });
   show('a member of ANOTHER venue is not matched', lk.status === 200 && lk.body.member === false, JSON.stringify(lk.body));
   e = await enter('0411999888', null);
@@ -354,7 +357,7 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   e = await enter('0499333444', { first_name: 'Hacker', marketing_opt_in: true });
   var cat = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Cat'; })[0];
   show('a request cannot give a member an opt-in they never ticked, or swap their name', e.status === 200 && cat && cat.marketing_opt_in === false && DB.vp_purchase_raffle_entrants.every(function (x) { return x.first_name !== 'Hacker'; }), JSON.stringify(e.body));
-  show('nothing was written to the other venue\'s list', DB.vp_captures.filter(function (c) { return c.venue_id === OTHER; }).length === 1 && DB.vp_captures[3].mobile === '0411999888');
+  show('nothing was written to the other venue\'s list', DB.vp_captures.filter(function (c) { return c.venue_id === OTHER; }).length === 1 && DB.vp_captures.filter(function (c) { return c.id === 'c-other'; })[0].mobile === '0411999888');
 
   print('the new-customer form asks only what the venue collects');
   world(true); ROLE = 'owner'; await setup(); ROLE = 'host';
