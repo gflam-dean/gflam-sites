@@ -4469,6 +4469,11 @@ def local_checks(which):
              'a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room\'s) it joins as a phone; POST /room/ticket answers only a login that is staff at the room\'s venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one', 21,
              'Anybody who reads the venue code off the TV floods every phone and TV with 240 messages of 16 KB a second '
              'and stalls a night'),
+            # D412: Play a quick game (Dean, 14 Nov 2026; INBOX 412), branch feature/try-it-412-15nov.
+            ('D412. Play a quick game: three boxes (first name, mobile, venue), a text code, a card-free prospect account with a login that has no email and is never mailed, a picker that cannot be walked, and one sales ticket for more info',
+             'test-quick-start.js',
+             'runs the billing Worker: a blank name, a landline or a blank venue refused, the honeypot and the bot check, eight starts an hour per network and three codes an hour per mobile; the postcode from the picked venue or the one postcode of the typed suburb, asked for (never guessed) when the suburb is unknown or has two; the account at 10 players as a pub with an empty account email, no prospect email, a flagged placeholder login that no email or reminder ever goes to, no welcome queued; one free month per mobile still holds; the picker answers only name, suburb, postcode and state, five at most, three letters at least, forty a minute; more info makes ONE sales ticket with name, mobile, venue and game, sends nothing to the prospect, refuses a stranger and another venue; the card gate is one constant', 40,
+             'A bot or a stranger given an account, a placeholder address emailed or shown, a venue list that can be walked, or a prospect sent mail they never asked for'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

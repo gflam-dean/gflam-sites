@@ -446,6 +446,7 @@
   "suspend-not-before-auth.test.js",
   "sweep-sessions.test.js",
   "ten weeks of \"add 20\" reach past the first hundred rows, and no parked question is dealt",
+  "test-quick-start.js",
   "the \"how was the party\" follow-up can be stopped",
   "the \"party is full\" message is not matched on the NUMBER",
   "the Worker asks the library for it rather than writing it again",

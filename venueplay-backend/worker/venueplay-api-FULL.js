@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 20:19 · 016376e4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 21:28 · 0bfbf0d0';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -288,6 +288,11 @@ export default {
       if (request.method === 'POST' && path === '/start/begin')  return await vpsStartBegin(request, env, json);
       if (request.method === 'POST' && path === '/start/resend') return await vpsStartResend(request, env, json);
       if (request.method === 'POST' && path === '/start/verify') return await vpsStartVerify(request, env, json);
+      // "Play a quick game" (INBOX 412, 14 Nov 2026): first name + mobile + venue, then the same code and the same card-free
+      // prospect account as /start (verify and resend are /start's own). Public, rate-limited, bot-checked.
+      if (request.method === 'POST' && path === '/quick/begin')  return await vpqQuickBegin(request, env, json);
+      if (request.method === 'GET'  && path === '/quick/venues') return await vpqVenues(request, env, json);
+      if (request.method === 'POST' && path === '/quick/more-info') return await vpqMoreInfo(request, env, json);
       // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
@@ -2559,6 +2564,7 @@ function vpaProspectWebsite(raw) {
    this carry no flag, so nothing changes for them. */
 async function vpaProspectLogin(env, email, phone, venueName) {
   const meta = { venue: venueName, vp_details_due: true };
+  if (vpqIsPlaceholderEmail(email)) meta.placeholder_email = true;   // "Play a quick game": the login has no real email yet (INBOX 412)
   const u = await vpaAuthCreateUser(env, phone
     ? { email: email, email_confirm: true, phone: phone, phone_confirm: true, user_metadata: meta }
     : { email: email, email_confirm: true, user_metadata: meta });
@@ -3652,7 +3658,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   if (offer.warning) warnings.push(offer.warning);
   // 1. The account record: a paying founding row with no card, as /admin/venue makes one.
   const founding = await vpaInsert(env, 'venueplay_founding', {
-    venue_name: name, contact_email: email, mobile: mobileRaw || null, postcode: postcode,
+    venue_name: name, contact_email: vpqRealEmail(email) || '', mobile: mobileRaw || null, postcode: postcode,
     max_seats: players, plan: 'monthly', marketing_opt_in: false, status: 'active',
   });
   const foundingId = founding && founding.id;
@@ -3687,7 +3693,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
      flagged for a call if they never sign in. Best-effort: the account stands without it. */
   try {
     await vpaInsert(env, 'vp_prospects', { venue_id: venue.id, founding_id: foundingId || null,
-      source: opts.via === 'autopilot_prospect' ? 'autopilot' : (opts.via === 'self_signup' ? 'self' : 'hq'), contact_name: firstName || null, email: email,
+      source: opts.via === 'autopilot_prospect' ? 'autopilot' : (opts.via === 'self_signup' ? 'self' : 'hq'), contact_name: firstName || null, email: vpqRealEmail(email) || null,
       phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
       call_requested: b.call_requested === true, created_label: actor.label || null }, false);
     /* NO offer_rate AT SETUP (Dean, 7 Nov 2026): being set up by the offer's date is not enough, the free month must
@@ -4059,11 +4065,11 @@ async function vpsHoldTicket(env, row, why, extra) {
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'normal',
       title: 'Sign-up to check: ' + row.venue_name + ' (' + row.postcode + ')',
       message: [why, '', 'Venue: ' + row.venue_name, 'Postcode: ' + row.postcode + (row.au_state ? ' (' + row.au_state + ')' : ''),
-        'Name: ' + row.contact_name, 'Email: ' + row.email, 'Mobile: ' + row.mobile + ' (proven by the text code)',
+        'Name: ' + row.contact_name, 'Email: ' + (vpqRealEmail(row.email) || '(none yet, mobile sign-in only)'), 'Mobile: ' + row.mobile + ' (proven by the text code)',
         extra ? '' : null, extra || null, '',
         'Approve or refuse it in HQ > Prospects > Sign-ups to check. Approving makes the normal account and sends the welcome.',
         'Sign-up start: ' + row.id].filter((x) => x !== null).join('\n'),
-      contact_name: row.contact_name, contact_email: row.email, contact_phone: vpaProspectPhone(row.mobile) || row.mobile,
+      contact_name: row.contact_name, contact_email: vpqRealEmail(row.email) || null, contact_phone: vpaProspectPhone(row.mobile) || row.mobile,
       lead_venue_name: row.venue_name, lead_locality: row.postcode });
     if (t && t.id) { try { await helpAnnounce(env, t, ''); } catch (e) {} return t.ticket_no || null; }
   } catch (e) { console.log('[start] hold ticket not made: ' + String((e && e.message) || e).slice(0, 160)); }
@@ -4185,7 +4191,7 @@ async function vpsAccountReady(env, row, venueId, done) {
     const venueName = (done && done.venue) || row.venue_name;
     const to = vpaNormaliseMobileAU(row.mobile);
     const mobileWords = vpaProspectPhone(to);
-    const email = String(row.email || '').trim();
+    const email = vpqRealEmail(row.email) || '';   // a quick start has no real email: the text goes, no email (INBOX 412)
     if (email && env.RESEND_API_KEY && mobileWords) {
       const msg = await vpsRenderReady(env, { venueName: venueName, contactName: row.contact_name, mobileWords: mobileWords, tvCode: done && done.tv_code, email: email });
       if (msg) {
@@ -4249,6 +4255,178 @@ async function vpsStartVerify(request, env, json) {
   if (c.row.outcome !== 'pending') return json({ ok: true, outcome: 'done_before', message: VPS_START_WORDS.done_before });
   if (vpsEntity(_b.body.kind)) c.row.kind = _b.body.kind;
   return await vpsDecide(env, json, c.row);
+}
+
+/* ===========================================================================
+ * "PLAY A QUICK GAME": /quick  (Dean, 14 Nov 2026; INBOX 412 FINAL ORDER for Tue 17 Nov)
+ *
+ * Button -> form (first name, mobile, venue) -> the code texted to the mobile -> the card-free prospect account (the
+ * SAME one /start makes: vpaProspectSetUp, 10 players, free month from the first sign-in) -> the trivia demo on their
+ * own account -> what games do you run -> the console, ready.  Verify and resend are /start's own routes.
+ *
+ *   POST /quick/begin   { name, mobile, venue, postcode?, suburb?, turnstile?, website? (honeypot) }
+ *                       Three boxes. No email, no pub-or-club (VPQ_DEFAULT_KIND). The venue comes from the picker
+ *                       (GET /quick/venues) with its postcode, or is typed with a suburb; the suburb finds the postcode
+ *                       on our licensed list, and only when it does not does the page ask for the 4-digit postcode
+ *                       (the postcode sets the state's gaming rules and the timezone, so it is never guessed).
+ *                       -> { ok, start_id } or { need_postcode: true }.
+ *   GET  /quick/venues?q=   the picker: our licensed list, at most 5, name + suburb + postcode + state, never a count,
+ *                       3 letters at least, per-network limit, no other column.
+ *   POST /quick/more-info { venue_id, game? }  signed in as the owner of a prospect: ONE sales ticket (name, mobile,
+ *                       venue, the game played) and the team alert. Nothing is sent to the prospect.
+ *
+ * NO EMAIL (the safe default, each part ONE constant or helper):
+ *   - the login gets a placeholder address (vpqPlaceholderEmail, on VPQ_PLACEHOLDER_DOMAIN), never shown, never typed,
+ *     never emailed; user_metadata.placeholder_email marks it.
+ *   - vpqRealEmail(x) is null for a placeholder. Everything that would write or send to a prospect's email goes through
+ *     it: venueplay_founding.contact_email is '' (every "no contact email" guard already reads that as none),
+ *     vp_prospects.email is null (so the card reminders, the nudge emails and the quiet list skip them), the
+ *     account-ready email is skipped (the text goes), no welcome is queued.
+ *   - NO CARD until a real email is on the account: vpqCardGate(). VPQ_CARD_NEEDS_REAL_EMAIL switches it.
+ * ======================================================================== */
+const VPQ_PLACEHOLDER_DOMAIN = 'phone.venueplay.com.au';   // never mailed; the Worker never sends to it (vpqRealEmail)
+const VPQ_DEFAULT_KIND = 'for_profit';                      // a pub: the stricter gaming rules; HQ can change it
+const VPQ_CARD_NEEDS_REAL_EMAIL = false;   // OFF (INBOX 412 UPDATE 7): Stripe's page asks for the email; the gate stays for the day Dean wants it back
+const VPQ_VENUES_PER_IP = 40;                               // picker searches per network per minute
+const VPQ_VENUE_LIMIT = 5;
+const VPQ_MIN_LETTERS = 3;
+const VPQ_WORDS = {
+  need_postcode: 'We could not find that suburb on our list. What is your venue\'s 4-digit postcode?',
+  card_email: 'Add your email in Account details first, then add your card.',
+  more_done: 'Thanks, we\'ll be in touch.',
+};
+function vpqIsPlaceholderEmail(e) {
+  const m = /^[^\s@]+@([^\s@]+)$/.exec(String(e || '').trim().toLowerCase());
+  return !!m && m[1] === VPQ_PLACEHOLDER_DOMAIN;
+}
+/* The email if it is a real one, else null. The one door every prospect email goes through. */
+function vpqRealEmail(e) {
+  const x = String(e || '').trim();
+  return x && !vpqIsPlaceholderEmail(x) ? x : null;
+}
+function vpqPlaceholderEmail(mobileE164) {
+  const a = new Uint8Array(6); crypto.getRandomValues(a);
+  const r = [...a].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return 'm' + String(mobileE164 || '').replace(/\D/g, '').slice(-9) + '.' + r + '@' + VPQ_PLACEHOLDER_DOMAIN;
+}
+/* NO CARD without a real email on the account. null = fine; else the words to answer with. */
+function vpqCardGate(contactEmail) {
+  if (!VPQ_CARD_NEEDS_REAL_EMAIL) return null;
+  return vpqRealEmail(contactEmail) ? null : VPQ_WORDS.card_email;
+}
+/* The postcode for a typed suburb, from our licensed list: ONE postcode or none (two postcodes for a suburb is
+   not a guess we make). */
+async function vpqPostcodeForSuburb(env, suburb) {
+  const sub = helpLine(suburb, 80).replace(/[,()*\\"%_]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (sub.length < 3) return null;
+  try {
+    const rows = await vpaSelect(env, 'vp_licensed_venues', 'suburb=ilike.' + encodeURIComponent(sub) + '&select=postcode&limit=200');
+    const pcs = Array.from(new Set((rows || []).map((r) => r.postcode).filter(Boolean)));
+    return pcs.length === 1 ? pcs[0] : null;
+  } catch (e) { return null; }
+}
+async function vpqQuickBegin(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'start', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  if (String(b.website || '').trim()) return json({ ok: true, start_id: vpsUuid() });   // the honeypot: answered as if it worked
+  const venue = helpLine(b.venue, 120);
+  const name = helpLine(b.name, 120).split(/\s+/)[0] || '';
+  const mobile = helpLine(b.mobile, 40) ? vpaNormaliseMobileAU(helpLine(b.mobile, 40)) : null;
+  if (!name) return json({ error: 'Enter your first name.', field: 'name' }, 400);
+  if (!vpaIsAuMobileE164(mobile)) return json({ error: 'Enter your mobile (04...). We text your code to it.', field: 'mobile' }, 400);
+  if (!vpVenueKey(venue)) return json({ error: 'Enter your venue\'s name.', field: 'venue' }, 400);
+  const bot = await helpTurnstile(env, b.turnstile, ip);
+  if (!bot.ok) return json({ error: VPS_START_WORDS.bot, bot: true }, 403);
+  if (vpsStartOff(env)) return json({ error: VPS_START_WORDS.off, off: true }, 503);
+  let postcode = vpVenuePostcode(b.postcode);
+  if (!postcode || !vpaStateFromPostcode(postcode)) {
+    postcode = await vpqPostcodeForSuburb(env, b.suburb);
+    if (!postcode || !vpaStateFromPostcode(postcode)) return json({ ok: false, need_postcode: true, error: VPQ_WORDS.need_postcode, field: 'postcode' }, 200);
+  }
+  if (!(await vpsMobileLimit(env, mobile))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const state = vpaStateFromPostcode(postcode);
+  let row;
+  try {
+    row = await vpaInsert(env, 'vp_signup_starts', { id: vpsUuid(), ip_key: ip ? (await helpIpKey(env, ip)).slice(0, 80) : null,
+      venue_name: venue, venue_key: vpVenueKey(venue), postcode: postcode, au_state: state,
+      contact_name: name, email: vpqPlaceholderEmail(mobile), mobile: mobile, outcome: 'pending', attempts: 0, code_sent_count: 0 });
+  } catch (e) {
+    return json({ error: VPS_START_WORDS.off, off: true }, 503);
+  }
+  if (!row || !row.id) return json({ error: VPS_START_WORDS.blip }, 502);
+  try { await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { entity_type: VPQ_DEFAULT_KIND }); row.entity_type = VPQ_DEFAULT_KIND; } catch (e) { /* 173 not run */ }
+  const sent = await vpsIssueCode(env, row);
+  if (!sent.ok) return json({ error: 'We could not send the text just then. Check your mobile number and press the button again.', field: 'mobile' }, 502);
+  return json({ ok: true, start_id: row.id });
+}
+/* THE PICKER. Whole words matched on the licensed list; the best five. */
+function vpqVenueRank(typed, rows) {
+  const norm = (x) => String(x || '').toLowerCase().replace(/&/g, ' and ').replace(/['‘’`]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  const q = norm(typed);
+  if (q[0] === 'the') q.shift();
+  if (q.join('').length < VPQ_MIN_LETTERS) return { matches: [], why: 'Type at least three letters of the name.' };
+  const hits = [];
+  for (const r of rows || []) {
+    if (!r || !r.name) continue;
+    const nw = norm(r.name);
+    if (nw[0] === 'the' && nw.length > 1) nw.shift();
+    if (!q.every((t) => nw.some((n) => n.startsWith(t)))) continue;
+    hits.push({ sc: nw[0].startsWith(q[0]) ? (nw.join('') === q.join('') ? 0 : 1) : 2, r: r });
+  }
+  hits.sort((a, b) => (a.sc - b.sc) || String(a.r.name).localeCompare(String(b.r.name)));
+  const out = { matches: hits.slice(0, VPQ_VENUE_LIMIT).map((h) => ({ name: h.r.name, suburb: h.r.suburb || '', postcode: h.r.postcode || '', state: h.r.au_state || '' })) };
+  if (hits.length > VPQ_VENUE_LIMIT) out.more = true;
+  return out;
+}
+async function vpqVenues(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'qvenues', ip, VPQ_VENUES_PER_IP, 60))) return json({ matches: [], why: 'Too many searches from this network. Wait a minute and try again.' }, 429);
+  const typed = String(new URL(request.url).searchParams.get('q') || '').slice(0, 80);
+  const words = typed.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w && w !== 'the');
+  if (words.join('').length < VPQ_MIN_LETTERS) return json({ matches: [], why: 'Type at least three letters of the name.' });
+  const longest = words.slice().sort((a, b) => b.length - a.length)[0];
+  let rows = [];
+  try { rows = await vpaSelect(env, 'vp_licensed_venues', 'name=ilike.' + encodeURIComponent('*' + longest + '*') + '&select=name,suburb,postcode,au_state&order=name.asc&limit=60'); } catch (e) { rows = []; }
+  return json(vpqVenueRank(typed, rows || []));
+}
+/* "I'd like more info": the owner of a PROSPECT venue only, one ticket per venue, nothing sent to them. */
+async function vpqMoreInfo(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (o.actingAsAdmin) return json({ ok: true, view_as: true });
+  if (!(await helpIpLimit(env, 'qmore', request.headers.get('cf-connecting-ip') || '', 20, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body && _b.body.venue_id) || '').trim();
+  if (!(o.venues || []).some((v) => v.id === venueId)) return json({ error: 'Pick one of your venues.' }, 400);
+  const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
+  if (!prow) return json({ ok: true, words: VPQ_WORDS.more_done });   // not a prospect: nothing to raise
+  const game = helpLine((_b.body && _b.body.game) || 'trivia', 40) || 'trivia';
+  if (await vpqMoreInfoBefore(env, venueId)) return json({ ok: true, words: VPQ_WORDS.more_done });   // a second tap is the same ticket
+  const v = ((await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=name,postcode,founding_id&limit=1')) || [])[0] || {};
+  const f = v.founding_id ? ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=mobile&limit=1')) || [])[0] : null;
+  const mobile = (f && f.mobile) || prow.phone || '';
+  try {
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'normal',
+      title: 'More info wanted: ' + (v.name || 'a venue'),
+      message: ['They played the quick game and asked for more info.', '', 'Name: ' + (prow.contact_name || ''), 'Mobile: ' + mobile,
+        'Venue: ' + (v.name || '') + (v.postcode ? ' (' + v.postcode + ')' : ''), 'Game played: ' + game,
+        'Nothing has been sent to them. Call or text them from HQ.'].join('\n'),
+      contact_name: prow.contact_name || null, contact_email: vpqRealEmail(prow.email), contact_phone: vpaProspectPhone(mobile) || mobile || null,
+      lead_venue_name: v.name || null, lead_locality: v.postcode || null, venue_id: venueId });
+    if (t && t.id) { try { await helpAnnounce(env, t, v.name || ''); } catch (e) {} }
+    await vpaAudit(env, { actorId: null, label: 'Quick game: more info' }, 'quick_more_info', 'venue:' + venueId, { game: game, ticket_no: (t && t.ticket_no) || null });
+  } catch (e) { return json({ error: 'We could not pass that on just then. Please try again.' }, 502); }
+  return json({ ok: true, words: VPQ_WORDS.more_done });
+}
+async function vpqMoreInfoBefore(env, venueId) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) + '&action=eq.quick_more_info&select=id&limit=1');
+    return !!(rows && rows.length);
+  } catch (e) { return true; }
 }
 
 /* ---- HQ: the held sign-ups, and the one-tap decision (owner | accounts) ---- */
@@ -10977,6 +11155,7 @@ async function vpaAddCardRedirect(request, env) {
     // same venue and bill them twice. Their billing page is where changes belong.
     if (f.stripe_subscription_id) return Response.redirect(site + '/app/billing.html', 302);
     if (f.status === 'comp') return page('This account is on us', 'There is nothing to pay on ' + vpaEsc(f.venue_name || 'this venue') + ', so there is no card to add.');
+    { const noEmail = vpqCardGate(f.contact_email); if (noEmail) return page('One thing first', vpaEsc(noEmail)); }   // a quick start has no real email yet (INBOX 412)
 
     const plan = f.plan === 'annual' ? 'annual' : 'monthly';
     const seats = Math.max(parseInt(f.max_seats, 10) || 0, 1);

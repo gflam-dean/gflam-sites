@@ -1223,6 +1223,10 @@
   "checks": 92,
   "counted_by": "lines"
  },
+ "tools/test-quick-start.js": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
  "tools/test-raffle-console.js": {
   "checks": 77,
   "counted_by": "lines"
