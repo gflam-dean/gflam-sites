@@ -16,8 +16,6 @@
     '@page{size:A4 portrait;margin:0}' +
     '*{box-sizing:border-box}' +
     'body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    '.bar{position:sticky;top:0;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;background:#111;color:#fff;font-size:15px}' +
-    '.bar button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:8px;background:#FF1F8E;color:#fff;cursor:pointer}' +
     '.wait{padding:40px;font-size:18px;text-align:center}' +
     '.sheet{padding:12mm 14mm;page-break-after:always;break-after:page}' +
     '.sheet:last-child{page-break-after:auto;break-after:auto}' +
@@ -35,7 +33,7 @@
     'table{width:100%;border-collapse:collapse;font-size:10pt}' +
     'td{padding:1.1mm 1mm;border-bottom:1px solid #ccc}td.q{width:14mm;font-weight:700}' +
     '.box{display:inline-block;width:10mm;height:6mm;border:1.5px solid #111;border-radius:2px;margin-right:4mm;text-align:center;font-weight:700;line-height:6mm;font-size:9pt}' +
-    '@media print{.bar{display:none}}';
+    '';
 
   function open(title) {
     var w = null;
@@ -55,11 +53,11 @@
   function fill(w, title, bodyHtml, count, noun, extra) {
     if (!w || w.closed) return false;
     extra = extra || {};
-    var bar = '<div class="bar"><span>' + count + ' ' + noun + (count === 1 ? '' : 's') + ' ready. Print them before the night starts.</span>' +
-      '<button type="button" onclick="window.print()">Print</button></div>';
+    /* INBOX 392 (Dean, 14 Nov): NO print bar, no text, no button, no count. The console's own Print button is the only control;
+       this window opens straight into the print dialog, and cancelling it leaves a page with nothing on it but the cards. */
     w.document.open();
     w.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title>' + (extra.head || '') + '<style>' + CSS + (extra.css || '') + '</style></head><body>' + bar + bodyHtml + '</body></html>');
+      '</title>' + (extra.head || '') + '<style>' + CSS + (extra.css || '') + '</style></head><body>' + bodyHtml + '</body></html>');
     w.document.close();
     var go = function () { try { w.focus(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400); } catch (e) {} };
     var done = false, once = function () { if (done) return; done = true; go(); };

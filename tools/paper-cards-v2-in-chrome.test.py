@@ -179,6 +179,24 @@ try:
     c0, c1 = m['cards'][0], m['cards'][1]
     ok('one A4 landscape sheet holds both cards, each 148.5 x 210 mm', m['sheets'] == 1 and len(m['cards']) == 2 and all(abs(c['cardW'] - 148.5) < 0.6 and abs(c['cardH'] - 210) < 0.6 for c in m['cards']),
        [(c['cardW'], c['cardH']) for c in m['cards']])
+    # INBOX 392 (Dean, 14 Nov): the print window carries NO print bar: no text, no button, no count. Only the cards are on the page.
+    nobar = S.json(sid, '(function(){var d=document.getElementById("pw").contentDocument;'
+                                     'var kids=[].map.call(d.body.children,function(e){return e.className||e.tagName;});'
+                                     'return JSON.stringify({bar:d.querySelectorAll(".bar").length,buttons:d.querySelectorAll("button,input,a").length,'
+                                     'kids:kids,text:d.body.innerText,sticky:[].filter.call(d.body.querySelectorAll("*"),function(e){return getComputedStyle(e).position==="sticky";}).length});})()', {})
+    ok('the print window has no print bar, no button and nothing but the cards (INBOX 392)',
+       nobar.get('bar') == 0 and nobar.get('buttons') == 0 and nobar.get('sticky') == 0 and all(k == 'pcs' for k in nobar.get('kids', ['x'])) and nobar.get('kids'), nobar)
+    ok('...and none of the old instruction words are anywhere in it ("ready", "Print them", "before the night", "Print")',
+       not re.search(r'ready|print them|before the night|\bprint\b', nobar.get('text', ''), re.I), nobar.get('text', '')[:120])
+    tr = S.json(sid, '(function(){var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};'
+                                 'VPPrint.trivia(w,{teams:2,questions:10,roundSize:5,venue:"The Mini Bar"});var d=f.contentDocument;'
+                                 'return JSON.stringify({bar:d.querySelectorAll(".bar").length,buttons:d.querySelectorAll("button").length,sheets:d.querySelectorAll(".sheet").length,'
+                                 'text:/ready|print them|before the night/i.test(d.body.innerText)});})()', {})
+    ok('the trivia sheets carry no print bar either, and still print one page per team', tr.get('bar') == 0 and tr.get('buttons') == 0 and tr.get('sheets') == 2 and tr.get('text') is False, tr)
+    S.js(sid, cards_js())
+    S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
+    S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
+    time.sleep(1.2)
     for n, c in enumerate(m['cards']):
         tag = 'card %02d' % (7 + n)
         t = c['text']
@@ -379,7 +397,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 235
+EXPECTED = 238
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
