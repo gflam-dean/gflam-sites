@@ -411,6 +411,10 @@
   "checks": 152,
   "counted_by": "lines"
  },
+ "tools/quick-game-in-chrome.test.py": {
+  "checks": 47,
+  "counted_by": "lines"
+ },
  "tools/real-night-dryrun-in-chrome.test.py": {
   "checks": 151,
   "counted_by": "lines"

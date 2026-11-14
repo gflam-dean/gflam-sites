@@ -179,12 +179,15 @@ try:
     tid, sid = S.open('/quick', 390, 844, mobile=True)
     S.until(sid, '!!window.VPQuick && !!document.getElementById("qGo")', 20)
     typ(sid, 'qName', 'Kim'); typ(sid, 'qMobile', '0412 555 001'); typ(sid, 'qVenue', 'The Railway Hotel')
-    S.js(sid, 'document.getElementById("qVenue").value="The Railway Hotel"; true')
+    S.until(sid, 'document.querySelectorAll("#qPick button").length', 10)
     S.js(sid, '(function(){ var b=document.querySelector("#qPick button"); if(b) b.click(); return true; })()')
     tap(sid, 'qGo'); S.until(sid, '!document.getElementById("qCode").hidden', 15)
     paste_code(sid, last_code(e164))
-    ok('held: "Thanks, we\'ll check your venue..." and nothing new is made', S.until(sid, '!document.getElementById("qHeld").hidden', 20) is True and HELD in (S.js(sid, 'document.getElementById("qHeldWords").textContent') or '') and len([f for f in S.W.table('venueplay_founding') if f.get('venue_name') == 'Kirra Beach Hotel']) == 1 and not [f for f in S.W.table('venueplay_founding') if f.get('venue_name') == 'The Railway Hotel'],
-       S.js(sid, 'document.getElementById("qHeldWords").textContent'))
+    shown_held = S.until(sid, '!document.getElementById("qHeld").hidden', 20)
+    held_words = S.js(sid, 'document.getElementById("qHeldWords").textContent') or ''
+    names = [f.get('venue_name') for f in S.W.table('venueplay_founding')]
+    ok('held: "Thanks, we\'ll check your venue..." and nothing new is made', bool(shown_held) and HELD in held_words and names.count('Kirra Beach Hotel') == 1 and 'The Railway Hotel' not in names,
+       [shown_held, held_words, names, S.js(sid, 'document.getElementById("qErr").textContent'), S.js(sid, 'document.getElementById("qCerr").textContent'), S.js(sid, '["qForm","qCode","qHeld","qMade"].map(function(i){return i+":"+document.getElementById(i).hidden;}).join(" ")')])
     shot(sid, 'quick-held-390px.png')
     S.close_tab(tid)
 

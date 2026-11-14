@@ -361,6 +361,7 @@
   "purchase-raffle-in-chrome.test.py",
   "purchase-raffle-walk-in-chrome.test.py",
   "qr-fallback-in-chrome.test.py",
+  "quick-game-in-chrome.test.py",
   "raffle-ticket-stub-in-chrome.test.py",
   "real-night-check.test.py",
   "real-night-free.test.py",
