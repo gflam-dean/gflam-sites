@@ -24290,6 +24290,11 @@ MUTATIONS = [
      '.stat .box .v#livePattern{white-space:normal;overflow:visible;text-overflow:clip;',
      '.stat .box .v#livePattern{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',
      'the console Pattern box cuts Any line to Any lin... again'),
+    ('live-here-now-in-chrome.test.py',
+     'venueplay/live-here-now.html',
+     '#whereIn::placeholder{font-size:15px;letter-spacing:-.025em}',
+     '#whereIn::placeholder{font-size:20px;letter-spacing:0}',
+     'the search placeholder is cut off at 320 again'),
 ]
 
 
