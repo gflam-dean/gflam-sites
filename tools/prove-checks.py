@@ -24103,6 +24103,15 @@ MUTATIONS = [
      'document.body.classList.toggle("vp-entry", which==="vNoRoom");',
      'document.body.classList.toggle("vp-entry", true);',
      'a phone in a game (a QR scan) gets the website bar and loses its header and menu button'),
+    # 17 Nov 2026: the /play website bar keeps out from under the island and the notch
+    ('safe-area-in-chrome.test.py', 'venueplay/play.html',
+     'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px);',
+     '',
+     'the /play website bar sits under the island and the side notch'),
+    ('connected-word-in-chrome.test.py', 'venueplay/play.html',
+     'body.vp-entry .ptop>*:not(.vp-connbar){display:none}',
+     'body.vp-entry .ptop>*{display:none}',
+     'the Reconnecting bar disappears on the /play code screen'),
     # 13 Nov 2026, fix/waitwatch-flake-13nov: the watcher's count survives a failed or slow answer; the bingo phone knows its night before its own join lands.
     ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
      '          if (s === null || shown) return;                       // could not tell: say nothing',

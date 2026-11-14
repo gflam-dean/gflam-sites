@@ -51,6 +51,7 @@ PAGES = [
 ]
 SHAPES = [
     ('portrait', 430, 932, {'top': 59, 'bottom': 34, 'left': 0, 'right': 0}),
+    ('portrait-390', 390, 844, {'top': 47, 'bottom': 34, 'left': 0, 'right': 0}),   # 17 Nov 2026: the /play code screen's website bar at the common phone size
     ('landscape', 932, 430, {'top': 0, 'bottom': 21, 'left': 59, 'right': 59}),
 ]
 
