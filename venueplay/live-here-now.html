@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Coaster Trivia | venueplay</title>
-<meta name="description" content="Five quick trivia questions while you wait for your drink. Points for speed, a board for your pub tonight, and a link to challenge your mates. No app, no sign-up.">
+<meta name="description" content="Five quick trivia questions while you wait for your mate. Points for speed, a board for your pub tonight, and a link to challenge your mates. No app, no sign-up.">
 <meta property="og:title" content="Coaster Trivia | venueplay">
-<meta property="og:description" content="Five quick trivia questions while you wait for your drink. Can you beat your mates? No app, no sign-up.">
+<meta property="og:description" content="Five quick trivia questions while you wait for your mate. Can you beat your mates? No app, no sign-up.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://venueplay.com.au/live-here-now">
 <meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png?v=20261104">
@@ -25,7 +25,7 @@
 <!-- The questions, asked for before anything else so they are on their way while the page paints. -->
 <link rel="preload" href="/data/live-here-now.json" as="fetch" crossorigin="anonymous">
 
-<!-- THE DRINK-COASTER PAGE, v2 (/live-here-now; /here and /live 301 to it). Dean's spec, later items over earlier:
+<!-- THE COASTER TRIVIA PAGE, v2 (/live-here-now; /here and /live 301 to it). Dean's spec, later items over earlier:
      reports/live-here-now-v2/DEAN-NOTES.md and INBOX 222, 229, 232, 302-313. The board, the points, the picker
      and the venue's own sign-up come from the game Worker's /coaster routes; with the board down the round plays
      on the phone from /data/live-here-now.json. Tested by coaster-page.test.js and live-here-now-in-chrome.test.py. -->
@@ -68,7 +68,7 @@
   .ptop{padding-right:16px;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .vline{order:3;flex:0 0 100%;display:flex;align-items:center;gap:8px;margin-top:-8px;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1.3;min-width:0}
   .vline[hidden]{display:none}
-  .vline span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vline span{min-width:0;overflow-wrap:anywhere}   /* a long name wraps, never cut */
   .ptop .brand{min-width:0}
   .ptop .vname{white-space:nowrap}
   .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
@@ -115,14 +115,15 @@
   .pick.again{box-shadow:inset 0 0 0 2px #3A3A44}
   /* "Can't find your venue? Add it": 3/4 the size of the placeholder, tucked straight under the box, its tap area reaching 8px each way */
   .addlink{font-size:12px;line-height:1.3;min-height:0;padding:0;margin:4px 0 0}
-  .addlink::before{content:"";position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+  .addlink::before{content:"";position:absolute;left:0;right:0;top:0;bottom:-28px}   /* a 44px tap area, reaching DOWN only so it never covers the search box */
   /* Add your venue: name and suburb only, small */
   .addcard{margin-top:8px;border-radius:14px;background:#1A1A1F;padding:10px 12px 12px}
   .addcard h2{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1.2;color:#fff}
   .addcard .vp-field{margin-top:8px;background:#0F0F12;padding:9px 12px;font-size:16px;border-radius:11px;min-height:42px}
   .addcard .btn{margin-top:10px;min-height:42px;font-size:16px}
   .addcard .cerr{margin-top:6px;min-height:0}
-  .optin-tick label.optin{display:flex;gap:12px;align-items:center;margin-top:16px;color:var(--text);font-size:16px;line-height:1.3;cursor:pointer;white-space:nowrap}
+  .optin-tick label.optin{display:flex;gap:12px;align-items:center;margin-top:16px;color:var(--text);font-size:16px;line-height:1.3;cursor:pointer}
+  .optin-tick label.optin span{min-width:0;overflow-wrap:anywhere}
   .optin-tick label.optin input{flex:none;width:26px;height:26px;margin:0;-webkit-appearance:none;appearance:none;border-radius:7px;border:2px solid var(--pink);background:rgba(255,31,142,.10);cursor:pointer;position:relative}
   .optin-tick label.optin input:checked{background:var(--pink)}
   .optin-tick label.optin input:checked::after{content:"";position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid #0A0A0B;border-width:0 3px 3px 0;transform:rotate(40deg)}
@@ -143,7 +144,9 @@
   .loading::before{content:"";display:block;width:34px;height:34px;margin:0 auto 16px;border-radius:50%;border:3px solid #1A1A1F;border-top-color:#fff;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .panswers{display:flex;flex-direction:column;gap:12px}
-  .ans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:14px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.15;overflow-wrap:anywhere;touch-action:manipulation;transition:opacity .15s}
+  .ans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:14px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;line-height:1.12;overflow-wrap:anywhere;touch-action:manipulation;transition:opacity .15s}
+  .panswers.alen-2 .ans{font-size:21px}
+  .panswers.alen-3 .ans{font-size:18px}   /* the trivia phone's sizing: 24px, 21px for a longer answer, 18px for the longest */
   .ans.c0{--c:#FF5A4E}.ans.c1{--c:#4D8DFF}.ans.c2{--c:#FFA53D}.ans.c3{--c:#A57BFF}
   .ans .l{flex:none;min-width:34px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1;text-align:center}
   .ans.c2 .l{text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 7px rgba(0,0,0,.55)}
@@ -238,6 +241,8 @@
   @media (max-height:700px){
     .panswers{gap:8px}
     .ans{min-height:62px;padding-top:14px;padding-bottom:4px}
+    .panswers .ans,.panswers.alen-2 .ans{font-size:19px}
+    .panswers.alen-3 .ans{font-size:17px}
     .pq-head{margin-bottom:8px}
     .pcard{margin-top:6px;padding:4px 16px;min-height:52px}
     .pq-ring .n span{display:none}
@@ -248,7 +253,9 @@
     .pq-ring .n b,.pq-ring .n .pts,.pq-ring.done .n b{font-size:20px}
     .pq-ring .n span{display:none}
     .pq-text{font-size:17px;min-height:0}
-    .ans{min-height:54px;padding-top:12px;padding-bottom:3px;font-size:17px}
+    .ans{min-height:54px;padding-top:12px;padding-bottom:3px}
+    .panswers .ans,.panswers.alen-2 .ans{font-size:17px}
+    .panswers.alen-3 .ans{font-size:16px}
     .ans .l{font-size:30px}
     .pcard{min-height:48px}
   }
@@ -686,8 +693,10 @@ var VPCoaster = (function () {
   function fitTick() {
     var l = document.querySelector('#optinTick label.optin'), t = l && l.querySelector('span');
     if (!l || !t) return;
-    var sz = 16; t.style.fontSize = sz + 'px';
-    while (sz > 11 && l.scrollWidth > l.clientWidth + 1) { sz -= 0.5; t.style.fontSize = sz + 'px'; }
+    /* ONE line, shrunk to fit down to 12px; a venue name too long even then wraps to a second line at a readable size (never cut) */
+    var sz = 16; l.style.whiteSpace = 'nowrap'; t.style.fontSize = sz + 'px';
+    while (sz > 12 && l.scrollWidth > l.clientWidth + 1) { sz -= 0.5; t.style.fontSize = sz + 'px'; }
+    if (l.scrollWidth > l.clientWidth + 1) { l.style.whiteSpace = 'normal'; t.style.fontSize = '15px'; }
   }
   $('nameForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -908,6 +917,8 @@ var VPCoaster = (function () {
     $('verdict').parentNode.className = 'pcard idle';
     var box = $('answers');
     box.textContent = '';
+    var alen = 0; item[2].forEach(function (x) { alen = Math.max(alen, String(x).length); });
+    box.className = 'panswers' + (alen > 40 ? ' alen-3' : alen > 22 ? ' alen-2' : '');   // phoneAnsClass, the trivia phone's
     item[2].forEach(function (text, i) {
       var b = document.createElement('button');
       b.type = 'button';

@@ -104,7 +104,9 @@ PLACES = [
     {'place': 'l:103', 'name': 'Royal Oak Tavern', 'suburb': 'Ballarat', 'postcode': '', 'state': 'VIC', 'on': False},
     {'place': BODALLA, 'name': 'Bodalla Pub', 'suburb': 'Bodalla', 'postcode': '', 'state': 'NSW', 'on': False},
 ]
-OPTIN = {MINI: {'email': True, 'mobile': False, 'marketing_optin': True}}   # the venue HQ switched the sign-up on for
+LONGPUB = 'v:88888888-8888-4888-8888-888888888888'
+PLACES.append({'place': LONGPUB, 'name': 'The Grand Imperial Hotel Bowls Club', 'suburb': '', 'postcode': '', 'state': 'NSW', 'on': True})
+OPTIN = {LONGPUB: {'email': True, 'mobile': False, 'marketing_optin': True}, MINI: {'email': True, 'mobile': False, 'marketing_optin': True}}   # the venue HQ switched the sign-up on for
 DUCK = 'c:99999999-9999-4999-8999-999999999999'
 NAMES = dict((p['place'], p['name']) for p in PLACES)
 NAMES[DUCK] = 'Duck and Drake'
@@ -853,6 +855,21 @@ def main():
         check('then question 1 shows with all four answers and the round started once', s.get('id') and len(s.get('btns', [])) == 4 and len([x for x in FAKE['log'] if x[1] == '/coaster/start']) == 1, s.get('view'))
         tst.close()
 
+        print('\nA 35-LETTER VENUE NAME: THE OFFERS LINE NEVER CUT, THE TICK ALWAYS THERE (design review, MUST FIX 3)')
+        for lw, lh in ((320, 568), (375, 667)):
+            clear_storage(b, base)
+            tl = Tab(b, base, api, w=lw, h=lh)
+            tl.go('/live-here-now')
+            where_step(tl, 'grand', 'The Grand Imperial')
+            wait(tl, lambda s: s.get('view') == 'vName' and s.get('optin'))
+            time.sleep(0.3)
+            tk = waits.as_json(tl.js('(function(){var l=document.querySelector("#optinTick label.optin"),sp=l.querySelector("span"),cb=l.querySelector("input"),r=cb.getBoundingClientRect(),cs=getComputedStyle(sp);'
+                                     'return JSON.stringify([sp.textContent,l.scrollWidth<=l.clientWidth+1,Math.round(sp.getBoundingClientRect().height/parseFloat(cs.lineHeight)),r.width>=20&&r.left>=0&&r.right<=innerWidth,parseFloat(cs.fontSize)]);})()'), [], 'LONGTICK')
+            check('%d px, a 35-letter venue name: the offers line is never cut off, takes at most two lines, and the tick box is on screen' % lw,
+                  tk and tk[0] == 'Send me offers from The Grand Imperial Hotel Bowls Club' and tk[1] and tk[2] <= 2 and tk[3] and tk[4] >= 12, tk)
+            tl.shot('lhn-longname-%d.png' % lw)
+            tl.close()
+
         print('\nBOTH SHOWS ON: ONE FULL PLAY AT 375 AND 430 (INBOX 405 updates 5 and 6), THEN THE SHOWS AT FULL BRIGHTNESS FOR THE REVIEW PAGE')
         HOOK = ("document.addEventListener('DOMContentLoaded',function(){window.__T=[];var S=window.VPSting;"
                 "if(S){var o=S.start;S.start=function(a){window.__T.push(['show',JSON.stringify((a||{}).words||{}),performance.now()]);return o.apply(S,arguments);};}"
@@ -1141,11 +1158,20 @@ def main():
                 check('%d px: the question and all four answers are on the first screen' % w, all(x['bottom'] <= h for x in s.get('btns', [])),
                       [round(x['bottom']) for x in s.get('btns', [])])
             tf.shot('lhn-question-%d.png' % w)
+            if w == 375:
+                # a venue with its own logo switched on: the logo takes the title spot, as the real game (the picture is simulated: no network here)
+                tf.js('(function(){var i=document.getElementById("venueLogo");i.src="data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'80\'><rect width=\'200\' height=\'80\' rx=\'14\' fill=\'%23C70F69\'/><text x=\'100\' y=\'52\' font-size=\'24\' font-family=\'Arial\' font-weight=\'700\' text-anchor=\'middle\' fill=\'white\'>THE MINI BAR</text></svg>";i.hidden=false;document.getElementById("hdrVenueName").hidden=true;if(window.VPVenueLogo)window.VPVenueLogo.fit(i,"phone");})()')
+                time.sleep(0.4)
+                tf.shot('lhn-logo-%d.png' % w)
+                tf.js('(function(){var i=document.getElementById("venueLogo");i.hidden=true;document.getElementById("hdrVenueName").hidden=false;})()')
             _, s, _ = play_round(tf, [True, False, True, True, False])
             time.sleep(0.4)
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, the end with the board: "435 pts", the same' % w,
                   s.get('scoreN') == '435 pts' and s.get('board') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('board'), f))
+            if h >= 667:
+                fold = tf.js('document.getElementById("challenge").getBoundingClientRect().bottom <= innerHeight')
+                check('%d px: the score\'s Share button is above the fold, nothing cut at the bottom edge (design review)' % w, fold is True, fold)
             tf.shot('lhn-score-%d.png' % w)
             tf.shot_full('lhn-scorefull-%d.png' % w)
             mine = tf.js('(function(){var r=document.querySelector("#rows .row.you");if(!r)return "";var c=getComputedStyle(r.querySelector(".rk")).backgroundColor;return r.textContent.replace(/\\s+/g," ").trim()+"|"+c;})()')
