@@ -73,7 +73,7 @@
   .done.on{ display:flex; }
   .done .card{ max-width:520px; width:100%; background:var(--ink-2); border:1px solid var(--line); border-radius:16px; padding:22px; }
   /* PLAY A QUICK GAME (INBOX 412): the games question and the three choices, one screen each, no scroll */
-  .qcard h2{ margin:0 0 6px; }
+  .qcard h2{ margin:0 0 12px; }
   .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
   .chip{ min-height:46px; padding:0 16px; border-radius:12px; border:2px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--text); font:700 16px 'Hanken Grotesk',Manrope,sans-serif; cursor:pointer; }
   .chip[aria-pressed=true]{ border-color:var(--pink); background:rgba(255,31,142,.18); color:#fff; }
@@ -239,6 +239,7 @@
   var QSTEP="";
   function quickStart(){
     VPQuick.countTaps(); VPQuick.leave();
+    $("ask").style.display="none";   // the old "Have a play for free / Checking you are signed in" page is not shown behind the cards
     qtrack("signed_in");
     try{ var k="vpFirstRun:"+S.venueId, st=JSON.parse(localStorage.getItem(k)||"null")||{}; st.dismissed=true; localStorage.setItem(k, JSON.stringify(st)); }catch(e){}   // NO setup wizard on first entry (INBOX 412)
     S.mode="player"; setCount(1); S.other=true;

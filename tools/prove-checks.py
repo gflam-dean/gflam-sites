@@ -24518,6 +24518,22 @@ MUTATIONS = [
      'href="/quick?src=website" data-cta="hero-quick-game"',
      'href="/see-a-night?from=home" data-cta="hero-quick-game"',
      'the home page button still goes to the old see-a-night page'),
+    ('quick-demo-in-chrome.test.py', 'venueplay/app/try.html',
+     'quickRun(VPQuick.first());',
+     'quickRun("demo");',
+     'the step order setting is ignored and the demo always comes first'),
+    ('quick-demo-in-chrome.test.py', 'venueplay/app/try.html',
+     'VP.saveSettings(S.venueId, { setup_answers:ans })',
+     'Promise.resolve(true)',
+     'what games do you run is never saved to the venue'),
+    ('quick-demo-in-chrome.test.py', 'venueplay/app/try.html',
+     'bill("/quick/more-info", { venue_id:S.venueId, game:"trivia" })',
+     'bill("/quick/nothing", { venue_id:S.venueId, game:"trivia" })',
+     "I'd like more info never reaches the sales desk"),
+    ('quick-demo-in-chrome.test.py', 'venueplay/app/try.html',
+     '    $("ask").style.display="none";   // the old',
+     '    // the old',
+     'the old Have a play for free page shows behind the quick cards'),
 ]
 
 
