@@ -108,7 +108,7 @@ MEASURE = r'''(function(){
     out.cards.push({
       text:c.innerText.replace(/\s+/g," "), html:c.innerHTML,
       frameLeft:fr.left, frameRight:fr.right, frameTop:fr.top, frameBottom:fr.bottom, rad:rad, fw:fw,
-      vlLeft:vr.left, brRight:br.right, vlTop:vr.top, frameBottomEdge:fr.bottom,
+      vlLeft:vr.left, brRight:br.right, vlTop:vr.top, brW:mm(br.width), footGap:mm(c.getBoundingClientRect().bottom-foot.getBoundingClientRect().bottom), frameBottomEdge:fr.bottom,
       box:{l:vr.left,t:vr.top,r:vr.right,b:vr.bottom,w:mm(vr.width),h:mm(vr.height)}, img:lr?{l:lr.left,t:lr.top,r:lr.right,b:lr.bottom,w:lr.width,h:lr.height,nw:li.naturalWidth,nh:li.naturalHeight,ok:li.complete&&li.naturalWidth>0}:null,
       vname:(vl.querySelector(".vpp-vname")||{}).textContent||"",
       freeText:fr0?fr0.innerText.replace(/\s+/g," ").trim():"", tiles:[].map.call(c.querySelectorAll(".pcgrid .cell"),function(e){return e.classList.contains("free")?null:(e.textContent||"").trim();}), freeColor:ff?getComputedStyle(ff).color:"", freeMark:!!(fr0&&fr0.querySelector('img[src$="/brand/venueplay-icon-pink.svg"]')),
@@ -219,6 +219,8 @@ try:
            abs(c['vlLeft'] - inside_left) <= 1.0, (c['vlLeft'], inside_left))
         ok('%s: the venueplay logo ends where the bottom-right curve ends (frame right - corner radius, +-1 px)' % tag,
            abs(c['brRight'] - inside_right) <= 1.0, (c['brRight'], inside_right))
+        ok('%s: the venueplay logo is 34 mm wide and the footer sits 7 mm above the card edge, still inside one page (INBOX 392 item 3)' % tag,
+           abs(c['brW'] - 34) < 0.4 and abs(c['footGap'] - 7) < 0.4, (c['brW'], c['footGap']))
         ok('%s: the footer sits below the frame, not over it' % tag, c['vlTop'] >= c['frameBottom'] - 0.5, (c['vlTop'], c['frameBottom']))
         # INBOX 385 (1): the centre square SAYS FREE, in black, with the small pink play mark, inside its square
         ok('%s: the centre square reads FREE PLAY, in black, with the small pink play mark, all inside the square (INBOX 385)' % tag,
@@ -279,13 +281,13 @@ try:
         b, im = c['box'], c['img'] or {}
         tag = '%s logo (%dx%d)' % (name, lw, lh)
         ok('%s: measured by prepLogo at its real size' % tag, bool(info) and info.get('w') == lw and info.get('h') == lh, info)
-        ok('%s: the box is the fixed 42 x 12 mm footer box' % tag, abs(b['w'] - 42) < 0.3 and abs(b['h'] - 12) < 0.3, b)
+        ok('%s: the box is the fixed 52 x 17 mm footer box (INBOX 392: bigger than the old 42 x 12)' % tag, abs(b['w'] - 52) < 0.3 and abs(b['h'] - 17) < 0.3, b)
         ok('%s: the logo is a picture that loaded, CONTAINED in its box (no overflow on any side)' % tag,
            im.get('ok') and im['l'] >= b['l'] - 0.5 and im['t'] >= b['t'] - 0.5 and im['r'] <= b['r'] + 0.5 and im['b'] <= b['b'] + 0.5, (im, b))
         ratio_drawn, ratio_real = (im.get('w', 0) / im['h']) if im.get('h') else 0, lw / float(lh)
         ok('%s: its shape is kept (drawn width/height within 1%% of the real logo, no stretch)' % tag,
            abs(ratio_drawn - ratio_real) / ratio_real <= 0.01, (ratio_drawn, ratio_real))
-        bound = 'w' if ratio_real >= 42 / 12.0 else 'h'
+        bound = 'w' if ratio_real >= 52 / 17.0 else 'h'
         ok('%s: as big as the box allows (it fills the box\'s %s)' % (tag, 'width' if bound == 'w' else 'height'),
            (abs(im['r'] - im['l'] - (b['r'] - b['l'])) <= 1.0) if bound == 'w' else (abs(im['b'] - im['t'] - (b['b'] - b['t'])) <= 1.0), (im, b))
         ok('%s: centred top to bottom in the box, its left edge on the curve end' % tag,
@@ -397,7 +399,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 238
+EXPECTED = 240
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

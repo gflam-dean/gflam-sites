@@ -416,7 +416,7 @@
   "counted_by": "lines"
  },
  "tools/paper-cards-v2-in-chrome.test.py": {
-  "checks": 238,
+  "checks": 240,
   "counted_by": "lines"
  },
  "tools/paper-lock-in-chrome.test.py": {

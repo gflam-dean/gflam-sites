@@ -87,7 +87,7 @@
     '.pcs.one .pcc{padding-right:3mm}' +
     '.pccut{position:absolute;left:148.5mm;top:0;bottom:0;border-left:.25mm dashed #8A8A95}' +
     '.pccutlbl{position:absolute;left:148.5mm;top:3mm;transform:translateX(-50%);background:#fff;padding:1mm 0;font:600 6.5pt Manrope,Arial,sans-serif;color:#6A6A74;writing-mode:vertical-rl}' +
-    '.pcc{position:absolute;top:0;width:148.5mm;height:210mm;padding:10mm;display:flex;flex-direction:column;--fw:1.5mm;--rad:4mm}' +
+    '.pcc{position:absolute;top:0;width:148.5mm;height:210mm;padding:10mm 10mm 7mm;display:flex;flex-direction:column;--fw:1.5mm;--rad:4mm}' +
     '.pcc.L{left:0;padding-right:3mm}.pcc.R{left:148.5mm;padding-left:3mm}' +
     '.pcc .k{font-weight:700;color:#55555E;line-height:1.1}' +
     '.pcc .play{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.005em;overflow-wrap:anywhere}' +
@@ -109,7 +109,7 @@
     '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
     '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}';
   /* The pub's logo box in the footer (/app/vp-paper-style.js): every shape of logo fits it, contained. */
-  var LOGO_BOX = { w: 42, h: 12 };
+  var LOGO_BOX = { w: 52, h: 17 };   /* INBOX 392 (14 Nov): was 42 x 12, the bottom of the sheet had spare room */
 
   /* The QR as an SVG string, drawn here from the qrcode library the console page loads. Level Q (a quarter of it can be
      smudged and it still reads), the capitals address so it stays a small code. No margin: the box round it is the quiet zone. */
@@ -153,7 +153,7 @@
     var PS = window.VPPaperStyle;
     if (!PS) { fail(w, 'The card style did not load. Reload the page and print again.'); return false; }
     var foot = '<div class="foot">' + PS.logoBox(o.logo, o.venue, LOGO_BOX) +
-      '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:25mm;display:block"></div>';
+      '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:34mm;display:block"></div>';
     function one(c, side) {
       var no = (c.no < 10 ? '0' : '') + c.no, g = '';
       for (var i = 0; i < 25; i++) {
