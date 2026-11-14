@@ -120,6 +120,7 @@ def scene_bc(RIG):
                 ok('the LATER order (games before the demo) is one array line: the games question comes first, no demo yet', first is True and not r.ask(s, 'document.getElementById("play").classList.contains("on")'), r.ask(s, 'JSON.stringify({e:window.__errs,s:(window.VPQuick||{}).cfg&&VPQuick.cfg.STEPS,m:document.getElementById("signinMsg").textContent})'))
             f = r.json(s, FITCARD, {})
             ok('%dpx: the games card is inside the screen, no scroll, buttons 44px or taller' % w, first is True and f.get('top', -1) >= 0 and f.get('bottom', 9999) <= f.get('vh', 0) and f.get('left', -1) >= 0 and f.get('right', 9999) <= f.get('vw', 0) and f.get('small', 1) == 0 and f.get('wide', 1) <= 0, f)
+            ok('%dpx: the old "Have a play for free / Checking you are signed in" page is not showing behind the card' % w, r.ask(s, 'getComputedStyle(document.getElementById("ask")).display') == 'none', r.ask(s, 'getComputedStyle(document.getElementById("ask")).display'))
             if SHOTS: r.shot(s, os.path.join(SHOTS, 'quick-games-%dpx.jpg' % w))
             TD.clickid(r, s, 'qGamesGo')
             ok('%dpx: after the games question the demo starts (TV and QR)' % w, r.until(s, '!!document.querySelector("#tvBox iframe")', 30) is True, r.ask(s, TD.STEP))
