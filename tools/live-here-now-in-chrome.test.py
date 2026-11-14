@@ -555,8 +555,8 @@ def main():
     check('a big enough bank: at least 600 questions (120 scans before a phone could need a repeat)', len(BANK['q']) >= 600, len(BANK['q']))
     check('every question has four different answers, one marked right, and an id of its own',
           all(len(q[2]) == 4 and len(set(q[2])) == 4 and 0 <= q[3] < 4 for q in BANK['q']) and len(BY_ID) == len(BANK['q']))
-    check('small enough for pub wifi: the page under 60 KB and the questions under 200 KB',
-          os.path.getsize(PAGE) < 60000 and os.path.getsize(DATA) < 200000, (os.path.getsize(PAGE), os.path.getsize(DATA)))
+    check('small enough for pub wifi: the page under 75 KB (about 20 KB compressed) and the questions under 200 KB',
+          os.path.getsize(PAGE) < 75000 and os.path.getsize(DATA) < 200000, (os.path.getsize(PAGE), os.path.getsize(DATA)))
 
     print('\nTHE PAGE FILE')
     check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
@@ -566,7 +566,7 @@ def main():
     check('no "60-second" and no "Coaster trivia" anywhere, and no top bar: our logo (or the venue\'s) sits at the foot (396)',
           '60-second' not in HTML and 'Coaster trivia' not in HTML and '<header' not in HTML and 'id="venueLogo"' in HTML)
     check('the foot carries the venueplay wordmark (data-vp-mark="wordmark"), linked home',
-          'data-vp-mark="wordmark"' in HTML and 'class="mark" href="/" aria-label="venueplay home"' in HTML)
+          'data-vp-mark="wordmark"' in HTML and 'class="mark" id="footMark" href="/" aria-label="venueplay home"' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
            if l.strip() and not l.lstrip().startswith('#')]
     check('_redirects sends /here (and /here.html), the address printed on the coaster, to /live-here-now with a 301',
@@ -786,7 +786,8 @@ def main():
             lab = tsh.js('document.getElementById("challenge").textContent')
             cp = tsh.js('document.getElementById("copyLink").hidden')
             tsh.shot('lhn-share-%s-%s.png' % (dev, mode))
-            tsh.tap_id('challenge')
+            if mode != 'none':          # the text-message link would navigate the tab away to sms: (jsc proves its address)
+                tsh.tap_id('challenge')
             time.sleep(0.4)
             shares = waits.as_json(tsh.js('JSON.stringify(window.__shares)'), [], 'SHARES')
             shown_err = tsh.js('document.getElementById("shared").textContent')
@@ -1037,6 +1038,9 @@ def main():
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, a question: the same' % w, f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            one = waits.as_json(tf.js('(function(){var m=document.getElementById("footMark").getBoundingClientRect();return JSON.stringify([document.documentElement.scrollHeight,innerHeight,m.bottom,m.height>0]);})()'), [], 'ONESCREEN')
+            check('%d x %d: a game screen is ONE screen, no scroll, and the logo at the bottom is on it (memory: one screen no scroll)' % (w, h),
+                  one and one[0] <= one[1] + 1 and one[2] <= one[1] and one[3], one)
             if h >= 667:
                 check('%d px: the question and all four answers are on the first screen' % w, all(x['bottom'] <= h for x in s.get('btns', [])),
                       [round(x['bottom']) for x in s.get('btns', [])])

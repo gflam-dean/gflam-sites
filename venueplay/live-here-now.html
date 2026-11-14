@@ -77,19 +77,21 @@
   input::placeholder{color:#8E8E99;font-weight:600}
   #whereIn{padding-right:12px}
   #whereIn::placeholder{font-size:15px;font-weight:600}
+  @media(max-width:360px){ #whereIn{padding-left:12px;padding-right:8px} #whereIn::placeholder{letter-spacing:-.03em} }   /* the whole sentence fits one line at 320 and stays 15px */
   /* the search clear (x): grey and white, never the browser's blue, with a 44px tap area */
   input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
   input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:44px;height:44px;margin:-12px -6px -12px 0;cursor:pointer;
     background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Ccircle cx='22' cy='22' r='10' fill='%2338383F'/%3E%3Cpath d='M18 18l8 8M26 18l-8 8' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center/44px 44px no-repeat}
   .cerr{color:var(--roll);font-size:16px;min-height:24px;margin-top:8px}
   .hint{color:var(--muted);font-size:16px;min-height:24px;margin-top:10px}
+  .hint:empty{min-height:0;margin-top:0}
   .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:14px;cursor:pointer;
     font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:19px;letter-spacing:.01em;touch-action:manipulation;text-align:center}
   .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 10px 26px -8px rgba(255,31,142,.6)}
   .btn.pink:active{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:#fff;border:1px solid var(--line-2);margin-top:12px;font-size:17px;min-height:54px}
   .btn:disabled{opacity:.5;cursor:default}
-  .linkbtn{display:flex;align-items:center;min-height:54px;background:none;border:0;padding:8px 0;color:#FF8AC4;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;
+  .linkbtn{display:flex;align-items:center;min-height:56px;background:none;border:0;padding:8px 0;color:#FF8AC4;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;
     text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
   .linkbtn.quiet{color:var(--muted);font-weight:600;font-size:16px}
 
@@ -124,9 +126,9 @@
   /* ---------- THE QUESTION, IN THE TRIVIA PHONE'S NEW LOOK ---------- */
   .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .lefts{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-  .soundbtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 0;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
-  .soundbtn[aria-pressed="true"]{color:#fff}
-  .soundbtn[aria-pressed="true"] #soundX,.soundbtn[aria-pressed="false"] #soundWave{display:none}
+  .sndtoggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 0;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
+  .sndtoggle[aria-pressed="true"]{color:#fff}
+  .sndtoggle[aria-pressed="true"] #soundX,.sndtoggle[aria-pressed="false"] #soundWave{display:none}
   .count{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--muted)}
   .count b{color:#fff}
   .pips{display:flex;gap:6px;margin:12px 0 18px}
@@ -135,6 +137,7 @@
   .pip.right{background:var(--green)}
   .pip.wrong{background:#5A5A64}
   .q{font-family:'Manrope',sans-serif;font-weight:800;font-size:clamp(22px,6.4vw,28px);line-height:1.22;color:#fff;min-height:3.66em;overflow-wrap:break-word;animation:rise .28s ease both}
+  #vPlay.hush .top,#vPlay.hush .pips,#vPlay.hush .loading{visibility:hidden}   /* while the start show plays, nothing of the question screen shows through */
   .loading{color:var(--muted);font-size:18px;padding:48px 0;text-align:center}
   .loading::before{content:"";display:block;width:34px;height:34px;margin:0 auto 16px;border-radius:50%;
     border:3px solid rgba(255,31,142,.22);border-top-color:var(--pink);animation:spin .8s linear infinite}
@@ -226,7 +229,20 @@
     .bigscreen .tv{width:42px;height:32px}
     .vlogo{max-width:150px}
   }
-  @media(max-height:700px){ .pq-ring{width:48px;height:48px} .pq-ring .n b{font-size:20px} .pq-ring .n span{display:none} }   /* a short phone keeps all four answers on screen */
+  /* A SHORT PHONE (iPhone SE 568, an iPhone 667 or Safari's 664 visible): the whole game screen, our logo included, fits ONE screen with no scroll */
+  @media(max-height:700px){
+    body[data-view=vPlay] .view{padding-top:max(12px, env(safe-area-inset-top, 0px));padding-bottom:6px}
+    #vPlay .top .pq-ring{width:48px;height:48px} #vPlay .top .pq-ring .n b{font-size:20px} #vPlay .top .pq-ring .n span{display:none}
+    #vPlay .pips{margin:6px 0 10px}
+    #vPlay .q{font-size:clamp(18px,5.6vw,22px);min-height:3.66em}
+    #vPlay .answers{gap:8px;margin-top:10px}
+    #vPlay .ans{min-height:56px;font-size:17px;padding-top:6px;padding-bottom:6px}
+    #vPlay .ans .l{font-size:30px}
+    #vPlay .verdict{margin-top:10px;min-height:44px;padding:8px 14px}
+    #vPlay .ptotal{margin-top:2px;min-height:0}
+    body[data-view=vPlay] footer{margin-top:0;padding:8px 0 max(8px, env(safe-area-inset-bottom, 0px))}
+    body[data-view=vPlay] .foot .mark{padding:2px 0}
+  }
   @media(min-width:700px){ .view{padding-top:48px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
@@ -288,11 +304,11 @@
   <section class="view" id="vPlay" hidden>
     <div class="top">
       <div class="lefts"><span class="count" id="count">Question <b>1</b> of 5</span>
-        <button class="soundbtn" id="vpqMute" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button></div>
+        <button class="sndtoggle" id="vpqMute" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button></div>
       <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
     </div>
     <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
-    <p class="loading" id="loading">Pouring your first question...</p>
+    <p class="loading" id="loading">Getting your first question...</p>
     <h2 class="q" id="q" hidden></h2>
     <div class="answers" id="answers" role="group" aria-labelledby="q"></div>
     <div class="verdict" id="verdict" aria-live="polite"></div>
@@ -789,9 +805,9 @@ var VPCoaster = (function () {
        Worker's clock for question 1 starts when the round does, so the show never costs a player seconds */
     var ST = window.VPSting;
     if (ST && ST.on && !startShow) {
-      startShow = true;
+      startShow = true; $('vPlay').classList.add('hush');
       try { ST.start({ words: ST.phoneWords('TRIVIA'), layout: 'phone' }); } catch (e) {}
-      setTimeout(function () { startShow = false; startRound(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
+      setTimeout(function () { startShow = false; $('vPlay').classList.remove('hush'); startRound(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
       return;
     }
     startRound();
@@ -975,7 +991,7 @@ var VPCoaster = (function () {
       setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1500);
     } catch (e) {}
   }
-  function toMyRow() { var r = document.querySelector('#rows .row.you'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  function toMyRow() { try { window.scrollTo(0, 0); } catch (e) {} }   // the result hero first, the board under it (never scrolled past the score)
   function paintBoard(b, period) {
     boardPeriod = period;
     $('tabNight').setAttribute('aria-selected', period === 'night' ? 'true' : 'false');
