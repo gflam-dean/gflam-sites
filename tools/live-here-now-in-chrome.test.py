@@ -592,7 +592,7 @@ def main():
           ['/here', '/live-here-now', '301'] in red and ['/here.html', '/live-here-now', '301'] in red, [r for r in red if 'here' in ' '.join(r)])
     check('and /live (and /live.html), the other spelling people try, with a 301 too',
           ['/live', '/live-here-now', '301'] in red and ['/live.html', '/live-here-now', '301'] in red, [r for r in red if 'live' in ' '.join(r)])
-    check('and /coaster, "From a venue? Click here", is served by the offer page (today\'s offer)', ['/coaster', '/nsw', '200'] in red)
+    check('and /coaster, the address already printed, is still served by the offer page', ['/coaster', '/nsw', '200'] in red)
     sm = io.open(os.path.join(ROOT, 'venueplay', 'sitemap.xml'), encoding='utf-8').read()
     check('the sitemap lists https://venueplay.com.au/live-here-now', '<loc>https://venueplay.com.au/live-here-now</loc>' in sm)
 
@@ -723,8 +723,8 @@ def main():
         check('"Want to challenge your mates?" and ONE pink button "Share" is offered, above the board (396 update 2)', s.get('challenge') is True and
               t.js('document.getElementById("challenge").textContent') in ('Share', 'Text your mates a challenge') and
               t.js('document.getElementById("challengeBox").getBoundingClientRect().bottom <= document.getElementById("board").getBoundingClientRect().top'))
-        check('"From a venue? Click here" goes to /coaster (today\'s offer), never the home page',
-              s.get('owner') == '/coaster' and s.get('ownerText') == 'From a venue? Click here', (s.get('owner'), s.get('ownerText')))
+        check('"From a venue? Click here" goes to the home page (sales page first) with the three coaster utm tags',
+              s.get('owner') == '/?utm_source=coaster&utm_medium=qr&utm_campaign=live-here-now' and s.get('ownerText') == 'From a venue? Click here', (s.get('owner'), s.get('ownerText')))
         check('"Game on the TV? Join it" goes to /play when the coaster names no venue', s.get('next') == '/play', s.get('next'))
         t.shot('lhn-score-375.png')
         t.tap_id('tabWeek')

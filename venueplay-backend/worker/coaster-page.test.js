@@ -185,7 +185,9 @@ var small = (css.match(/font-size:\s*(\d+(?:\.\d+)?)px/g) || []).filter(function
 var addlink = /\.addlink\{font-size:12px;/.test(css);
 pass("nothing on the page is under 15px (but the Add it link, 12px at Dean's word, and the offers line that shrinks to fit)", small.length === (addlink ? 1 : 0) && (!addlink || small[0] === "font-size:12px"), small);
 var text = PAGE.replace(/<!--[\s\S]*?-->/g, "").replace(/<script[\s\S]*?<\/script>/g, function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, ""); });
-pass("'From a venue? Click here' goes to /coaster, today's offer, never the home page", /<a class="owner" id="ownerLink" href="\/coaster">From a venue\? Click here<\/a>/.test(PAGE));
+pass("'From a venue? Click here' goes to the home page (the sales page, sign-up at the bottom) with the three coaster tags, not the sign-up form first", /<a class="owner" id="ownerLink" href="\/\?utm_source=coaster&amp;utm_medium=qr&amp;utm_campaign=live-here-now">From a venue\? Click here<\/a>/.test(PAGE));
+var REDIR = find("venueplay/_redirects");
+pass("the /coaster rewrite to the offer page stays, for the links already printed", /^\/coaster\s+\/nsw\s+200\s*$/m.test(REDIR) && /^\/coaster\/\s+\/nsw\s+200\s*$/m.test(REDIR));
 pass("the games are named in order: trivia, musical bingo, bingo", /Trivia, musical bingo and bingo on the pub TV/.test(PAGE) && !/Trivia, bingo and musical bingo/.test(PAGE));
 /* The one exception is the legal line, the same on every page of the site (test-terms-put-compliance-on-the-venue.js). */
 pass("'venueplay' is lowercase wherever a person reads it (the legal footer line aside)", !/VenuePlay|Venueplay|VENUEPLAY/.test(text));
