@@ -10416,6 +10416,7 @@ async function vpaProvisionFromCheckout(env, session) {
         timezone: vpaTimezoneFromPostcode(f.postcode),
       });
       stepsDone.push('venue');
+      await vpaSimilarVenueAlert(env, foundingId, { id: venue.id, name: venueName, postcode: f.postcode }, 'signup');
     }
 
     // ---- Default settings (create only if missing). ----
@@ -10718,6 +10719,51 @@ function vpaGuessEntity(name) {
   return null;
 }
 
+/* A VENUE THAT LOOKS LIKE ONE WE ALREADY HAVE (Dean, 14 Nov 2026, INBOX 419 B8 b extended): whenever ANY account signs up or
+   adds a venue that looks like an existing or recent venue (the same name at the same postcode, any account, active
+   now or cancelled/switched off inside the last 12 months), one email goes to sales@ saying so, and whether the
+   account doing it is unpaid. NOTHING is shown to the customer and nothing is blocked: a person decides. The same mail
+   path every HQ alert uses (vpaSendEmail + vpaAlertSubject), once per venue (the audit row is the memory). Best effort,
+   it can never stop a sign-up or an add. Venues store no street address today, so name + postcode is what can be
+   compared; a missing postcode cannot tell two Royals apart and raises nothing. */
+const VPA_SIMILAR_VENUE_MONTHS = 12;
+async function vpaSimilarVenueAlert(env, foundingId, venue, source) {
+  try {
+    const vid = venue && venue.id;
+    if (!vid || !foundingId) return false;
+    const pc = vpVenuePostcode(venue.postcode);
+    if (!pc || !vpVenueKey(venue.name)) return false;
+    const have = await vpaSelect(env, 'vp_admin_audit', 'action=eq.similar_venue_alert&target=eq.' + encodeURIComponent('venue:' + vid) + '&select=id&limit=1');
+    if (have && have.length) return false;
+    const rows = await vpaSelect(env, 'vp_venues', 'postcode=eq.' + encodeURIComponent(pc)
+      + '&select=id,name,postcode,founding_id,status,suspended_reason,created_at,closed_at&limit=1000');
+    const cutoff = Date.now() - VPA_SIMILAR_VENUE_MONTHS * 31 * 86400000;
+    const hits = (rows || []).filter((r) => {
+      if (!r || r.id === vid || vpVenueMatch(venue.name, pc, r.name, r.postcode) !== 'same') return false;
+      if (r.status === 'active') return true;
+      const t = Math.max(Date.parse(r.closed_at || '') || 0, Date.parse(r.created_at || '') || 0);
+      return t >= cutoff;
+    });
+    if (!hits.length) return false;
+    const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email,status,stripe_subscription_id,bill_by_invoice&limit=1');
+    const acct = (fr && fr[0]) || {};
+    const unpaid = acct.status !== 'comp' && !acct.stripe_subscription_id && acct.bill_by_invoice !== true && acct.status !== 'card_on_file';
+    const site = 'https://www.venueplay.com.au';
+    const name = String(venue.name || 'A venue');
+    const list = hits.slice(0, 5).map((h) => '<li>' + vpaEsc(h.name || '') + ' (' + vpaEsc(h.postcode || '') + '), '
+      + (h.status === 'active' ? 'active' : 'off' + (h.suspended_reason ? ' (' + vpaEsc(h.suspended_reason) + ')' : '')) + ', account ' + vpaEsc(h.founding_id || 'none') + '</li>').join('');
+    const html = '<p>' + vpaEsc(name) + ' (' + vpaEsc(pc) + ') was just ' + (source === 'add_venue' ? 'added to an account' : 'signed up')
+      + ' and looks like a venue we already have or had in the last ' + VPA_SIMILAR_VENUE_MONTHS + ' months.</p>'
+      + '<p><b>' + (unpaid ? 'This account is UNPAID (no card or subscription behind it).' : 'This account is paid.') + '</b></p>'
+      + '<p>Account: ' + vpaEsc(acct.contact_email || foundingId) + '</p>'
+      + '<p>Looks like:</p><ul>' + list + '</ul>'
+      + vpaEmailButton(site + '/app/hq.html', 'Open HQ');
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'similar_venue_alert',
+      target: 'venue:' + vid, detail: { name: name, postcode: pc, source: source, unpaid: unpaid, matches: hits.slice(0, 5).map((h) => h.id) } }, false).catch(() => {});
+    return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', 'Similar venue ' + name + (unpaid ? ' (account unpaid)' : '')), html);
+  } catch (_) { return false; }
+}
+
 async function vpaProvisionOneVenue(env, opts) {
   const foundingId = opts.foundingId, groupId = opts.groupId,
         name = opts.name, seats = opts.seats, authUserId = opts.authUserId;
@@ -10769,6 +10815,7 @@ async function vpaProvisionOneVenue(env, opts) {
       compliance_accepted_by: opts.complianceBy || null,
     });
     created = true;
+    await vpaSimilarVenueAlert(env, foundingId, { id: venue.id, name: name, postcode: opts.postcode }, opts.alertSource || 'signup');
   }
 
   const haveSettings = await vpaSelect(env, 'vp_venue_settings',
@@ -13978,8 +14025,8 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
        reduction lowers the NEXT bill, which the credit is set against, so the unearned part comes back off.
        (On the old monthly rule the month charged and the month credited sit on the same next bill and
        cancel each other whatever happens, so there is nothing to square and this does nothing.)
-     - yearly: inside the pub's free month, because a yearly release pays the unused players out as credit
-       straight away, which on top of the free month paid out the same players twice.
+     - yearly: inside the pub's free month. (A yearly cut no longer pays anything out, INBOX 419 (3), so this is the one
+       way a cut inside the free month moves money, and it stays: the free month is for the players kept through it.)
    The credit is kept for every player up to the number it was given for (P, worked back from the credit
    and the same rate and days that sized it). Below P the unearned share, credit x (P - players) / P, is
    taken back; raising the players again gives it back. Each adjustment is the difference from the last one
@@ -14006,8 +14053,7 @@ async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
     if (rate == null) return null;
     let per;
     if (annual) {
-      const frac = Math.max(0, Math.min(1, (Number(info.periodEnd) - atS) / (365 * 86400)));
-      per = Math.min(Math.round(rate * 100), rate * 100 * 12 * frac);
+      per = Math.round(rate * 100);                                 // a whole month a player, uncapped (INBOX 419 (2))
     } else {
       const cycleStart = Number(info.periodEnd);
       const cycleDays = vpbCycleDays(cycleStart, vpbMonthOnS(cycleStart, info.anchor));
@@ -14113,7 +14159,9 @@ async function vpbSetPlayers(request, env, json) {
   const previewOnly = b.preview === true;
 
   const annualPlan = o.account.plan === 'annual';
-  const basis = annualPlan ? billedNow : current;
+  /* ONE BASIS ON BOTH PLANS (Dean, 14 Nov 2026, INBOX 419 (3)): a reduction never gives money back, so what the venue has
+     PAID FOR this period (max_players) is the number every increase is measured from, yearly as well as monthly. */
+  const basis = current;
 
   if (players === current) {
     if (venue.pending_players == null) return json({ ok: true, unchanged: true });
@@ -14262,32 +14310,21 @@ async function vpbSetPlayers(request, env, json) {
     } catch (e) { console.log('[billing] undo check failed, reducing normally: ' + (e && e.message)); }
   }
 
-  /* DECREASE. The two plans genuinely differ here, and conflating them was minting credit.
-     MONTHLY: keep capacity (max_players) until renewal so they are never left short, and no
-     mid-term refund. Lower the Stripe quantity NOW with proration_behavior 'none' so the
-     reduction lands on the NEXT invoice. (Stripe bills in advance, so applying it only at
-     invoice.paid would be one full cycle too late and overcharge them.)
-
-     ANNUAL: the capacity has to go NOW, because the credit is paid out now. Keeping capacity
-     until renewal while banking a pro-rata credit for "unused" players handed back money for
-     players the venue carried on using all year. Worse, the payout shrank as the year ran down
-     while the capacity never moved, so dropping 50 players in January and restoring them in
-     November banked ten months of credit and gave up nothing: the restore only charged the two
-     months left. That was free money on a timer, and it did not even need a loop.
-     Releasing the capacity for real makes the credit honest. Give up 50 players in January, buy
-     them back in November, and you keep the value of the ten months you actually did without. */
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
-    annualPlan ? { max_players: players, pending_players: null } : { pending_players: players });
+  /* DECREASE (Dean, 14 Nov 2026, INBOX 419 (3)): THE SAME ON BOTH PLANS, and no money moves. The period is paid, so the
+     capacity (max_players) stays until the renewal, the cut is held as pending_players, and the Stripe quantity is
+     lowered now with proration_behavior 'none' so it lands on the NEXT invoice (monthly: next month; yearly: next
+     year). No credit, no refund. This replaces the 13 Nov yearly rule, which released the capacity at once and banked
+     a credit. The free month take-back (vpbFreeMonthTrueUp) is the only thing that can move money here. */
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { pending_players: players });
   const reducedTotal = await vpbAccountTotal(env, foundingId); // effective total (already reflects this pending)
   const dinfo = await vpbSubItem(env, o.account.stripe_subscription_id);
   if (dinfo && dinfo.itemId) {
     await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(dinfo.itemId),
       { quantity: Math.max(reducedTotal, 1), proration_behavior: 'none' });
   }
-  // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
-  // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
-  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0') + ':g' + gen) : null;
+  /* NO MONEY COMES BACK, ON EITHER PLAN (Dean, 14 Nov 2026, INBOX 419 (3)): the period is paid, so the cut takes effect
+     from the next bill. No credit, no refund. The free month take-back below is separate and stays. */
+  const dAdj = null;
   if (dinfo) await vpbFreeMonthTrueUp(env, o, venueId, dinfo, players, { why: 'reduction' });
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
@@ -14295,9 +14332,9 @@ async function vpbSetPlayers(request, env, json) {
   }, false).catch(() => {});
   return json({ ok: true,
                 credit_failed: (dAdj && dAdj.kind === 'failed') ? true : false,
-                applied: annualPlan ? 'now' : 'next_renewal',
-                players: annualPlan ? players : undefined,
-                pending: annualPlan ? null : players,
+                applied: 'next_renewal',
+                players: undefined,
+                pending: players,
                 credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0,
                 undo_failed: b.undo_failed === true });
 }
@@ -14484,7 +14521,7 @@ async function vpbAddVenue(request, env, json) {
     // same-named venue exists at a DIFFERENT postcode, which the block above has just established.
     r = await vpaProvisionOneVenue(env, {
       foundingId: foundingId, groupId: null, name: name, seats: players, postcode: postcode,
-      authUserId: o.authUserId, forceNew: !!(sameName && sameName.length),
+      authUserId: o.authUserId, forceNew: !!(sameName && sameName.length), alertSource: 'add_venue',
     });
     if (!r || !r.created) {
       if (preBefore != null) {
@@ -14635,10 +14672,10 @@ async function vpbAddVenue(request, env, json) {
      a returning venue is now the SAME ROW rather than a new one. */
   if (!newVenueProrata && !reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
-    /* NEVER MORE THAN WAS CHARGED (B3, 13 Nov 2026). On a yearly plan the charge is pro rata to the renewal,
-       so a pub added in the last weeks of the year was charged a few days and credited a whole month: the
-       difference paid the account's other bills. Monthly the charge IS one month, so this changes nothing. */
-    const freeCents = (fRate == null) ? 0 : Math.min(Math.round(fRate * 100) * players, aAdj.cents);
+    /* A FULL FREE MONTH ON A YEARLY PLAN, NO CAP (Dean, 14 Nov 2026, INBOX 419 (2)): the 13 Nov limit of "never more than
+       was charged" is reversed. A pub added a few days before renewal still gets its whole month (players x rate),
+       the way a monthly pub does. The free-month take-back (vpbFreeMonthTrueUp) still squares it if the players go. */
+    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
     if (freeCents > 0) {
       /* KEYED ON THE VENUE ID, which is unique and permanent, so a double click or a client
          retry banks the credit once. vpaProvisionOneVenue is idempotent by name and answers 409
