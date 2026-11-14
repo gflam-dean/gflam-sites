@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Nov 2026, 06:23 · a1f9a432';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Nov 2026, 06:30 · 952374b2';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3406,6 +3406,10 @@ async function handleCoasterStart(request, env, json) {
   const b = await readJson(request);
   const first = coasterFirstName(b.name);
   if (!first) return json({ error: 'Type your first name.' }, 400);
+  /* Name AND mobile at every board (Dean, 15 Nov 2026): no round on a board without a real Australian mobile. It is
+     checked here and kept only by /coaster/optin (never on the board, never in vp_coaster_plays). */
+  const mobileErr = coasterMobileError(b.mobile);
+  if (mobileErr) return json({ error: mobileErr, field: 'mobile' }, 400);
   if (!(await coasterLimit(request, env, 'start', COASTER_START_MAX_PER_IP, 600))) {
     return json({ error: 'Too many rounds from this network. Wait a few minutes and try again.' }, 429);
   }
@@ -3531,41 +3535,83 @@ async function coasterOptinAsk(env, where) {
 async function handleCoasterAsk(request, env, json) {
   if (!(await coasterLimit(request, env, 'find', COASTER_FIND_MAX_PER_IP, 60))) return json({ optin: null }, 429);
   try {
-    const where = await coasterPlace(env, new URL(request.url).searchParams.get('place'));
-    return json({ optin: await coasterOptinAsk(env, where) });
+    const u = new URL(request.url);
+    let place = u.searchParams.get('place');
+    /* a mate's challenge link (?code=): the board it was played on, so the details step can name the venue (Dean, 15 Nov 2026) */
+    const code = String(u.searchParams.get('code') || '').toUpperCase();
+    if (!place && /^[A-Z0-9]{6}$/.test(code)) {
+      const g = (await sbGet(env, 'vp_coaster_plays', 'code=eq.' + enc(code) + '&select=board&limit=1'))[0];
+      place = g ? g.board : null;
+    }
+    const where = await coasterPlace(env, place);
+    const out = { optin: await coasterOptinAsk(env, where) };
+    /* owner: a venueplay venue (the details go to it) or not (they stay with venueplay) */
+    if (where) out.venue = { name: where.name, owner: !!where.venue_id };
+    return json(out);
   } catch (e) { return json({ optin: null }); }
 }
 
-/* POST /coaster/optin { play, token, email, mobile, marketing_optin, consent_version, pid }
-   The player's sign-up for THAT venue, kept exactly the way a sign-up on the phones is: the venue's own
-   gate (gatedCapture: only what it collects, the tick only with an address), the consent words' version
-   (migration 174; tried once more without it if the column is not there, so a sign-up is never lost), in
-   vp_captures with source 'coaster'. The round's secret proves this phone played the round, not that it
-   was in the room, so like every sign-up that cannot prove that (/join/list, a token-less /capture) it is
-   kept with during_game false, and the venue's opt-in export reads source 'coaster' rows itself (vpaOptinCsv,
-   Dean 12 Nov 2026, INBOX 303): only with that venue's tick, consent_version kept with it. */
+/* A REAL AUSTRALIAN MOBILE (Dean, 15 Nov 2026: name and mobile at every venue). Spaces, dashes, dots and brackets
+   are ignored; 04xx xxx xxx, +61 4xx xxx xxx, 61 4..., and 4xx xxx xxx (9 digits) are taken. Answers "+614xxxxxxxx"
+   or "" when it is not one. The page's VPCoaster.auMobile is the same rule (coaster-page.test.js holds them equal). */
+function coasterMobile(raw) {
+  let d = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+  const plus = d.charAt(0) === '+'; if (plus) d = d.slice(1);
+  if (!/^\d+$/.test(d)) return '';
+  if (/^614\d{8}$/.test(d)) return '+' + d;
+  if (!plus && /^04\d{8}$/.test(d)) return '+61' + d.slice(1);
+  if (!plus && /^4\d{8}$/.test(d)) return '+61' + d;
+  return '';
+}
+function coasterMobileError(raw) {
+  if (!String(raw == null ? '' : raw).trim()) return 'Type your mobile.';
+  return coasterMobile(raw) ? '' : 'That mobile does not look right. An Australian mobile starts 04 and has 10 digits.';
+}
+
+/* POST /coaster/optin { play, token, mobile, email, marketing_optin, consent_version, last_name }
+   THE PLAYER'S DETAILS FOR A ROUND (Dean, 15 Nov 2026: first name and mobile at every venue). The round's secret
+   proves this phone played the round, not that it was in the room, so like every sign-up that cannot prove that
+   (/join/list, a token-less /capture) it is kept with during_game false.
+   - At a venueplay venue: in vp_captures with source 'coaster', for THAT venue, the way a sign-up on the phones is
+     (gatedCapture), except that the first name and the mobile are always kept. The email, a last name and the one
+     offers tick only where HQ switched the coaster sign-up on (vp_coaster_optin_venues) and the venue's own settings
+     collect them; the tick only with an address (gatedCapture); the consent words' version (migration 174; tried once
+     more without it if the column is not there, so a sign-up is never lost). The venue's opt-in export reads source
+     'coaster' rows itself (vpaOptinCsv, Dean 12 Nov 2026, INBOX 303): only with that venue's tick.
+   - Anywhere else (a venue a player added, a coaster venue, a pub from our list: no venueplay account behind it):
+     the first name and the mobile in vp_coaster_contacts (migration 198), for venueplay only. Service role only,
+     never shown to any venue, never in HQ's lists or an export, never emailed or texted for marketing: service only.
+     Before migration 198 nothing is kept there (stored false), and the round plays the same. */
 async function handleCoasterOptin(request, env, json) {
   const b = await readJson(request);
   const playId = assertUuid(String(b.play || ''), 'round');
   const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
-  const mobile = String(b.mobile || '').replace(/[^0-9+]/g, '').slice(0, 20);
+  const mobileErr = coasterMobileError(b.mobile);
+  if (mobileErr) return json({ error: mobileErr, field: 'mobile' }, 400);
+  const mobile = coasterMobile(b.mobile);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right.' }, 400);
-  if (mobile && !/^\+?[0-9]{8,15}$/.test(mobile)) return json({ error: 'That mobile does not look right.' }, 400);
-  if (!email && !mobile) return json({ error: 'Type your email.' }, 400);
   if (!(await coasterLimit(request, env, 'optin', COASTER_OPTIN_MAX_PER_IP, 600))) return json({ error: 'Too many sign-ups from this network. Wait a few minutes.' }, 429);
   try {
     const row = (await sbGet(env, 'vp_coaster_plays', 'id=eq.' + enc(playId) + '&select=id,board,token_hash,first_name&limit=1'))[0];
     const proof = await sha256Hex(String(b.token || ''));   // the round's secret, as /coaster/answer checks it
     if (!row || proof !== row.token_hash) return json({ error: 'That round is not yours.' }, 403);
     const where = await coasterPlace(env, row.board);
+    if (!where) return json({ ok: true, stored: false });
+    if (!where.venue_id) return await coasterKeepContact(env, json, where, row, mobile);
     const ask = await coasterOptinAsk(env, where);
-    if (!ask) return json({ ok: true, stored: false });   // not switched on for this venue: nothing is kept
     const cfg = await venueCollectCfg(env, where.venue_id);
-    /* the round's first name and an optional last name ride with it (INBOX 309.1c), through the venue's own gate */
+    /* the first name and the mobile always; the rest only where the venue's coaster sign-up is on and it collects them */
+    const gate = Object.assign({}, cfg, { collect_first_name: true, collect_mobile: true, collect_postcode: false });
+    if (!ask) { gate.collect_email = false; gate.collect_last_name = false; gate.collect_marketing_optin = false; }
     const lastName = String(b.last_name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 40);
-    const cap = gatedCapture(cfg, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile || null,
+    const cap = gatedCapture(gate, { marketing_optin: b.marketing_optin === true, email: email || null, mobile: mobile,
       first_name: row.first_name || null, last_name: lastName || null });
-    if (!(cap.email || cap.mobile)) return json({ ok: true, stored: false });
+    if (!cap.mobile) return json({ ok: true, stored: false });
+    /* a second round on the same phone with nothing new (no email, no tick): kept once, not once a round */
+    if (!cap.email && !cap.marketing_optin) {
+      const had = await sbGet(env, 'vp_captures', 'venue_id=eq.' + enc(where.venue_id) + '&source=eq.coaster&mobile=eq.' + enc(cap.mobile) + '&select=venue_id&limit=1');
+      if (had && had.length) return json({ ok: true, stored: true });
+    }
     const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
     if (consentVersion && cap.marketing_optin) cap.consent_version = consentVersion;   // migration 174's column
     const ipHash = await abuseIpHash(request, env);
@@ -3582,6 +3628,19 @@ async function handleCoasterOptin(request, env, json) {
     if (coasterMissingTable(e)) return coasterOff(json);
     throw e;
   }
+}
+/* A board with no venueplay account behind it: the first name and the mobile for venueplay only (migration 198).
+   One row per board and mobile (a unique index): a second round from the same phone keeps the first. */
+async function coasterKeepContact(env, json, where, row, mobile) {
+  const m = /^c:([0-9a-f-]{36})$/.exec(where.place);
+  const ins = { board: where.place, coaster_venue_id: m ? m[1] : null, play_id: row.id, first_name: row.first_name || null, mobile: mobile };
+  try { await sbInsert(env, 'vp_coaster_contacts', ins, false); }
+  catch (e) {
+    if (e && e.status === 409) return json({ ok: true, stored: true });   // this phone is already kept for this board
+    if (coasterMissingTable(e)) return json({ ok: true, stored: false });  // before migration 198: nothing kept, the round plays the same
+    throw e;
+  }
+  return json({ ok: true, stored: true });
 }
 
 /* GET /coaster/board?place=..&period=tonight|week[&play=<round id>] */

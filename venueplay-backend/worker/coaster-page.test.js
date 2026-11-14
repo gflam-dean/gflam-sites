@@ -126,8 +126,8 @@ var rnd = /const COASTER_ROUND = (\d+);/.exec(GAME);
 pass("five a round on both sides", !!rnd && +rnd[1] === L.PER_SCAN && L.PER_SCAN === 5);
 pass("the page talks to game.venueplay.com.au (never a .dev address)", /var API = window\.VP_GAME_API \|\| 'https:\/\/game\.venueplay\.com\.au';/.test(PAGE));
 var beginFn = PAGE.slice(PAGE.indexOf("  function begin() {"), PAGE.indexOf("  /* the clock: counts up, never down */"));
-pass("a round sends only the first name, the place and the five ids (or a challenge code)",
-  /var body = S\.code \? \{ name: S\.name, code: S\.code \} : \{ name: S\.name, place: S\.place, qids: local\.map\(function \(q\) \{ return q\[0\]; \}\) \};/.test(beginFn));
+pass("a round sends only the first name, the mobile (the Worker checks it), the place and the five ids (or a challenge code)",
+  /var body = S\.code \? \{ name: S\.name, mobile: S\.mobile, code: S\.code \} : \{ name: S\.name, mobile: S\.mobile, place: S\.place, qids: local\.map\(function \(q\) \{ return q\[0\]; \}\) \};/.test(beginFn));
 pass("with no venue picked (Just play), nothing is sent and the round plays on the phone", /if \(!S\.code && !S\.place\) return go\('local', local\);/.test(beginFn));
 pass("a refused or failed start plays the round on the phone, never a dead page", /go\('local', local\);\n    \}\);/.test(beginFn));
 var ans = PAGE.slice(PAGE.indexOf("  function answer(i) {"), PAGE.indexOf("  /* 4. THE END */"));
@@ -206,12 +206,12 @@ pass("the venue's rows show only when the Worker says this venue has its sign-up
   /<script src="\/app\/vp-consent\.js"><\/script>/.test(PAGE) && !/checked/.test(PAGE.slice(PAGE.indexOf('id="nameForm"'), PAGE.indexOf('id="nameBtn"'))));
 pass("the venue first, then the details: picking a venueplay venue asks the Worker what to ask (/coaster/ask), anything else asks the name only",
   /if \(!\/\^v:\/\.test\(place\)\) return askDetails\(name\);/.test(PAGE) && /call\('GET', '\/coaster\/ask\?place=' \+ encodeURIComponent\(place\)/.test(PAGE) &&
-  /else askWhere\(\);   \/\/ the venue first/.test(PAGE));
-pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /cap\.marketing_optin = !!\(window\.VPConsent && window\.VPConsent\.optedIn\(cap\)\);\n      if \(cap\.marketing_optin\) cap\.consent_version = window\.VPConsent\.VERSION;/.test(det.concat(PAGE.slice(PAGE.indexOf("  $('nameForm').addEventListener"), PAGE.indexOf("  function sendDetails()")))));
+  /if \(S\.code\) askName\(\); else askWhere\(\);/.test(PAGE));
+pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /cap\.marketing_optin = !!\(window\.VPConsent && window\.VPConsent\.optedIn\(cap\)\);\n\s+if \(cap\.marketing_optin\) cap\.consent_version = window\.VPConsent\.VERSION;/.test(det.concat(PAGE.slice(PAGE.indexOf("  $('nameForm').addEventListener"), PAGE.indexOf("  function sendDetails()")))));
 pass("the details go to /coaster/optin only once the round has started there (its secret proves the round), then are dropped from the page",
-  /S\.optin = d\.optin \|\| null;\n[^\n]*VPPhoneAd[^\n]*\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
+  /S\.optin = d\.optin \|\| null;\n[^\n]*VPPhoneAd[^\n]*\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !c\.mobile\) return;/.test(PAGE));
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
-  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null; S\.venueName = f\.name;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null; S\.venueName = f\.name; S\.owner = false;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
 pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no lowercase 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
   !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE));
 pass("INBOX 405: no footer at all (no Help, Privacy or Terms, no (c) line, no divider above our logo); the game's own header says COASTER TRIVIA in the title spot; no pink glow or gradient",
@@ -297,6 +297,39 @@ pass("the real trivia phone plays the same Time's up moment (VPQRing.timesUp), o
   /if\(P\.q\.endsAt-Date\.now\(\)<=0\)\{ stopCd\(\); lockOut\(true\); \}/.test(TP) && /stopCd\(\); lockOut\(!m\.to\);/.test(TP) &&
   /if\(lk\)\{ stopCd\(\); lockOut\(\); \}/.test(TP) && TP.indexOf('<script src="/app/vp-qring.js"></script>') > 0);
 pass("the coaster page loads the one player before the ring", PAGE.indexOf('<script src="/app/vp-celebrate.js"></script>') > 0 && PAGE.indexOf('<script src="/app/vp-celebrate.js"></script>') < PAGE.indexOf('<script src="/app/vp-qring.js"></script>'));
+
+print("\nNAME AND MOBILE AT EVERY VENUE (Dean 15 Nov 2026)");
+["0412 345 678", "0412345678", "+61 412 345 678", "61412345678", "412 345 678", "(04) 1234-5678"].forEach(function (m) {
+  pass("'" + m + "' is an Australian mobile on the phone: +61412345678", L.auMobile(m) === "+61412345678", L.auMobile(m));
+});
+["", "0412 345 67", "0212345678", "+64211234567", "07 5228 3667", "+0412345678", "abc"].forEach(function (m) {
+  pass("'" + m + "' is not one", L.auMobile(m) === "", L.auMobile(m));
+});
+pass("no mobile: 'Type your mobile.'", L.mobileError("  ") === "Type your mobile.");
+pass("a wrong one says how to fix it", L.mobileError("0412") === "That mobile does not look right. An Australian mobile starts 04 and has 10 digits.");
+pass("a right one has no error", L.mobileError("0412 345 678") === "");
+/* the phone and the Worker hold the same rule: run both over the same inputs */
+var wm0 = GAME.indexOf("\nfunction coasterMobile("), wm1 = GAME.indexOf("\nfunction coasterMobileError(", wm0), wm2 = GAME.indexOf("\n/* POST /coaster/optin", wm1);
+var WM = new Function(GAME.slice(wm0, wm2) + "\nreturn { m: coasterMobile, e: coasterMobileError };")();
+var MIX = ["0412 345 678", "+61412345678", "61412345678", "412345678", "0412.345.678", "0412-345-678", "04123456789", "0312345678", "+610412345678", "", " ", "o412345678", "+64211234567", "0400 000 000"];
+pass("the phone's auMobile and the Worker's coasterMobile agree on every input", MIX.every(function (m) { return L.auMobile(m) === WM.m(m); }), MIX.filter(function (m) { return L.auMobile(m) !== WM.m(m); }));
+pass("...and say the same words when it is wrong", MIX.every(function (m) { return L.mobileError(m) === WM.e(m); }));
+pass("the line under the details at a venueplay venue: 'Your details go to The Mini Bar.'", L.detailsNote("The Mini Bar", true) === "Your details go to The Mini Bar.");
+pass("at a venue with no venueplay account: 'Your details stay with venueplay.'", L.detailsNote("Dingo Palace", false) === "Your details stay with venueplay." && L.detailsNote(null, true) === "Your details stay with venueplay.");
+var form = PAGE.slice(PAGE.indexOf('<form id="nameForm"'), PAGE.indexOf('</form>', PAGE.indexOf('<form id="nameForm"')));
+pass("the mobile box comes straight after the name (before the email), a tel box",
+  form.indexOf('id="nameIn"') < form.indexOf('id="optinMobile"') && form.indexOf('id="optinMobile"') < form.indexOf('id="optinEmail"') && /<input class="vp-field" type="tel" id="optinMobile"/.test(form));
+pass("the line sits under the fields and the tick in the page's own small text (.hint), no new style",
+  /<div class="optin-tick" id="optinTick"><\/div>\n\s*<p class="hint" id="detailsNote" hidden><\/p>/.test(form) && !/#detailsNote\s*\{/.test(PAGE));
+var askD = PAGE.slice(PAGE.indexOf("  function askDetails(venueName, added) {"), PAGE.indexOf("  /* the one offers line is ONE line"));
+pass("the mobile box shows at every venue and every challenge, whatever the venue collects (not tied to the sign-up box)",
+  /var board = !!\(venueName \|\| S\.code\);\n\s*\$\('optinMobileRow'\)\.hidden = !board;/.test(askD) && askD.indexOf("$('optinMobileRow').hidden = !o.mobile") < 0);
+pass("the line's words come from detailsNote with whose venue it is", /\$\('detailsNote'\)\.textContent = board \? L\.detailsNote\(venueName, S\.owner\) : '';/.test(askD));
+var sub = PAGE.slice(PAGE.indexOf("  $('nameForm').addEventListener('submit'"), PAGE.indexOf("  function sendDetails()"));
+pass("Play checks the mobile first and refuses a wrong one before any round", /var me = L\.mobileError\(\$\('optinMobile'\)\.value\);\n\s*if \(me\) \{ \$\('nameErr'\)\.textContent = me; \$\('optinMobile'\)\.focus\(\); return; \}/.test(sub));
+pass("only a venueplay venue is an owner: a pick by its place, an added venue never", /S\.owner = \/\^v:\/\.test\(place\);/.test(PAGE) && /S\.venueName = f\.name; S\.owner = false;/.test(PAGE));
+pass("a mate's challenge asks the Worker for its venue (/coaster/ask?code=)", /call\('GET', '\/coaster\/ask\?code=' \+ encodeURIComponent\(S\.code\)/.test(PAGE) && /S\.owner = !!\(d && d\.venue && d\.venue\.owner\);/.test(PAGE));
+pass("a mobile the Worker refuses brings the details step back with its words", /d\.field === 'mobile'\)\) \{ var err = d\.error \|\| ''; askDetails\(S\.venueName \|\| null\); \$\('nameErr'\)\.textContent = err; return; \}/.test(PAGE));
 
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }

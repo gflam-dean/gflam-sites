@@ -154,7 +154,11 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
             m = [dict(p, exact=False) for p in PLACES if t in re.sub(r'[^a-z0-9]', '', p['name'].lower())]
             return self.send(200, {'matches': m})
         if u.path == '/coaster/ask':
-            return self.send(200, {'optin': OPTIN.get(q.get('place'))})
+            place = q.get('place') or (FAKE['codes'].get(q.get('code') or '') or {}).get('place')
+            out = {'optin': OPTIN.get(place)}
+            if place:
+                out['venue'] = {'name': NAMES.get(place, ''), 'owner': place.startswith('v:')}
+            return self.send(200, out)
         if u.path == '/coaster/board':
             b = fake_board(q.get('place'), q.get('period'), q.get('play'))
             b['venue'] = {'name': NAMES.get(q.get('place'), ''), 'suburb': '', 'logo_url': ''}
@@ -177,11 +181,13 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
             r = FAKE['rounds'].get(b.get('play'))
             if not r or b.get('token') != r['token']:
                 return self.send(403, {'error': 'That round is not yours.'})
-            return self.send(200, {'ok': True, 'stored': r['place'] in OPTIN})
+            return self.send(200, {'ok': True, 'stored': True})
         if self.path == '/coaster/start':
             first = (b.get('name') or '').split(' ')[0][:14]
             if not first:
                 return self.send(400, {'error': 'Type your first name.'})
+            if not re.match(r'^\+614\d{8}$', b.get('mobile') or ''):     # the Worker's own rule (coaster-round.test.js runs the real one)
+                return self.send(400, {'error': 'Type your mobile.' if not b.get('mobile') else 'That mobile does not look right. An Australian mobile starts 04 and has 10 digits.', 'field': 'mobile'})
             if b.get('code'):
                 g = FAKE['codes'].get(b['code'])
                 if not g:
@@ -389,7 +395,8 @@ STATE = r'''(function(){
     leadVal:(document.getElementById("leadIn")||{}).value||"", nameVal:(document.getElementById("nameIn")||{}).value||"",
     kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
     sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
-    optin:shown("optinEmailRow")||shown("optinMobileRow"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"), lastRow:shown("lastRow"),
+    optin:shown("optinEmailRow")||(shown("optinTick")&&!!document.querySelector("#optinTick label")), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"), lastRow:shown("lastRow"),
+    note:shown("detailsNote")?txt("detailsNote"):"", mobileVal:(document.getElementById("optinMobile")||{}).value||"",
     optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
     notListed:shown("notListed"),
     tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
@@ -460,9 +467,17 @@ def name_step(t, name):
     s = wait(t, lambda s: s.get('view') in ('vName', 'vWhere'))
     if s.get('view') == 'vName':
         t.type_into('nameIn', name)
+        fill_mobile(t)
         t.tap_id('nameBtn')
     else:
         PENDING[id(t)] = name
+
+
+def fill_mobile(t, number='0412 345 678'):
+    """First name AND mobile at every venue (Dean 15 Nov 2026): the mobile box, when it shows and is empty."""
+    s = state(t)
+    if s.get('optinMobile') and not s.get('mobileVal'):
+        t.type_into('optinMobile', number)
 
 
 def details_step(t, secs=6):
@@ -476,6 +491,7 @@ def details_step(t, secs=6):
             t.type_into('nameIn', PENDING.get(id(t)) or 'Pat')
         if s.get('optinEmail'):
             t.type_into('optinEmail', 'player@example.com')
+        fill_mobile(t)
         t.tap_id('nameBtn')
     return s
 
@@ -659,8 +675,8 @@ def main():
         t.shot('lhn-typeahead-375.png')
         where_step(t, 'min', 'The Mini Bar')
         s = wait(t, lambda s: s.get('view') == 'vName' and s.get('optin'))
-        check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
-              s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and not s.get('lastRow') and
+        check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the mobile ALWAYS (Dean 15 Nov, though this venue collects no mobile), the email box, the phones\' one tick, NOT ticked',
+              s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and s.get('optinMobile') and not s.get('lastRow') and
               s.get('optinTick') == "Send me offers from The Mini Bar" and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
         gone = t.js('document.getElementById("vName").textContent.indexOf("never on the board")<0 && document.getElementById("vName").textContent.indexOf("goes on the board")<0')
         check('the name step does NOT carry the long "details go to the venue, never on the board" lines (INBOX 405.8)', gone is True, gone)
@@ -671,21 +687,28 @@ def main():
         t.tap_id('nameBtn')
         s = wait(t, lambda s: bool(s.get('nameErr')), 3)
         check('Play with no name says "Type your first name." and stays', s.get('view') == 'vName' and s.get('nameErr') == 'Type your first name.', s.get('nameErr'))
+        check('under the fields, in the page\'s own small text: "Your details go to The Mini Bar."', s.get('note') == 'Your details go to The Mini Bar.', s.get('note'))
         t.type_into('nameIn', 'sam smith')
         t.tap_id('nameBtn')
-        s = wait(t, lambda s: s.get('nameErr') == 'Type your email.', 3)
-        check('no email asks for one and starts nothing', s.get('view') == 'vName' and not any(x[1] in ('/coaster/start', '/coaster/optin') for x in FAKE['log']), s.get('nameErr'))
+        s = wait(t, lambda s: s.get('nameErr') == 'Type your mobile.', 3)
+        check('no mobile asks for one and starts nothing', s.get('view') == 'vName' and not any(x[1] in ('/coaster/start', '/coaster/optin') for x in FAKE['log']), s.get('nameErr'))
+        t.type_into('optinMobile', '0412 345')
+        t.tap_id('nameBtn')
+        s = wait(t, lambda s: 'starts 04' in (s.get('nameErr') or ''), 3)
+        check('a short mobile says how to fix it and starts nothing', s.get('nameErr') == 'That mobile does not look right. An Australian mobile starts 04 and has 10 digits.' and
+              not any(x[1] in ('/coaster/start', '/coaster/optin') for x in FAKE['log']), s.get('nameErr'))
+        t.type_into('optinMobile', '0412 345 678')
         t.type_into('optinEmail', 'sam@example.com')
         t.tap_id('xOptin')
         t.tap_id('nameBtn')
         s = wait_question(t)
         sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
-        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-3-14nov) go with the round\'s secret',
-              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-3-14nov' and
+        check('ticked: after the round starts, the mobile (+61 form), the email, the tick and the consent words\' version (vpc-3-14nov) go with the round\'s secret',
+              len(sent) == 1 and sent[0].get('mobile') == '+61412345678' and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-3-14nov' and
               sent[0].get('token', '').startswith('tok'), sent)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
-        check('picking it starts a round on its board, sending only the first name, the place and five question ids',
-              len(start) == 1 and sorted(start[0].keys()) == ['name', 'place', 'qids'] and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
+        check('picking it starts a round on its board, sending only the first name, the mobile, the place and five question ids',
+              len(start) == 1 and sorted(start[0].keys()) == ['mobile', 'name', 'place', 'qids'] and start[0]['mobile'] == '+61412345678' and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
         check('the game screen has no top bar and no venue-name pill: just the ring row, the question and our logo at the bottom (this venue has no logo switched on)',
               s.get('foot') == 'ours' and not s.get('tag') and t.js('document.querySelector("header")') is None, (s.get('foot'), s.get('tag')))
         btns = s.get('btns', [])
@@ -762,6 +785,8 @@ def main():
         tm.go('/live-here-now?c=' + code1)
         s = wait(tm, lambda s: s.get('view') == 'vName')
         check('the link opens on the name, saying "You have been challenged"', s.get('nameKick') == 'You have been challenged', s.get('nameKick'))
+        check('a challenge asks the mobile too, and names the venue it was played at: "Your details go to The Mini Bar."',
+              s.get('optinMobile') and s.get('note') == 'Your details go to The Mini Bar.', (s.get('optinMobile'), s.get('note')))
         name_step(tm, 'Mia')
         s = wait_question(tm)
         check('then straight to the questions, no venue asked (the link carries it), on The Mini Bar\'s board',
@@ -797,6 +822,7 @@ def main():
                       hd[3] == 'rgb(255, 31, 142)' and hd[4] == 'rgb(255, 31, 142)' and hd[5] >= 44, hd)
             tsh.type_into('nameIn', 'Sam')
             tsh.type_into('optinEmail', 'sam@example.com')
+            fill_mobile(tsh)
             tsh.tap_id('nameBtn')
             s = wait_question(tsh)
             ids_sh, s, _ = play_round(tsh, [True, False, True, False, True])
@@ -840,6 +866,7 @@ def main():
         where_step(tst, 'tug', 'Tugun Tavern')
         s = wait(tst, lambda s: s.get('view') == 'vName')
         tst.type_into('nameIn', 'Pip')
+        fill_mobile(tst)
         tst.tap_id('nameBtn')
         words = None
         for _ in range(20):
@@ -885,6 +912,7 @@ def main():
             where_step(tsw, 'tug', 'Tugun Tavern')
             s = wait(tsw, lambda s: s.get('view') == 'vName')
             tsw.type_into('nameIn', 'Pip')
+            fill_mobile(tsw)
             tsw.tap_id('nameBtn')
             ids_sw, s, _ = play_round(tsw, [True, True, False, True, False])
             T = waits.as_json(tsw.js('JSON.stringify(window.__T||[])'), [], 'T')
@@ -909,6 +937,7 @@ def main():
             where_step(tsm, 'tug', 'Tugun Tavern')
             wait(tsm, lambda s: s.get('view') == 'vName')
             tsm.type_into('nameIn', 'Pip')
+            fill_mobile(tsm)
             tsm.tap_id('nameBtn')
             tsm.until('!!document.getElementById("vppL1")', 6)
             tsm.js('VPSting.frame(1.0)')
@@ -969,9 +998,14 @@ def main():
         check('after Add: just "Added", straight to the name step (no "we will check it"), the old search box and its "no venue" line cleared',
               tn.js('document.getElementById("addedPill").textContent') == 'Added' and 'check it' not in (tn.js('document.getElementById("vName").textContent') or '') and
               tn.js('document.getElementById("whereIn").value') == '' and tn.js('document.getElementById("whereHint").textContent') == '', s.get('view'))
+        check('a venue the player added: the mobile still asked, and "Your details stay with venueplay." (no account to give them to)',
+              s.get('optinMobile') and s.get('note') == 'Your details stay with venueplay.' and not s.get('optinEmail') and not s.get('optin'), (s.get('optinMobile'), s.get('note'), s.get('optinEmail')))
         tn.shot('lhn-added-375.png')
         s = wait_question(tn)
         starts = [x for x in FAKE['log'] if x[1] == '/coaster/start']
+        kept = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
+        check('the added venue\'s round sends the first name\'s round and the mobile to /coaster/optin (kept for venueplay only), never an email or a tick',
+              kept and kept[-1].get('mobile') == '+61412345678' and not kept[-1].get('email') and not kept[-1].get('marketing_optin'), kept[-1:])
         check('then the round plays on the added venue\'s OWN board when the Worker hands one back (nothing typed makes a board by itself)',
               s.get('id') and [x for x in starts if x[2].get('name') == 'Kai' and x[2].get('place') == DUCK], (s.get('hdr'), starts[-1:]))
         _, s, _ = play_round(tn, [True, False, True, True, False])
@@ -1146,6 +1180,7 @@ def main():
             tf.shot('lhn-name-%d.png' % w)
             tf.type_into('nameIn', 'Christabel-Anne')
             tf.type_into('optinEmail', 'christabel@example.com')
+            fill_mobile(tf)
             tf.tap_id('nameBtn')
             s = wait_question(tf)
             check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))

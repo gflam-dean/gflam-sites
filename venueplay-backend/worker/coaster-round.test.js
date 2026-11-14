@@ -117,6 +117,8 @@ function sbInsert(env, table, obj, ret) {
   return Promise.resolve().then(function () {
     if (DB.missing && table.indexOf("vp_coaster_") === 0) throw httpErr(502, "A database error occurred (x)");
     if (DB.noLeadCols && table === "vp_coaster_venues" && "lead_status" in obj) throw httpErr(502, "A database error occurred (x)");
+    if (DB.no198 && table === "vp_coaster_contacts") throw httpErr(502, "A database error occurred (x)");
+    if (table === "vp_coaster_contacts" && (DB[table] || []).some(function (r) { return r.board === obj.board && r.mobile === obj.mobile; })) throw httpErr(409, "dup");
     var t = DB[table] = DB[table] || [];
     var row = JSON.parse(JSON.stringify(obj));
     if (!row.id) row.id = nextId();
@@ -187,7 +189,7 @@ FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; Fixed
 
 function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, mobile: coasterMobile, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
   "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", "setTimeout", "clearTimeout", "AbortController", SRC)(
@@ -411,7 +413,7 @@ var P1;
 step(function () {
   print("\nSTARTING A ROUND: A FIRST NAME, NOTHING ELSE");
   fresh(); NOW = FRI_830PM;
-  return post(W.start, { name: "  sam   smith-jones 0412 345 678", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
+  return post(W.start, { mobile: "0412 345 678", name: "  sam   smith-jones 0412 345 678", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
     P1 = r.body;
     var row = DB.vp_coaster_plays[0];
     pass("a round starts and answers its id, a secret, a challenge code and the venue's name and logo",
@@ -425,68 +427,68 @@ step(function () {
     pass("tonight is the venue's own night (8:30pm Friday in NSW is Friday 6 Nov), this week is Monday 2 Nov", row.night === "2026-11-06" && row.week === "2026-11-02", [row.night, row.week]);
     pass("the round is limited per network", calls.some(function (c) { return /^rl:coaster:start:iphash:40:600$/.test(c); }), calls);
     pass("the questions are checked against the page's own file", fetched[0] === "https://venueplay.com.au/data/live-here-now.json", fetched);
-    return post(W.start, { name: "", place: "v:" + V_MINI, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("no first name: refused", r.status === 400 && /first name/.test(r.body.error), r);
-    return post(W.start, { name: "Fuckface", place: "v:" + V_MINI, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Fuckface", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("a rude name goes on the board as 'Player', as on the TV", r.status === 200 && DB.vp_coaster_plays[1].first_name === "Player", DB.vp_coaster_plays[1] && DB.vp_coaster_plays[1].first_name);
-    return post(W.start, { name: "Jo", place: "v:" + V_MINI, qids: ["nope", "x", "y", "z", "w"] });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: ["nope", "x", "y", "z", "w"] });
   }).then(function (r) {
     pass("questions that are not on the coaster are refused", r.status === 400, r);
     var dup = five(0); dup[4] = dup[0];
-    return post(W.start, { name: "Jo", place: "v:" + V_MINI, qids: dup });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: dup });
   }).then(function (r) {
     pass("the same question twice is refused", r.status === 400, r);
-    return post(W.start, { name: "Jo", place: "v:" + V_MINI, qids: five(0).slice(0, 4) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: five(0).slice(0, 4) });
   }).then(function (r) {
     pass("four questions is refused", r.status === 400, r);
-    return post(W.start, { name: "Jo", place: "v:" + V_GONE, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_GONE, qids: five(0) });
   }).then(function (r) {
     pass("a cancelled venue has no board", r.status === 404, r);
-    return post(W.start, { name: "Jo", place: "c:" + C_SWITCHED, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "c:" + C_SWITCHED, qids: five(0) });
   }).then(function (r) {
     pass("a coaster venue since switched to a prospect plays on that venue's board", r.status === 200 && r.body.place === "v:" + V_MINI, r.body);
-    return post(W.start, { name: "Jo", place: "c:" + C_TUGUN, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "c:" + C_TUGUN, qids: five(0) });
   }).then(function (r) {
     pass("a coaster venue has its own board, with its logo and suburb", r.status === 200 && r.body.place === "c:" + C_TUGUN && r.body.venue.suburb === "Tugun" && /t\.png$/.test(r.body.venue.logo_url), r.body);
-    return post(W.start, { name: "Jo", place: "c:" + L_OLD, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "c:" + L_OLD, qids: five(0) });
   }).then(function (r) {
     pass("a venue a player added (a lead) has NO board: it waits for HQ", r.status === 404 && r.body.place_gone === true && !DB.vp_coaster_plays.some(function (x) { return x.board === "c:" + L_OLD; }), r.body);
-    return post(W.start, { name: "Jo", place: "l:107", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:107", qids: five(0) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[DB.vp_coaster_plays.length - 1];
     pass("a venue on our list has its own board 'l:<id>', its night on its state's clock, no logo, and is not 'on venueplay'",
       r.status === 200 && r.body.place === "l:107" && r.body.venue.name === "Bodalla Pub" && r.body.venue.logo_url === "" && r.body.venue.on === false && row.board === "l:107" && row.night === "2026-11-06", [r.body, row && row.night]);
     pass("...and no sign-up box: it is not a venueplay venue", !("optin" in r.body), r.body);
-    return post(W.start, { name: "Jo", place: "l:105", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:105", qids: five(0) });
   }).then(function (r) {
     pass("a list id whose name has none of the target words has no board ('Royal Cafe')", r.status === 404, r.body);
-    return post(W.start, { name: "Jo", place: "l:99999", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:99999", qids: five(0) });
   }).then(function (r) {
     pass("a list id that is not there has no board", r.status === 404, r.body);
-    return post(W.start, { name: "Jo", place: "l:0", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:0", qids: five(0) });
   }).then(function (r) {
     pass("a made-up place is refused before the database is asked", r.status === 404, r.body);
-    return post(W.start, { name: "Mia", code: P1.code, place: "c:" + C_TUGUN, qids: five(10) });
+    return post(W.start, { mobile: "0412 345 678", name: "Mia", code: P1.code, place: "c:" + C_TUGUN, qids: five(10) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[DB.vp_coaster_plays.length - 1];
     pass("a mate on the challenge link gets the SAME five questions and the SAME board, whatever the phone sent",
       r.status === 200 && r.body.place === "v:" + V_MINI && JSON.stringify(r.body.qids) === JSON.stringify(five(0)) && row.from_code === P1.code, r.body);
     pass("and a challenge code of their own to pass on", r.body.code !== P1.code);
-    return post(W.start, { name: "Mia", code: "ZZZZZZ" });
+    return post(W.start, { mobile: "0412 345 678", name: "Mia", code: "ZZZZZZ" });
   }).then(function (r) {
     pass("a challenge code that does not exist says so", r.status === 404 && r.body.gone === true, r);
     DB.forceCodeClash = 2;
-    return post(W.start, { name: "Kai", place: "v:" + V_MINI, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Kai", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("a clashing challenge code is drawn again, not a failed round", r.status === 200, r);
     fresh(); limited = true;
-    return post(W.start, { name: "Kai", place: "v:" + V_MINI, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Kai", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("over the limit: 429 and no round", r.status === 429 && DB.vp_coaster_plays.length === 0, r);
     fresh(); DB.missing = true;
-    return post(W.start, { name: "Kai", place: "v:" + V_MINI, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Kai", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("before migration 153: 503 { off: true }", r.status === 503 && r.body.off === true, r);
   });
@@ -511,7 +513,7 @@ step(function () {
   print("\nTHE RING RUNS OUT (INBOX 310-312): TIME'S UP IS AN ANSWER, AND NO QUESTION COUNTS MORE THAN ITS 20 SECONDS");
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
-  return post(W.start, { name: "Kim", place: "v:" + V_MINI, qids: q }).then(function (r) {
+  return post(W.start, { mobile: "0412 345 678", name: "Kim", place: "v:" + V_MINI, qids: q }).then(function (r) {
     R = r.body; start0 = NOW;
     NOW = start0 + 20900;   // the ring hit 0 at 20 s, the phone showed Time's up, then sent it
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: -1 });
@@ -535,7 +537,7 @@ step(function () {
   print("\nANSWERING: TIMED AND SCORED HERE, BY THE TRIVIA NIGHT'S OWN RULE");
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
-  return post(W.start, { name: "Sam", place: "v:" + V_MINI, qids: q }).then(function (r) {
+  return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: q }).then(function (r) {
     R = r.body; start0 = NOW;
     NOW = start0 + 2000;   // two seconds in: 18 of 20 seconds left
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
@@ -604,7 +606,7 @@ step(function () {
 
 function playRound(name, place, qidsStart, rights, gapMs) {
   var R, q = five(qidsStart || 0);
-  return post(W.start, { name: name, place: place, qids: q }).then(function (r) {
+  return post(W.start, { mobile: "0412 345 678", name: name, place: place, qids: q }).then(function (r) {
     R = r.body; var i = 0;
     function next() {
       if (i >= 5) return Promise.resolve(R);
@@ -684,7 +686,7 @@ step(function () {
     pass("a website that points at an address inside a network is never fetched (no private hosts): UNVERIFIED", row && row.lead_status === "unverified" && fetched.indexOf("https://10.0.0.5/admin") < 0, [fetched, row]);
     id3 = row.id;
     pass("the same words on a licensed venue in ANOTHER state is not a match", W.same("royal oak", "royal oak hotel") === true && W.same("oak tree", "royal oak hotel") === false);
-    return post(W.start, { name: "Pat", place: "c:" + id2, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Pat", place: "c:" + id2, qids: five(0) });
   }).then(function (r) {
     pass("a round can be played on an unverified lead's board (trivia only: no venueplay login, no sign-up questions)", r.status === 200 && !!r.body.play && r.body.venue && r.body.venue.name === "Dingo Palace" && r.body.venue.on === false && !r.body.optin, r.body);
     return get(W.venues, "?q=dingo");
@@ -692,10 +694,10 @@ step(function () {
     var names = r.body.matches.map(function (m) { return m.name; });
     pass("search: the VERIFIED lead is findable by the next player (not on venueplay yet); the UNVERIFIED one is not", names.indexOf("The Wandering Dingo Tavern") >= 0 && names.indexOf("Dingo Palace") < 0 && r.body.matches.every(function (m) { return m.on === false; }), r.body);
     NOW = NOW + 31 * 86400000;
-    return post(W.start, { name: "Pat", place: "c:" + id2, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Pat", place: "c:" + id2, qids: five(0) });
   }).then(function (r) {
     pass("after its 30 days an unverified board is closed (the place is gone) and a verified one is not", r.status === 404 && r.body.place_gone === true, r);
-    return post(W.start, { name: "Pat", place: "c:" + id1, qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Pat", place: "c:" + id1, qids: five(0) });
   }).then(function (r) {
     pass("...a verified lead's board is still open after 31 days", r.status === 200 && !!r.body.play, r);
     DB.vp_coaster_plays.push({ id: "z1", board: "c:" + id2, first_name: "Pat", started_at: new RealDate(NOW - 86400000).toISOString() });
@@ -716,7 +718,7 @@ step(function () {
       var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Early Bird Tavern"; })[0];
       pass("BEFORE migration 194 runs: an added venue is kept for HQ exactly as before (no board, no place), and nothing throws", r.status === 200 && r.body.added === true && !("place" in r.body) && !!row && !("lead_status" in row), [r, row]);
       DB.vp_coaster_venues.push({ id: C_TUGUN, kind: "coaster", name: "Tugun Tavern", name_key: "tugun tavern", suburb: "Tugun", postcode: "4224", au_state: "QLD", timezone: "Australia/Brisbane", venue_id: null });
-      return post(W.start, { name: "Pat", place: "c:" + C_TUGUN, qids: five(0) });
+      return post(W.start, { mobile: "0412 345 678", name: "Pat", place: "c:" + C_TUGUN, qids: five(0) });
     }).then(function (r) {
       pass("...and a coaster venue's board still plays before migration 194 (the place lookup never needs the new columns)", r.status === 200 && !!r.body.play, r);
       DB.noLeadCols = false;
@@ -813,14 +815,15 @@ step(function () {
 });
 
 step(function () {
-  print("\nTHE VENUE'S OWN SIGN-UP: ONLY WHERE HQ SWITCHED IT ON, THE SAME GATE AND TICK AS THE PHONES");
+  print("\nTHE PLAYER'S DETAILS AT A VENUEPLAY VENUE (Dean 15 Nov 2026): FIRST NAME + MOBILE ALWAYS, EMAIL AND TICK ONLY WHERE HQ SWITCHED IT ON");
   fresh(); NOW = FRI_830PM;
   var mini, perth;
-  return post(W.start, { name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
+  return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
     mini = r.body;
     pass("a round at a venue HQ switched on carries the sign-up box: what the venue collects (email, no mobile) and the tick",
       r.status === 200 && JSON.stringify(mini.optin) === JSON.stringify({ email: true, mobile: false, marketing_optin: true, last_name: false }), mini.optin);
-    return post(W.start, { name: "Sam", place: "v:" + V_PERTH, qids: five(0) });
+    pass("the round's row on the board never holds the mobile", DB.vp_coaster_plays.every(function (p) { return !("mobile" in p) && JSON.stringify(p).indexOf("412345678") < 0; }), DB.vp_coaster_plays);
+    return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_PERTH, qids: five(0) });
   }).then(function (r) {
     perth = r.body;
     pass("a venue NOT switched on gets no box (every existing venue starts OFF)", r.status === 200 && !("optin" in perth), perth);
@@ -830,32 +833,126 @@ step(function () {
     var c = DB.vp_captures[0];
     pass("the sign-up is kept for THAT venue, source 'coaster', with the consent words' version", r.status === 200 && r.body.stored === true && c && c.venue_id === V_MINI &&
       c.source === "coaster" && c.email === "sam@example.com" && c.marketing_optin === true && c.consent_version === "vpc-2-6nov", c);
-    pass("only what the venue collects is kept (it does not collect a mobile)", c && !("mobile" in c), c);
+    pass("the mobile is always kept, in the one +61 form, even where the venue's settings do not collect one", c && c.mobile === "+61412345678", c);
     pass("the round's first name goes with it (INBOX 309.1c); a last name only where the venue collects one", c && c.first_name === "Sam" && !("last_name" in c), c);
     pass("it cannot prove the phone was in the room, so it is kept with during_game false, like every such sign-up", c && c.during_game === false, c);
     pass("the sign-up limit is counted per network", calls.some(function (x) { return /^rl:coaster:optin:iphash:10:600$/.test(x); }), calls);
-    return post(W.optin, { play: mini.play, token: mini.token, email: "jo@example.com", marketing_optin: false });
+    return post(W.optin, { play: mini.play, token: mini.token, mobile: "0412 345 678", email: "jo@example.com", marketing_optin: false });
   }).then(function (r) {
     var c = DB.vp_captures[1];
     pass("no tick: the email is kept, the opt-in is not (never ticked for them)", r.body.stored === true && c && !c.marketing_optin && !("consent_version" in c), c);
-    return post(W.optin, { play: mini.play, token: "wrong", email: "x@example.com", marketing_optin: true });
+    return post(W.optin, { play: mini.play, token: "wrong", mobile: "0412 345 678", email: "x@example.com", marketing_optin: true });
   }).then(function (r) {
     pass("someone else's round: refused, nothing kept", r.status === 403 && DB.vp_captures.length === 2, r);
-    return post(W.optin, { play: perth.play, token: perth.token, email: "x@example.com", marketing_optin: true });
-  }).then(function (r) {
-    pass("at a venue not switched on: nothing kept", r.status === 200 && r.body.stored === false && DB.vp_captures.length === 2, r);
-    return post(W.optin, { play: mini.play, token: mini.token, email: "nope", marketing_optin: true });
-  }).then(function (r) {
-    pass("an email that does not look right is refused", r.status === 400, r);
-    DB.no174 = true;
-    return post(W.optin, { play: mini.play, token: mini.token, email: "late@example.com", marketing_optin: true, consent_version: "vpc-2-6nov" });
+    return post(W.optin, { play: perth.play, token: perth.token, mobile: "0498 765 432", email: "x@example.com", marketing_optin: true });
   }).then(function (r) {
     var c = DB.vp_captures[2];
+    pass("at a venue NOT switched on: the first name and mobile are kept for it, never the email or a tick", r.status === 200 && r.body.stored === true && c && c.venue_id === V_PERTH &&
+      c.mobile === "+61498765432" && c.first_name === "Sam" && !("email" in c) && !c.marketing_optin && !("consent_version" in c), c);
+    return post(W.optin, { play: perth.play, token: perth.token, mobile: "+61 498 765 432" });
+  }).then(function (r) {
+    pass("the same phone again with nothing new: kept once, not once a round", r.body.stored === true && DB.vp_captures.length === 3, DB.vp_captures.length);
+    return post(W.optin, { play: mini.play, token: mini.token, email: "nope", mobile: "0412 345 678", marketing_optin: true });
+  }).then(function (r) {
+    pass("an email that does not look right is refused", r.status === 400, r);
+    return post(W.optin, { play: mini.play, token: mini.token, email: "a@example.com", marketing_optin: true });
+  }).then(function (r) {
+    pass("no mobile: refused at the Worker too, nothing kept", r.status === 400 && r.body.field === "mobile" && DB.vp_captures.length === 3, r);
+    DB.no174 = true;
+    return post(W.optin, { play: mini.play, token: mini.token, mobile: "0412 345 678", email: "late@example.com", marketing_optin: true, consent_version: "vpc-2-6nov" });
+  }).then(function (r) {
+    var c = DB.vp_captures[3];
     pass("before migration 174's column: kept without the version rather than lost", r.body.stored === true && c && c.email === "late@example.com" && c.marketing_optin === true && !("consent_version" in c), c);
     DB.no174 = false; DB.vp_coaster_optin_venues = [];
-    return post(W.optin, { play: mini.play, token: mini.token, email: "after@example.com", marketing_optin: true });
+    return post(W.optin, { play: mini.play, token: mini.token, mobile: "0412 345 678", email: "after@example.com", marketing_optin: true });
   }).then(function (r) {
-    pass("switched off again in HQ: nothing more is kept", r.body.stored === false && DB.vp_captures.length === 3, r);
+    pass("switched off again in HQ: no email and no tick kept any more (the mobile is already held once)", r.body.stored === true && DB.vp_captures.length === 4 &&
+      DB.vp_captures.every(function (c) { return c.email !== "after@example.com"; }), DB.vp_captures);
+  });
+});
+
+step(function () {
+  print("\nTHE MOBILE (Dean 15 Nov 2026): REQUIRED AT EVERY BOARD, AUSTRALIAN FORMATS WITH SPACES, CHECKED BY THE WORKER");
+  fresh(); NOW = FRI_830PM;
+  ["0412 345 678", "0412345678", "+61 412 345 678", "+61412345678", "61412345678", "412 345 678", "(04) 1234-5678", "0412.345.678"].forEach(function (m) {
+    pass("'" + m + "' is a mobile: +61412345678", W.mobile(m) === "+61412345678", W.mobile(m));
+  });
+  ["", "0412 345 67", "0412 345 6789", "0212345678", "+64211234567", "07 5228 3667", "+0412345678", "0412a345678", "1300 123 456"].forEach(function (m) {
+    pass("'" + m + "' is not an Australian mobile", W.mobile(m) === "", W.mobile(m));
+  });
+  return post(W.start, { name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
+    pass("no mobile: no round on the board ('Type your mobile.')", r.status === 400 && r.body.field === "mobile" && r.body.error === "Type your mobile." && DB.vp_coaster_plays.length === 0, r);
+    return post(W.start, { name: "Sam", mobile: "0412 345", place: "v:" + V_MINI, qids: five(0) });
+  }).then(function (r) {
+    pass("a short mobile: refused with the words to fix it", r.status === 400 && /starts 04 and has 10 digits/.test(r.body.error || "") && DB.vp_coaster_plays.length === 0, r);
+    return post(W.start, { name: "Sam", mobile: "+61 412 345 678", place: "c:" + C_TUGUN, qids: five(0) });
+  }).then(function (r) {
+    pass("+61 with spaces plays", r.status === 200 && !!r.body.play, r.body);
+    var code = r.body.code;
+    return post(W.start, { name: "Jo", code: code }).then(function (r2) {
+      pass("a mate's challenge link needs a mobile too", r2.status === 400 && r2.body.field === "mobile", r2);
+    });
+  });
+});
+
+step(function () {
+  print("\nA BOARD WITH NO VENUEPLAY ACCOUNT: FIRST NAME + MOBILE FOR VENUEPLAY ONLY (migration 198), NEVER A VENUE'S");
+  fresh(); NOW = FRI_830PM;
+  var lead, tug;
+  return post(W.lead, { name: "The Wandering Dingo Tavern", suburb: "Fitzroy", state: "VIC", website: "realpub.com.au" }).then(function (r) {
+    pass("the added venue has its own board", r.status === 200 && /^c:/.test(r.body.place || ""), r.body);
+    return post(W.start, { mobile: "0412 345 678", name: "Sam", place: r.body.place, qids: five(0) });
+  }).then(function (r) {
+    lead = r.body;
+    pass("a round on the added venue's board: no sign-up box (no venue to give it to)", r.status === 200 && !r.body.optin && r.body.venue && r.body.venue.on === false, r.body);
+    return post(W.optin, { play: lead.play, token: lead.token, mobile: "0412 345 678", email: "sam@example.com", marketing_optin: true });
+  }).then(function (r) {
+    var c = (DB.vp_coaster_contacts || [])[0], lid = lead.place.slice(2);
+    pass("kept in vp_coaster_contacts against the lead row: board, first name, mobile, the round", r.status === 200 && r.body.stored === true && c && c.board === lead.place &&
+      c.coaster_venue_id === lid && c.first_name === "Sam" && c.mobile === "+61412345678" && c.play_id === lead.play, c);
+    pass("...and nothing else of theirs: no email, no tick, never in vp_captures", c && !("email" in c) && !("marketing_optin" in c) && DB.vp_captures.length === 0, c);
+    return post(W.optin, { play: lead.play, token: lead.token, mobile: "0412 345 678" });
+  }).then(function (r) {
+    pass("the same phone again: kept once (one row per board and mobile)", r.body.stored === true && DB.vp_coaster_contacts.length === 1, DB.vp_coaster_contacts);
+    return post(W.start, { mobile: "0400 000 001", name: "Kim", place: "c:" + C_TUGUN, qids: five(0) });
+  }).then(function (r) {
+    tug = r.body;
+    return post(W.optin, { play: tug.play, token: tug.token, mobile: "0400 000 001" });
+  }).then(function (r) {
+    var c = DB.vp_coaster_contacts[1];
+    pass("a coaster venue (not on venueplay) keeps them for venueplay the same way", r.body.stored === true && c && c.board === "c:" + C_TUGUN && c.mobile === "+61400000001", c);
+    DB.no198 = true;
+    return post(W.optin, { play: tug.play, token: tug.token, mobile: "0400 000 002" });
+  }).then(function (r) {
+    pass("before migration 198: nothing kept, no error (the round plays the same)", r.status === 200 && r.body.stored === false && DB.vp_coaster_contacts.length === 2, r);
+    DB.no198 = false;
+    var opt = GAME.slice(GAME.indexOf("async function coasterKeepContact("), GAME.indexOf("/* GET /coaster/board?"));
+    pass("the venueplay-only store writes vp_coaster_contacts and nothing a venue reads (no vp_captures, no venue id)", /sbInsert\(env, 'vp_coaster_contacts'/.test(opt) && opt.indexOf("vp_captures") < 0 && !/[^_]venue_id\s*:/.test(opt));
+    pass("nothing in either Worker reads vp_coaster_contacts back (no list, no export, no send)", (GAME.match(/vp_coaster_contacts/g) || []).length === (opt.match(/vp_coaster_contacts/g) || []).length + (GAME.slice(GAME.indexOf("/* POST /coaster/optin {"), GAME.indexOf("async function handleCoasterOptin(")).match(/vp_coaster_contacts/g) || []).length &&
+      find("venueplay-backend/worker/venueplay-api-FULL.js").indexOf("vp_coaster_contacts") < 0);
+  });
+});
+
+step(function () {
+  print("\nTHE DETAILS STEP NAMES THE VENUE OF A MATE'S CHALLENGE: GET /coaster/ask?code=");
+  fresh(); NOW = FRI_830PM;
+  var mini;
+  return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: five(0) }).then(function (r) {
+    mini = r.body;
+    return get(W.ask, "?code=" + mini.code);
+  }).then(function (r) {
+    pass("a challenge code answers the venue's name, that it is a venueplay venue, and its sign-up box", r.status === 200 && r.body.venue && r.body.venue.name === "The Mini Bar" && r.body.venue.owner === true && r.body.optin && r.body.optin.email === true, r.body);
+    return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "c:" + C_TUGUN, qids: five(0) });
+  }).then(function (r) {
+    return get(W.ask, "?code=" + r.body.code);
+  }).then(function (r) {
+    pass("a coaster venue's challenge: named, not a venueplay venue, no box", r.status === 200 && r.body.venue && r.body.venue.name === "Tugun Tavern" && r.body.venue.owner === false && r.body.optin === null, r.body);
+    return get(W.ask, "?code=ZZZZZZ");
+  }).then(function (r) {
+    pass("a code that is not one: nothing named, nothing to ask", r.status === 200 && r.body.optin === null && !r.body.venue, r.body);
+    return get(W.ask, "?place=" + encodeURIComponent("v:" + V_PERTH));
+  }).then(function (r) {
+    pass("a picked venueplay venue says it is one (the details go to it)", r.body.venue && r.body.venue.owner === true, r.body);
   });
 });
 
@@ -876,10 +973,11 @@ step(function () {
   });
   var o0 = BLOCK.indexOf("async function coasterOptinAsk("), o1 = BLOCK.indexOf("/* GET /coaster/board?", o0);
   pass("the venue's sign-up is one piece of the block (coasterOptinAsk, handleCoasterOptin)", o0 > 0 && o1 > o0 && BLOCK.slice(o0, o1).indexOf("async function handleCoasterOptin(") > 0);
-  pass("outside the venue's own sign-up, nothing in the coaster block asks for an email, a mobile or a surname",
-    !/email|mobile|phone|surname|last_name/i.test((BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").replace(/phoneSlides/g, "")));   // phoneSlides is the join lookup's own slide filter, the venue's ad, no person's detail
+  var outside = (BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").replace(/phoneSlides/g, "");
+  pass("outside the venue's own sign-up, the only contact detail in the coaster block is the round's mobile check (coasterMobileError), never an email or a surname",
+    !/email|phone|surname|last_name/i.test(outside) && outside.replace("const mobileErr = coasterMobileError(b.mobile);", "").replace("if (mobileErr) return json({ error: mobileErr, field: 'mobile' }, 400);", "").search(/mobile/i) < 0, outside.match(/.{0,60}mobile.{0,60}/i));   // phoneSlides is the join lookup's own slide filter, the venue's ad, no person's detail
   pass("the sign-up goes through the phones' own gate (gatedCapture) and the venue's own settings (venueCollectCfg), never a copy",
-    /gatedCapture\(cfg, /.test(BLOCK) && /venueCollectCfg\(env, where\.venue_id\)/.test(BLOCK) && BLOCK.indexOf("function gatedCapture") < 0);
+    /gatedCapture\(gate, /.test(BLOCK) && /venueCollectCfg\(env, where\.venue_id\)/.test(BLOCK) && BLOCK.indexOf("function gatedCapture") < 0);
   return Promise.resolve();
 });
 
@@ -928,10 +1026,10 @@ step(function () {
     pass("whole words only: 'Zetabowls Cafe' and 'Zeta Bowling Greens' are not bowls clubs", !names.some(function (n) { return /zetabowls|bowling/i.test(n); }), names);
     pass("exactly the venueplay venue and the five kept names", names.length === 6, names);
     calls = [];
-    return post(W.start, { name: "Jo", place: "l:125", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:125", qids: five(0) });
   }).then(function (r) {
     pass("a chain hotel's board 'l:<id>' is refused even when typed in by address", r.status >= 400 && !DB.vp_coaster_plays.length, [r.status, r.body]);
-    return post(W.start, { name: "Jo", place: "l:120", qids: five(0) });
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:120", qids: five(0) });
   }).then(function (r) {
     pass("...while the kept country pub's board opens", r.status === 200 && r.body.place === "l:120", [r.status, r.body]);
   });

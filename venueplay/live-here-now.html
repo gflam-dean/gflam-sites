@@ -307,7 +307,7 @@
     <button class="linkbtn" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
   </section>
 
-  <!-- 2. YOUR DETAILS: first name, email, the one offers tick, Play (the trivia phone's join step) -->
+  <!-- 2. YOUR DETAILS: first name and mobile at every venue, email where the venue collects it, the one offers tick, whose the details are, Play (the trivia phone's join step) -->
   <section class="view vp-step" id="vName" hidden>
     <p class="okpill" id="addedPill" hidden>Added</p>
     <p class="vp-kicker" id="nameKick" hidden></p>
@@ -316,9 +316,10 @@
     <form id="nameForm" novalidate autocomplete="off">
       <input class="vp-field" type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name">
       <div id="lastRow" hidden><input class="vp-field" type="text" id="lastIn" maxlength="40" placeholder="Last name (optional)" autocomplete="family-name" autocapitalize="words" spellcheck="false" aria-label="Your last name, optional"></div>
+      <div id="optinMobileRow" hidden><input class="vp-field" type="tel" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
       <div id="optinEmailRow" hidden><input class="vp-field" type="text" id="optinEmail" maxlength="200" placeholder="Your email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="Your email"></div>
-      <div id="optinMobileRow" hidden><input class="vp-field" type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
       <div class="optin-tick" id="optinTick"></div>
+      <p class="hint" id="detailsNote" hidden></p>
       <p class="vp-err" id="nameErr" aria-live="polite"></p>
       <div class="vp-grow"></div>
       <button class="vp-cta" id="nameBtn" type="submit">Play</button>
@@ -433,6 +434,25 @@ var VPCoaster = (function () {
     var w = String(raw || '').replace(/[\x00-\x1f]+/g, ' ').trim().split(/\s+/)[0] || '';
     w = w.replace(/[^A-Za-z\u00C0-\u024F'\-]/g, '').slice(0, 14);
     return /[A-Za-z\u00C0-\u024F]/.test(w) ? w.charAt(0).toUpperCase() + w.slice(1) : '';
+  }
+  /* A REAL AUSTRALIAN MOBILE (Dean, 15 Nov 2026: first name AND mobile at every venue). The game Worker's coasterMobile is
+     the same rule: 04xx xxx xxx, +61 4xx xxx xxx, 61 4..., 4xx xxx xxx; spaces, dashes, dots, brackets ignored. "+614..." or "". */
+  function auMobile(raw) {
+    var d = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
+    var plus = d.charAt(0) === '+'; if (plus) d = d.slice(1);
+    if (!/^\d+$/.test(d)) return '';
+    if (/^614\d{8}$/.test(d)) return '+' + d;
+    if (!plus && /^04\d{8}$/.test(d)) return '+61' + d.slice(1);
+    if (!plus && /^4\d{8}$/.test(d)) return '+61' + d;
+    return '';
+  }
+  function mobileError(raw) {
+    if (!String(raw == null ? '' : raw).trim()) return 'Type your mobile.';
+    return auMobile(raw) ? '' : 'That mobile does not look right. An Australian mobile starts 04 and has 10 digits.';
+  }
+  /* The one line under the details (Dean, 15 Nov 2026): a venueplay venue gets them; anywhere else they stay with us. */
+  function detailsNote(venueName, owner) {
+    return owner && venueName ? 'Your details go to ' + venueName + '.' : 'Your details stay with venueplay.';
   }
   function letters(s) { return String(s || '').toLowerCase().replace(/^\s*the\s+/, '').replace(/[^a-z0-9]/g, '').length; }
   function ordinal(n) {
@@ -554,7 +574,7 @@ var VPCoaster = (function () {
   }
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
            ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, sharedPlaces: sharedPlaces, myPlace: myPlace, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
-           shareUrl: shareUrl, shareText: shareText, topTenPlace: topTenPlace, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
+           shareUrl: shareUrl, shareText: shareText, topTenPlace: topTenPlace, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, auMobile: auMobile, mobileError: mobileError, detailsNote: detailsNote, STATES: STATES,
            QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
@@ -564,7 +584,7 @@ var VPCoaster = (function () {
   'use strict';
   var L = VPCoaster, PER_SCAN = L.PER_SCAN;
   var API = window.VP_GAME_API || 'https://game.venueplay.com.au';
-  var SEEN_KEY = 'vp-lhn-seen', NAME_KEY = 'vp-lhn-name', PLACE_KEY = 'vp-lhn-place', SIGNED_KEY = 'vp-lhn-signed';
+  var SEEN_KEY = 'vp-lhn-seen', NAME_KEY = 'vp-lhn-name', PLACE_KEY = 'vp-lhn-place', SIGNED_KEY = 'vp-lhn-signed', MOBILE_KEY = 'vp-lhn-mobile';
   var SEEN_CAP = 400;          // well under the bank, so the next five are always fresh ones
   var PAUSE_MS = 1300;         // how long right or wrong stays up before the next question (the Worker's COASTER_REVEAL_MS)
   var LOCK_MS = 450;           // Locked in, then the reveal, inside the 1.3 seconds
@@ -665,14 +685,29 @@ var VPCoaster = (function () {
   }
 
   /* ---- state ---- */
-  var BANK = null, S = { name: '', place: null, code: L.readCode(location.search), mode: 'local', play: null, token: '', myCode: '', venue: null };
+  var BANK = null, S = { name: '', mobile: '', owner: false, place: null, code: L.readCode(location.search), mode: 'local', play: null, token: '', myCode: '', venue: null };
   var round = [], at = 0, right = 0, results = [], total = 0, lastAnswer = null, ended = null;
 
   /* 2. YOUR DETAILS after the venue (INBOX 309.1c) */
-  function askName() { askDetails(null); }
+  /* a mate's challenge link: ask the Worker which venue it was played at first, so the details step can name it */
+  function askName() {
+    if (!S.code) return askDetails(null);
+    var done = false;
+    function go(d) {
+      if (done) return; done = true;
+      S.optin = (d && d.optin) || null;
+      S.owner = !!(d && d.venue && d.venue.owner);
+      S.venueName = (d && d.venue && d.venue.name) || '';
+      askDetails(S.venueName || null);
+    }
+    call('GET', '/coaster/ask?code=' + encodeURIComponent(S.code), null, function (st, d) { go(st === 200 ? d : null); });
+    setTimeout(function () { go(null); }, 2500);   // a slow answer never holds the player up
+  }
   function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
+    var savedMob = recall(MOBILE_KEY);
+    if (savedMob && typeof savedMob === 'string' && !$('optinMobile').value) $('optinMobile').value = savedMob;   // this phone's own last answer
     venueLine('');   // the name step already says "Playing at <venue>"
     var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
@@ -683,11 +718,16 @@ var VPCoaster = (function () {
     $('nameErr').textContent = '';
     var o = S.optin, done = recall(SIGNED_KEY);
     if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone
+    /* first name AND mobile at every venue (Dean, 15 Nov 2026), whatever the venue collects; a round with no venue
+       (the search down: "Play now") keeps nothing, so asks nothing more */
+    var board = !!(venueName || S.code);
+    $('optinMobileRow').hidden = !board;
+    $('detailsNote').hidden = !board;
+    $('detailsNote').textContent = board ? L.detailsNote(venueName, S.owner) : '';
     if (o && (o.email || o.mobile) && venueName && window.VPConsent) {
       $('optinEmailRow').hidden = !o.email;
-      $('optinMobileRow').hidden = !o.mobile;
       $('lastRow').hidden = !o.last_name;
-      window.VPConsent.render($('optinTick'), { marketing_optin: o.marketing_optin, email: o.email, mobile: o.mobile }, { venueName: venueName });
+      window.VPConsent.render($('optinTick'), { marketing_optin: o.marketing_optin, email: o.email, mobile: true }, { venueName: venueName });
     }
     view('vName');
     fitTick();
@@ -706,12 +746,21 @@ var VPCoaster = (function () {
     var n = L.firstName($('nameIn').value);
     if (!n) { $('nameErr').textContent = 'Type your first name.'; $('nameIn').focus(); return; }
     var o = S.optin, cap = null;
-    if (o && !$('optinEmailRow').hidden || o && !$('optinMobileRow').hidden) {
-      cap = { email: o.email ? $('optinEmail').value.trim() : '', mobile: o.mobile ? $('optinMobile').value.trim() : '', last_name: o.last_name ? $('lastIn').value.trim() : '' };
-      if (!cap.email && !cap.mobile) { $('nameErr').textContent = o.email ? 'Type your email.' : 'Type your mobile.'; return; }
-      if (cap.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cap.email)) { $('nameErr').textContent = 'That email does not look right.'; return; }
-      cap.marketing_optin = !!(window.VPConsent && window.VPConsent.optedIn(cap));
-      if (cap.marketing_optin) cap.consent_version = window.VPConsent.VERSION;
+    if (!$('optinMobileRow').hidden) {
+      var me = L.mobileError($('optinMobile').value);
+      if (me) { $('nameErr').textContent = me; $('optinMobile').focus(); return; }
+      cap = { mobile: L.auMobile($('optinMobile').value), email: '', last_name: '' };
+      if (o && !$('optinEmailRow').hidden) {
+        cap.email = o.email ? $('optinEmail').value.trim() : '';
+        cap.last_name = o.last_name ? $('lastIn').value.trim() : '';
+        if (cap.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cap.email)) { $('nameErr').textContent = 'That email does not look right.'; $('optinEmail').focus(); return; }
+      }
+      if (o) {
+        cap.marketing_optin = !!(window.VPConsent && window.VPConsent.optedIn(cap));
+        if (cap.marketing_optin) cap.consent_version = window.VPConsent.VERSION;
+      }
+      S.mobile = cap.mobile;
+      remember(MOBILE_KEY, $('optinMobile').value.trim());
     }
     $('nameErr').textContent = '';
     S.name = n;
@@ -723,7 +772,7 @@ var VPCoaster = (function () {
   function sendDetails() {
     var c = S.details;
     S.details = null;
-    if (!c || !S.play || !S.optin) return;
+    if (!c || !S.play || !c.mobile) return;
     var place = S.place;
     call('POST', '/coaster/optin', { play: S.play, token: S.token, email: c.email, mobile: c.mobile, last_name: c.last_name,
       marketing_optin: c.marketing_optin, consent_version: c.consent_version }, function (st, d) {
@@ -734,7 +783,7 @@ var VPCoaster = (function () {
   /* 2. WHERE ARE YOU PLAYING */
   function askWhere() {
     venueLine('');
-    S.optin = null; S.details = null; header(null);
+    S.optin = null; S.details = null; S.owner = false; header(null);
     var last = recall(PLACE_KEY), box = $('againBox');
     box.textContent = '';
     box.hidden = true;
@@ -767,7 +816,7 @@ var VPCoaster = (function () {
     return b;
   }
   function choose(place, name, label) {
-    S.place = place; S.venueName = name;
+    S.place = place; S.venueName = name; S.owner = /^v:/.test(place);   // a venueplay venue: the details go to it
     remember(PLACE_KEY, { place: place, name: name, label: label || '', at: Date.now() });
     S.optin = null;
     if (!/^v:/.test(place)) return askDetails(name);
@@ -831,7 +880,7 @@ var VPCoaster = (function () {
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
       /* an added venue plays on its own trivia-only board when the Worker hands one back (a real venue's stays, any other for 30 days) */
-      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null; S.venueName = f.name;
+      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null; S.venueName = f.name; S.owner = false;
       /* "Added", then straight on to the name: the old search and its "no venue" line are cleared */
       $('whereIn').value = ''; $('picks').textContent = ''; $('whereHint').textContent = ''; $('notListed').hidden = false;
       askDetails(f.name, st === 200);
@@ -859,7 +908,7 @@ var VPCoaster = (function () {
   function startRound() {
     var local = L.pickFive(BANK, hourNow(), readSeen());
     if (!S.code && !S.place) return go('local', local);
-    var body = S.code ? { name: S.name, code: S.code } : { name: S.name, place: S.place, qids: local.map(function (q) { return q[0]; }) };
+    var body = S.code ? { name: S.name, mobile: S.mobile, code: S.code } : { name: S.name, mobile: S.mobile, place: S.place, qids: local.map(function (q) { return q[0]; }) };
     call('POST', '/coaster/start', body, function (st, d) {
       if (st === 200 && d.play) {
         var five = L.byIds(BANK, d.qids);
@@ -876,7 +925,7 @@ var VPCoaster = (function () {
         return askWhere();
       }
       if (st === 404 && d.place_gone) { S.place = null; return askWhere(); }
-      if (st === 400 && /first name/i.test(d.error || '')) return askName();
+      if (st === 400 && (/first name/i.test(d.error || '') || d.field === 'mobile')) { var err = d.error || ''; askDetails(S.venueName || null); $('nameErr').textContent = err; return; }
       go('local', local);
     });
   }
@@ -1121,7 +1170,7 @@ var VPCoaster = (function () {
       try { d = JSON.parse(x.responseText); } catch (e) {}
       if (x.status !== 200 || !d || !d.q || d.q.length < PER_SCAN) return failed();
       BANK = d.q;
-      if (S.code) { if (!S.name) askName(); else begin(); } else askWhere();   // the venue first, then the name (INBOX 309.1)
+      if (S.code) askName(); else askWhere();   // a challenge always shows the details step: it names the venue and asks the mobile   // the venue first, then the name (INBOX 309.1)
     };
     x.onerror = x.ontimeout = failed;
     x.send();
