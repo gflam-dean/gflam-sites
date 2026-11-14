@@ -812,6 +812,14 @@ read-only checks in the file's header against LIVE. After running: dump RLS-BASE
 function). No column change. NUMBER: 192 is the highest on any branch or worktree, checked 13 Nov 2026, so 193. Read-back and
 rollback in the file.
 
+`venueplay-198-coaster-contacts.sql` (Dean, 15 Nov 2026, Coaster Trivia name + mobile always, branch `fix/sun15-coaster-mobile`): one new table
+vp_coaster_contacts (board, coaster_venue_id, play_id, first_name, mobile +614..., unique board+mobile), RLS on, no policies, revoked from
+public/anon/authenticated: the first name and mobile from a round at a board with NO venueplay account (a player-added venue, a coaster venue,
+a listed pub), for venueplay only, never shown to a venue, never used for marketing. Additive only. RUN on TEST (rkfaftxgzpsmmrzudlqy) 15 Nov
+2026 with the guard block (read back: service 200, anon permission denied). NOT RUN on LIVE. The game Worker keeps nothing for those boards
+(stored false) until it runs; the round plays the same. After it runs on live: dump RLS-BASELINE.json. NUMBER: 197 is the highest on any branch
+or worktree (fix/praffle-lock-14nov), checked 15 Nov 2026, so 198.
+
 `venueplay-194-coaster-lead-boards.sql` (Dean, 14 Nov 2026, INBOX 396 backend, branch `fix/coaster-stunning-396-14nov`): four columns on
 vp_coaster_venues (lead_status unchecked/verified/unverified/flagged, board_until, checked_at, checked_by) so a venue a player ADDS is a free lead
 that can play: the game Worker auto-checks it against the licensed list (vp_licensed_venues) and its website; real = a lead with a board that
