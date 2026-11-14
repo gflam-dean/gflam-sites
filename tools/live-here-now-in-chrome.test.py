@@ -853,6 +853,67 @@ def main():
         check('then question 1 shows with all four answers and the round started once', s.get('id') and len(s.get('btns', [])) == 4 and len([x for x in FAKE['log'] if x[1] == '/coaster/start']) == 1, s.get('view'))
         tst.close()
 
+        print('\nBOTH SHOWS ON: ONE FULL PLAY AT 375 AND 430 (INBOX 405 updates 5 and 6), THEN THE SHOWS AT FULL BRIGHTNESS FOR THE REVIEW PAGE')
+        HOOK = ("document.addEventListener('DOMContentLoaded',function(){window.__T=[];var S=window.VPSting;"
+                "if(S){var o=S.start;S.start=function(a){window.__T.push(['show',JSON.stringify((a||{}).words||{}),performance.now()]);return o.apply(S,arguments);};}"
+                "var seen={q:0,score:0};setInterval(function(){var q=document.getElementById('q'),sc=document.getElementById('score');"
+                "if(!seen.q&&q&&!q.hidden){seen.q=1;window.__T.push(['q',document.getElementById('pqCdNum').textContent,performance.now()]);}"
+                "if(!seen.score&&sc&&!sc.hidden){seen.score=1;window.__T.push(['score','',performance.now()]);}},30);});")
+        for sw, sh in ((375, 667), (430, 932)):
+            clear_storage(b, base)
+            FAKE['log'][:] = []
+            tsw = Tab(b, base, api, w=sw, h=sh)
+            tsw.b.call('Page.addScriptToEvaluateOnNewDocument', {'source': HOOK}, session=tsw.sid)
+            tsw.go('/live-here-now', sting=True)
+            where_step(tsw, 'tug', 'Tugun Tavern')
+            s = wait(tsw, lambda s: s.get('view') == 'vName')
+            tsw.type_into('nameIn', 'Pip')
+            tsw.tap_id('nameBtn')
+            ids_sw, s, _ = play_round(tsw, [True, True, False, True, False])
+            T = waits.as_json(tsw.js('JSON.stringify(window.__T||[])'), [], 'T')
+            snd = waits.as_json(tsw.js('JSON.stringify([localStorage.getItem("vpqMute"),window.VP_SOUND_GAIN])'), [], 'SND')
+            kinds = [x[0] for x in T]
+            check('%d px, a full play with both shows on: the start show, the question, the end show, the score, in that order' % sw,
+                  kinds == ['show', 'q', 'show', 'score'] and 'TRIVIA' in T[0][1] and 'WRAP' in T[2][1], T)
+            if kinds == ['show', 'q', 'show', 'score']:
+                hold_in = T[1][2] - T[0][2]
+                hold_out = T[3][2] - T[2][2]
+                check('%d px: the START show is held about as long as the real game holds it (2.3 s) before question 1, and the 20 s clock starts only after it (the ring reads 20 or 19 at the first question)' % sw,
+                      hold_in >= 2300 and T[1][1] in ('20', '19'), (round(hold_in), T[1][1]))
+                check('%d px: the END show is held the same 2.3 s before the score, no flash-by' % sw, hold_out >= 2300, round(hold_out))
+            check('%d px: coaster sound starts ON (stored 0) and every sound is at half volume (gain 0.5)' % sw, snd and snd[0] == '0' and snd[1] == 0.5, snd)
+            tsw.close()
+        # the same shows with the show's own clock stepped to full brightness (the recorder switch), for the review page
+        for sw, sh in ((375, 667), (430, 932)):
+            clear_storage(b, base)
+            tsm = Tab(b, base, api, w=sw, h=sh)
+            tsm.b.call('Page.addScriptToEvaluateOnNewDocument', {'source': 'window.__vpStingManual=true;'}, session=tsm.sid)
+            tsm.go('/live-here-now', sting=True)
+            where_step(tsm, 'tug', 'Tugun Tavern')
+            wait(tsm, lambda s: s.get('view') == 'vName')
+            tsm.type_into('nameIn', 'Pip')
+            tsm.tap_id('nameBtn')
+            tsm.until('!!document.getElementById("vppL1")', 6)
+            tsm.js('VPSting.frame(1.6)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showstart-%d.png' % sw)
+            tsm.js('VPSting.frame(9)')
+            s = wait_question(tsm)
+            # answer the five by tapping, then catch the end show
+            for _q in range(5):
+                st = wait(tsm, lambda x: x.get('id') and len(x.get('btns', [])) == 4 and not x['btns'][0]['disabled'], 8)
+                if not st.get('btns'):
+                    break
+                b0 = st['btns'][0]
+                tsm.tap(b0['x'], b0['y'])
+                time.sleep(1.6)
+            tsm.until('!!document.getElementById("vppL1")', 8)
+            tsm.js('VPSting.frame(1.6)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showend-%d.png' % sw)
+            tsm.js('VPSting.frame(9)')
+            tsm.close()
+
         print('\nNOT ON OUR LIST: "CAN\'T FIND YOUR VENUE? ADD IT", AND JUST PLAY')
         clear_storage(b, base)
         tn = Tab(b, base, api)
@@ -958,7 +1019,7 @@ def main():
               re.match(r"^Time's up\. The answer was [ABCD]\.$", s.get('verdict') or '') and sent and sent[0].get('a') == -1 and tr.js('!!document.querySelector("#answers .ans.right")'), (s.get('verdict'), sent))
         snd = tr.js('(function(){var b=document.getElementById("vpqMute");return b?JSON.stringify([b.textContent.trim(),b.getBoundingClientRect().height,localStorage.getItem("vpqMute")]):"";})()')
         snd = waits.as_json(snd, [], 'SND')
-        check('sound starts OFF with a visible label "Sound off" and a 44 px tap area (396.k)', snd and snd[0] == 'Sound off' and snd[1] >= 44 and snd[2] == '1', snd)
+        check('sound starts ON with a visible "Sound on" switch (top right, 44 px tall; INBOX 405 update 7, replacing 396.k)', snd and snd[0] == 'Sound on' and snd[1] >= 44 and snd[2] == '0', snd)
         tr.close()
 
         print('\nTHE HOUR CHANGES THE SET')
