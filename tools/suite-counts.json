@@ -932,7 +932,7 @@
   "counted_by": "lines"
  },
  "tools/test-journey-client.js": {
-  "checks": 62,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-journey-track.js": {

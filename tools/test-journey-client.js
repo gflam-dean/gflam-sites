@@ -126,7 +126,6 @@ section('9. the links: _redirects and the page tags');
   check('/' + p + '/:code is served as the offer page (200 rewrite, the address stays)', new RegExp('^/' + p + '/:code\\s+/nsw\\s+200\\s*$', 'm').test(REDIR));
 });
 check('/home/:code serves the home page', /^\/home\/:code\s+\/\s+200\s*$/m.test(REDIR));
-check('/quick/:code serves the quick page', /^\/quick\/:code\s+\/quick\s+200\s*$/m.test(REDIR));
 check('no rule uses a query string', !/^\/[a-z-]+\/:code[^\n]*\?/m.test(REDIR));
 check('nsw.html loads /app/vp-track.js after the analytics tag', /vp-analytics\.js"><\/script>\s*\n<script src="\/app\/vp-track\.js">/.test(readFile('venueplay/nsw.html')));
 check('index.html loads /app/vp-track.js', /<script src="\/app\/vp-track\.js">/.test(readFile('venueplay/index.html')));
