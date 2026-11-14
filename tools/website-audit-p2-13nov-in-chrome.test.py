@@ -32,6 +32,23 @@ try:
     ok('host console, 375 phone: the greeting is showing', M['txt'].startswith('Good'), M)
     ok('host console, 375 phone: the greeting sits in the lower half, clear of the venueplay wordmark', M['top'] > M['vh'] / 2, M)
     S.close_tab(tid)
+    # INBOX 399 (b): "Good evening" never overlaps the venueplay logo (nor the venue's own logo) on the host home, at 320, 375 and 430
+    BOXES = r'''JSON.stringify((function(){var t=document.getElementById("greetToast"),tr=t.getBoundingClientRect(),R=function(e){var b=e.getBoundingClientRect();return {l:b.left,t:b.top,r:b.right,b:b.bottom,w:b.width,h:b.height}};
+      var hit=function(a,b){return a.l<b.r&&b.l<a.r&&a.t<b.b&&b.t<a.b};
+      var els=[].slice.call(document.querySelectorAll("header .brand svg.vp-wm,header img#venueLogo,header .bar button,header .bar a")).filter(function(e){var b=e.getBoundingClientRect();return b.width>0&&b.height>0&&getComputedStyle(e).visibility!=="hidden"});
+      var wm=document.querySelector("header .brand svg.vp-wm");
+      return {toast:R(t),txt:t.textContent,wordmark:wm?R(wm):null,vh:innerHeight,n:els.length,hits:els.filter(function(e){return hit(R(e),R(t))}).map(function(e){return e.id||e.tagName})};})())'''
+    for vw in (320, 375, 430):
+        tid, sid = S.open('/app/index.html?as=owner', vw, 812, mobile=True)
+        S.until(sid, 'document.getElementById("greetToast")&&document.getElementById("greetToast").classList.contains("show")', 20); time.sleep(0.8)
+        Q = S.json(sid, BOXES)
+        ok('host home, %d phone: the greeting and the venueplay wordmark are both on screen and their boxes do not intersect' % vw,
+           Q['txt'].startswith('Good') and Q['wordmark'] and Q['wordmark']['w'] > 40 and 'svg' not in Q['hits'], Q)
+        ok('host home, %d phone: the greeting touches nothing else in the header either (venue logo, buttons)' % vw, not Q['hits'] and Q['n'] >= 1, Q)
+        if vw == 375:
+            import os as _os
+            if _os.environ.get('VP_SHOTS'): S.shot(sid, _os.path.join(_os.environ['VP_SHOTS'], 'good-evening-375.png'), full=False)
+        S.close_tab(tid)
     for page, ids in (('/app/trivia/host.html', ['cfgCount', 'cfgTime', 'cfgBase']),
                       ('/app/members/host.html', ['setSince', 'setDay', 'setClaim', 'setStart', 'setInc']),
                       ('/app/raffle/host.html', ['rfTime'])):

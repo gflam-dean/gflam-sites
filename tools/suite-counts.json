@@ -796,7 +796,7 @@
   "counted_by": "lines"
  },
  "tools/test-draw-looks-switch.js": {
-  "checks": 47,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-draw-moments.js": {
@@ -2184,7 +2184,7 @@
   "counted_by": "lines"
  },
  "tools/website-audit-p2-13nov-in-chrome.test.py": {
-  "checks": 8,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/website-audit-p1b-13nov-in-chrome.test.py": {
