@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>venueplay: Play a quick game</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Play a quick game of trivia on your own TV in a minute. Nothing to pay.">
+<link rel="canonical" href="https://venueplay.com.au/quick">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="/app/vp-analytics.js"></script>
+<script src="/app/vp-pixel.js"></script>
+<!-- PLAY A QUICK GAME (Dean, 14 Nov 2026; INBOX 412). The page every old "see a night" link now reaches. ONE screen, no scroll:
+     first name, mobile, venue (picked from our list, or typed with its suburb), the text code, then the account is made and
+     they are signed in by the one-tap link and land on the trivia demo on their own account (/app/try.html?quick=1).
+     The button words and the order of the steps after this are one setting each: /app/vp-quick-config.js. -->
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#141418; --pink:#FF1F8E; --pink-soft:#FF8CC6; --text:#E7E7EC; --muted:#C9C9D1; --faint:#8A8A94; --line:rgba(255,255,255,.14); }
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
+  html,body{ margin:0; height:100%; background:var(--ink); color:var(--text); font-family:Manrope,system-ui,sans-serif; line-height:1.45; -webkit-font-smoothing:antialiased; }
+  body{ min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:14px 16px; }
+  main{ width:100%; max-width:440px; }
+  .logo{ display:block; height:24px; margin:0 0 14px; }
+  h1{ font:800 clamp(24px,5.4vw,30px)/1.15 'Hanken Grotesk',Manrope,sans-serif; margin:0 0 6px; color:#fff; }
+  .sub{ margin:0 0 14px; font-size:15px; color:var(--muted); }
+  label{ display:block; font:700 13px/1.3 'Hanken Grotesk',Manrope,sans-serif; color:var(--muted); margin:0 0 4px; }
+  input[type=text],input[type=tel]{ width:100%; height:48px; padding:0 14px; border-radius:12px; border:1px solid var(--line); background:var(--ink-2); color:#fff; font:600 16px 'Manrope',system-ui,sans-serif; }
+  input:focus-visible,button:focus-visible,a:focus-visible{ outline:2px solid var(--pink); outline-offset:2px; }
+  .row{ margin:0 0 10px; position:relative; }
+  .two{ display:grid; grid-template-columns:1fr 1.3fr; gap:10px; }
+  .btn{ display:block; width:100%; min-height:50px; border:0; border-radius:12px; background:var(--pink); color:#fff; font:800 17px 'Hanken Grotesk',Manrope,sans-serif; cursor:pointer; margin:4px 0 0; }
+  .btn[disabled]{ opacity:.55; cursor:default; }
+  .err{ min-height:18px; margin:6px 0 0; font-size:14px; color:var(--pink-soft); }
+  .fine{ margin:8px 0 0; font-size:13px; color:var(--faint); }
+  .link{ background:none; border:0; padding:0; color:var(--pink-soft); font:inherit; text-decoration:underline; cursor:pointer; }
+  .pick{ position:absolute; left:0; right:0; top:100%; z-index:5; margin:4px 0 0; padding:0; list-style:none; background:#1B1B20; border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+  .pick button{ display:block; width:100%; text-align:left; background:none; border:0; color:var(--text); padding:10px 14px; min-height:44px; font:600 15px Manrope,sans-serif; cursor:pointer; }
+  .pick button:hover,.pick button:focus-visible{ background:rgba(255,31,142,.18); }
+  .pick small{ display:block; color:var(--faint); font-weight:500; }
+  .code{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:0 0 10px; }
+  .code input{ width:100%; height:54px; padding:0; text-align:center; font:800 24px 'JetBrains Mono',monospace; }
+  .st-hp{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+  @media (max-height:640px){ .logo{ margin-bottom:8px; } .sub{ margin-bottom:8px; } input[type=text],input[type=tel]{ height:44px; } .row{ margin-bottom:7px; } }
+</style>
+</head>
+<body>
+<main id="main">
+  <img class="logo" src="/logos/venueplay-primary.svg" alt="venueplay">
+
+  <form id="qForm" autocomplete="on" novalidate onsubmit="return false">
+    <h1 data-vpq-label>Play a quick game</h1>
+    <p class="sub" id="qSub">Trivia on your own TV in a minute. Nothing to pay.</p>
+    <div class="two">
+      <div class="row"><label for="qName">First name</label><input id="qName" name="given-name" type="text" autocomplete="given-name" maxlength="60" required></div>
+      <div class="row"><label for="qMobile">Mobile</label><input id="qMobile" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="0400 000 000" maxlength="20" required></div>
+    </div>
+    <div class="row">
+      <label for="qVenue">Your venue</label>
+      <input id="qVenue" name="organization" type="text" autocomplete="organization" maxlength="120" role="combobox" aria-expanded="false" aria-controls="qPick" aria-autocomplete="list" placeholder="Start typing its name" required>
+      <ul class="pick" id="qPick" role="listbox" hidden></ul>
+    </div>
+    <div class="row" id="qSuburbRow" hidden><label for="qSuburb">Not in the list? Add its suburb</label><input id="qSuburb" name="address-level2" type="text" autocomplete="address-level2" maxlength="80"></div>
+    <div class="row" id="qPostRow" hidden><label for="qPost">Venue postcode</label><input id="qPost" name="postal-code" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="postal-code" maxlength="4"></div>
+    <div class="st-hp" aria-hidden="true"><label for="qWeb">Leave this empty</label><input id="qWeb" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <div id="qTs"></div>
+    <button class="btn" id="qGo" type="submit">Text me my code</button>
+    <p class="err" id="qErr" role="alert"></p>
+    <p class="fine">We text a code to your mobile so we know it is you. <a href="/privacy" style="color:inherit">Privacy</a></p>
+  </form>
+
+  <form id="qCode" autocomplete="on" novalidate onsubmit="return false" hidden>
+    <h1>Type your code</h1>
+    <p class="sub">We texted 6 numbers to the mobile ending <b id="qEnd"></b>.</p>
+    <div class="code">
+      <input id="qc1" name="one-time-code" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code, number 1 of 6">
+      <input id="qc2" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 2 of 6">
+      <input id="qc3" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 3 of 6">
+      <input id="qc4" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 4 of 6">
+      <input id="qc5" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 5 of 6">
+      <input id="qc6" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 6 of 6">
+    </div>
+    <button class="btn" id="qCheck" type="submit">Start my game</button>
+    <p class="err" id="qCerr" role="alert"></p>
+    <p class="fine">Nothing yet? <button type="button" class="link" id="qResend">Send it again</button> or <button type="button" class="link" id="qChange">change your details</button>.</p>
+  </form>
+
+  <div id="qHeld" hidden>
+    <h1>Thanks, we have it</h1>
+    <p class="sub" id="qHeldWords">Thanks, we'll check your venue and get you set up, usually within a business day.</p>
+  </div>
+  <div id="qMade" hidden>
+    <h1>Getting your game ready</h1>
+    <p class="sub">Signing you in...</p>
+  </div>
+</main>
+<script src="/app/vp-quick-config.js"></script>
+<script src="/app/vp-quick.js"></script>
+</body>
+</html>

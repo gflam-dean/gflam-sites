@@ -93,3 +93,7 @@
 /here.html    /live-here-now  301
 /live         /live-here-now  301
 /live.html    /live-here-now  301
+
+# 14 Nov 2026, INBOX 412: the old see-a-night page is replaced by Play a quick game. Every old link (cold emails, the autopilot reply, search) lands there.
+/see-a-night       /quick  301
+/see-a-night.html  /quick  301
