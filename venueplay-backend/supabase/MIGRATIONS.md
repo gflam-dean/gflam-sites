@@ -816,8 +816,8 @@ rollback in the file.
 vp_coaster_contacts (board, coaster_venue_id, play_id, first_name, mobile +614..., unique board+mobile), RLS on, no policies, revoked from
 public/anon/authenticated: the first name and mobile from a round at a board with NO venueplay account (a player-added venue, a coaster venue,
 a listed pub), for venueplay only, never shown to a venue, never used for marketing. Additive only. RUN on TEST (rkfaftxgzpsmmrzudlqy) 15 Nov
-2026 with the guard block (read back: service 200, anon permission denied). NOT RUN on LIVE. The game Worker keeps nothing for those boards
-(stored false) until it runs; the round plays the same. After it runs on live: dump RLS-BASELINE.json. NUMBER: 197 is the highest on any branch
+2026 with the guard block (read back: service 200, anon permission denied). RUN on LIVE by Dean 15 Nov ~06:55 (with the RLS read-back);
+file frozen as committed in f340f520. Still to do: dump RLS-BASELINE.json from live and commit it. NUMBER: 197 is the highest on any branch
 or worktree (fix/praffle-lock-14nov), checked 15 Nov 2026, so 198.
 
 `venueplay-194-coaster-lead-boards.sql` (Dean, 14 Nov 2026, INBOX 396 backend, branch `fix/coaster-stunning-396-14nov`): four columns on
