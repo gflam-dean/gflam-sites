@@ -200,7 +200,7 @@ def page(game, path):
             ok('A %s %d: not ticked, in the markup or by a script' % (game, w),
                L and all(x['checked'] is False and x['defaultChecked'] is False for x in L), L)
             st = ask(sid, STEP_TEXT) or ''
-            ok('A %s %d: the step says 18 once, inside the offers tick, and nowhere else' % (game, w), st.count('18') == 1, st)
+            ok('A %s %d: the step says NOTHING about 18 or an age, anywhere (Dean, 14 Nov 2026: "we decided that ages ago")' % (game, w), '18' not in st and 'age' not in st.lower().replace('manage','').replace('page','').replace('message',''), st)
             if len(L) == 1:
                 x = L[0]
                 ok('G %s %d: on screen, inside the screen width' % (game, w), x['r']['w'] > 0 and x['r']['l'] >= 0 and x['r']['r'] <= t['W'] + 0.5, x['r'])
