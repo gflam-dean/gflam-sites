@@ -231,12 +231,25 @@ TV_PROBE = r'''(function(){
     var mm=document.getElementById("tvBoardMore"); o.more=vis(mm)?{ r:R(mm), text:mm.textContent }:null;
     var nx=document.getElementById("tvBoardNext"); o.next=vis(nx)?{ r:R(nx), text:nx.textContent, bs:getComputedStyle(nx).borderTopStyle }:null;
     o.wallText=(lay.innerText||"").replace(/\s+/g," ");
+    var lw=document.querySelector("#tvArtBox .mlogo"), lbx=document.getElementById("tvArtBox"); o.logoTile=lw?{ tile:lbx.classList.contains("vplogo"), r:R(lw), shown:lw.getBoundingClientRect().width>0 }:null;
     var tri=document.querySelector("#tvArtBox .mtri"); o.tri=vis(tri)?{ r:R(tri), anim:getComputedStyle(tri).animationName, dur:getComputedStyle(tri).animationDuration }:null;
     var ls=document.getElementById("tvListen"); o.listen=vis(ls)?{ text:ls.innerText }:null;
     o.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden"&&getComputedStyle(e).display!=="none")?b.bottom:0; }).concat([0]));
   }
   o.joinCorner=vis(document.getElementById("tvJoinCorner"));
   return JSON.stringify(o);
+})()'''
+
+
+LOGO_PROBE = r'''(function(){
+  var box=document.getElementById("tvArtBox"), lg=box.querySelector(".mlogo"), w=box.querySelector(".mlw"), tri=box.querySelector(".mtri");
+  var R=function(e){ var b=e.getBoundingClientRect(); return [b.left,b.top,b.right,b.bottom]; };
+  var ls=getComputedStyle(lg), ws=getComputedStyle(w), m=ws.transform, sc=1;
+  if(m && m!=="none"){ var a=m.match(/matrix\(([^)]+)\)/); if(a) sc=parseFloat(a[1].split(",")[0]); }
+  var br=R(box), lr=R(lg);
+  return JSON.stringify({ tile:box.classList.contains("vplogo"), beaty:box.classList.contains("beaty"), logo:lr, triShown:getComputedStyle(tri).display!=="none",
+    spin:ls.animationName, spinDur:ls.animationDuration, pulse:ws.animationName, pulseDur:ws.animationDuration, scale:sc,
+    centreOff:Math.max(Math.abs((lr[0]+lr[2])/2-(br[0]+br[2])/2), Math.abs((lr[1]+lr[3])/2-(br[1]+br[3])/2)) });
 })()'''
 
 
@@ -322,6 +335,41 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' now playing: nothing runs under the venue\'s logo or ours', all(apart(r, n.get('logo')) and apart(r, n.get('mark')) for r in [A, tl.get('r'), e.get('r'), sn.get('r')] + [t['r'] for t in T]), [n.get('logo'), n.get('mark')])
         ok(tagn + ' now playing: the wall ends inside the screen and vp-fit leaves it alone', (n.get('bottom') or 0) <= h and (n.get('tf') or '') == '', [n.get('bottom'), n.get('tf')])
         ok(tagn + ' now playing: no JOIN NOW card over the strip (the approved wall)', not n.get('joinCorner'))
+        # INBOX 392 item 2 (Dean, 14 Nov 2026): NO song artwork. Our logo spins in then pulses, and the layout is IDENTICAL with and without a cover.
+        P.js(say(chan, [{'t': 'played', 'title': played[-1], 'artist': 'The Band', 'artworkUrl': '', 'played': played, 'reveal': 'instant', 'replay': True}]))
+        time.sleep(2.2)
+        N = P.obj(TV_PROBE) or {}
+        P.shot(shots + '-tv-now-playing-no-art')
+        same = lambda a, b: bool(a and b) and all(abs(x - y) <= 1 for x, y in zip(a, b))
+        ok(tagn + ' no artwork: the layout is identical with and without a cover (art box, NOW PLAYING label, title, artist, sentence, strip all in the same place)',
+           same(N.get('art'), A) and same((N.get('eye') or {}).get('r'), e.get('r')) and same((N.get('ttl') or {}).get('r'), tl.get('r')) and same(N.get('artist'), n.get('artist')) and same((N.get('wins') or {}).get('r'), (n.get('wins') or {}).get('r'))
+           and len(N.get('tiles') or []) == len(T) and all(same(x['r'], y['r']) for x, y in zip(N.get('tiles') or [], T)), [N.get('art'), A, (N.get('ttl') or {}).get('r'), tl.get('r')])
+        LG = P.obj(LOGO_PROBE) or {}
+        ok(tagn + ' no artwork: no cover picture, no play triangle; our venueplay logo is in the art spot, whole, inside the art box and inside the 5% safe margin',
+           N.get('artImg') is False and not LG.get('triShown') and LG.get('tile') is True and inside(LG.get('logo'), N.get('art'), 1) and LG.get('logo') and LG['logo'][0] >= 0.05 * w and LG['logo'][2] <= 0.95 * w and LG['logo'][1] >= 0.05 * h and LG['logo'][3] <= 0.95 * h, LG)
+        ok(tagn + ' no artwork: it spun in (a 0.95 s spin) and now pulses (a steady 1.6 s breath), and the spin did not move it off centre',
+           LG.get('spin') == 'mLogoSpin' and LG.get('spinDur') == '0.95s' and LG.get('pulse') == 'mLogoPulse' and LG.get('pulseDur') == '1.6s' and LG.get('centreOff', 99) <= 1.5, LG)
+        # the beat: a kick makes it swell, silence lets it rest; neither moves a pixel of layout
+        P.js('window.VP_TV_BEAT.feed(1); true'); time.sleep(0.2)
+        K1 = P.obj(LOGO_PROBE) or {}
+        P.js('window.VP_TV_BEAT.feed(0); true'); time.sleep(0.2)
+        K0 = P.obj(LOGO_PROBE) or {}
+        ok(tagn + ' no artwork: on the beat the logo swells (1.1 x on a hard kick) and rests at 1 x, the steady breath handing over to the beat',
+           K1.get('beaty') is True and K1.get('pulse') == 'none' and abs(K1.get('scale', 0) - 1.1) < 0.02 and abs(K0.get('scale', 0) - 1.0) < 0.02, [K1.get('beaty'), K1.get('pulse'), K1.get('scale'), K0.get('scale')])
+        N2 = P.obj(TV_PROBE) or {}
+        ok(tagn + ' no artwork: the beat never moves the layout (art box and text rects the same on a kick as at rest)',
+           same(N2.get('art'), A) and same((N2.get('ttl') or {}).get('r'), tl.get('r')) and same(N2.get('artist'), n.get('artist')), [N2.get('art'), A])
+        P.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]}, session=P.sid); time.sleep(0.5)
+        P.js('window.VP_TV_BEAT.feed(1); true'); time.sleep(0.2)
+        RM = P.obj(LOGO_PROBE) or {}
+        ok(tagn + ' no artwork: with reduced motion the logo holds still (no spin, no pulse, no beat swell) and stays in the art spot',
+           RM.get('spin') == 'none' and RM.get('pulse') == 'none' and abs(RM.get('scale', 0) - 1.0) < 0.01 and RM.get('tile') is True and inside(RM.get('logo'), N.get('art'), 1), RM)
+        P.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'no-preference'}]}, session=P.sid); time.sleep(0.3)
+        # back to a song WITH a cover: the cover is back, the logo is gone, nothing moved
+        P.js(say(chan, [{'t': 'played', 'title': played[-1], 'artist': 'The Band', 'artworkUrl': '/__fixture/art-603070.svg', 'played': played, 'reveal': 'instant', 'replay': True}]))
+        time.sleep(1.2)
+        BK = P.obj(TV_PROBE) or {}
+        ok(tagn + ' no artwork: a song that has a cover shows the cover again and the logo steps out, in the same place', BK.get('artImg') is True and (BK.get('logoTile') or {}).get('tile') is False and same(BK.get('art'), A), [BK.get('artImg'), BK.get('logoTile'), BK.get('art')])
         # a long title: two lines, still above the artist
         P.js(say(chan, [{'t': 'played', 'title': "Don't Dream It's Over", 'artist': 'Crowded House', 'artworkUrl': '/__fixture/art-603070.svg', 'played': played + ["Don't Dream It's Over"], 'reveal': 'instant', 'replay': True}]))
         time.sleep(1.2)
@@ -338,7 +386,7 @@ def tv(B, base, w, h, logo, tag, shots):
         L = P.obj(TV_PROBE) or {}
         P.shot(shots + '-tv-listen')
         tri = L.get('tri') or {}
-        ok(tagn + ' listen: the neon triangle where the art goes, breathing on its 2.6 s glow', bool(tri.get('r')) and inside(tri['r'], L.get('art'), 2) and tri.get('anim') == 'mTriBreath' and tri.get('dur') == '2.6s', tri)
+        ok(tagn + ' listen: no triangle any more; our venueplay logo holds the art spot instead (INBOX 392 item 2)', not tri.get('r') and (L.get('logoTile') or {}).get('tile') is True and inside((L.get('logoTile') or {}).get('r'), L.get('art'), 2), [tri, L.get('logoTile')])
         ok(tagn + ' listen: LISTEN, then "Name that tune." for a host who reveals by hand', (L.get('listen') or {}).get('text', '').replace('\n', ' ').strip().lower().startswith('listen'), L.get('listen'))
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])

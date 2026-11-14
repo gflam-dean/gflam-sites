@@ -360,7 +360,7 @@
   "counted_by": "lines"
  },
  "tools/musical-newlook-in-chrome.test.py": {
-  "checks": 250,
+  "checks": 271,
   "counted_by": "lines"
  },
  "tools/musical-tv-sound-in-chrome.test.py": {
@@ -1016,7 +1016,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 54,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
