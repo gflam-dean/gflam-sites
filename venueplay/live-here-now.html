@@ -123,6 +123,10 @@
 
   /* ---------- THE QUESTION, IN THE TRIVIA PHONE'S NEW LOOK ---------- */
   .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .lefts{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  .soundbtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 0;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
+  .soundbtn[aria-pressed="true"]{color:#fff}
+  .soundbtn[aria-pressed="true"] #soundX,.soundbtn[aria-pressed="false"] #soundWave{display:none}
   .count{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--muted)}
   .count b{color:#fff}
   .pips{display:flex;gap:6px;margin:12px 0 18px}
@@ -165,12 +169,20 @@
 
   /* THE END: score, points, place, board */
   .score{padding-top:18px}
+  .hero{position:relative;text-align:center;padding:6px 0 4px}
   .score .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;color:var(--pink)}
   .score h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
-  .score .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:#fff;margin-top:8px}
+  .score .pts{font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;margin-top:8px}
   .score .placeline{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:var(--green);margin-top:4px;overflow-wrap:break-word}
   .score .sub{color:var(--muted);font-size:17px;margin-top:8px}
-  .board{margin-top:20px;border-radius:18px;background:var(--card);padding:6px 6px 10px}
+  .btn.ghost.first{margin-top:18px}
+  .challenge{margin-top:18px;text-align:center}
+  .challenge .cq{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px}
+  .challenge .linkbtn{margin:2px auto 0;justify-content:center}
+  .burst{position:absolute;left:50%;top:44%;width:0;height:0;pointer-events:none}
+  .burst i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);animation:burst .9s ease-out both}
+  @keyframes burst{from{transform:translate(0,0) scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+  .board{margin-top:18px;border-radius:18px;background:var(--card);padding:6px 6px 10px}
   .tabs{display:flex;gap:6px;padding:4px}
   .tab{flex:1;min-height:46px;border-radius:12px;border:0;background:transparent;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
   .tab[aria-selected="true"]{background:var(--ink-3);color:#fff;box-shadow:inset 0 0 0 1px var(--line-2)}
@@ -182,7 +194,8 @@
   .row.you{background:rgba(255,31,142,.13);box-shadow:inset 0 0 0 1px rgba(255,31,142,.5)}
   .row.you .rk{color:var(--pink)}
   .empty{color:var(--muted);font-size:16px;padding:12px}
-  .shared{color:var(--green);font-size:16px;min-height:24px;margin-top:8px;text-align:center}
+  .shared{color:var(--green);font-size:16px;margin-top:6px;text-align:center}
+  .shared:empty{display:none}
   .copyurl{margin-top:8px;font-family:'JetBrains Mono',monospace!important;font-size:15px!important;font-weight:500!important}
   /* The soft call to action */
   .bigscreen{margin-top:26px;display:flex;gap:16px;align-items:flex-start;padding:20px 18px;border-radius:18px;
@@ -224,6 +237,7 @@
 <link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show, "Let's play trivia", as on the trivia phone; ?sting=0 switches it off -->
 <link rel="stylesheet" href="/app/vp-podium.css"><script src="/app/vp-trivia-finale.js"></script><script src="/app/vp-podium.js"></script>
 </head>
 <body>
@@ -272,7 +286,8 @@
   <!-- 3. THE QUESTIONS -->
   <section class="view" id="vPlay" hidden>
     <div class="top">
-      <span class="count" id="count">Question <b>1</b> of 5</span>
+      <div class="lefts"><span class="count" id="count">Question <b>1</b> of 5</span>
+        <button class="soundbtn" id="vpqMute" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button></div>
       <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
     </div>
     <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
@@ -285,11 +300,20 @@
 
   <!-- 4. THE END -->
   <section class="view score" id="score" hidden aria-live="polite">
-    <p class="fk" id="scoreKick">Round done</p>
-    <h2 id="scoreN">0 of 5</h2>
-    <p class="pts" id="scorePts" hidden></p>
-    <p class="placeline" id="scorePlace" hidden></p>
-    <p class="sub" id="scoreSub"></p>
+    <div class="hero" id="hero">
+      <p class="fk" id="scoreKick">Round done</p>
+      <h2 id="scoreN">0 of 5</h2>
+      <p class="pts" id="scorePts" hidden></p>
+      <p class="placeline" id="scorePlace" hidden></p>
+      <p class="sub" id="scoreSub"></p>
+    </div>
+    <div class="challenge" id="challengeBox" hidden>
+      <p class="cq">Want to challenge your mates?</p>
+      <button class="btn pink" id="challenge" type="button">Share</button>
+      <button class="linkbtn" id="copyLink" type="button" hidden>Copy link</button>
+      <p class="shared" id="shared" aria-live="polite"></p>
+      <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
+    </div>
     <div class="board" id="board" hidden>
       <div class="tabs" role="tablist">
         <button class="tab" id="tabNight" role="tab" type="button" aria-selected="true">Tonight</button>
@@ -297,11 +321,7 @@
       </div>
       <ol class="rows" id="rows"></ol>
     </div>
-    <button class="btn pink" id="challenge" type="button" hidden style="margin-top:20px">Challenge your mates: text them</button>
-    <button class="linkbtn" id="copyLink" type="button" hidden>Or copy the link</button>
-    <p class="shared" id="shared" aria-live="polite"></p>
-    <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
-    <button class="btn ghost" id="again" type="button">Play again</button>
+    <button class="btn ghost first" id="again" type="button">Play again</button>
     <a class="btn ghost" id="joinGame" href="/play">Game on the TV? Join it</a>
     <div class="bigscreen">
       <span class="tv" aria-hidden="true"><svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true" data-vp-mark="mark"><path fill="#FF1F8E" d="M1.12 27.35C1.12 27.92 1.42 28.44 1.91 28.72C2.40 29 3.01 28.99 3.49 28.70L24.12 16.35C24.59 16.06 24.88 15.55 24.88 15C24.88 14.45 24.59 13.94 24.12 13.65L3.49 1.30C3.01 1.01 2.40 1 1.91 1.28C1.42 1.56 1.12 2.08 1.12 2.65L1.12 27.35Z"/></svg></span>
@@ -416,10 +436,26 @@ var VPCoaster = (function () {
     if (w && !/^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/\S*)?$/i.test(w)) return { field: 'website', error: 'That website does not look right. Leave it empty if you are not sure.' };
     return null;
   }
-  function verdict(good, points) {
-    if (good === null) return { text: "Time's up", pts: '' };
-    if (!good) return { text: 'Not quite', pts: '' };
+  /* the reveal beat: "Correct!", "The answer was B", "Time's up. The answer was B." (396.f) */
+  function verdict(good, points, letter) {
+    var ans = letter ? 'The answer was ' + letter : '';
+    if (good === null) return { text: "Time's up" + (ans ? '. ' + ans + '.' : ''), pts: '' };
+    if (!good) return { text: ans || 'Not quite', pts: '' };
     return { text: 'Correct!', pts: points > 0 ? '+' + points : '' };
+  }
+  /* Equal scores share a place (725 and 725 are both 1st); the next one is placed after them (1, 1, 3) */
+  function sharedPlaces(rows) {
+    var out = [], lastPts = null, lastPlace = 0;
+    for (var i = 0; i < (rows || []).length; i++) {
+      var r = rows[i], pl = (lastPts !== null && +r.points === lastPts) ? lastPlace : (+r.place || i + 1);
+      out.push(pl); lastPts = +r.points; lastPlace = pl;
+    }
+    return out;
+  }
+  function myPlace(rows, fallback) {
+    var pl = sharedPlaces(rows);
+    for (var i = 0; i < (rows || []).length; i++) if (rows[i].you) return pl[i];
+    return fallback || 0;
   }
   /* The end: "Nice one, Sam" / "4 of 5" / "520 points" / "2nd tonight at The Mini Bar". */
   function headline(name, correct, total) {
@@ -454,9 +490,12 @@ var VPCoaster = (function () {
   /* a text message with the words and the link: 'sms:?&body=' opens the messages app on iPhone and Android */
   function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text + ' ' + url); }
   function shareUrl(code) { return 'https://venueplay.com.au/live-here-now?c=' + encodeURIComponent(code); }
+  /* "I scored 435 at The Mini Bar. Reckon you can beat me?" (396.i); the link goes beside it */
   function shareText(name, correct, points, venue) {
-    return (name || 'I') + ' got ' + correct + ' of 5 (' + points + ' points)' + (venue ? ' at ' + venue : '') + '. Same five questions: can you beat it?';
+    return points > 0 || correct > 0 ? 'I scored ' + points + (venue ? ' at ' + venue : '') + '. Reckon you can beat me?'
+      : 'I played trivia' + (venue ? ' at ' + venue : '') + '. Reckon you can beat me?';
   }
+  var SHARE_TITLE = 'Beat my trivia score';
   /* ?c=CODE, the challenge link, or '' */
   function readCode(search) {
     var m = /[?&]c=([A-Za-z0-9]{6})(?:&|$)/.exec(search || '');
@@ -464,14 +503,15 @@ var VPCoaster = (function () {
   }
   function boardHtml(rows, period) {
     if (!rows || !rows.length) return '<li class="empty">Nobody on the board ' + (period === 'week' ? 'this week' : 'tonight') + ' yet. Send the link to your mates.</li>';
-    return rows.map(function (r) {
-      return '<li class="row' + (r.you ? ' you' : '') + '"><span class="rk">' + esc(ordinal(r.place)) + '</span><span class="nm">' + esc(r.name) +
+    var pls = sharedPlaces(rows);
+    return rows.map(function (r, i) {
+      return '<li class="row' + (r.you ? ' you' : '') + '"><span class="rk">' + esc(ordinal(pls[i])) + '</span><span class="nm">' + esc(r.name) +
         (r.you ? ' (you)' : '') + '</span><span class="pt">' + esc(r.points) + '</span></li>';
     }).join('');
   }
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
-           ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
-           shareUrl: shareUrl, shareText: shareText, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
+           ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, sharedPlaces: sharedPlaces, myPlace: myPlace, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
+           shareUrl: shareUrl, shareText: shareText, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
            QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
@@ -490,6 +530,20 @@ var VPCoaster = (function () {
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
   $('vp-year').textContent = new Date().getFullYear();
+
+  /* SOUND STARTS OFF, with a visible label (396.k): a pub is loud and the phone is in a hand; one tap turns it on */
+  (function () {
+    var C = window.VPCelebrate, btn = $('vpqMute');
+    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '1'); } catch (e) {}
+    function paint() {
+      var on = C && C.muted ? !C.muted() : false;
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      $('soundTxt').textContent = on ? 'Sound on' : 'Sound off';
+      btn.setAttribute('aria-label', on ? 'Sound on. Tap to turn it off' : 'Sound off. Tap to turn it on');
+    }
+    btn.addEventListener('click', function () { if (C && C.setMuted) { C.setMuted(!C.muted()); paint(); } });
+    paint();
+  })();
 
   /* ---- where "Game on the TV? Join it" goes: the venue's own page when the coaster names one ---- */
   (function () {
@@ -717,9 +771,22 @@ var VPCoaster = (function () {
   /* 3. THE ROUND: start it on the board, or play without one */
   function begin() {
     if (!BANK) return;
-    var local = L.pickFive(BANK, hourNow(), readSeen());
     view('vPlay');
     $('loading').hidden = false; $('q').hidden = true; $('answers').textContent = ''; $('verdict').textContent = ''; $('ptotal').textContent = '';
+    /* the start-of-game show, "Let's play trivia" (/app/vp-sting.js, as on the trivia phone), THEN the round starts: the
+       Worker's clock for question 1 starts when the round does, so the show never costs a player seconds */
+    var ST = window.VPSting;
+    if (ST && ST.on && !startShow) {
+      startShow = true;
+      try { ST.start({ words: ST.phoneWords('TRIVIA'), layout: 'phone' }); } catch (e) {}
+      setTimeout(function () { startShow = false; startRound(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
+      return;
+    }
+    startRound();
+  }
+  var startShow = false;
+  function startRound() {
+    var local = L.pickFive(BANK, hourNow(), readSeen());
     if (!S.code && !S.place) return go('local', local);
     var body = S.code ? { name: S.name, code: S.code } : { name: S.name, place: S.place, qids: local.map(function (q) { return q[0]; }) };
     call('POST', '/coaster/start', body, function (st, d) {
@@ -761,7 +828,6 @@ var VPCoaster = (function () {
     header(S.venue);
     round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
-    window.VPQRing.muteButton($('vPlay').querySelector('.top'));   // in the top row, never over an answer
     show();
   }
   function pips() {
@@ -799,8 +865,8 @@ var VPCoaster = (function () {
     ticker = setInterval(tick, 250);
   }
   function tag(btn, words) { var s = document.createElement('span'); s.className = 'tg'; s.textContent = words; btn.appendChild(s); }
-  function paintVerdict(good, points) {
-    var v = L.verdict(good, points), el = $('verdict');
+  function paintVerdict(good, points, letter) {
+    var v = L.verdict(good, points, letter), el = $('verdict');
     el.className = 'verdict' + (good ? '' : ' wrong');
     el.innerHTML = '<span class="vt">' + L.esc(v.text) + '</span>' + (v.pts ? '<span class="vp">' + L.esc(v.pts) + '</span>' : '');
   }
@@ -821,7 +887,7 @@ var VPCoaster = (function () {
         if (k === item[3]) tag(btns[k], 'Right answer');
         else if (k === i) tag(btns[k], 'Yours');
       }
-      paintVerdict(i < 0 ? null : good, pts);
+      paintVerdict(i < 0 ? null : good, pts, LETTERS[item[3]]);
       pips();
     }
     if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);
@@ -835,7 +901,7 @@ var VPCoaster = (function () {
       call('POST', '/coaster/answer', { play: S.play, token: S.token, i: n, a: i }, function (st, d) {
         if (st === 200 && d.ok) {
           total = d.total;
-          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points); }
+          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points, LETTERS[item[3]]); }
           $('ptotal').innerHTML = '<b>' + L.esc(total) + '</b> points';
           if (d.done) ended = d;
         } else {
@@ -856,26 +922,45 @@ var VPCoaster = (function () {
     view('score');
     var onBoard = S.mode === 'board' && ended && ended.score;
     $('scoreKick').textContent = L.headline(S.name, right, round.length);
-    $('scoreN').textContent = right + ' of ' + round.length;
+    /* THE RESULT HERO before the board: the big number, "3 of 5 correct", the place tonight */
+    $('scoreN').textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
     $('scorePts').hidden = !onBoard;
     $('scorePlace').hidden = !onBoard;
     $('board').hidden = !onBoard;
-    $('challenge').hidden = !onBoard;
-    $('copyLink').hidden = !onBoard;
+    $('challengeBox').hidden = !onBoard;
     $('shared').textContent = '';
     $('copyUrl').hidden = true;
+    shareMode();
     if (onBoard) {
-      $('scorePts').textContent = L.pointsLine(ended.score.points, ended.score.secs);
-      var b = ended.board || {};
-      $('scorePlace').textContent = L.placeLine(b.rank, 'night', S.venue && S.venue.name);
-      $('scoreSub').textContent = 'Same five questions for your mates: send them the link and see who tops the board.';
+      $('scorePts').textContent = right + ' of ' + round.length + ' correct';
+      var b = ended.board || {}, myPl = L.myPlace(b.rows, b.rank);
+      $('scorePlace').textContent = L.placeLine(myPl, 'night', S.venue && S.venue.name);
+      $('scoreSub').textContent = '';
       paintBoard(b, 'night');
+      burst();
       /* top 3: the podium first (INBOX 313), then the board */
-      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(b.rank), onDone: toMyRow }))) toMyRow();
+      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(myPl), onDone: toMyRow }))) toMyRow();
     } else {
       $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
+  }
+  /* a short pink burst behind the score; none with reduced motion */
+  function burst() {
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var host = $('hero'), old = host.querySelector('.burst'), b = document.createElement('div');
+      if (old) old.remove();
+      b.className = 'burst'; b.setAttribute('aria-hidden', 'true');
+      for (var k = 0; k < 14; k++) {
+        var a = (k / 14) * Math.PI * 2, r = 110 + (k % 3) * 34, d = document.createElement('i');
+        d.style.setProperty('--dx', Math.round(Math.cos(a) * r) + 'px'); d.style.setProperty('--dy', Math.round(Math.sin(a) * r * 0.7) + 'px');
+        d.style.animationDelay = (k % 4) * 0.04 + 's';
+        b.appendChild(d);
+      }
+      host.appendChild(b);
+      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1500);
+    } catch (e) {}
   }
   function toMyRow() { var r = document.querySelector('#rows .row.you'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   function paintBoard(b, period) {
@@ -895,18 +980,40 @@ var VPCoaster = (function () {
   }
   $('tabNight').addEventListener('click', function () { loadBoard('night'); });
   $('tabWeek').addEventListener('click', function () { loadBoard('week'); });
-  /* "Challenge your mates" (INBOX 309.1e): a text message first, the link to copy second. */
-  $('challenge').addEventListener('click', function () {
-    var url = L.shareUrl(S.myCode), text = L.shareText(S.name, right, total, S.venue && S.venue.name);
-    window.location.href = L.smsHref(text, url);
-  });
-  $('copyLink').addEventListener('click', function () {
-    var url = L.shareUrl(S.myCode), text = L.shareText(S.name, right, total, S.venue && S.venue.name);
-    function copied() { $('shared').textContent = 'Link copied. Send it to your mates.'; }
-    function showLink() { var c = $('copyUrl'); c.value = url; c.hidden = false; c.select(); $('shared').textContent = 'Copy this link and send it to your mates.'; }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + ' ' + url).then(copied, showLink);
+  /* "Want to challenge your mates?" then ONE pink Share button (396 update 2): the phone's own share sheet where there
+     is one (iPhone and Android: Messages, WhatsApp, Messenger, Instagram, Mail, Copy), else a text message and a Copy
+     link. A cancelled share does nothing and shows no error. */
+  function canShare() { return !!(navigator.share && typeof navigator.share === 'function'); }
+  function shareMode() {
+    $('challenge').textContent = canShare() ? 'Share' : 'Text your mates a challenge';
+    $('copyLink').hidden = canShare();
+  }
+  function challengeBits() {
+    return { url: L.shareUrl(S.myCode), text: L.shareText(S.name, right, total, S.venue && S.venue.name) };
+  }
+  function textFallback() {
+    var c = challengeBits();
+    window.location.href = L.smsHref(c.text, c.url);
+  }
+  function copyChallenge() {
+    var c = challengeBits();
+    function copied() { $('shared').textContent = 'Link copied'; }
+    function showLink() { var x = $('copyUrl'); x.value = c.url; x.hidden = false; x.select(); $('shared').textContent = 'Copy this link and send it to your mates.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c.text + ' ' + c.url).then(copied, showLink);
     else showLink();
+  }
+  $('challenge').addEventListener('click', function () {
+    if (!canShare()) return textFallback();
+    var c = challengeBits();
+    try {
+      var pr = navigator.share({ title: L.SHARE_TITLE, text: c.text, url: c.url });
+      if (pr && pr.catch) pr.catch(function (err) {
+        if (err && err.name === 'AbortError') return;        // they changed their mind: nothing happens, nothing is said
+        $('copyLink').hidden = false;                         // the share sheet could not open: the text and the copy are one tap away
+      });
+    } catch (e) { $('copyLink').hidden = false; }
   });
+  $('copyLink').addEventListener('click', copyChallenge);
   $('again').addEventListener('click', function () { S.code = ''; begin(); });
 
   /* the questions, by XMLHttpRequest */

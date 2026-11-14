@@ -94,7 +94,7 @@ pass("Add it: name, suburb and one of the eight states are needed; the website i
 print("\nTHE CHALLENGE LINK");
 pass("the link is venueplay.com.au/live-here-now?c=CODE", L.shareUrl("ABC234") === "https://venueplay.com.au/live-here-now?c=ABC234");
 var st = L.shareText("Sam", 4, 520, "The Mini Bar");
-pass("its words: 'Sam got 4 of 5 (520 points) at The Mini Bar. Same five questions: can you beat it?'", st === "Sam got 4 of 5 (520 points) at The Mini Bar. Same five questions: can you beat it?", st);
+pass("its words: 'I scored 520 at The Mini Bar. Reckon you can beat me?' (396.i), the link beside it", st === "I scored 520 at The Mini Bar. Reckon you can beat me?", st);
 pass("the code is read from ?c=, in capitals", L.readCode("?c=abc234") === "ABC234" && L.readCode("?v=the-mini-bar&c=ABC234") === "ABC234");
 pass("anything else is not a code", L.readCode("?c=abc") === "" && L.readCode("?c=abcdefg") === "" && L.readCode("?cc=ABC234") === "");
 
@@ -153,9 +153,18 @@ pass("there is no 'Just play, no board': Play now is hidden, shown only while th
 pass("the venue step asks 'What venue are you at?' (Dean 12 Nov, INBOX 309.1a), never 'Where are you playing?'",
   /<h[12] class="pbig one" id="whereHead">What venue are you at\?<\/h[12]>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
 pass("not on our list: the Add your venue form drops down straight away with what they typed", /if \(!m\.length\) openLead\(typed\);/.test(PAGE));
-var sms = L.smsHref("Sam got 4 of 5 (520 points). Same five questions: can you beat it?", "https://venueplay.com.au/live-here-now?c=ABC234");
-pass("Challenge your mates opens a text message with the words and the link", sms === "sms:?&body=" + encodeURIComponent("Sam got 4 of 5 (520 points). Same five questions: can you beat it? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
-pass("...the text first, the link to copy second", /window\.location\.href = L\.smsHref\(text, url\);/.test(PAGE) && PAGE.indexOf('id="challenge"') < PAGE.indexOf('id="copyLink"') && /Or copy the link/.test(PAGE));
+var sms = L.smsHref("I scored 520 at The Mini Bar. Reckon you can beat me?", "https://venueplay.com.au/live-here-now?c=ABC234");
+pass("the text-message fallback opens Messages with the words and the link", sms === "sms:?&body=" + encodeURIComponent("I scored 520 at The Mini Bar. Reckon you can beat me? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
+pass("Share (396 update 2): 'Want to challenge your mates?' then ONE pink Share button; navigator.share gets title, words and link; a cancelled share (AbortError) says nothing; no share sheet means the text message and Copy link ('Link copied')",
+  /<p class="cq">Want to challenge your mates\?<\/p>\s*<button class="btn pink" id="challenge" type="button">Share<\/button>/.test(PAGE) &&
+  /navigator\.share\(\{ title: L\.SHARE_TITLE, text: c\.text, url: c\.url \}\)/.test(PAGE) && /err\.name === 'AbortError'\) return;/.test(PAGE) &&
+  /if \(!canShare\(\)\) return textFallback\(\);/.test(PAGE) && /textContent = 'Link copied'/.test(PAGE) && /Text your mates a challenge/.test(PAGE) &&
+  PAGE.indexOf('id="challengeBox"') < PAGE.indexOf('id="board"'));
+pass("equal scores share a place (725 and 725 are both 1st, the next is 3rd), and your own place follows it", L.sharedPlaces([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580 }]).join() === "1,1,3" &&
+  L.myPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }], 2) === 1);
+pass("the reveal beat: 'The answer was B' and 'Time's up. The answer was B.'", L.verdict(false, 0, "B").text === "The answer was B" && L.verdict(null, 0, "B").text === "Time's up. The answer was B." && L.verdict(true, 120, "B").text === "Correct!");
+pass("the sting plays before question 1 and the round starts after it (Worker clock); sound starts off with a label",
+  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /setItem\('vpqMute', '1'\)/.test(PAGE) && /id="soundTxt">Sound off</.test(PAGE));
 
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
@@ -231,7 +240,7 @@ pass("4th: no podium, straight to the board", POD && POD.mine(rowsOf([500, 400, 
 pass("a tie for 2nd shares the step", POD && POD.mine(rowsOf([500, 400, 400, 200], 2)) === 2);
 pass("'You're in the lead!' and '3rd tonight!'", L.podiumTitle(1) === "You're in the lead!" && L.podiumTitle(3) === "3rd tonight!");
 pass("the end shows the podium first and hands to the board with their row marked; otherwise the board straight away",
-  /if \(!\(window\.VPPodium && window\.VPPodium\.show\(b\.rows, \{ title: L\.podiumTitle\(b\.rank\), onDone: toMyRow \}\)\)\) toMyRow\(\);/.test(PAGE) &&
+  /if \(!\(window\.VPPodium && window\.VPPodium\.show\(b\.rows, \{ title: L\.podiumTitle\(myPl\), onDone: toMyRow \}\)\)\) toMyRow\(\);/.test(PAGE) &&
   PAGE.indexOf('<script src="/app/vp-podium.js"></script>') > 0 && PAGE.indexOf('<script src="/app/vp-trivia-finale.js"></script>') > 0);
 pass("its confetti and sound are the one celebration file's (burst, the 'podium' slot)", /C\.burst\(el, 40,/.test(find("venueplay/app/vp-podium.js")) && /C\.sound\("podium"\)/.test(find("venueplay/app/vp-podium.js")));
 
