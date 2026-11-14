@@ -57,7 +57,8 @@
   function ago(days) { return days <= 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"; }
 
   /* ---- what one prospect row says, from what the Worker sent ---- */
-  function flagHtml(p) {
+  function flagHtml(p) { return flagCore(p) + leadHtml(p); }   // the lead badge rides with the flag (INBOX 412)
+  function flagCore(p) {
     if (p.flag === "call_requested") return '<span class="badge prreq prflag">Call requested</span>';
     /* The yellow "Call them" only when there is a number to ring (Dean, 3 Nov 2026). The Worker only sends the
        flag with a phone now; this holds the same line if an older Worker still sends it without one. */
@@ -213,7 +214,7 @@
     var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
     return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + leadHtml(p) + day21Html(p) + "</div>" +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + day21Html(p) + "</div>" +
       '<div class="prmore"' + (open ? "" : " hidden") + ">" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +

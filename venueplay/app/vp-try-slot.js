@@ -43,12 +43,14 @@
     if (root.VPStart && root.VPStart.done) draw(root.VPStart.done);
   }
   /* What /app/go opens after the one-tap sign-in: the demo only if it was chosen here in the last 30 minutes, and
-     only one of the fixed addresses (the quick game's /app/try.html?quick=1 is the third, INBOX 412) (never anything read from a link). Spent once read. */
+     only one of the fixed addresses (never anything read from a link; the quick game's own is checked first, below). Spent once read. */
   function nextAfterSignIn(ls, now) {
     var raw = null; try { raw = ls && ls.getItem(KEY); if (raw) ls.removeItem(KEY); } catch (e) { raw = null; }
     if (!raw) return "/app/";
     var o = null; try { o = JSON.parse(raw); } catch (e) { o = null; }
-    if (!o || !/^\/app\/try\.html\?(mode=(player|host)|quick=1)$/.test(String(o.path || ""))) return "/app/";
+    /* PLAY A QUICK GAME (INBOX 412): its one fixed address, exactly, inside the same 30 minutes. */
+    if (o && o.path === "/app/try.html?quick=1") { var qa = (now || Date.now()) - Number(o.at || 0); return (qa >= 0 && qa <= 30 * 60 * 1000) ? o.path : "/app/"; }
+    if (!o || !/^\/app\/try\.html\?mode=(player|host)$/.test(String(o.path || ""))) return "/app/";
     var age = (now || Date.now()) - Number(o.at || 0);
     return (age >= 0 && age <= 30 * 60 * 1000) ? o.path : "/app/";
   }

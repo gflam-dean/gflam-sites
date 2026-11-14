@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:09 · 4cff0185';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 23:17 · 153868ba';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -4333,11 +4333,11 @@ async function vpqPostcodeForSuburb(env, suburb) {
 }
 async function vpqQuickBegin(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
-  if (!(await helpIpLimit(env, 'start', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  if (!(await helpIpLimit(env, 'quickstart', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  if (String(b.website || '').trim()) return json({ ok: true, start_id: vpsUuid() });   // the honeypot: answered as if it worked
+  if (helpLine(b.website, 40)) return json({ ok: true, start_id: vpsUuid() });   // the honeypot: answered as if it worked
   const venue = helpLine(b.venue, 120);
   const name = helpLine(b.name, 120).split(/\s+/)[0] || '';
   const mobile = helpLine(b.mobile, 40) ? vpaNormaliseMobileAU(helpLine(b.mobile, 40)) : null;
@@ -4345,7 +4345,7 @@ async function vpqQuickBegin(request, env, json) {
   if (!vpaIsAuMobileE164(mobile)) return json({ error: 'Enter your mobile (04...). We text your code to it.', field: 'mobile' }, 400);
   if (!vpVenueKey(venue)) return json({ error: 'Enter your venue\'s name.', field: 'venue' }, 400);
   const bot = await helpTurnstile(env, b.turnstile, ip);
-  if (!bot.ok) return json({ error: VPS_START_WORDS.bot, bot: true }, 403);
+  if (!bot.ok) return json({ error: VPS_START_WORDS.bot, bot: true, quick: true }, 403);
   if (vpsStartOff(env)) return json({ error: VPS_START_WORDS.off, off: true }, 503);
   let postcode = vpVenuePostcode(b.postcode);
   if (!postcode || !vpaStateFromPostcode(postcode)) {
@@ -4451,7 +4451,7 @@ async function vpqCaptureStripeEmail(env, foundingId, session) {
   try {
     const cd = (session && session.customer_details) || {};
     const email = String(cd.email || (session && session.customer_email) || '').trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200 || /[,;()\\"]/.test(email) || vpqIsPlaceholderEmail(email)) return { skipped: 'no usable email' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200 || /["\\;(),]/.test(email) || vpqIsPlaceholderEmail(email)) return { skipped: 'no usable email' };
     const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email,unverified_email&limit=1');
     const f = fr && fr[0];
     if (!f || vpqRealEmail(f.contact_email) || f.unverified_email) return { skipped: 'already has an email' };
