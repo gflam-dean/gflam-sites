@@ -286,14 +286,35 @@ function monthlyWorld(players) {
   return r;
 }
 
-/* a) The ceiling. */
+/* a) The player limits (Dean, 14 Nov 2026, INBOX 418, replacing the 2,000 ceiling): a venue BY ITSELF (the account is not yet a
+      group) over 100 is allowed and tells sales@ once; over 200 is a phone call, nothing made or charged. An existing group: no limit, no flag. */
+function flagMails() { return sent.filter(function (m) { return (m.to || []).indexOf('sales@venueplay.com.au') !== -1 && /added with/.test(m.subject || ''); }); }
+function soloWorld() { worldReset({ is_group: false }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]); stripeReset({ quantity: 40 }); sent.length = 0; }
+soloWorld();
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 100, postcode: '4999' }, ON);
+check('a) on its own, 100 players: added, no alert', r.status === 200 && !!bigPub() && flagMails().length === 0, [r, flagMails().length]);
+soloWorld();
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 101, postcode: '4999' }, ON);
+check('a) on its own, 101 players: added, one alert to sales@', r.status === 200 && !!bigPub() && flagMails().length === 1, [r, flagMails().length]);
+var fm = flagMails()[0] || {};
+check('a) the alert names the venue, the players, the account and links to HQ', /Big Barn/.test(fm.html || '') && /101/.test(fm.html || '') && /o@test\.local/.test(fm.html || '') && /app\/hq/.test(fm.html || ''), fm.html);
+soloWorld();
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 200, postcode: '4999' }, ON);
+check('a) on its own, 200 players: added, one alert', r.status === 200 && !!bigPub() && flagMails().length === 1, [r, flagMails().length]);
+soloWorld();
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 201, postcode: '4999' }, ON);
+check('a) on its own, 201 players: refused, nothing made, charged or mailed', r.status === 400 && !bigPub() && S.balance === 0 && quantityPosts().length === 0 && flagMails().length === 0, r);
+check('a) and the message is "For more than 200 players, call us on 07 5228 3667"', r.body.error === 'For more than 200 players, call us on 07 5228 3667', r.body.error);
 worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
-stripeReset({ quantity: 40 });
-r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 20000, postcode: '4999' }, ON);
-check('a) 20,000 players on one add is refused, nothing made or charged', r.status === 400 && !bigPub() && S.balance === 0 && quantityPosts().length === 0, r);
-check('a) and the message says the ceiling and who to call', /2,000/.test(r.body.error || '') && /07 5228 3667/.test(r.body.error || ''), r.body.error);
-r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 2000, postcode: '4999' }, ON);
-check('a) 2,000 (the ceiling HQ sets venues up with) is still added', r.status === 200 && !!bigPub(), r);
+stripeReset({ quantity: 40 }); sent.length = 0;
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 500, postcode: '4999' }, ON);
+check('a) added to an existing group, 500 players: added, no alert, no limit', r.status === 200 && !!bigPub() && flagMails().length === 0, [r, flagMails().length]);
+soloWorld();
+venueNamed('Home Pub').status = 'suspended'; venueNamed('Home Pub').suspended_reason = 'cancelled';
+call('/account/add-venue', OWNER, { name: 'Home Pub', players: 150, postcode: '4000' }, ON);
+venueNamed('Home Pub').status = 'suspended'; venueNamed('Home Pub').suspended_reason = 'cancelled'; DB.venueplay_founding[0].is_group = false;
+var r2 = call('/account/add-venue', OWNER, { name: 'Home Pub', players: 150, postcode: '4000' }, ON);
+check('a) the alert goes to sales@ exactly once per venue (the same venue added again sends no second mail)', r2.status === 200 && r2.body.readded === true && flagMails().length === 1, [r2.status, flagMails().length]);
 
 /* b) Monthly, pro rata rule on: add 2,000, take the credit, drop to 1 before the bill. The credit kept is
       the free part for the 1 player still billed, never the 2,000's. */
