@@ -108,7 +108,7 @@ MEASURE = r'''(function(){
     out.cards.push({
       text:c.innerText.replace(/\s+/g," "), html:c.innerHTML,
       frameLeft:fr.left, frameRight:fr.right, frameTop:fr.top, frameBottom:fr.bottom, rad:rad, fw:fw,
-      vlLeft:vr.left, brRight:br.right, vlTop:vr.top, frameBottomEdge:fr.bottom,
+      vlLeft:vr.left, brRight:br.right, vlTop:vr.top, brW:mm(br.width), footGap:mm(c.getBoundingClientRect().bottom-foot.getBoundingClientRect().bottom), frameBottomEdge:fr.bottom,
       box:{l:vr.left,t:vr.top,r:vr.right,b:vr.bottom,w:mm(vr.width),h:mm(vr.height)}, img:lr?{l:lr.left,t:lr.top,r:lr.right,b:lr.bottom,w:lr.width,h:lr.height,nw:li.naturalWidth,nh:li.naturalHeight,ok:li.complete&&li.naturalWidth>0}:null,
       vname:(vl.querySelector(".vpp-vname")||{}).textContent||"",
       freeText:fr0?fr0.innerText.replace(/\s+/g," ").trim():"", tiles:[].map.call(c.querySelectorAll(".pcgrid .cell"),function(e){return e.classList.contains("free")?null:(e.textContent||"").trim();}), freeColor:ff?getComputedStyle(ff).color:"", freeMark:!!(fr0&&fr0.querySelector('img[src$="/brand/venueplay-icon-pink.svg"]')),
@@ -179,6 +179,24 @@ try:
     c0, c1 = m['cards'][0], m['cards'][1]
     ok('one A4 landscape sheet holds both cards, each 148.5 x 210 mm', m['sheets'] == 1 and len(m['cards']) == 2 and all(abs(c['cardW'] - 148.5) < 0.6 and abs(c['cardH'] - 210) < 0.6 for c in m['cards']),
        [(c['cardW'], c['cardH']) for c in m['cards']])
+    # INBOX 392 (Dean, 14 Nov): the print window carries NO print bar: no text, no button, no count. Only the cards are on the page.
+    nobar = S.json(sid, '(function(){var d=document.getElementById("pw").contentDocument;'
+                                     'var kids=[].map.call(d.body.children,function(e){return e.className||e.tagName;});'
+                                     'return JSON.stringify({bar:d.querySelectorAll(".bar").length,buttons:d.querySelectorAll("button,input,a").length,'
+                                     'kids:kids,text:d.body.innerText,sticky:[].filter.call(d.body.querySelectorAll("*"),function(e){return getComputedStyle(e).position==="sticky";}).length});})()', {})
+    ok('the print window has no print bar, no button and nothing but the cards (INBOX 392)',
+       nobar.get('bar') == 0 and nobar.get('buttons') == 0 and nobar.get('sticky') == 0 and all(k == 'pcs' for k in nobar.get('kids', ['x'])) and nobar.get('kids'), nobar)
+    ok('...and none of the old instruction words are anywhere in it ("ready", "Print them", "before the night", "Print")',
+       not re.search(r'ready|print them|before the night|\bprint\b', nobar.get('text', ''), re.I), nobar.get('text', '')[:120])
+    tr = S.json(sid, '(function(){var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};'
+                                 'VPPrint.trivia(w,{teams:2,questions:10,roundSize:5,venue:"The Mini Bar"});var d=f.contentDocument;'
+                                 'return JSON.stringify({bar:d.querySelectorAll(".bar").length,buttons:d.querySelectorAll("button").length,sheets:d.querySelectorAll(".sheet").length,'
+                                 'text:/ready|print them|before the night/i.test(d.body.innerText)});})()', {})
+    ok('the trivia sheets carry no print bar either, and still print one page per team', tr.get('bar') == 0 and tr.get('buttons') == 0 and tr.get('sheets') == 2 and tr.get('text') is False, tr)
+    S.js(sid, cards_js())
+    S.until(sid, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
+    S.js(sid, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
+    time.sleep(1.2)
     for n, c in enumerate(m['cards']):
         tag = 'card %02d' % (7 + n)
         t = c['text']
@@ -201,6 +219,8 @@ try:
            abs(c['vlLeft'] - inside_left) <= 1.0, (c['vlLeft'], inside_left))
         ok('%s: the venueplay logo ends where the bottom-right curve ends (frame right - corner radius, +-1 px)' % tag,
            abs(c['brRight'] - inside_right) <= 1.0, (c['brRight'], inside_right))
+        ok('%s: the venueplay logo is 34 mm wide and the footer sits 7 mm above the card edge, still inside one page (INBOX 392 item 3)' % tag,
+           abs(c['brW'] - 34) < 0.4 and abs(c['footGap'] - 7) < 0.4, (c['brW'], c['footGap']))
         ok('%s: the footer sits below the frame, not over it' % tag, c['vlTop'] >= c['frameBottom'] - 0.5, (c['vlTop'], c['frameBottom']))
         # INBOX 385 (1): the centre square SAYS FREE, in black, with the small pink play mark, inside its square
         ok('%s: the centre square reads FREE PLAY, in black, with the small pink play mark, all inside the square (INBOX 385)' % tag,
@@ -261,13 +281,13 @@ try:
         b, im = c['box'], c['img'] or {}
         tag = '%s logo (%dx%d)' % (name, lw, lh)
         ok('%s: measured by prepLogo at its real size' % tag, bool(info) and info.get('w') == lw and info.get('h') == lh, info)
-        ok('%s: the box is the fixed 42 x 12 mm footer box' % tag, abs(b['w'] - 42) < 0.3 and abs(b['h'] - 12) < 0.3, b)
+        ok('%s: the box is the fixed 52 x 17 mm footer box (INBOX 392: bigger than the old 42 x 12)' % tag, abs(b['w'] - 52) < 0.3 and abs(b['h'] - 17) < 0.3, b)
         ok('%s: the logo is a picture that loaded, CONTAINED in its box (no overflow on any side)' % tag,
            im.get('ok') and im['l'] >= b['l'] - 0.5 and im['t'] >= b['t'] - 0.5 and im['r'] <= b['r'] + 0.5 and im['b'] <= b['b'] + 0.5, (im, b))
         ratio_drawn, ratio_real = (im.get('w', 0) / im['h']) if im.get('h') else 0, lw / float(lh)
         ok('%s: its shape is kept (drawn width/height within 1%% of the real logo, no stretch)' % tag,
            abs(ratio_drawn - ratio_real) / ratio_real <= 0.01, (ratio_drawn, ratio_real))
-        bound = 'w' if ratio_real >= 42 / 12.0 else 'h'
+        bound = 'w' if ratio_real >= 52 / 17.0 else 'h'
         ok('%s: as big as the box allows (it fills the box\'s %s)' % (tag, 'width' if bound == 'w' else 'height'),
            (abs(im['r'] - im['l'] - (b['r'] - b['l'])) <= 1.0) if bound == 'w' else (abs(im['b'] - im['t'] - (b['b'] - b['t'])) <= 1.0), (im, b))
         ok('%s: centred top to bottom in the box, its left edge on the curve end' % tag,
@@ -379,7 +399,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 235
+EXPECTED = 240
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

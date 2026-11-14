@@ -193,20 +193,27 @@
   .mart{position:absolute;left:calc(6.25cqw);top:9.17cqw;width:33.33cqw;height:33.33cqw;border-radius:.94cqw;overflow:hidden;background:#141418}
   .mart img{display:block;width:100%;height:100%;object-fit:cover;margin:0;border:none;border-radius:0;box-shadow:none;animation:none}
   .mart .mtri{position:absolute;left:50%;top:50%;width:11cqw;height:auto;transform:translate(-50%,-50%);overflow:visible;filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}
-  .mart.listening{background:none}
-  .mart.listening .mtri{width:9.4cqw;animation:mTriBreath 2.6s ease-in-out infinite}
   .mart.hasart .mtri{display:none}
   /* THE SALES-PAGE AND STORE DEMO SHOWS NO ALBUM COVERS (Dean, 4 Nov 2026: app store screenshots must not carry
      third-party artwork; Google Play, LG and Samsung all bar it). The art spot holds OUR venueplay logo tile instead,
      the same size and place; the strip's small squares hold the play triangle. A real venue's night is unchanged. */
-  .mart .mlogo{display:none;width:76%;height:auto;color:#fff;overflow:visible}
+  .mart .mlw{display:none;width:76%}
+  .mart .mlw .mlogo{display:block;width:100%;height:auto;color:#fff;overflow:visible}
   .mart.vplogo{background:#16161A;box-shadow:inset 0 0 0 .16cqw rgba(255,31,142,.55);display:flex;align-items:center;justify-content:center}
-  .mart.vplogo .mlogo{display:block}
+  .mart.vplogo .mlw{display:block}
+  /* NO SONG ARTWORK (INBOX 392 item 2, Dean 14 Nov 2026): OUR logo holds the art spot, whatever the song is doing, and never moves the
+     layout (the box is the same size with or without a cover; only a transform and a glow change inside it). It SPINS IN once when a
+     song starts (.spin on .mlogo), then PULSES while it plays (.pulse on .mlw: a steady 1.6 s breath). When the wall's own sound can be
+     read (a Web Audio analyser tapped off the clip, see buildBoost) the pulse rides the kick drum instead (.beaty: --beat 0 to 1). */
+  .mart.vplogo.spin .mlogo{animation:mLogoSpin .95s cubic-bezier(.2,.7,.2,1) both}
+  .mart.vplogo.pulse .mlw{animation:mLogoPulse 1.6s ease-in-out .95s infinite}
+  .mart.vplogo.beaty .mlw{animation:none;transform:scale(calc(1 + var(--beat,0)*.1));filter:drop-shadow(0 0 calc(.3cqw + var(--beat,0)*1.2cqw) rgba(255,31,142,.8))}
+  @keyframes mLogoSpin{0%{transform:perspective(60cqw) rotateY(-360deg) scale(.3);opacity:0}70%{opacity:1}100%{transform:perspective(60cqw) rotateY(0) scale(1);opacity:1}}
+  @keyframes mLogoPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 .3cqw rgba(255,31,142,.35))}50%{transform:scale(1.07);filter:drop-shadow(0 0 1.4cqw rgba(255,31,142,.85))}}
+  @media (prefers-reduced-motion:reduce){.mart.vplogo.spin .mlogo,.mart.vplogo.pulse .mlw{animation:none}.mart.vplogo.beaty .mlw{transform:none;filter:none}}
   .mart.vplogo .mtri,.mart.vplogo img{display:none}
   #tvRun .ptok .ptri{flex:none;width:3.9cqw;height:3.9cqw;border-radius:.42cqw;margin-right:.7cqw;background:#16161A;box-shadow:inset 0 0 0 .1cqw rgba(255,31,142,.5);display:flex;align-items:center;justify-content:center}
   #tvRun .ptok .ptri svg{width:45%;height:auto;overflow:visible}
-  @keyframes mTriBreath{0%,100%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}50%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 2.2cqw rgba(255,31,142,.9))}}
-  @media (prefers-reduced-motion:reduce){.mart.listening .mtri{animation:none}}
   .mcol{position:absolute;left:calc(43.75cqw);right:6.25cqw;top:9.9cqw;height:31.4cqw;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
   /* NO SPACED MONO CAPITALS ANYWHERE ON THE WALL (Dean, 10 Nov 2026 sign-off: the "AI look"). The small line over the title is
      plain sentence case in the page's body font, no letter-spacing, big enough to read from the room. */
@@ -269,7 +276,7 @@
   <!-- running (now playing) -->
   <div class="layer hidden mrun" id="tvRun">
     <div class="toplbl"><span class="tl-night">Musical bingo</span></div>
-    <div class="mart" id="tvArtBox"><img class="nowart hidden" id="tvNowArt" alt=""><svg class="vp-wm mlogo" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true"  data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg><svg class="mtri" viewBox="2500 -2020 900 1044" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg></div>
+    <div class="mart" id="tvArtBox"><img class="nowart hidden" id="tvNowArt" alt=""><div class="mlw"><svg class="vp-wm mlogo" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true"  data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div><svg class="mtri" viewBox="2500 -2020 900 1044" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg></div>
     <div class="mcol">
       <div class="eyebrow" id="tvNowEye">Now playing</div>
       <div class="mystery hidden" id="tvListen">
@@ -573,19 +580,48 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   var _shownTitle="";
   function setArt(url){
     var img=$("tvNowArt"), box=$("tvArtBox");
-    if(VP_DEMO){   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */
-      img.removeAttribute("src"); img.classList.add("hidden");
-      if(box){ box.classList.toggle("vplogo", !box.classList.contains("listening")); box.classList.remove("hasart"); }
-      return;
-    }
-    if(url){ img.src=url; img.classList.remove("hidden"); }
-    else { img.removeAttribute("src"); img.classList.add("hidden"); }
+    if(VP_DEMO) url="";   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */
+    if(url){ img.src=url; img.classList.remove("hidden"); logoHide(); }
+    else { img.removeAttribute("src"); img.classList.add("hidden"); logoShow(false); }
     if(box) box.classList.toggle("hasart", !!url);
   }
-  /* LISTEN: the neon triangle breathes where the art goes, and the NOW PLAYING label goes (Dean, 3 Nov late: no
-     "Song 15" under the title; the song number is bottom left). */
+  /* OUR LOGO IN THE ART SPOT (INBOX 392 item 2). Whenever there is no song artwork (the wall never has any on a real night, and not
+     while a song is held back) the venueplay logo sits where the cover goes: spins in once at a song, then pulses while it plays.
+     Only classes and CSS variables change, never a size or a place. logoShow(true) starts the spin again (a new song). */
+  var _beatRAF=0, _beatAn=null, _beatBins=null, _beatSlow=0, _beatLvl=0, _beatLive=0;
+  function calm(){ try{ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches); }catch(e){ return false; } }
+  function logoShow(restart){
+    var box=$("tvArtBox"); if(!box) return;
+    var was=box.classList.contains("vplogo");
+    box.classList.add("vplogo");
+    if(!was || restart){ box.classList.remove("spin","pulse"); void box.offsetWidth; box.classList.add("spin","pulse"); }
+    beatStart();
+  }
+  function logoHide(){ var box=$("tvArtBox"); if(box) box.classList.remove("vplogo","spin","pulse","beaty"); beatStop(); }
+  /* The beat: a number 0 to 1 from the kick drum, written to --beat on the art box. A silent second hands the pulse back to the steady breath. */
+  function beatFeed(level){
+    var box=$("tvArtBox"); if(!box || !box.classList.contains("vplogo") || calm()) return;
+    var v=Math.max(0, Math.min(1, +level||0));
+    box.style.setProperty("--beat", v.toFixed(3)); box.classList.add("beaty"); _beatLive=Date.now();
+  }
+  function beatLoop(){
+    _beatRAF=window.requestAnimationFrame(beatLoop);
+    if(!_beatAn || calm() || document.hidden) return;
+    try{
+      _beatAn.getByteFrequencyData(_beatBins);
+      var e=(_beatBins[1]+_beatBins[2]+_beatBins[3]+_beatBins[4])/(4*255);
+      _beatSlow=_beatSlow*.97+e*.03;
+      _beatLvl=Math.max(_beatLvl*.85, Math.min(1, Math.max(0, e-_beatSlow*1.05)*5));
+      if(e>.02) beatFeed(_beatLvl);
+      else if(Date.now()-_beatLive>1500){ var box=$("tvArtBox"); if(box) box.classList.remove("beaty"); }
+    }catch(x){ _beatAn=null; var bx=$("tvArtBox"); if(bx) bx.classList.remove("beaty"); }
+  }
+  function beatStart(){ if(_beatRAF || !window.requestAnimationFrame) return; _beatRAF=window.requestAnimationFrame(beatLoop); }
+  function beatStop(){ if(_beatRAF){ try{ window.cancelAnimationFrame(_beatRAF); }catch(e){} _beatRAF=0; } }
+  window.VP_TV_BEAT={ feed:beatFeed };
+  /* LISTEN: the label goes (Dean, 3 Nov late: no "Song 15" under the title; the song number is bottom left). */
   function setListening(on){
-    var box=$("tvArtBox"); if(box){ box.classList.toggle("listening", !!on); if(on) box.classList.remove("vplogo"); }
+    var box=$("tvArtBox"); if(box) box.classList.toggle("listening", !!on);
     var eye=$("tvNowEye"); if(eye) eye.classList.toggle("hidden", !!on);
   }
   function showReady(){
@@ -656,6 +692,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     $("tvNowEye").textContent="Now playing";
     _pendingSong={ title:title, artist:artist, artwork:artwork };
     noteArt(title, artwork);
+    logoShow(true);   /* a new song: the logo spins in again (a cover, if there is one, replaces it at the reveal) */
     if(!mode){ mode="legacy"; }
     _revealMode=mode;
     try{ localStorage.setItem("vpMusRevealMode", mode); }catch(e){}   // a TV that reloads mid-song still knows (below)
@@ -1088,6 +1125,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       _limiter.threshold.value=-6; _limiter.knee.value=0; _limiter.ratio.value=20;
       _limiter.attack.value=0.003; _limiter.release.value=0.25;
       _srcNode.connect(_boostNode); _boostNode.connect(_limiter); _limiter.connect(_ac2.destination);
+      /* The logo pulses to the beat: an analyser listens in on the clip, before the boost and the fade, and sends nothing on. */
+      try{ var an=_ac2.createAnalyser(); an.fftSize=256; an.smoothingTimeConstant=.5; _beatBins=new Uint8Array(an.frequencyBinCount); _srcNode.connect(an); _beatAn=an; }catch(e){ _beatAn=null; }
       applyFade(fadeLevel());
     }catch(e){ _graphDead=true; _srcNode=null; }
   }

@@ -16,8 +16,6 @@
     '@page{size:A4 portrait;margin:0}' +
     '*{box-sizing:border-box}' +
     'body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
-    '.bar{position:sticky;top:0;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;background:#111;color:#fff;font-size:15px}' +
-    '.bar button{font:inherit;font-weight:700;padding:10px 18px;border:0;border-radius:8px;background:#FF1F8E;color:#fff;cursor:pointer}' +
     '.wait{padding:40px;font-size:18px;text-align:center}' +
     '.sheet{padding:12mm 14mm;page-break-after:always;break-after:page}' +
     '.sheet:last-child{page-break-after:auto;break-after:auto}' +
@@ -35,7 +33,7 @@
     'table{width:100%;border-collapse:collapse;font-size:10pt}' +
     'td{padding:1.1mm 1mm;border-bottom:1px solid #ccc}td.q{width:14mm;font-weight:700}' +
     '.box{display:inline-block;width:10mm;height:6mm;border:1.5px solid #111;border-radius:2px;margin-right:4mm;text-align:center;font-weight:700;line-height:6mm;font-size:9pt}' +
-    '@media print{.bar{display:none}}';
+    '';
 
   function open(title) {
     var w = null;
@@ -55,11 +53,11 @@
   function fill(w, title, bodyHtml, count, noun, extra) {
     if (!w || w.closed) return false;
     extra = extra || {};
-    var bar = '<div class="bar"><span>' + count + ' ' + noun + (count === 1 ? '' : 's') + ' ready. Print them before the night starts.</span>' +
-      '<button type="button" onclick="window.print()">Print</button></div>';
+    /* INBOX 392 (Dean, 14 Nov): NO print bar, no text, no button, no count. The console's own Print button is the only control;
+       this window opens straight into the print dialog, and cancelling it leaves a page with nothing on it but the cards. */
     w.document.open();
     w.document.write('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><title>' + esc(title) +
-      '</title>' + (extra.head || '') + '<style>' + CSS + (extra.css || '') + '</style></head><body>' + bar + bodyHtml + '</body></html>');
+      '</title>' + (extra.head || '') + '<style>' + CSS + (extra.css || '') + '</style></head><body>' + bodyHtml + '</body></html>');
     w.document.close();
     var go = function () { try { w.focus(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400); } catch (e) {} };
     var done = false, once = function () { if (done) return; done = true; go(); };
@@ -89,7 +87,7 @@
     '.pcs.one .pcc{padding-right:3mm}' +
     '.pccut{position:absolute;left:148.5mm;top:0;bottom:0;border-left:.25mm dashed #8A8A95}' +
     '.pccutlbl{position:absolute;left:148.5mm;top:3mm;transform:translateX(-50%);background:#fff;padding:1mm 0;font:600 6.5pt Manrope,Arial,sans-serif;color:#6A6A74;writing-mode:vertical-rl}' +
-    '.pcc{position:absolute;top:0;width:148.5mm;height:210mm;padding:10mm;display:flex;flex-direction:column;--fw:1.5mm;--rad:4mm}' +
+    '.pcc{position:absolute;top:0;width:148.5mm;height:210mm;padding:10mm 10mm 7mm;display:flex;flex-direction:column;--fw:1.5mm;--rad:4mm}' +
     '.pcc.L{left:0;padding-right:3mm}.pcc.R{left:148.5mm;padding-left:3mm}' +
     '.pcc .k{font-weight:700;color:#55555E;line-height:1.1}' +
     '.pcc .play{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.005em;overflow-wrap:anywhere}' +
@@ -111,7 +109,7 @@
     '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
     '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}';
   /* The pub's logo box in the footer (/app/vp-paper-style.js): every shape of logo fits it, contained. */
-  var LOGO_BOX = { w: 42, h: 12 };
+  var LOGO_BOX = { w: 52, h: 17 };   /* INBOX 392 (14 Nov): was 42 x 12, the bottom of the sheet had spare room */
 
   /* The QR as an SVG string, drawn here from the qrcode library the console page loads. Level Q (a quarter of it can be
      smudged and it still reads), the capitals address so it stays a small code. No margin: the box round it is the quiet zone. */
@@ -155,7 +153,7 @@
     var PS = window.VPPaperStyle;
     if (!PS) { fail(w, 'The card style did not load. Reload the page and print again.'); return false; }
     var foot = '<div class="foot">' + PS.logoBox(o.logo, o.venue, LOGO_BOX) +
-      '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:25mm;display:block"></div>';
+      '<img alt="venueplay" src="' + origin + '/brand/venueplay-horizontal-on-light.svg" style="width:34mm;display:block"></div>';
     function one(c, side) {
       var no = (c.no < 10 ? '0' : '') + c.no, g = '';
       for (var i = 0; i < 25; i++) {

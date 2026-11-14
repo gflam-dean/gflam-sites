@@ -1428,7 +1428,7 @@
     logResults("claimed");
     for(var i=0;i<nums.length;i++){ G.drawn[nums[i]]=true; }
     send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
-    $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
+    $("wcCd").innerHTML='<span style="color:var(--win)">Claimed: '+esc(pz)+'</span>';
     show("wcResolve",false);
     G.lastWin={ nums:nums, prize:pz, claimed:true };
     $("doneLine").textContent=ticketWords(nums)+" collected "+(nums.length>1?"the ":"their ")+(G.jackOn?"jackpot":lower(pz));

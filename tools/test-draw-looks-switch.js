@@ -83,5 +83,7 @@ print('\n== 5. the setup wizard (hidden for now) offers the same looks ==');
 print('\n== 6. older TVs and the house words ==');
 show('vp-drawstyle.js is still ES5 (no arrow, const, let, template string)', !/=>|\bconst |\blet |`/.test(MOD.replace(/\/\*[\s\S]*?\*\//g, '')));
 
+show('INBOX 399: the raffle host\'s claimed line reads "Claimed: <prize>", no middle dot (the AI look)', /Claimed: '\+esc\(pz\)/.test(RH) && !/Claimed \u00b7|Claimed &middot;|Claimed · /.test(RH));
+
 print('\n' + (bad ? 'FAILED ' + bad + ' of ' + ran : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');

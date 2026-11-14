@@ -360,7 +360,7 @@
   "counted_by": "lines"
  },
  "tools/musical-newlook-in-chrome.test.py": {
-  "checks": 250,
+  "checks": 271,
   "counted_by": "lines"
  },
  "tools/musical-tv-sound-in-chrome.test.py": {
@@ -416,11 +416,11 @@
   "counted_by": "lines"
  },
  "tools/paper-cards-v2-in-chrome.test.py": {
-  "checks": 235,
+  "checks": 240,
   "counted_by": "lines"
  },
  "tools/paper-lock-in-chrome.test.py": {
-  "checks": 62,
+  "checks": 64,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
@@ -796,7 +796,7 @@
   "counted_by": "lines"
  },
  "tools/test-draw-looks-switch.js": {
-  "checks": 47,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-draw-moments.js": {
@@ -1016,7 +1016,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 54,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -2184,7 +2184,7 @@
   "counted_by": "lines"
  },
  "tools/website-audit-p2-13nov-in-chrome.test.py": {
-  "checks": 8,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/website-audit-p1b-13nov-in-chrome.test.py": {
