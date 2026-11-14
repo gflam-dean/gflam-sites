@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 21:35 · d1c3cb93';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 21:37 · 89fec2fc';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -4440,32 +4440,27 @@ async function vpqMoreInfoBefore(env, venueId) {
   } catch (e) { return true; }
 }
 
-/* THE EMAIL STRIPE ASKED FOR (INBOX 412 UPDATE 7). A quick-game account has no real email; its card page is Stripe's, which
-   asks for one. When the card lands, that address goes where a real one belongs: the account's contact email, the prospect row,
-   and the owner's login (replacing the placeholder), after which the normal reminders and emails apply. It only FILLS an empty
-   or placeholder email, never replaces a real one, never takes an address another login already has, and never throws (a
-   webhook that throws is retried by Stripe). */
+/* THE EMAIL STRIPE ASKED FOR (INBOX 412 UPDATE 7; changed after the security review of 15 Nov 2026). Nobody has proven they own
+   the address typed on Stripe's page, so it is kept ONLY as venueplay_founding.unverified_email (migration 195): a note.
+   It is NEVER the login (the login stays the placeholder; hosts sign in by their mobile), NEVER confirmed, NEVER written to
+   contact_email or the prospect row, and NO account, welcome, reminder, nudge or report email goes to it. Stripe sends its own
+   receipt there, which is Stripe's. It only becomes the account's email through a confirmation link the address's owner opens
+   (Tue 24), and only then. An address another account already has (verified or not) or another login has is not kept.
+   Never replaces anything, never throws (a webhook that throws is retried by Stripe). */
 async function vpqCaptureStripeEmail(env, foundingId, session) {
   try {
     const cd = (session && session.customer_details) || {};
     const email = String(cd.email || (session && session.customer_email) || '').trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200 || /[,;()\\"]/.test(email) || vpqIsPlaceholderEmail(email)) return { skipped: 'no usable email' };
-    const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email&limit=1');
+    const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email,unverified_email&limit=1');
     const f = fr && fr[0];
-    if (!f || vpqRealEmail(f.contact_email)) return { skipped: 'already has an email' };
-    const taken = await vpaFindAuthUser(env, { email: email });
-    const venues = (await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id&limit=20')) || [];
-    let owner = null;
-    for (const v of venues) {
-      const st = (await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(v.id) + '&role=eq.owner&select=auth_user_id&limit=1')) || [];
-      if (st[0] && st[0].auth_user_id) { owner = st[0].auth_user_id; break; }
-    }
-    if (taken && (!owner || taken.id !== owner)) return { skipped: 'another login has it' };
-    await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId), { contact_email: email });
-    await vpaPatch(env, 'vp_prospects', 'founding_id=eq.' + encodeURIComponent(foundingId), { email: email }).catch(() => {});
-    if (owner && !taken) await vpaAuthUpdateUser(env, owner, { email: email, email_confirm: true, user_metadata: { placeholder_email: false } }).catch(() => {});
-    await vpaAudit(env, { actorId: null, label: 'Stripe card page' }, 'quick_email_captured', 'founding:' + foundingId, { owner: !!owner }).catch(() => {});
-    return { ok: true };
+    if (!f || vpqRealEmail(f.contact_email) || f.unverified_email) return { skipped: 'already has an email' };
+    const others = await vpaSelect(env, 'venueplay_founding', 'or=(contact_email.ilike.' + encodeURIComponent(email) + ',unverified_email.eq.' + encodeURIComponent(email) + ')&id=neq.' + encodeURIComponent(foundingId) + '&select=id&limit=1');
+    if (others && others.length) return { skipped: 'another account has it' };
+    if (await vpaFindAuthUser(env, { email: email })) return { skipped: 'another login has it' };
+    await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId), { unverified_email: email, unverified_email_at: new Date().toISOString() });
+    await vpaAudit(env, { actorId: null, label: 'Stripe card page' }, 'quick_email_noted', 'founding:' + foundingId, { verified: false }).catch(() => {});
+    return { ok: true, verified: false };
   } catch (e) { console.log('[quick] stripe email: ' + String((e && e.message) || e).slice(0, 160)); return { error: true }; }
 }
 

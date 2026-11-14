@@ -6,6 +6,9 @@
 --                    (with a salt held in the Worker) is kept, never the code, never an email. Expires, can be revoked.
 --   vp_signup_starts.lead_id / vp_prospects.lead_source   which lead a start came from, and "cold_email" on the prospect row
 --                    (HQ > Prospects: "came from cold email").
+--   venueplay_founding.unverified_email / unverified_email_at   the address Stripe's card page collected on a quick-game account.
+--                    A NOTE ONLY: never the login, never confirmed, no account mail goes to it until its owner confirms by link
+--                    (Tue 24). One account per address (partial unique index), so nobody can pre-claim a stranger's address twice.
 -- The Worker answers every route here with "not switched on" / nothing recorded until this has run.
 
 create table if not exists public.vp_quick_events (
@@ -48,6 +51,10 @@ grant usage, select on sequence public.vp_quick_leads_id_seq to service_role;
 
 alter table public.vp_signup_starts add column if not exists lead_id bigint references public.vp_quick_leads(id) on delete set null;
 alter table public.vp_prospects     add column if not exists lead_source text check (lead_source is null or lead_source in ('cold_email','coaster','website'));
+
+alter table public.venueplay_founding add column if not exists unverified_email text check (unverified_email is null or char_length(unverified_email) <= 200);
+alter table public.venueplay_founding add column if not exists unverified_email_at timestamptz;
+create unique index if not exists venueplay_founding_unverified_email_uq on public.venueplay_founding (lower(unverified_email)) where unverified_email is not null;
 
 -- Read back (read-only):
 --   select count(*) from vp_quick_events;  select count(*) from vp_quick_leads;
