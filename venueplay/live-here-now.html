@@ -663,7 +663,7 @@ var VPCoaster = (function () {
   function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
-    venueLine(venueName || (S.venue && S.venue.name) || '');
+    venueLine('');   // the name step already says "Playing at <venue>"
     var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
     $('addedPill').hidden = !added;
