@@ -760,7 +760,8 @@ var VPCoaster = (function () {
       $('leadBtn').disabled = false;
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
-      S.place = null; S.venue = null; S.optin = null;
+      /* an added venue plays on its own trivia-only board when the Worker hands one back (a real venue's stays, any other for 30 days) */
+      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null;
       /* "Added", then straight on to the name: the old search and its "no venue" line are cleared */
       $('whereIn').value = ''; $('picks').textContent = ''; $('whereHint').textContent = ''; $('notListed').hidden = false;
       askDetails(f.name, st === 200);

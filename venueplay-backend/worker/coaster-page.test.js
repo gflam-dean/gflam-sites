@@ -195,7 +195,7 @@ pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /
 pass("the details go to /coaster/optin only once the round has started there (its secret proves the round), then are dropped from the page",
   /S\.optin = d\.optin \|\| null;\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
-  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
 pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
   !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE) && /&copy; <span id="vp-year"><\/span> venueplay</.test(PAGE));
 pass("under the title, '5 questions, 20 seconds each' is the one honest line (396.a), and the search box carries its own placeholder (396.2)",
