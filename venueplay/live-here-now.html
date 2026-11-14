@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Quick trivia | venueplay</title>
+<title>Coaster Trivia | venueplay</title>
 <meta name="description" content="Five quick trivia questions while you wait for your drink. Points for speed, a board for your pub tonight, and a link to challenge your mates. No app, no sign-up.">
-<meta property="og:title" content="Quick trivia | venueplay">
+<meta property="og:title" content="Coaster Trivia | venueplay">
 <meta property="og:description" content="Five quick trivia questions while you wait for your drink. Can you beat your mates? No app, no sign-up.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://venueplay.com.au/live-here-now">
@@ -242,7 +242,7 @@
 </head>
 <body>
 
-<h1 class="sr" id="hdrName">venueplay trivia</h1>
+<h1 class="sr" id="hdrName">Coaster Trivia</h1>
 
 <main class="shell" id="game">
   <!-- 1. THE FIRST NAME -->
@@ -265,6 +265,7 @@
 
   <!-- 2. WHERE ARE YOU PLAYING -->
   <section class="view" id="vWhere" hidden>
+    <p class="kick" id="whereKick">Coaster Trivia</p>
     <h2 class="pbig one" id="whereHead">What venue are you at?</h2>
     <div class="picks" id="againBox" hidden></div>
     <div class="field"><input type="search" id="whereIn" maxlength="60" placeholder="Type 3 letters of your pub or club" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club"></div>
@@ -491,11 +492,21 @@ var VPCoaster = (function () {
   function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text + ' ' + url); }
   function shareUrl(code) { return 'https://venueplay.com.au/live-here-now?c=' + encodeURIComponent(code); }
   /* "I scored 435 at The Mini Bar. Reckon you can beat me?" (396.i); the link goes beside it */
-  function shareText(name, correct, points, venue) {
-    return points > 0 || correct > 0 ? 'I scored ' + points + (venue ? ' at ' + venue : '') + '. Reckon you can beat me?'
-      : 'I played trivia' + (venue ? ' at ' + venue : '') + '. Reckon you can beat me?';
+  /* The share text (Dean 14 Nov, INBOX 396 updates 3 and 4). In tonight's top 10 at the venue: "I'm 4th on the Coaster Trivia board at
+     The Mini Bar tonight. Come down and knock me off." Otherwise: "I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you
+     can beat it?" The venue is always named, and nothing here ever mentions a drink, a shout or a next round (liquor licensing). */
+  function shareText(points, venue, place) {
+    var at = venue || 'my pub';
+    if (place > 0 && place <= 10) return "I'm " + ordinal(place) + ' on the Coaster Trivia board at ' + at + ' tonight. Come down and knock me off.';
+    return 'I scored ' + points + ' on Coaster Trivia at ' + at + '. Your turn. Reckon you can beat it?';
   }
-  var SHARE_TITLE = 'Beat my trivia score';
+  /* your place tonight if you are in the top 10 rows (equal scores share a place), else 0 */
+  function topTenPlace(rows) {
+    var pl = sharedPlaces(rows);
+    for (var i = 0; i < (rows || []).length && i < 10; i++) if (rows[i].you) return pl[i];
+    return 0;
+  }
+  var SHARE_TITLE = 'Coaster Trivia';
   /* ?c=CODE, the challenge link, or '' */
   function readCode(search) {
     var m = /[?&]c=([A-Za-z0-9]{6})(?:&|$)/.exec(search || '');
@@ -511,7 +522,7 @@ var VPCoaster = (function () {
   }
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
            ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, sharedPlaces: sharedPlaces, myPlace: myPlace, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
-           shareUrl: shareUrl, shareText: shareText, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
+           shareUrl: shareUrl, shareText: shareText, topTenPlace: topTenPlace, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
            QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
@@ -622,7 +633,7 @@ var VPCoaster = (function () {
   function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
-    var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : '';
+    var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
     $('addedPill').hidden = !added;
     $('nameHead').textContent = 'Ready to play?';
@@ -917,7 +928,7 @@ var VPCoaster = (function () {
   }
 
   /* 4. THE END */
-  var boardPeriod = 'night';
+  var boardPeriod = 'night', myTonight = 0;
   function finish() {
     clearInterval(ticker);
     view('score');
@@ -935,6 +946,7 @@ var VPCoaster = (function () {
     if (onBoard) {
       $('scorePts').textContent = right + ' of ' + round.length + ' correct';
       var b = ended.board || {}, myPl = L.myPlace(b.rows, b.rank);
+      myTonight = L.topTenPlace(b.rows);
       $('scorePlace').textContent = L.placeLine(myPl, 'night', S.venue && S.venue.name);
       $('scoreSub').textContent = '';
       paintBoard(b, 'night');
@@ -990,7 +1002,7 @@ var VPCoaster = (function () {
     $('copyLink').hidden = canShare();
   }
   function challengeBits() {
-    return { url: L.shareUrl(S.myCode), text: L.shareText(S.name, right, total, S.venue && S.venue.name) };
+    return { url: L.shareUrl(S.myCode), text: L.shareText(total, S.venue && S.venue.name, myTonight) };
   }
   function textFallback() {
     var c = challengeBits();

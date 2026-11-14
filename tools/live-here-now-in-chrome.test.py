@@ -795,7 +795,7 @@ def main():
             if mode in ('ok', 'cancel'):
                 check('%s: the button reads "Share", Copy link is not shown, and a tap opens the phone\'s own share sheet with the title, the words and the link' % tag,
                       lab == 'Share' and cp is True and len(shares) == 1 and shares[0].get('title') and
-                      shares[0].get('text') == 'I scored 435 at The Mini Bar. Reckon you can beat me?' and
+                      shares[0].get('text') == "I'm %s on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off." % tsh.js('document.getElementById("scorePlace").textContent.split(" ")[0]') and shares[0].get('title') == 'Coaster Trivia' and
                       re.match(r'^https://venueplay\.com\.au/live-here-now\?c=[A-Z0-9]{6}$', shares[0].get('url') or ''), (lab, cp, shares))
             if mode == 'cancel':
                 check('%s: a cancelled share does nothing and says nothing (no error line, the page stays put)' % tag,
@@ -807,7 +807,7 @@ def main():
                 time.sleep(0.3)
                 done = tsh.js('document.getElementById("shared").textContent')
                 copied = waits.as_json(tsh.js('JSON.stringify(window.__copied)'), [], 'COPIED')
-                check('%s: Copy link says "Link copied" and copies the words with the link' % tag, done == 'Link copied' and len(copied) == 1 and copied[0].startswith('I scored 435 at The Mini Bar. Reckon you can beat me? https://venueplay.com.au/live-here-now?c='), (done, copied))
+                check('%s: Copy link says "Link copied" and copies the words with the link' % tag, done == 'Link copied' and len(copied) == 1 and copied[0].startswith("I'm ") and ' on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off. https://venueplay.com.au/live-here-now?c=' in copied[0], (done, copied))
             f = waits.as_json(tsh.js(FIT), {}, 'FIT')
             check('%s: the result screen fits: nothing sideways, cut off, under 15px or too short to tap' % tag, f['sw'] <= dw and not f['out'] and not f['clipped'] and not f['small'], f)
             tsh.close()
