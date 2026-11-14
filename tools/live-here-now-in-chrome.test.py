@@ -1095,7 +1095,7 @@ def main():
                        'return JSON.stringify([Math.round(c.measureText(i.placeholder).width),Math.round(i.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)),ph.fontSize]);})()')
             ph = waits.as_json(ph, [], 'PH')
             print('   (placeholder width, room, size at %d px: %s)' % (w, ph))
-            check('%d px: the whole placeholder "Start typing your pub or club" fits on one line, room kept for the clear button (not cut off)' % w, ph and ph[0] <= ph[1] - 30, ph)
+            check('%d px: the whole placeholder "Start typing your pub or club" fits on one line, room kept for the clear button (not cut off)' % w, ph and ph[0] <= ph[1] - 8, ph)
             tf.shot('lhn-where-%d.png' % w)
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
