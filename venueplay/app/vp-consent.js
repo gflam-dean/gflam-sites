@@ -1,5 +1,9 @@
-/* "YOUR DETAILS": ONE TICK, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026, for the
-   Friday 6 Nov release).
+/* "YOUR DETAILS": ONE TICK, "Send me offers from {venue}" (Dean, 14 Nov 2026, INBOX 405 update 3, FINAL: no age words
+   on the tick; "we decided that ages ago"). It was "Send me offers from {venue}. I'm 18 or over." from 4 Nov (consent version
+   vpc-2-6nov); every sign-up already recorded under vpc-2-6nov, vpc-1 or before keeps its version in vp_captures.consent_version
+   and is NOT rewritten: the new words are vpc-3-14nov and only sign-ups from now on carry it (PREVIOUS lists the old ones).
+   The text below is the history of the 4 Nov wording, kept as written.
+   (Dean, 4 Nov 2026, for the Friday 6 Nov release).
 
    History. The three player phones (bingo /play, musical bingo and trivia) once ended the details step
    with one tick, "I am 18 or over. Keep me posted on what is on at the venue". On 3 Nov that became two
@@ -30,9 +34,10 @@
    with no way to reach you is pointless). No em dashes in anything a person reads. */
 (function (root) {
   "use strict";
-  var VERSION = "vpc-2-6nov";
+  var VERSION = "vpc-3-14nov";
+  var PREVIOUS = ["vpc-1", "vpc-2-6nov"];   // the words people agreed to before, kept recorded against their sign-ups
   var OPTIN_HEAD = "Send me offers from ";
-  var OPTIN_TAIL = ". I'm 18 or over.";
+  var OPTIN_TAIL = "";
   var NO_NAME = "this venue";
   /* The tick this module drew, held here rather than looked up by id: a page (or a test's stand-in DOM)
      that answers any id with an element must not turn "no tick on this step" into "ticked". A tick
@@ -85,6 +90,6 @@
   function age18Done() {}
 
   root.VPConsent = { render: render, optedIn: optedIn, offered: offered, optinText: optinText,
-                     VERSION: VERSION, OPTIN_HEAD: OPTIN_HEAD, OPTIN_TAIL: OPTIN_TAIL, NO_NAME: NO_NAME,
+                     VERSION: VERSION, PREVIOUS: PREVIOUS, OPTIN_HEAD: OPTIN_HEAD, OPTIN_TAIL: OPTIN_TAIL, NO_NAME: NO_NAME,
                      ageOk: ageOk, age18Done: age18Done, AGE_NEEDED: "" };
 })(typeof window !== "undefined" ? window : this);

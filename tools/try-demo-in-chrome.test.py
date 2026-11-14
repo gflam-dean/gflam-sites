@@ -162,7 +162,7 @@ def scene_a(RIG):
         ok('  the offers tick is NOT ticked for them', pre.get('t') is False, pre)
         ok('  their details are gone from the address', pre.get('h') == '', pre)
         ok('  the phone says it is a demo, "Up to 10 for the demo"', pre.get('demo') is True and 'Up to 10 for the demo' in (r.ask(p1, 'document.getElementById("demoNote").textContent') or ''))
-        ok('  the tick names their own venue', 'Send me offers from Test Alpha. I\'m 18 or over.' in (r.ask(p1, 'document.getElementById("xOptin").parentNode.textContent') or ''),
+        ok('  the tick names their own venue', 'Send me offers from Test Alpha' in (r.ask(p1, 'document.getElementById("xOptin").parentNode.textContent') or ''),
            r.ask(p1, 'document.getElementById("xOptin").parentNode.textContent'))
         r.ask(p1, 'document.getElementById("xOptin").click(); true')
         r.ask(p1, 'document.getElementById("joinBtn").click(); true')

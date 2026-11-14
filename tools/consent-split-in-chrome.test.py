@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""YOUR DETAILS: ONE TICK, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026, 6 Nov release).
+"""YOUR DETAILS: ONE TICK, "Send me offers from {venue}" (Dean, 14 Nov 2026, INBOX 405 update 3: no age words; was "... I'm 18 or over." from 4 Nov, vpc-2-6nov).
 
 The 3 Nov step had two ticks ("I'm 18 or over" and "Keep me posted"). Dean folded 18+ into the offers
 opt-in: one optional tick, built once in venueplay/app/vp-consent.js, consent version vpc-2-6nov.
@@ -167,9 +167,9 @@ def sent(code, secs=6):
     return []
 
 PAGES = [('bingo', '/play'), ('musical', '/app/musical/play.html'), ('trivia', '/app/trivia/play.html')]
-WORDS = "Send me offers from The Test Hotel. I'm 18 or over."
-NO_NAME_WORDS = "Send me offers from this venue. I'm 18 or over."
-VERSION = 'vpc-2-6nov'
+WORDS = "Send me offers from The Test Hotel"
+NO_NAME_WORDS = "Send me offers from this venue"
+VERSION = 'vpc-3-14nov'
 ISLAND = 59   # the iPhone's Dynamic Island and status bar: nothing a person taps sits in the top 59px
 # A room code is six letters from the code alphabet (no O, 0, 1, I, L, B, 8): three say the scenario,
 # three count, so every page gets codes nobody else used.

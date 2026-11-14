@@ -15,7 +15,7 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
     to HQ's review list and the round plays with no board; "Play now" shows only while the search is down;
     the next scan offers the same venue first
   - the venue's own sign-up at the end (INBOX 232): only where the Worker says it is switched on, the
-    phones' one tick unticked ("Send me offers from The Mini Bar. I'm 18 or over."), its consent
+    phones' one tick unticked ("Send me offers from The Mini Bar", no age words, Dean 14 Nov), its consent
     version sent with it; never at a venue that is not on venueplay
   - the new look: the answers in the TV's full colours, the right one turns GREEN and says so, a
     wrong pick is outlined in its own colour and tagged; "Correct! +145" once the Worker answers;
@@ -642,7 +642,7 @@ def main():
         s = wait(t, lambda s: s.get('view') == 'vName' and s.get('optin'))
         check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
               s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and not s.get('lastRow') and
-              s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
+              s.get('optinTick') == "Send me offers from The Mini Bar" and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
         gone = t.js('document.getElementById("vName").textContent.indexOf("never on the board")<0 && document.getElementById("vName").textContent.indexOf("goes on the board")<0')
         check('the name step does NOT carry the long "details go to the venue, never on the board" lines (INBOX 405.8)', gone is True, gone)
         f = waits.as_json(t.js(FIT), {}, "FIT")
@@ -1030,6 +1030,9 @@ def main():
             on1 = tf.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight')
             check('%d px, your details with the venue\'s sign-up (INBOX 309.1c): the same%s' % (w, ', and Play is on the first screen' if h >= 667 else ''),
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'] and (on1 or h < 667), (f, on1))
+            tk = waits.as_json(tf.js('(function(){var l=document.querySelector("#optinTick label.optin"),sp=l&&l.querySelector("span");if(!l)return "[]";var r=sp.getBoundingClientRect(),cs=getComputedStyle(sp);return JSON.stringify([sp.textContent,l.scrollWidth<=l.clientWidth+1,r.height/parseFloat(cs.lineHeight),parseFloat(cs.fontSize)]);})()'), [], 'TICK')
+            check('%d px: the offers line is ONE line ("Send me offers from The Mini Bar", no age words), shrunk to fit, never cut off' % w,
+                  tk and tk[0] == 'Send me offers from The Mini Bar' and tk[1] and tk[2] < 1.6 and tk[3] >= 11, tk)
             tf.shot('lhn-name-%d.png' % w)
             tf.type_into('nameIn', 'Christabel-Anne')
             tf.type_into('optinEmail', 'christabel@example.com')
