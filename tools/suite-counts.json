@@ -1968,11 +1968,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 103,
+  "checks": 115,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 163,
+  "checks": 194,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {
