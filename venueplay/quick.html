@@ -33,9 +33,10 @@
   .sec-head{ margin-bottom:16px; }
   .st-legal{ margin-top:10px; }
   .sec-sub{ margin-top:8px; }
-  @media (max-height:700px){ .nav{ height:52px; } .sec-sub{ display:none; } .sec-head{ margin-bottom:10px; } .form-grid{ gap:10px; } .form-shell{ padding:20px; } #qGo,#qCheck{ margin-top:12px; padding:12px; } .st-legal{ margin-top:8px; } .field label{ line-height:1.2; } }
   #qGo,#qCheck{ width:100%; margin-top:18px; padding:16px; font-size:var(--fs-base); }   /* #st-go and #st-check's own rule, for this page's ids */
   #qGo:disabled,#qCheck:disabled{ opacity:.6; cursor:default; transform:none; }
+  /* after the #qGo rules above, so the short-screen margin and padding win the tie (same specificity) */
+  @media (max-height:700px){ .nav{ height:52px; } .sec-sub{ display:none; } .sec-head{ margin-bottom:10px; } .form-grid{ gap:10px; } .form-shell{ padding:20px; } #qGo,#qCheck{ margin-top:10px; } .st-legal{ margin-top:8px; } .field label{ line-height:1.2; } }
   /* the venue list under the box: the website's own box tokens (as .field input and the pub/club choice) */
   .field{ position:relative; }
   .qpick{ position:absolute; left:0; right:0; top:100%; z-index:5; margin:6px 0 0; padding:0; list-style:none; background:var(--ink-2); border:1px solid var(--line-2); border-radius:11px; overflow:hidden; }
