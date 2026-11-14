@@ -493,7 +493,8 @@ def show_fits():
         # laptop as on a phone: both lines inside the column and not on top of each other, the wordmark no wider than the column
         COL = r"""(function(){ function bx(e){ if(!e) return null; var g=document.createRange(); g.selectNodeContents(e); var b=g.getBoundingClientRect(); return [b.left,b.top,b.right,b.bottom]; }
           var wg=document.getElementById("vppWg"), w=wg?wg.getBoundingClientRect():null;
-          return {W:innerWidth, H:innerHeight, l1:bx(document.getElementById("vppL1s")||document.getElementById("vppL1")), l2:bx(document.getElementById("vppL2s")), wm:w?[w.left,w.top,w.right,w.bottom]:null}; })()"""
+          function el(i){ var b=document.getElementById(i).getBoundingClientRect(); return [b.left,b.top,b.right,b.bottom]; }
+          return {W:innerWidth, H:innerHeight, l1:bx(document.getElementById("vppL1s")||document.getElementById("vppL1")), l2:bx(document.getElementById("vppL2s")), e1:el("vppL1"), e2:el("vppL2"), wm:w?[w.left,w.top,w.right,w.bottom]:null}; })()"""
         for path, what in LAND_PAGES:
             for w, h in ((390, 844), (1280, 720), (1440, 900)):
                 tag = '%s phone show at %dx%d' % (what, w, h)
@@ -511,7 +512,7 @@ def show_fits():
                     why = ''
                     if not (l1 and l2 and wm): why = 'not measured %s' % json.dumps([a, b])[:200]
                     elif l1[0] < x0 - 2 or l1[2] > x0 + cw + 2 or l2[0] < x0 - 2 or l2[2] > x0 + cw + 2: why = 'a line leaves the %d px column: %s %s' % (cw, [round(x) for x in l1], [round(x) for x in l2])
-                    elif l1[3] > l2[1] + 2: why = 'the two lines overlap: first ends at %d, second starts at %d' % (l1[3], l2[1])
+                    elif a['e1'][3] > a['e2'][1] + 2: why = 'the two lines overlap: first line box ends at %d, second starts at %d' % (a['e1'][3], a['e2'][1])
                     elif wm[0] < x0 - 2 or wm[2] > x0 + cw + 2: why = 'the wordmark (%d to %d) is wider than the %d px column' % (wm[0], wm[2], cw)
                     ok(tag + ': both lines sit in the centred column, apart, and the wordmark is no wider than the column', why == '', why)
                     shot(r, sid, 'sting-8-phone-%s-%dx%d' % (what.replace(' ', '-'), w, h))
