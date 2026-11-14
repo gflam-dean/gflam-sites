@@ -2208,7 +2208,7 @@
   "counted_by": "lines"
  },
  "tools/lobby-refresh-in-chrome.test.py": {
-  "checks": 162,
+  "checks": 163,
   "counted_by": "lines"
  },
  "tools/rig-join-unique-index.test.py": {

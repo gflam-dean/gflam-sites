@@ -23917,6 +23917,11 @@ MUTATIONS = [
      'localStorage.removeItem("vp-name-"+P.room); sessionStorage.removeItem("vp-name-"+P.room); }catch(e){} } });',
      '}catch(e){} } });',
      'Join again on the bingo phone lands straight back on "You\'re in" for the dead night'),
+    # 15 Nov 2026, 417A: the ended screen wording
+    ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
+     'b.textContent = "Join";',
+     'b.textContent = "Join again";',
+     'the ended screen button goes back to "Join again", or its line to the old host-closed wording'),
     # 13 Nov 2026, fix/waitwatch-flake-13nov: the watcher's count survives a failed or slow answer; the bingo phone knows its night before its own join lands.
     ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
      '          if (s === null || shown) return;                       // could not tell: say nothing',

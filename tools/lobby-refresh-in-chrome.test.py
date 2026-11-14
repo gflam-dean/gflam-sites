@@ -337,12 +337,12 @@ def run_gone(G):
         ok('%s: a night that is gone is a clean setup screen, not a ghost lobby' % G.name, G.setup_up(host), [text(host), js(host, ERRT)])
         shot(host, '%s-6-gone-host-1024' % G.name)
         ok('%s: the waiting phone says the game has ended (never "You\'re in" for ever)' % G.name, R.until(ph, '!!document.getElementById("vpGone") && /game has ended/i.test(document.getElementById("vpGone").innerText)', 90) is True, text(ph))
-        ok('%s: and offers a way back (Join again)' % G.name, js(ph, '!!document.getElementById("vpGoneBtn") && document.getElementById("vpGoneBtn").getBoundingClientRect().height>=44') is True, text(ph))
+        ok('%s: and offers a way back (Join)' % G.name, js(ph, '!!document.getElementById("vpGoneBtn") && document.getElementById("vpGoneBtn").getBoundingClientRect().height>=44') is True, text(ph))
         shot(ph, '%s-7-gone-phone-390' % G.name)
         js(ph, 'document.getElementById("vpGoneBtn").click(); true')
         time.sleep(1.5)
         R.until(ph, 'document.readyState==="complete"', 30)
-        ok('%s: Join again lands on the join form (a clean join), not on "You\'re in"' % G.name, R.until(ph, '(' + JOIN_FORM + ') && !document.getElementById("vpGone")', 40) is True, text(ph))
+        ok('%s: Join lands on the join form (a clean join), not on "You\'re in"' % G.name, R.until(ph, '(' + JOIN_FORM + ') && !document.getElementById("vpGone")', 40) is True, text(ph))
     finally:
         R.close()
 
