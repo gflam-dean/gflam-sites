@@ -4258,9 +4258,22 @@ MUTATIONS = [
      'a racing duplicate of one request gets its own key and charges twice'),
     # 13 Nov 2026, B3: the new-pub free month cannot be farmed. A ceiling on one add, the yearly credit never more than
     # was charged, and vpbFreeMonthTrueUp squaring the credit when its players go before it is used. test-billing-abuse-13nov.js.
+    # 15 Nov 2026, INBOX 418: the 2,000 ceiling is replaced by PLAYER_FLAG 100 (one sales@ alert) and PLAYER_CALL 200 (a call) for a venue by itself.
     ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     "  if (players > VPB_ADD_VENUE_MAX_PLAYERS) {", "  if (false) {",
-     'a pub can be added at 20,000 players, a five-figure free month credit'),
+     "  if (addByItself && players > VPB_PLAYER_CALL) {", "  if (false) {",
+     'a venue on its own can be added at 201 players or more without a phone call'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (addByItself && players > VPB_PLAYER_FLAG) await", "  if (false) await",
+     'a venue on its own added over 100 players tells nobody at sales@'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (addByItself && players > VPB_PLAYER_FLAG) await", "  if (players > VPB_PLAYER_FLAG) await",
+     'a venue added to an existing group over 100 players is flagged to sales@ as if it were alone'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  const addByItself = !o.account.is_group && (o.venues || []).length < 2;", "  const addByItself = true;",
+     'a venue added to an existing group is held to the 200 player limit'),
+    ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (have && have.length) return false;\n  const site =", "  const site =",
+     'the same venue sends sales@ a second alert'),
     ('test-billing-abuse-13nov.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "Math.min(Math.round(fRate * 100) * players, aAdj.cents);", "Math.round(fRate * 100) * players;",
      'a yearly pub added days before renewal is charged days and credited a whole month'),
@@ -23917,6 +23930,11 @@ MUTATIONS = [
      'localStorage.removeItem("vp-name-"+P.room); sessionStorage.removeItem("vp-name-"+P.room); }catch(e){} } });',
      '}catch(e){} } });',
      'Join again on the bingo phone lands straight back on "You\'re in" for the dead night'),
+    # 15 Nov 2026, 417A: the ended screen wording
+    ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
+     'b.textContent = "Join";',
+     'b.textContent = "Join again";',
+     'the ended screen button goes back to "Join again", or its line to the old host-closed wording'),
     # 13 Nov 2026, fix/waitwatch-flake-13nov: the watcher's count survives a failed or slow answer; the bingo phone knows its night before its own join lands.
     ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
      '          if (s === null || shown) return;                       // could not tell: say nothing',

@@ -680,7 +680,7 @@
   "counted_by": "lines"
  },
  "tools/test-billing-abuse-13nov.js": {
-  "checks": 65,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
@@ -2224,7 +2224,7 @@
   "counted_by": "lines"
  },
  "tools/lobby-refresh-in-chrome.test.py": {
-  "checks": 162,
+  "checks": 163,
   "counted_by": "lines"
  },
  "tools/rig-join-unique-index.test.py": {

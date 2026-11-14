@@ -24,6 +24,7 @@ function world(opts) {
   var started = false;
   return { win: win, doc: doc, answers: answers, fetched: fetched, shown: function () { return !!els.vpGone; },
     start: function (sid, waiting) { win.VP_WAITWATCH.start({ api: 'https://x.test/', session: function () { return sid(); }, waiting: function () { return waiting(); }, forget: function () {} }); },
+    texts: function () { return made.map(function (e) { return e.textContent; }).filter(Boolean); },
     poll: function () { timers[0](); } };
 }
 function r(status, body) { return { status: status, ok: status >= 200 && status < 300, json: function () { return sync(body); } }; }
@@ -39,6 +40,8 @@ function run(script, sid) {
   return w;
 }
 check('two "gone" answers in a row show "This game has ended"', run([GONE, GONE]).shown());
+var tx = run([GONE, GONE]).texts();
+check('the ended screen reads: heading, "When the next one starts, tap below to join.", button "Join" (15 Nov 2026)', tx[0] === 'This game has ended' && tx[1] === 'When the next one starts, tap below to join.' && tx[2] === 'Join');
 check('one "gone" answer alone says nothing', !run([GONE]).shown());
 check('a 404 counts as gone, twice in a row shows it', run([N404, N404]).shown());
 check('gone, then "still here", then gone says nothing (the count resets only on a positive answer)', !run([GONE, HERE, GONE]).shown());

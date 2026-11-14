@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:17 · 153868ba';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 23:58 · f7a8dbb1';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -13844,8 +13844,11 @@ function vpbRules(env) {
   return { new_pub_free_month: on, undo_hour: on };
 }
 const VPB_UNDO_WINDOW_S = 3600;   // rule 4: one hour
-/* B3, 13 Nov 2026: the most players one Add a venue can ask for (the same ceiling HQ sets a venue up with). */
-const VPB_ADD_VENUE_MAX_PLAYERS = 2000;
+/* ADD A VENUE PLAYER LIMITS (Dean, 14 Nov 2026, INBOX 418, replaces the 2,000 ceiling). Named ONCE, here.
+   A venue BY ITSELF (an account that is not yet a group): over PLAYER_FLAG players is allowed and tells sales@;
+   over PLAYER_CALL players is not self-serve, it is a phone call. A venue added to an existing group has no limit and no flag. */
+const VPB_PLAYER_FLAG = 100;   // PLAYER_FLAG
+const VPB_PLAYER_CALL = 200;   // PLAYER_CALL
 
 /* --- Whole Brisbane days, the unit Dean bills in (4 Nov 2026). --- */
 const VPB_BRIS_S = 36000;   // UTC+10, no daylight saving, the same shift vpaFmtDate uses
@@ -14363,6 +14366,22 @@ function vpbNewVenueTag(venueId, players, periodEnd) {
   return 'newvenue:' + String(venueId || '') + ':' + players + ':' + (periodEnd || '0');
 }
 
+/* The sales@ email for a venue added over PLAYER_FLAG players (INBOX 418): venue, players, account, link to HQ. The same
+   mail path every HQ alert uses (vpaSendEmail + vpaAlertSubject), once per venue (the audit row is the memory). */
+async function vpbPlayerFlagAlert(env, o, venue, name, players) {
+  const vid = (venue && venue.id) || '';
+  if (!vid) return false;
+  const have = await vpaSelect(env, 'vp_admin_audit', 'action=eq.venue_player_flag&target=eq.' + encodeURIComponent('venue:' + vid) + '&select=id&limit=1');
+  if (have && have.length) return false;
+  const site = 'https://www.venueplay.com.au';
+  const html = '<p>' + vpaEsc(name) + ' was added by itself with ' + vpaEsc(String(players)) + ' players, more than ' + VPB_PLAYER_FLAG + '.</p>'
+    + '<p>Account: ' + vpaEsc((o.account && (o.account.contact_email || o.account.id)) || '') + '</p>'
+    + vpaEmailButton(site + '/app/hq.html', 'Open HQ');
+  await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'venue_player_flag',
+    target: 'venue:' + vid, detail: { name: name, players: players } }, false).catch(() => {});
+  return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', name + ' added with ' + players + ' players'), html);
+}
+
 /* --- POST /account/add-venue : add a whole new venue to the account. --- */
 async function vpbAddVenue(request, env, json) {
   const o = await vpbRequireOwner(request, env);
@@ -14376,12 +14395,11 @@ async function vpbAddVenue(request, env, json) {
   const players = parseInt(b.players, 10);
   if (!name) return json({ error: 'Enter a venue name.' }, 400);
   if (!players || players < 1) return json({ error: 'Enter the max players for the new venue.' }, 400);
-  /* A CEILING ON ONE ADD (security review 13 Nov 2026, B3): there was none, and a new pub's free month is
-     worth players x rate, so 20,000 players bought a five-figure credit. The ceiling is the biggest crowd HQ
-     can set up a venue with (VPA_PROSPECT_MAX_PLAYERS); a bigger venue is a phone call. Dean confirms the
-     number (NEEDS-DEAN, DECISION: billing security). */
-  if (players > VPB_ADD_VENUE_MAX_PLAYERS) {
-    return json({ error: 'Up to ' + VPB_ADD_VENUE_MAX_PLAYERS.toLocaleString('en-AU') + ' players can be added to one venue from here. For a bigger venue, call us on ' + VP_SUPPORT_PHONE + ' or email hello@venueplay.com.au. Nothing was added or charged.' }, 400);
+  /* A VENUE BY ITSELF HAS A LIMIT (INBOX 418): over PLAYER_CALL players it is a phone call, nothing made or charged.
+     An existing group (is_group, or already two or more venues) adds any size, no flag: the group total is what counts. */
+  const addByItself = !o.account.is_group && (o.venues || []).length < 2;
+  if (addByItself && players > VPB_PLAYER_CALL) {
+    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, call us on ' + VP_SUPPORT_PHONE }, 400);
   }
   // In-app venues are effectively unlimited for any real operator (larger than the biggest
   // Australian pub group). A high ceiling still guards against runaway/abuse.
@@ -14566,6 +14584,8 @@ async function vpbAddVenue(request, env, json) {
     console.log('[billing] add-venue: Stripe refused the quantity change for ' + name + ', venue put back as it was');
     return json({ error: 'We could not update your billing just now, so ' + name + ' was not switched on and nothing was charged. Please try again in a minute.' }, 502);
   }
+  /* OVER PLAYER_FLAG, ON ITS OWN: one email to sales@, once per venue (INBOX 418). Best effort, never stops the add. */
+  if (addByItself && players > VPB_PLAYER_FLAG) await vpbPlayerFlagAlert(env, o, r.venue, name, players).catch(() => false);
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
   /* THE KEY NAMES THE VENUE, NOT WHAT IT IS CALLED. It used to be built from the name, the
