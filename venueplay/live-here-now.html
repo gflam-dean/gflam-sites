@@ -25,10 +25,9 @@
 <!-- The questions, asked for before anything else so they are on their way while the page paints. -->
 <link rel="preload" href="/data/live-here-now.json" as="fetch" crossorigin="anonymous">
 
-<!-- THE COASTER TRIVIA PAGE, v2 (/live-here-now; /here and /live 301 to it). Dean's spec, later items over earlier:
-     reports/live-here-now-v2/DEAN-NOTES.md and INBOX 222, 229, 232, 302-313. The board, the points, the picker
-     and the venue's own sign-up come from the game Worker's /coaster routes; with the board down the round plays
-     on the phone from /data/live-here-now.json. Tested by coaster-page.test.js and live-here-now-in-chrome.test.py. -->
+<!-- THE COASTER TRIVIA PAGE, v2 (/live-here-now; /here and /live 301 to it). Spec: reports/live-here-now-v2/DEAN-NOTES.md and
+     the INBOX items named below. Board, points, picker and details: the game Worker's /coaster routes; with the board down
+     the round plays on the phone. Tested by coaster-page.test.js and live-here-now-in-chrome.test.py. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking (display=swap) -->
@@ -38,10 +37,7 @@
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 <link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the venue's own ad slot (#vpAd), the same as the real game -->
 <style>
-  /* THE COASTER PAGE IS A REAL venueplay GAME SCREEN (Dean, 14 Nov 2026, INBOX 405). Everything below is the trivia phone's own look,
-     copied rule for rule from /app/trivia/play.html (the header, the join steps, the question, the reveal, the end) and the shared
-     files /app/vp-phone.css and /app/vp-qring.css. Where a coaster screen and the game's differ, the game's wins. Only the venue
-     search and the add-venue step are new. No glow, no gradient: the plain game background. */
+  /* THE COASTER PAGE IS A REAL venueplay GAME SCREEN (Dean 14 Nov 2026, INBOX 405): the trivia phone's own look, one screen, no scroll. */
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
@@ -307,7 +303,7 @@
     <button class="linkbtn" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
   </section>
 
-  <!-- 2. YOUR DETAILS: first name and mobile at every venue, email where the venue collects it, the one offers tick, whose the details are, Play (the trivia phone's join step) -->
+  <!-- 2. YOUR DETAILS: first name, mobile, email where collected, the one offers tick, Play (the trivia phone's join step) -->
   <section class="view vp-step" id="vName" hidden>
     <p class="okpill" id="addedPill" hidden>Added</p>
     <p class="vp-kicker" id="nameKick" hidden></p>
@@ -435,8 +431,7 @@ var VPCoaster = (function () {
     w = w.replace(/[^A-Za-z\u00C0-\u024F'\-]/g, '').slice(0, 14);
     return /[A-Za-z\u00C0-\u024F]/.test(w) ? w.charAt(0).toUpperCase() + w.slice(1) : '';
   }
-  /* A REAL AUSTRALIAN MOBILE (Dean, 15 Nov 2026: first name AND mobile at every venue). The game Worker's coasterMobile is
-     the same rule: 04xx xxx xxx, +61 4xx xxx xxx, 61 4..., 4xx xxx xxx; spaces, dashes, dots, brackets ignored. "+614..." or "". */
+  /* An Australian mobile as "+614...", or "" (Dean 15 Nov 2026); the same rule as the Worker's coasterMobile */
   function auMobile(raw) {
     var d = String(raw == null ? '' : raw).replace(/[\s\-().]/g, '');
     var plus = d.charAt(0) === '+'; if (plus) d = d.slice(1);
@@ -450,7 +445,7 @@ var VPCoaster = (function () {
     if (!String(raw == null ? '' : raw).trim()) return 'Type your mobile.';
     return auMobile(raw) ? '' : 'That mobile does not look right. An Australian mobile starts 04 and has 10 digits.';
   }
-  /* The one line under the details (Dean, 15 Nov 2026): a venueplay venue gets them; anywhere else they stay with us. */
+  /* the line under the details (Dean 15 Nov 2026) */
   function detailsNote(venueName, owner) {
     return owner && venueName ? 'Your details go to ' + venueName + '.' : 'Your details stay with venueplay.';
   }
@@ -472,9 +467,7 @@ var VPCoaster = (function () {
     return (list || []).map(function (m, i) { return { m: m, i: i }; })
       .sort(function (a, b) { return rank(a.m) - rank(b.m) || a.i - b.i; }).map(function (x) { return x.m; });
   }
-  /* Whether a pick is on venueplay, in plain words (INBOX 229/232): only a venue with a venueplay login is
-     "on venueplay" ("game on now" while a game is open there); everything else on our list is honestly
-     "not on venueplay yet", never dressed up as if it were. */
+  /* Whether a pick is on venueplay, in plain words (INBOX 229/232): only a venue with a venueplay login is "on venueplay". */
   function statusWords(m) {
     if (m && m.on) return { cls: 'on', text: m.live ? 'Game on now' : 'On venueplay' };
     return { cls: 'off', text: 'Not on venueplay yet' };
@@ -544,9 +537,7 @@ var VPCoaster = (function () {
   function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text + ' ' + url); }
   function shareUrl(code) { return 'https://venueplay.com.au/live-here-now?c=' + encodeURIComponent(code); }
   /* "I scored 435 at The Mini Bar. Reckon you can beat me?" (396.i); the link goes beside it */
-  /* The share text (Dean 14 Nov, INBOX 396 updates 3 and 4). In tonight's top 10 at the venue: "I'm 4th on the Coaster Trivia board at
-     The Mini Bar tonight. Come down and knock me off." Otherwise: "I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you
-     can beat it?" The venue is always named, and nothing here ever mentions a drink, a shout or a next round (liquor licensing). */
+  /* The share text (Dean 14 Nov, INBOX 396 updates 3 and 4): coaster-page.test.js holds the words. */
   function shareText(points, venue, place) {
     var at = venue || 'my pub';
     if (place > 0 && place <= 10) return "I'm " + ordinal(place) + ' on the Coaster Trivia board at ' + at + ' tonight. Come down and knock me off.';
@@ -593,7 +584,7 @@ var VPCoaster = (function () {
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
 
-  /* SOUND STARTS ON (INBOX 405 update 7, replacing 396.k): the Play tap unlocks the audio, a visible Sound on / Sound off switch sits top right, every sound at half volume (VP_SOUND_GAIN) */
+  /* SOUND STARTS ON (INBOX 405 update 7): the Play tap unlocks the audio; the Sound on / off switch is top right; half volume (VP_SOUND_GAIN). */
   (function () {
     var C = window.VPCelebrate, btn = $('vpqMute');
     try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '0'); } catch (e) {}   // sound starts ON (Dean, INBOX 405 update 7): the Play tap unlocks the audio; the switch is top right
@@ -669,8 +660,7 @@ var VPCoaster = (function () {
     v.hidden = !name;
     $('vlineTxt').textContent = name || '';
   }
-  /* The header, as the trivia phone's: the venue's own logo when it is on venueplay and HQ has its logo switched on, else the name of
-     the game, "Coaster Trivia", in the title spot where the real game says "Trivia". */
+  /* The header, as the trivia phone's: the venue's own logo when HQ has it switched on, else the venue's name. */
   function header(venue) {
     var img = $('venueLogo'), nm = $('hdrVenueName');
     img.hidden = true; nm.hidden = false;
@@ -689,7 +679,7 @@ var VPCoaster = (function () {
   var round = [], at = 0, right = 0, results = [], total = 0, lastAnswer = null, ended = null;
 
   /* 2. YOUR DETAILS after the venue (INBOX 309.1c) */
-  /* a mate's challenge link: ask the Worker which venue it was played at first, so the details step can name it */
+  /* a challenge link: the Worker names its venue first */
   function askName() {
     if (!S.code) return askDetails(null);
     var done = false;
@@ -707,7 +697,7 @@ var VPCoaster = (function () {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
     var savedMob = recall(MOBILE_KEY);
-    if (savedMob && typeof savedMob === 'string' && !$('optinMobile').value) $('optinMobile').value = savedMob;   // this phone's own last answer
+    if (savedMob && typeof savedMob === 'string' && !$('optinMobile').value) $('optinMobile').value = savedMob;
     venueLine('');   // the name step already says "Playing at <venue>"
     var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
@@ -718,8 +708,7 @@ var VPCoaster = (function () {
     $('nameErr').textContent = '';
     var o = S.optin, done = recall(SIGNED_KEY);
     if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone
-    /* first name AND mobile at every venue (Dean, 15 Nov 2026), whatever the venue collects; a round with no venue
-       (the search down: "Play now") keeps nothing, so asks nothing more */
+    /* first name AND mobile at every venue (Dean 15 Nov 2026); no venue (search down) keeps nothing, asks nothing more */
     var board = !!(venueName || S.code);
     $('optinMobileRow').hidden = !board;
     $('detailsNote').hidden = !board;
@@ -816,7 +805,7 @@ var VPCoaster = (function () {
     return b;
   }
   function choose(place, name, label) {
-    S.place = place; S.venueName = name; S.owner = /^v:/.test(place);   // a venueplay venue: the details go to it
+    S.place = place; S.venueName = name; S.owner = /^v:/.test(place);
     remember(PLACE_KEY, { place: place, name: name, label: label || '', at: Date.now() });
     S.optin = null;
     if (!/^v:/.test(place)) return askDetails(name);
@@ -856,8 +845,7 @@ var VPCoaster = (function () {
   $('notListed').addEventListener('click', function () { openLead($('whereIn').value); $('leadIn').focus(); });
   /* "Can't find your venue? Add it" (INBOX 232): to HQ's review list, never a board */
   var LEAD_BOX = { name: 'leadIn', suburb: 'leadSuburb' };
-  /* only the name and the suburb are asked. Today's Worker still wants a state with it, so it is the phone's own best guess from its
-     time zone (HQ reviews every added venue); the held backend that works the state out from the suburb is not in this build. */
+  /* only the name and the suburb are asked; the state is the phone's own guess from its time zone (HQ reviews every added venue). */
   function guessState() {
     var tz = '';
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
@@ -893,8 +881,7 @@ var VPCoaster = (function () {
     if (!BANK) return;
     view('vPlay');
     $('loading').hidden = false; $('q').hidden = true; $('answers').textContent = ''; $('verdict').textContent = ''; $('ptotal').textContent = '';
-    /* the start-of-game show, "Let's play trivia" (/app/vp-sting.js, as on the trivia phone), THEN the round starts: the
-       Worker's clock for question 1 starts when the round does, so the show never costs a player seconds */
+    /* the start-of-game show (/app/vp-sting.js, as on the trivia phone), THEN the round starts, so the show never costs a player seconds */
     var ST = window.VPSting;
     if (ST && ST.on && !startShow) {
       startShow = true; $('vPlay').classList.add('hush');
@@ -1049,8 +1036,7 @@ var VPCoaster = (function () {
 
   /* 4. THE END */
   var boardPeriod = 'night', myTonight = 0;
-  /* THE END SHOW (INBOX 405 update 6): the real game's show system again, held as long as it holds the start (vp-sting, phone layout),
-     "THAT'S A WRAP", then the score. With ?sting=0 there is none. */
+  /* THE END SHOW (INBOX 405 update 6): the real game's show, held as long as the start show, then the score. */
   function finish() {
     clearInterval(ticker);
     var ST = window.VPSting;
@@ -1123,9 +1109,7 @@ var VPCoaster = (function () {
   }
   $('tabNight').addEventListener('click', function () { loadBoard('night'); });
   $('tabWeek').addEventListener('click', function () { loadBoard('week'); });
-  /* "Want to challenge your mates?" then ONE pink Share button (396 update 2): the phone's own share sheet where there
-     is one (iPhone and Android: Messages, WhatsApp, Messenger, Instagram, Mail, Copy), else a text message and a Copy
-     link. A cancelled share does nothing and shows no error. */
+  /* "Want to challenge your mates?" then ONE pink Share button (396 update 2): the share sheet where there is one, else a text message and Copy link. */
   function canShare() { return !!(navigator.share && typeof navigator.share === 'function'); }
   function shareMode() {
     $('challenge').textContent = canShare() ? 'Share' : 'Text your mates a challenge';
@@ -1170,7 +1154,7 @@ var VPCoaster = (function () {
       try { d = JSON.parse(x.responseText); } catch (e) {}
       if (x.status !== 200 || !d || !d.q || d.q.length < PER_SCAN) return failed();
       BANK = d.q;
-      if (S.code) askName(); else askWhere();   // a challenge always shows the details step: it names the venue and asks the mobile   // the venue first, then the name (INBOX 309.1)
+      if (S.code) askName(); else askWhere();   // the venue first, then the details (a challenge carries its venue)
     };
     x.onerror = x.ontimeout = failed;
     x.send();
