@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 00:35 · 70cc06b8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 20:15 · fcdd0dbb';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -336,6 +336,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/help/push/key')    return await helpAdminPushKey(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/push/subscribe')   return await helpAdminPushSubscribe(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/push/unsubscribe') return await helpAdminPushUnsubscribe(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/push/mine')        return await helpAdminPushMine(request, env, json);
       if (request.method === 'POST' && path === '/webhook')  return await handleWebhook(request, env, cors);
       // Owner self-serve billing (vpb* functions pasted in from venueplay-api-account.js).
       if (request.method === 'POST' && path === '/account/summary'   && typeof vpbAccountSummary === 'function') return await vpbAccountSummary(request, env, json);
@@ -21211,11 +21212,13 @@ const HELP_EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
    domains Resend sends for; venueplay.com.au and partyplay.com.au are at DMARC quarantine with
    Migadu as their only sender, so a From of support@venueplay.com.au sent through Resend would
    land in junk. The Reply-To is the real Migadu mailbox, and from there the help subdomain copy
-   threads the answer back onto the ticket. */
+   threads the answer back onto the ticket. PartyPlay uses only hello@ and support@ (Dean, 2 Nov 2026:
+   "return mail has to go via partyplay"; its accounts@ goes only to Dean and never threads back), so a
+   PartyPlay accounts or sales ticket answers from hello@send.partyplay.com.au, Reply-To hello@partyplay.com.au. */
 function helpFromFor(category, brand) {
   const b = brand === 'partyplay' ? 'partyplay' : 'venueplay';
   const local = (category === 'venue_support' || category === 'patron_support') ? 'support'
-              : category === 'accounts' ? 'accounts' : 'hello';
+              : (category === 'accounts' && b === 'venueplay') ? 'accounts' : 'hello';
   const who = HELP_BRAND_LABEL[b] + (local === 'support' ? ' Support' : local === 'accounts' ? ' Accounts' : '');
   return { from: who + ' <' + local + '@send.' + b + '.com.au>', reply_to: local + '@' + b + '.com.au' };
 }
@@ -21239,6 +21242,46 @@ function helpIsInstantlyLead(mail) {
 }
 function helpBrandForAddress(addr) {
   return /@([a-z0-9-]+\.)*partyplay\.com\.au$/i.test(String(addr || '').trim()) ? 'partyplay' : 'venueplay';
+}
+/* THE ADDRESS THE CUSTOMER WROTE TO (Dean, 2 Nov 2026). Migadu aliases cannot point outside the
+   domain, so the one real feed is the hello@ mailbox forwarding everything to hello@help.<brand>,
+   and support@, sales@ and accounts@ reach it by their copy into hello@. Every email therefore
+   arrives with the envelope hello@help..., which made every ticket General. When the envelope is
+   that hello@, the original To, then Cc, is read: the first support@, accounts@ or sales@ at
+   venueplay.com.au or partyplay.com.au decides the kind and the brand; failing that, the first
+   address at either domain decides the brand (General); failing that, the envelope.
+   A direct envelope (support@help... and so on) is used as it is. Headers are the sender's to
+   write, so this only ever picks a kind and a brand: a reply still needs its ticket's secret, and
+   nothing else here trusts a header. Display names are never read, only the addresses. */
+const HELP_TEAM_LOCALS = ['support', 'accounts', 'sales'];
+function helpHeaderAddresses(v) {
+  const out = []; let cur = '', q = false, a = 0;
+  for (const c of helpWords(String(v || ''))) {
+    if (c === '"' && !a) q = !q;
+    else if (c === '<' && !q) a++;
+    else if (c === '>' && !q && a) a--;
+    if (c === ',' && !q && !a) { out.push(cur); cur = ''; } else cur += c;
+  }
+  out.push(cur);
+  return out.map((p) => helpAddress(p).email).filter(Boolean);
+}
+function helpOriginalAddress(envelopeTo, headers) {
+  const env = String(envelopeTo || '').toLowerCase().trim();
+  if (!/^hello@help\.(venueplay|partyplay)\.com\.au$/.test(env)) return envelopeTo;   // as it came: a +secret keeps its case
+  const h = headers || {};
+  const all = helpHeaderAddresses(h.to).concat(helpHeaderAddresses(h.cc));
+  let brandOnly = '';
+  for (const e of all) {
+    const m = /^([a-z0-9._-]+)(\+[^@]*)?@(?:help\.)?(venueplay|partyplay)\.com\.au$/.exec(e);
+    if (!m) continue;
+    if (HELP_TEAM_LOCALS.indexOf(m[1]) >= 0) return m[1] + '@' + m[3] + '.com.au';
+    if (!brandOnly) brandOnly = m[3];
+  }
+  /* No team address, but a brand's own address (hello@partyplay.com.au): that brand, General. PartyPlay
+     hello@ ALSO forwards to venueplay hello@ (since August 2026), so every PartyPlay email arrives twice,
+     once on each brand's help address with one Message-ID. Whichever copy lands first, the headers are
+     the same, so the brand comes out the same. */
+  return brandOnly ? 'hello@' + brandOnly + '.com.au' : envelopeTo;
 }
 
 function helpLine(v, max) { return String(v == null ? '' : v).replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max); }
@@ -21507,11 +21550,37 @@ async function helpSendEmail(env, m) {
   return !!(res && res.ok);
 }
 
-/* THE STAFF ALERT, on every ticket that did not start in HQ. Subject: [VenuePlay] or [PartyPlay],
-   URGENT when it is, the kind, the number. To VP_HELP_ALERT_EMAIL, else VP_INTERNAL_EMAIL, else
-   hello@venueplay.com.au, where every other staff alert in this Worker goes. The X-VP-Help header
-   and the send. domain stop this alert, copied from hello@ to the help subdomain, coming straight
-   back in as a ticket of its own. */
+/* THE STAFF ALERT, on every ticket that did not start in HQ. Subject: [venueplay] or [PartyPlay]
+   first, URGENT when it is, the kind, the number. The X-VP-Help header and the send. domain stop
+   this alert, copied from a team mailbox into hello@ and on to the help subdomain, coming straight
+   back in as a ticket of its own.
+
+   EACH TEAM GETS ITS OWN (Dean, 2 Nov 2026: "every different email needs its own notifications for
+   different teams", then "split notifications by brand too"). The alert goes to the team address on
+   the ticket's own brand: Accounts to accounts@, Sales to sales@, Venue and Player support to
+   support@, General to hello@. PartyPlay has only hello@ and support@, so its accounts and sales
+   alerts go to PartyPlay hello@. VP_HELP_ALERT_ROUTES, optional, is JSON from a kind ("sales") or a
+   brand and kind ("partyplay:sales") to one address, the brand and kind winning; anything that is
+   not JSON, or not an address, is ignored and the default stands. */
+const HELP_TEAM_MAILBOX = { venue_support: 'support', patron_support: 'support', accounts: 'accounts', sales: 'sales', general: 'hello' };
+const HELP_BRAND_MAILBOXES = { venueplay: ['support', 'accounts', 'sales', 'hello'], partyplay: ['support', 'hello'] };
+function helpAlertRoutes(env) {
+  try {
+    const o = JSON.parse(String((env && env.VP_HELP_ALERT_ROUTES) || ''));
+    return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+  } catch (e) { return {}; }
+}
+function helpAlertTo(env, ticket) {
+  const brand = ticket && ticket.brand === 'partyplay' ? 'partyplay' : 'venueplay';
+  const kind = ticket && HELP_CATEGORIES.indexOf(ticket.category) >= 0 ? ticket.category : 'general';
+  const routes = helpAlertRoutes(env);
+  for (const k of [brand + ':' + kind, kind]) {
+    const v = typeof routes[k] === 'string' ? routes[k].trim().toLowerCase() : '';
+    if (v && HELP_EMAIL_RE.test(v)) return v;
+  }
+  const box = HELP_TEAM_MAILBOX[kind] || 'hello';
+  return (HELP_BRAND_MAILBOXES[brand].indexOf(box) >= 0 ? box : 'hello') + '@' + brand + '.com.au';
+}
 function helpAlertSubject(ticket, lead) {
   return vpaStaffSubject(ticket.priority === 'urgent' ? 'urgent' : 'action',
          helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90), ticket.brand);
@@ -21537,7 +21606,8 @@ async function helpAlertAllowed(env) {
 async function helpNotifyStaff(env, ticket, venueName, lead) {
   try {
     if (!(await helpAlertAllowed(env))) return false;
-    const to = env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au';
+    const to = helpAlertTo(env, ticket);
+    const brand = ticket.brand === 'partyplay' ? 'partyplay' : 'venueplay';
     const row = (k, v) => v ? '<p style="margin:4px 0"><b>' + k + ':</b> ' + helpHtml(v) + '</p>' : '';
     const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">' +
       '<h2 style="margin:0 0 10px">' + helpHtml(helpAlertSubject(ticket, lead)) + '</h2>' +
@@ -21550,8 +21620,8 @@ async function helpNotifyStaff(env, ticket, venueName, lead) {
       helpHtml(lead && lead !== ticket.subject ? lead : ticket.message) + '</div>' +
       '<p style="margin-top:16px"><a href="https://www.venueplay.com.au/app/hq.html#help-' + ticket.ticket_no + '">Open it in HQ</a>. ' +
       'Reply from HQ so the answer is kept on the ticket.</p></div>';
-    return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
-      reply_to: ticket.contact_email || 'hello@venueplay.com.au',
+    return await helpSendEmail(env, { to: to, from: HELP_BRAND_LABEL[brand] + ' Help Desk <hello@send.' + brand + '.com.au>',
+      reply_to: ticket.contact_email || 'hello@' + brand + '.com.au',
       subject: helpAlertSubject(ticket, lead),
       html: vpaStaffCard(html, helpAlertSubject(ticket, lead), ticket.priority === 'urgent' ? 'urgent' : 'action'), headers: { 'X-VP-Help': 'alert' } });
   } catch (e) { return false; }
@@ -22556,10 +22626,60 @@ async function helpVapidAuth(env, endpoint) {
    A ticket is bad feedback by helpIsBadFeedback: the alert sweep's own raised_by, or the flag the follow-up
    sets on the ticket it hands to the push (never stored, never on anything a player sees). */
 function helpIsBadFeedback(ticket) { return !!(ticket && (ticket.bad_feedback === true || ticket.raised_by === VPF_ALERT_BY)); }
+/* WHICH TICKETS BUZZ WHICH DEVICE (HQ > Help desk > Alerts on this device; Dean, 2 Nov 2026: "every
+   different email needs its own notifications for different teams" and "split notifications by
+   brand too"). A tick per kind per brand, so a phone can take PartyPlay support only:
+     <brand>:<kind>     venueplay:venue_support ... partyplay:general, every kind in HELP_CATEGORIES
+     <brand>:urgent     an urgent ticket of any kind on that brand
+     venueplay:bad_feedback   bad player feedback (the "Not for me" alerts; venueplay games only)
+   STORED in vp_help_push_subs.filter as text. The three words the column always allowed stay the
+   names of their sets, so a device saved before today keeps exactly what it had:
+     all            every tick (and the default: a device is never left with no alerts)
+     urgent_sales   urgent and sales on both brands, and bad player feedback
+     bad_feedback   only bad player feedback
+   Any other choice is a comma list of ticks, which needs migration 144 to widen the column's check;
+   until then the device is kept on every ticket and HQ says why (helpAdminPushSubscribe). A list
+   with nothing this desk knows reads as every tick, for the same reason. */
+const HELP_ALERT_TICKS = (function () {
+  const out = [];
+  HELP_BRANDS.forEach((b) => {
+    HELP_CATEGORIES.forEach((k) => out.push(b + ':' + k));
+    out.push(b + ':urgent');
+    if (b === 'venueplay') out.push(b + ':bad_feedback');
+  });
+  return out;
+})();
+const HELP_ALERT_NAMED = {
+  urgent_sales: ['venueplay:sales', 'venueplay:urgent', 'venueplay:bad_feedback', 'partyplay:sales', 'partyplay:urgent'],
+  bad_feedback: ['venueplay:bad_feedback'],
+};
+function helpAlertSet(filter) {
+  const f = String(filter == null ? '' : filter).trim();
+  if (!f || f === 'all') return HELP_ALERT_TICKS.slice();
+  if (HELP_ALERT_NAMED[f]) return HELP_ALERT_TICKS.filter((t) => HELP_ALERT_NAMED[f].indexOf(t) >= 0);
+  const got = f.toLowerCase().split(',').map((x) => x.trim());
+  const set = HELP_ALERT_TICKS.filter((t) => got.indexOf(t) >= 0);
+  return set.length ? set : HELP_ALERT_TICKS.slice();
+}
+/* What to store for a choice: an array of ticks from HQ, or one of the stored words. */
+function helpAlertFilter(choice) {
+  const set = Array.isArray(choice) ? helpAlertSet(choice.map(String).join(',')) : helpAlertSet(choice);
+  const same = (names) => names.length === set.length && names.every((t) => set.indexOf(t) >= 0);
+  if (same(HELP_ALERT_TICKS)) return 'all';
+  for (const k of Object.keys(HELP_ALERT_NAMED)) if (same(HELP_ALERT_NAMED[k])) return k;
+  return set.join(',');
+}
+/* Bad player feedback: the mark the feedback work (feature/player-screens-2nov) puts on the copy of a
+   ticket it hands to the push, or the "Not for me" alert's own raised_by (its VPF_ALERT_BY). This
+   replaces that work's helpIsBadFeedback, word for word the same test. */
+function helpAlertIsBad(ticket) { return helpIsBadFeedback(ticket); }
 function helpPushWants(sub, ticket) {
-  if (sub.filter === 'bad_feedback') return helpIsBadFeedback(ticket);
-  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales' || helpIsBadFeedback(ticket);
-  return true;
+  const set = helpAlertSet(sub && sub.filter);
+  const brand = ticket && ticket.brand === 'partyplay' ? 'partyplay' : 'venueplay';
+  if (ticket && ticket.priority === 'urgent' && set.indexOf(brand + ':urgent') >= 0) return true;
+  if (brand === 'venueplay' && helpAlertIsBad(ticket)) return set.indexOf('venueplay:bad_feedback') >= 0;
+  const kind = ticket && HELP_CATEGORIES.indexOf(ticket.category) >= 0 ? ticket.category : 'general';
+  return set.indexOf(brand + ':' + kind) >= 0;
 }
 async function helpPushNew(env, ticket) {
   if (!env.VAPID_PRIVATE_JWK || !env.VAPID_PUBLIC_KEY) return { sent: 0, why: 'phone alerts are not set up' };
@@ -22590,7 +22710,7 @@ async function helpAdminPushSubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const endpoint = String(g.body.endpoint || '').trim();
   if (!HELP_PUSH_HOSTS.test(endpoint) || endpoint.length > 1000) return json({ error: 'That is not a push address this desk knows.' }, 400);
-  let filter = ['urgent_sales', 'bad_feedback'].indexOf(g.body.filter) >= 0 ? g.body.filter : 'all';
+  let filter = helpAlertFilter(Array.isArray(g.body.ticks) ? g.body.ticks : g.body.filter);
   const raw = new Uint8Array(32); crypto.getRandomValues(raw);
   const token = helpB64url(raw);
   await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
@@ -22600,14 +22720,25 @@ async function helpAdminPushSubscribe(request, env, json) {
   let note = '';
   try { await vpaInsert(env, 'vp_help_push_subs', row, false); }
   catch (e) {
-    /* Until migration 137 widens the filter's check, "bad_feedback" is refused. The old setting was
-       already removed above, so the device is never left with no alerts: it gets every ticket, and says so. */
-    if (filter !== 'bad_feedback') throw e;
+    /* The column's check refuses a choice it does not know yet ("bad_feedback" before migration 137, a
+       list of ticks before 144). The old setting was removed above, so the device is never left with no
+       alerts: it gets every ticket, and says so. */
+    if (filter === 'all' || filter === 'urgent_sales') throw e;
+    note = 'This device gets every ticket for now: ' + (filter === 'bad_feedback'
+      ? '"Only bad player feedback" needs migration 137 run first.' : 'choosing teams needs migration 144 run first.');
     filter = 'all'; row.filter = 'all';
     await vpaInsert(env, 'vp_help_push_subs', row, false);
-    note = 'This device gets every ticket for now: "Only bad player feedback" needs migration 137 run first.';
   }
-  return json({ ok: true, token: token, filter: filter, note: note || undefined });
+  return json({ ok: true, token: token, filter: filter, ticks: helpAlertSet(filter), note: note || undefined });
+}
+/* What this device is set to, so HQ shows its ticks (an old "urgent_sales" shows as its ticks). */
+async function helpAdminPushMine(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const endpoint = String(g.body.endpoint || '').trim();
+  if (!endpoint) return json({ on: false, ticks: helpAlertSet('all') });
+  const r = await vpaSelect(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint) + '&select=filter&limit=1');
+  const sub = r && r[0];
+  return json({ on: !!sub, filter: sub ? sub.filter : null, ticks: helpAlertSet(sub ? sub.filter : 'all') });
 }
 async function helpAdminPushUnsubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
@@ -22644,7 +22775,7 @@ async function helpPushPeek(request, env, json) {
     return json({ count: 0, handled: handled });
   }
   const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
-    '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
+    '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,raised_by,created_at&order=created_at.desc&limit=50');
   const mine = (rows || []).filter((t) => helpPushWants(sub, t))
     .sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));
   const seen = (rows || []).reduce((m, x) => (String(x.created_at) > m ? String(x.created_at) : m), String(since));
@@ -22796,6 +22927,18 @@ function helpIgnoreEmail(mail) {
   if (/^(bulk|junk|list|auto_reply)$/i.test(h.precedence || '')) return 'bulk mail';
   if (h['list-unsubscribe'] || h['list-id']) return 'a mailing list';
   if (/^(mailer-daemon|postmaster|no-?reply|do-?not-?reply)@/i.test(from)) return 'an automatic sender';
+  /* AUTOMATED MAIL TO hello@ (Dean, 2 Nov 2026): reports and service notices are not a customer
+     waiting on a reply. Kept CONSERVATIVE, because a real person must never be dropped: only senders
+     that cannot be a person, and only report shapes no person writes. Everything ignored here is
+     still in the Migadu mailbox; only the help desk copy is skipped. */
+  if (/^(no[-_.]?reply|do[-_.]?not[-_.]?reply|donotreply)([-_.+][^@]*)?@/i.test(from)) return 'an automatic sender';
+  if (/^[^@]*dmarc[^@]*@/i.test(from)) return 'a DMARC report';
+  const subj = String(mail.title || '');
+  if (/\breport[ -]?domain:/i.test(subj) || (/\bsubmitter:/i.test(subj) && /\breport[ -]?id:/i.test(subj))) return 'a DMARC report';
+  if (/^multipart\/report\b/i.test(h['content-type'] || '') && /report-type\s*=\s*\x22?(feedback-report|delivery-status|disposition-notification)/i.test(h['content-type'] || '')) return 'an automatic report';
+  /* An Instantly positive-reply alert is a sales LEAD (Dean, 3 Nov 2026), never a service notice: it is let
+     through here and filed as a venueplay sales ticket (helpIsInstantlyLead). Its other notices stay ignored. */
+  if (!helpIsInstantlyLead(mail) && /^(notifications?|notify|alerts?|security|billing-?noreply|support-?noreply)@([a-z0-9-]+\.)*(stripe\.com|resend\.com|resend\.dev|google\.com|facebookmail\.com|meta\.com|instantly\.ai|migadu\.com)$/i.test(from)) return 'a service notice';
   return '';
 }
 /* ==========================================================================================
@@ -22946,6 +23089,12 @@ async function helpAdminUnblock(request, env, json) {
   if (gone.length) await vpaAudit(env, g.admin, 'help_unblock_sender', gone[0].value, { kind: gone[0].kind });
   return json({ ok: true, removed: gone.length });
 }
+/* A REMITTANCE OR PAYMENT ADVICE (Dean, 2 Nov 2026): kept, as Accounts, already closed and with no
+   alert or acknowledgement, so it is on file without sitting in Needs reply. A reply on an open ticket
+   still threads as normal. */
+function helpIsRemittance(mail) {
+  return /\b(remittance|payment advice)\b/i.test(String((mail && mail.title) || ''));
+}
 async function helpReadRaw(message) {
   if (typeof message.raw === 'string') return message.raw.slice(0, 2000000);
   const text = await new Response(message.raw).text();
@@ -22971,6 +23120,8 @@ async function helpTicketFromEmail(env, to, mail) {
      nobody checked is our brand's mail going wherever a stranger pointed it. */
   const contact = mail.from;
   const askedElsewhere = (mail.reply_to && mail.reply_to.email && mail.reply_to.email !== mail.from.email) ? mail.reply_to.email : null;
+  const sentTo = to;
+  to = helpOriginalAddress(sentTo, mail.headers);   // the hello@ feed: the team address the customer wrote to (kind and brand only)
   /* An Instantly positive-reply alert is filed as venueplay whichever inbox it reached (Dean, 3 Nov
      2026): Instantly still mails hello@partyplay.com.au, but the cold campaigns are venueplay's.
      Everything else to a partyplay address stays partyplay. */
@@ -22984,7 +23135,7 @@ async function helpTicketFromEmail(env, to, mail) {
      as the address. From and Reply-To can be forged; the secret cannot be guessed. Anything without
      it, including a bare "[#1042]" or "(ticket 1042)", starts a new ticket instead of writing on
      somebody else's. */
-  const plus = /\+(\d{3,9})-([A-Za-z0-9_-]{8,40})@/.exec(String(to || ''));
+  const plus = /\+(\d{3,9})-([A-Za-z0-9_-]{8,40})@/.exec(String(sentTo || ''));   // the envelope only: header addresses are lowercased
   const oldTag = /\[#(\d{3,9})-([A-Za-z0-9_-]{8,40})\]/.exec(mail.title) || plus;
   const newTag = oldTag ? null : (HELP_REF_RE.exec(mail.title) || HELP_REF_RE.exec(String(mail.text || '').slice(0, 50000)));
   const tagNo = oldTag ? oldTag[1] : newTag ? newTag[1] : null;
@@ -23027,10 +23178,12 @@ async function helpTicketFromEmail(env, to, mail) {
       return { action: 'spam', why: phish };
     }
   }
+  const remit = !instantlyLead && helpIsRemittance(mail);
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: instantlyLead ? 'sales' : helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
+      brand: brand, category: instantlyLead ? 'sales' : remit ? 'accounts' : helpCategoryForAddress(to), status: remit ? 'closed' : undefined,
+      channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
       contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + inboxBrand + '.com.au' : null, email_message_id: mid,
     });
@@ -23039,6 +23192,7 @@ async function helpTicketFromEmail(env, to, mail) {
     if (mid && /duplicate|unique|23505/i.test(String(e && e.message))) return { action: 'duplicate' };
     throw e;
   }
+  if (remit) return { action: 'filed', ticket_no: t.ticket_no };   // a remittance: on file, closed, nobody woken
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
   // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked:
   // helpAcknowledge refuses every instantly.ai address itself (helpRobotAddress, 9 Nov 2026), one place for it.

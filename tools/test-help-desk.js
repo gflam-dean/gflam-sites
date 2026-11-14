@@ -136,7 +136,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the email is kept in lower case for the reply', t && t.contact_email === 'jo@example.com', t && t.contact_email);
   var alert = sent.filter(function (m) { return /HELP|\[venueplay\]|venueplay \u00b7 (Action needed|Urgent|FYI):/.test(m.subject); })[0];
   check('staff are emailed, subject starting [venueplay], the kind and the number', alert && /^venueplay \u00b7 Action needed: Player support \[#1001\]/.test(alert.subject), alert && alert.subject);
-  check('the alert goes to the staff address, never to the patron', alert && alert.to.join() === 'hello@venueplay.com.au', alert && alert.to);
+  // Changed on purpose (Dean, 2 Nov 2026): each team gets its own alert, so a player-support ticket alerts support@ (was hello@).
+  check('the alert goes to the staff address, never to the patron', alert && alert.to.join() === 'support@venueplay.com.au', alert && alert.to);
   check('the alert carries the header that stops it coming back in as a ticket', alert && alert.headers && alert.headers['X-VP-Help'] === 'alert');
   /* THE ACKNOWLEDGEMENT (Dean, 23 Oct 2026). Until then this check said nothing at all was emailed to
      the address the patron typed; now exactly one thing is, and it carries nothing they wrote. */
@@ -605,21 +606,23 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the same email delivered twice is one ticket (Message-ID)', (await inbound('support@help.venueplay.com.au', mail({}))).action === 'duplicate' && DB.vp_help_tickets.length === 1);
   check('accounts@ is accounts', (await inbound('accounts@help.venueplay.com.au', mail({ mid: '<m2@x>' }))).action === 'ticket' && DB.vp_help_tickets[1].category === 'accounts');
   check('sales@ is sales and hello@ is general', (await inbound('sales@help.venueplay.com.au', mail({ mid: '<m3@x>' }))) && DB.vp_help_tickets[2].category === 'sales' &&
-        (await inbound('hello@help.venueplay.com.au', mail({ mid: '<m4@x>' }))) && DB.vp_help_tickets[3].category === 'general');
+        (await inbound('hello@help.venueplay.com.au', mail({ mid: '<m4@x>', to: 'hello@venueplay.com.au' }))) && DB.vp_help_tickets[3].category === 'general');   // To: hello@ (2 Nov 2026: the hello@ feed reads the original To)
+  /* (14 Nov 2026: these three carry To: hello@partyplay.com.au, as the real mail does; since the hello@ feed reads the
+     team address from To/Cc (help alerts by team), a To left at the support@venueplay default would route them there.) */
   /* 3 Nov 2026: Instantly's "positive reply" alert to hello@partyplay was partyplay / general, so a
      phone set to urgent-and-sales never buzzed. It is a sales lead, and Instantly is not thanked. */
   var ackBefore = sent.length, nBefore = DB.vp_help_tickets.length;
-  await inbound('hello@help.partyplay.com.au', mail({ mid: '<inst1@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+  await inbound('hello@help.partyplay.com.au', mail({ to: 'hello@partyplay.com.au', mid: '<inst1@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
     subject: 'drinks@pausebar.com.au may have sent a positive reply', body: 'Hi Dean,\r\n\r\nIt looks like you have a sales opportunity in the Unibox, go check it out!\r\n\r\nFrom: drinks@pausebar.com.au' }));
   var inst = DB.vp_help_tickets[nBefore];
   check('an Instantly positive-reply alert is a SALES ticket, so an urgent-and-sales phone buzzes', inst && inst.category === 'sales', inst && inst.category);
   check('and it is filed as VENUEPLAY, though it reached hello@partyplay (the cold campaigns are venueplay\'s)', inst && inst.brand === 'venueplay', inst && inst.brand);
   check('the HQ card still says the true inbox it was sent to', inst && inst.source_address === 'hello@partyplay.com.au', inst && inst.source_address);
   check('and no acknowledgement is mailed back to Instantly', !sent.slice(ackBefore).some(function (m) { return /instantly\.ai/.test(m.to.join()); }), sent.slice(ackBefore).map(function (m) { return m.to.join(); }));
-  await inbound('hello@help.partyplay.com.au', mail({ mid: '<inst2@x>', from: 'Fake <notifications@instantly.ai.evil.example>', subject: 'x may have sent a positive reply' }));
+  await inbound('hello@help.partyplay.com.au', mail({ to: 'hello@partyplay.com.au', mid: '<inst2@x>', from: 'Fake <notifications@instantly.ai.evil.example>', subject: 'x may have sent a positive reply' }));
   check('the same words from anyone else stay general', DB.vp_help_tickets[nBefore + 1].category === 'general', DB.vp_help_tickets[nBefore + 1].category);
   check('and stay partyplay', DB.vp_help_tickets[nBefore + 1].brand === 'partyplay', DB.vp_help_tickets[nBefore + 1].brand);
-  await inbound('hello@help.partyplay.com.au', mail({ mid: '<pp-hello@x>', from: 'Kim <kim@example.com.au>', subject: 'Party for 30 on Saturday' }));
+  await inbound('hello@help.partyplay.com.au', mail({ to: 'hello@partyplay.com.au', mid: '<pp-hello@x>', from: 'Kim <kim@example.com.au>', subject: 'Party for 30 on Saturday' }));
   check('an ordinary email to hello@partyplay stays a PARTYPLAY general ticket', DB.vp_help_tickets[nBefore + 2].brand === 'partyplay' && DB.vp_help_tickets[nBefore + 2].category === 'general', DB.vp_help_tickets[nBefore + 2]);
   DB.vp_help_tickets.splice(nBefore, 3);
   await inbound('support@help.partyplay.com.au', mail({ mid: '<m5@x>' }));

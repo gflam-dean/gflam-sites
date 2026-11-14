@@ -4394,6 +4394,12 @@ def local_checks(which):
              'test-webhook-retry-is-not-dropped.js',
              'only a FINISHED Stripe event is answered 200; a failed one is retried', 10,
              'A 200 tells Stripe never to send it again. Paid, no venue, and nothing says so'),
+            # D112: help desk alerts by team and by brand (Dean, 2 Nov 2026; migration 144), branch feature/help-alerts-by-team-2nov.
+            ('D112. Each help desk alert reaches its own team on its own brand, and an email is filed under the address it was written to',
+             'test-help-alerts.js',
+             'through the hello@ feed the original To, then Cc, picks the kind and the brand (display names and look-alike domains never count; a PartyPlay email landing first on venueplay\'s help address is PartyPlay); a device ticks kinds per brand, urgent per brand and bad player feedback; the old all, urgent_sales and bad_feedback keep what they had; a team choice before migration 144 keeps every ticket and says so; HQ\'s ticks equal the Worker\'s; each alert email goes to that team\'s mailbox on the ticket\'s brand (PartyPlay accounts and sales to its hello@), VP_HELP_ALERT_ROUTES overrides and bad JSON is ignored, and X-VP-Help: alert is on every one; every alert, acknowledgement and reply on a PartyPlay ticket goes from the partyplay send domain, its accounts and sales from hello@; DMARC and delivery reports, no-reply senders and service notices open no ticket while a real person never drops, and a remittance is filed as Accounts, closed, with no alert', 90,
+             'Every ticket filed as General because every email arrives through hello@, an accounts question buzzing the sales phone, '
+             'a PartyPlay complaint filed and answered as venueplay, or an alert that loops back in as a ticket of its own'),
             ('D53. The help desk: anyone can ask, only HQ can read',
              'test-help-desk.js',
              'tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 140,

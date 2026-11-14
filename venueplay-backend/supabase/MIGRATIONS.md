@@ -864,3 +864,11 @@ keeps the earliest draw and the rest are marked redrawn with a reason and an aud
 `PRECHECK-raffle-double-winners-147-READ-ONLY.sql` (expect no rows). Needs 115. Any order with the game Worker; recommended 147
 first, then the game Worker from this branch (which answers 409 already_drawn). Branch `fix/security-3nov`. NOT RUN.
 Rollback: in the file.
+
+`venueplay-144-help-alerts-by-team.sql` (Dean, 2 Nov 2026: "every different email needs its own notifications for different
+teams", then "split notifications by brand too"): widens the check on `vp_help_push_subs.filter` so a device can keep a comma
+list of ticks (`venueplay:sales,partyplay:venue_support,...`) as well as the three named sets `all`, `urgent_sales` and
+`bad_feedback`. No new table, column, policy or grant, so RLS-BASELINE.json does not change. Safe to re-run (drop if exists,
+then add). Run AFTER 137. Any order with the billing Worker: until it is run, a device that picks teams is kept on every
+ticket and HQ says why; the named sets keep working. Branch `feature/help-alerts-by-team-2nov`, merged into release/tuesday-17nov 14 Nov 2026. RUN on LIVE by Dean 14 Nov 2026 ~22:50
+(Sydney project) and on the TEST database by main 14 Nov ~23:00 (tools/staging/run-on-test.py). Rollback: in the file.

@@ -30,7 +30,7 @@ BUILTIN = set("""if for while switch catch function return typeof new delete voi
  setTimeout setInterval clearTimeout clearInterval fetch alert confirm prompt requestAnimationFrame cancelAnimationFrame
  encodeURIComponent decodeURIComponent isNaN isFinite console document window navigator localStorage
  sessionStorage crypto Intl gtag dataLayer supabase
- atob btoa getComputedStyle encodeURI decodeURI structuredClone queueMicrotask
+ atob btoa getComputedStyle encodeURI decodeURI structuredClone queueMicrotask escape unescape
  AbortController Headers Request Response AudioContext webkitAudioContext
  IntersectionObserver ResizeObserver MutationObserver
  fbq

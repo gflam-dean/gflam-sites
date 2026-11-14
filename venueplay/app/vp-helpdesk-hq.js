@@ -840,16 +840,64 @@
     var standalone = root.matchMedia && root.matchMedia("(display-mode: standalone)").matches;
     box.innerHTML = '<div class="cxhead"><span class="cxname">Alerts on this device</span></div>' +
       (can ? "" : '<div class="restrict" style="margin:0 0 12px">This browser cannot take alerts' + (/iPhone|iPad/.test(root.navigator.userAgent) && !standalone ? ". On an iPhone: tap Share, then Add to Home Screen, open HQ from that icon, and come back here." : ".") + "</div>") +
-      '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
+      '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message. Tick what this device should hear about, for each brand.</div>' +
       '<div class="note" style="margin:0 0 12px">Sales and urgent alerts stay on screen until the ticket is opened, answered, closed or assigned. On an iPhone that needs one setting: Settings, Notifications, venueplay HQ, then Banner Style: Persistent (and Sounds on).</div>' +
-      '<div class="checklist" style="max-width:520px;margin-bottom:12px"><label class="checkitem"><input type="radio" name="hdaF" value="all" checked> Every ticket</label>' +
-      '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales (bad player feedback too)</label>' +
-      '<label class="checkitem"><input type="radio" name="hdaF" value="bad_feedback"> Only bad player feedback</label></div>' +
-      '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +
+      '<div id="hdaPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px">' +
+        '<button type="button" class="btn ghost" data-hda-preset value="all">Every ticket</button>' +
+        '<button type="button" class="btn ghost" data-hda-preset value="urgent_sales"> Only urgent ones and sales (bad player feedback too)</button>' +
+        '<button type="button" class="btn ghost" data-hda-preset value="bad_feedback"> Only bad player feedback</button>' +
+        '<button type="button" class="btn ghost" data-hda-preset value="none">Untick all</button></div>' +
+      '<div id="hdaTicks" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin-bottom:12px">' +
+        ALERT_BRANDS.map(function (b) {
+          return '<div data-hda-brand="' + b + '"><div class="cxname" style="margin:0 0 6px">' + BR[b] + '</div>' +
+            '<div style="display:grid;gap:6px">' + ALERT_ROWS.filter(function (r) { return !r.only || r.only === b; }).map(function (r) {
+              return '<label class="checkitem"><input type="checkbox" name="hdaT" value="' + b + ':' + r.k + '" checked> ' + hdEsc(r.label(b)) + '</label>';
+            }).join("") + '</div></div>';
+        }).join("") + '</div>' +
+      '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on (or save these ticks)</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +
       '<div class="note" id="hdaMsg"></div>';
+    Array.prototype.forEach.call(box.querySelectorAll("[data-hda-preset]"), function (b) {
+      b.addEventListener("click", function () { setTicks(alertPreset(b.value)); });
+    });
     if (!can) return;
     $("hdaOn").addEventListener("click", alertOn);
     $("hdaOff").addEventListener("click", alertOff);
+    // A device that already has alerts shows what it is set to (an old "urgent ones and sales" as its ticks).
+    root.navigator.serviceWorker.getRegistration(SCOPE).then(function (reg) { return reg && reg.pushManager.getSubscription(); })
+      .then(function (sub) { if (!sub) return null; return post("/admin/help/push/mine", { endpoint: sub.endpoint }); })
+      .then(function (r) { if (r && r.on && r.ticks) { setTicks(r.ticks); say("Alerts are on for this device. These are its ticks."); } })
+      .catch(function () {});
+  }
+  /* THE TICKS (Dean, 2 Nov 2026: "every different email needs its own notifications for different teams",
+     "split notifications by brand too"). One per kind per brand, urgent ones per brand, and bad player
+     feedback on venueplay. The Worker's HELP_ALERT_TICKS and HELP_ALERT_NAMED are the same lists
+     (tools/test-help-alerts.js holds them together). */
+  var ALERT_BRANDS = ["venueplay", "partyplay"];
+  var ALERT_ROWS = [
+    { k: "venue_support", label: function (b) { return catLabel("venue_support", b); } },
+    { k: "patron_support", label: function (b) { return catLabel("patron_support", b); } },
+    { k: "accounts", label: function (b) { return catLabel("accounts", b); } },
+    { k: "sales", label: function (b) { return catLabel("sales", b); } },
+    { k: "general", label: function (b) { return catLabel("general", b); } },
+    { k: "urgent", label: function () { return "Urgent ones, any kind"; } },
+    { k: "bad_feedback", only: "venueplay", label: function () { return "Bad player feedback"; } }
+  ];
+  var ALERT_PRESETS = {
+    urgent_sales: ["venueplay:sales", "venueplay:urgent", "venueplay:bad_feedback", "partyplay:sales", "partyplay:urgent"],
+    bad_feedback: ["venueplay:bad_feedback"],
+    none: []
+  };
+  function alertAllTicks() {
+    var out = [];
+    ALERT_BRANDS.forEach(function (b) { ALERT_ROWS.forEach(function (r) { if (!r.only || r.only === b) out.push(b + ":" + r.k); }); });
+    return out;
+  }
+  function alertPreset(v) { return ALERT_PRESETS[v] ? ALERT_PRESETS[v].slice() : alertAllTicks(); }
+  function setTicks(list) {
+    Array.prototype.forEach.call(doc.querySelectorAll('input[name="hdaT"]'), function (x) { x.checked = list.indexOf(x.value) >= 0; });
+  }
+  function getTicks() {
+    return Array.prototype.filter.call(doc.querySelectorAll('input[name="hdaT"]'), function (x) { return x.checked; }).map(function (x) { return x.value; });
   }
   function say(m) { var n = $("hdaMsg"); if (n) n.textContent = m; }
   function activeReg() {
@@ -861,7 +909,8 @@
   }
   var _alertNote = "";
   function alertOn() {
-    var filter = (doc.querySelector('input[name="hdaF"]:checked') || {}).value || "all";
+    var ticks = getTicks();
+    if (!ticks.length) { say("Tick at least one, or use Turn alerts off on this device."); return; }
     say("Asking this device...");
     root.Notification.requestPermission().then(function (perm) {
       if (perm !== "granted") throw new Error("Alerts were not allowed. Allow notifications for this site in the browser's settings, then try again.");
@@ -873,9 +922,10 @@
       });
     }).then(function (sub) {
       var label = (root.navigator.userAgentData && root.navigator.userAgentData.platform) || root.navigator.platform || "";
-      return post("/admin/help/push/subscribe", { endpoint: sub.endpoint, filter: filter, device_label: label }).then(function (r) {
+      return post("/admin/help/push/subscribe", { endpoint: sub.endpoint, ticks: ticks, device_label: label }).then(function (r) {
         if (r.error) throw new Error(r.error);
-        _alertNote = r.note || "";   // e.g. "Only bad player feedback" before migration 137: every ticket for now
+        _alertNote = r.note || "";   // e.g. before migration 144: every ticket for now
+        if (r.ticks) setTicks(r.ticks);
         // The device's own secret, for the service worker to ask what woke it. Never leaves this device but to us.
         return root.caches.open("vp-help-push").then(function (c) {
           return c.put(SCOPE + "config", new Response(JSON.stringify({ api: API, endpoint: sub.endpoint, token: r.token })));
