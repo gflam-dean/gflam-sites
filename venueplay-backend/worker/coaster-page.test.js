@@ -239,7 +239,7 @@ pass("NO DRINK words anywhere a person or a link preview can read (liquor licens
     var head = (PAGE.match(/<title>[^<]*<\/title>|<meta [^>]*content="[^"]*"/g) || []).join(" ");
     var vis = PAGE.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<style[\s\S]*?<\/style>/g, "").replace(/<!--[\s\S]*?-->/g, "");
     return !/\b(drinks?|shouts?|pour(ing)?|beer|pints?|booze|cheers)\b/i.test(head) && !/\b(drinks?|shouts?|pour(ing)?|beer|pints?|booze|cheers)\b/i.test(vis.replace(/<[^>]+>/g, " "));
-  })() && /name="description" content="Five quick trivia questions\. Points for speed, a board for your pub tonight/.test(PAGE));
+  })() && /name="description" content="Five quick trivia questions while you wait for your mate\. Points for speed, a board for your pub tonight/.test(PAGE) && /og:description" content="Five quick trivia questions while you wait for your mate\. Can you beat your mates\?/.test(PAGE));
 pass("the answers use the trivia phone's sizes: 24px, 21px for a longer answer (over 22 letters), 18px for the longest (over 40)",
   /font-size:24px;line-height:1\.12;/.test(css) && /\.panswers\.alen-2 \.ans\{font-size:21px\}/.test(css) && /\.panswers\.alen-3 \.ans\{font-size:18px\}/.test(css) && /alen > 40 \? ' alen-3' : alen > 22 \? ' alen-2' : ''/.test(PAGE));
 pass("the offers line shrinks to ONE line (down to 12px) and a name too long even then wraps at 15px, never cut; the venue name line wraps too",
