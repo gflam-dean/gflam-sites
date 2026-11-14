@@ -14,6 +14,8 @@ check('the home page, help, llms.txt and the sitemap no longer link /see-a-night
 check('/see-a-night and /see-a-night.html are 301s to /quick (cold emails and the autopilot reply that already point there land on the new flow)', /^\/see-a-night\s+\/quick\s+301$/m.test(REDIR) && /^\/see-a-night\.html\s+\/quick\s+301$/m.test(REDIR));
 var exists = true; try { rd('venueplay/see-a-night.html'); } catch (e) { exists = false; }
 check('the old page file is kept (unlinked) so a rollback is one line', exists);
+var P404 = rd('venueplay/404.html'), TRAIN = rd('venueplay/training.html'), WK = rd('venueplay-backend/worker/venueplay-api-FULL.js');
+check('the 404 page, the training page and the subscriber welcome email no longer point at /see-a-night', !/href="\/see-a-night/.test(P404) && !/\/see-a-night/.test(TRAIN.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '')) && WK.indexOf("site + '/see-a-night") === -1 && /site \+ '\/quick\?src=website&utm_source=subscriber/.test(WK));
 check('the home page and help load the label setting', /vp-quick-config\.js/.test(INDEX) && /vp-quick-config\.js/.test(HELP));
 
 section('2. The label and the step order are ONE setting each');
