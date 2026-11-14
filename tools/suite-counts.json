@@ -420,7 +420,7 @@
   "counted_by": "lines"
  },
  "tools/paper-lock-in-chrome.test.py": {
-  "checks": 62,
+  "checks": 64,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {

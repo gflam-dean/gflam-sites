@@ -115,6 +115,9 @@ def scene(w, h, tag):
         # 5a. scan: the button and the screen (no camera in a test Chrome)
         r.ask(s, 'document.getElementById("paperScanBtn").scrollIntoView({block:"center"}); true'); time.sleep(0.4)
         ok('5: the Scan a paper card button is on the live console, big enough to tap', (r.json(s, FIT, {}).get('scan') or {}).get('vis') is True and (r.json(s, FIT, {}).get('scan') or {}).get('h', 0) >= 44, r.json(s, FIT, {}).get('scan'))
+        sl = r.json(s, '(function(){var b=document.getElementById("paperScanBtn"),l=document.getElementById("paperScanLine");var br=b.getBoundingClientRect(),lr=l?l.getBoundingClientRect():null;return JSON.stringify({b:b.textContent.trim(),l:l?l.textContent.trim():"",below:!!lr&&lr.top>=br.bottom-0.5&&Math.abs(lr.left-br.left)<2,vis:!!lr&&lr.width>0,over:!!lr&&lr.right>innerWidth+0.5});})()', {})
+        ok('5: the button says what it does: "Scan a paper card", with the line "This checks if the card is a winner." under it, inside the screen (INBOX 392 item 4)',
+           sl.get('b') == 'Scan a paper card' and sl.get('l') == 'This checks if the card is a winner.' and sl.get('below') and sl.get('vis') and not sl.get('over'), sl)
         if SHOTS: r.shot(s, os.path.join(SHOTS, 'scan-button-%s.jpg' % tag))
         r.ask(s, 'document.getElementById("paperScanBtn").click(); true'); time.sleep(1.5)
         o = r.json(s, OVER, {})
