@@ -251,6 +251,7 @@ function H(o) { return helpParseEmail(mail(o)).headers; }
   function rawWhy(lines) { return helpIgnoreEmail(helpParseEmail(lines.join('\r\n'))); }
   check('a Google DMARC aggregate report (its sender) is ignored', why({ from: 'noreply-dmarc-support@google.com', subject: 'Report domain: venueplay.com.au Submitter: google.com Report-ID: 1234' }) !== '');
   check('a DMARC report from any dmarc@ sender is ignored', why({ from: 'dmarcreport@microsoft.com', subject: 'Report Domain: venueplay.com.au Submitter: protection.outlook.com Report-ID: <a1>' }) === 'a DMARC report');
+  check('and by its sender alone, whatever the subject says (a dmarc@ mailbox never writes to a person)', why({ from: 'dmarcreport@microsoft.com', subject: 'Weekly summary' }) === 'a DMARC report');
   check('a "Report domain:" subject is a DMARC report whoever sent it', why({ from: 'reports@mail.yahoo.com', subject: 'Report Domain: partyplay.com.au' }) === 'a DMARC report');
   check('"Submitter: ... Report-ID:" is a DMARC report', why({ from: 'rua@example.net', subject: 'Submitter: example.net Report-ID: 99' }) === 'a DMARC report');
   check('a delivery or feedback report (multipart/report) is ignored', rawWhy(['From: abuse@isp.example', 'To: hello@venueplay.com.au', 'Subject: Delivery Status Notification', 'Message-ID: <r@x>',

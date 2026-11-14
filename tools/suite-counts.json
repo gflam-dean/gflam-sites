@@ -884,7 +884,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-alerts.js": {
-  "checks": 90,
+  "checks": 91,
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
