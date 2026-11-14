@@ -134,7 +134,7 @@ print('the contact lines say venueplay, not Gflam Group; the legal line stays (D
     var c = contactBlock(x[1]);
     check(x[0] + ': the Contact us lines name venueplay and the ABN, and not Gflam Group', !!c && /<strong>venueplay<\/strong>/.test(c) && /ABN 35 679 383 049/.test(c) && !/Gflam Group/.test(c), c);
   });
-  ['index', 'help', 'nsw', 'privacy', 'terms', 'live-here-now'].forEach(function (f) {
+  ['index', 'help', 'nsw', 'privacy', 'terms'].forEach(function (f) {   // live-here-now left this list 14 Nov: its foot says (c) venueplay, no Gflam (INBOX 396.9)
     var src = readFile('venueplay/' + f + '.html') || '';
     check(f + '.html keeps the legal footer line, lowercase: "© Gflam Group Pty Ltd, trading as venueplay" (Dean, 4 Nov 2026)', /&copy; <span id="vp-year"><\/span> Gflam Group Pty Ltd, trading as venueplay(?![A-Za-z])/.test(src));
   });

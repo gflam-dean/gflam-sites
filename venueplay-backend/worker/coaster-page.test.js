@@ -78,9 +78,10 @@ pass("'1st this week at Tugun Tavern'", L.placeLine(1, "week", "Tugun Tavern") =
 pass("past the top 200 it says 'On the board', never a wrong place", L.placeLine(null, "night", "The Mini Bar") === "On the board tonight at The Mini Bar");
 var ords = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111, 112].map(L.ordinal).join(" ");
 pass("places read 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th 112th", ords === "1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th 112th", ords);
-pass("a coaster venue reads 'Tugun 4224'", L.placeLabel({ suburb: "Tugun", postcode: "4224", state: "QLD" }) === "Tugun 4224");
-pass("a venueplay venue (no suburb held) reads '2485 NSW'", L.placeLabel({ suburb: "", postcode: "2485", state: "NSW" }) === "2485 NSW");
-pass("a venue on our list (no postcode shown) reads 'Bodalla NSW'", L.placeLabel({ suburb: "Bodalla", postcode: "", state: "NSW" }) === "Bodalla NSW");
+pass("a result shows the suburb and the state: 'Tugun, QLD' (INBOX 396.3)", L.placeLabel({ suburb: "Tugun", postcode: "4224", state: "QLD" }) === "Tugun, QLD");
+pass("never a postcode: a venue with no suburb held reads just 'NSW', not '2000 NSW'", L.placeLabel({ suburb: "", postcode: "2000", state: "NSW" }) === "NSW" && !/\d/.test(L.placeLabel({ suburb: "Bodalla", postcode: "2537", state: "NSW" })));
+pass("venueplay venues come first, a game on now before the rest, the Worker's order kept otherwise (396.b)",
+  L.playableFirst([{ n: 1 }, { n: 2, on: true }, { n: 3, on: true, live: true }, { n: 4 }, { n: 5, on: true }]).map(function (m) { return m.n; }).join() === "3,2,5,1,4");
 pass("only a venue with a venueplay login reads 'On venueplay' ('Game on now' while a game is open); every other pick reads 'Not on venueplay yet'",
   L.statusWords({ on: true }).text === "On venueplay" && L.statusWords({ on: true, live: true }).text === "Game on now" && L.statusWords({ on: false, live: true }).text === "Not on venueplay yet" &&
   L.statusWords({}).text === "Not on venueplay yet" && L.statusWords({ on: true }).cls === "on" && L.statusWords({ on: false }).cls === "off");
@@ -92,8 +93,20 @@ pass("Add it: name, suburb and one of the eight states are needed; the website i
 
 print("\nTHE CHALLENGE LINK");
 pass("the link is venueplay.com.au/live-here-now?c=CODE", L.shareUrl("ABC234") === "https://venueplay.com.au/live-here-now?c=ABC234");
-var st = L.shareText("Sam", 4, 520, "The Mini Bar");
-pass("its words: 'Sam got 4 of 5 (520 points) at The Mini Bar. Same five questions: can you beat it?'", st === "Sam got 4 of 5 (520 points) at The Mini Bar. Same five questions: can you beat it?", st);
+var TOP = L.shareText(435, "The Mini Bar", 4), OUT = L.shareText(435, "The Mini Bar", 0);
+pass("in tonight's top 10 the words are: I'm 4th on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off. (396 update 4)", TOP === "I'm 4th on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off.", TOP);
+pass("outside the top 10 the words are: I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you can beat it?", OUT === "I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you can beat it?", OUT);
+pass("10th place is in the top 10, 11th is out", /10th on the Coaster/.test(L.shareText(100, "X", 10)) && /^I scored 100 on Coaster Trivia/.test(L.shareText(100, "X", 11)));
+pass("the venue is always named in the text", /The Mini Bar/.test(TOP) && /The Mini Bar/.test(OUT) && /my pub/.test(L.shareText(5, "", 0)));
+pass("NO drink, shout, round or booze wording anywhere in the share words (liquor licensing: never promote drinking)",
+  !/drink|shout|beer|round|pint|booze|bar tab|cheers|wine|shot/i.test(TOP.replace("The Mini Bar", "") + OUT.replace("The Mini Bar", "")) && !/\b(drink|shout|next round|beer|pint|booze)\b/i.test(PAGE.slice(PAGE.indexOf("function shareText("), PAGE.indexOf("var SHARE_TITLE"))));
+var ORD = { 1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 10: "10th", 11: "11th", 12: "12th", 13: "13th", 14: "14th", 21: "21st", 22: "22nd", 23: "23rd", 24: "24th", 101: "101st", 111: "111th", 112: "112th", 113: "113th", 121: "121st", 122: "122nd", 123: "123rd" };
+pass("ordinals are right: 1st 2nd 3rd 4th, the teens 11th 12th 13th, 21st 22nd 23rd, 101st 111th 112th 113th 121st", Object.keys(ORD).every(function (k) { return L.ordinal(+k) === ORD[k]; }), Object.keys(ORD).filter(function (k) { return L.ordinal(+k) !== ORD[k]; }));
+pass("the share words use the shared place: two on 725 are both 1st (the one on 580 is 3rd), top 10 only",
+  L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }, { place: 3, points: 580 }]) === 1 && L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580, you: true }]) === 3 &&
+  L.topTenPlace((function () { var r = []; for (var i = 1; i <= 11; i++) r.push({ place: i, points: 1000 - i, you: i === 11 }); return r; })()) === 0);
+pass("the game's name is Coaster Trivia: page title, og title, the line before a venue is picked, and the share sheet's title",
+  /<title>Coaster Trivia \| venueplay<\/title>/.test(PAGE) && /og:title" content="Coaster Trivia \| venueplay"/.test(PAGE) && /id="whereKick">Coaster Trivia</.test(PAGE) && L.SHARE_TITLE === "Coaster Trivia" && /'Playing at ' \+ venueName/.test(PAGE));
 pass("the code is read from ?c=, in capitals", L.readCode("?c=abc234") === "ABC234" && L.readCode("?v=the-mini-bar&c=ABC234") === "ABC234");
 pass("anything else is not a code", L.readCode("?c=abc") === "" && L.readCode("?c=abcdefg") === "" && L.readCode("?cc=ABC234") === "");
 
@@ -150,11 +163,20 @@ pass("there is no 'Just play, no board': Play now is hidden, shown only while th
   /\$\('whereHint'\)\.textContent = 'The search is having a rest\. Try again in a minute, or just play\.'; \$\('skipWhere'\)\.hidden = false; return; \}/.test(PAGE) &&
   /\$\('skipWhere'\)\.hidden = true;\n      var m = d\.matches/.test(PAGE));
 pass("the venue step asks 'What venue are you at?' (Dean 12 Nov, INBOX 309.1a), never 'Where are you playing?'",
-  /<h[12] class="pbig" id="whereHead">What venue are you at\?<\/h[12]>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
+  /<h[12] class="pbig one" id="whereHead">What venue are you at\?<\/h[12]>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
 pass("not on our list: the Add your venue form drops down straight away with what they typed", /if \(!m\.length\) openLead\(typed\);/.test(PAGE));
-var sms = L.smsHref("Sam got 4 of 5 (520 points). Same five questions: can you beat it?", "https://venueplay.com.au/live-here-now?c=ABC234");
-pass("Challenge your mates opens a text message with the words and the link", sms === "sms:?&body=" + encodeURIComponent("Sam got 4 of 5 (520 points). Same five questions: can you beat it? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
-pass("...the text first, the link to copy second", /window\.location\.href = L\.smsHref\(text, url\);/.test(PAGE) && PAGE.indexOf('id="challenge"') < PAGE.indexOf('id="copyLink"') && /Or copy the link/.test(PAGE));
+var sms = L.smsHref("I scored 520 at The Mini Bar. Reckon you can beat me?", "https://venueplay.com.au/live-here-now?c=ABC234");
+pass("the text-message fallback opens Messages with the words and the link", sms === "sms:?&body=" + encodeURIComponent("I scored 520 at The Mini Bar. Reckon you can beat me? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
+pass("Share (396 update 2): 'Want to challenge your mates?' then ONE pink Share button; navigator.share gets title, words and link; a cancelled share (AbortError) says nothing; no share sheet means the text message and Copy link ('Link copied')",
+  /<p class="cq">Want to challenge your mates\?<\/p>\s*<button class="btn pink" id="challenge" type="button">Share<\/button>/.test(PAGE) &&
+  /navigator\.share\(\{ title: L\.SHARE_TITLE, text: c\.text, url: c\.url \}\)/.test(PAGE) && /err\.name === 'AbortError'\) return;/.test(PAGE) &&
+  /if \(!canShare\(\)\) return textFallback\(\);/.test(PAGE) && /textContent = 'Link copied'/.test(PAGE) && /Text your mates a challenge/.test(PAGE) &&
+  PAGE.indexOf('id="challengeBox"') < PAGE.indexOf('id="board"'));
+pass("equal scores share a place (725 and 725 are both 1st, the next is 3rd), and your own place follows it", L.sharedPlaces([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580 }]).join() === "1,1,3" &&
+  L.myPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }], 2) === 1);
+pass("the reveal beat: 'The answer was B' and 'Time's up. The answer was B.'", L.verdict(false, 0, "B").text === "The answer was B" && L.verdict(null, 0, "B").text === "Time's up. The answer was B." && L.verdict(true, 120, "B").text === "Correct!");
+pass("the sting plays before question 1 and the round starts after it (Worker clock); sound starts off with a label",
+  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /if \(ST && ST\.on && !startShow\) \{/.test(PAGE) && /setItem\('vpqMute', '1'\)/.test(PAGE) && /id="soundTxt">Sound off</.test(PAGE));
 
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
@@ -164,7 +186,7 @@ var text = PAGE.replace(/<!--[\s\S]*?-->/g, "").replace(/<script[\s\S]*?<\/scrip
 pass("'From a venue? Click here' goes to /coaster, today's offer, never the home page", /<a class="owner" id="ownerLink" href="\/coaster">From a venue\? Click here<\/a>/.test(PAGE));
 pass("the games are named in order: trivia, musical bingo, bingo", /Trivia, musical bingo and bingo on the pub TV/.test(PAGE) && !/Trivia, bingo and musical bingo/.test(PAGE));
 /* The one exception is the legal line, the same on every page of the site (test-terms-put-compliance-on-the-venue.js). */
-pass("'venueplay' is lowercase wherever a person reads it (the legal footer line aside)", !/VenuePlay|Venueplay|VENUEPLAY/.test(text.replace("Gflam Group Pty Ltd, trading as VenuePlay", "")));
+pass("'venueplay' is lowercase wherever a person reads it (the legal footer line aside)", !/VenuePlay|Venueplay|VENUEPLAY/.test(text));
 pass("no em dash anywhere", PAGE.indexOf("—") < 0);
 pass("no phone number on a public page", !/07 ?5228|5228 ?3667|04\d\d ?\d{3} ?\d{3}/.test(text));
 pass("no .dev or workers.dev address", !/workers\.dev|\.dev\b/.test(PAGE));
@@ -174,7 +196,7 @@ pass("the only inputs: the first name, the venue's own sign-up (last name, email
   (PAGE.match(/<input /g) || []).length === 9 && (PAGE.match(/<select /g) || []).length === 1 && ["nameIn", "lastIn", "whereIn", "leadIn", "leadSuburb", "leadSite", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
   /<select id="leadState">/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE), (PAGE.match(/<input [^>]*id="[^"]+"/g) || []).map(function (x) { return /id="([^"]+)"/.exec(x)[1]; }));
 print("\nYOUR DETAILS BEFORE PLAY (INBOX 309.1c)");
-var det = PAGE.slice(PAGE.indexOf("  function askDetails(venueName) {"), PAGE.indexOf("  /* the details go with the round"));
+var det = PAGE.slice(PAGE.indexOf("  function askDetails(venueName, added) {"), PAGE.indexOf("  /* the details go with the round"));
 pass("the venue's rows show only when the Worker says this venue has its sign-up on (S.optin from /coaster/ask), with the phones' one tick (VPConsent), never ticked",
   /if \(o && \(o\.email \|\| o\.mobile\) && venueName && window\.VPConsent\) \{/.test(det) && /window\.VPConsent\.render\(\$\('optinTick'\), /.test(det) &&
   /<script src="\/app\/vp-consent\.js"><\/script>/.test(PAGE) && !/checked/.test(PAGE.slice(PAGE.indexOf('id="nameForm"'), PAGE.indexOf('id="nameBtn"'))));
@@ -185,7 +207,11 @@ pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /
 pass("the details go to /coaster/optin only once the round has started there (its secret proves the round), then are dropped from the page",
   /S\.optin = d\.optin \|\| null;\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
-  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = null; S\.venue = null; S\.optin = null;\n      setTimeout\(function \(\) \{ askDetails\(null\); \}/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no lowercase 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
+  !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE) && /&copy; <span id="vp-year"><\/span> venueplay</.test(PAGE));
+pass("under the title, '5 questions, 20 seconds each' is the one honest line (396.a), and the search box carries its own placeholder (396.2)",
+  /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Type 3 letters of your pub or club"/.test(PAGE));
 pass("the end has no second sign-up card", PAGE.indexOf('id="optinCard"') < 0);
 
 print("\nONE SOUND PLAYER, A NAMED SLOT PER MOMENT (INBOX 317/318)");
@@ -226,7 +252,7 @@ pass("4th: no podium, straight to the board", POD && POD.mine(rowsOf([500, 400, 
 pass("a tie for 2nd shares the step", POD && POD.mine(rowsOf([500, 400, 400, 200], 2)) === 2);
 pass("'You're in the lead!' and '3rd tonight!'", L.podiumTitle(1) === "You're in the lead!" && L.podiumTitle(3) === "3rd tonight!");
 pass("the end shows the podium first and hands to the board with their row marked; otherwise the board straight away",
-  /if \(!\(window\.VPPodium && window\.VPPodium\.show\(b\.rows, \{ title: L\.podiumTitle\(b\.rank\), onDone: toMyRow \}\)\)\) toMyRow\(\);/.test(PAGE) &&
+  /if \(!\(window\.VPPodium && window\.VPPodium\.show\(b\.rows, \{ title: L\.podiumTitle\(myPl\), onDone: toMyRow \}\)\)\) toMyRow\(\);/.test(PAGE) &&
   PAGE.indexOf('<script src="/app/vp-podium.js"></script>') > 0 && PAGE.indexOf('<script src="/app/vp-trivia-finale.js"></script>') > 0);
 pass("its confetti and sound are the one celebration file's (burst, the 'podium' slot)", /C\.burst\(el, 40,/.test(find("venueplay/app/vp-podium.js")) && /C\.sound\("podium"\)/.test(find("venueplay/app/vp-podium.js")));
 

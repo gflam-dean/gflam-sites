@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>60-second trivia | venueplay</title>
+<title>Coaster Trivia | venueplay</title>
 <meta name="description" content="Five quick trivia questions while you wait for your drink. Points for speed, a board for your pub tonight, and a link to challenge your mates. No app, no sign-up.">
-<meta property="og:title" content="60-second trivia | venueplay">
+<meta property="og:title" content="Coaster Trivia | venueplay">
 <meta property="og:description" content="Five quick trivia questions while you wait for your drink. Can you beat your mates? No app, no sign-up.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://venueplay.com.au/live-here-now">
@@ -54,36 +54,44 @@
   .linkbtn[hidden]{display:none}
   .shell{width:100%;max-width:480px;margin:0 auto;padding:0 18px}
 
-  /* THE HEADER, OPTION 5 (Dean 3 Nov) */
-  header{padding-top:max(12px, env(safe-area-inset-top, 0px));position:sticky;top:0;z-index:10;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-  .ptop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding-bottom:8px}
-  .brand{display:flex;align-items:center;min-width:0;min-height:56px}
-  .vlogo{display:block;height:56px;max-width:170px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
-  .vname{font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.15;color:#fff;overflow-wrap:break-word;hyphens:manual;min-width:0}
-  .vname.long{font-size:17px}
-  .tag{flex:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.04em;color:#fff;white-space:nowrap;
-    padding:6px 11px;border-radius:999px;background:rgba(255,31,142,.12);border:1px solid rgba(255,31,142,.38)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  /* no top bar (Dean 14 Nov): our logo, or the venue's own, sits at the BOTTOM like the game screens */
+  .vlogo{display:block;height:44px;max-width:200px;object-fit:contain;margin:0 auto}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
 
   main{flex:1 0 auto}
-  .view{padding-top:14px;padding-bottom:24px;animation:rise .28s ease both}
-  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .kick{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--pink)}
+  .view{padding-top:max(28px, env(safe-area-inset-top, 0px));padding-bottom:20px;animation:rise .28s ease both}
+  @keyframes rise{from{transform:translateY(6px)}to{transform:none}}   /* a lift only, never a fade: text and buttons are full white and full pink from the first frame */
+  .kick{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--pink);margin-bottom:2px}
+  .kick[hidden]{display:none}
+  .okpill{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:4px 12px;border-radius:999px;background:rgba(47,208,138,.14);border:1px solid rgba(47,208,138,.5);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
+  .okpill[hidden]{display:none}
+  .okpill::before{content:"";width:8px;height:14px;border:solid var(--green);border-width:0 3px 3px 0;transform:rotate(40deg) translateY(-2px);margin:0 4px 0 2px}
   .pbig{font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(34px,10.5vw,46px);line-height:1.02;text-transform:uppercase;color:#fff;margin-top:8px;overflow-wrap:break-word}
+  .pbig.one{white-space:nowrap;font-size:clamp(24px,calc((100vw - 36px) / 9.9),44px);letter-spacing:.005em}
+  .facts{margin-top:8px;color:#fff;font-weight:800;font-size:17px}
   .psub{color:var(--muted);font-size:17px;line-height:1.45;margin-top:10px}
   .field{margin-top:18px}
   input[type=text],input[type=search]{width:100%;background:var(--ink-3);border:1px solid var(--line-2);color:#fff;border-radius:14px;
     padding:16px;font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;outline:none;-webkit-appearance:none;appearance:none}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.18)}
-  input::placeholder{color:#7C7C86;font-weight:600}
+  input::placeholder{color:#8E8E99;font-weight:600}
+  #whereIn{padding-right:12px}
+  #whereIn::placeholder{font-size:15px;font-weight:600}
+  @media(max-width:360px){ #whereIn{padding-left:12px;padding-right:8px} #whereIn::placeholder{letter-spacing:-.03em} }   /* the whole sentence fits one line at 320 and stays 15px */
+  /* the search clear (x): grey and white, never the browser's blue, with a 44px tap area */
+  input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
+  input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:44px;height:44px;margin:-12px -6px -12px 0;cursor:pointer;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Ccircle cx='22' cy='22' r='10' fill='%2338383F'/%3E%3Cpath d='M18 18l8 8M26 18l-8 8' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center/44px 44px no-repeat}
   .cerr{color:var(--roll);font-size:16px;min-height:24px;margin-top:8px}
   .hint{color:var(--muted);font-size:16px;min-height:24px;margin-top:10px}
+  .hint:empty{min-height:0;margin-top:0}
   .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:14px;cursor:pointer;
     font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:19px;letter-spacing:.01em;touch-action:manipulation;text-align:center}
   .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 10px 26px -8px rgba(255,31,142,.6)}
   .btn.pink:active{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:#fff;border:1px solid var(--line-2);margin-top:12px;font-size:17px;min-height:54px}
   .btn:disabled{opacity:.5;cursor:default}
-  .linkbtn{display:flex;align-items:center;min-height:54px;background:none;border:0;padding:8px 0;color:#FF8AC4;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;
+  .linkbtn{display:flex;align-items:center;min-height:56px;background:none;border:0;padding:8px 0;color:#FF8AC4;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;
     text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
   .linkbtn.quiet{color:var(--muted);font-weight:600;font-size:16px}
 
@@ -108,15 +116,19 @@
     background-repeat:no-repeat;background-position:right 18px center}
   select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.18)}
   .addcard .btn{margin-top:6px}
-  .added{margin-top:14px;border-radius:16px;background:rgba(47,208,138,.08);border:1px solid rgba(47,208,138,.4);padding:16px}
-  .added b{display:block;color:#fff;font-weight:800;font-size:18px;overflow-wrap:anywhere}
-  .added p{color:var(--text);font-size:16px;margin-top:4px}
   .optin-tick label.optin{display:flex;gap:12px;align-items:flex-start;margin-top:14px;color:var(--text);font-size:16px;line-height:1.4;cursor:pointer}
-  .optin-tick label.optin input{flex:none;width:24px;height:24px;margin-top:1px;accent-color:var(--pink)}
+  .optin-tick label.optin input{flex:none;width:26px;height:26px;margin-top:0;-webkit-appearance:none;appearance:none;border-radius:7px;border:2px solid var(--pink);background:rgba(255,31,142,.10);cursor:pointer;position:relative}
+  .optin-tick label.optin input:checked{background:var(--pink)}
+  .optin-tick label.optin input:checked::after{content:"";position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid #0A0A0B;border-width:0 3px 3px 0;transform:rotate(40deg)}
+  .optin-tick label.optin input:focus-visible{outline:3px solid rgba(255,31,142,.5);outline-offset:2px}
   .pick.again{border-color:rgba(255,31,142,.5);background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 70%),var(--card)}
 
   /* ---------- THE QUESTION, IN THE TRIVIA PHONE'S NEW LOOK ---------- */
   .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .lefts{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  .sndtoggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 0;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
+  .sndtoggle[aria-pressed="true"]{color:#fff}
+  .sndtoggle[aria-pressed="true"] #soundX,.sndtoggle[aria-pressed="false"] #soundWave{display:none}
   .count{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--muted)}
   .count b{color:#fff}
   .pips{display:flex;gap:6px;margin:12px 0 18px}
@@ -125,6 +137,7 @@
   .pip.right{background:var(--green)}
   .pip.wrong{background:#5A5A64}
   .q{font-family:'Manrope',sans-serif;font-weight:800;font-size:clamp(22px,6.4vw,28px);line-height:1.22;color:#fff;min-height:3.66em;overflow-wrap:break-word;animation:rise .28s ease both}
+  #vPlay.hush .top,#vPlay.hush .pips,#vPlay.hush .loading{visibility:hidden}   /* while the start show plays, nothing of the question screen shows through */
   .loading{color:var(--muted);font-size:18px;padding:48px 0;text-align:center}
   .loading::before{content:"";display:block;width:34px;height:34px;margin:0 auto 16px;border-radius:50%;
     border:3px solid rgba(255,31,142,.22);border-top-color:var(--pink);animation:spin .8s linear infinite}
@@ -159,12 +172,20 @@
 
   /* THE END: score, points, place, board */
   .score{padding-top:18px}
+  .hero{position:relative;text-align:center;padding:6px 0 4px}
   .score .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;color:var(--pink)}
   .score h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
-  .score .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:#fff;margin-top:8px}
+  .score .pts{font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;margin-top:8px}
   .score .placeline{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:var(--green);margin-top:4px;overflow-wrap:break-word}
   .score .sub{color:var(--muted);font-size:17px;margin-top:8px}
-  .board{margin-top:20px;border-radius:18px;background:var(--card);padding:6px 6px 10px}
+  .btn.ghost.first{margin-top:18px}
+  .challenge{margin-top:18px;text-align:center}
+  .challenge .cq{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px}
+  .challenge .linkbtn{margin:2px auto 0;justify-content:center}
+  .burst{position:absolute;left:50%;top:44%;width:0;height:0;pointer-events:none}
+  .burst i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);animation:burst .9s ease-out both}
+  @keyframes burst{from{transform:translate(0,0) scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+  .board{margin-top:18px;border-radius:18px;background:var(--card);padding:6px 6px 10px}
   .tabs{display:flex;gap:6px;padding:4px}
   .tab{flex:1;min-height:46px;border-radius:12px;border:0;background:transparent;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
   .tab[aria-selected="true"]{background:var(--ink-3);color:#fff;box-shadow:inset 0 0 0 1px var(--line-2)}
@@ -176,7 +197,8 @@
   .row.you{background:rgba(255,31,142,.13);box-shadow:inset 0 0 0 1px rgba(255,31,142,.5)}
   .row.you .rk{color:var(--pink)}
   .empty{color:var(--muted);font-size:16px;padding:12px}
-  .shared{color:var(--green);font-size:16px;min-height:24px;margin-top:8px;text-align:center}
+  .shared{color:var(--green);font-size:16px;margin-top:6px;text-align:center}
+  .shared:empty{display:none}
   .copyurl{margin-top:8px;font-family:'JetBrains Mono',monospace!important;font-size:15px!important;font-weight:500!important}
   /* The soft call to action */
   .bigscreen{margin-top:26px;display:flex;gap:16px;align-items:flex-start;padding:20px 18px;border-radius:18px;
@@ -191,10 +213,12 @@
   /* THE FOOT: our logo small, then the links */
   footer{border-top:1px solid var(--line);padding:20px 0 max(18px, env(safe-area-inset-bottom, 0px));margin-top:12px}
   .foot{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-size:15px;color:var(--muted);line-height:1.6}
-  .foot .mark{color:#fff;display:block}
+  .foot .mark{color:#fff;display:block;padding:6px 0}
+  .foot .mark svg{width:132px;height:auto}
   .foot nav{display:flex;flex-wrap:wrap;justify-content:center;gap:0 10px}
   .foot nav a{color:#C9C9D0;display:inline-block;padding:11px 8px;min-height:44px;box-sizing:border-box}
   .foot>span{text-wrap:balance}
+  body[data-view=vPlay] .foot nav,body[data-view=vPlay] .foot>span{display:none}   /* a game screen is one screen: just the logo at the bottom */
 
   @media(max-width:360px){
     .shell{padding:0 14px}
@@ -205,8 +229,21 @@
     .bigscreen .tv{width:42px;height:32px}
     .vlogo{max-width:150px}
   }
-  @media(max-height:700px){ .pq-ring{width:48px;height:48px} .pq-ring .n b{font-size:20px} .pq-ring .n span{display:none} }   /* a short phone keeps all four answers on screen */
-  @media(min-width:700px){ .view{padding-top:36px} }
+  /* A SHORT PHONE (iPhone SE 568, an iPhone 667 or Safari's 664 visible): the whole game screen, our logo included, fits ONE screen with no scroll */
+  @media(max-height:700px){
+    body[data-view=vPlay] .view{padding-top:max(12px, env(safe-area-inset-top, 0px));padding-bottom:6px}
+    #vPlay .top .pq-ring{width:48px;height:48px} #vPlay .top .pq-ring .n b{font-size:20px} #vPlay .top .pq-ring .n span{display:none}
+    #vPlay .pips{margin:6px 0 10px}
+    #vPlay .q{font-size:clamp(18px,5.6vw,22px);min-height:3.66em}
+    #vPlay .answers{gap:8px;margin-top:10px}
+    #vPlay .ans{min-height:56px;font-size:17px;padding-top:6px;padding-bottom:6px}
+    #vPlay .ans .l{font-size:30px}
+    #vPlay .verdict{margin-top:10px;min-height:44px;padding:8px 14px}
+    #vPlay .ptotal{margin-top:2px;min-height:0}
+    body[data-view=vPlay] footer{margin-top:0;padding:8px 0 max(8px, env(safe-area-inset-bottom, 0px))}
+    body[data-view=vPlay] .foot .mark{padding:2px 0}
+  }
+  @media(min-width:700px){ .view{padding-top:48px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 <script src="/app/vp-venueurl.js"></script>
@@ -216,23 +253,21 @@
 <link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show, "Let's play trivia", as on the trivia phone; ?sting=0 switches it off -->
 <link rel="stylesheet" href="/app/vp-podium.css"><script src="/app/vp-trivia-finale.js"></script><script src="/app/vp-podium.js"></script>
 </head>
 <body>
 
-<header>
-  <div class="shell ptop">
-    <div class="brand"><img id="venueLogo" class="vlogo" alt="" hidden><h1 class="vname" id="hdrName">60-second trivia</h1></div>
-    <span class="tag" id="hdrTag" hidden>60-second trivia</span>
-  </div>
-</header>
+<h1 class="sr" id="hdrName">Coaster Trivia</h1>
 
 <main class="shell" id="game">
   <!-- 1. THE FIRST NAME -->
   <section class="view" id="vName" hidden>
-    <p class="kick" id="nameKick">Coaster trivia</p>
-    <h2 class="pbig" id="nameHead">Five quick questions. First, your name?</h2>
-    <p class="psub" id="nameSub">First name only. It goes on tonight's board at your venue.</p>
+    <p class="okpill" id="addedPill" hidden>Added</p>
+    <p class="kick" id="nameKick" hidden></p>
+    <h2 class="pbig" id="nameHead">Ready to play?</h2>
+    <p class="facts">5 questions, 20 seconds each</p>
+    <p class="psub" id="nameSub">Your first name goes on the board.</p>
     <form id="nameForm" novalidate autocomplete="off">
       <div class="field"><input type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name"></div>
       <div class="field" id="lastRow" hidden><input type="text" id="lastIn" maxlength="40" placeholder="Last name (optional)" autocomplete="family-name" autocapitalize="words" spellcheck="false" aria-label="Your last name, optional"></div>
@@ -246,36 +281,34 @@
 
   <!-- 2. WHERE ARE YOU PLAYING -->
   <section class="view" id="vWhere" hidden>
-    <p class="kick" id="whereKick">Hi</p>
-    <h2 class="pbig" id="whereHead">What venue are you at?</h2>
-    <p class="psub">Type three letters of the pub or club, then pick it.</p>
+    <p class="kick" id="whereKick">Coaster Trivia</p>
+    <h2 class="pbig one" id="whereHead">What venue are you at?</h2>
     <div class="picks" id="againBox" hidden></div>
-    <div class="field"><input type="search" id="whereIn" maxlength="60" placeholder="e.g. Royal" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club"></div>
+    <div class="field"><input type="search" id="whereIn" maxlength="60" placeholder="Type 3 letters of your pub or club" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club"></div>
     <p class="hint" id="whereHint" aria-live="polite"></p>
     <div class="picks" id="picks" role="list"></div>
     <button class="linkbtn" id="notListed" type="button">Can't find your venue? Add it</button>
     <form class="addcard" id="leadForm" novalidate hidden>
       <h2>Add your venue</h2>
-      <p>We will check it and add it to the list. You can play now.</p>
-      <div class="field"><label for="leadIn">Venue name</label><input type="text" id="leadIn" maxlength="60" placeholder="e.g. The Royal Hotel" autocomplete="off" autocapitalize="words"></div>
+            <div class="field"><label for="leadIn">Venue name</label><input type="text" id="leadIn" maxlength="60" placeholder="e.g. The Royal Hotel" autocomplete="off" autocapitalize="words"></div>
       <div class="field"><label for="leadSuburb">Suburb or town</label><input type="text" id="leadSuburb" maxlength="60" placeholder="e.g. Paddington" autocomplete="off" autocapitalize="words"></div>
       <div class="field"><label for="leadState">State</label><select id="leadState"><option value="">Pick the state</option><option>QLD</option><option>NSW</option><option>VIC</option><option>SA</option><option>WA</option><option>TAS</option><option>NT</option><option>ACT</option></select></div>
       <div class="field"><label for="leadSite">Website (if you know it)</label><input type="text" id="leadSite" maxlength="200" placeholder="e.g. royalhotel.com.au" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url"></div>
       <p class="cerr" id="leadErr" aria-live="polite"></p>
       <button class="btn pink" id="leadBtn" type="submit">Add it and play</button>
     </form>
-    <div class="added" id="leadDone" hidden><b id="leadDoneName"></b><p>Thanks. We will check it and add it to the list.</p></div>
-    <button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
+        <button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
   </section>
 
   <!-- 3. THE QUESTIONS -->
   <section class="view" id="vPlay" hidden>
     <div class="top">
-      <span class="count" id="count">Question <b>1</b> of 5</span>
+      <div class="lefts"><span class="count" id="count">Question <b>1</b> of 5</span>
+        <button class="sndtoggle" id="vpqMute" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button></div>
       <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
     </div>
     <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
-    <p class="loading" id="loading">Pouring your first question...</p>
+    <p class="loading" id="loading">Getting your first question...</p>
     <h2 class="q" id="q" hidden></h2>
     <div class="answers" id="answers" role="group" aria-labelledby="q"></div>
     <div class="verdict" id="verdict" aria-live="polite"></div>
@@ -284,11 +317,20 @@
 
   <!-- 4. THE END -->
   <section class="view score" id="score" hidden aria-live="polite">
-    <p class="fk" id="scoreKick">Round done</p>
-    <h2 id="scoreN">0 of 5</h2>
-    <p class="pts" id="scorePts" hidden></p>
-    <p class="placeline" id="scorePlace" hidden></p>
-    <p class="sub" id="scoreSub"></p>
+    <div class="hero" id="hero">
+      <p class="fk" id="scoreKick">Round done</p>
+      <h2 id="scoreN">0 of 5</h2>
+      <p class="pts" id="scorePts" hidden></p>
+      <p class="placeline" id="scorePlace" hidden></p>
+      <p class="sub" id="scoreSub"></p>
+    </div>
+    <div class="challenge" id="challengeBox" hidden>
+      <p class="cq">Want to challenge your mates?</p>
+      <button class="btn pink" id="challenge" type="button">Share</button>
+      <button class="linkbtn" id="copyLink" type="button" hidden>Copy link</button>
+      <p class="shared" id="shared" aria-live="polite"></p>
+      <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
+    </div>
     <div class="board" id="board" hidden>
       <div class="tabs" role="tablist">
         <button class="tab" id="tabNight" role="tab" type="button" aria-selected="true">Tonight</button>
@@ -296,11 +338,7 @@
       </div>
       <ol class="rows" id="rows"></ol>
     </div>
-    <button class="btn pink" id="challenge" type="button" hidden style="margin-top:20px">Challenge your mates: text them</button>
-    <button class="linkbtn" id="copyLink" type="button" hidden>Or copy the link</button>
-    <p class="shared" id="shared" aria-live="polite"></p>
-    <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
-    <button class="btn ghost" id="again" type="button">Play again</button>
+    <button class="btn ghost first" id="again" type="button">Play again</button>
     <a class="btn ghost" id="joinGame" href="/play">Game on the TV? Join it</a>
     <div class="bigscreen">
       <span class="tv" aria-hidden="true"><svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true" data-vp-mark="mark"><path fill="#FF1F8E" d="M1.12 27.35C1.12 27.92 1.42 28.44 1.91 28.72C2.40 29 3.01 28.99 3.49 28.70L24.12 16.35C24.59 16.06 24.88 15.55 24.88 15C24.88 14.45 24.59 13.94 24.12 13.65L3.49 1.30C3.01 1.01 2.40 1 1.91 1.28C1.42 1.56 1.12 2.08 1.12 2.65L1.12 27.35Z"/></svg></span>
@@ -320,9 +358,10 @@
 
 <footer>
   <div class="shell foot">
-    <a class="mark" href="/" aria-label="venueplay home"><svg class="vp-wm" height="18" width="89.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></a>
+    <img id="venueLogo" class="vlogo" alt="" hidden>
+    <a class="mark" id="footMark" href="/" aria-label="venueplay home"><svg class="vp-wm" height="18" width="89.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></a>
     <nav aria-label="venueplay"><a href="/help">Help</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
-    <span>&copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as venueplay</span>
+    <span>&copy; <span id="vp-year"></span> venueplay</span>
   </div>
 </footer>
 
@@ -384,13 +423,18 @@ var VPCoaster = (function () {
     var t = n % 100, u = n % 10;
     return n + ((t >= 11 && t <= 13) ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th');
   }
-  /* "Tugun 4224", "2485 NSW" or "Bodalla NSW" */
+  /* "Tugun, QLD" or just "NSW": the suburb and the state, never a postcode (Dean 14 Nov) */
   function placeLabel(m) {
     var a = [];
     if (m.suburb) a.push(m.suburb);
-    if (m.postcode) a.push(m.postcode);
-    if (m.state && (!m.suburb || !m.postcode)) a.push(m.state);
-    return a.join(' ');
+    if (m.state) a.push(m.state);
+    return a.join(', ');
+  }
+  /* venueplay venues first, a game on now before the rest; the Worker's own order otherwise (stable) */
+  function playableFirst(list) {
+    var rank = function (m) { return m && m.on ? (m.live ? 0 : 1) : 2; };
+    return (list || []).map(function (m, i) { return { m: m, i: i }; })
+      .sort(function (a, b) { return rank(a.m) - rank(b.m) || a.i - b.i; }).map(function (x) { return x.m; });
   }
   /* Whether a pick is on venueplay, in plain words (INBOX 229/232): only a venue with a venueplay login is
      "on venueplay" ("game on now" while a game is open there); everything else on our list is honestly
@@ -409,10 +453,26 @@ var VPCoaster = (function () {
     if (w && !/^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/\S*)?$/i.test(w)) return { field: 'website', error: 'That website does not look right. Leave it empty if you are not sure.' };
     return null;
   }
-  function verdict(good, points) {
-    if (good === null) return { text: "Time's up", pts: '' };
-    if (!good) return { text: 'Not quite', pts: '' };
+  /* the reveal beat: "Correct!", "The answer was B", "Time's up. The answer was B." (396.f) */
+  function verdict(good, points, letter) {
+    var ans = letter ? 'The answer was ' + letter : '';
+    if (good === null) return { text: "Time's up" + (ans ? '. ' + ans + '.' : ''), pts: '' };
+    if (!good) return { text: ans || 'Not quite', pts: '' };
     return { text: 'Correct!', pts: points > 0 ? '+' + points : '' };
+  }
+  /* Equal scores share a place (725 and 725 are both 1st); the next one is placed after them (1, 1, 3) */
+  function sharedPlaces(rows) {
+    var out = [], lastPts = null, lastPlace = 0;
+    for (var i = 0; i < (rows || []).length; i++) {
+      var r = rows[i], pl = (lastPts !== null && +r.points === lastPts) ? lastPlace : (+r.place || i + 1);
+      out.push(pl); lastPts = +r.points; lastPlace = pl;
+    }
+    return out;
+  }
+  function myPlace(rows, fallback) {
+    var pl = sharedPlaces(rows);
+    for (var i = 0; i < (rows || []).length; i++) if (rows[i].you) return pl[i];
+    return fallback || 0;
   }
   /* The end: "Nice one, Sam" / "4 of 5" / "520 points" / "2nd tonight at The Mini Bar". */
   function headline(name, correct, total) {
@@ -447,9 +507,22 @@ var VPCoaster = (function () {
   /* a text message with the words and the link: 'sms:?&body=' opens the messages app on iPhone and Android */
   function smsHref(text, url) { return 'sms:?&body=' + encodeURIComponent(text + ' ' + url); }
   function shareUrl(code) { return 'https://venueplay.com.au/live-here-now?c=' + encodeURIComponent(code); }
-  function shareText(name, correct, points, venue) {
-    return (name || 'I') + ' got ' + correct + ' of 5 (' + points + ' points)' + (venue ? ' at ' + venue : '') + '. Same five questions: can you beat it?';
+  /* "I scored 435 at The Mini Bar. Reckon you can beat me?" (396.i); the link goes beside it */
+  /* The share text (Dean 14 Nov, INBOX 396 updates 3 and 4). In tonight's top 10 at the venue: "I'm 4th on the Coaster Trivia board at
+     The Mini Bar tonight. Come down and knock me off." Otherwise: "I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you
+     can beat it?" The venue is always named, and nothing here ever mentions a drink, a shout or a next round (liquor licensing). */
+  function shareText(points, venue, place) {
+    var at = venue || 'my pub';
+    if (place > 0 && place <= 10) return "I'm " + ordinal(place) + ' on the Coaster Trivia board at ' + at + ' tonight. Come down and knock me off.';
+    return 'I scored ' + points + ' on Coaster Trivia at ' + at + '. Your turn. Reckon you can beat it?';
   }
+  /* your place tonight if you are in the top 10 rows (equal scores share a place), else 0 */
+  function topTenPlace(rows) {
+    var pl = sharedPlaces(rows);
+    for (var i = 0; i < (rows || []).length && i < 10; i++) if (rows[i].you) return pl[i];
+    return 0;
+  }
+  var SHARE_TITLE = 'Coaster Trivia';
   /* ?c=CODE, the challenge link, or '' */
   function readCode(search) {
     var m = /[?&]c=([A-Za-z0-9]{6})(?:&|$)/.exec(search || '');
@@ -457,14 +530,15 @@ var VPCoaster = (function () {
   }
   function boardHtml(rows, period) {
     if (!rows || !rows.length) return '<li class="empty">Nobody on the board ' + (period === 'week' ? 'this week' : 'tonight') + ' yet. Send the link to your mates.</li>';
-    return rows.map(function (r) {
-      return '<li class="row' + (r.you ? ' you' : '') + '"><span class="rk">' + esc(ordinal(r.place)) + '</span><span class="nm">' + esc(r.name) +
+    var pls = sharedPlaces(rows);
+    return rows.map(function (r, i) {
+      return '<li class="row' + (r.you ? ' you' : '') + '"><span class="rk">' + esc(ordinal(pls[i])) + '</span><span class="nm">' + esc(r.name) +
         (r.you ? ' (you)' : '') + '</span><span class="pt">' + esc(r.points) + '</span></li>';
     }).join('');
   }
   return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
-           ordinal: ordinal, placeLabel: placeLabel, verdict: verdict, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
-           shareUrl: shareUrl, shareText: shareText, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
+           ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, sharedPlaces: sharedPlaces, myPlace: myPlace, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
+           shareUrl: shareUrl, shareText: shareText, topTenPlace: topTenPlace, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, STATES: STATES,
            QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
 })();
 /* ===== END LOGIC ===== */
@@ -483,6 +557,20 @@ var VPCoaster = (function () {
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
   $('vp-year').textContent = new Date().getFullYear();
+
+  /* SOUND STARTS OFF, with a visible label (396.k): a pub is loud and the phone is in a hand; one tap turns it on */
+  (function () {
+    var C = window.VPCelebrate, btn = $('vpqMute');
+    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '1'); } catch (e) {}
+    function paint() {
+      var on = C && C.muted ? !C.muted() : false;
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      $('soundTxt').textContent = on ? 'Sound on' : 'Sound off';
+      btn.setAttribute('aria-label', on ? 'Sound on. Tap to turn it off' : 'Sound off. Tap to turn it on');
+    }
+    btn.addEventListener('click', function () { if (C && C.setMuted) { C.setMuted(!C.muted()); paint(); } });
+    paint();
+  })();
 
   /* ---- where "Game on the TV? Join it" goes: the venue's own page when the coaster names one ---- */
   (function () {
@@ -534,23 +622,20 @@ var VPCoaster = (function () {
   /* ---- the screens ---- */
   var VIEWS = ['vName', 'vWhere', 'vPlay', 'score', 'failed'];
   function view(id) {
+    document.body.setAttribute('data-view', id);
     VIEWS.forEach(function (v) { $(v).hidden = v !== id; });
     try { window.scrollTo(0, 0); } catch (e) {}
   }
-  /* The option 5 header: the venue's logo, else its name as text; "60-second trivia" before a venue. */
+  /* The foot's logo: the venue's own when it is on venueplay and HQ has its logo switched on, else ours. */
   function header(venue) {
-    var img = $('venueLogo'), nm = $('hdrName');
-    var name = venue && venue.name ? venue.name : '60-second trivia';
-    nm.textContent = name;
-    nm.className = 'vname' + (name.length > 22 ? ' long' : '');
-    $('hdrTag').hidden = !(venue && venue.name);
-    img.hidden = true; nm.hidden = false;
+    var img = $('venueLogo'), mark = $('footMark');
+    img.hidden = true; mark.hidden = false;
     if (venue && venue.logo_url && /^https:\/\//.test(venue.logo_url)) {
       img.onload = function () {
-        img.hidden = false; nm.hidden = true; img.alt = name;
+        img.hidden = false; mark.hidden = true; img.alt = venue.name || '';
         try { if (window.VPVenueLogo) window.VPVenueLogo.fit(img, 'phone'); } catch (e) {}
       };
-      img.onerror = function () { img.hidden = true; nm.hidden = false; };
+      img.onerror = function () { img.hidden = true; mark.hidden = false; };
       img.src = venue.logo_url;
     }
   }
@@ -561,19 +646,21 @@ var VPCoaster = (function () {
 
   /* 2. YOUR DETAILS after the venue (INBOX 309.1c) */
   function askName() { askDetails(null); }
-  function askDetails(venueName) {
+  function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
-    $('nameKick').textContent = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster trivia';
-    $('nameHead').textContent = S.code ? 'Same five questions. Your name?' : 'Five quick questions. Your name?';
-    $('nameSub').textContent = 'First name only on the board.';
+    var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
+    $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
+    $('addedPill').hidden = !added;
+    $('nameHead').textContent = 'Ready to play?';
+    $('nameSub').textContent = S.code ? 'Same five questions. Your first name goes on the board.' : 'Your first name goes on the board.';
     ['lastRow', 'optinEmailRow', 'optinMobileRow'].forEach(function (id) { $(id).hidden = true; });
     $('optinTick').textContent = '';
     $('nameErr').textContent = '';
     var o = S.optin, done = recall(SIGNED_KEY);
     if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone
     if (o && (o.email || o.mobile) && venueName && window.VPConsent) {
-      $('nameSub').textContent = 'First name only on the board. Your details go to ' + venueName + ', never on the board.';
+      $('nameSub').textContent = 'Your first name goes on the board. Your details go to ' + venueName + ', never on the board.';
       $('optinEmailRow').hidden = !o.email;
       $('optinMobileRow').hidden = !o.mobile;
       $('lastRow').hidden = !o.last_name;
@@ -613,7 +700,6 @@ var VPCoaster = (function () {
 
   /* 2. WHERE ARE YOU PLAYING */
   function askWhere() {
-    $('whereKick').textContent = S.name ? 'Hi ' + S.name : 'Coaster trivia';
     S.optin = null; S.details = null; header(null);
     var last = recall(PLACE_KEY), box = $('againBox');
     box.textContent = '';
@@ -626,7 +712,6 @@ var VPCoaster = (function () {
     $('picks').textContent = '';
     $('whereHint').textContent = '';
     $('leadForm').hidden = true;
-    $('leadDone').hidden = true;
     $('notListed').hidden = false;
     $('skipWhere').hidden = true;
     view('vWhere');
@@ -675,15 +760,14 @@ var VPCoaster = (function () {
       if (st !== 200) { $('whereHint').textContent = 'The search is having a rest. Try again in a minute, or just play.'; $('skipWhere').hidden = false; return; }
       $('skipWhere').hidden = true;
       var m = d.matches || [];
-      m.forEach(function (x) { box.appendChild(pickButton(x)); });
-      $('whereHint').textContent = m.length ? (d.more ? 'More match: keep typing to narrow it.' : '') : 'No venue by that name on our list. Add it below and play.';
+      L.playableFirst(m).forEach(function (x) { box.appendChild(pickButton(x)); });
+      $('whereHint').textContent = m.length ? (d.more ? 'More match: keep typing to narrow it.' : '') : 'Not on our list? Add it below.';
       if (!m.length) openLead(typed);   // not on our list: the form drops down straight away (INBOX 309.1b)
     });
   }
   function openLead(prefill) {
     $('leadForm').hidden = false;
     $('notListed').hidden = true;
-    $('leadDone').hidden = true;
     if (prefill) $('leadIn').value = String(prefill).trim();
   }
   $('notListed').addEventListener('click', function () { openLead($('whereIn').value); $('leadIn').focus(); });
@@ -703,9 +787,11 @@ var VPCoaster = (function () {
       $('leadBtn').disabled = false;
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
-      if (st === 200) { $('leadDoneName').textContent = f.name; $('leadDone').hidden = false; }
-      S.place = null; S.venue = null; S.optin = null;
-      setTimeout(function () { askDetails(null); }, st === 200 ? 1600 : 0);   // they read the thanks, then their name (no board)
+      /* an added venue plays on its own trivia-only board when the Worker hands one back (a real venue's stays, any other for 30 days) */
+      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null;
+      /* "Added", then straight on to the name: the old search and its "no venue" line are cleared */
+      $('whereIn').value = ''; $('picks').textContent = ''; $('whereHint').textContent = ''; $('notListed').hidden = false;
+      askDetails(f.name, st === 200);
     });
   });
   $('skipWhere').addEventListener('click', function () { S.place = null; S.venue = null; S.optin = null; askDetails(null); });
@@ -713,9 +799,22 @@ var VPCoaster = (function () {
   /* 3. THE ROUND: start it on the board, or play without one */
   function begin() {
     if (!BANK) return;
-    var local = L.pickFive(BANK, hourNow(), readSeen());
     view('vPlay');
     $('loading').hidden = false; $('q').hidden = true; $('answers').textContent = ''; $('verdict').textContent = ''; $('ptotal').textContent = '';
+    /* the start-of-game show, "Let's play trivia" (/app/vp-sting.js, as on the trivia phone), THEN the round starts: the
+       Worker's clock for question 1 starts when the round does, so the show never costs a player seconds */
+    var ST = window.VPSting;
+    if (ST && ST.on && !startShow) {
+      startShow = true; $('vPlay').classList.add('hush');
+      try { ST.start({ words: ST.phoneWords('TRIVIA'), layout: 'phone' }); } catch (e) {}
+      setTimeout(function () { startShow = false; $('vPlay').classList.remove('hush'); startRound(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
+      return;
+    }
+    startRound();
+  }
+  var startShow = false;
+  function startRound() {
+    var local = L.pickFive(BANK, hourNow(), readSeen());
     if (!S.code && !S.place) return go('local', local);
     var body = S.code ? { name: S.name, code: S.code } : { name: S.name, place: S.place, qids: local.map(function (q) { return q[0]; }) };
     call('POST', '/coaster/start', body, function (st, d) {
@@ -757,7 +856,6 @@ var VPCoaster = (function () {
     header(S.venue);
     round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
-    window.VPQRing.muteButton($('vPlay').querySelector('.top'));   // in the top row, never over an answer
     show();
   }
   function pips() {
@@ -795,8 +893,8 @@ var VPCoaster = (function () {
     ticker = setInterval(tick, 250);
   }
   function tag(btn, words) { var s = document.createElement('span'); s.className = 'tg'; s.textContent = words; btn.appendChild(s); }
-  function paintVerdict(good, points) {
-    var v = L.verdict(good, points), el = $('verdict');
+  function paintVerdict(good, points, letter) {
+    var v = L.verdict(good, points, letter), el = $('verdict');
     el.className = 'verdict' + (good ? '' : ' wrong');
     el.innerHTML = '<span class="vt">' + L.esc(v.text) + '</span>' + (v.pts ? '<span class="vp">' + L.esc(v.pts) + '</span>' : '');
   }
@@ -817,7 +915,7 @@ var VPCoaster = (function () {
         if (k === item[3]) tag(btns[k], 'Right answer');
         else if (k === i) tag(btns[k], 'Yours');
       }
-      paintVerdict(i < 0 ? null : good, pts);
+      paintVerdict(i < 0 ? null : good, pts, LETTERS[item[3]]);
       pips();
     }
     if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);
@@ -831,7 +929,7 @@ var VPCoaster = (function () {
       call('POST', '/coaster/answer', { play: S.play, token: S.token, i: n, a: i }, function (st, d) {
         if (st === 200 && d.ok) {
           total = d.total;
-          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points); }
+          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points, LETTERS[item[3]]); }
           $('ptotal').innerHTML = '<b>' + L.esc(total) + '</b> points';
           if (d.done) ended = d;
         } else {
@@ -846,34 +944,54 @@ var VPCoaster = (function () {
   }
 
   /* 4. THE END */
-  var boardPeriod = 'night';
+  var boardPeriod = 'night', myTonight = 0;
   function finish() {
     clearInterval(ticker);
     view('score');
     var onBoard = S.mode === 'board' && ended && ended.score;
     $('scoreKick').textContent = L.headline(S.name, right, round.length);
-    $('scoreN').textContent = right + ' of ' + round.length;
+    /* THE RESULT HERO before the board: the big number, "3 of 5 correct", the place tonight */
+    $('scoreN').textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
     $('scorePts').hidden = !onBoard;
     $('scorePlace').hidden = !onBoard;
     $('board').hidden = !onBoard;
-    $('challenge').hidden = !onBoard;
-    $('copyLink').hidden = !onBoard;
+    $('challengeBox').hidden = !onBoard;
     $('shared').textContent = '';
     $('copyUrl').hidden = true;
+    shareMode();
     if (onBoard) {
-      $('scorePts').textContent = L.pointsLine(ended.score.points, ended.score.secs);
-      var b = ended.board || {};
-      $('scorePlace').textContent = L.placeLine(b.rank, 'night', S.venue && S.venue.name);
-      $('scoreSub').textContent = 'Same five questions for your mates: send them the link and see who tops the board.';
+      $('scorePts').textContent = right + ' of ' + round.length + ' correct';
+      var b = ended.board || {}, myPl = L.myPlace(b.rows, b.rank);
+      myTonight = L.topTenPlace(b.rows);
+      $('scorePlace').textContent = L.placeLine(myPl, 'night', S.venue && S.venue.name);
+      $('scoreSub').textContent = '';
       paintBoard(b, 'night');
+      burst();
       /* top 3: the podium first (INBOX 313), then the board */
-      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(b.rank), onDone: toMyRow }))) toMyRow();
+      if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(myPl), onDone: toMyRow }))) toMyRow();
     } else {
       $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
   }
-  function toMyRow() { var r = document.querySelector('#rows .row.you'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  /* a short pink burst behind the score; none with reduced motion */
+  function burst() {
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var host = $('hero'), old = host.querySelector('.burst'), b = document.createElement('div');
+      if (old) old.remove();
+      b.className = 'burst'; b.setAttribute('aria-hidden', 'true');
+      for (var k = 0; k < 14; k++) {
+        var a = (k / 14) * Math.PI * 2, r = 110 + (k % 3) * 34, d = document.createElement('i');
+        d.style.setProperty('--dx', Math.round(Math.cos(a) * r) + 'px'); d.style.setProperty('--dy', Math.round(Math.sin(a) * r * 0.7) + 'px');
+        d.style.animationDelay = (k % 4) * 0.04 + 's';
+        b.appendChild(d);
+      }
+      host.appendChild(b);
+      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1500);
+    } catch (e) {}
+  }
+  function toMyRow() { try { window.scrollTo(0, 0); } catch (e) {} }   // the result hero first, the board under it (never scrolled past the score)
   function paintBoard(b, period) {
     boardPeriod = period;
     $('tabNight').setAttribute('aria-selected', period === 'night' ? 'true' : 'false');
@@ -891,18 +1009,40 @@ var VPCoaster = (function () {
   }
   $('tabNight').addEventListener('click', function () { loadBoard('night'); });
   $('tabWeek').addEventListener('click', function () { loadBoard('week'); });
-  /* "Challenge your mates" (INBOX 309.1e): a text message first, the link to copy second. */
-  $('challenge').addEventListener('click', function () {
-    var url = L.shareUrl(S.myCode), text = L.shareText(S.name, right, total, S.venue && S.venue.name);
-    window.location.href = L.smsHref(text, url);
-  });
-  $('copyLink').addEventListener('click', function () {
-    var url = L.shareUrl(S.myCode), text = L.shareText(S.name, right, total, S.venue && S.venue.name);
-    function copied() { $('shared').textContent = 'Link copied. Send it to your mates.'; }
-    function showLink() { var c = $('copyUrl'); c.value = url; c.hidden = false; c.select(); $('shared').textContent = 'Copy this link and send it to your mates.'; }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + ' ' + url).then(copied, showLink);
+  /* "Want to challenge your mates?" then ONE pink Share button (396 update 2): the phone's own share sheet where there
+     is one (iPhone and Android: Messages, WhatsApp, Messenger, Instagram, Mail, Copy), else a text message and a Copy
+     link. A cancelled share does nothing and shows no error. */
+  function canShare() { return !!(navigator.share && typeof navigator.share === 'function'); }
+  function shareMode() {
+    $('challenge').textContent = canShare() ? 'Share' : 'Text your mates a challenge';
+    $('copyLink').hidden = canShare();
+  }
+  function challengeBits() {
+    return { url: L.shareUrl(S.myCode), text: L.shareText(total, S.venue && S.venue.name, myTonight) };
+  }
+  function textFallback() {
+    var c = challengeBits();
+    window.location.href = L.smsHref(c.text, c.url);
+  }
+  function copyChallenge() {
+    var c = challengeBits();
+    function copied() { $('shared').textContent = 'Link copied'; }
+    function showLink() { var x = $('copyUrl'); x.value = c.url; x.hidden = false; x.select(); $('shared').textContent = 'Copy this link and send it to your mates.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c.text + ' ' + c.url).then(copied, showLink);
     else showLink();
+  }
+  $('challenge').addEventListener('click', function () {
+    if (!canShare()) return textFallback();
+    var c = challengeBits();
+    try {
+      var pr = navigator.share({ title: L.SHARE_TITLE, text: c.text, url: c.url });
+      if (pr && pr.catch) pr.catch(function (err) {
+        if (err && err.name === 'AbortError') return;        // they changed their mind: nothing happens, nothing is said
+        $('copyLink').hidden = false;                         // the share sheet could not open: the text and the copy are one tap away
+      });
+    } catch (e) { $('copyLink').hidden = false; }
   });
+  $('copyLink').addEventListener('click', copyChallenge);
   $('again').addEventListener('click', function () { S.code = ''; begin(); });
 
   /* the questions, by XMLHttpRequest */

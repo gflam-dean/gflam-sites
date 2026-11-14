@@ -91,6 +91,7 @@ function pick(r, sel) {
 }
 function query(table, q) {
   if (DB.missing && table.indexOf("vp_coaster_") === 0) { var e = new Error("A database error occurred (x)"); e.status = 502; throw e; }
+  if (DB.noLeadCols && table === "vp_coaster_venues" && /lead_status|board_until/.test(q)) { var e2 = new Error("A database error occurred (x)"); e2.status = 502; throw e2; }
   var p = parseQ(q), rows = (DB[table] || []).filter(function (r) { return matches(r, p.f); });
   if (p.order.length) rows.sort(function (a, b) {
     for (var i = 0; i < p.order.length; i++) { var o = p.order[i], x = a[o.c], y = b[o.c]; if (x === y) continue; var c = x < y ? -1 : 1; return o.desc ? -c : c; }
@@ -115,6 +116,7 @@ function sbInsert(env, table, obj, ret) {
   calls.push("INSERT " + table);
   return Promise.resolve().then(function () {
     if (DB.missing && table.indexOf("vp_coaster_") === 0) throw httpErr(502, "A database error occurred (x)");
+    if (DB.noLeadCols && table === "vp_coaster_venues" && "lead_status" in obj) throw httpErr(502, "A database error occurred (x)");
     var t = DB[table] = DB[table] || [];
     var row = JSON.parse(JSON.stringify(obj));
     if (!row.id) row.id = nextId();
@@ -162,6 +164,14 @@ function readJsonOf(req) { return Promise.resolve(req.body || {}); }
 function fakeFetch(u) {
   fetched.push(u);
   if (u === "https://venueplay.com.au/data/live-here-now.json") return Promise.resolve({ ok: true, json: function () { return Promise.resolve(JSON.parse(BANKFILE)); } });
+  /* a venue's own website: it says the venue's name; another site says something else; one is down */
+  if (u === "https://realpub.com.au") return Promise.resolve({ ok: true, text: function () { return Promise.resolve("<title>The Wandering Dingo Tavern, Fitzroy</title>"); } });
+  /* redirects: to the venue's own page (fine), to the machine itself, to plain http, an endless chain */
+  var HOP = { "https://short.com.au/a": "https://realpub.com.au", "https://evil.com.au/a": "https://127.0.0.1/admin", "https://evil.com.au/b": "http://realpub.com.au",
+    "https://evil.com.au/c": "//169.254.169.254/latest", "https://evil.com.au/d": "https://localhost.localdomain/x", "https://loop.com.au/1": "/2", "https://loop.com.au/2": "/3",
+    "https://loop.com.au/3": "/4", "https://loop.com.au/4": "/5", "https://loop.com.au/5": "https://realpub.com.au" };
+  if (HOP[u]) return Promise.resolve({ ok: false, status: 302, headers: { get: function (k) { return /location/i.test(k) ? HOP[u] : null; } } });
+  if (u === "https://shop.com.au") return Promise.resolve({ ok: true, text: function () { return Promise.resolve("<title>Cheap shoes for everyone</title>"); } });
   return Promise.resolve({ ok: false });
 }
 function MiniURL(u) {
@@ -177,12 +187,12 @@ FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; Fixed
 
 function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
-  "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", SRC)(
+  "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", "setTimeout", "clearTimeout", "AbortController", SRC)(
   sbGet, sbGetAll, sbInsertAny, sbPatchReturning, sbDelete, abuseIpHash, rateLimit, enc, MiniURL, fakeFetch, FixedDate,
-  randomTokenHex, genCode, sha256Hex, readJsonOf, httpErr);
+  randomTokenHex, genCode, sha256Hex, readJsonOf, httpErr, function () { return 0; }, function () {}, function () { this.signal = {}; this.abort = function () {}; });
 
 var V_MINI = "11111111-1111-4111-8111-111111111111", V_PERTH = "22222222-2222-4222-8222-222222222222", V_GONE = "33333333-3333-4333-8333-333333333333";
 var C_TUGUN = "44444444-4444-4444-8444-444444444444", C_SWITCHED = "55555555-5555-4555-8555-555555555555", L_OLD = "66666666-6666-4666-8666-666666666666";
@@ -342,7 +352,8 @@ step(function () {
     var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "The Drunken Duck & Co"; })[0];
     pass("an added venue is kept for HQ's review as kind 'lead' with its suburb, state and website", r.status === 200 && r.body.added === true && !!row && row.kind === "lead" &&
       row.suburb === "Fitzroy" && row.au_state === "VIC" && row.website === "https://drunkenduck.com.au" && row.timezone === "Australia/Melbourne", [r.body, row]);
-    pass("the player gets NO board for it (never a place from typed text)", !("place" in r.body), r.body);
+    pass("INBOX 396: an added venue that cannot be confirmed (no licence row, a website that is not up) is 'unverified' with a trivia-only board for 30 days, and the player is handed it",
+      row.lead_status === "unverified" && row.checked_by === "none" && RealDate.parse(row.board_until) === NOW + 30 * 86400000 && r.body.place === "c:" + row.id, [r.body, row]);
     pass("its key drops 'the', case, '&' and punctuation", row && row.name_key === "drunken duck and co", row && row.name_key);
     pass("the key is the same words HQ keeps (coasterNameKey)", W.key("The Drunken Duck & Co") === "drunken duck and co");
     pass("a fine pub name carries no lead_guard note", row && row.guard_note == null, row);
@@ -375,7 +386,16 @@ step(function () {
     pass("a website that does not look like one is refused (it is optional: empty is fine)", r.status === 400 && r.body.field === "website" && W.site("") === "" && W.site("http://x.com.au/a") === "https://x.com.au/a", r);
     return post(W.lead, { name: "The Big Shit Pub", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
-    pass("a rude name is refused and nothing is kept", r.status === 400 && !DB.vp_coaster_venues.some(function (x) { return /shit/i.test(x.name); }), r);
+    var rudeRow = DB.vp_coaster_venues.filter(function (x) { return /shit/i.test(x.name); })[0];
+    var tk = (DB.vp_help_tickets || [])[0];
+    pass("INBOX 396: a rude name is FLAGGED, never refused to the player: kept hidden (no board, no place handed out)", r.status === 200 && r.body.added === true && !("place" in r.body) && !!rudeRow && rudeRow.lead_status === "flagged" && rudeRow.board_until == null && /rude/.test(rudeRow.guard_note), [r.body, rudeRow]);
+    pass("...and Dean gets an HQ help-desk ticket for it, one ticket, nothing about the player", (DB.vp_help_tickets || []).length === 1 && tk.brand === "venueplay" && tk.channel === "manual" && /flagged/.test(tk.subject) && /Tugun/.test(tk.message) && !("contact_email" in tk), tk);
+    return post(W.lead, { name: "The Big Shit Pub", suburb: "Tugun", state: "QLD" });
+  }).then(function (r) {
+    pass("the same flagged name again adds an ask, never a second ticket, still no board", (DB.vp_help_tickets || []).length === 1 && !("place" in r.body) && DB.vp_coaster_venues.filter(function (x) { return /shit/i.test(x.name); })[0].asks === 2, r.body);
+    return get(W.venues, "?q=big sh");
+  }).then(function (r) {
+    pass("a flagged name is never in anyone's search", r.body.matches.length === 0, r.body);
     fresh(); limited = true;
     return post(W.lead, { name: "Some Pub", suburb: "Tugun", state: "QLD" });
   }).then(function (r) {
@@ -635,6 +655,121 @@ step(function () {
     return get(W.board, "?place=v:" + V_GONE + "&period=tonight");
   }).then(function (r) {
     pass("no board for a place that is not on venueplay", r.status === 404, r);
+  });
+});
+
+step(function () {
+  print("\nAN ADDED VENUE IS A FREE LEAD THAT CAN PLAY (INBOX 396, migration 194)");
+  fresh(); NOW = FRI_830PM;
+  var id1, id2, id3;
+  return post(W.lead, { name: "Bodalla Pub", suburb: "Bodalla", state: "NSW" }).then(function (r) {
+    var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Bodalla Pub" && x.kind === "lead"; })[0];
+    pass("auto-check 1: a name on our licensed list (same telling words, same state) is VERIFIED by the licence list: a real venue, board stays, no expiry",
+      row && row.lead_status === "verified" && row.checked_by === "licence list" && row.board_until == null && r.body.place === "c:" + row.id, [r.body, row]);
+    id1 = row.id;
+    return post(W.lead, { name: "The Wandering Dingo Tavern", suburb: "Fitzroy", state: "VIC", website: "realpub.com.au" });
+  }).then(function (r) {
+    var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "The Wandering Dingo Tavern"; })[0];
+    pass("auto-check 2: not on the list, but its own website loads and says its name: VERIFIED by the website", row && row.lead_status === "verified" && row.checked_by === "website" && r.body.place === "c:" + row.id, [r.body, row]);
+    return post(W.lead, { name: "Dingo Palace", suburb: "Fitzroy", state: "VIC", website: "shop.com.au" });
+  }).then(function (r) {
+    var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Dingo Palace"; })[0];
+    pass("auto-check 3: a website that does not say the venue's name proves nothing: UNVERIFIED, a trivia-only board for 30 days", row && row.lead_status === "unverified" && !!r.body.place, [r.body, row]);
+    id2 = row.id;
+    return post(W.lead, { name: "Made Up Arms", suburb: "Nowhere", state: "QLD", website: "https://10.0.0.5/admin" });
+  }).then(function (r) {
+    var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Made Up Arms"; })[0];
+    pass("a website that points at an address inside a network is never fetched (no private hosts): UNVERIFIED", row && row.lead_status === "unverified" && fetched.indexOf("https://10.0.0.5/admin") < 0, [fetched, row]);
+    id3 = row.id;
+    pass("the same words on a licensed venue in ANOTHER state is not a match", W.same("royal oak", "royal oak hotel") === true && W.same("oak tree", "royal oak hotel") === false);
+    return post(W.start, { name: "Pat", place: "c:" + id2, qids: five(0) });
+  }).then(function (r) {
+    pass("a round can be played on an unverified lead's board (trivia only: no venueplay login, no sign-up questions)", r.status === 200 && !!r.body.play && r.body.venue && r.body.venue.name === "Dingo Palace" && r.body.venue.on === false && !r.body.optin, r.body);
+    return get(W.venues, "?q=dingo");
+  }).then(function (r) {
+    var names = r.body.matches.map(function (m) { return m.name; });
+    pass("search: the VERIFIED lead is findable by the next player (not on venueplay yet); the UNVERIFIED one is not", names.indexOf("The Wandering Dingo Tavern") >= 0 && names.indexOf("Dingo Palace") < 0 && r.body.matches.every(function (m) { return m.on === false; }), r.body);
+    NOW = NOW + 31 * 86400000;
+    return post(W.start, { name: "Pat", place: "c:" + id2, qids: five(0) });
+  }).then(function (r) {
+    pass("after its 30 days an unverified board is closed (the place is gone) and a verified one is not", r.status === 404 && r.body.place_gone === true, r);
+    return post(W.start, { name: "Pat", place: "c:" + id1, qids: five(0) });
+  }).then(function (r) {
+    pass("...a verified lead's board is still open after 31 days", r.status === 200 && !!r.body.play, r);
+    DB.vp_coaster_plays.push({ id: "z1", board: "c:" + id2, first_name: "Pat", started_at: new RealDate(NOW - 86400000).toISOString() });
+    DB.vp_coaster_plays.push({ id: "z2", board: "c:" + id1, first_name: "Pat", started_at: new RealDate(NOW - 86400000).toISOString() });
+    return W.sweep({}, NOW);
+  }).then(function (r) {
+    var left = DB.vp_coaster_venues.filter(function (x) { return x.kind === "lead"; }).map(function (x) { return x.name; });
+    pass("the nightly sweep DELETES unverified leads whose 30 days are up, with their rounds; verified, flagged and legacy leads stay", r.ok === true && left.indexOf("Dingo Palace") < 0 && left.indexOf("Made Up Arms") < 0 &&
+      left.indexOf("Bodalla Pub") >= 0 && left.indexOf("The Wandering Dingo Tavern") >= 0 && left.indexOf("Leady Larry's") >= 0 &&
+      !DB.vp_coaster_plays.some(function (x) { return x.board === "c:" + id2; }) && DB.vp_coaster_plays.some(function (x) { return x.board === "c:" + id1; }) && r.leads_deleted === 2, [r, left]);
+    pass("a lead from before migration 194 (never checked) has no board", W.open({ kind: "lead", venue_id: null }, NOW) === false && W.open({ lead_status: "flagged", venue_id: null }, NOW) === false &&
+      W.open({ lead_status: "unverified", board_until: new RealDate(NOW + 1000).toISOString(), venue_id: null }, NOW) === true);
+    pass("never cold-emailed: a lead is only a vp_coaster_venues row (no vp_venues, vp_prospects, vp_venue_staff or send-list write, no email call)",
+      !calls.some(function (c) { return /^(INSERT|PATCH) (vp_venues|vp_prospects|vp_venue_staff|vp_licensed_venues|vp_outbox)/.test(c); }) && !/resend|sendEmail|instantly/i.test(GAME.slice(GAME.indexOf("async function handleCoasterLead("), GAME.indexOf("/* POST /coaster/start {"))), calls.slice(-6));
+    fresh(); NOW = FRI_830PM; DB.vp_coaster_venues = [];
+    DB.noLeadCols = true;
+    return post(W.lead, { name: "Early Bird Tavern", suburb: "Tugun", state: "QLD" }).then(function (r) {
+      var row = DB.vp_coaster_venues.filter(function (x) { return x.name === "Early Bird Tavern"; })[0];
+      pass("BEFORE migration 194 runs: an added venue is kept for HQ exactly as before (no board, no place), and nothing throws", r.status === 200 && r.body.added === true && !("place" in r.body) && !!row && !("lead_status" in row), [r, row]);
+      DB.vp_coaster_venues.push({ id: C_TUGUN, kind: "coaster", name: "Tugun Tavern", name_key: "tugun tavern", suburb: "Tugun", postcode: "4224", au_state: "QLD", timezone: "Australia/Brisbane", venue_id: null });
+      return post(W.start, { name: "Pat", place: "c:" + C_TUGUN, qids: five(0) });
+    }).then(function (r) {
+      pass("...and a coaster venue's board still plays before migration 194 (the place lookup never needs the new columns)", r.status === 200 && !!r.body.play, r);
+      DB.noLeadCols = false;
+    });
+  });
+});
+
+step(function () {
+  print("\nTHE WEBSITE CHECK CANNOT BE POINTED AT A MACHINE OF OURS (SSRF, INBOX 396)");
+  fresh(); NOW = FRI_830PM;
+  var bad = ["http://realpub.com.au", "https://user@realpub.com.au", "https://user:pw@realpub.com.au", "https://2130706433", "https://2130706433/", "https://0x7f000001/", "https://0177.0.0.1/",
+    "https://127.0.0.1", "https://10.0.0.5/admin", "https://169.254.169.254/latest", "https://[::1]/", "https://[::ffff:127.0.0.1]/", "https://localhost", "https://localhost.localdomain",
+    "https://printer.local", "https://db.internal", "https://nas.home", "https://x.lan", "https://x.arpa", "https://realpub", "https://realpub.com.au:8443", "https://realpub.com.au:22/",
+    "https://real%2epub.com.au", "ftp://realpub.com.au", "file:///etc/passwd", "https://", "https://.com.au", "https://-x.com.au", "https://1.2.3.4.5", "https://999.999.999.999"];
+  pass("every bad form of address is refused by the guard (" + bad.length + " of them: http, userinfo, decimal/hex/octal/dotted IPs, IPv6, localhost, local names, odd ports, encoded dots, other schemes)",
+    bad.every(function (u) { return W.safe(u) === null; }), bad.filter(function (u) { return W.safe(u) !== null; }));
+  pass("a real site passes, normalised to lower case with its path", W.safe("https://RealPub.com.au/menu?x=1") === "https://realpub.com.au/menu?x=1" && W.safe("https://realpub.com.au:443/") === "https://realpub.com.au/");
+  pass("redirects are resolved and re-checked: relative paths stay on the host, http, IPs and local names are refused",
+    W.hop("https://a.com.au/x/y", "/z") === "https://a.com.au/z" && W.hop("https://a.com.au/x/y", "z") === "https://a.com.au/x/z" && W.hop("https://a.com.au/x", "//b.com.au/q") === "https://b.com.au/q" &&
+    W.hop("https://a.com.au/x", "http://b.com.au") === null && W.hop("https://a.com.au/x", "https://127.0.0.1") === null && W.hop("https://a.com.au/x", "//169.254.169.254/") === null &&
+    W.hop("https://a.com.au/x", "javascript:alert(1)") === null && W.hop("https://a.com.au/x", "") === null);
+  var words = ["wandering", "dingo"];
+  return W.siteNames("https://realpub.com.au", words).then(function (ok) {
+    pass("a site that says the venue's words is confirmed (manual redirect mode: the fetch is asked not to follow)", ok === true && fetched.indexOf("https://realpub.com.au") >= 0, fetched);
+    return W.siteNames("https://short.com.au/a", words);
+  }).then(function (ok) {
+    pass("a redirect to the venue's own page is followed by hand and confirms", ok === true, fetched);
+    fetched.length = 0;
+    return W.siteNames("https://evil.com.au/a", words);
+  }).then(function (ok) {
+    pass("a redirect to 127.0.0.1 is never fetched, and is not confirmed", ok === false && fetched.every(function (u) { return u.indexOf("127.0.0.1") < 0; }), fetched);
+    return W.siteNames("https://evil.com.au/b", words);
+  }).then(function (ok) {
+    pass("a redirect to plain http is never fetched, and is not confirmed", ok === false && fetched.every(function (u) { return u.indexOf("http://") !== 0; }), fetched);
+    return W.siteNames("https://evil.com.au/c", words);
+  }).then(function (ok) {
+    pass("a protocol-relative redirect to the metadata address is never fetched", ok === false && fetched.every(function (u) { return u.indexOf("169.254") < 0; }), fetched);
+    return W.siteNames("https://evil.com.au/d", words);
+  }).then(function (ok) {
+    pass("a redirect to a localhost name is never fetched", ok === false && fetched.every(function (u) { return u.indexOf("localhost") < 0; }), fetched);
+    fetched.length = 0;
+    return W.siteNames("https://loop.com.au/1", words);
+  }).then(function (ok) {
+    pass("a chain of 4 redirects is not followed to the end: not confirmed, and at most 4 requests made", ok === false && fetched.length <= 4 && fetched.indexOf("https://realpub.com.au") < 0, fetched);
+    return W.siteNames("https://shop.com.au", words);
+  }).then(function (ok) {
+    pass("a site that does not say the venue's words proves nothing", ok === false);
+    var g = GAME.slice(GAME.indexOf("async function coasterWebsiteNames("), GAME.indexOf("/* A rude name goes to Dean"));
+    pass("the fetch is in manual redirect mode, capped at 200 KB, with a 3 second timeout, and only a boolean leaves it",
+      /redirect: 'manual'/.test(g) && !/redirect: 'follow'/.test(g) && /COASTER_SITE_BYTES = 200000/.test(GAME) && /, 3000\)/.test(g) && !/return t\b|return text\b/.test(g));
+    fresh(); NOW = FRI_830PM; fetched.length = 0; limited = false;
+    return post(W.lead, { name: "Dingo Hut", suburb: "Fitzroy", state: "VIC", website: "https://127.0.0.1/admin" });
+  }).then(function (r) {
+    pass("end to end: a lead whose website is an IP is added as unverified and the address is never fetched", r.status === 200 && fetched.indexOf("https://127.0.0.1/admin") < 0 && DB.vp_coaster_venues.filter(function (x) { return x.name === "Dingo Hut"; })[0].lead_status === "unverified", fetched);
+    pass("the website check is rate limited per network per day, and a repeat add never fetches again", calls.some(function (c) { return /^rl:coaster:sitecheck:iphash:6:86400$/.test(c); }), calls);
   });
 });
 

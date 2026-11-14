@@ -47,7 +47,7 @@ PAGES = [
     ('/app/musical/play', 'the musical bingo phone'),
     ('/app/trivia/play', 'the trivia phone'),
     ('/app/purchase-raffle/', 'the purchase raffle seller'),
-    ('/live-here-now', 'the 60-second trivia'),
+    ('/live-here-now', 'the Coaster Trivia page'),
 ]
 SHAPES = [
     ('portrait', 430, 932, {'top': 59, 'bottom': 34, 'left': 0, 'right': 0}),
