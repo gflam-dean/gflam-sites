@@ -661,8 +661,8 @@ def main():
         t.tap_id('nameBtn')
         s = wait_question(t)
         sent = [x[2] for x in FAKE['log'] if x[1] == '/coaster/optin']
-        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-2-6nov) go with the round\'s secret',
-              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-2-6nov' and
+        check('ticked: after the round starts, the email, the tick and the consent words\' version (vpc-3-14nov) go with the round\'s secret',
+              len(sent) == 1 and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-3-14nov' and
               sent[0].get('token', '').startswith('tok'), sent)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
         check('picking it starts a round on its board, sending only the first name, the place and five question ids',
