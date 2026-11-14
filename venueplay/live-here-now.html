@@ -146,12 +146,13 @@
   .ans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;text-transform:none;padding:4px 8px;border-radius:6px}
   .ans.mine .tg{color:var(--c)}
   .ans.right .tg{color:var(--green)}
-  .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:14px 18px;display:flex;align-items:center;gap:12px;min-height:60px}
-  .pcard:empty{visibility:hidden}
-  .pcard .vt{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
-  .pcard .vp{font-family:'Anton',sans-serif;font-size:28px;line-height:1;color:var(--green);margin-left:auto}
-  .pcard.wrong .vt{color:var(--muted)}
-  .ptotal{width:max-content;margin:6px 0 0 auto;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);min-height:22px}
+  .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:12px 18px;display:flex;flex-direction:column;gap:2px;min-height:66px}
+  .vrow{display:flex;align-items:center;gap:12px;min-height:26px}
+  .vrow .vt{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
+  .vrow .vp{font-family:'Anton',sans-serif;font-size:28px;line-height:1;color:var(--green);margin-left:auto}
+  .vrow.wrong .vt{color:var(--muted)}
+  .pcard.idle{visibility:hidden}
+  .ptotal{width:max-content;margin:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);min-height:22px}
   .ptotal b{color:#fff}
   .pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
   .pq-ring.done svg,.pq-ring.done span{display:none}
@@ -199,7 +200,7 @@
   #vPlay.hush .pq-head,#vPlay.hush .panswers,#vPlay.hush .loading{visibility:hidden}   /* while the start show plays, nothing of the question screen shows through */
 
   /* A SHORT PHONE (trivia phone, 6 and 12 Nov): the question screen, the ring, all four answers and our logo are ONE screen, no scrolling */
-  @media (max-height:830px){
+  @media (max-height:900px){
     .view{padding:8px 16px 8px}
     .pq-head{gap:6px;margin-bottom:10px}
     .pq-ring{width:56px;height:56px}
@@ -211,8 +212,7 @@
     .panswers{gap:10px}
     .ans{min-height:72px;padding:14px 14px 6px 12px;border-radius:14px;gap:12px}
     .ans .l{font-size:36px;min-width:30px}
-    .pcard{margin-top:8px;padding:7px 16px;min-height:48px}
-    .ptotal{margin-top:4px}
+    .pcard{margin-top:8px;padding:6px 16px;min-height:56px}
     .pfoot{padding:6px 16px max(6px, env(safe-area-inset-bottom, 0px))}
     .finalwrap{padding-top:16px}
   }
@@ -220,11 +220,20 @@
     .panswers{gap:8px}
     .ans{min-height:62px;padding-top:14px;padding-bottom:4px}
     .pq-head{margin-bottom:8px}
-    .pcard{margin-top:6px;padding:5px 16px;min-height:44px}
-    .ptotal{margin-top:2px;min-height:0}
+    .pcard{margin-top:6px;padding:4px 16px;min-height:52px}
+  }
+  @media (max-height:600px){
+    .ptop .brand .word{min-height:44px}
+    .pq-ring{width:44px;height:44px}
+    .pq-ring .n b,.pq-ring .n .pts,.pq-ring.done .n b{font-size:20px}
+    .pq-ring .n span{display:none}
+    .pq-text{font-size:17px;min-height:0}
+    .ans{min-height:54px;padding-top:12px;padding-bottom:3px;font-size:17px}
+    .ans .l{font-size:30px}
+    .pcard{min-height:48px}
   }
   .view.vp-step{padding:18px 20px 16px}
-  @media(max-height:830px){ .view.vp-step{padding:12px 20px 8px} }
+  @media (max-height:900px){ .view.vp-step{padding:12px 20px 8px} }
   @media(min-width:700px){ .view{padding-top:36px} #vPlay{padding-top:16px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
@@ -291,8 +300,7 @@
       <h2 class="pq-text" id="q" hidden></h2>
     </div>
     <div class="panswers" id="answers" role="group" aria-labelledby="q"></div>
-    <div class="pcard" id="verdict" aria-live="polite"></div>
-    <div class="ptotal" id="ptotal"></div>
+    <div class="pcard idle" aria-live="polite"><div class="vrow" id="verdict"></div><div class="ptotal" id="ptotal"></div></div>
   </section>
 
   <!-- 4. THE END: the trivia phone's final screen, then the tonight board -->
@@ -637,9 +645,9 @@ var VPCoaster = (function () {
       $('optinMobileRow').hidden = !o.mobile;
       $('lastRow').hidden = !o.last_name;
       window.VPConsent.render($('optinTick'), { marketing_optin: o.marketing_optin, email: o.email, mobile: o.mobile }, { venueName: venueName });
-      fitTick();
     }
     view('vName');
+    fitTick();
   }
   /* the one offers line is ONE line at every width: it shrinks to fit (never wraps) */
   function fitTick() {
@@ -860,7 +868,8 @@ var VPCoaster = (function () {
     q.className = 'pq-text' + (item[1].length > 90 ? ' long' : '');
     var rb = $('pqRingBox'); rb.className = 'pq-ring'; $('pqCdNum').className = ''; $('pqCdNum').textContent = '20';
     $('verdict').textContent = '';
-    $('verdict').className = 'pcard';
+    $('verdict').className = 'vrow';
+    $('verdict').parentNode.className = 'pcard idle';
     var box = $('answers');
     box.textContent = '';
     item[2].forEach(function (text, i) {
@@ -889,7 +898,8 @@ var VPCoaster = (function () {
   }
   function paintVerdict(good, points, letter) {
     var v = L.verdict(good, points, letter), el = $('verdict');
-    el.className = 'pcard' + (good ? '' : ' wrong');
+    el.className = 'vrow' + (good ? '' : ' wrong');
+    el.parentNode.className = 'pcard';
     ringDone(good, points);
     el.innerHTML = '<span class="vt">' + L.esc(v.text) + '</span>' + (v.pts ? '<span class="vp">' + L.esc(v.pts) + '</span>' : '');
   }

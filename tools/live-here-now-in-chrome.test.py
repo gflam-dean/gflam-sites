@@ -771,11 +771,11 @@ def main():
             s = wait(tsh, lambda s: s.get('view') == 'vName' and s.get('optin'))
             if mode == 'ok' and dev == 'iphone':
                 hd = waits.as_json(tsh.js('(function(){var h=document.getElementById("nameHead"),b=document.getElementById("nameBtn"),t=document.querySelector("#optinTick input"),'
-                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,'',
+                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,'
                                          'getComputedStyle(b).backgroundColor,t?getComputedStyle(t).borderTopColor:"",b.getBoundingClientRect().height]);})()'), [], 'NAMEHEAD')
                 check('the name step: heading "Ready to play?" in WHITE, "5 questions, 20 seconds each", no helper lines, the tick box ringed in the brand pink and Play the bright brand pink, 44 px or taller',
                       hd and hd[0] == 'Ready to play?' and hd[1] == 'rgb(255, 255, 255)' and hd[2] == '5 questions, 20 seconds each' and
-                      hd[4] == 'rgb(255, 31, 142)' and hd[5] == 'rgb(255, 31, 142)' and hd[6] >= 44, hd)
+                      hd[3] == 'rgb(255, 31, 142)' and hd[4] == 'rgb(255, 31, 142)' and hd[5] >= 44, hd)
             tsh.type_into('nameIn', 'Sam')
             tsh.type_into('optinEmail', 'sam@example.com')
             tsh.tap_id('nameBtn')
@@ -865,7 +865,7 @@ def main():
         tn.tap_id('leadBtn')
         s = wait(tn, lambda s: s.get('view') == 'vName', 4)
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
-        check('Add it sends ONLY the name and suburb the player typed (the state is the phone's own guess), for HQ to review, and says thanks',
+        check('Add it sends ONLY the name and suburb the player typed (the state is the phone own time-zone guess), for HQ to review, and says thanks',
               lead and lead[-1].get('name') == 'Duck and Drake' and lead[-1].get('suburb') == 'Fitzroy' and lead[-1].get('state') in ('NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT') and lead[-1].get('website') == '' and sorted(lead[-1].keys()) == ['name', 'state', 'suburb', 'website'] and
               s.get('addedPill') and s.get('nameKick') == 'Playing at Duck and Drake', (lead[-1:], s.get('addedPill'), s.get('nameKick')))
         check('after Add: just "Added", straight to the name step (no "we will check it"), the old search box and its "no venue" line cleared',
