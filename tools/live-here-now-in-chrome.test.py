@@ -1090,9 +1090,12 @@ def main():
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             hl = waits.as_json(tf.js('(function(){var h=document.getElementById("whereHead"),cs=getComputedStyle(h);return JSON.stringify([h.getBoundingClientRect().height/parseFloat(cs.lineHeight),h.scrollWidth<=h.clientWidth+1]);})()'), [], 'HL')
             check('%d px: "What venue are you at?" is on ONE line, not cut off (396.1)' % w, hl and hl[0] < 1.4 and hl[1], hl)
-            ph = tf.js('(function(){var i=document.getElementById("whereIn");return JSON.stringify([i.scrollWidth,i.clientWidth]);})()')
+            ph = tf.js('(function(){var i=document.getElementById("whereIn"),cs=getComputedStyle(i),ph=getComputedStyle(i,"::placeholder"),c=document.createElement("canvas").getContext("2d");'
+                       'c.font=ph.fontWeight+" "+ph.fontSize+" "+ph.fontFamily;if("letterSpacing" in c)c.letterSpacing=ph.letterSpacing;'
+                       'return JSON.stringify([Math.round(c.measureText(i.placeholder).width),Math.round(i.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)),ph.fontSize]);})()')
             ph = waits.as_json(ph, [], 'PH')
-            check('%d px: the whole placeholder "Start typing your pub or club" shows on one line (not cut off)' % w, ph and ph[0] <= ph[1] + 1, ph)
+            print('   (placeholder width, room, size at %d px: %s)' % (w, ph))
+            check('%d px: the whole placeholder "Start typing your pub or club" fits on one line, room kept for the clear button (not cut off)' % w, ph and ph[0] <= ph[1] - 30, ph)
             tf.shot('lhn-where-%d.png' % w)
             tf.type_into('whereIn', 'ro')
             tf.type_into('whereIn', 'roy')
