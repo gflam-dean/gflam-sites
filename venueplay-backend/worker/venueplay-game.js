@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Nov 2026, 21:14 · 608eb5d3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Nov 2026, 01:39 · c8907923';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1434,6 +1434,16 @@ const DEMO_MAX_PLAYERS = 10, DEMO_QUESTIONS = 5, DEMO_SECONDS = 30, DEMO_PER_DAY
 const DEMO_FULL_MSG = 'Up to 10 for the demo, and this one is full.';
 const DEMO_OFF = '&is_demo=not.is.true';   // PostgREST: false, and (before migration 172 backfills) null
 function isDemoSession(s) { return !!(s && s.is_demo === true); }
+/* A venue whose account has an EMPTY contact email (made by Play a quick game: its login is a mobile). Never throws. */
+async function venueHasNoEmail(env, venueId) {
+  try {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=founding_id&limit=1');
+    const fid = v && v[0] && v[0].founding_id;
+    if (!fid) return false;
+    const f = await sbGet(env, 'venueplay_founding', 'id=eq.' + enc(fid) + '&select=contact_email&limit=1');
+    return !!(f && f[0] && f[0].contact_email === '');   // exactly the empty string a quick start writes; a missing or null email is an older account
+  } catch (e) { return false; }
+}
 /* What the demo's join screen asks: a name, email and mobile (pre-filled from sign-up on their own phone)
    and the one offers tick, so they see how venueplay builds their list. Kept: the name always; the email
    and mobile ONLY with the tick, which is the same gate (gatedCapture) a real player passes. */
@@ -1921,6 +1931,13 @@ async function joinInfoLookup(env, code, fresh) {
   }
   /* THE DEMO'S JOIN SCREEN asks for the name, email and mobile and offers the one tick (DEMO_COLLECT), so a
      new venue sees how its list is built. /join keeps them by the same rule (demoCapture). */
+  /* PLAY A QUICK GAME (INBOX 412, 15 Nov 2026): a venue made by the three-box start has no email of its own (the account's contact
+     email is empty), so its demo's join screen asks for NO email and offers NO tick: Dean, "no email field anywhere". A venue with an
+     email keeps the demo it always had (the next block, unchanged). A read that will not answer keeps the email box. */
+  if (isDemoSession(liveSession) && await venueHasNoEmail(env, venueId)) {
+    return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: false, paper_reason: '', age_gate: false,
+      demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: false, mobile: true, marketing_optin: false } }, venueId: venueId };
+  }
   if (isDemoSession(liveSession)) {
     return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: false, paper_reason: '', age_gate: false,
       demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: true, mobile: true, marketing_optin: true } }, venueId: venueId };

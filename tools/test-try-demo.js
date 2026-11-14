@@ -99,6 +99,15 @@ function rowsOf(t) { return (DB[t] || []).length; }
   var c = ji.body && ji.body.collect;
   show('/join/info on the demo: demo true, up to 10', ji.body.demo === true && ji.body.demo_max === 10, JSON.stringify(ji.body));
   show('...collects first name, email, mobile and offers the tick', c && c.first_name && c.email && c.mobile && c.marketing_optin && !c.last_name && !c.postcode);
+  /* PLAY A QUICK GAME (INBOX 412, redo 15 Nov 2026): a venue made by the three-box start has an EMPTY contact email, so its demo's join screen
+     asks for no email and offers no tick ("no email field anywhere"); one with an email keeps the demo above. */
+  DB.venueplay_founding[0].contact_email = 'owner@royal.example';
+  var jEmail = await call(handleJoinInfo, { code: CODE, fresh: 1 });
+  show('CONTROL: a venue with an account email: the demo still asks the email and offers the tick', jEmail.body.collect && jEmail.body.collect.email === true && jEmail.body.collect.marketing_optin === true);
+  DB.venueplay_founding[0].contact_email = '';
+  var jQuick = await call(handleJoinInfo, { code: CODE, fresh: 1 });
+  show('a quick-start venue (empty account email): the demo asks NO email and offers NO tick, still the name and mobile', jQuick.body.demo === true && jQuick.body.collect && jQuick.body.collect.email === false && jQuick.body.collect.marketing_optin === false && jQuick.body.collect.first_name === true && jQuick.body.collect.mobile === true, JSON.stringify(jQuick.body.collect));
+  delete DB.venueplay_founding[0].contact_email;
   var oreal = (await call(handleCreateSession, { venue_id: OTHER, format: 'trivia', road: 'supabase' })).body;
   var jr = await call(handleJoinInfo, { code: OCODE, fresh: 1 });
   show('CONTROL: a real night at a venue that collects nothing asks only the name', jr.body.demo !== true && jr.body.collect && !jr.body.collect.email && !jr.body.collect.mobile && !jr.body.collect.marketing_optin, JSON.stringify(jr.body.collect));
