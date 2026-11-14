@@ -1160,7 +1160,7 @@ def main():
             tf.shot('lhn-question-%d.png' % w)
             if w == 375:
                 # a venue with its own logo switched on: the logo takes the title spot, as the real game (the picture is simulated: no network here)
-                tf.js('(function(){var i=document.getElementById("venueLogo");i.src="data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'80\'><rect width=\'200\' height=\'80\' rx=\'14\' fill=\'%23C70F69\'/><text x=\'100\' y=\'52\' font-size=\'34\' font-family=\'Arial\' font-weight=\'700\' text-anchor=\'middle\' fill=\'white\'>THE MINI BAR</text></svg>";i.hidden=false;document.getElementById("hdrVenueName").hidden=true;if(window.VPVenueLogo)window.VPVenueLogo.fit(i,"phone");})()')
+                tf.js('(function(){var i=document.getElementById("venueLogo");i.src="data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'80\'><rect width=\'200\' height=\'80\' rx=\'14\' fill=\'%23C70F69\'/><text x=\'100\' y=\'52\' font-size=\'24\' font-family=\'Arial\' font-weight=\'700\' text-anchor=\'middle\' fill=\'white\'>THE MINI BAR</text></svg>";i.hidden=false;document.getElementById("hdrVenueName").hidden=true;if(window.VPVenueLogo)window.VPVenueLogo.fit(i,"phone");})()')
                 time.sleep(0.4)
                 tf.shot('lhn-logo-%d.png' % w)
                 tf.js('(function(){var i=document.getElementById("venueLogo");i.hidden=true;document.getElementById("hdrVenueName").hidden=false;})()')
