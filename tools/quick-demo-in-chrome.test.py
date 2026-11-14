@@ -121,6 +121,7 @@ def scene_a(RIG):
         ok('the setup wizard is marked dismissed, and nothing opened or posted on its own', r.ask(lap, '(JSON.parse(localStorage.getItem("vpFirstRun:"+VPTry.venueId)||"{}")).dismissed') is True and
            not [c for c in json.loads(r.ask(lap, 'JSON.stringify(window.__calls)')) if re.search(r'more-info|card-link', c[0])])
         if SHOTS: r.shot(lap, os.path.join(SHOTS, 'quick-choices-1440.jpg'))
+        ok('before more info is tapped, the thank-you is NOT on the screen (only the four buttons are)', r.ask(lap, 'getComputedStyle(document.getElementById("qpThanks")).display') == 'none' and r.ask(lap, 'getComputedStyle(document.getElementById("qpChoiceBox")).display') != 'none')
         TD.clickid(r, lap, 'qpInfo')
         calls = json.loads(r.ask(lap, 'JSON.stringify(window.__calls)'))
         ok('"I\'d like more info" posts once with the venue and the game played, and shows only the thank-you',
@@ -212,6 +213,7 @@ def scene_c(RIG):
             if w in (390, 1440) and SHOTS:
                 time.sleep(8); r.shot(s, os.path.join(SHOTS, 'quick-tv-%dpx.jpg' % w))
             r.ask(s, 'document.body.classList.remove("playing"); document.getElementById("qpGames").classList.remove("on"); document.getElementById("qpChoices").classList.add("on"); true')
+            ok('%dpx: the thank-you is not showing under the four buttons' % w, r.ask(s, 'getComputedStyle(document.getElementById("qpThanks")).display') == 'none', r.ask(s, 'getComputedStyle(document.getElementById("qpThanks")).display'))
             f = r.json(s, FIT, {})
             ok('%dpx: the choices card: nothing wider than the screen, buttons 44px or taller, the same four buttons' % w, f.get('wide', 1) <= 0 and f.get('left', -1) >= 0 and f.get('right', 9999) <= f.get('vw', 0) and f.get('small', 1) == 0 and
                r.ask(s, '["qpAnother","qpInfo","qpSetup","qpCard"].map(function(i){return document.getElementById(i).textContent;}).join("|")') == "Play another game|I'd like more info|Set up my venue|Add my card", f)

@@ -102,7 +102,7 @@ try:
         ok('%s: three boxes and no email box' % where, S.js(s1, '(function(){var f=document.getElementById("qForm");return [].filter.call(f.querySelectorAll("input"),function(i){return i.type!=="hidden"&&!i.closest(".st-hp")&&i.offsetParent!==null;}).map(function(i){return i.id;}).join(",")+"|"+f.querySelectorAll("input[type=email]").length;})()') == 'qName,qMobile,qVenue|0',
            S.js(s1, 'document.getElementById("qForm").innerText'))
         shot(s1, 'quick-form-%s.png' % where)
-        S.js(s1, 'document.getElementById("qForm").hidden=true; document.getElementById("qCode").hidden=false; true')
+        S.js(s1, 'document.getElementById("qForm").hidden=true; document.getElementById("qCode").hidden=false; document.getElementById("qEnd").textContent="001"; true')
         f2 = S.json(s1, FIT, {})
         ok('%s: the code step: nothing wider than the screen, buttons 44px or taller%s' % (where, ', fits one screen' if h >= 844 else ''), f2.get('wide', 1) <= 0 and (h < 844 or f2.get('tall', 1) <= 0) and f2.get('small', 1) == 0, f2)
         shot(s1, 'quick-code-%s.png' % where)

@@ -412,7 +412,7 @@
   "counted_by": "lines"
  },
  "tools/quick-demo-in-chrome.test.py": {
-  "checks": 62,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/quick-game-in-chrome.test.py": {
@@ -1232,7 +1232,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-page.js": {
-  "checks": 52,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/test-quick-start.js": {

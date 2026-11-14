@@ -13,7 +13,7 @@
   function $(id) { return doc.getElementById(id); }
   function val(id) { var e = $(id); return e ? String(e.value || "").trim() : ""; }
   function err(id, t) { var e = $(id); if (e) e.textContent = t || ""; }
-  function show(id) { ["qForm", "qCode", "qHeld", "qMade"].forEach(function (x) { $(x).hidden = x !== id; }); }
+  function show(id) { ["qForm", "qCode", "qHeld", "qMade"].forEach(function (x) { $(x).hidden = x !== id; }); var h = doc.querySelector(".sec-head"); if (h) h.hidden = id !== "qForm"; }   // the code, thanks and signing-in cards carry their own heading
   function post(path, body) {
     return root.fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j = j || {}; j._status = r.status; return j; }); });

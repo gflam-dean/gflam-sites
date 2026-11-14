@@ -42,7 +42,8 @@
   #qpStage.tv iframe.screen{ left:0; right:0; top:0; bottom:0; margin:auto; width:min(100vw, calc(100dvh * 16 / 9)); height:min(100dvh, calc(100vw * 9 / 16)); }
   #qpStage.ph iframe.screen{ inset:0; width:100%; height:100%; }
   iframe.driver{ left:-10px; top:-10px; width:1px; height:1px; opacity:0; pointer-events:none; }
-  .qerr{ min-height:18px; }
+  [hidden]{ display:none !important; }   /* the website's .success.show would otherwise show the thank-you before it is earned */
+  @media (max-width:380px){ .st-kind{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
