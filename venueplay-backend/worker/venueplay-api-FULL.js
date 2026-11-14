@@ -24121,13 +24121,15 @@ function vpsFooterHtml(env, email) {
 function vpsConfirmationEmail(env, email, venue, nowMs) {
   const site = vpaCustomerSite(env);
   const subject = "You're on the venueplay monthly email";
-  const look = site + '/quick?src=website&utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
+  /* THE HOME PAGE, with the tags that say it was this email (Dean, 15 Nov 2026, INBOX 422 / MAIN 06:14 (d)). The button used to say "See how a
+     night runs" and lead to a game page; the home page is where the sample night and the games are, so the words say that. */
+  const look = site + '/?utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
   const inner = '<p style="font-size:20px;font-weight:800;color:#0A0A0B;margin:0 0 12px">You\'re on the list</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 14px">Thanks for signing up' + (venue ? ' for ' + vpaEsc(venue) : '')
     + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with venueplay.</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)
     + '. Nothing else, and nobody will ring you.</p>'
-    + vpaEmailButton(vpaEsc(look), 'See how a night runs')
+    + vpaEmailButton(vpaEsc(look), 'Have a look at venueplay')
     + '<p style="font-size:13px;line-height:1.5;color:#6a6a75;margin:22px 0 0">Questions? Just reply to this email. Did not sign up? Tap unsubscribe below and you will not hear from us again.</p>'
     + vpsFooterHtml(env, email);
   return { subject: subject, html: vpaVenueEmailCard('One short email a month. Here is what to expect.', inner, subject) };

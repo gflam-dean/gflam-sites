@@ -54,6 +54,16 @@ var LINK_PAGES = ["404", "add-card", "c", "go-venue", "help", "index", "leave-be
 var LINKS_BACK = /href\s*=\s*["'][^"']*see-a-night|<loc>[^<]*see-a-night|["'`]\/see-a-night|venueplay\.com\.au\/see-a-night/i;
 var linking = LINK_PAGES.filter(function (f) { var t; try { t = readFile(f); } catch (e) { return false; } return LINKS_BACK.test(t); });
 ok("no public page, sitemap.xml or llms.txt links to /see-a-night (the page stays reachable by its address, unlisted)", linking.length === 0, linking.join(", "));
+/* Dean, 15 Nov 2026 (INBOX 421, welcome email): NO email body links to /see-a-night either. Every Worker that builds an email, and the email
+   templates, are read; the only places the word may appear are the sign-up source list and the analytics path normaliser. */
+var EMAIL_SRC = ["venueplay-backend/worker/venueplay-api-FULL.js", "venueplay-backend/worker/venueplay-game.js", "venueplay-backend/worker/venueplay-room.js",
+  "venueplay-backend/worker/venueplay-sms-hook.js", "venueplay/email/signature.html"];
+var emailLinks = [];
+EMAIL_SRC.forEach(function (f) { var t; try { t = readFile(f); } catch (e) { return; }
+  t.split("\n").forEach(function (line, i) { if (!/see-a-night/i.test(line)) return;
+    if (/const VPS_SOURCES = /.test(line) || /\|signage\|training\|screen-check\|live-here-now\|see-a-night\|offer-/.test(line)) return;   // the source list, the analytics path rule
+    emailLinks.push(f + ":" + (i + 1)); }); });
+ok("no email body, in any Worker or template, links to /see-a-night", emailLinks.length === 0, emailLinks.join(", "));
 ok("the /see-a-night page itself is still deployed and plays (reachable by direct address)", PAGE.indexOf("<h1") >= 0 && PAGE.length > 5000);
 ok("no page text on the demo names a state offer", !/on the "\s*\+\s*STATES/.test(PAGE));
 
