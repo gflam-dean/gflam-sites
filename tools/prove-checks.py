@@ -24285,6 +24285,11 @@ MUTATIONS = [
      "    n.textContent = good ? (points > 0 ? '+' + points : '\\u2713') : '0';",
      "    n.textContent = '';",
      'the result ring shows no points where the countdown was'),
+    ('test-any-line-15nov.js',
+     'venueplay/app/musical/host.html',
+     '.stat .box .v#livePattern{white-space:normal;overflow:visible;text-overflow:clip;',
+     '.stat .box .v#livePattern{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',
+     'the console Pattern box cuts Any line to Any lin... again'),
 ]
 
 

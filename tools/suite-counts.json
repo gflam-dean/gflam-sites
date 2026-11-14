@@ -652,7 +652,7 @@
   "counted_by": "lines"
  },
  "tools/test-any-line-15nov.js": {
-  "checks": 60,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-archive-sweep-fails-closed.js": {

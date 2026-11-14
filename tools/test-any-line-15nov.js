@@ -250,5 +250,9 @@ print("\n7. 256.2, DEAN'S 5:39PM SCREENSHOT: THE DIM BUTTON WAS A CLAIM WITH THE
     workerCheck("one_line", CARD, played([10, 11, 13, 14])).valid === true && phoneFor("one", [10, 11, 13, 14], [10, 11, 13, 14]).marked() === true);
 })();
 
+/* 404b (Dean's rule: never cut words): the console's Pattern stat box shows the whole pattern name; its value wraps rather than ending in "..." (at 390 wide "Any line" showed as "Any lin..."). */
+pass("the console's Pattern box wraps its value (white-space normal, no ellipsis), so \"Any line\" is never cut",
+  /\.stat \.box \.v#livePattern\{white-space:normal;overflow:visible;text-overflow:clip;/.test(HOST) && /id="livePattern"/.test(HOST));
+
 print("\n" + (ran - bad) + " of " + ran + " checks passed" + (bad ? "  (" + bad + " FAILED)" : ""));
 if (bad) throw new Error(bad + " failed");
