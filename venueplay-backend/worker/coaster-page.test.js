@@ -106,7 +106,7 @@ pass("the share words use the shared place: two on 725 are both 1st (the one on 
   L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }, { place: 3, points: 580 }]) === 1 && L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580, you: true }]) === 3 &&
   L.topTenPlace((function () { var r = []; for (var i = 1; i <= 11; i++) r.push({ place: i, points: 1000 - i, you: i === 11 }); return r; })()) === 0);
 pass("the game's name is Coaster Trivia: page title, og title, the line before a venue is picked, and the share sheet's title",
-  /<title>Coaster Trivia \| venueplay<\/title>/.test(PAGE) && /og:title" content="Coaster Trivia \| venueplay"/.test(PAGE) && /id="whereKick">Coaster Trivia</.test(PAGE) && L.SHARE_TITLE === "Coaster Trivia" && /'Playing at ' \+ venueName/.test(PAGE));
+  /<title>Coaster Trivia \| venueplay<\/title>/.test(PAGE) && /og:title" content="Coaster Trivia \| venueplay"/.test(PAGE) && /id="hdrVenueName">Coaster Trivia</.test(PAGE) && L.SHARE_TITLE === "Coaster Trivia" && /'Playing at ' \+ venueName/.test(PAGE));
 pass("the code is read from ?c=, in capitals", L.readCode("?c=abc234") === "ABC234" && L.readCode("?v=the-mini-bar&c=ABC234") === "ABC234");
 pass("anything else is not a code", L.readCode("?c=abc") === "" && L.readCode("?c=abcdefg") === "" && L.readCode("?cc=ABC234") === "");
 
@@ -159,11 +159,11 @@ pass("Time's up reads as such, not 'Not quite'", L.verdict(null, 0).text === "Ti
 
 print("\nPICK OR ADD A VENUE, AND TEXT YOUR MATES (INBOX 309.1)");
 pass("there is no 'Just play, no board': Play now is hidden, shown only while the search is down",
-  /<button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now<\/button>/.test(PAGE) && PAGE.indexOf("Just play, no board") < 0 &&
+  /<button class="linkbtn" id="skipWhere" type="button" hidden>Play now<\/button>/.test(PAGE) && PAGE.indexOf("Just play, no board") < 0 &&
   /\$\('whereHint'\)\.textContent = 'The search is having a rest\. Try again in a minute, or just play\.'; \$\('skipWhere'\)\.hidden = false; return; \}/.test(PAGE) &&
   /\$\('skipWhere'\)\.hidden = true;\n      var m = d\.matches/.test(PAGE));
 pass("the venue step asks 'What venue are you at?' (Dean 12 Nov, INBOX 309.1a), never 'Where are you playing?'",
-  /<h[12] class="pbig one" id="whereHead">What venue are you at\?<\/h[12]>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
+  /<h[12] class="vp-h one" id="whereHead">What venue are you at\?<\/h[12]>/.test(PAGE) && PAGE.indexOf("Where are you playing") < 0);
 pass("not on our list: the Add your venue form drops down straight away with what they typed", /if \(!m\.length\) openLead\(typed\);/.test(PAGE));
 var sms = L.smsHref("I scored 520 at The Mini Bar. Reckon you can beat me?", "https://venueplay.com.au/live-here-now?c=ABC234");
 pass("the text-message fallback opens Messages with the words and the link", sms === "sms:?&body=" + encodeURIComponent("I scored 520 at The Mini Bar. Reckon you can beat me? https://venueplay.com.au/live-here-now?c=ABC234"), sms);
@@ -192,9 +192,9 @@ pass("no phone number on a public page", !/07 ?5228|5228 ?3667|04\d\d ?\d{3} ?\d
 pass("no .dev or workers.dev address", !/workers\.dev|\.dev\b/.test(PAGE));
 pass("never 'roster'", !/roster/i.test(text));
 pass("no price or offer on the coaster page itself", !/\$\d|offer/i.test(text.replace(/\/\*[\s\S]*?\*\//g, "")));
-pass("the only inputs: the first name, the venue's own sign-up (last name, email, mobile), the venue search, the four 'Add it' boxes and the challenge link",
-  (PAGE.match(/<input /g) || []).length === 9 && (PAGE.match(/<select /g) || []).length === 1 && ["nameIn", "lastIn", "whereIn", "leadIn", "leadSuburb", "leadSite", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
-  /<select id="leadState">/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE), (PAGE.match(/<input [^>]*id="[^"]+"/g) || []).map(function (x) { return /id="([^"]+)"/.exec(x)[1]; }));
+pass("the only inputs: the first name, the venue's own sign-up (last name, email, mobile), the venue search, the TWO 'Add it' boxes (name and suburb only, INBOX 405.7) and the challenge link",
+  (PAGE.match(/<input /g) || []).length === 8 && (PAGE.match(/<select /g) || []).length === 0 && ["nameIn", "lastIn", "whereIn", "leadIn", "leadSuburb", "optinEmail", "optinMobile"].every(function (id) { return PAGE.indexOf('id="' + id + '"') > 0; }) &&
+  !/leadState|leadSite/.test(PAGE) && /id="copyUrl" readonly/.test(PAGE), (PAGE.match(/<input [^>]*id="[^"]+"/g) || []).map(function (x) { return /id="([^"]+)"/.exec(x)[1]; }));
 print("\nYOUR DETAILS BEFORE PLAY (INBOX 309.1c)");
 var det = PAGE.slice(PAGE.indexOf("  function askDetails(venueName, added) {"), PAGE.indexOf("  /* the details go with the round"));
 pass("the venue's rows show only when the Worker says this venue has its sign-up on (S.optin from /coaster/ask), with the phones' one tick (VPConsent), never ticked",
@@ -209,9 +209,12 @@ pass("the details go to /coaster/optin only once the round has started there (it
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
   /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
 pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no lowercase 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
-  !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE) && /&copy; <span id="vp-year"><\/span> venueplay</.test(PAGE));
+  !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE));
+pass("INBOX 405: no footer at all (no Help, Privacy or Terms, no (c) line, no divider above our logo); the game's own header says COASTER TRIVIA in the title spot; no pink glow or gradient",
+  !/<footer/.test(PAGE) && !/&copy;|vp-year|href="\/help"|href="\/privacy"|href="\/terms"/.test(PAGE) && /<span class="vname" id="hdrVenueName">Coaster Trivia<\/span>/.test(PAGE) &&
+  /<div class="ptop">/.test(PAGE) && /<div class="pfoot" id="footMark">/.test(PAGE) && !/radial-gradient|linear-gradient/.test(css) && !/shadow:[^;}]*(255,31,142|var\(--pink\))/.test(css));
 pass("under the title, '5 questions, 20 seconds each' is the one honest line (396.a), and the search box carries its own placeholder (396.2)",
-  /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Type 3 letters of your pub or club"/.test(PAGE));
+  /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Start typing your pub or club"/.test(PAGE));
 pass("the end has no second sign-up card", PAGE.indexOf('id="optinCard"') < 0);
 
 print("\nONE SOUND PLAYER, A NAMED SLOT PER MOMENT (INBOX 317/318)");

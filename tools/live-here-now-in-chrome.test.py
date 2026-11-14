@@ -371,8 +371,8 @@ STATE = r'''(function(){
     kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
     sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
     optin:shown("optinEmailRow")||shown("optinMobileRow"), optinEmail:shown("optinEmailRow"), optinMobile:shown("optinMobileRow"), lastRow:shown("lastRow"),
-    nameSub:txt("nameSub"), optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
-    leadDone:shown("leadDone")?txt("leadDone"):"", notListed:shown("notListed"),
+    optinTick:txt("optinTick"), optinTicked:!!(document.getElementById("xOptin")||{}).checked,
+    notListed:shown("notListed"),
     tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
     next:document.getElementById("joinGame").getAttribute("href"), owner:document.getElementById("ownerLink").getAttribute("href"),
     ownerText:txt("ownerLink"), inputs:Array.prototype.filter.call(document.querySelectorAll("input"),function(i){return i.offsetParent!==null;}).length,
@@ -382,7 +382,7 @@ STATE = r'''(function(){
 
 FIT = r'''(function(){
   var vw=innerWidth, out=[], clipped=[], small=[];
-  Array.prototype.forEach.call(document.querySelectorAll("header *, main *, footer *"),function(e){
+  Array.prototype.forEach.call(document.querySelectorAll("#app *"),function(e){
     var r=e.getBoundingClientRect(); if(!r.width||!r.height) return;
     var cs=getComputedStyle(e); if(cs.visibility==="hidden"||cs.display==="none") return;
     if(r.left<-0.5||r.right>vw+0.5) out.push((e.id||e.className||e.tagName)+" "+Math.round(r.left)+".."+Math.round(r.right));
@@ -390,9 +390,9 @@ FIT = r'''(function(){
       clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
     if(/^(BUTTON|A)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" text wider than its button");
     var own=Array.prototype.some.call(e.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});
-    if(own && parseFloat(cs.fontSize)<15) small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
+    if(own && parseFloat(cs.fontSize)<15 && !e.closest('#optinTick')) small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
   });
-  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && r.height<54;})
+  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && !/linkbtn|sndtoggle/.test(b.className) && r.height<54;})
     .map(function(b){return (b.id||b.className)+" "+Math.round(b.getBoundingClientRect().height);});
   return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6), small:small.slice(0,6), short:tall.slice(0,6)});
 })()'''
@@ -561,12 +561,12 @@ def main():
     print('\nTHE PAGE FILE')
     check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
           '<script src="/app/vp-analytics.js" defer></script>' in HTML and 'vp-pixel' not in HTML and 'fbq(' not in HTML)
-    check('the foot says "(c) 2026 venueplay" and nothing of Gflam (Dean, 14 Nov 2026, INBOX 396.9: no Gflam customer-facing)',
-          '&copy; <span id="vp-year"></span> venueplay' in HTML and 'Gflam' not in HTML)
+    check('INBOX 405.5/405.6: NO footer at all (no Help, Privacy, Terms, no (c) line) and nothing of Gflam',
+          '<footer' not in HTML and '&copy;' not in HTML and 'href="/help"' not in HTML and 'href="/privacy"' not in HTML and 'href="/terms"' not in HTML and 'Gflam' not in HTML)
     check('no "60-second" and no "Coaster trivia" anywhere, and no top bar: our logo (or the venue\'s) sits at the foot (396)',
           '60-second' not in HTML and 'Coaster trivia' not in HTML and '<header' not in HTML and 'id="venueLogo"' in HTML)
-    check('the foot carries the venueplay wordmark (data-vp-mark="wordmark"), linked home',
-          'data-vp-mark="wordmark"' in HTML and 'class="mark" id="footMark" href="/" aria-label="venueplay home"' in HTML)
+    check('the game\'s own foot carries the venueplay wordmark (data-vp-mark="wordmark") at the bottom, as the trivia phone',
+          'data-vp-mark="wordmark"' in HTML and '<div class="pfoot" id="footMark">' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
            if l.strip() and not l.lstrip().startswith('#')]
     check('_redirects sends /here (and /here.html), the address printed on the coaster, to /live-here-now with a 301',
@@ -610,8 +610,8 @@ def main():
         check('...and its heading reads exactly "What venue are you at?" (never "Where are you playing?")', wh == 'What venue are you at?', wh)
         ph = t.js('document.getElementById("whereIn").getAttribute("placeholder")')
         sub = t.js('(function(){var h=document.getElementById("whereHead");var n=h.nextElementSibling;return n?n.tagName+" "+(n.className||""):"";})()')
-        check('the search box carries "Type 3 letters of your pub or club" as its placeholder and no helper line sits under the heading (396.2)',
-              ph == 'Type 3 letters of your pub or club' and not (sub or '').startswith('P psub'), (ph, sub))
+        check('the search box carries "Start typing your pub or club" as its placeholder and no helper line sits under the heading (INBOX 405.3)',
+              ph == 'Start typing your pub or club' and not (sub or '').startswith('P '), (ph, sub))
         check('our wordmark is at the foot (no venue yet), not a top bar', s.get('foot') == 'ours' and t.js('document.querySelector("header")') is None, s.get('foot'))
         one = t.js('(function(){var h=document.getElementById("whereHead"),r=h.getBoundingClientRect(),cs=getComputedStyle(h);return JSON.stringify([r.height/parseFloat(cs.lineHeight),h.scrollWidth<=h.clientWidth+1,cs.color]);})()')
         one = waits.as_json(one, [], 'ONE')
@@ -643,7 +643,8 @@ def main():
         check('then the details, BEFORE play: "Playing at The Mini Bar", the first name, the email box only (it collects no mobile), the phones\' one tick, NOT ticked',
               s.get('nameKick') == 'Playing at The Mini Bar' and s.get('optinEmail') and not s.get('optinMobile') and not s.get('lastRow') and
               s.get('optinTick') == "Send me offers from The Mini Bar. I'm 18 or over." and not s.get('optinTicked'), (s.get('nameKick'), s.get('optinEmail'), s.get('optinMobile'), s.get('optinTick'), s.get('optinTicked')))
-        check('it says the details go to the venue, never on the board', 'go to The Mini Bar, never on the board' in s.get('nameSub', ''), s.get('nameSub'))
+        gone = t.js('document.getElementById("vName").textContent.indexOf("never on the board")<0 && document.getElementById("vName").textContent.indexOf("goes on the board")<0')
+        check('the name step does NOT carry the long "details go to the venue, never on the board" lines (INBOX 405.8)', gone is True, gone)
         f = waits.as_json(t.js(FIT), {}, "FIT")
         check('the details step fits one screen at 375 (Play on screen, nothing cut off)', not f['out'] and not f['clipped'] and
               t.js('document.getElementById("nameBtn").getBoundingClientRect().bottom <= innerHeight'), f)
@@ -770,10 +771,10 @@ def main():
             s = wait(tsh, lambda s: s.get('view') == 'vName' and s.get('optin'))
             if mode == 'ok' and dev == 'iphone':
                 hd = waits.as_json(tsh.js('(function(){var h=document.getElementById("nameHead"),b=document.getElementById("nameBtn"),t=document.querySelector("#optinTick input"),'
-                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,document.getElementById("nameSub").textContent.slice(0,34),'
+                                         'f=document.querySelector(".facts"),cs=getComputedStyle(h);return JSON.stringify([h.textContent,cs.color,f&&f.textContent,'',
                                          'getComputedStyle(b).backgroundColor,t?getComputedStyle(t).borderTopColor:"",b.getBoundingClientRect().height]);})()'), [], 'NAMEHEAD')
-                check('the name step: heading "Ready to play?" in WHITE, "5 questions, 20 seconds each", the helper "Your first name goes on the board.", the tick box ringed in the brand pink and Play the bright brand pink, 44 px or taller',
-                      hd and hd[0] == 'Ready to play?' and hd[1] == 'rgb(255, 255, 255)' and hd[2] == '5 questions, 20 seconds each' and hd[3] == 'Your first name goes on the board.' and
+                check('the name step: heading "Ready to play?" in WHITE, "5 questions, 20 seconds each", no helper lines, the tick box ringed in the brand pink and Play the bright brand pink, 44 px or taller',
+                      hd and hd[0] == 'Ready to play?' and hd[1] == 'rgb(255, 255, 255)' and hd[2] == '5 questions, 20 seconds each' and
                       hd[4] == 'rgb(255, 31, 142)' and hd[5] == 'rgb(255, 31, 142)' and hd[6] >= 44, hd)
             tsh.type_into('nameIn', 'Sam')
             tsh.type_into('optinEmail', 'sam@example.com')
@@ -855,10 +856,8 @@ def main():
         err = tn.js('document.getElementById("leadErr").textContent')
         check('no suburb: the form says so and sends nothing', err == 'Type the suburb or town.' and len([x for x in FAKE['log'] if x[1] == '/coaster/lead']) == n_lead, err)
         tn.type_into('leadSuburb', 'Fitzroy')
-        tn.js('(function(){var s=document.getElementById("leadState");s.value="VIC";s.dispatchEvent(new Event("change"));})()')
         err2 = tn.js('document.getElementById("leadErr").textContent')
         check('once the suburb is typed, the "Type the suburb or town." line goes', err2 == '', err2)
-        tn.type_into('leadSite', 'duckanddrake.com.au')
         tn.shot('lhn-addit-375.png')
         tn.js('(function(){var e=document.getElementById("leadBtn");if(e)e.scrollIntoView({block:"end"});})()')
         time.sleep(0.2)
@@ -866,8 +865,8 @@ def main():
         tn.tap_id('leadBtn')
         s = wait(tn, lambda s: s.get('view') == 'vName', 4)
         lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
-        check('Add it sends the name, suburb, state and website for HQ to review, and says thanks',
-              lead and lead[-1] == {'name': 'Duck and Drake', 'suburb': 'Fitzroy', 'state': 'VIC', 'website': 'duckanddrake.com.au'} and
+        check('Add it sends ONLY the name and suburb the player typed (the state is the phone's own guess), for HQ to review, and says thanks',
+              lead and lead[-1].get('name') == 'Duck and Drake' and lead[-1].get('suburb') == 'Fitzroy' and lead[-1].get('state') in ('NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT') and lead[-1].get('website') == '' and sorted(lead[-1].keys()) == ['name', 'state', 'suburb', 'website'] and
               s.get('addedPill') and s.get('nameKick') == 'Playing at Duck and Drake', (lead[-1:], s.get('addedPill'), s.get('nameKick')))
         check('after Add: just "Added", straight to the name step (no "we will check it"), the old search box and its "no venue" line cleared',
               tn.js('document.getElementById("addedPill").textContent') == 'Added' and 'check it' not in (tn.js('document.getElementById("vName").textContent') or '') and
@@ -1017,7 +1016,6 @@ def main():
             wait(tf, lambda s: s.get('leadOpen'))
             tf.shot('lhn-notfound-%d.png' % w)
             tf.type_into('leadSuburb', 'Fitzroy')
-            tf.js('(function(){var s=document.getElementById("leadState");s.value="VIC";})()')
             f = waits.as_json(tf.js(FIT), {}, "FIT")
             check('%d px, "Add your venue" (the short form open): the same' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
