@@ -331,6 +331,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/make-journey-codes.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/migration-191-sim.test.py": {
   "checks": 40,
   "counted_by": "lines"
@@ -925,6 +929,14 @@
  },
  "tools/test-join-list.js": {
   "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-journey-client.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/test-journey-track.js": {
+  "checks": 71,
   "counted_by": "lines"
  },
  "tools/test-legal-gaps-28-oct.js": {

@@ -152,4 +152,4 @@ check('and says which link was clicked', /play-button 3/.test(ch));
 check('the empty campaign table explains itself', /No tracked links are loaded yet/.test(J.campHtml({ rows: [] })));
 check('no em dash, no person named in the HQ file', HQJ.indexOf('—') < 0);
 
-Promise.all(P).then(function () { print(''); print((ran - bad) + '/' + ran + ' checks passed' + (bad ? ', ' + bad + ' FAILED' : '')); });
+Promise.all(P).then(function () { print(''); print(bad ? (bad + ' FAILED of ' + ran + ' checks') : ('ALL ' + ran + ' CHECKS PASSED')); });

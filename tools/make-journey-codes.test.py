@@ -92,5 +92,5 @@ check('the lead data adds trivia and musical bingo for kim, besides her own bing
 before = os.stat(db).st_mtime
 check('the master file is not changed', os.stat(db).st_mtime == before)
 
-print('\n%d/%d checks passed%s' % (ran - bad, ran, ', %d FAILED' % bad if bad else ''))
+print('\n' + ('ALL %d CHECKS PASSED' % ran if not bad else '%d FAILED of %d checks' % (bad, ran)))
 sys.exit(1 if bad else 0)

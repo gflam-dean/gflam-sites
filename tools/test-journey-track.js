@@ -189,13 +189,15 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   Date.now = function () { return Date.parse('2026-11-16T03:00:00.000Z'); };
   var sc2 = await track({ sid: 'e2b2c3d4e5f60718293a4b61', code: 'SCNR22', events: [ev('link_hit')] }, 'Mozilla/5.0 (compatible; MSIE 9.0) Proofpoint/ URL Defense');
   check('a Proofpoint user agent is a HARD scanner', ofSid('e2b2c3d4e5f60718293a4b61')[0].event === 'scanner_hit' && ofSid('e2b2c3d4e5f60718293a4b61')[0].props.hard === true);
-  CF = { regionCode: 'VIC', country: 'AU', asn: 8075, asOrganization: 'Microsoft Corporation' };
+  CF = { regionCode: 'VIC', country: 'AU', asn: 8075 };   // the network number alone; no organisation name to fall back on
   var sc3 = await track({ sid: 'e3b2c3d4e5f60718293a4b62', code: 'SCNR22', events: [ev('link_hit')] }, sUa);
   check('a Microsoft network hit is a soft scanner (asn)', ofSid('e3b2c3d4e5f60718293a4b62')[0].event === 'scanner_hit' && ofSid('e3b2c3d4e5f60718293a4b62')[0].props.why === 'asn' && ofSid('e3b2c3d4e5f60718293a4b62')[0].props.hard === false);
   var sc4 = await track({ sid: 'e4b2c3d4e5f60718293a4b63', code: 'SCNR22', wd: true, events: [ev('link_hit')] }, PERSON_UA);
   check('a webdriver browser is a hard scanner', ofSid('e4b2c3d4e5f60718293a4b63')[0].event === 'scanner_hit' && ofSid('e4b2c3d4e5f60718293a4b63')[0].props.why === 'webdriver');
   await track({ sid: 'e4b2c3d4e5f60718293a4b63', code: 'SCNR22', events: [ev('page_view'), ev('human')] }, PERSON_UA);
   check('a hard scanner later events stay scanner and never upgrade', ofSid('e4b2c3d4e5f60718293a4b63').every(function (x) { return x.scanner === true; }) && ofSid('e4b2c3d4e5f60718293a4b63').filter(function (x) { return x.event === 'link_hit'; }).length === 0);
+  await track({ sid: 'e2b2c3d4e5f60718293a4b61', events: [ev('human')] }, PERSON_UA);
+  check('a hard scanner is not lifted by a human beacon that arrives without the code', ofSid('e2b2c3d4e5f60718293a4b61').filter(function (x) { return x.event === 'link_hit'; }).length === 0 && ofSid('e2b2c3d4e5f60718293a4b61').filter(function (x) { return x.event === 'scanner_hit'; }).length === 1, ofSid('e2b2c3d4e5f60718293a4b61'));
   // soft scanner then a human
   await track({ sid: 'e3b2c3d4e5f60718293a4b62', code: 'SCNR22', events: [ev('human')] }, sUa);
   var up = ofSid('e3b2c3d4e5f60718293a4b62').filter(function (x) { return x.props && x.props.upgraded; });
@@ -305,6 +307,8 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   check('email 1: enquired 1, signed up 1, signed in 1, card 1', r1.enquired === 1 && r1.signed_up === 1 && r1.signed_in === 1 && r1.card === 1, r1);
   check('email 1: the scanner-only lead is counted apart', r1.scanner_only === 1, r1);
   check('email 2 sent 1 and nobody clicked', r2.sent === 1 && r2.clicked === 0, r2);
+  var direct = vpjCampaignTable([{ id: 1, lead_ref: 'Z1', campaign: 'c', email_step: 1, link_label: 'a' }], [{ link_id: 1, event: 'link_hit', scanner: true }, { link_id: 1, event: 'page_view', scanner: true }]);
+  check('the table function itself counts a scanner-flagged row as no click and no visit', direct[0].clicked === 0 && direct[0].visited === 0 && direct[0].sent === 1, direct);
   check('the campaign table refuses a non-admin', (await call('/admin/journey-campaigns', {}, AS(STAFFADMIN))).status === 403);
 
   section('11. HQ: one venue journey in order');
@@ -313,11 +317,19 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   await addLink({ code: 'JJJ111', id: 1, lead_ref: 'L1', campaign: 'offer-nov', step: 2, label: 'play-button', sent_at: '2026-11-10T01:00:00.000Z', venue_id: a2.vid });
   DB.vp_journey_events.push({ id: 1, sid: SID, link_id: 1, event: 'link_hit', props: {}, src: 'cold_email', path: '/offer-nov/:code', region: 'QLD', device: 'mobile', scanner: false, venue_id: a2.vid, at: '2026-11-10T03:00:00.000Z' });
   DB.vp_journey_events.push({ id: 2, sid: SID, link_id: 1, event: 'form_sent', props: {}, src: 'cold_email', path: '/quick', region: 'QLD', device: 'mobile', scanner: false, venue_id: a2.vid, at: '2026-11-10T03:05:00.000Z' });
-  DB.vp_journey_events.push({ id: 3, sid: SID, link_id: 1, event: 'page_view', props: {}, src: 'cold_email', path: '/nsw', region: 'QLD', device: 'mobile', scanner: false, venue_id: null, at: '2026-11-10T02:59:00.000Z' });
+  DB.vp_journey_events.push({ id: 3, sid: SID, link_id: 1, event: 'page_view', props: {}, src: 'cold_email', path: '/nsw', region: 'QLD', device: 'mobile', scanner: false, venue_id: null, at: '2026-11-10T03:02:00.000Z' });
   var jv = await call('/admin/journey-venue', { venue_id: a2.vid }, AS(ADMIN));
   var words = (jv.body.journey || []).map(function (x) { return x.what; });
-  check('the venue journey is in time order, email first', jv.status === 200 && /^Email 2 of offer-nov sent/.test(words[0]) && /Looked at \/nsw/.test(words[1]) && /play-button link in email 2 of offer-nov/.test(words[2]) && /Sent the form/.test(words[3]), words);
+  check('the venue journey is in time order, email first', jv.status === 200 && /^Email 2 of offer-nov sent/.test(words[0]) && /play-button link in email 2 of offer-nov/.test(words[1]) && /Looked at \/nsw/.test(words[2]) && /Sent the form/.test(words[3]), words);
   check('the venue journey refuses a bad id and a non-admin', (await call('/admin/journey-venue', { venue_id: 'x' }, AS(ADMIN))).status === 400 && (await call('/admin/journey-venue', { venue_id: a2.vid }, AS(STAFFADMIN))).status === 403);
+
+  section('12a. migration 196 is locked down');
+  var SQL = readFile('venueplay-backend/supabase/venueplay-196-journey-tracking.sql').split('\n').filter(function (l) { return !/^\s*--/.test(l); }).join('\n');
+  ['vp_track_links', 'vp_journey_events'].forEach(function (t) {
+    check(t + ': RLS on, nothing for public / anon / authenticated, service role only', new RegExp('alter table public\\.' + t + ' enable row level security;').test(SQL) && new RegExp('revoke all on public\\.' + t + ' from public, anon, authenticated;').test(SQL) && new RegExp('grant select, insert(, update)? on public\\.' + t + ' to service_role;').test(SQL) && !new RegExp('to (anon|authenticated|public)').test(SQL));
+  });
+  check('the events table has no column for an address, a user agent or a person', !/\b(ip|ip_address|user_agent|ua|email|mobile|phone|name|fingerprint)\b\s+(text|inet|varchar)/i.test(SQL.split('create table if not exists public.vp_journey_events')[1].split(');')[0]), 'columns');
+  check('only a hash of the code is stored', /code_hash\s+text not null unique check \(code_hash ~ '\^\[a-f0-9\]\{64\}\$'\)/.test(SQL) && !/\bcode\s+text/.test(SQL));
 
   section('12. migration 196 not run: nothing breaks');
   world(); delete DB.vp_journey_events; delete DB.vp_track_links; FAIL['vp_journey_events:POST'] = 99;
@@ -326,6 +338,6 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   var nl = await call('/track/lookup?c=MPYXPG', undefined, hdr(PERSON_UA), 'GET');
   check('/track/lookup still answers found:false', nl.status === 200 && nl.body.found === false, nl);
 
-  print(''); print((ran - bad) + '/' + ran + ' checks passed' + (bad ? ', ' + bad + ' FAILED' : ''));
+  print(''); print(bad ? (bad + ' FAILED of ' + ran + ' checks') : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('journey tests failed');
 })().catch(function (e) { print('CRASH ' + (e && e.stack || e)); bad++; });
