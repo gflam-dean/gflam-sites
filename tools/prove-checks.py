@@ -24093,6 +24093,20 @@ MUTATIONS = [
      'var NEXT_STEPS = [30000, 30000, 30000, 60000, 60000, 60000, 120000];',
      'var NEXT_STEPS = [2000];',
      'the ended screen hammers the Worker every two seconds with no backoff'),
+    # 17 Nov 2026, 422 item 1: the phone start show is one centred column, not the whole laptop window
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js',
+     'var IW=innerWidth, W=Math.min(IW,460), X0=(IW-W)/2, H=innerHeight;',
+     'var IW=innerWidth, W=IW, X0=0, H=innerHeight;',
+     'on a laptop the phone start show is sized from the whole window: the wordmark is 890 px wide and BINGO runs over LET\'S PLAY'),
+    # 17 Nov 2026, 422 item 2: a website visitor on the code screen sees the website bar, not the in-game header
+    ('ux-fixes-in-chrome.test.py', 'venueplay/play.html',
+     'document.body.classList.toggle("vp-entry", which==="vNoRoom");',
+     'document.body.classList.toggle("vp-entry", false);',
+     'the code screen keeps the in-game header and menu button for a website visitor'),
+    ('ux-fixes-in-chrome.test.py', 'venueplay/play.html',
+     'document.body.classList.toggle("vp-entry", which==="vNoRoom");',
+     'document.body.classList.toggle("vp-entry", true);',
+     'a phone in a game (a QR scan) gets the website bar and loses its header and menu button'),
     # 13 Nov 2026, fix/waitwatch-flake-13nov: the watcher's count survives a failed or slow answer; the bingo phone knows its night before its own join lands.
     ('lobby-refresh-in-chrome.test.py', 'venueplay/app/vp-waitwatch.js',
      '          if (s === null || shown) return;                       // could not tell: say nothing',
