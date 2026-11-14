@@ -17,6 +17,8 @@
   var CFG = {
     LABEL: "Play a quick game",
     STEPS: ["demo", "games", "choices"],
+    DEMO_GAMES: ["trivia"],     // the games that have a quick demo. "Play another game" shows only when there are two or more (add "musical" on 1 Dec)
+    SKIP_AFTER_MS: 90000,        // a laptop visitor with nobody joined after this long is offered a way on
     PATH: "/quick",
     API: root.VP_START_API || "https://api.venueplay.com.au"
   };

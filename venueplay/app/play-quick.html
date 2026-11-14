@@ -36,6 +36,8 @@
   .st-kind{ margin-top:6px; }
   .st-kind-opt input{ position:absolute; opacity:0; width:1px; height:1px; }
   #qpStage{ display:none; }
+  #qpSkip{ position:fixed; left:0; right:0; bottom:10px; text-align:center; z-index:10; }
+  body:not(.playing) #qpSkip{ display:none; }
   body.playing header, body.playing main, body.playing footer{ display:none; }
   body.playing #qpStage{ display:block; position:fixed; inset:0; background:var(--ink); }
   #qpStage iframe{ position:absolute; border:0; }
@@ -43,7 +45,7 @@
   #qpStage.ph iframe.screen{ inset:0; width:100%; height:100%; }
   iframe.driver{ left:-10px; top:-10px; width:1px; height:1px; opacity:0; pointer-events:none; }
   [hidden]{ display:none !important; }   /* the website's .success.show would otherwise show the thank-you before it is earned */
-  @media (max-width:380px){ .st-kind{ grid-template-columns:1fr; } }
+  @media (max-height:700px){ .nav{ height:52px; } .st-h{ font-size:var(--fs-lg); line-height:1.1; margin-bottom:6px; } .st-p{ margin-bottom:8px; } .st-kind-opt span{ min-height:44px; } .st-kind{ gap:8px; } #qpGamesGo{ margin-top:12px; padding:12px; } .stack .btn{ padding:12px; margin-bottom:8px; } .form-shell{ padding:20px; } main .sec{ padding:0; } }
 </style>
 </head>
 <body>
@@ -74,7 +76,7 @@
     <h2 class="st-h">Open it on the big screen</h2>
     <p class="st-tv" id="qpTvLine">On the laptop or TV, go to venueplay.com.au/tv and type this code: <b id="qpTvCode">------</b></p>
     <div class="stack" style="margin-top:18px">
-      <a class="btn btn-ghost" id="qpTextLink" href="#">Text me the link</a>
+      <a class="btn btn-ghost" id="qpTextLink" href="#">Text myself the code</a>
       <button class="btn btn-primary" type="button" id="qpReady">I'm ready</button>
     </div>
   </div></div></div></section>
@@ -89,8 +91,13 @@
 
   <section class="sec" id="qpChoices"><div class="wrap narrow"><div class="form-shell"><div class="inner">
     <div id="qpChoiceBox">
+      <div id="qpThanks" class="success show" style="padding-top:0" hidden>
+        <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Got it</h3>
+        <p id="qpThanksWords">Thanks, we'll be in touch.</p>
+      </div>
       <h2 class="st-h" id="qpChoicesHead">That's the game</h2>
-      <p class="st-p">What would you like to do next?</p>
+      <p class="st-p" id="qpChoicesAsk">What would you like to do next?</p>
       <div class="stack" style="margin-top:18px">
         <button class="btn btn-ghost" type="button" id="qpAnother">Play another game</button>
         <button class="btn btn-ghost" type="button" id="qpInfo">I'd like more info</button>
@@ -99,14 +106,10 @@
       </div>
       <p class="form-err" id="qpErr" role="alert"></p>
     </div>
-    <div id="qpThanks" class="success show" style="padding-top:0" hidden>
-      <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <h3>Thanks</h3>
-      <p id="qpThanksWords">Thanks, we'll be in touch.</p>
-    </div>
   </div></div></div></section>
 </main>
 <div id="qpStage" aria-label="Your game"></div>
+<a class="st-link" id="qpSkip" href="#" hidden>No phone to hand? Skip the game</a>
 
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-session.js"></script>
@@ -159,12 +162,15 @@
   }
   function run(step){
     QSTEP=step;
-    if(step==="demo") return S.device==="phone" ? show("qpPhone") : playOnBigScreen();
+    if(step==="demo") return needsChoice() ? chooser() : playOnBigScreen();
     if(step==="games") return games();
     return choices();
   }
   function after(){ run(VPQuick.next(QSTEP)); }
 
+  /* A phone, or a tablet held upright, is not a TV: ask first. A laptop, or a tablet held wide, is the TV. */
+  function needsChoice(){ return S.device==="phone" || (S.device==="tablet" && window.innerHeight>window.innerWidth); }
+  function chooser(){ $("qpOnPhone").textContent = S.device==="phone" ? "Play on this phone" : "Play on this tablet"; show("qpPhone"); }
   /* ---- the demo: the real pages ---- */
   function frame(src, cls, title){ var f=document.createElement("iframe"); f.src=src; if(cls) f.className=cls; f.title=title; f.setAttribute("allow","autoplay; fullscreen"); return f; }
   var driver=null, stage=$("qpStage"), _pf=false;
@@ -175,10 +181,14 @@
     driver.setAttribute("aria-hidden","true"); driver.setAttribute("tabindex","-1");
     document.body.appendChild(driver);
   }
+  var skipT=null;
   function playOnBigScreen(){          // a laptop or tablet: this page IS the TV, the real /tv, with its own QR, logo and room code
     S.plan={ tv:true, driver:true };
     begin("tv"); stage.appendChild(frame(VPDemo.tvUrl(S.slug), "screen", "Your TV screen"));
+    /* Nobody has joined after a while (a laptop visitor with no phone to hand): a quiet way on, the game cannot start by itself with nobody in it. */
+    skipT=setTimeout(function(){ var a=$("qpSkip"); if(a && document.body.classList.contains("playing")) a.hidden=false; }, VPQuick.cfg.SKIP_AFTER_MS||90000);
   }
+  $("qpSkip").addEventListener("click", function(e){ e.preventDefault(); qtrack("skipped_game"); endDemo(); });
   $("qpOnPhone").addEventListener("click", function(){          // a phone, no big screen: the real trivia phone screen does the lot
     S.plan={ player:true, driver:true, phoneOnly:true };
     begin("ph");
@@ -198,17 +208,20 @@
     if(e.origin!==location.origin || !e.data || e.data.vpDemo!==true || e.data.cmd) return;
     var d=e.data;
     if(d.joinCode) S.joinCode=d.joinCode;
+    if(skipT && (d.joined>=1 || d.status==="question")){ clearTimeout(skipT); skipT=null; $("qpSkip").hidden=true; }
     if(d.joinCode && d.status!=="setup" && S.plan && S.plan.player) playerFrame(d.joinCode);
     if(d.status==="question" && d.qi>=1 && d.qi<=5) qtrack("demo_q"+(d.qi|0));
     if(d.status==="done") finished();
   });
+  function endDemo(){ if(skipT){ clearTimeout(skipT); skipT=null; } $("qpSkip").hidden=true; if(driver && driver.parentNode) driver.parentNode.removeChild(driver); stage.innerHTML=""; _pf=false; after(); }
   function finished(){
     qtrack("podium_seen");
-    setTimeout(function(){ if(driver && driver.parentNode) driver.parentNode.removeChild(driver); stage.innerHTML=""; _pf=false; after(); }, 8000);   // the podium first, then on
+    setTimeout(endDemo, 8000);   // the podium first, then on
   }
 
   /* ---- what games do you run now? (the wizard's own five games and saver) ---- */
   function games(){
+    try{ if(localStorage.getItem("vpqGames-"+S.venueId)) return after(); }catch(e){}   // already answered: never asked twice
     var FR=window.VPFirstRun, list=(FR&&FR.GAMES)||[["trivia","Trivia"],["musical","Musical bingo"],["bingo","Bingo"],["raffles","Raffles"],["members","Members draws"]];
     var box=$("qpChips"); box.innerHTML="";
     list.forEach(function(g){
@@ -223,12 +236,12 @@
       var ans={ games:picked }; if(FR&&FR.cleanAnswers) ans=FR.cleanAnswers(ans);
       var save=Promise.resolve(false);
       try{ save=Promise.resolve(VP.saveSettings(S.venueId, { setup_answers:ans })).then(function(){ return true; }, function(){ return false; }); }catch(e){}
-      save.then(function(){ qtrack("games_answered"); after(); });
+      save.then(function(ok){ try{ localStorage.setItem("vpqGames-"+S.venueId, "1"); }catch(e){} qtrack("games_answered"); after(); });
     };
   }
 
   /* ---- the choices ---- */
-  function choices(){ show("qpChoices"); $("qpAnother").focus(); }
+  function choices(){ $("qpAnother").hidden = (VPQuick.cfg.DEMO_GAMES||[]).length < 2; show("qpChoices"); }
   $("qpAnother").addEventListener("click", function(){ qtrack("choice_another"); setTimeout(function(){ location.href="/app/play-quick.html"; }, 150); });
   $("qpSetup").addEventListener("click", function(){
     qtrack("choice_setup");
@@ -238,14 +251,14 @@
   $("qpInfo").addEventListener("click", function(){
     qtrack("choice_info"); $("qpErr").classList.remove("show");
     bill("/quick/more-info", { venue_id:S.venueId, game:"trivia" }).then(function(j){
-      if(j && !j.error){ $("qpChoiceBox").hidden=true; $("qpThanks").hidden=false; $("qpThanksWords").textContent=j.words||"Thanks, we'll be in touch."; }
+      if(j && !j.error){ $("qpChoicesHead").hidden=true; $("qpChoicesAsk").hidden=true; $("qpInfo").hidden=true; $("qpThanks").hidden=false; $("qpThanksWords").textContent=j.words||"Thanks, we'll be in touch."; }
       else { $("qpErr").textContent=(j&&j.error)||"We could not pass that on just then. Please try again."; $("qpErr").classList.add("show"); }
     });
   });
   $("qpCard").addEventListener("click", function(){
     qtrack("card_screen_seen"); $("qpErr").classList.remove("show");
     bill("/account/card-link", { venue_id:S.venueId }).then(function(j){
-      if(j && j.card_url && /^https:\/\//.test(j.card_url)){ qtrack("card_added"); setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there
+      if(j && j.card_url && /^https:\/\//.test(j.card_url)){ setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there. the funnel's card-added step is sent only when Stripe sends them back (the console, ?card=added)
       else { $("qpErr").textContent=(j&&j.has_card) ? "Your card is already added." : ((j&&j.error)||"We could not open the card page just then. Please try again."); $("qpErr").classList.add("show"); }
     });
   });

@@ -101,12 +101,20 @@ try:
         ok('%s: the heading is the label setting' % where, f.get('h1') == 'Play a quick game', f)
         ok('%s: three boxes and no email box' % where, S.js(s1, '(function(){var f=document.getElementById("qForm");return [].filter.call(f.querySelectorAll("input"),function(i){return i.type!=="hidden"&&!i.closest(".st-hp")&&i.offsetParent!==null;}).map(function(i){return i.id;}).join(",")+"|"+f.querySelectorAll("input[type=email]").length;})()') == 'qName,qMobile,qVenue|0',
            S.js(s1, 'document.getElementById("qForm").innerText'))
+        sub = S.json(s1, '(function(){ var b=document.getElementById("qGo").getBoundingClientRect(); return {bottom:Math.round(b.bottom), vh:innerHeight}; })()', {})
+        ok('%s: the Text me my code button is on the screen without scrolling' % where, sub.get('bottom', 9999) <= sub.get('vh', 0), sub)
         shot(s1, 'quick-form-%s.png' % where)
-        S.js(s1, 'document.getElementById("qForm").hidden=true; document.getElementById("qCode").hidden=false; document.getElementById("qEnd").textContent="001"; true')
+        # the code step, reached by a REAL submission (a real text code is sent), as the evidence shot
+        typ(s1, 'qName', 'Kim'); typ(s1, 'qMobile', '0412 600 0%02d' % (w // 10 % 100)); typ(s1, 'qVenue', 'kirra')
+        S.until(s1, 'document.querySelectorAll("#qPick button").length', 10)
+        S.js(s1, '(function(){ %s var b=document.querySelector("#qPick button"); if(b) tap(b); return true; })()' % TAP)
+        tap(s1, 'qGo')
+        real = S.until(s1, '!document.getElementById("qCode").hidden', 20)
         f2 = S.json(s1, FIT, {})
-        ok('%s: the code step: nothing wider than the screen, buttons 44px or taller%s' % (where, ', fits one screen' if h >= 844 else ''), f2.get('wide', 1) <= 0 and (h < 844 or f2.get('tall', 1) <= 0) and f2.get('small', 1) == 0, f2)
+        ok('%s: the code step, reached by really sending the form: nothing wider than the screen, buttons 44px or taller%s, the page heading gives way to the card\'s own' % (where, ', fits one screen' if h >= 844 else ''), real is True and f2.get('wide', 1) <= 0 and (h < 844 or f2.get('tall', 1) <= 0) and f2.get('small', 1) == 0 and S.js(s1, 'document.querySelector(".sec-head").hidden') is True, f2)
         shot(s1, 'quick-code-%s.png' % where)
-        S.js(s1, 'document.getElementById("qCode").hidden=true; document.getElementById("qForm").hidden=false; document.getElementById("qPostRow").hidden=false; document.getElementById("qSuburbRow").hidden=false; true')
+        S.js(s1, 'document.getElementById("qCode").hidden=true; document.getElementById("qForm").hidden=false; document.querySelector(".sec-head").hidden=false; true')
+        S.js(s1, 'document.getElementById("qPostRow").hidden=false; document.getElementById("qSuburbRow").hidden=false; true')
         f3 = S.json(s1, FIT, {})
         ok('%s: with the suburb and postcode boxes open nothing is wider than the screen' % where, f3.get('wide', 1) <= 0, f3)
         S.close_tab(t1)
@@ -131,7 +139,7 @@ try:
     e164 = '+61412555001'
     code = last_code(e164)
     ok('a 6 digit code was texted to the mobile through the SMS hook', bool(code) and re.match(r'^\d{6}$', code or ''), code)
-    st_rows = S.W.table('vp_signup_starts')
+    st_rows = [x for x in S.W.table('vp_signup_starts') if x.get('mobile') == '+61412555001']
     ok('the start holds a placeholder login and the first name only', len(st_rows) == 1 and st_rows[0].get('email', '').endswith('@phone.venueplay.com.au') and st_rows[0].get('contact_name') == 'Kim' and st_rows[0].get('postcode') == '4225', st_rows)
     wrong = '000000' if code != '000000' else '111111'
     paste_code(sid, wrong)

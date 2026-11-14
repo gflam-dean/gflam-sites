@@ -33,6 +33,7 @@
   .sec-head{ margin-bottom:16px; }
   .st-legal{ margin-top:10px; }
   .sec-sub{ margin-top:8px; }
+  @media (max-height:700px){ .nav{ height:52px; } .sec-sub{ display:none; } .sec-head{ margin-bottom:10px; } .form-grid{ gap:10px; } .form-shell{ padding:20px; } #qGo,#qCheck{ margin-top:12px; padding:12px; } .st-legal{ margin-top:8px; } .field label{ line-height:1.2; } }
   #qGo,#qCheck{ width:100%; margin-top:18px; padding:16px; font-size:var(--fs-base); }   /* #st-go and #st-check's own rule, for this page's ids */
   #qGo:disabled,#qCheck:disabled{ opacity:.6; cursor:default; transform:none; }
   /* the venue list under the box: the website's own box tokens (as .field input and the pub/club choice) */
@@ -114,6 +115,7 @@
             <h3>Thanks</h3>
             <p id="qHeldWords">Thanks, we'll check your venue and get you set up, usually within a business day.</p>
           </div>
+          <a class="btn btn-ghost" href="/" style="width:100%;margin-top:18px;padding:16px">Back to venueplay.com.au</a>
         </div>
         <div id="qMade" class="st-step" hidden>
           <h3 class="st-h">Getting your game ready</h3>
