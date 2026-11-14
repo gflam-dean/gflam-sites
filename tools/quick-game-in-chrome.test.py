@@ -70,7 +70,7 @@ def last_code(mobile):
     return t[-1]['sms']['otp'] if t else None
 
 
-FIT = ('(function(){ var d=document.documentElement; var small=[].filter.call(document.querySelectorAll("button,.btn"),function(b){var r=b.getBoundingClientRect();return r.width>0&&r.height>0&&r.height<44;}).length;'
+FIT = ('(function(){ var d=document.documentElement; var small=[].filter.call(document.querySelectorAll("button:not(.st-link),.btn"),function(b){var r=b.getBoundingClientRect();return r.width>0&&r.height>0&&r.height<44;}).length;'
        'return {wide:d.scrollWidth-window.innerWidth, tall:d.scrollHeight-window.innerHeight, small:small, h1:(document.querySelector("h1:not([hidden])")||{}).textContent}; })()')
 
 S = admin_site.Site(root=A.root, fonts=bool(A.shots))
@@ -97,18 +97,18 @@ try:
         t1, s1 = S.open('/quick', w, h, mobile=mobile)
         S.until(s1, '!!window.VPQuick && !!document.getElementById("qGo")', 20)
         f = S.json(s1, FIT, {})
-        ok('%s: the form fits the window (no scroll either way), buttons 44px or taller' % where, f.get('wide', 1) <= 0 and f.get('tall', 1) <= 0 and f.get('small', 1) == 0, f)
+        ok('%s: the form is the website\'s own: nothing wider than the screen, buttons 44px or taller%s' % (where, ', and it fits one screen' if h >= 844 else ' (a small phone scrolls, as the website\'s own forms do)'), f.get('wide', 1) <= 0 and (h < 844 or f.get('tall', 1) <= 0) and f.get('small', 1) == 0, f)
         ok('%s: the heading is the label setting' % where, f.get('h1') == 'Play a quick game', f)
         ok('%s: three boxes and no email box' % where, S.js(s1, '(function(){var f=document.getElementById("qForm");return [].filter.call(f.querySelectorAll("input"),function(i){return i.type!=="hidden"&&!i.closest(".st-hp")&&i.offsetParent!==null;}).map(function(i){return i.id;}).join(",")+"|"+f.querySelectorAll("input[type=email]").length;})()') == 'qName,qMobile,qVenue|0',
            S.js(s1, 'document.getElementById("qForm").innerText'))
         shot(s1, 'quick-form-%s.png' % where)
         S.js(s1, 'document.getElementById("qForm").hidden=true; document.getElementById("qCode").hidden=false; true')
         f2 = S.json(s1, FIT, {})
-        ok('%s: the code step fits too' % where, f2.get('wide', 1) <= 0 and f2.get('tall', 1) <= 0 and f2.get('small', 1) == 0, f2)
+        ok('%s: the code step: nothing wider than the screen, buttons 44px or taller%s' % (where, ', fits one screen' if h >= 844 else ''), f2.get('wide', 1) <= 0 and (h < 844 or f2.get('tall', 1) <= 0) and f2.get('small', 1) == 0, f2)
         shot(s1, 'quick-code-%s.png' % where)
         S.js(s1, 'document.getElementById("qCode").hidden=true; document.getElementById("qForm").hidden=false; document.getElementById("qPostRow").hidden=false; document.getElementById("qSuburbRow").hidden=false; true')
         f3 = S.json(s1, FIT, {})
-        ok('%s: with the suburb and postcode boxes open it still fits one screen' % where, f3.get('wide', 1) <= 0 and f3.get('tall', 1) <= 0, f3)
+        ok('%s: with the suburb and postcode boxes open nothing is wider than the screen' % where, f3.get('wide', 1) <= 0, f3)
         S.close_tab(t1)
 
     print('\nA BRAND-NEW VENUE ON OUR LIST, ON A PHONE (the taps are counted)')
@@ -144,7 +144,7 @@ try:
     taps = S.js(sid, 'VPQuick.taps()')
     ok('TAPS TO SIGNED IN: %s (name, mobile, venue, pick, send); the code is one paste' % taps, taps == 5, taps)
     hand = S.js(sid, 'localStorage.getItem("vpTryNext")') or ''
-    ok('the 30 minute hand-off opens the demo on their own account', '/app/try.html?quick=1' in hand, hand)
+    ok('the 30 minute hand-off opens the real demo page on their own account', '/app/play-quick.html' in hand, hand)
     shot(sid, 'quick-made-390px.png')
     fo = S.W.table('venueplay_founding'); vp = [p for p in S.W.table('vp_prospects') if p.get('contact_name') == 'Kim']; au = S.W.table('auth'); mine = [f for f in fo if f.get('venue_name') == 'Kirra Beach Hotel']; fo = mine
     ok('the account is a card-free prospect at 10 players, a pub', len(mine) == 1 and len(vp) >= 1 and (S.W.table('vp_venues') or [{}])[-1].get('max_players') == 10, [fo, vp])

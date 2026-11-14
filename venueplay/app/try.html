@@ -72,14 +72,6 @@
   .done{ position:fixed; inset:0; background:rgba(10,10,11,.92); display:none; align-items:center; justify-content:center; padding:18px; z-index:5; }
   .done.on{ display:flex; }
   .done .card{ max-width:520px; width:100%; background:var(--ink-2); border:1px solid var(--line); border-radius:16px; padding:22px; }
-  /* PLAY A QUICK GAME (INBOX 412): the games question and the three choices, one screen each, no scroll */
-  .qcard h2{ margin:0 0 12px; }
-  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
-  .chip{ min-height:46px; padding:0 16px; border-radius:12px; border:2px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--text); font:700 16px 'Hanken Grotesk',Manrope,sans-serif; cursor:pointer; }
-  .chip[aria-pressed=true]{ border-color:var(--pink); background:rgba(255,31,142,.18); color:#fff; }
-  .stack .btn{ display:block; width:100%; margin:0 0 10px; }
-  .stack .btn:last-child{ margin-bottom:0; }
-  .thanks{ color:#fff; font-weight:700; }
   .done ol{ margin:0 0 16px; padding:0 0 0 22px; color:var(--muted); font-size:16px; }
 </style>
 </head>
@@ -166,41 +158,17 @@
   </div>
 </div>
 
-<div class="done" id="qGames" role="dialog" aria-modal="true" aria-labelledby="qGamesHead">
-  <div class="card qcard">
-    <h2 id="qGamesHead">What games do you run?</h2>
-    <p>Tap all that apply. We will have them ready for you.</p>
-    <div class="chips" id="qChips"></div>
-    <button class="btn" type="button" id="qGamesGo">Next</button>
-  </div>
-</div>
-<div class="done" id="qChoices" role="dialog" aria-modal="true" aria-labelledby="qChoicesHead">
-  <div class="card qcard">
-    <h2 id="qChoicesHead">Nice one. Your venue is ready to play.</h2>
-    <div id="qChoiceBtns" class="stack">
-      <button class="btn" type="button" id="qAnother">Play another game</button>
-      <button class="btn ghost" type="button" id="qInfo">I'd like more info</button>
-      <button class="btn ghost" type="button" id="qSetup">Set up my venue</button>
-      <button class="btn ghost" type="button" id="qCard">Add your card</button>
-    </div>
-    <p class="thanks" id="qThanks" role="status" hidden></p>
-    <p class="err" id="qErr" role="alert"></p>
-  </div>
-</div>
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-session.js"></script>
 <script src="/app/vendor/qrcode-1.4.4.min.js"></script>
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-demo.js"></script>
-<script src="/app/vp-quick-config.js"></script>
-<script src="/app/vp-firstrun.js"></script>
 <script>
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
   var S={ mode:"", n:1, device:"computer", other:null, venue:null, venueId:"", slug:"", code:"", me:{ name:"", email:"", mobile:"" }, plan:null, joinCode:"" };
   window.VPTry=S;   // for the suites
-  var QUICK=/[?&]quick=1(&|$)/.test(location.search);
 
   function show(id){ var all=document.querySelectorAll(".step"); for(var i=0;i<all.length;i++) all[i].classList.toggle("on", all[i].id===id); window.scrollTo(0,0); }
   function touch(){ try{ return ("ontouchstart" in window) || (navigator.maxTouchPoints||0)>0; }catch(e){ return false; } }
@@ -218,83 +186,9 @@
     S.code=String(S.venue.join_code || (VP.venueCode && S.slug ? VP.venueCode(S.slug) : "") || "");
     var u=ctx.user||{}, md=u.user_metadata||{}, mine=(ctx.staff||[]).filter(function(r){ return r && r.venue_id===S.venueId; })[0]||{};
     S.me={ name:String(mine.display_name||md.first_name||md.name||"").split(" ")[0], email:String(u.email||""), mobile:mobileShow(u.phone) };
-    if(QUICK){ quickStart(); return; }
     if(S.preMode) pickMode(S.preMode); else show("stepMode");
   }).catch(function(){ $("signinMsg").textContent="We could not check your sign in. Reload the page to try again."; });
 
-  /* ---- PLAY A QUICK GAME (INBOX 412): /app/try.html?quick=1, after /quick made the account and signed them in ----
-     No mode, count or device questions: this screen is the TV, their phone joins by QR, the game runs itself (5 questions, the
-     leaderboard, the podium). On a phone with no second screen the existing TV-code step is kept. The ORDER of what comes after is
-     one setting (VPQuick.cfg.STEPS): "demo", "games" (What games do you run?), "choices" (Play another game / more info / Set up). */
-  function bill(path, body){
-    var c=VP.getClient();
-    return c.auth.getSession().then(function(r){
-      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||"";
-      return fetch(VPQuick.cfg.API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok, "X-VP-Venue":S.venueId }, body:JSON.stringify(body||{}) })
-        .then(function(res){ return res.json().catch(function(){ return {}; }); });
-    });
-  }
-  function quickToken(){ try{ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }); }catch(e){ return Promise.resolve(""); } }
-  function qtrack(step){ quickToken().then(function(t){ window.vpTrackStep(step, { token:t }); }); }
-  var QSTEP="";
-  function quickStart(){
-    VPQuick.countTaps(); VPQuick.leave();
-    $("ask").style.display="none";   // the old "Have a play for free / Checking you are signed in" page is not shown behind the cards
-    qtrack("signed_in");
-    try{ var k="vpFirstRun:"+S.venueId, st=JSON.parse(localStorage.getItem(k)||"null")||{}; st.dismissed=true; localStorage.setItem(k, JSON.stringify(st)); }catch(e){}   // NO setup wizard on first entry (INBOX 412)
-    S.mode="player"; setCount(1); S.other=true;
-    quickRun(VPQuick.first());
-  }
-  function quickRun(step){
-    QSTEP=step;
-    if(step==="demo") return go();
-    if(step==="games") return quickGames();
-    return quickChoices();
-  }
-  function quickAfter(){ quickRun(VPQuick.next(QSTEP)); }
-  function quickGames(){
-    var FR=window.VPFirstRun, list=(FR&&FR.GAMES)||[["trivia","Trivia"],["musical","Musical bingo"],["bingo","Bingo"],["raffles","Raffles"],["members","Members draws"]];
-    var picked=["trivia"], box=$("qChips"); box.innerHTML="";
-    list.forEach(function(g){
-      var b=document.createElement("button"); b.type="button"; b.className="chip"; b.id="qChip-"+g[0]; b.textContent=g[1];
-      b.setAttribute("aria-pressed", picked.indexOf(g[0])>=0?"true":"false");
-      b.addEventListener("click", function(){ var i=picked.indexOf(g[0]); if(i>=0) picked.splice(i,1); else picked.push(g[0]); b.setAttribute("aria-pressed", picked.indexOf(g[0])>=0?"true":"false"); });
-      box.appendChild(b);
-    });
-    $("done").classList.remove("on"); $("qChoices").classList.remove("on"); $("qGames").classList.add("on");
-    $("qGamesGo").onclick=function(){
-      var ans={ games:picked.slice() }; if(FR&&FR.cleanAnswers) ans=FR.cleanAnswers(ans);
-      var prior={}; try{ prior=(FR&&FR.answersFor)?FR.answersFor({ settings:{} }, null):{}; }catch(e){}
-      var save=Promise.resolve(false);
-      try{ save=Promise.resolve(VP.saveSettings(S.venueId, { setup_answers:ans })).then(function(){ return true; }, function(){ return false; }); }catch(e){}
-      save.then(function(){ qtrack("games_answered"); $("qGames").classList.remove("on"); quickAfter(); });
-    };
-  }
-  function quickChoices(){
-    $("done").classList.remove("on"); $("qGames").classList.remove("on"); $("qChoices").classList.add("on");
-    $("qAnother").focus();
-  }
-  $("qAnother").addEventListener("click", function(){ qtrack("choice_another"); setTimeout(function(){ location.href="/app/try.html?quick=1"; }, 150); });
-  $("qSetup").addEventListener("click", function(){
-    qtrack("choice_setup");
-    try{ var k="vpFirstRun:"+S.venueId, st=JSON.parse(localStorage.getItem(k)||"null")||{}; st.dismissed=false; localStorage.setItem(k, JSON.stringify(st)); }catch(e){}
-    setTimeout(function(){ location.href="/app/"; }, 150);
-  });
-  $("qInfo").addEventListener("click", function(){
-    qtrack("choice_info"); $("qErr").textContent="";
-    bill("/quick/more-info", { venue_id:S.venueId, game:"trivia" }).then(function(j){
-      if(j && !j.error){ $("qChoiceBtns").hidden=true; $("qThanks").hidden=false; $("qThanks").textContent=j.words||"Thanks, we'll be in touch."; $("qChoicesHead").textContent="Thanks"; }
-      else $("qErr").textContent=(j&&j.error)||"We could not pass that on just then. Please try again.";
-    });
-  });
-  $("qCard").addEventListener("click", function(){
-    qtrack("card_screen_seen"); $("qErr").textContent="";
-    bill("/account/card-link", { venue_id:S.venueId }).then(function(j){
-      if(j && j.card_url && /^https:\/\//.test(j.card_url)){ qtrack("card_added"); setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there
-      else if(j && j.has_card){ $("qErr").textContent="Your card is already added."; }
-      else $("qErr").textContent=(j&&j.error)||"We could not open the card page just then. Please try again.";
-    });
-  });
   /* ---- 1. how ---- */
   function pickMode(m){ S.mode=(m==="host")?"host":"player"; show("stepCount"); var c=$("countIn"); if(c && S.device!=="phone") c.focus(); }
   $("modePlayer").addEventListener("click", function(){ pickMode("player"); });
@@ -387,7 +281,7 @@
     if(d.status==="setup") say("Getting the game ready...");
     else if(d.status==="lobby"){ say(d.joined+" of "+d.expected+" joined. "+(d.joined>=d.expected ? "Starting..." : "Waiting for players.")); $("startNow").hidden=!(d.joined>=1 && d.joined<d.expected); }
     else if(d.status==="ready"){ $("startNow").hidden=true; say("Here comes question 1."); }
-    else if(d.status==="question"){ if(QUICK && d.qi>=1 && d.qi<=5) qtrack("demo_q"+(d.qi|0)); say("Question "+d.qi+" of "+d.qtotal+". "+d.answered+" of "+Math.min(d.expected, Math.max(1,d.joined))+" answered, "+(d.left|0)+"s left."); }
+    else if(d.status==="question") say("Question "+d.qi+" of "+d.qtotal+". "+d.answered+" of "+Math.min(d.expected, Math.max(1,d.joined))+" answered, "+(d.left|0)+"s left.");
     else if(d.status==="reveal") say("Question "+d.qi+" of "+d.qtotal+": the answer, then the leaderboard.");
     else if(d.status==="ended") say("Final scores.");
     else if(d.status==="done") finished(d.board||[]);
@@ -400,7 +294,6 @@
     board.slice(0,5).forEach(function(r){ var li=document.createElement("li"); li.textContent=(r.name||"A team")+", "+(r.points|0)+" points"; ol.appendChild(li); });
     if(!board.length){ var li=document.createElement("li"); li.textContent="Nobody scored this time. Try it with your phone next time."; ol.appendChild(li); }
     $("doneList").hidden=false;
-    if(QUICK){ qtrack("podium_seen"); setTimeout(quickAfter, 6000); return; }   // the podium on the TV first, then the next step
     setTimeout(function(){ $("done").classList.add("on"); $("toConsole").focus(); }, 6000);   // the podium on the TV first
   }
 })();

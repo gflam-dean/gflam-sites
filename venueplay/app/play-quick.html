@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>venueplay: Play a quick game</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- PLAY A QUICK GAME, AFTER THE ACCOUNT (Dean, 14 Nov 2026; INBOX 412; redone on brand 15 Nov: "the demo IS the real trivia").
+     The game is the REAL pages, in demo mode, and nothing is drawn here: on a laptop this page IS the TV (the real /tv, full screen, its
+     own QR panel, venue logo and room code) and the phone joins from that QR; on a phone, the real trivia phone screen (play.html) runs
+     the question, the answers and the result on this phone, or the phone is the player for a laptop or TV nearby. Only the questions
+     before the game and the choices after it are new, built from the website's own look (app/vp-site.css, lifted unchanged from nsw.html).
+     The order of the steps (the demo, what games do you run, the choices) is one setting: /app/vp-quick-config.js. -->
+<link rel="stylesheet" href="/app/vp-site.css">
+<link rel="stylesheet" href="/app/vp-skip.css">
+<style>
+  /* LAYOUT ONLY (no colour, type or shape of its own). While a game plays, the page is the game and nothing else. */
+  body{ min-height:100dvh; display:flex; flex-direction:column; }
+  main{ flex:1; display:flex; align-items:center; }
+  main .sec{ padding:20px 0; width:100%; }
+  #qpWait,#qpPhone,#qpCode,#qpGames,#qpChoices{ display:none; }
+  #qpWait.on,#qpPhone.on,#qpCode.on,#qpGames.on,#qpChoices.on{ display:block; }
+  .narrow{ max-width:640px; margin:0 auto; }
+  .stack .btn{ display:flex; width:100%; margin:0 0 12px; padding:16px; }
+  .stack .btn:last-child{ margin-bottom:0; }
+  #qpGamesGo{ width:100%; margin-top:18px; padding:16px; }
+  .st-kind{ margin-top:6px; }
+  .st-kind-opt input{ position:absolute; opacity:0; width:1px; height:1px; }
+  #qpStage{ display:none; }
+  body.playing header, body.playing main, body.playing footer{ display:none; }
+  body.playing #qpStage{ display:block; position:fixed; inset:0; background:var(--ink); }
+  #qpStage iframe{ position:absolute; border:0; }
+  #qpStage.tv iframe.screen{ left:0; right:0; top:0; bottom:0; margin:auto; width:min(100vw, calc(100dvh * 16 / 9)); height:min(100dvh, calc(100vw * 9 / 16)); }
+  #qpStage.ph iframe.screen{ inset:0; width:100%; height:100%; }
+  iframe.driver{ left:-10px; top:-10px; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .qerr{ min-height:18px; }
+</style>
+</head>
+<body>
+<a class="vp-skip" href="#main">Skip to content</a>
+<header>
+  <div class="wrap nav">
+        <a class="logo" href="/" aria-label="venueplay home">
+      <span class="word"><svg class="vp-wm" height="25.5" width="127.4" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
+    </a>
+  </div>
+</header>
+<main id="main">
+  <section class="sec" id="qpWait"><div class="wrap narrow"><div class="form-shell"><div class="inner">
+    <h1 class="st-h" id="qpWaitHead">Getting your game ready</h1>
+    <p class="st-p" id="signinMsg">Checking you are signed in.</p>
+  </div></div></div></section>
+
+  <section class="sec" id="qpPhone"><div class="wrap narrow"><div class="form-shell"><div class="inner">
+    <h2 class="st-h">Ready for a quick game?</h2>
+    <p class="st-p">It is the real venueplay trivia, five questions.</p>
+    <div class="stack" style="margin-top:18px">
+      <button class="btn btn-primary" type="button" id="qpOnPhone">Play on this phone</button>
+      <button class="btn btn-ghost" type="button" id="qpNeedBig">I've got a laptop or TV here</button>
+    </div>
+  </div></div></div></section>
+
+  <section class="sec" id="qpCode"><div class="wrap narrow"><div class="form-shell"><div class="inner">
+    <h2 class="st-h">Open it on the big screen</h2>
+    <p class="st-tv" id="qpTvLine">On the laptop or TV, go to venueplay.com.au/tv and type this code: <b id="qpTvCode">------</b></p>
+    <div class="stack" style="margin-top:18px">
+      <a class="btn btn-ghost" id="qpTextLink" href="#">Text me the link</a>
+      <button class="btn btn-primary" type="button" id="qpReady">I'm ready</button>
+    </div>
+  </div></div></div></section>
+
+  <section class="sec" id="qpGames"><div class="wrap narrow"><div class="form-shell"><div class="inner">
+    <h2 class="st-h">What games do you run now?</h2>
+    <p class="st-p">Tap all that apply.</p>
+    <div class="st-kind" id="qpChips" role="group" aria-label="Games you run now"></div>
+    <p class="st-small" style="text-align:left">We'll show you how each one works on venueplay.</p>
+    <button class="btn btn-primary" type="button" id="qpGamesGo">Next</button>
+  </div></div></div></section>
+
+  <section class="sec" id="qpChoices"><div class="wrap narrow"><div class="form-shell"><div class="inner">
+    <div id="qpChoiceBox">
+      <h2 class="st-h" id="qpChoicesHead">That's the game</h2>
+      <p class="st-p">What would you like to do next?</p>
+      <div class="stack" style="margin-top:18px">
+        <button class="btn btn-ghost" type="button" id="qpAnother">Play another game</button>
+        <button class="btn btn-ghost" type="button" id="qpInfo">I'd like more info</button>
+        <button class="btn btn-primary" type="button" id="qpSetup">Set up my venue</button>
+        <button class="btn btn-ghost" type="button" id="qpCard">Add my card</button>
+      </div>
+      <p class="form-err" id="qpErr" role="alert"></p>
+    </div>
+    <div id="qpThanks" class="success show" style="padding-top:0" hidden>
+      <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Thanks</h3>
+      <p id="qpThanksWords">Thanks, we'll be in touch.</p>
+    </div>
+  </div></div></div></section>
+</main>
+<div id="qpStage" aria-label="Your game"></div>
+
+<script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
+<script src="/app/vp-session.js"></script>
+<script src="/app/vp-demo.js"></script>
+<script src="/app/vp-quick-config.js"></script>
+<script src="/app/vp-firstrun.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  var S={ n:1, device:"computer", venueId:"", slug:"", code:"", me:{ name:"", mobile:"" }, plan:null, joinCode:"" };
+  window.VPTry=S;   // for the suites
+  function touch(){ try{ return ("ontouchstart" in window) || (navigator.maxTouchPoints||0)>0; }catch(e){ return false; } }
+  S.device=VPDemo.deviceKind(window.innerWidth, window.innerHeight, touch());
+  (function(){ var m=/[?&]device=(phone|tablet|computer)(&|$)/.exec(location.search); if(m) S.device=m[1]; })();   // for the suites and the local preview
+  var SECTIONS=["qpWait","qpPhone","qpCode","qpGames","qpChoices"];
+  function show(id){ document.body.classList.remove("playing"); SECTIONS.forEach(function(s){ $(s).classList.toggle("on", s===id); }); window.scrollTo(0,0); }
+  function mobileShow(p){ p=String(p||"").replace(/[^0-9]/g,""); if(/^614\d{8}$/.test(p)) p="0"+p.slice(2); return /^04\d{8}$/.test(p) ? p.slice(0,4)+" "+p.slice(4,7)+" "+p.slice(7) : ""; }
+  /* What the real join screen is pre-filled with: first name and mobile. NEVER the login's address: a quick-game login has none of its own. */
+  function details(){ return { name:S.me.name, mobile:S.me.mobile }; }
+
+  function bill(path, body){
+    var c=VP.getClient();
+    return c.auth.getSession().then(function(r){
+      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||"";
+      return fetch(VPQuick.cfg.API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok, "X-VP-Venue":S.venueId }, body:JSON.stringify(body||{}) })
+        .then(function(res){ return res.json().catch(function(){ return {}; }); });
+    });
+  }
+  function quickToken(){ try{ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }); }catch(e){ return Promise.resolve(""); } }
+  function qtrack(step){ quickToken().then(function(t){ window.vpTrackStep(step, { token:t }); }); }
+
+  show("qpWait");
+  VP.ready().then(function(ctx){
+    if(!ctx || !ctx.authed || !ctx.currentVenueId){ $("signinMsg").innerHTML='Sign in first, then come back here. <a class="btn btn-primary" style="margin-top:12px" href="/app/">Sign in</a>'; return; }
+    var v=ctx.venue||{}; S.venueId=ctx.currentVenueId; S.slug=v.slug||"";
+    S.code=String(v.join_code || (VP.venueCode && S.slug ? VP.venueCode(S.slug) : "") || "");
+    var u=ctx.user||{}, md=u.user_metadata||{}, mine=(ctx.staff||[]).filter(function(r){ return r && r.venue_id===S.venueId; })[0]||{};
+    S.me={ name:String(mine.display_name||md.first_name||md.name||"").split(" ")[0], mobile:mobileShow(u.phone) };
+    start();
+  }).catch(function(){ $("signinMsg").textContent="We could not check your sign in. Reload the page to try again."; });
+
+  /* ---- the order of the steps is VPQuick.cfg.STEPS ---- */
+  var QSTEP="";
+  function start(){
+    VPQuick.countTaps(); VPQuick.leave();
+    qtrack("signed_in");
+    try{ var k="vpFirstRun:"+S.venueId, st=JSON.parse(localStorage.getItem(k)||"null")||{}; st.dismissed=true; localStorage.setItem(k, JSON.stringify(st)); }catch(e){}   // NO setup wizard on first entry
+    run(VPQuick.first());
+  }
+  function run(step){
+    QSTEP=step;
+    if(step==="demo") return S.device==="phone" ? show("qpPhone") : playOnBigScreen();
+    if(step==="games") return games();
+    return choices();
+  }
+  function after(){ run(VPQuick.next(QSTEP)); }
+
+  /* ---- the demo: the real pages ---- */
+  function frame(src, cls, title){ var f=document.createElement("iframe"); f.src=src; if(cls) f.className=cls; f.title=title; f.setAttribute("allow","autoplay; fullscreen"); return f; }
+  var driver=null, stage=$("qpStage"), _pf=false;
+  function begin(kind){
+    document.body.classList.add("playing"); stage.className=kind; stage.innerHTML="";
+    try{ localStorage.setItem("vpDemoPlayed-"+S.venueId, "1"); }catch(e){}   // the wizard's "Is this the same TV you played the demo on?"
+    driver=frame("/app/trivia/host.html?demo=auto&n="+S.n, "driver", "The game, running itself");   // the real console in demo mode, out of sight
+    driver.setAttribute("aria-hidden","true"); driver.setAttribute("tabindex","-1");
+    document.body.appendChild(driver);
+  }
+  function playOnBigScreen(){          // a laptop or tablet: this page IS the TV, the real /tv, with its own QR, logo and room code
+    S.plan={ tv:true, driver:true };
+    begin("tv"); stage.appendChild(frame(VPDemo.tvUrl(S.slug), "screen", "Your TV screen"));
+  }
+  $("qpOnPhone").addEventListener("click", function(){          // a phone, no big screen: the real trivia phone screen does the lot
+    S.plan={ player:true, driver:true, phoneOnly:true };
+    begin("ph");
+  });
+  $("qpNeedBig").addEventListener("click", function(){          // a phone with a laptop or TV nearby: the TV is that screen, this phone plays
+    $("qpTvCode").textContent=S.code||"------";
+    var words="venueplay: open venueplay.com.au/tv on a laptop or TV and type this code: "+(S.code||"");
+    var tl=$("qpTextLink"); if(S.me.mobile) tl.setAttribute("href","sms:"+S.me.mobile.replace(/ /g,"")+"?&body="+encodeURIComponent(words)); else tl.hidden=true;   // to their OWN mobile, from their own phone
+    show("qpCode");
+  });
+  $("qpReady").addEventListener("click", function(){ S.plan={ player:true, driver:true, tvCode:true }; begin("ph"); });
+  function playerFrame(code){
+    if(_pf) return; _pf=true;
+    stage.appendChild(frame(VPDemo.playUrl(code, details()).replace(/^https?:\/\/[^\/]+/,""), "screen", "Your player screen"));
+  }
+  window.addEventListener("message", function(e){
+    if(e.origin!==location.origin || !e.data || e.data.vpDemo!==true || e.data.cmd) return;
+    var d=e.data;
+    if(d.joinCode) S.joinCode=d.joinCode;
+    if(d.joinCode && d.status!=="setup" && S.plan && S.plan.player) playerFrame(d.joinCode);
+    if(d.status==="question" && d.qi>=1 && d.qi<=5) qtrack("demo_q"+(d.qi|0));
+    if(d.status==="done") finished();
+  });
+  function finished(){
+    qtrack("podium_seen");
+    setTimeout(function(){ if(driver && driver.parentNode) driver.parentNode.removeChild(driver); stage.innerHTML=""; _pf=false; after(); }, 8000);   // the podium first, then on
+  }
+
+  /* ---- what games do you run now? (the wizard's own five games and saver) ---- */
+  function games(){
+    var FR=window.VPFirstRun, list=(FR&&FR.GAMES)||[["trivia","Trivia"],["musical","Musical bingo"],["bingo","Bingo"],["raffles","Raffles"],["members","Members draws"]];
+    var box=$("qpChips"); box.innerHTML="";
+    list.forEach(function(g){
+      var lab=document.createElement("label"); lab.className="st-kind-opt";
+      var inp=document.createElement("input"); inp.type="checkbox"; inp.value=g[0]; inp.id="qpGame-"+g[0];
+      var sp=document.createElement("span"); sp.textContent=g[1];
+      lab.appendChild(inp); lab.appendChild(sp); box.appendChild(lab);
+    });
+    show("qpGames");
+    $("qpGamesGo").onclick=function(){
+      var picked=[].filter.call(box.querySelectorAll("input"),function(i){ return i.checked; }).map(function(i){ return i.value; });
+      var ans={ games:picked }; if(FR&&FR.cleanAnswers) ans=FR.cleanAnswers(ans);
+      var save=Promise.resolve(false);
+      try{ save=Promise.resolve(VP.saveSettings(S.venueId, { setup_answers:ans })).then(function(){ return true; }, function(){ return false; }); }catch(e){}
+      save.then(function(){ qtrack("games_answered"); after(); });
+    };
+  }
+
+  /* ---- the choices ---- */
+  function choices(){ show("qpChoices"); $("qpAnother").focus(); }
+  $("qpAnother").addEventListener("click", function(){ qtrack("choice_another"); setTimeout(function(){ location.href="/app/play-quick.html"; }, 150); });
+  $("qpSetup").addEventListener("click", function(){
+    qtrack("choice_setup");
+    try{ var k="vpFirstRun:"+S.venueId, st=JSON.parse(localStorage.getItem(k)||"null")||{}; st.dismissed=false; localStorage.setItem(k, JSON.stringify(st)); }catch(e){}
+    setTimeout(function(){ location.href="/app/"; }, 150);
+  });
+  $("qpInfo").addEventListener("click", function(){
+    qtrack("choice_info"); $("qpErr").classList.remove("show");
+    bill("/quick/more-info", { venue_id:S.venueId, game:"trivia" }).then(function(j){
+      if(j && !j.error){ $("qpChoiceBox").hidden=true; $("qpThanks").hidden=false; $("qpThanksWords").textContent=j.words||"Thanks, we'll be in touch."; }
+      else { $("qpErr").textContent=(j&&j.error)||"We could not pass that on just then. Please try again."; $("qpErr").classList.add("show"); }
+    });
+  });
+  $("qpCard").addEventListener("click", function(){
+    qtrack("card_screen_seen"); $("qpErr").classList.remove("show");
+    bill("/account/card-link", { venue_id:S.venueId }).then(function(j){
+      if(j && j.card_url && /^https:\/\//.test(j.card_url)){ qtrack("card_added"); setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there
+      else { $("qpErr").textContent=(j&&j.has_card) ? "Your card is already added." : ((j&&j.error)||"We could not open the card page just then. Please try again."); $("qpErr").classList.add("show"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

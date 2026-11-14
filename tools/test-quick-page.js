@@ -4,7 +4,7 @@ var bad = 0, ran = 0;
 function check(n, c, saw) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (saw !== undefined ? '   saw: ' + String(typeof saw === 'string' ? saw : JSON.stringify(saw)).slice(0, 300) : '')); } }
 function section(t) { print(''); print(t); }
 function rd(p) { try { return readFile(p); } catch (e) { return readFile('../' + p); } }
-var CONFIG = rd('venueplay/app/vp-quick-config.js'), QJS = rd('venueplay/app/vp-quick.js'), QHTML = rd('venueplay/quick.html'), TRY = rd('venueplay/app/try.html'),
+var CONFIG = rd('venueplay/app/vp-quick-config.js'), QJS = rd('venueplay/app/vp-quick.js'), QHTML = rd('venueplay/quick.html'), TRY = rd('venueplay/app/play-quick.html'), NSW = rd('venueplay/nsw.html'), SITECSS = rd('venueplay/app/vp-site.css'),
     INDEX = rd('venueplay/index.html'), HELP = rd('venueplay/help.html'), LLMS = rd('venueplay/llms.txt'), SITEMAP = rd('venueplay/sitemap.xml'), REDIR = rd('venueplay/_redirects'),
     SLOT = rd('venueplay/app/vp-try-slot.js');
 
@@ -29,7 +29,7 @@ check('the steps after the account are demo, games, choices', JSON.stringify(Q.c
 check('next() follows the order and ends on choices', Q.next('demo') === 'games' && Q.next('games') === 'choices' && Q.next('choices') === 'choices' && Q.first() === 'demo');
 Q.cfg.STEPS = ['games', 'demo', 'choices'];
 check('the LATER release (games before the demo) is one line: swap the array', Q.first() === 'games' && Q.next('games') === 'demo' && Q.next('demo') === 'choices');
-check('the try page runs whatever the setting says (no step order of its own)', /quickRun\(VPQuick\.first\(\)\)/.test(TRY) && /quickRun\(VPQuick\.next\(QSTEP\)\)/.test(TRY));
+check('the try page runs whatever the setting says (no step order of its own)', /run\(VPQuick\.first\(\)\)/.test(TRY) && /run\(VPQuick\.next\(QSTEP\)\)/.test(TRY));
 
 section('3. The form: three boxes, no email, honeypot and bot check');
 check('first name, mobile and venue are the boxes; no email box anywhere', /id="qName"/.test(QHTML) && /id="qMobile"/.test(QHTML) && /id="qVenue"/.test(QHTML) && !/type="email"/.test(QHTML) && !/id="[a-zA-Z]*[Ee]mail/.test(QHTML));
@@ -38,25 +38,25 @@ check('the hidden honeypot is named website and the page sends it', /name="websi
 check('the bot check is rendered and its token sent', /id="qTs"/.test(QHTML) && /turnstile: tsToken\(\)/.test(QJS));
 check('phone autofill: name, tel, organization and one-time-code are declared', /autocomplete="given-name"/.test(QHTML) && /autocomplete="tel"/.test(QHTML) && /autocomplete="one-time-code"/.test(QHTML));
 check('the code step sends no email and no kind, to /start/verify, as /start does', /post\("\/start\/verify", \{ start_id: S\.id, code: c \}\)/.test(QJS));
-check('after the account the one-tap link opens the demo on their own account', /\/app\/try\.html\?quick=1/.test(QJS) && /vpTryNext/.test(QJS));
+check('after the account the one-tap link opens the demo on their own account', /\/app\/play-quick\.html/.test(QJS) && /vpTryNext/.test(QJS));
 check('the hand-off accepts the quick path and nothing else new', (function () {
   win.document = undefined; delete win.VPTrySlot; (0, eval)(SLOT); var T = win.VPTrySlot;
   var ls = { v: null, getItem: function () { var x = this.v; this.v = null; return x; }, removeItem: function () {} };
-  ls.v = JSON.stringify({ path: '/app/try.html?quick=1', at: 1000 }); var ok1 = T.nextAfterSignIn(ls, 2000);
-  ls.v = JSON.stringify({ path: '/app/try.html?quick=2', at: 1000 }); var no1 = T.nextAfterSignIn(ls, 2000);
+  ls.v = JSON.stringify({ path: '/app/play-quick.html', at: 1000 }); var ok1 = T.nextAfterSignIn(ls, 2000);
+  ls.v = JSON.stringify({ path: '/app/play-quick.html?x=2', at: 1000 }); var no1 = T.nextAfterSignIn(ls, 2000);
   ls.v = JSON.stringify({ path: 'https://evil.example/', at: 1000 }); var no2 = T.nextAfterSignIn(ls, 2000);
-  ls.v = JSON.stringify({ path: '/app/try.html?quick=1', at: 1000 }); var no3 = T.nextAfterSignIn(ls, 1000 + 31 * 60000);
+  ls.v = JSON.stringify({ path: '/app/play-quick.html', at: 1000 }); var no3 = T.nextAfterSignIn(ls, 1000 + 31 * 60000);
   ls.v = JSON.stringify({ path: '/app/try.html?mode=player', at: 1000 }); var ok2 = T.nextAfterSignIn(ls, 2000);
-  return ok1 === '/app/try.html?quick=1' && no1 === '/app/' && no2 === '/app/' && no3 === '/app/' && ok2 === '/app/try.html?mode=player';
+  return ok1 === '/app/play-quick.html' && no1 === '/app/' && no2 === '/app/' && no3 === '/app/' && ok2 === '/app/try.html?mode=player';
 })());
 
 section('4. After the account: no wizard, the games question, the three choices, a card offer that is never forced');
-check('first entry marks the setup guide dismissed (no wizard)', /st\.dismissed=true/.test(TRY.slice(TRY.indexOf('function quickStart'), TRY.indexOf('function quickRun'))));
+check('first entry marks the setup guide dismissed (no wizard)', /st\.dismissed=true/.test(TRY.slice(TRY.indexOf('function start()'), TRY.indexOf('function run('))));
 check('"Set up my venue" is the only thing that brings the guide back', /st\.dismissed=false/.test(TRY) && (TRY.match(/dismissed=false/g) || []).length === 1);
 check('what games do you run saves setup_answers (the wizard\'s own question and saver)', /VP\.saveSettings\(S\.venueId, \{ setup_answers:ans \}\)/.test(TRY) && /VPFirstRun/.test(TRY) && /vp-firstrun\.js/.test(TRY));
-check('the three choices and the card button exist', /id="qAnother"/.test(TRY) && /id="qInfo"/.test(TRY) && /id="qSetup"/.test(TRY) && /id="qCard"/.test(TRY));
+check('the three choices and the card button exist', /id="qpAnother"/.test(TRY) && /id="qpInfo"/.test(TRY) && /id="qpSetup"/.test(TRY) && /id="qpCard"/.test(TRY));
 check('more info posts to /quick/more-info and shows only a thank-you (nothing is sent to them)', /bill\("\/quick\/more-info"/.test(TRY) && /Thanks, we'll be in touch/.test(TRY));
-check('the card button is one tap to Stripe and is never automatic', /bill\("\/account\/card-link"/.test(TRY) && !/qCard"\)\.click\(\)/.test(TRY) && /location\.href=j\.card_url/.test(TRY));
+check('the card button is one tap to Stripe and is never automatic', /bill\("\/account\/card-link"/.test(TRY) && !/qpCard"\)\.click\(\)/.test(TRY) && /location\.href=j\.card_url/.test(TRY));
 
 section('5. The funnel client: step names only, no personal data');
 posts.length = 0; win.localStorage = { d: {}, getItem: function (k) { return this.d[k] === undefined ? null : this.d[k]; }, setItem: function (k, v) { this.d[k] = String(v); } };
@@ -85,8 +85,22 @@ win.vpTrackStep('form_sent', { a: 1 });
 check('once the 413 store defines vpTrackStepImpl, steps go to it, not the queue', got.length === 1 && got[0][0] === 'form_sent' && win.__vpTrackQueue.length === 1, got);
 check('the page and the demo fire steps only through that door', !/\bQ\.track\(|VPQuick\.track\(/.test(QJS) && !/VPQuick\.track\(/.test(TRY));
 
+
+section('7. On brand: the website\'s own look, the real game pages, one set of words, only true statements');
+var nswLines = NSW.split('\n'), liftBody = nswLines.slice(34, 419).join('\n');
+check('app/vp-site.css IS the website\'s own style, lifted unchanged from nsw.html (so a change to the website is a change here)', SITECSS.indexOf(liftBody) !== -1 && liftBody.length > 15000, [liftBody.length, SITECSS.length]);
+check('/quick and the demo pages load it, and bring no look of their own: their style blocks hold layout and the website\'s own colour variables only (no hex colour, no gradient)', /vp-site\.css/.test(QHTML) && /vp-site\.css/.test(TRY) &&
+  [QHTML, TRY].every(function (h) { var m = h.match(/<style>[\s\S]*?<\/style>/g) || []; return m.length === 1 && !/#[0-9a-fA-F]{3,8}\b/.test(m[0]) && !/gradient/.test(m[0]); }), [(QHTML.match(/<style>[\s\S]*?<\/style>/g) || []).join('').match(/#[0-9a-fA-F]{3,8}\b/), (TRY.match(/<style>[\s\S]*?<\/style>/g) || []).join('').match(/#[0-9a-fA-F]{3,8}\b/)]);
+check('the form is the website\'s start form: its own classes (form-shell, field, st-legal, st-boxes, btn btn-primary), its own legal line, the one h1', /class="form-shell"/.test(QHTML) && /class="st-boxes"/.test(QHTML) && /<p class="st-legal">By starting you agree to the <a href="\/terms">Terms and Conditions<\/a> and <a href="\/privacy">Privacy Policy<\/a>\.<\/p>/.test(QHTML) && (QHTML.match(/<h1/g) || []).length === 1);
+check('the form order is first name, mobile, venue (then the suburb and postcode only when asked) and nothing stray after the button', (function () { var a = QHTML.indexOf('id="qName"'), b = QHTML.indexOf('id="qMobile"'), c = QHTML.indexOf('id="qVenue"'), d = QHTML.indexOf('id="qGo"'); return a < b && b < c && c < d && QHTML.slice(d).indexOf('<p class="fine"') === -1; })());
+check('the demo draws NO game screen of its own: no QR drawn here, no side panel, no status line, no scoreboard (the real /tv and the real phone page are the only game screens)', !/VPQR|qrcode|<canvas|playStatus|doneBoard|Scan with your phone/i.test(TRY) && /VPDemo\.tvUrl\(S\.slug\)/.test(TRY) && /VPDemo\.playUrl\(code, details\(\)\)/.test(TRY) && /host\.html\?demo=auto/.test(TRY));
+check('a phone visitor is asked first: Ready for a quick game? with the two buttons, never "scan with your phone"', /Ready for a quick game\?/.test(TRY) && />Play on this phone</.test(TRY) && />I've got a laptop or TV here</.test(TRY) && /S\.device==="phone" \? show\("qpPhone"\) : playOnBigScreen\(\)/.test(TRY));
+check('the real join screen is pre-filled with first name and mobile and never the login\'s email', /function details\(\)\{ return \{ name:S\.me\.name, mobile:S\.me\.mobile \}; \}/.test(TRY) && !/email/i.test(TRY.slice(TRY.indexOf('function details'), TRY.indexOf('function details') + 160)) && !/mailto/.test(TRY));
+check('the games question says exactly what Dean wrote, with the true line, nothing ticked for them', />What games do you run now\?</.test(TRY) && />Tap all that apply\.</.test(TRY) && /We'll show you how each one works on venueplay\./.test(TRY) && !/\.checked\s*=[^=]|setAttribute\("checked"/.test(TRY.slice(TRY.indexOf('function games()'), TRY.indexOf('/* ---- the choices ---- */'))));
+check('the choices are one set: Play another game, I\'d like more info, Set up my venue, Add my card; and no "ready to play"', (function () { var i = TRY.indexOf('id="qpAnother"'), seg = TRY.slice(i - 40, i + 700); return />Play another game</.test(seg) && />I'd like more info</.test(seg) && />Set up my venue</.test(seg) && />Add my card</.test(seg); })() && !/ready to play/i.test(TRY) && !/Add your card/.test(TRY));
+
 section('6. House rules on the words');
-var ALL = QHTML + QJS + CONFIG + TRY.slice(TRY.indexOf('PLAY A QUICK GAME'), TRY.indexOf('/* ---- 1. how ---- */'));
+var ALL = QHTML + QJS + CONFIG + TRY;
 check('no em dash or en dash', ALL.indexOf('\u2014') === -1 && ALL.indexOf('\u2013') === -1);
 check('venueplay is lowercase in every customer word', !/VenuePlay|Venueplay/.test(ALL.replace(/vpTryNext|VPQuick|VPFirstRun/g, '')));
 check('no Gflam, no workers.dev, no .dev link, and no phone number but the support line', !/Gflam|workers\.dev|\.dev\b/i.test(ALL) && !/0[2-9]\s?\d{4}\s?\d{4}|04\d\d\s?\d{3}\s?\d{3}/.test((QHTML + QJS).replace('0400 000 000', '')));

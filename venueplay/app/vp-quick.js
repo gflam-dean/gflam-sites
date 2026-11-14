@@ -1,7 +1,7 @@
 /* vp-quick.js -- THE QUICK GAME'S FORM, CODE AND SIGN-IN (Dean, 14 Nov 2026; INBOX 412). The page is /quick (venueplay/quick.html).
    First name, mobile, venue (picker over our licensed list, or typed with a suburb), the text code, then the account is made by
    the Worker (/quick/begin, then /start/verify) and the one-tap sign-in link opens the demo on their own account
-   (/app/try.html?quick=1, through the same 30 minute hand-off the offer page uses: VPTrySlot). The words and the order of the steps
+   (/app/play-quick.html, through the same 30 minute hand-off the offer page uses: VPTrySlot). The words and the order of the steps
    are in vp-quick-config.js. Nothing is stored here but what that hand-off needs. No em dashes, lowercase venueplay. */
 (function (root) {
   "use strict";
@@ -140,7 +140,7 @@
   function made(j) {
     root.vpTrackStep("account_made");
     show("qMade");
-    var path = "/app/try.html?quick=1";
+    var path = "/app/play-quick.html";
     try { root.localStorage.setItem("vpTryNext", JSON.stringify({ path: path, at: Date.now() })); } catch (e) {}
     root.setTimeout(function () { root.location.href = j.go_url || path; }, 250);
   }

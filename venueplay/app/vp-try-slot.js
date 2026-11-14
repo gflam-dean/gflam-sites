@@ -49,7 +49,7 @@
     if (!raw) return "/app/";
     var o = null; try { o = JSON.parse(raw); } catch (e) { o = null; }
     /* PLAY A QUICK GAME (INBOX 412): its one fixed address, exactly, inside the same 30 minutes. */
-    if (o && o.path === "/app/try.html?quick=1") { var qa = (now || Date.now()) - Number(o.at || 0); return (qa >= 0 && qa <= 30 * 60 * 1000) ? o.path : "/app/"; }
+    if (o && o.path === "/app/play-quick.html") { var qa = (now || Date.now()) - Number(o.at || 0); return (qa >= 0 && qa <= 30 * 60 * 1000) ? o.path : "/app/"; }
     if (!o || !/^\/app\/try\.html\?mode=(player|host)$/.test(String(o.path || ""))) return "/app/";
     var age = (now || Date.now()) - Number(o.at || 0);
     return (age >= 0 && age <= 30 * 60 * 1000) ? o.path : "/app/";

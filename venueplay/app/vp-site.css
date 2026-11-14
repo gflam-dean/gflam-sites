@@ -1,0 +1,387 @@
+/* vp-site.css -- THE WEBSITE'S OWN STYLE, LIFTED UNCHANGED FROM nsw.html's first <style> block (14 Nov 2026, INBOX 412 redo: "build every screen from the real components, no new styles").
+   Play a quick game (/quick, /app/try.html?quick=1) loads THIS instead of any look of its own. If the website's look changes, re-lift it (tools/test-quick-page.js compares the two). */
+  :root{
+    --ink:#0A0A0B;
+    --ink-2:#121214;
+    --ink-3:#17171B;
+    --pink:#FF1F8E;
+    --pink-deep:#C70F69;
+    --white:#FFFFFF;
+    --muted:#9A9AA4;
+    --muted-2:#8E8E98;
+    --line:rgba(255,255,255,0.08);
+    --line-2:rgba(255,255,255,0.14);
+    --glow:rgba(255,31,142,0.55);
+    --maxw:1120px;
+    /* Type scale: seven steps and nothing in between (design review, 1 Oct 2026). Every
+       font-size on the page is one of these. --fs-xs is the floor: nothing smaller is set. */
+    --fs-xs:12px;
+    --fs-sm:14px;
+    --fs-base:16px;
+    --fs-md:18px;
+    --fs-lg:22px;
+    --fs-xl:clamp(30px,4.4vw,52px);
+    --fs-hero:clamp(36px,4.6vw,64px);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+
+  body{
+    background:var(--ink);
+    color:var(--white);
+    font-family:'Manrope',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  ::selection{background:var(--pink);color:#fff}
+
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  .mono{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:saturate(140%) blur(14px);
+    background:rgba(10,10,11,0.72);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+
+  /* logo lockup: glowing play triangle | divider | wordmark */
+  .logo{display:flex;align-items:center;gap:13px}
+  .logo svg{display:block;filter:drop-shadow(0 0 9px var(--glow))}
+  .logo .div{width:1px;height:24px;background:var(--line-2)}
+  .logo .word{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:var(--fs-lg);letter-spacing:-0.03em;
+    color:#fff;line-height:1;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-base);
+    border:0;cursor:pointer;border-radius:999px;
+    padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+  }
+  .btn-primary{background:var(--pink);color:#0A0A0B;box-shadow:0 0 0 0 var(--glow)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
+  .nav .btn{padding:10px 20px;font-size:var(--fs-sm)}
+
+  .nav-links{display:flex;align-items:center;gap:28px;margin-left:auto;margin-right:24px}
+  .nav-links a{font-size:var(--fs-sm);font-weight:600;color:var(--muted);transition:color .15s ease}
+  .nav-links a:hover{color:#fff}
+
+  /* plan toggle + seat estimate (founding form) */
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:5px}
+  .seg button{border:0;cursor:pointer;border-radius:8px;padding:12px 10px;background:transparent;color:var(--muted);
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-sm);transition:background .15s ease,color .15s ease;text-align:center;line-height:1.2}
+  .seg button small{display:block;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:400;font-size:var(--fs-xs);margin-top:3px;opacity:.85}
+  .seg button.on{background:var(--pink);color:#0A0A0B}
+  .estimate{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted);margin-top:14px;text-align:center}
+  .estimate b{color:#fff;font-weight:700}
+  .overage-note{font-size:var(--fs-sm);color:var(--muted-2);text-align:center;margin-top:10px;max-width:46ch;margin-left:auto;margin-right:auto;line-height:1.5}
+  .field textarea{
+    background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:var(--fs-base);padding:14px 15px;width:100%;min-height:120px;resize:vertical;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .field textarea::placeholder{color:var(--muted-2)}
+  .field textarea:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .form-err{color:var(--pink);font-size:var(--fs-sm);text-align:center;margin-top:12px;min-height:0;display:none}
+  .form-err.show{display:block}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;padding:96px 0 88px;overflow:hidden}
+  .hero::before{display:none}   /* glow diet, design review 1 Oct 2026 */
+  .hero::after{
+    content:"";position:absolute;inset:0;z-index:0;opacity:.4;
+    background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-size:100% 38px;
+    mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    pointer-events:none;
+  }
+  .hero .wrap{position:relative;z-index:1}
+
+  .hero-offer{font-weight:700;color:#fff;font-size:var(--fs-md);margin:0 0 14px;line-height:1.4}
+  html[data-offer="ended"] .hero-offer{display:none}
+
+  h1{
+    font-family:'Anton',sans-serif;font-weight:400;
+    text-transform:uppercase;
+    font-size:var(--fs-hero);
+    line-height:0.92;letter-spacing:0.005em;
+    max-width:14ch;
+  }
+  h1 .accent{color:var(--pink)}
+
+  .lede{
+    margin-top:26px;max-width:56ch;
+    font-size:var(--fs-md);color:#D8D8DD;font-weight:500;
+  }
+  .lede b{color:#fff;font-weight:700}
+
+  .hero-cta{margin-top:36px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .hero-note{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);margin-top:18px}
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{position:relative}
+  .sec{padding:84px 0}
+  .sec-head{margin-bottom:46px}
+  .label{
+    font-family:'Manrope',sans-serif;font-size:var(--fs-base);color:#C9C9D1;font-weight:600;
+    display:flex;align-items:center;gap:12px;margin-bottom:12px;
+  }
+  .sec-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;
+    font-size:var(--fs-xl);line-height:1;letter-spacing:.01em}
+  .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:var(--fs-md)}
+
+  /* ---------- GAME MODES ---------- */
+  .modes{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:16px}
+  .modes .mode{flex:1 1 280px;max-width:340px}
+  .mode{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:16px;
+    padding:26px 22px 24px;transition:border-color .2s ease,transform .2s ease,background .2s ease;
+    position:relative;overflow:hidden;
+  }
+  .mode:hover{border-color:var(--line-2)}
+  .mode .ico{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.3);margin-bottom:20px;
+  }
+  .mode .ico svg{display:block}
+  .mode h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);letter-spacing:-.01em;margin-bottom:8px}
+  .mode p{color:var(--muted);font-size:var(--fs-sm);line-height:1.5}
+
+  /* ---------- FOUNDING OFFER ---------- */
+  .offer{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,52px);position:relative;overflow:hidden;
+  }
+  .offer::before{display:none}
+  .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
+
+  .counter{font-family:'Hanken Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;margin-top:8px}
+  .counter .big{font-size:var(--fs-hero);font-weight:800;color:#fff;line-height:1;letter-spacing:-.02em}
+  .counter .big .of{color:var(--pink)}
+  .counter .sub{color:var(--muted);font-size:var(--fs-sm);margin-top:12px}
+  .bar{height:8px;border-radius:999px;background:var(--ink-3);overflow:hidden;margin-top:22px;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink-deep),var(--pink));box-shadow:0 0 14px var(--glow);transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+  .price-card{background:var(--ink);border:1px solid var(--line-2);border-radius:16px;padding:26px}
+  .price-eyebrow{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);padding-bottom:16px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+  .price-row{display:flex;align-items:baseline;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+  .price-row:last-child{border-bottom:0;padding-bottom:0}
+  .price-row:first-child{padding-top:0}
+  .price-row .pl{font-size:var(--fs-sm);color:var(--muted)}
+  .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:var(--fs-base);letter-spacing:-.01em}
+  .price-row .pv{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-lg)}
+  .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
+  .price-row.found .pv{color:var(--pink)}
+  .price-foot{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2);margin-top:20px;line-height:1.6}
+
+  /* ---------- INCLUDED ---------- */
+  .incl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;max-width:860px;margin-left:auto;margin-right:auto}
+  .incl li{list-style:none;display:flex;gap:14px;align-items:flex-start;padding:6px 0}
+  .incl .tick{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);margin-top:2px}
+  .incl b{font-weight:700;color:#fff}
+  .incl span{color:var(--muted);font-size:var(--fs-sm);display:block}
+  .incl strong{display:block;font-size:var(--fs-base);color:#fff;font-weight:700;margin-bottom:1px}
+
+  /* ---------- SIGNUP ---------- */
+  #claim{padding-top:8px}
+  .form-shell{background:var(--ink-2);border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,48px);max-width:680px;margin:0 auto;position:relative;overflow:hidden}
+  .form-shell::before{display:none}
+  .form-shell .inner{position:relative}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px;margin-top:26px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  /* Two boxes side by side line up even when one label has a help line under it (round 3 review, note 7). */
+  .form-grid .field > input, .form-grid .field > select{margin-top:auto}
+  .field.full{grid-column:1 / -1}
+  .field[hidden]{display:none}
+  .field label{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
+  /* SELECTS TOO. The club-or-pub dropdown had no styling at all, so it rendered as a native
+     white 19px control with black Arial text and square corners, sitting in the middle of a
+     black form full of 52px dark rounded fields. Dean, 17 Sep 2026: "the venue/club dropdown
+     needs to match the others too." Found by measuring both against each other rather than
+     by looking at the CSS, which said nothing about selects precisely because nothing did. */
+  .field input, .field select{
+    background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:var(--fs-base);padding:14px 15px;width:100%;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  /* The native arrow is drawn in the OS colours and cannot be recoloured, so it is replaced
+     with our own chevron. appearance:none on all three prefixes: Safari still needs -webkit-
+     and a select with appearance:none and no background-image loses its arrow entirely. */
+  .field select{
+    -webkit-appearance:none;-moz-appearance:none;appearance:none;
+    padding-right:42px;cursor:pointer;
+    background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23ffffff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 16px center;
+  }
+  /* The dropdown list itself is painted by the OS, not by us. Firefox and Windows Chrome take
+     these; Safari on macOS ignores them and draws a light menu, which is acceptable because it
+     is the platform's own menu rather than part of our form. */
+  .field select option{background:var(--ink);color:#fff}
+  .field input::placeholder{color:var(--muted-2)}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  /* Chrome/Safari autofill paints its own pale background over our dark fields, which hides the
+     white text so filled fields look blank. Force our dark field + white text when autofilled. */
+  .field input:-webkit-autofill,
+  .field input:-webkit-autofill:hover,
+  .field input:-webkit-autofill:focus,
+  .field input:-webkit-autofill:active,
+  .field textarea:-webkit-autofill,
+  .field textarea:-webkit-autofill:hover,
+  .field textarea:-webkit-autofill:focus{
+    -webkit-text-fill-color:#fff;
+    -webkit-box-shadow:0 0 0 1000px var(--ink) inset;
+    box-shadow:0 0 0 1000px var(--ink) inset;
+    caret-color:#fff;
+    border:1px solid var(--line-2);
+    transition:background-color 9999s ease-in-out 0s;
+  }
+  #vp-submit,#ct-submit{width:100%;margin-top:20px;padding:16px;font-size:var(--fs-base)}
+  .ct-topic{margin:0 0 18px;display:flex;align-items:center;gap:12px;font-size:var(--fs-base);color:var(--muted)}
+  .ct-topic[hidden]{display:none}
+  /* The topic can be changed (Dean, 7 Nov 2026, round 3 note 23): a free account, or just a chat. */
+  .ct-topic select{flex:1 1 auto;max-width:300px;height:48px;background:var(--ink) url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23ffffff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 16px center;
+    -webkit-appearance:none;-moz-appearance:none;appearance:none;border:1px solid var(--line-2);border-radius:11px;color:#fff;
+    font-family:'Manrope',sans-serif;font-size:var(--fs-base);font-weight:600;padding:0 42px 0 15px;cursor:pointer}
+  .ct-topic select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .ct-topic select option{background:var(--ink);color:#fff}
+  #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
+  a.vp-tel{color:var(--pink);white-space:nowrap}
+  .form-fine{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted-2);text-align:center;margin-top:16px}
+  .consent{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  .consent .ck{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-sm);color:var(--muted);line-height:1.45;cursor:pointer}
+  .consent .ck input{margin-top:3px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+  .consent .ck a{color:var(--pink)}
+  /* SA and NT pubs: number bingo is not available there. An in-page note, never a pop-up. */
+  .state-note{margin-top:12px;padding:14px 16px;border:1px solid rgba(255,176,32,.45);background:rgba(255,176,32,.08);border-radius:12px;text-align:left}
+  .state-note[hidden]{display:none}
+  .state-note h4{margin:0 0 6px;font-size:var(--fs-sm,15px);line-height:1.35;color:#fff;font-weight:700}
+  .state-note p{margin:0 0 10px;font-size:var(--fs-xs,13px);line-height:1.5;color:var(--muted)}
+  .state-note .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs,13px);color:var(--muted);line-height:1.45;cursor:pointer;
+    text-transform:none;letter-spacing:normal;font-family:inherit;font-weight:500;margin:0}   /* not the form's uppercase field label */
+  .state-note .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+
+  .success{display:none;text-align:center;padding:16px 0}
+  .success.show{display:block}
+  .success .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.4);box-shadow:0 0 26px -4px var(--glow)}
+  .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:var(--fs-xl);font-weight:400;letter-spacing:.01em}
+  .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
+
+  /* ---------- THE NO-CARD START (#start, app/vp-start.js; Dean, 5 Nov 2026) ---------- */
+  #start{padding-top:56px}
+  #start .form-grid{margin-top:0}
+  .st-step[hidden]{display:none}
+  .st-help{display:block;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:500;color:var(--muted-2);text-transform:none;letter-spacing:normal;margin-top:2px}
+  .st-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+  /* Pub or club (Dean, 6 Nov 2026): one honest two-way choice, nothing preselected, the same size as the boxes. */
+  .st-kind-lbl{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
+  .st-kind{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field .st-kind-opt{position:relative;display:block;cursor:pointer;margin:0;text-transform:none;letter-spacing:normal;font-family:'Manrope',sans-serif;color:#fff}   /* not the form's mono field label */
+  .st-kind-opt input{position:absolute;opacity:0;width:1px;height:1px}
+  .st-kind-opt span{display:flex;align-items:center;justify-content:center;min-height:52px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink);
+    color:#fff;font-size:var(--fs-base);font-weight:700}
+  .st-kind-opt input:checked + span{border-color:var(--pink);background:rgba(255,31,142,.14);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-kind-opt input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
+  .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:22px 0 0;text-align:center}
+  .st-legal a{color:#fff}
+  #st-go,#st-check{width:100%;margin-top:18px;padding:16px;font-size:var(--fs-base)}
+  #st-go:disabled,#st-check:disabled{opacity:.6;cursor:default;transform:none}
+  .st-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:var(--fs-xl);letter-spacing:.01em;line-height:1.05;margin:0 0 10px}
+  .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
+  /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
+  .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-lg);font-weight:700;
+    color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
+  .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
+  .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:inherit;line-height:inherit;cursor:pointer;min-height:24px}
+  .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
+  .st-tv b{display:block;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:800;font-size:var(--fs-xl);letter-spacing:.04em;color:#fff;margin-top:8px}
+  #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
+  #st-done,#st-held{text-align:center}
+  @media(max-width:560px){ #start{padding-bottom:120px} }   /* room under the done card for the floating button, so it can never sit on the TV code */
+  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px} }
+
+  /* ---------- FAQ ---------- */
+  .faq{max-width:780px;margin:0 auto}
+  .q{border-bottom:1px solid var(--line)}
+  .q summary{
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;
+    padding:22px 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:var(--fs-md);letter-spacing:-.01em;
+  }
+  .q summary::-webkit-details-marker{display:none}
+  .q summary .pm{flex:0 0 auto;width:22px;height:22px;position:relative;transition:transform .2s ease}
+  .q summary .pm::before,.q summary .pm::after{content:"";position:absolute;background:var(--pink);border-radius:2px}
+  .q summary .pm::before{left:0;right:0;top:10px;height:2px}
+  .q summary .pm::after{top:0;bottom:0;left:10px;width:2px;transition:opacity .2s ease}
+  .q[open] summary .pm::after{opacity:0}
+  .q .a{padding:0 4px 24px;color:var(--muted);font-size:var(--fs-base);max-width:64ch}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
+  .foot-brand{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center}
+  .foot-brand .div{display:none}
+  .foot-brand svg{display:block;filter:drop-shadow(0 0 7px var(--glow))}
+  .foot-brand .div{width:1px;height:20px;background:var(--line-2)}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);letter-spacing:-.03em;color:#fff;line-height:1}
+  .foot-meta{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-xs);color:var(--muted);line-height:1.9;text-align:right}
+  .foot-meta a:hover{color:var(--pink)}
+  .powered{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2)}
+  .powered b{color:var(--muted);font-weight:500}
+  .foot-social{display:flex;gap:16px;justify-content:center;margin-top:16px}
+  .foot-social a{display:inline-flex;color:var(--muted);transition:color .2s}
+  .foot-social a:hover{color:var(--pink)}
+  .foot-social svg{width:22px;height:22px}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:900px){
+    .offer-grid{grid-template-columns:1fr;gap:34px}
+    .incl{grid-template-columns:1fr;gap:6px}
+  }
+  @media(max-width:760px){
+    .nav-links{display:none}
+  }
+  @media(max-width:560px){
+    .sec{padding:64px 0}
+    .hero{padding:64px 0 56px}
+    .form-grid{grid-template-columns:1fr}
+    .nav .ghost-cta{display:none}
+    .foot{flex-direction:column;align-items:flex-start}
+    .foot-meta{text-align:left}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
+
+  /* Number-of-venues field hint + group-enquiry note */
+  .field-hint{display:block;margin-top:6px;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted-2)}
+  /* Group signup: repeatable venue rows */
+  #vp-venue-list{display:flex;flex-direction:column;gap:9px}
+  .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+  .venue-row .v-name{flex:2 1 160px;min-width:120px}
+  .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
+  .venue-row .v-seats{flex:1 1 120px;min-width:100px}
+  .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:var(--fs-lg);line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+  .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
+  .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:border-color .15s ease}
+  .add-venue:hover{border-color:var(--pink)}
+  .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:var(--fs-sm);line-height:1.55;color:#e8e8ec}
