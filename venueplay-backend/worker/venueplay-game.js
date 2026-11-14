@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '13 Nov 2026, 22:47 · 7b24ea9e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 13:37 · 87848f4b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2902,7 +2902,10 @@ let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migrat
  *   - COASTER VENUES Dean added in HQ (vp_coaster_venues kind 'coaster'), also "not on venueplay yet".
  * "Can't find your venue? Add it" (POST /coaster/lead: name, suburb, state, optional website) goes to
  * HQ's review list as a POSSIBLE NEW LEAD, never into cold email; lead_guard's name rules are noted on
- * it for HQ (coasterLeadGuard). An added venue has no board until HQ adds it to the list.
+ * it for HQ (coasterLeadGuard). An added venue is a FREE LEAD that can play (INBOX 396, migration 194): it is checked at once against
+ * our licensed list and its website; real = a lead with a board that stays; not real = a trivia-only board for COASTER_LEAD_DAYS days,
+ * then the nightly sweep deletes it; a rude name is flagged to Dean (an HQ help-desk ticket) and never shown. Before migration 194 an added
+ * venue has no board, as it always had.
  * OPT-INS: at a venueplay venue that HQ has switched on for coaster sign-ups (vp_coaster_optin_venues,
  * OFF for every venue until then), the end of the round offers the venue's own sign-up: the same
  * fields the venue collects (vp_venue_settings), the same one tick (VPConsent, consent_version) and
@@ -2933,6 +2936,7 @@ const COASTER_SECS = 20;             // the speed bonus window, as a trivia nigh
 const COASTER_LATE_MS = 3000;        // the Time's up moment and the network, after a question's 20 seconds
 const COASTER_REVEAL_MS = 1300;      // the page shows right or wrong this long before the next question
 const COASTER_ROUND = 5;
+const COASTER_LEAD_DAYS = 30;       // an added venue that could not be confirmed keeps its trivia-only board this long, then it is deleted (Dean 14 Nov)
 const COASTER_KEEP_DAYS = 35;        // rounds are deleted after this; "This week" needs 7
 const COASTER_BOARD_ROWS = 10;
 const COASTER_FIND_MAX_PER_IP = 30;  // searches a minute per network (a pub's wifi is one network)
@@ -3032,10 +3036,22 @@ async function coasterPlace(env, place) {
   }
   let kind = m[1], id = m[2];
   if (kind === 'c') {
-    const rows = await sbGet(env, 'vp_coaster_venues', 'id=eq.' + enc(id) + '&select=id,kind,name,suburb,timezone,logo_url,venue_id&limit=1');
+    const base = 'id=eq.' + enc(id) + '&select=id,kind,name,suburb,timezone,logo_url,venue_id';
+    let rows;
+    try { rows = await sbGet(env, 'vp_coaster_venues', base + ',lead_status,board_until&limit=1'); }
+    catch (e) {
+      if (!coasterMissingTable(e)) throw e;
+      rows = await sbGet(env, 'vp_coaster_venues', base + '&limit=1');   // before migration 194: no lead columns, and no lead board
+    }
     const c = rows && rows[0];
     if (!c) return null;
-    /* A venue a player added is a possible lead waiting for HQ, never a board (INBOX 232: no free text). */
+    /* A venue a player added is a possible lead for HQ. Before migration 194 (lead_status unchecked) it has no board (INBOX 232: no free
+       text). Since 194 a checked one plays: a real (verified) venue's board stays; an unverified one has a trivia-only board until its
+       30 days are up. A flagged name (rude) never has one. */
+    if (!c.venue_id && c.kind === 'lead') {
+      if (!coasterLeadBoardOpen(c, Date.now())) return null;
+      return { place: 'c:' + c.id, name: c.name, suburb: c.suburb || '', logo_url: '', tz: c.timezone || 'Australia/Brisbane', lead: true };
+    }
     if (!c.venue_id && c.kind !== 'coaster') return null;
     if (!c.venue_id) return { place: 'c:' + c.id, name: c.name, suburb: c.suburb || '', logo_url: c.logo_url || '', tz: c.timezone || 'Australia/Brisbane' };
     kind = 'v'; id = c.venue_id;
@@ -3059,9 +3075,16 @@ async function coasterRows(env) {
   try {
     coaster = (await sbGetAll(env, 'vp_coaster_venues', 'kind=eq.coaster&venue_id=is.null&select=id,name,suburb,postcode,au_state&order=id.asc')) || [];
   } catch (e) { coaster = []; }   // before migration 153: venueplay venues only
+  /* A VERIFIED lead (a real venue a player added) is findable by the next player; an unverified one is not (its board is
+     reached from its adder's phone and challenge links), and a flagged one never is. Before migration 194: none. */
+  let verified = [];
+  try {
+    verified = (await sbGetAll(env, 'vp_coaster_venues', 'kind=eq.lead&lead_status=eq.verified&venue_id=is.null&select=id,name,suburb,au_state&order=id.asc')) || [];
+  } catch (e) { verified = []; }
   const rows = [];
   for (const v of venues) if (v && v.id && v.status === 'active') rows.push({ place: 'v:' + v.id, name: v.name || '', suburb: '', postcode: v.postcode || '', state: v.au_state || '', on: true, vid: v.id });
   for (const c of coaster) if (c && c.id) rows.push({ place: 'c:' + c.id, name: c.name || '', suburb: c.suburb || '', postcode: c.postcode || '', state: c.au_state || '', on: false });
+  for (const c of verified) if (c && c.id) rows.push({ place: 'c:' + c.id, name: c.name || '', suburb: c.suburb || '', postcode: '', state: c.au_state || '', on: false });
   _coasterRows = rows; _coasterRowsAt = now;
   return rows;
 }
@@ -3165,44 +3188,158 @@ function coasterWebsite(raw) {
   return m ? w.replace(/^http:\/\//i, 'https://') : null;
 }
 
-/* POST /coaster/lead { name, suburb, state, website }: "Can't find your venue? Add it" (INBOX 232).
-   It goes to HQ's review list as a POSSIBLE NEW LEAD: never a board, never into cold email. The same
-   name and suburb added again counts one more ask on the same row. */
+/* Whether a lead's board is open now: a verified lead's stays; an unverified one's lasts until board_until; a flagged or unchecked
+   (pre-194) one has none. */
+function coasterLeadBoardOpen(c, nowMs) {
+  if (!c || c.venue_id) return false;
+  if (c.lead_status === 'verified') return true;
+  if (c.lead_status === 'unverified') return !!c.board_until && Date.parse(c.board_until) > nowMs;
+  return false;
+}
+const COASTER_GENERIC = new Set(['the', 'and', 'of', 'at', 'hotel', 'pub', 'tavern', 'inn', 'club', 'rsl', 'bar', 'bistro', 'hotelmotel', 'motel', 'bowls', 'bowlo', 'sports', 'sporting', 'social', 'cafe', 'restaurant', 'grill']);
+/* The words of a venue's name that tell it from every other pub: 'the royal oak hotel' -> ['royal', 'oak']. */
+function coasterNameWords(key) {
+  return String(key || '').split(' ').filter((w) => w.length >= 3 && !COASTER_GENERIC.has(w));
+}
+/* Is this licensed-list name the venue the player typed? Every telling word of the shorter name is in the longer. */
+function coasterSameVenue(aKey, bKey) {
+  const a = coasterNameWords(aKey), b = coasterNameWords(bKey);
+  if (!a.length || !b.length) return String(aKey) === String(bKey);
+  const [small, big] = a.length <= b.length ? [a, b] : [b, a];
+  return small.every((w) => big.indexOf(w) >= 0);
+}
+/* The auto-check (Dean, 14 Nov): the licensed venues list first, then its website. Returns { status, by }. A venue the
+   player added that we cannot confirm is 'unverified' (a trivia-only board for COASTER_LEAD_DAYS days), never refused. */
+async function coasterCheckLead(env, key, suburb, state, website) {
+  const words = coasterNameWords(key).sort((a, b) => b.length - a.length);
+  if (words.length && /^[a-z0-9]+$/.test(words[0])) {
+    try {
+      const rows = (await sbGet(env, 'vp_licensed_venues', 'au_state=eq.' + state + '&name=ilike.' + enc('*' + words[0] + '*') + '&select=id,name,suburb&limit=60')) || [];
+      const sub = coasterNameKey(suburb);
+      const hit = rows.find((l) => l && coasterSameVenue(key, coasterNameKey(l.name)) && (!l.suburb || !sub || coasterNameKey(l.suburb) === sub));
+      if (hit) return { status: 'verified', by: 'licence list' };
+    } catch (e) { /* the list is a nicety here: fall through to the website */ }
+  }
+  if (website) {
+    try {
+      if (await coasterWebsiteNames(website, words)) return { status: 'verified', by: 'website' };
+    } catch (e) { /* unreachable: not confirmed */ }
+  }
+  return { status: 'unverified', by: 'none' };
+}
+/* Does this public website load and say the venue's own words? Public https hosts only, 3 seconds, the first 150 KB. */
+function coasterWebsiteNames(website, words) {
+  const m = /^https:\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)(?::\d+)?(?:\/|$)/i.exec(String(website || ''));
+  if (!m || /^\d+(\.\d+)+$/.test(m[1]) || /(^|\.)(local|internal|localhost|lan|home)$/i.test(m[1]) || !words.length) return Promise.resolve(false);
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => { try { if (ctl) ctl.abort(); } catch (e) {} }, 3000);
+  return fetch(website, { redirect: 'follow', signal: ctl ? ctl.signal : undefined, headers: { 'User-Agent': 'venueplay-check/1' } })
+    .then((r) => (r && r.ok && r.text ? r.text() : ''))
+    .then((t) => {
+      const text = String(t || '').slice(0, 150000).toLowerCase();
+      return words.some((w) => text.indexOf(w) >= 0) && words.filter((w) => text.indexOf(w) >= 0).length * 2 >= words.length;
+    })
+    .catch(() => false)
+    .then((v) => { clearTimeout(timer); return v; });
+}
+/* A rude name goes to Dean's HQ help desk (migration 106) as a ticket and is hidden. A failed ticket never fails the player. */
+async function coasterFlagTicket(env, name, suburb, state) {
+  try {
+    await sbInsert(env, 'vp_help_tickets', { brand: 'venueplay', category: 'general', channel: 'manual', priority: 'normal',
+      subject: 'Coaster page: a venue name was flagged and hidden',
+      message: 'A player added a venue on the drink-coaster page with a word in the name that venueplay does not show: "' + String(name).slice(0, 60) + '" (' +
+        String(suburb).slice(0, 60) + ', ' + state + '). It is hidden: no board, not in any search, never contacted. Nothing is needed unless it is a real venue with an unlucky name: HQ > Coaster venues keeps or dismisses it.' }, false);
+  } catch (e) { /* the row is kept and hidden either way */ }
+}
+
+/* POST /coaster/lead { name, suburb, state, website }: "Can't find your venue? Add it" (INBOX 232, 396).
+   A FREE LEAD for HQ that can play at once: checked against our licensed list and its website; real = a lead with a board
+   that stays; not real = a trivia-only board for COASTER_LEAD_DAYS days, then deleted by the nightly sweep; a rude name is
+   flagged (an HQ ticket for Dean), never shown and has no board. NEVER cold-emailed: nothing here makes a vp_venues,
+   vp_prospects or send-list row. The same name and suburb added again counts one more ask on the same row. */
 async function handleCoasterLead(request, env, json) {
   const b = await readJson(request);
   const clean = (v, n) => String(v || '').replace(/[\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
   const name = clean(b.name, 60), suburb = clean(b.suburb, 60), state = clean(b.state, 3).toUpperCase();
   const key = coasterNameKey(name);
   if (key.replace(/ /g, '').length < 3) return json({ error: 'Type the venue\'s name.', field: 'name' }, 400);
-  if (coasterRude(name)) return json({ error: 'Type the venue\'s name.', field: 'name' }, 400);
-  if (coasterNameKey(suburb).replace(/ /g, '').length < 2 || coasterRude(suburb)) return json({ error: 'Type the suburb or town.', field: 'suburb' }, 400);
+  if (coasterNameKey(suburb).replace(/ /g, '').length < 2) return json({ error: 'Type the suburb or town.', field: 'suburb' }, 400);
   if (COASTER_STATES.indexOf(state) < 0) return json({ error: 'Pick the state.', field: 'state' }, 400);
   const website = coasterWebsite(b.website);
   if (website === null) return json({ error: 'That website does not look right. Leave it empty if you are not sure.', field: 'website' }, 400);
   if (!(await coasterLimit(request, env, 'lead', COASTER_LEAD_MAX_PER_IP, 600))) {
     return json({ error: 'Too many from this network. Wait a few minutes and try again.' }, 429);
   }
+  const rude = coasterRude(name) || coasterRude(suburb);
   try {
     const q = 'kind=eq.lead&venue_id=is.null&name_key=eq.' + enc(key) + '&suburb=ilike.' + enc(suburb.replace(/[*%_\\]/g, '')) +
-      '&au_state=eq.' + state + '&select=id,asks,website&limit=1';   // state is one of COASTER_STATES
-    let row = (await sbGet(env, 'vp_coaster_venues', q))[0];
+      '&au_state=eq.' + state + '&select=id,asks,website,lead_status,board_until&limit=1';   // state is one of COASTER_STATES
+    let row;
+    try { row = (await sbGet(env, 'vp_coaster_venues', q))[0]; }
+    catch (e) {
+      if (!coasterMissingTable(e)) throw e;       // before migration 194 the columns are missing: the old lead (no board)
+      return await coasterLeadBefore194(env, { name, suburb, state, key, website, json });
+    }
     if (row) {
       const patch = { asks: Math.min(9999, (row.asks || 1) + 1) };
       if (website && !row.website) patch.website = website;
       await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), patch);
-      return json({ ok: true, added: true });
+      /* a lead from before migration 194 (never checked) is checked now, the first time it is added again */
+      if (row.lead_status === 'unchecked' && !rude) {
+        const c = await coasterCheckLead(env, key, suburb, state, website || row.website);
+        const up = { lead_status: c.status, checked_at: new Date().toISOString(), checked_by: c.by,
+          board_until: c.status === 'unverified' ? new Date(Date.now() + COASTER_LEAD_DAYS * 86400000).toISOString() : null };
+        await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), up);
+        row = Object.assign({}, row, up);
+      }
+      return json(coasterLeadAnswer(row, name, Date.now()));
     }
+    const now = Date.now();
+    let status = 'unverified', by = 'none';
+    if (rude) { status = 'flagged'; by = 'name guard'; }
+    else { const c = await coasterCheckLead(env, key, suburb, state, website); status = c.status; by = c.by; }
+    const fields = { kind: 'lead', name: name, name_key: key, suburb: suburb, au_state: state, website: website || null,
+      timezone: COASTER_STATE_TZ[state], guard_note: (rude ? 'rude word in the name (flagged, hidden)' : coasterLeadGuard(name)) || null, created_label: 'coaster player',
+      lead_status: status, checked_at: new Date(now).toISOString(), checked_by: by,
+      board_until: status === 'unverified' ? new Date(now + COASTER_LEAD_DAYS * 86400000).toISOString() : null };
+    let made = null;
     try {
-      await sbInsert(env, 'vp_coaster_venues', { kind: 'lead', name: name, name_key: key, suburb: suburb, au_state: state, website: website || null,
-        timezone: COASTER_STATE_TZ[state], guard_note: coasterLeadGuard(name) || null, created_label: 'coaster player' }, false);
+      made = (await sbInsert(env, 'vp_coaster_venues', fields, true))[0];
     } catch (e) {
       if (!(e && e.status === 409)) throw e;   // a mate added it at the same moment: one row
+      return json({ ok: true, added: true });
     }
-    return json({ ok: true, added: true });
+    if (rude) await coasterFlagTicket(env, name, suburb, state);
+    return json(coasterLeadAnswer(made, name, now));
   } catch (e) {
     if (coasterMissingTable(e)) return coasterOff(json);
     throw e;
   }
+}
+/* What the player is told: ok and added, plus the board to play on when it has one (never for a flagged name). */
+function coasterLeadAnswer(row, name, nowMs) {
+  const out = { ok: true, added: true };
+  if (row && row.id && coasterLeadBoardOpen(Object.assign({ venue_id: null }, row), nowMs)) { out.place = 'c:' + row.id; out.name = name; }
+  return out;
+}
+/* Before migration 194: the lead as it always was (kept for HQ, no board). */
+async function coasterLeadBefore194(env, o) {
+  const q = 'kind=eq.lead&venue_id=is.null&name_key=eq.' + enc(o.key) + '&suburb=ilike.' + enc(o.suburb.replace(/[*%_\\]/g, '')) +
+    '&au_state=eq.' + o.state + '&select=id,asks,website&limit=1';
+  let row = (await sbGet(env, 'vp_coaster_venues', q))[0];
+  if (row) {
+    const patch = { asks: Math.min(9999, (row.asks || 1) + 1) };
+    if (o.website && !row.website) patch.website = o.website;
+    await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), patch);
+    return o.json({ ok: true, added: true });
+  }
+  try {
+    await sbInsert(env, 'vp_coaster_venues', { kind: 'lead', name: o.name, name_key: o.key, suburb: o.suburb, au_state: o.state, website: o.website || null,
+      timezone: COASTER_STATE_TZ[o.state], guard_note: coasterLeadGuard(o.name) || null, created_label: 'coaster player' }, false);
+  } catch (e) {
+    if (!(e && e.status === 409)) throw e;
+  }
+  return o.json({ ok: true, added: true });
 }
 
 /* POST /coaster/start { name, place, qids } or { name, code } (a mate's "Challenge your mates" link). */
@@ -3407,12 +3544,24 @@ async function handleCoasterBoardRoute(request, env, json) {
   }
 }
 
-/* The nightly sweep: rounds older than COASTER_KEEP_DAYS go. */
+/* The nightly sweep: rounds older than COASTER_KEEP_DAYS go, and so does every UNVERIFIED lead whose 30 days are up, with its
+   board's rounds (INBOX 396). A verified lead (a real venue) is never swept; neither is a flagged one (HQ's to decide). */
 async function sweepCoasterPlays(env, nowMs) {
-  const cut = new Date((nowMs == null ? Date.now() : nowMs) - COASTER_KEEP_DAYS * 86400000).toISOString();
+  const now = nowMs == null ? Date.now() : nowMs;
+  const cut = new Date(now - COASTER_KEEP_DAYS * 86400000).toISOString();
   try {
     await sbDelete(env, 'vp_coaster_plays', 'started_at=lt.' + enc(cut));
-    return { ok: true, before: cut };
+    let leadsGone = 0;
+    try {
+      const old = (await sbGet(env, 'vp_coaster_venues', 'kind=eq.lead&lead_status=eq.unverified&venue_id=is.null&board_until=lt.' + enc(new Date(now).toISOString()) + '&select=id&limit=200')) || [];
+      for (const r of old) {
+        if (!r || !UUID_RE.test(String(r.id))) continue;
+        await sbDelete(env, 'vp_coaster_plays', 'board=eq.' + enc('c:' + r.id));
+        await sbDelete(env, 'vp_coaster_venues', 'id=eq.' + enc(r.id));
+        leadsGone++;
+      }
+    } catch (e) { /* before migration 194 there is no lead_status: nothing to sweep */ }
+    return { ok: true, before: cut, leads_deleted: leadsGone };
   } catch (e) {
     return { error: coasterMissingTable(e) ? 'migration 153 not run' : String((e && e.message) || e) };
   }
