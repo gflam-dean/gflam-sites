@@ -351,7 +351,7 @@ class Tab(object):
         if not A.shots:
             return
         self.fonts()
-        full = self.js('document.documentElement.scrollHeight')
+        full = self.js('Math.ceil(Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.getElementById("app").getBoundingClientRect().bottom+window.scrollY))')
         full = int(full) if isinstance(full, (int, float)) else self.h
         # a phone window is as tall as the page for this one picture, then goes back (a phone's own screenshot of the scrolled page)
         self.b.call('Emulation.setDeviceMetricsOverride', {'width': self.w, 'height': min(max(full, self.h), 3000), 'deviceScaleFactor': 2, 'mobile': self.mobile}, session=self.sid)
@@ -894,9 +894,12 @@ def main():
             tsm.type_into('nameIn', 'Pip')
             tsm.tap_id('nameBtn')
             tsm.until('!!document.getElementById("vppL1")', 6)
-            tsm.js('VPSting.frame(1.6)')
+            tsm.js('VPSting.frame(1.0)')
             time.sleep(0.2)
             tsm.shot('lhn-showstart-%d.png' % sw)
+            tsm.js('VPSting.frame(2.1)')
+            time.sleep(0.2)
+            tsm.shot('lhn-showstart2-%d.png' % sw)
             tsm.js('VPSting.frame(9)')
             s = wait_question(tsm)
             # answer the five by tapping, then catch the end show
