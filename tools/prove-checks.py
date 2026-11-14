@@ -21572,7 +21572,7 @@ MUTATIONS = [
      'the D192 gate line stays green while semicolon, tab and pipe members files are unreadable'),
     # ---- 10 Nov 2026: help desk Block sender and the phishing filter.
     ('help-block-sender.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  if (helpBlockedBy(mail.from.email, await helpBlocklist(env))) {',
+     '  if (mail && mail.from && mail.from.email && helpBlockedBy(mail.from.email, await helpBlocklist(env))) {',
      '  if (false) {',
      'a blocked sender is turned into a ticket and acknowledged again'),
     ('help-block-sender.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',

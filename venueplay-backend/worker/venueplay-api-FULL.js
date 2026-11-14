@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 20:15 · fcdd0dbb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 20:19 · 016376e4';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -23101,14 +23101,16 @@ async function helpReadRaw(message) {
   return text.slice(0, 2000000);
 }
 async function helpTicketFromEmail(env, to, mail) {
-  const why = helpIgnoreEmail(mail);
-  if (why) return { action: 'ignored', why: why };
   /* BLOCKED SENDER: filed as spam, silently. Before the duplicate check, the reply-tag check and
-     everything else: no ticket, no note on an old ticket, no acknowledgement, no alert. */
-  if (helpBlockedBy(mail.from.email, await helpBlocklist(env))) {
+     everything else: no ticket, no note on an old ticket, no acknowledgement, no alert. First of all
+     since 14 Nov 2026: the 2 Nov automatic-sender rules (donotreply_us@...) would otherwise call a
+     blocked phisher "ignored" and it would not be counted as spam. */
+  if (mail && mail.from && mail.from.email && helpBlockedBy(mail.from.email, await helpBlocklist(env))) {
     console.log('[help] blocked sender filed as spam: ' + mail.from.email);
     return { action: 'spam', why: 'blocked sender' };
   }
+  const why = helpIgnoreEmail(mail);
+  if (why) return { action: 'ignored', why: why };
   const mid = mail.message_id || null;
   if (mid) {
     const a = await vpaSelect(env, 'vp_help_tickets', 'email_message_id=eq.' + encodeURIComponent(mid) + '&select=ticket_no&limit=1');
