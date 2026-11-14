@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '14 Nov 2026, 13:37 · 87848f4b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 13:43 · de8c6765';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2936,6 +2936,7 @@ const COASTER_SECS = 20;             // the speed bonus window, as a trivia nigh
 const COASTER_LATE_MS = 3000;        // the Time's up moment and the network, after a question's 20 seconds
 const COASTER_REVEAL_MS = 1300;      // the page shows right or wrong this long before the next question
 const COASTER_ROUND = 5;
+const COASTER_SITECHECK_PER_IP_DAY = 6;   // websites fetched for added venues, per network per day
 const COASTER_LEAD_DAYS = 30;       // an added venue that could not be confirmed keeps its trivia-only board this long, then it is deleted (Dean 14 Nov)
 const COASTER_KEEP_DAYS = 35;        // rounds are deleted after this; "This week" needs 7
 const COASTER_BOARD_ROWS = 10;
@@ -3210,7 +3211,7 @@ function coasterSameVenue(aKey, bKey) {
 }
 /* The auto-check (Dean, 14 Nov): the licensed venues list first, then its website. Returns { status, by }. A venue the
    player added that we cannot confirm is 'unverified' (a trivia-only board for COASTER_LEAD_DAYS days), never refused. */
-async function coasterCheckLead(env, key, suburb, state, website) {
+async function coasterCheckLead(env, key, suburb, state, website, canFetch) {
   const words = coasterNameWords(key).sort((a, b) => b.length - a.length);
   if (words.length && /^[a-z0-9]+$/.test(words[0])) {
     try {
@@ -3220,27 +3221,82 @@ async function coasterCheckLead(env, key, suburb, state, website) {
       if (hit) return { status: 'verified', by: 'licence list' };
     } catch (e) { /* the list is a nicety here: fall through to the website */ }
   }
-  if (website) {
+  if (website && canFetch) {      // the website is fetched at most once per venue (when it is first added) and 6 times a day per network
     try {
       if (await coasterWebsiteNames(website, words)) return { status: 'verified', by: 'website' };
     } catch (e) { /* unreachable: not confirmed */ }
   }
   return { status: 'unverified', by: 'none' };
 }
-/* Does this public website load and say the venue's own words? Public https hosts only, 3 seconds, the first 150 KB. */
-function coasterWebsiteNames(website, words) {
-  const m = /^https:\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)(?::\d+)?(?:\/|$)/i.exec(String(website || ''));
-  if (!m || /^\d+(\.\d+)+$/.test(m[1]) || /(^|\.)(local|internal|localhost|lan|home)$/i.test(m[1]) || !words.length) return Promise.resolve(false);
+/* SSRF GUARD for the website a player typed. Pure string work (no URL object, so it is the same everywhere and testable): returns the
+   normalised https URL, or null. https only, no userinfo, port 443 only, a real DNS name (letters in the last label, so EVERY form of an
+   IP literal is refused: dotted, decimal, hex, octal, bracketed IPv6), at least two labels, and never a local or internal name
+   (localhost in any label, .local .internal .localdomain .lan .home .arpa .corp .test .invalid .example .onion). */
+function coasterSafeUrl(raw) {
+  const m = /^https:\/\/([^\/?#]*)([\/?#][^\s]*)?$/i.exec(String(raw || '').trim());
+  if (!m) return null;
+  const auth = m[1].toLowerCase();
+  if (!auth || auth.indexOf('@') >= 0 || auth.indexOf('[') >= 0 || auth.indexOf('%') >= 0) return null;
+  const pm = /^([^:]+)(?::(\d+))?$/.exec(auth);
+  if (!pm || (pm[2] && pm[2] !== '443')) return null;
+  const host = pm[1];
+  if (host.length > 253 || !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host)) return null;
+  const labels = host.split('.');
+  if (labels.some((l) => !l || l.length > 63 || l[0] === '-' || l[l.length - 1] === '-' || l === 'localhost' || l.indexOf('localhost') === 0)) return null;
+  if (!/^[a-z]{2,24}$/.test(labels[labels.length - 1])) return null;     // an IP in any form has no letters-only last label
+  if (/^(local|internal|localdomain|localhost|lan|home|arpa|corp|test|invalid|example|onion|intranet|private)$/.test(labels[labels.length - 1])) return null;
+  return 'https://' + host + (m[2] || '');
+}
+/* The next hop of a redirect, resolved against the current URL and checked by the same guard; null = not safe (so: unverified). */
+function coasterNextHop(cur, loc) {
+  const l = String(loc || '').trim();
+  const c = /^(https:\/\/[^\/?#]+)([^?#]*)/.exec(cur);
+  if (!l || !c) return null;
+  let abs;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(l)) abs = l;                 // absolute: coasterSafeUrl refuses anything but https
+  else if (l.indexOf('//') === 0) abs = 'https:' + l;
+  else if (l[0] === '/') abs = c[1] + l;
+  else if (l[0] === '?' || l[0] === '#') abs = c[1] + c[2] + l;
+  else abs = c[1] + c[2].replace(/[^\/]*$/, '') + l;
+  return coasterSafeUrl(abs);
+}
+const COASTER_SITE_BYTES = 200000;
+const COASTER_SITE_HOPS = 3;          // redirects followed by hand, each re-checked; a fourth is a loop or too many to trust
+/* Does this public website load and say the venue's own words? Up to 3 redirects, each one re-checked; 3 seconds in all; the first
+   200 KB read. Only a yes or a no leaves this function: nothing fetched is ever returned, stored or shown. */
+async function coasterWebsiteNames(website, words) {
+  let url = coasterSafeUrl(website);
+  if (!url || !words.length) return false;
   const ctl = typeof AbortController === 'function' ? new AbortController() : null;
   const timer = setTimeout(() => { try { if (ctl) ctl.abort(); } catch (e) {} }, 3000);
-  return fetch(website, { redirect: 'follow', signal: ctl ? ctl.signal : undefined, headers: { 'User-Agent': 'venueplay-check/1' } })
-    .then((r) => (r && r.ok && r.text ? r.text() : ''))
-    .then((t) => {
-      const text = String(t || '').slice(0, 150000).toLowerCase();
-      return words.some((w) => text.indexOf(w) >= 0) && words.filter((w) => text.indexOf(w) >= 0).length * 2 >= words.length;
-    })
-    .catch(() => false)
-    .then((v) => { clearTimeout(timer); return v; });
+  try {
+    for (let hop = 0; hop <= COASTER_SITE_HOPS; hop++) {
+      const r = await fetch(url, { redirect: 'manual', signal: ctl ? ctl.signal : undefined, headers: { 'User-Agent': 'venueplay-check/1' } });
+      if (!r) return false;
+      if (r.status >= 300 && r.status < 400) {
+        url = coasterNextHop(url, r.headers && r.headers.get ? r.headers.get('location') : '');
+        if (!url) return false;                               // a redirect we cannot validate is not confirmed
+        continue;
+      }
+      if (!r.ok) return false;
+      let t = '';
+      if (r.body && typeof r.body.getReader === 'function') {
+        const rd = r.body.getReader(), dec = new TextDecoder();
+        let got = 0;
+        for (;;) {
+          const x = await rd.read();
+          if (x.done) break;
+          got += x.value.length; t += dec.decode(x.value, { stream: true });
+          if (got >= COASTER_SITE_BYTES) { try { rd.cancel(); } catch (e) {} break; }
+        }
+      } else if (r.text) t = await r.text();
+      const text = String(t).slice(0, COASTER_SITE_BYTES).toLowerCase();
+      const found = words.filter((w) => text.indexOf(w) >= 0).length;
+      return found > 0 && found * 2 >= words.length;
+    }
+    return false;
+  } catch (e) { return false; }
+  finally { clearTimeout(timer); }
 }
 /* A rude name goes to Dean's HQ help desk (migration 106) as a ticket and is hidden. A failed ticket never fails the player. */
 async function coasterFlagTicket(env, name, suburb, state) {
@@ -3286,7 +3342,7 @@ async function handleCoasterLead(request, env, json) {
       await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), patch);
       /* a lead from before migration 194 (never checked) is checked now, the first time it is added again */
       if (row.lead_status === 'unchecked' && !rude) {
-        const c = await coasterCheckLead(env, key, suburb, state, website || row.website);
+        const c = await coasterCheckLead(env, key, suburb, state, website || row.website, await coasterLimit(request, env, 'sitecheck', COASTER_SITECHECK_PER_IP_DAY, 86400));
         const up = { lead_status: c.status, checked_at: new Date().toISOString(), checked_by: c.by,
           board_until: c.status === 'unverified' ? new Date(Date.now() + COASTER_LEAD_DAYS * 86400000).toISOString() : null };
         await sbPatchReturning(env, 'vp_coaster_venues', 'id=eq.' + enc(row.id), up);
@@ -3297,7 +3353,7 @@ async function handleCoasterLead(request, env, json) {
     const now = Date.now();
     let status = 'unverified', by = 'none';
     if (rude) { status = 'flagged'; by = 'name guard'; }
-    else { const c = await coasterCheckLead(env, key, suburb, state, website); status = c.status; by = c.by; }
+    else { const c = await coasterCheckLead(env, key, suburb, state, website, !website || await coasterLimit(request, env, 'sitecheck', COASTER_SITECHECK_PER_IP_DAY, 86400)); status = c.status; by = c.by; }
     const fields = { kind: 'lead', name: name, name_key: key, suburb: suburb, au_state: state, website: website || null,
       timezone: COASTER_STATE_TZ[state], guard_note: (rude ? 'rude word in the name (flagged, hidden)' : coasterLeadGuard(name)) || null, created_label: 'coaster player',
       lead_status: status, checked_at: new Date(now).toISOString(), checked_by: by,

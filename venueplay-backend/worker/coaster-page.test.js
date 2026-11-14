@@ -93,8 +93,20 @@ pass("Add it: name, suburb and one of the eight states are needed; the website i
 
 print("\nTHE CHALLENGE LINK");
 pass("the link is venueplay.com.au/live-here-now?c=CODE", L.shareUrl("ABC234") === "https://venueplay.com.au/live-here-now?c=ABC234");
-var st = L.shareText("Sam", 4, 520, "The Mini Bar");
-pass("its words: 'I scored 520 at The Mini Bar. Reckon you can beat me?' (396.i), the link beside it", st === "I scored 520 at The Mini Bar. Reckon you can beat me?", st);
+var TOP = L.shareText(435, "The Mini Bar", 4), OUT = L.shareText(435, "The Mini Bar", 0);
+pass("in tonight's top 10 the words are: I'm 4th on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off. (396 update 4)", TOP === "I'm 4th on the Coaster Trivia board at The Mini Bar tonight. Come down and knock me off.", TOP);
+pass("outside the top 10 the words are: I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you can beat it?", OUT === "I scored 435 on Coaster Trivia at The Mini Bar. Your turn. Reckon you can beat it?", OUT);
+pass("10th place is in the top 10, 11th is out", /10th on the Coaster/.test(L.shareText(100, "X", 10)) && /^I scored 100 on Coaster Trivia/.test(L.shareText(100, "X", 11)));
+pass("the venue is always named in the text", /The Mini Bar/.test(TOP) && /The Mini Bar/.test(OUT) && /my pub/.test(L.shareText(5, "", 0)));
+pass("NO drink, shout, round or booze wording anywhere in the share words (liquor licensing: never promote drinking)",
+  !/drink|shout|beer|round|pint|booze|bar tab|cheers|wine|shot/i.test(TOP.replace("The Mini Bar", "") + OUT.replace("The Mini Bar", "")) && !/\b(drink|shout|next round|beer|pint|booze)\b/i.test(PAGE.slice(PAGE.indexOf("function shareText("), PAGE.indexOf("var SHARE_TITLE"))));
+var ORD = { 1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 10: "10th", 11: "11th", 12: "12th", 13: "13th", 14: "14th", 21: "21st", 22: "22nd", 23: "23rd", 24: "24th", 101: "101st", 111: "111th", 112: "112th", 113: "113th", 121: "121st", 122: "122nd", 123: "123rd" };
+pass("ordinals are right: 1st 2nd 3rd 4th, the teens 11th 12th 13th, 21st 22nd 23rd, 101st 111th 112th 113th 121st", Object.keys(ORD).every(function (k) { return L.ordinal(+k) === ORD[k]; }), Object.keys(ORD).filter(function (k) { return L.ordinal(+k) !== ORD[k]; }));
+pass("the share words use the shared place: two on 725 are both 1st (the one on 580 is 3rd), top 10 only",
+  L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }, { place: 3, points: 580 }]) === 1 && L.topTenPlace([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580, you: true }]) === 3 &&
+  L.topTenPlace((function () { var r = []; for (var i = 1; i <= 11; i++) r.push({ place: i, points: 1000 - i, you: i === 11 }); return r; })()) === 0);
+pass("the game's name is Coaster Trivia: page title, og title, the line before a venue is picked, and the share sheet's title",
+  /<title>Coaster Trivia \| venueplay<\/title>/.test(PAGE) && /og:title" content="Coaster Trivia \| venueplay"/.test(PAGE) && /id="whereKick">Coaster Trivia</.test(PAGE) && L.SHARE_TITLE === "Coaster Trivia" && /'Playing at ' \+ venueName/.test(PAGE));
 pass("the code is read from ?c=, in capitals", L.readCode("?c=abc234") === "ABC234" && L.readCode("?v=the-mini-bar&c=ABC234") === "ABC234");
 pass("anything else is not a code", L.readCode("?c=abc") === "" && L.readCode("?c=abcdefg") === "" && L.readCode("?cc=ABC234") === "");
 
@@ -164,7 +176,7 @@ pass("equal scores share a place (725 and 725 are both 1st, the next is 3rd), an
   L.myPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }], 2) === 1);
 pass("the reveal beat: 'The answer was B' and 'Time's up. The answer was B.'", L.verdict(false, 0, "B").text === "The answer was B" && L.verdict(null, 0, "B").text === "Time's up. The answer was B." && L.verdict(true, 120, "B").text === "Correct!");
 pass("the sting plays before question 1 and the round starts after it (Worker clock); sound starts off with a label",
-  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /setItem\('vpqMute', '1'\)/.test(PAGE) && /id="soundTxt">Sound off</.test(PAGE));
+  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /if \(ST && ST\.on && !startShow\) \{/.test(PAGE) && /setItem\('vpqMute', '1'\)/.test(PAGE) && /id="soundTxt">Sound off</.test(PAGE));
 
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
@@ -196,7 +208,7 @@ pass("the details go to /coaster/optin only once the round has started there (it
   /S\.optin = d\.optin \|\| null;\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
   /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
-pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
+pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no lowercase 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
   !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE) && /&copy; <span id="vp-year"><\/span> venueplay</.test(PAGE));
 pass("under the title, '5 questions, 20 seconds each' is the one honest line (396.a), and the search box carries its own placeholder (396.2)",
   /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Type 3 letters of your pub or club"/.test(PAGE));
