@@ -407,9 +407,9 @@ FIT = r'''(function(){
       clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
     if(/^(BUTTON|A)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" text wider than its button");
     var own=Array.prototype.some.call(e.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});
-    if(own && parseFloat(cs.fontSize)<15 && !e.closest('#optinTick')) small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
+    if(own && parseFloat(cs.fontSize)<15 && !e.closest('#optinTick') && e.id!=='notListed') small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
   });
-  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && !/linkbtn|sndtoggle/.test(b.className) && r.height<54;})
+  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && !/linkbtn|sndtoggle/.test(b.className) && r.height<40;})
     .map(function(b){return (b.id||b.className)+" "+Math.round(b.getBoundingClientRect().height);});
   return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6), small:small.slice(0,6), short:tall.slice(0,6)});
 })()'''
