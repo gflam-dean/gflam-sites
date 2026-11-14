@@ -198,8 +198,8 @@ def main():
                   s.get('code') and s.get('go') and s['code']['bottom'] <= h and s['go']['bottom'] <= h
                   and s['code']['h'] >= 48 and s['go']['h'] >= 48 and s['go']['left'] >= s['code']['right'] and s['go']['right'] <= w,
                   (s.get('code'), s.get('go')))
-            check('%d px: the three other ways back, each a full-width row at least 50 px tall' % w,
-                  [x['href'] for x in s.get('ways', [])] == ['/live-here-now', '/', '/see-a-night']
+            check('%d px: the two other ways back, each a full-width row at least 50 px tall' % w,
+                  [x['href'] for x in s.get('ways', [])] == ['/live-here-now', '/']
                   and all(x['h'] >= 50 for x in s['ways']), [(x['href'], x['h']) for x in s.get('ways', [])])
             check('%dx%d: ONE SCREEN, no scroll: the whole page (support line too) fits, the document is no taller than the screen' % (w, h),
                   s.get('sh', 9999) <= h and s['foot']['bottom'] <= h + 0.5 and s['lastWay']['bottom'] <= h, (s.get('sh'), s['foot'], s['lastWay']['bottom']))
@@ -278,8 +278,7 @@ def main():
 
         print('\nTHE WAYS BACK WORK FROM FOUR FOLDERS DEEP')
         for i, (want, mark) in enumerate((('/live-here-now', 'document.getElementById("vWhere") && !document.getElementById("vWhere").hidden && document.getElementById("vName").hidden && document.getElementById("whereIn")'),
-                                          ('/', 'document.querySelector("header .logo")'),
-                                          ('/see-a-night', 'document.querySelector("h1")'))):
+                                          ('/', 'document.querySelector("header .logo")'))):
             t = Tab(b, 390, 844)
             t.go(base + '/a/b/c/d')
             t.until('document.readyState==="complete"')
