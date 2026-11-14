@@ -539,6 +539,7 @@ r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode:
 check('B8: the same name and postcode as an active venue on another account: added, one email to sales@', r.status === 200 && simMails().length === 1, [r.status, simMails().length]);
 var sm = simMails()[0] || {};
 check('B8: the email names the venue, the postcode, the account, the other account\'s venue, and says paid', /Big Barn/.test(sm.html || '') && /4999/.test(sm.html || '') && /o@test\.local/.test(sm.html || '') && /The Big Barn/.test(sm.html || '') && /account is paid/.test(sm.html || ''), sm.html);
+check('B8: an add says it was added to an account', /added to an account/.test(sm.html || ''), sm.html);
 check('B8: nothing about it is shown to the customer', !/similar|already have|looks like/i.test(JSON.stringify(r.body)), r.body);
 twinWorld({ status: 'suspended', suspended_reason: 'cancelled', closed_at: new Date(Date.now() - 100 * 86400000).toISOString(), created_at: '2024-01-01T00:00:00Z' });
 call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
@@ -563,6 +564,9 @@ function provision(f) { var out = null; vpaProvisionOneVenue(ENV, { foundingId: 
 var pv = provision('f3');
 check('B8: a sign-up of a venue like an existing one: one email, and it says the account is UNPAID', pv && pv.created === true && simMails().length === 1 && /UNPAID/.test(simMails()[0].html || '') && /unpaid/.test(simMails()[0].subject || ''), [pv, simMails().map(function (m) { return m.subject; })]);
 var pv2 = provision('f3');
+check('B8: the email for a sign-up says it was signed up', /just signed up/.test((simMails()[0] || {}).html || ''), (simMails()[0] || {}).html);
+var twice = null; vpaSimilarVenueAlert(ENV, 'f3', { id: pv.venue.id, name: 'Big Barn', postcode: '4999' }, 'signup').then(function (x) { twice = x; }); for (var ti = 0; ti < 500 && twice === null; ti++) drainMicrotasks();
+check('B8: asked about the same venue a second time, it sends nothing more (once per venue, the audit row is the memory)', twice === false && simMails().length === 1, [twice, simMails().length]);
 check('B8: the same venue sends no second email (the audit row is the memory)', pv2 && pv2.created === false && simMails().length === 1, simMails().length);
 check('B8: and the audit row is written once', DB.vp_admin_audit.filter(function (a) { return a.action === 'similar_venue_alert'; }).length === 1, DB.vp_admin_audit.length);
 twinWorld();
