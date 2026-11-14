@@ -532,7 +532,7 @@
   "counted_by": "lines"
  },
  "tools/safe-area-in-chrome.test.py": {
-  "checks": 86,
+  "checks": 125,
   "counted_by": "lines"
  },
  "tools/sant-bingo-in-chrome.test.py": {
