@@ -171,6 +171,34 @@ def phone(r):
     r.close_tab(tid)
 
 
+def play_entry(r):
+    print('\n2b. A website visitor who taps Play lands on a page that looks like the website (INBOX 422 item 2, 17 Nov 2026)')
+    CHK = ('JSON.stringify((function(){ function shown(e){ if(!e) return false; var b=e.getBoundingClientRect(), c=getComputedStyle(e); return c.display!=="none" && c.visibility!=="hidden" && b.width>0 && b.height>0; }'
+           ' var wb=document.getElementById("webBar"); var links=wb?[].map.call(wb.querySelectorAll("a"),function(a){return a.textContent.trim()+">"+a.getAttribute("href");}):[];'
+           ' return {bar:shown(wb), ptop:shown(document.querySelector(".ptop")), menu:shown(document.getElementById("menuBtn")), links:links,'
+           ' venue:shown(document.querySelector(".vp-venuelink a")), venueHref:(document.querySelector(".vp-venuelink a")||{getAttribute:function(){return ""}}).getAttribute("href"),'
+           ' sw:document.documentElement.scrollWidth, iw:innerWidth, cls:document.body.className}; })())')
+    for w, h in ((1280, 720), (1440, 900), (390, 844), (320, 640)):
+        tid, p = r.open('/play', width=w, height=h)
+        ok('%dx%d: the code screen is showing' % (w, h), r.until(p, vis('vNoRoom'), 30) is True)
+        time.sleep(0.8)
+        st = J(r.ask(p, CHK))
+        ok('%dx%d: the in-game header and the pinned menu button are not there' % (w, h), st.get('ptop') is False and st.get('menu') is False, st)
+        ok('%dx%d: the website top bar is there with its logo and the venue log in link' % (w, h), st.get('bar') is True and 'Venue log in>/app/index.html' in st.get('links', []), st)
+        if w >= 1280:
+            ok('%dx%d: with Game modes, Pricing and Help' % (w, h), all(x in st.get('links', []) for x in ('Game modes>/#modes', 'Pricing>/#offer', 'Help>/help')), st)
+        ok('%dx%d: "Want this at your venue?" links to the website' % (w, h), st.get('venue') is True and st.get('venueHref') == '/', st)
+        ok('%dx%d: nothing runs off the side' % (w, h), st.get('sw', 0) <= st.get('iw', 0) + 1, st)
+        shot(r, p, 'play-entry-%dx%d' % (w, h))
+        r.close_tab(tid)
+    for w, h in ((1280, 720), (390, 844)):
+        tid, p = r.open('/play?room=' + r.W.info['code'], width=w, height=h)
+        ok('%dx%d: a QR link skips the code screen and shows the in-game header with its menu button, no website bar' % (w, h),
+           r.until(p, vis('vJoin'), 30) is True and J(r.ask(p, CHK)).get('ptop') is True and J(r.ask(p, CHK)).get('menu') is True and J(r.ask(p, CHK)).get('bar') is False and J(r.ask(p, CHK)).get('venue') is False, J(r.ask(p, CHK)))
+        shot(r, p, 'play-qr-%dx%d' % (w, h))
+        r.close_tab(tid)
+
+
 def musical(r):
     print('\n3. A song title never breaks inside a word, and the BINGO button is on screen')
     tid, m = r.open('/app/musical/play?demo=1', width=390, height=690)
@@ -288,6 +316,7 @@ r = RIG.Rig()
 try:
     homepage(r)
     phone(r)
+    play_entry(r)
     musical(r)
     tv(r)
 except Exception:
