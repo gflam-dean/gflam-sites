@@ -345,6 +345,19 @@ class Tab(object):
         with open(os.path.join(A.shots, name), 'wb') as f:
             f.write(base64.b64decode(d))
 
+    def shot_full(self, name):
+        """The whole page, top to bottom (the end screen scrolls: the hero, Share and the board with the player's own row)."""
+        if not A.shots:
+            return
+        self.fonts()
+        m = self.b.call('Page.getLayoutMetrics', session=self.sid)
+        cs = m.get('cssContentSize') or m.get('contentSize')
+        d = self.b.call('Page.captureScreenshot', {'format': 'png', 'captureBeyondViewport': True,
+                        'clip': {'x': 0, 'y': 0, 'width': cs['width'], 'height': min(cs['height'], 3000), 'scale': 1}}, session=self.sid)['data']
+        os.makedirs(A.shots, exist_ok=True)
+        with open(os.path.join(A.shots, name), 'wb') as f:
+            f.write(base64.b64decode(d))
+
     def close(self):
         self.b.close_tab(self.tid)
 
@@ -993,7 +1006,13 @@ def main():
         print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1440 WIDE')
         LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
         others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
+        def seed_board():
+            """The same small stand-in board for every width: Sam 725, Max 725, Mia 580 (INBOX 404: the player's own row must be on it)."""
+            FAKE['rounds'].clear()
+            for i, (nm, pts) in enumerate((('Sam', 725), ('Max', 725), ('Mia', 580))):
+                FAKE['rounds']['seed%d' % i] = {'id': 'seed%d' % i, 'token': 'x', 'place': MINI, 'qids': [], 'name': nm, 'answers': [], 'points': pts, 'correct': 5, 'ms': 1000 * (i + 1), 'done': True}
         for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1440, 900, False)):
+            seed_board()
             clear_storage(b, base, seen=others)
             tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
@@ -1054,6 +1073,10 @@ def main():
             check('%d px, the end with the board: "435 pts", the same' % w,
                   s.get('scoreN') == '435 pts' and s.get('board') and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), s.get('board'), f))
             tf.shot('lhn-score-%d.png' % w)
+            tf.shot_full('lhn-scorefull-%d.png' % w)
+            mine = tf.js('(function(){var r=document.querySelector("#rows .row.you");if(!r)return "";var c=getComputedStyle(r.querySelector(".rk")).backgroundColor;return r.textContent.replace(/\\s+/g," ").trim()+"|"+c;})()')
+            check('%d px: the board carries the player\'s OWN row, marked (you) and pink, so it never contradicts the hero (INBOX 404)' % w,
+                  isinstance(mine, str) and 'Christabel-ann (you)' in mine and mine.endswith('rgb(255, 31, 142)') and (s.get('place') or '').startswith('4th tonight'), (mine, s.get('place')))
             tf.close()
     finally:
         b.close()
