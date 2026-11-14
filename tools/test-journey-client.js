@@ -132,4 +132,24 @@ check('nsw.html loads /app/vp-track.js after the analytics tag', /vp-analytics\.
 check('index.html loads /app/vp-track.js', /<script src="\/app\/vp-track\.js">/.test(readFile('venueplay/index.html')));
 check('the file exists where the tag says (served from /app)', SRC.length > 1000);
 
+section('10. HQ > Journey: the page, run');
+var HQ = readFile('venueplay/app/hq.html'), HQJ = readFile('venueplay/app/vp-journey-hq.js');
+check('hq.html has the Journey button, the pane, the script and the pane in the list', /data-pane="journey"/.test(HQ) && /id="paneJourney"/.test(HQ) && /<script src="vp-journey-hq\.js">/.test(HQ) && /"reports","journey","team"/.test(HQ));
+check('opening the pane starts it, and the page hands it the sign-in', /pane==="journey" && window\.VPJourney\) window\.VPJourney\.open\(\)/.test(HQ) && /VPJourney\.init\(\{ post:workerPost/.test(HQ));
+check('each venue row has a journey slot, filled when it is open', /data-vpjourney=/.test(HQ) && /VPJourney\.venueBlock\(S\.openVenue\)/.test(HQ));
+var jw = { document: { getElementById: function () { return null; }, querySelector: function () { return null; } } }; jw.window = jw;
+new Function('window', HQJ).call(jw, jw);
+var J = jw.VPJourney;
+var fh = J.funnelHtml({ steps: [{ step: 'form_sent', label: 'Sent the form', reached: 6, website: 4, cold_email: 2, coaster: 0, lost_pct: 33, median_secs_to_next: 75, reason: 'Stopped at <b>x</b>', fix: 'Fix "it"' }], sessions: 12, scanner_hits: 1 });
+check('the funnel row shows reached, % lost, median time, reason and fix', /Sent the form/.test(fh) && />6</.test(fh) && /33%/.test(fh) && /75 s|1 min/.test(fh) && /Fix: Fix/.test(fh), fh.slice(0, 300));
+check('words from the Worker are escaped, never injected', fh.indexOf('<b>x</b>') < 0 && fh.indexOf('&lt;b&gt;x&lt;/b&gt;') >= 0);
+var fm = J.formHtml({ first_name_typed: 3, contact_typed: 2, chose_mobile: 1, chose_email: 1, venue_search_started: 2, venue_picked: 1, venue_not_found: 1, addvenue_shown: 1, addvenue_typed: 0, abandoned_at: [{ field: 'contact', n: 2, median_secs: 9 }], searches_found_nothing: [{ q: '<script>alert(1)</script>', n: 2 }], highlight_matched: 3, highlight_missed: 1 });
+check('what people typed in a search is escaped', fm.indexOf('<script>') < 0 && /&lt;script&gt;/.test(fm));
+check('abandon box and highlight accuracy are shown', /contact 2/.test(fm) && /3 of 4/.test(fm), fm);
+var ch = J.campHtml({ rows: [{ campaign: 'offer-nov', email_step: 1, sent: 10, clicked: 3, visited: 2, enquired: 1, signed_up: 1, signed_in: 1, card: 0, scanner_only: 2, links_clicked: { 'play-button': 3 } }] });
+check('the campaign table has every column Dean asked for', ['Sent', 'Clicked', 'Visited', 'Enquired', 'Signed up', 'Signed in', 'Card'].every(function (c) { return ch.indexOf('<th>' + c + '</th>') >= 0; }));
+check('and says which link was clicked', /play-button 3/.test(ch));
+check('the empty campaign table explains itself', /No tracked links are loaded yet/.test(J.campHtml({ rows: [] })));
+check('no em dash, no person named in the HQ file', HQJ.indexOf('—') < 0);
+
 Promise.all(P).then(function () { print(''); print((ran - bad) + '/' + ran + ' checks passed' + (bad ? ', ' + bad + ' FAILED' : '')); });
