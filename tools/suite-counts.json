@@ -1976,7 +1976,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 128,
+  "checks": 129,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
@@ -2088,7 +2088,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/signup-source.test.js": {
-  "checks": 48,
+  "checks": 49,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {

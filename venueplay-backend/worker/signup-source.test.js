@@ -80,6 +80,8 @@ var u3 = subscribePage('/gflam', '?utm_source=gflam.com.au&utm_campaign=xmas', {
 pass('tags typed onto the link win', u3.utm_campaign === 'xmas', u3);
 var u4 = subscribePage('/offer-nov', '', {}).utm();
 pass('an untagged visit to /offer-nov is not counted as gflam', !u4.utm_source, u4);
+var u5 = subscribePage('/', '?utm_source=coaster&utm_medium=qr&utm_campaign=live-here-now', {}).utm();
+pass('the coaster page link to the HOME page (INBOX 422 item 3) is counted as the coaster: the home page reads the three tags from the query', u5.utm_source === 'coaster' && u5.utm_medium === 'qr' && u5.utm_campaign === 'live-here-now', u5);
 var uc = subscribePage('/coaster', '', {}).utm();
 pass('landing on /coaster gives utm_source=coaster (medium qr, campaign live-here-now)', uc.utm_source === 'coaster' && uc.utm_medium === 'qr' && uc.utm_campaign === 'live-here-now', uc);
 var nsw = find('venueplay/nsw.html'), home = find('venueplay/index.html');
