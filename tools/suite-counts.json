@@ -307,6 +307,10 @@
   "checks": 1086,
   "counted_by": "lines"
  },
+ "tools/hq-journey-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"

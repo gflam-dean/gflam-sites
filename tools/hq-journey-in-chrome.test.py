@@ -119,20 +119,20 @@ try:
     by = dict((r[0], r) for r in rows)
     ok('every funnel step is a row, in order, starting with Opened the page', rows and rows[0][0] == 'Opened the page' and len(rows) == 15, [r[0] for r in rows])
     ok('Opened the page: 12 reached (2 of them from a cold email link, 10 website)', by['Opened the page'][1] == '12' and by['Opened the page'][3] == '2' and by['Opened the page'][2] == '10', by.get('Opened the page'))
-    ok('Tapped the button: 12; Started the form: 9; Sent the form: 6', by['Tapped "Play a quick game"'][1] == '12' and by['Started the form'][1] == '9' and by['Sent the form'][1] == '6',
+    ok('Tapped the button: 12; Started the form: 9; Sent the form: 7 (six quick-game sessions and the cold-email lead)', by['Tapped "Play a quick game"'][1] == '12' and by['Started the form'][1] == '9' and by['Sent the form'][1] == '7',
        [(r[0], r[1]) for r in rows[:5]])
-    ok('the percent lost is against the step before (Started the form 25%, Sent the form 33%)', by['Started the form'][5] == '25%' and by['Sent the form'][5] == '33%', [(r[0], r[5]) for r in rows[:5]])
+    ok('the percent lost is against the step before (Started the form 25%, Sent the form 22%)', by['Started the form'][5] == '25%' and by['Sent the form'][5] == '22%', [(r[0], r[5]) for r in rows[:5]])
     ok('a median time to the next step is shown where there is one', any(r[6] and r[6] != '\xa0' for r in rows[:5]), [r[6] for r in rows[:5]])
     ok('a likely reason and a fix sit beside every step that lost people', 'Fix:' in by['Sent the form'][7] and len(by['Sent the form'][7]) > 40, by['Sent the form'][7])
     ok('the reason names the missing venue when searches found nothing', 'missing from our list' in by['Sent the form'][7], by['Sent the form'][7])
     txt = js(sid, 'document.getElementById("jyFunnel").innerText')
-    ok('the mail scanner is left out and counted apart', '1 mail-scanner hits were left out' in txt, txt[-200:])
+    ok('the mail scanner is left out and counted apart', '1 mail-scanner hit was left out' in txt, txt[-200:])
 
     print('\nThe form detail and where visitors come from (1440)')
     ft = js(sid, 'document.getElementById("jyForm").innerText')
     ok('mobile vs email, picked vs cannot find, and the box people stop at are there', 'mobile 3, email 3' in ft and 'contact 3' in ft and 'venue 2' in ft, ft)
     ok('searches that found nothing are listed so missing venues get added', 'wobbly goat x4' in ft, ft)
-    ok('what someone typed is shown as text, not markup', js(sid, '!document.querySelector("#jyForm b")') is True and '<b>x</b>' in ft.replace('\xa0', ' ') or 'x inn' in ft, ft)
+    ok('what someone typed is shown as text, not markup', js(sid, '![].some.call(document.querySelectorAll("#jyForm b"), function(b){return b.textContent==="x";})') is True and '<b>x</b> inn' in ft, ft)
     ok('the lead data hit rate is shown (1 of 2)', '1 of 2' in ft, ft)
     wt = js(sid, 'document.getElementById("jyWhere").innerText')
     ok('where from, state and device are counts, with no one named', 'Google' in wt and 'QLD' in wt and 'mobile' in wt.lower(), wt)
@@ -167,7 +167,7 @@ try:
     ok('the funnel is the same numbers on a phone', js(sid, 'document.querySelectorAll("#jyFunnel tbody tr").length') == 15)
     ok('the page does not scroll sideways at 375 (the tables scroll inside their boxes)', js(sid, 'document.documentElement.scrollWidth <= window.innerWidth + 1') is True,
        js(sid, '[document.documentElement.scrollWidth, window.innerWidth]'))
-    ok('the reason text is readable: wide enough and wrapping', js(sid, '(function(){var c=document.querySelector("#jyFunnel tbody tr:nth-child(4) td:last-child"); return c.getBoundingClientRect().width >= 200 && getComputedStyle(c).whiteSpace !== "nowrap";})()') is True)
+    ok('the reason text is on the screen without scrolling, wide enough and wrapping (the source columns are hidden on a phone)', js(sid, '(function(){var c=document.querySelector("#jyFunnel tbody tr:nth-child(4) td:last-child"); return c.getBoundingClientRect().width >= 120 && c.getBoundingClientRect().right <= window.innerWidth && getComputedStyle(c).whiteSpace !== "nowrap";})()') is True)
     ok('the controls sit on the screen: the period picker and Refresh', js(sid, '(function(){var a=document.getElementById("jyDays").getBoundingClientRect(), b=document.getElementById("jyRefresh").getBoundingClientRect(); return a.right <= window.innerWidth && b.right <= window.innerWidth && a.left >= 0;})()') is True)
     shot(sid, 'journey-375')
     ok('no script error at 375', js(sid, 'JSON.stringify(window.__errs||[])') == '[]', js(sid, 'JSON.stringify(window.__errs||[])'))

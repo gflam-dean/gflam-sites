@@ -24566,6 +24566,27 @@ MUTATIONS = [
      "if not email or '@' not in email or email in seen:",
      "if not email or '@' not in email:",
      'a lead in the file twice gets two sets of codes'),
+    # 15 Nov 2026, INBOX 413: HQ > Journey in Chrome.
+    ('hq-journey-in-chrome.test.py', 'venueplay/app/vp-journey-hq.js',
+     '"<": "&lt;",',
+     '"<": "<",',
+     'what a visitor typed in a search is injected into the HQ Journey page'),
+    ('hq-journey-in-chrome.test.py', 'venueplay/app/hq.html',
+     '    if(pane==="journey" && window.VPJourney) window.VPJourney.open();\n',
+     '',
+     'the Journey tab opens to an empty pane'),
+    ('hq-journey-in-chrome.test.py', 'venueplay/app/hq.html',
+     '    if(S.openVenue && window.VPJourney) window.VPJourney.venueBlock(S.openVenue);\n',
+     '',
+     "a venue's journey never appears in its HQ row"),
+    ('hq-journey-in-chrome.test.py', 'venueplay/app/vp-journey-hq.js',
+     '@media (max-width:640px){#jyFunnel table{min-width:0}',
+     '@media (max-width:1px){#jyFunnel table{min-width:0}',
+     'on a phone the reason and fix sit off the side of the funnel table'),
+    ('hq-journey-in-chrome.test.py', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (s.reached === 0) { if (i > 0) { reason = 'Nobody reached this step yet.'; fix = ''; } }\n",
+     '    if (false) { }\n',
+     'steps nobody reached read "100% lost, too few to say" instead of "nobody reached this step yet"'),
 ]
 
 

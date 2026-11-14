@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 21:49 · 09265ea6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 23:13 · dd2cf0db';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -24484,8 +24484,9 @@ function vpjFunnelTable(events) {
   // The reason beside every step, sharpened by the form detail where it applies.
   steps.forEach((s, i) => {
     const def = VPJ_FUNNEL[i]; let reason = def.reason, fix = def.fix;
-    if (s.lost_pct === null || s.lost_pct < 5 || !prev) { if (i > 0) { reason = s.reached ? 'Small loss here.' : 'Nobody reached this step yet.'; fix = ''; } }
-    else if (steps[i - 1] && steps[i - 1].reached < 5) { reason = 'Too few people so far to say why (' + steps[i - 1].reached + ').'; fix = 'Wait for more traffic.'; }
+    if (s.reached === 0) { if (i > 0) { reason = 'Nobody reached this step yet.'; fix = ''; } }
+    else if (s.lost_pct === null || s.lost_pct < 5 || !prev) { if (i > 0) { reason = s.reached ? 'Small loss here.' : 'Nobody reached this step yet.'; fix = ''; } }
+    else if (steps.slice(0, i).reduce((m, x) => x.reached > 0 ? x.reached : m, 0) < 5) { reason = 'Too few people so far to say why (' + steps.slice(0, i).reduce((m, x) => x.reached > 0 ? x.reached : m, 0) + ').'; fix = 'Wait for more traffic.'; }
     else if (s.step === 'form_sent') {
       const top = form.abandoned_at[0];
       if (form.searches_found_nothing.length && form.searches_found_nothing.reduce((a, c) => a + c.n, 0) >= 3) {
