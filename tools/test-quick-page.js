@@ -71,6 +71,18 @@ check('taps are counted on every press and stored as a number', /pointerdown/.te
 var evs = /var EVENTS = \[([^\]]*)\]/.exec(CONFIG)[1];
 check('the steps include the demo questions, the podium, the games question, the card and each choice', ['demo_q1', 'demo_q5', 'podium_seen', 'games_answered', 'card_screen_seen', 'card_added', 'choice_another', 'choice_info', 'choice_setup', 'page_left', 'signed_in', 'account_made'].every(function (x) { return evs.indexOf('"' + x + '"') >= 0; }));
 
+section('5b. The tracking door (the contract with the 413 tracking build): window.vpTrackStep(step, props)');
+posts.length = 0; delete win.vpTrackStepImpl; delete win.__vpTrackQueue; win.localStorage.d = {};
+(0, eval)(CONFIG); Q = win.VPQuick;
+check('vpTrackStep is a window function', typeof win.vpTrackStep === 'function');
+check('an unknown step is refused and queued nowhere', win.vpTrackStep('typed_a_name', {}) === false && !win.__vpTrackQueue && posts.length === 0);
+win.vpTrackStep('page_opened', { x: 1 });
+check('before the 413 store is there, a step is QUEUED for it to flush (and sent to the fallback route)', win.__vpTrackQueue && win.__vpTrackQueue.length === 1 && win.__vpTrackQueue[0][0] === 'page_opened' && posts.length === 1, [win.__vpTrackQueue, posts.length]);
+var got = []; win.vpTrackStepImpl = function (st, pr) { got.push([st, pr]); };
+win.vpTrackStep('form_sent', { a: 1 });
+check('once the 413 store defines vpTrackStepImpl, steps go to it, not the queue', got.length === 1 && got[0][0] === 'form_sent' && win.__vpTrackQueue.length === 1, got);
+check('the page and the demo fire steps only through that door', !/\bQ\.track\(|VPQuick\.track\(/.test(QJS) && !/VPQuick\.track\(/.test(TRY));
+
 section('6. House rules on the words');
 var ALL = QHTML + QJS + CONFIG + TRY.slice(TRY.indexOf('PLAY A QUICK GAME'), TRY.indexOf('/* ---- 1. how ---- */'));
 check('no em dash or en dash', ALL.indexOf('\u2014') === -1 && ALL.indexOf('\u2013') === -1);

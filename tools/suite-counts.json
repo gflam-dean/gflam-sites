@@ -1224,7 +1224,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-page.js": {
-  "checks": 37,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-quick-start.js": {

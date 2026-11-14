@@ -235,7 +235,7 @@
     });
   }
   function quickToken(){ try{ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }); }catch(e){ return Promise.resolve(""); } }
-  function qtrack(step){ quickToken().then(function(t){ VPQuick.track(step, { token:t }); }); }
+  function qtrack(step){ quickToken().then(function(t){ window.vpTrackStep(step, { token:t }); }); }
   var QSTEP="";
   function quickStart(){
     VPQuick.countTaps(); VPQuick.leave();

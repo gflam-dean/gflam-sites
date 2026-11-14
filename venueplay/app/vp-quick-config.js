@@ -55,6 +55,18 @@
       put(TAP_KEY, String(taps() + 1));
     }, true);
   }
+  /* THE ONE TRACKING DOOR (the contract with the 413 tracking build, 15 Nov 2026):
+       window.vpTrackStep(step, props)   step: a name in EVENTS (the 412 UPDATE 8 names); props: optional small object (never a name,
+                                         mobile, email or venue name). Returns true when the step was passed on.
+     The 413 build defines window.vpTrackStepImpl(step, props) when its event store is live; until then a call is QUEUED in
+     window.__vpTrackQueue (for it to flush) AND sent to this build's own fallback route (/quick/event, to be removed when 413 lands). */
+  function vpTrackStep(step, props) {
+    if (EVENTS.indexOf(step) < 0) return false;
+    if (typeof root.vpTrackStepImpl === "function") { try { root.vpTrackStepImpl(step, props || {}); } catch (e) {} }
+    else { (root.__vpTrackQueue = root.__vpTrackQueue || []).push([step, props || {}, Date.now()]); }
+    return track(step, props);
+  }
+  root.vpTrackStep = vpTrackStep;
   var seen = {};
   function track(step, extra) {
     if (EVENTS.indexOf(step) < 0) return false;

@@ -73,7 +73,7 @@
       website: val("qWeb"), turnstile: tsToken() };
     var lead = /[?&]l=([A-Za-z0-9_-]{16,64})(&|$)/.exec(root.location.search || ""); if (lead) body.lead = lead[1];
     var btn = $("qGo"); busy(btn, true, "Sending your code...");
-    Q.track("form_sent");
+    root.vpTrackStep("form_sent");
     post("/quick/begin", body).then(function (j) {
       busy(btn, false, "Text me my code");
       if (j.ok && j.start_id) {
@@ -138,7 +138,7 @@
 
   /* ---- the account is made: sign in by the one-tap link, and land on the demo (the 30 minute hand-off VPTrySlot reads) ---- */
   function made(j) {
-    Q.track("account_made");
+    root.vpTrackStep("account_made");
     show("qMade");
     var path = "/app/try.html?quick=1";
     try { root.localStorage.setItem("vpTryNext", JSON.stringify({ path: path, at: Date.now() })); } catch (e) {}
@@ -146,13 +146,13 @@
   }
 
   function mount() {
-    Q.countTaps(); Q.leave(); Q.track("page_opened");
+    Q.countTaps(); Q.leave(); root.vpTrackStep("page_opened");
     $("qForm").addEventListener("submit", begin);
     $("qCode").addEventListener("submit", check);
     wireBoxes();
     $("qResend").addEventListener("click", resend);
     $("qChange").addEventListener("click", function () { S.id = null; show("qForm"); $("qVenue").focus(); });
-    ["qName", "qMobile", "qVenue"].forEach(function (id) { $(id).addEventListener("input", function () { if (!S.started) { S.started = true; Q.track("form_started"); } }); });
+    ["qName", "qMobile", "qVenue"].forEach(function (id) { $(id).addEventListener("input", function () { if (!S.started) { S.started = true; root.vpTrackStep("form_started"); } }); });
     $("qVenue").addEventListener("input", function () { root.clearTimeout(S.timer); S.timer = root.setTimeout(search, 220); });
     doc.addEventListener("click", function (e) { if (!e.target.closest || !e.target.closest(".row")) hidePick(); });
     turnstile();
