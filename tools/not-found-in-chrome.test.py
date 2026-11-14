@@ -162,8 +162,8 @@ def main():
     check('new-look type only: Anton headline, Manrope body, JetBrains Mono for the code box, no Hanken (that is TV body)',
           'Anton' in HTML and 'Manrope' in HTML and 'Hanken' not in HTML, None)
     lhn = io.open(os.path.join(SITE, 'live-here-now.html'), encoding='utf-8').read()
-    check('wording matches live-here-now v2: "Play 60 seconds of trivia" / "Five quick questions" (its own words: 60-second trivia, Five quick questions)',
-          'Play 60 seconds of trivia' in HTML and 'Five quick questions' in HTML and 'Five quick questions' in lhn and '60-second trivia' in lhn, None)
+    check('wording matches the coaster page (INBOX 396: its name is Coaster Trivia, 5 questions, never "60 seconds")',
+          'Play Coaster Trivia' in HTML and 'Five quick questions' in HTML and '60 seconds' not in HTML and 'Coaster Trivia' in lhn, None)
     rel = [u for u in re.findall(r'(?:href|src|action)="([^"]+)"', HTML)
            if not u.startswith(('/', 'https://', 'mailto:'))]
     check('every link, script and form address is absolute, because this page is served AT the missing address, at any depth',
