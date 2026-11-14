@@ -278,6 +278,7 @@ def pre(clock_ms, api, block_storage=False):
 class Tab(object):
     def __init__(self, b, base, api, w=375, h=740, clock=T0, block_storage=False, mobile=True):
         self.b, self.base, self.api, self.h = b, base, api, h
+        self.w, self.mobile = w, mobile
         self.tid = b.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
         self.sid = b.call('Target.attachToTarget', {'targetId': self.tid, 'flatten': True})['sessionId']
         b.call('Page.enable', session=self.sid)
@@ -350,10 +351,13 @@ class Tab(object):
         if not A.shots:
             return
         self.fonts()
-        m = self.b.call('Page.getLayoutMetrics', session=self.sid)
-        cs = m.get('cssContentSize') or m.get('contentSize')
-        d = self.b.call('Page.captureScreenshot', {'format': 'png', 'captureBeyondViewport': True,
-                        'clip': {'x': 0, 'y': 0, 'width': cs['width'], 'height': min(cs['height'], 3000), 'scale': 1}}, session=self.sid)['data']
+        full = self.js('document.documentElement.scrollHeight')
+        full = int(full) if isinstance(full, (int, float)) else self.h
+        # a phone window is as tall as the page for this one picture, then goes back (a phone's own screenshot of the scrolled page)
+        self.b.call('Emulation.setDeviceMetricsOverride', {'width': self.w, 'height': min(max(full, self.h), 3000), 'deviceScaleFactor': 2, 'mobile': self.mobile}, session=self.sid)
+        time.sleep(0.4)
+        d = self.b.call('Page.captureScreenshot', {'format': 'png'}, session=self.sid)['data']
+        self.b.call('Emulation.setDeviceMetricsOverride', {'width': self.w, 'height': self.h, 'deviceScaleFactor': 2, 'mobile': self.mobile}, session=self.sid)
         os.makedirs(A.shots, exist_ok=True)
         with open(os.path.join(A.shots, name), 'wb') as f:
             f.write(base64.b64decode(d))
