@@ -55,6 +55,8 @@ TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
+line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': False, 'collect_marketing_optin': True}], 'replace': True})
+line({'seed': 'vp_captures', 'rows': [], 'replace': True})
 for t in ('vp_purchase_raffles', 'vp_purchase_raffle_entrants', 'vp_purchase_raffle_entries', 'vp_purchase_raffle_draws', 'vp_admin_audit'):
     line({'seed': t, 'rows': [], 'replace': True})
 R.db['vp_venues'][0].update({'name': 'Deepwater Hotel', 'timezone': 'Australia/Sydney', 'au_state': 'NSW'})
@@ -141,7 +143,7 @@ try:
        R.until(p1, '/not in the raffle yet/i.test(document.getElementById("barMsg").textContent)', 10) is True and not table('vp_purchase_raffle_entries'), text(p1, '#barMsg'))
     click(p1, '#addBtn')
     R.until(p1, visible('#stepNew'), 15)
-    setv(p1, '#nFirst', 'Bob'); setv(p1, '#nLast', 'Smith'); setv(p1, '#nEmail', 'bob@example.com'); click(p1, '#nAge')
+    setv(p1, '#nFirst', 'Bob'); setv(p1, '#nLast', 'Smith'); setv(p1, '#nEmail', 'bob@example.com')
     ok('phone 1: the new-customer form fits the phone', fits(p1))
     shot(p1, '03-new-customer-phone-390.jpg')
     click(p1, '#newSave')
@@ -156,7 +158,7 @@ try:
     set_clock(120000)    # two minutes on: a new purchase, not a double tap
     keypad(p2, ANN[:0])
     type_mobile(p2, ANN); click(p2, '#addBtn'); R.until(p2, visible('#stepNew'), 15)
-    setv(p2, '#nFirst', 'Ann'); setv(p2, '#nLast', 'Lee'); setv(p2, '#nEmail', 'ann@example.com'); click(p2, '#nAge'); click(p2, '#nOpt')
+    setv(p2, '#nFirst', 'Ann'); setv(p2, '#nLast', 'Lee'); setv(p2, '#nEmail', 'ann@example.com'); click(p2, '#nOpt')
     click(p2, '#newSave')
     ok('Ann on the second phone: in, 1 entry', R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneSmall') == '1 entry so far. Good luck!', text(p2, '#doneSmall'))
     shot(p2, '04-thanks-phone-375.jpg')
@@ -173,6 +175,12 @@ try:
     ok('the confirm fits the first phone screen', fits(p2) and js(p2, 'document.getElementById("vpAskGo").getBoundingClientRect().bottom<=innerHeight') is True)
     click(p2, '#vpAskCancel'); time.sleep(0.6)
     ok('"No, not them" adds nothing, clears the number and says so', len(table('vp_purchase_raffle_entries')) == 3 and text(p2, '#barMsg') == 'Nothing added. Check the number.' and js(p2, 'document.getElementById("phoneIn").value===""') is True, [text(p2, '#barMsg'), len(table('vp_purchase_raffle_entries'))])
+    # a mobile on the venue's members list (not yet in this raffle): the same card, "On your members list"
+    line({'seed': 'vp_captures', 'rows': [{'id': 'cap-gus', 'venue_id': VENUE, 'first_name': 'Gus', 'last_name': 'Hall', 'email': 'gus@example.com', 'mobile': '0400999111', 'marketing_optin': False, 'created_at': '2026-09-01T00:00:00Z'}], 'replace': True})
+    type_mobile(p2, '0400999111'); click(p2, '#addBtn'); R.until(p2, visible('#vpAsk'), 10)
+    ok('a member shows the card "Gus H.? On your members list." with Yes, add entry', 'On your members list' in (text(p2, '#vpAsk') or '') and 'Gus H' in (text(p2, '#vpAsk') or ''), text(p2, '#vpAsk'))
+    click(p2, '#vpAskCancel'); time.sleep(0.6)
+    ok('"No, not them" on a member adds nothing', not [e for e in table('vp_purchase_raffle_entrants') if e.get('first_name') == 'Gus'])
     set_clock(240000)
     type_mobile(p2, BOB); click(p2, '#addBtn'); confirm_known(p2)
     ok('a third purchase the same day is refused by the cap: says why, nothing added',
@@ -211,7 +219,7 @@ try:
     for ph, f, l, k in [('0400111222', 'Chris', 'Nguyen', 7), ('0400555666', 'Dana', 'Kelly', 2), ('0400777888', 'Eli', 'Brown', 1)]:
         for i in range(k):
             body = {'venue_id': VENUE, 'raffle_id': raffle_id, 'phone': ph, 'again': True}
-            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': f != 'Eli', 'age_confirmed': True}
+            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': f != 'Eli'}
             W.ask('POST', '/host/praffle/enter', body)
     # (the cap of 2 a day stops the bulk adds above past 2 each: the list below counts what the Worker really kept)
     live = [e for e in table('vp_purchase_raffle_entries') if not e.get('voided_at')]

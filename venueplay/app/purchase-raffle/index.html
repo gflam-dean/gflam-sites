@@ -287,12 +287,12 @@
               <div class="rname" style="margin-bottom:2px">New to this raffle</div>
               <div class="note" style="margin-bottom:14px">Mobile <b class="mono" id="newPhone" style="color:#fff"></b>. Ask the customer for these, once. After today it is one tap.</div>
               <div class="two">
-                <div class="field"><label for="nFirst">First name</label><input type="text" id="nFirst" autocomplete="off" maxlength="60"></div>
-                <div class="field"><label for="nLast">Last name</label><input type="text" id="nLast" autocomplete="off" maxlength="60"></div>
+                <div class="field" id="fFirst"><label for="nFirst">First name</label><input type="text" id="nFirst" autocomplete="off" maxlength="60"></div>
+                <div class="field" id="fLast"><label for="nLast">Last name</label><input type="text" id="nLast" autocomplete="off" maxlength="60"></div>
               </div>
-              <div class="field"><label for="nEmail">Email, so we can tell them if they win</label><input type="email" id="nEmail" autocomplete="off" maxlength="200" inputmode="email"></div>
-              <label class="tickrow must"><input type="checkbox" id="nAge"><span><b>The customer says they are 18 or over.</b> Needed to enter.</span></label>
-              <label class="tickrow"><input type="checkbox" id="nOpt"><span id="nOptText">The customer would like news and offers from the venue. Only tick if THEY say yes.</span></label>
+              <div class="field" id="fEmail"><label for="nEmail">Email</label><input type="email" id="nEmail" autocomplete="off" maxlength="200" inputmode="email"></div>
+              <div class="field" id="fPost"><label for="nPost">Postcode</label><input type="text" id="nPost" autocomplete="off" maxlength="10" inputmode="numeric"></div>
+              <label class="tickrow" id="fOpt"><input type="checkbox" id="nOpt"><span id="nOptText">Send me offers from the venue</span></label>
               <p class="note" style="margin:4px 0 14px" id="nNotice">The venue collects these details to run this raffle and contact the winner. <button type="button" class="link" id="termsLink">Read the terms</button></p>
               <div class="msg" id="newMsg" role="status" aria-live="polite" style="text-align:left;margin:0 0 10px"></div>
               <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -465,7 +465,7 @@
     });
   }
 
-  var G={ isAdmin:false, venueId:"", venue:null, slug:"", canManage:false, multi:false, raffle:null, totals:null, recent:[], draws:[], tab:"bar",
+  var G={ form:null, isAdmin:false, venueId:"", venue:null, slug:"", canManage:false, multi:false, raffle:null, totals:null, recent:[], draws:[], tab:"bar",
           phone:"", busy:false, lastEntry:null, doneTimer:null, list:[], listTotal:0, q:"", tvRound:null };
 
   function fmtPhone(d){ d=String(d||"").replace(/\D/g,"").slice(0,10); if(d.length<=4) return d; if(d.length<=7) return d.slice(0,4)+" "+d.slice(4); return d.slice(0,4)+" "+d.slice(4,7)+" "+d.slice(7); }
@@ -484,7 +484,7 @@
   // ---------------- loading the venue's raffle ----------------
   function load(){
     return api("/host/praffle/state", { venue_id:G.venueId }).then(function(d){
-      G.canManage=!!d.can_manage; G.isAdmin=!!d.is_admin; G.raffle=d.raffle; G.totals=d.totals||null; G.recent=d.recent||[]; G.draws=d.draws||[]; G.openMsg=d.open_message||"";
+      G.canManage=!!d.can_manage; G.isAdmin=!!d.is_admin; G.form=d.form||null; G.raffle=d.raffle; G.totals=d.totals||null; G.recent=d.recent||[]; G.draws=d.draws||[]; G.openMsg=d.open_message||"";
       if(d.venue){ G.venue=Object.assign({}, G.venue||{}, d.venue); G.slug=d.venue.slug||G.slug; }
       show("loadingView",false); show("offView",false); show("mainView",true);
       document.querySelectorAll("#tabs .mgr").forEach(function(b){ b.classList.toggle("hidden", !G.canManage); });
@@ -571,6 +571,13 @@
     G.busy=true; syncAdd(); $("barMsg").textContent=""; $("barMsg").classList.remove("ok");
     api("/host/praffle/lookup", { venue_id:G.venueId, raffle_id:G.raffle.id, phone:digits() }).then(function(res){
       G.busy=false; syncAdd();
+      if(res.form) G.form=res.form;
+      if(!res.known && res.member){
+        return vpAsk(res.name+"? On your members list.", { yes:"Yes, add entry", no:"No, not them" }).then(function(yes){
+          if(yes) return addEntry(false);
+          setPhone(""); $("barMsg").textContent="Nothing added. Check the number.";
+        });
+      }
       if(!res.known) return addEntry(false);
       var c=res.entries|0;
       return vpAsk(res.name+"? "+c+(c===1?" entry":" entries")+" so far", { yes:"Yes, add entry", no:"No, not them" }).then(function(yes){
@@ -596,17 +603,22 @@
     show("stepPhone",false); show("stepDone",false); show("stepNew",true);
     $("newPhone").textContent=fmtPhone(digits());
     ["nFirst","nLast","nEmail"].forEach(function(id){ $(id).value=""; });
-    $("nAge").checked=false; $("nOpt").checked=false; $("newMsg").textContent="";
+    $("nPost").value=""; $("nOpt").checked=false; $("newMsg").textContent="";
+    /* Only what the venue's subscriber settings ask. The first name is always asked: the winner is named on the TV. */
+    var f=G.form||{ first_name:true, last_name:false, email:false, postcode:false, marketing_optin:false };
+    show("fFirst", f.first_name!==false); show("fLast", !!f.last_name); show("fEmail", !!f.email); show("fPost", !!f.postcode); show("fOpt", !!f.marketing_optin);
+    $("nOptText").textContent="Send me offers from "+((G.venue&&G.venue.name)||"the venue");
     try{ $("nFirst").focus(); }catch(e){}
   }
   function closeNew(){ show("stepNew",false); show("stepPhone",true); }
   $("newCancel").addEventListener("click", function(){ closeNew(); $("barMsg").textContent="Nothing added."; });
   $("newSave").addEventListener("click", function(){
-    var p={ first_name:$("nFirst").value.trim(), last_name:$("nLast").value.trim(), email:$("nEmail").value.trim(),
-            age_confirmed:$("nAge").checked===true, marketing_opt_in:$("nOpt").checked===true };
-    if(!p.first_name || !p.last_name){ $("newMsg").textContent="Add their first and last name."; return; }
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)){ $("newMsg").textContent="Add an email that works, so the winner can be told."; return; }
-    if(!p.age_confirmed){ $("newMsg").textContent="The customer has to be 18 or over to enter. Tick the box once they say so."; return; }
+    var f=G.form||{ first_name:true, last_name:false, email:false, postcode:false, marketing_optin:false };
+    var p={ first_name:$("nFirst").value.trim(), last_name:f.last_name?$("nLast").value.trim():"", email:f.email?$("nEmail").value.trim():"",
+            postcode:f.postcode?$("nPost").value.trim():"", marketing_opt_in:!!f.marketing_optin && $("nOpt").checked===true };
+    if(!p.first_name){ $("newMsg").textContent="Add their first name."; return; }
+    if(f.last_name && !p.last_name){ $("newMsg").textContent="Add their last name."; return; }
+    if(f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)){ $("newMsg").textContent="Add an email that works."; return; }
     addEntry(false, p);
   });
 

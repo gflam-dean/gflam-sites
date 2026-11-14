@@ -8,7 +8,7 @@ end to end the way Deepwater Hotel will use it:
   set up     the owner names it, adds the prize, sets the dates, saves; the terms come back written
              from those settings and are on the page
   the bar    a mobile typed on the big keypad, Add entry; a new customer is asked for their details
-             (18+ must be ticked; the marketing tick starts unticked); "Thanks Bob, you're in. 1 entry
+             (the marketing tick, "Send me offers from {venue}", starts unticked; there is no 18+ tick); "Thanks Bob, you're in. 1 entry
              so far. Good luck!"; the same mobile again inside a minute is asked ON THE PAGE (never a
              native dialog) whether it is a new purchase, "No" adds nothing, "Yes" adds exactly one;
              a phone-width window shows the same screen with nothing cut off
@@ -53,6 +53,8 @@ TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
+line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': False, 'collect_marketing_optin': True}], 'replace': True})
+line({'seed': 'vp_captures', 'rows': [], 'replace': True})
 for t in ('vp_purchase_raffles', 'vp_purchase_raffle_entrants', 'vp_purchase_raffle_entries', 'vp_purchase_raffle_draws', 'vp_admin_audit'):
     line({'seed': t, 'rows': [], 'replace': True})
 R.db['vp_venues'][0].update({'name': 'Deepwater Hotel', 'timezone': 'Australia/Sydney', 'au_state': 'NSW'})
@@ -111,8 +113,7 @@ try:
     ok('the marketing tick starts UNticked', js(sid, 'document.getElementById("nOpt").checked') is False)
     setv(sid, '#nFirst', 'Bob'); setv(sid, '#nLast', 'Smith'); setv(sid, '#nEmail', 'bob@example.com')
     click(sid, '#newSave')
-    ok('without the 18+ tick nothing is added and it says why', R.until(sid, '/18 or over/.test(document.getElementById("newMsg").textContent)', 5) is True and not line({'table': 'vp_purchase_raffle_entries'})['body'])
-    click(sid, '#nAge')
+    ok('the form asks only what the venue collects: no 18+ tick, no postcode', js(sid, '!document.getElementById("nAge") && getComputedStyle(document.getElementById("fPost")).display==="none"') is True)
     shot(sid, '02-bar-new-customer-tablet.jpg')
     click(sid, '#newSave')
     ok('the confirm reads "Thanks Bob, you\'re in" with the count',
@@ -138,7 +139,7 @@ try:
     for ph, f, l, opt, k in people:
         for i in range(k):
             body = {'venue_id': VENUE, 'raffle_id': ents[0]['raffle_id'], 'phone': ph, 'again': True}
-            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': opt, 'age_confirmed': True}
+            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': opt}
             W.ask('POST', '/host/praffle/enter', body)
     click(sid, '#doneNext')
     js(sid, 'void 0')

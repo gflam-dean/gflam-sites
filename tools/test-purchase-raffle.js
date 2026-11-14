@@ -26,6 +26,8 @@ var T0 = Date.parse('2026-10-23T02:00:00.000Z');   // Friday 23 Oct, 1pm in Sydn
 function world(on) {
   NOWMS = T0;
   DB = { vp_venues: [{ id: VENUE, name: 'Deepwater Hotel', slug: 'deepwater-hotel', status: 'active', timezone: 'Australia/Sydney', purchase_raffle_on: on !== false }],
+         vp_venue_settings: [{ venue_id: VENUE, collect_first_name: true, collect_last_name: true, collect_email: true, collect_postcode: false, collect_marketing_optin: true }],
+         vp_captures: [],
          vp_venue_groups: [], vp_venue_staff: [{ id: 'staff-1', display_name: 'Sarah' }, { id: 'staff-2', display_name: 'Tom' }],
          vp_purchase_raffles: [], vp_purchase_raffle_entrants: [], vp_purchase_raffle_entries: [], vp_purchase_raffle_draws: [],
          vp_admin_audit: [], vp_member_draws: [], vp_sessions: [], vp_bingo_draws: [] };
@@ -117,8 +119,9 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('a new mobile asks for their details', e.status === 400 && e.body.needs_details === true && DB.vp_purchase_raffle_entrants.length === 0);
   e = await enter('0412345678', Object.assign({}, BOB, { email: 'not-an-email' }));
   show('an email that is not an email is refused', e.status === 400 && DB.vp_purchase_raffle_entrants.length === 0);
-  e = await enter('0412345678', Object.assign({}, BOB, { age_confirmed: 'yes' }));
-  show('no 18+ confirmation, no entry', e.status === 400 && /18 or over/.test(e.body.error) && DB.vp_purchase_raffle_entrants.length === 0);
+  e = await enter('0400000099', { first_name: 'Zed', last_name: 'Young', email: 'zed@example.com', marketing_opt_in: false });
+  show('no 18+ tick is asked or refused: a new entrant with no such field is added, and age_confirmed_at holds the entry time', e.status === 200 && DB.vp_purchase_raffle_entrants.length === 1 && DB.vp_purchase_raffle_entrants[0].age_confirmed_at === new Date(NOWMS).toISOString(), JSON.stringify(e.body));
+  DB.vp_purchase_raffle_entrants.length = 0; DB.vp_purchase_raffle_entries.length = 0; NOWMS += 61000;
   e = await enter('0412345678', Object.assign({}, BOB, { marketing_opt_in: 'on' }));
   show('a new entrant gets their first entry', e.status === 200 && e.body.new_entrant === true && e.body.entries === 1, JSON.stringify(e.body));
   show('the confirm reads like a person', e.body.message === "Thanks Bob, you're in. 1 entry so far. Good luck!", e.body.message);
@@ -322,6 +325,78 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   s = await setup(Object.assign({ raffle_id: raffle().id, name: 'Fixed by HQ', reason: 'Venue typed the wrong name' }, FUT));
   show('after the start: HQ with a reason works and the reason is audited', s.status === 200 && raffle().name === 'Fixed by HQ' && audits('purchase_raffle_updated').slice(-1)[0].detail.reason === 'Venue typed the wrong name', JSON.stringify(s.body));
   ADMIN = false;
+
+  print('members list: matched by mobile at THIS venue only, details and opt-in carried over, never invented');
+  world(true); ROLE = 'owner'; await setup(); ROLE = 'host';
+  DB.vp_captures.push(
+    { id: 'c-alan', venue_id: VENUE, first_name: 'Alan', last_name: 'Smith', email: 'alan@x.au', mobile: '0497605423', marketing_optin: true, marketing_optin_at: '2026-09-01T00:00:00.000Z', created_at: '2026-09-01T00:00:00Z' },
+    { id: 'c-bea', venue_id: VENUE, first_name: 'Bea', last_name: 'Jones', email: 'bea@x.au', mobile: '+61498111222', marketing_optin: false, marketing_optin_at: null, created_at: '2026-09-01T00:00:00Z' },
+    { id: 'c-cat', venue_id: VENUE, first_name: 'Cat', last_name: 'Lee', email: null, mobile: '0499333444', marketing_optin: null, created_at: '2026-09-01T00:00:00Z' },
+    { id: 'c-other', venue_id: OTHER, first_name: 'Olly', last_name: 'Other', email: 'olly@x.au', mobile: '0411999888', marketing_optin: true, marketing_optin_at: '2026-09-01T00:00:00.000Z', created_at: '2026-09-01T00:00:00Z' });
+  var lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0497 605 423' });
+  show('a mobile on the members list is found, as first name and last initial', lk.status === 200 && lk.body.known === false && lk.body.member === true && /^Alan S\.?$/.test(lk.body.name), JSON.stringify(lk.body));
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '+61 498 111 222' });
+  show('the match is on the NORMALISED mobile (stored +61, typed 04)', lk.body.member === true && lk.body.first_name === 'Bea', JSON.stringify(lk.body));
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0411999888' });
+  show('a member of ANOTHER venue is not matched', lk.status === 200 && lk.body.member === false, JSON.stringify(lk.body));
+  e = await enter('0411999888', null);
+  show('and entering that mobile asks for details, nothing carried from the other venue', e.status === 400 && e.body.needs_details === true && DB.vp_purchase_raffle_entrants.length === 0, JSON.stringify(e.body));
+  e = await enter('0497605423', null);
+  var alan = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Alan'; })[0];
+  show('Yes on a member adds them from their own details, no form', e.status === 200 && e.body.new_entrant === true && alan && alan.last_name === 'Smith' && alan.email === 'alan@x.au' && alan.phone === '+61497605423', JSON.stringify(e.body));
+  show('the member link is recorded', alan && alan.member_capture_id === 'c-alan');
+  show('opt-in carried over when the member gave it (true, with their own time)', alan && alan.marketing_opt_in === true && alan.opted_in_at === '2026-09-01T00:00:00.000Z', JSON.stringify(alan));
+  NOWMS += 61000;
+  e = await enter('0498111222', null);
+  var bea = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Bea'; })[0];
+  show('opt-in carried over when the member did not give it (false, never invented)', bea && bea.marketing_opt_in === false && bea.opted_in_at === null, JSON.stringify(bea));
+  NOWMS += 61000;
+  e = await enter('0499333444', { first_name: 'Hacker', marketing_opt_in: true });
+  var cat = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Cat'; })[0];
+  show('a request cannot give a member an opt-in they never ticked, or swap their name', e.status === 200 && cat && cat.marketing_opt_in === false && DB.vp_purchase_raffle_entrants.every(function (x) { return x.first_name !== 'Hacker'; }), JSON.stringify(e.body));
+  show('nothing was written to the other venue\'s list', DB.vp_captures.filter(function (c) { return c.venue_id === OTHER; }).length === 1 && DB.vp_captures[3].mobile === '0411999888');
+
+  print('the new-customer form asks only what the venue collects');
+  world(true); ROLE = 'owner'; await setup(); ROLE = 'host';
+  DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: true, collect_last_name: false, collect_email: false, collect_postcode: false, collect_marketing_optin: false }];
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412000001' });
+  show('first name only: the form fields say so', JSON.stringify(lk.body.form) === '{"first_name":true,"last_name":false,"email":false,"postcode":false,"marketing_optin":false}', JSON.stringify(lk.body.form));
+  e = await enter('0412000001', { first_name: 'Cy', last_name: 'Sneaky', email: 'cy@x.au', postcode: '4000', marketing_opt_in: true });
+  var cy = DB.vp_purchase_raffle_entrants[0];
+  show('fields the venue does not collect are dropped on the server, and no tick without the setting', e.status === 200 && cy.first_name === 'Cy' && cy.last_name === '' && cy.email === null && !cy.postcode && cy.marketing_opt_in === false && DB.vp_captures.length === 0, JSON.stringify(cy));
+  DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: false, collect_last_name: false }]; NOWMS += 61000;
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412000002' });
+  show('no name collected at all: the first name is still asked (the winner is named on the TV)', lk.body.form.first_name === true && lk.body.form.last_name === false);
+  e = await enter('0412000002', { last_name: 'NoFirst' });
+  show('and a first name is required by the server too', e.status === 400 && e.body.needs_details === true && DB.vp_purchase_raffle_entrants.length === 1, JSON.stringify(e.body));
+  DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: true, collect_last_name: true, collect_email: true, collect_postcode: true, collect_marketing_optin: true }]; NOWMS += 61000;
+  e = await enter('0412000003', { first_name: 'Di', last_name: 'Full', email: 'bad' });
+  show('a collected email must work', e.status === 400 && e.body.needs_details === true);
+  e = await enter('0412000003', { first_name: 'Di', last_name: 'Full', email: 'di@x.au', postcode: '4000', marketing_opt_in: false });
+  var di = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Di'; })[0];
+  show('everything collected is kept, and no 18+ tick is needed', e.status === 200 && di.last_name === 'Full' && di.email === 'di@x.au' && di.postcode === '4000');
+
+  print('ticking offers joins the members list; not ticking does not; an email match fills an empty mobile only');
+  show('no tick, no list: Di did not join', DB.vp_captures.length === 0);
+  NOWMS += 61000;
+  e = await enter('0412000004', { first_name: 'Eli', last_name: 'Tick', email: 'eli@x.au', postcode: '4001', marketing_opt_in: true });
+  var cap = DB.vp_captures[0], eli = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Eli'; })[0];
+  show('a ticked new entrant joins this venue\'s members list, from the purchase raffle, with consent time', DB.vp_captures.length === 1 && cap.venue_id === VENUE && cap.marketing_optin === true && !!cap.marketing_optin_at && cap.source === 'purchase-raffle' && cap.mobile === '+61412000004' && cap.email === 'eli@x.au', JSON.stringify(cap));
+  show('and the entrant is linked to that member', eli.member_capture_id === cap.id && eli.marketing_opt_in === true);
+  DB.vp_captures.push({ id: 'c-dee', venue_id: VENUE, first_name: 'Dee', email: 'dee@x.au', mobile: null, marketing_optin: false, created_at: '2026-09-01T00:00:00Z' },
+                      { id: 'c-eve', venue_id: VENUE, first_name: 'Eve', email: 'eve@x.au', mobile: '+61411222333', marketing_optin: false, created_at: '2026-09-01T00:00:00Z' },
+                      { id: 'c-fay', venue_id: OTHER, first_name: 'Fay', email: 'fay@x.au', mobile: null, marketing_optin: false, created_at: '2026-09-01T00:00:00Z' });
+  NOWMS += 61000;
+  e = await enter('0412000005', { first_name: 'Dee', last_name: 'Lee', email: 'dee@x.au', postcode: '4000', marketing_opt_in: false });
+  var dee = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.phone === '+61412000005'; })[0];
+  show('an email that matches a member with no mobile fills the mobile in and links them', e.status === 200 && DB.vp_captures.filter(function (c) { return c.id === 'c-dee'; })[0].mobile === '+61412000005' && dee.member_capture_id === 'c-dee', JSON.stringify(DB.vp_captures.filter(function (c) { return c.id === 'c-dee'; })[0]));
+  show('and a member who did not tick stays off the offers list', DB.vp_captures.filter(function (c) { return c.id === 'c-dee'; })[0].marketing_optin === false && DB.vp_captures.length === 4);
+  NOWMS += 61000;
+  e = await enter('0412000006', { first_name: 'Eve', last_name: 'Lee', email: 'eve@x.au', postcode: '4000', marketing_opt_in: false });
+  show('a mobile that is already there is never overwritten, and no link is made', DB.vp_captures.filter(function (c) { return c.id === 'c-eve'; })[0].mobile === '+61411222333' && DB.vp_purchase_raffle_entrants.filter(function (x) { return x.phone === '+61412000006'; })[0].member_capture_id === null);
+  NOWMS += 61000;
+  e = await enter('0412000007', { first_name: 'Fay', last_name: 'Lee', email: 'fay@x.au', postcode: '4000', marketing_opt_in: false });
+  show('another venue\'s member with the same email is not touched or linked', DB.vp_captures.filter(function (c) { return c.id === 'c-fay'; })[0].mobile === null && DB.vp_purchase_raffle_entrants.filter(function (x) { return x.phone === '+61412000007'; })[0].member_capture_id === null);
 
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });
