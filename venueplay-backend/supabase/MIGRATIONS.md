@@ -816,8 +816,8 @@ rollback in the file.
 vp_coaster_venues (lead_status unchecked/verified/unverified/flagged, board_until, checked_at, checked_by) so a venue a player ADDS is a free lead
 that can play: the game Worker auto-checks it against the licensed list (vp_licensed_venues) and its website; real = a lead with a board that
 stays; not real = a trivia-only board for 30 days then deleted by the nightly sweep; a rude name = flagged, never shown, a help-desk ticket for
-Dean. Never cold-emailed (nothing here touches vp_venues, vp_prospects or any send path). NOT RUN; the Worker degrades to today's "no board" until
-it runs. NOT FOR SUNDAY unless Dean runs it first. NUMBER: 193 is the highest on any branch or worktree, checked 14 Nov 2026, so 194. Read-back in the file.
+Dean. Never cold-emailed (nothing here touches vp_venues, vp_prospects or any send path). RUN on LIVE by Dean 15 Nov ~06:30 (re-applied for
+Sunday 15 Nov by reverting the hold a2a88646). The Worker still degrades to the old "no board" where the columns are missing. NUMBER: 193 is the highest on any branch or worktree, checked 14 Nov 2026, so 194. Read-back in the file.
 
 `venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page; reworked 12 Nov 2026 for
 INBOX 229/232 before it was ever run): three tables, all service role only (RLS on, no policies, revoked from
