@@ -316,7 +316,7 @@
   "counted_by": "lines"
  },
  "tools/live-here-now-in-chrome.test.py": {
-  "checks": 128,
+  "checks": 150,
   "counted_by": "lines"
  },
  "tools/livenorm.test.py": {
