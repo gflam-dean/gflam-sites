@@ -46,6 +46,15 @@ if (ROUTE) {
    sample night does that job. The demo still sends a visitor who came from an offer back to it (above). */
 ok("the offer page has no link to the full demo (/see-a-night), in its HTML or written in by its script",
    OFFER.indexOf('href="/see-a-night') === -1 && OFFER.indexOf("'/see-a-night") === -1 && OFFER.indexOf('Play with a full night') === -1);
+/* Dean, 15 Nov 2026 (INBOX 421): NO page, menu, button, footer, sitemap or llms.txt links to /see-a-night any more; the page itself stays
+   deployed and reachable by its own address until Play a quick game replaces it. Every public page is read, link text or JS-built path alike. */
+var LINK_PAGES = ["404", "add-card", "c", "go-venue", "help", "index", "leave-behind-club", "leave-behind-pub", "leave-behind-rsl", "leave-behind",
+  "live-here-now", "nsw", "play", "privacy", "s", "screen-check", "signage", "terms", "training", "tv", "unsubscribe"].map(function (p) { return "venueplay/" + p + ".html"; })
+  .concat(["venueplay/sitemap.xml", "venueplay/llms.txt", "venueplay/robots.txt", "venueplay/app/vp-subscribe.js", "venueplay/app/vp-demo-venue.js"]);
+var LINKS_BACK = /href\s*=\s*["'][^"']*see-a-night|<loc>[^<]*see-a-night|["'`]\/see-a-night|venueplay\.com\.au\/see-a-night/i;
+var linking = LINK_PAGES.filter(function (f) { var t; try { t = readFile(f); } catch (e) { return false; } return LINKS_BACK.test(t); });
+ok("no public page, sitemap.xml or llms.txt links to /see-a-night (the page stays reachable by its address, unlisted)", linking.length === 0, linking.join(", "));
+ok("the /see-a-night page itself is still deployed and plays (reachable by direct address)", PAGE.indexOf("<h1") >= 0 && PAGE.length > 5000);
 ok("no page text on the demo names a state offer", !/on the "\s*\+\s*STATES/.test(PAGE));
 
 if (BAR) {

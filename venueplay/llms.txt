@@ -42,7 +42,6 @@ contract and no setup fee.
 ## Links
 
 - Home: https://venueplay.com.au
-- How a night runs: https://venueplay.com.au/see-a-night
 - 60-second trivia (the drink-coaster QR, five questions, no sign-up; venueplay.com.au/here is the short address): https://venueplay.com.au/live-here-now
 - Pricing: https://venueplay.com.au/#offer
 - Contact: https://venueplay.com.au/#contact
