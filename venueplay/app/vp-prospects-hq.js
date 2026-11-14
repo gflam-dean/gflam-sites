@@ -64,6 +64,10 @@
     if (p.flag === "no_sign_in" && p.tel) return '<span class="badge roll prflag">Call them</span>';
     return "";
   }
+  /* WHERE THEY CAME FROM (INBOX 412): an account made from a per-lead link in a cold email. */
+  function leadHtml(p) {
+    return p.lead_source === "cold_email" ? '<span class="badge prlead" data-pr-lead="cold_email">Came from cold email</span>' : "";
+  }
   /* DAY 21 (Dean, 10 Nov 2026, INBOX 129): from day 21 of their free month, the games they picked in the setup wizard
      and have not played, in the Worker's words (vpaDay21Flag, house order, musical bingo never "bingo"): "Bingo not
      played", "Picked trivia, bingo; played none", or with no wizard answer "No game played yet". HQ only: nothing is
@@ -209,7 +213,7 @@
     var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
     return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + day21Html(p) + "</div>" +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + leadHtml(p) + day21Html(p) + "</div>" +
       '<div class="prmore"' + (open ? "" : " hidden") + ">" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +

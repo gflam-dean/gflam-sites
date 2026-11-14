@@ -1223,6 +1223,10 @@
   "checks": 92,
   "counted_by": "lines"
  },
+ "tools/test-quick-page.js": {
+  "checks": 37,
+  "counted_by": "lines"
+ },
  "tools/test-quick-start.js": {
   "checks": 72,
   "counted_by": "lines"

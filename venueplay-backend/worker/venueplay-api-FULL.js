@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 21:37 · 89fec2fc';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '14 Nov 2026, 21:38 · 1eb8695f';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -4764,6 +4764,7 @@ async function vpaProspectsData(env, dopts) {
       last_sign_in_at: seen.at != null ? new Date(seen.at).toISOString() : null, sign_in_known: seen.known,
       called: r.called_at ? { at: r.called_at, by: r.called_label || '', note: r.call_note || '' } : null,
       call_requested: r.call_requested === true,
+      lead_source: r.lead_source || null,   // 'cold_email' for a per-lead link (INBOX 412)
       /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
          phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
          and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
