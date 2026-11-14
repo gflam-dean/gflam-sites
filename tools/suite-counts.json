@@ -1800,7 +1800,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 154,
+  "checks": 169,
   "counted_by": "lines"
  },
  "tools/tv-takeover-12nov-in-chrome.test.py": {
@@ -1812,7 +1812,7 @@
   "counted_by": "lines"
  },
  "tools/ux-fixes-in-chrome.test.py": {
-  "checks": 38,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
@@ -2244,7 +2244,7 @@
   "counted_by": "lines"
  },
  "tools/lobby-refresh-in-chrome.test.py": {
-  "checks": 163,
+  "checks": 228,
   "counted_by": "lines"
  },
  "tools/rig-join-unique-index.test.py": {
