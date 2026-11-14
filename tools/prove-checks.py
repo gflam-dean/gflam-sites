@@ -24592,6 +24592,16 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    'runs the billing Worker: a batch keeps the session id, the step, the page (a code cut out of the path)':
+        'its subject is the suite tools/test-journey-track.js itself, proven row by row under that suite\'s own name (35 mutations in the table: '
+        'Do Not Track, bots, both rate limits, the size and batch caps, the session id shape, the step whitelist, the props whitelist, the search-text scrub, '
+        'the code cut from the path, no IP or user agent stored, the cold_email belief, every scanner rule, the hard-scanner lock and the soft lift, '
+        'revoked and expired links, the lookup limit and its fields, the venue from the sign-in, the HQ role, scanner sessions out of the funnel, percent lost, '
+        'the missing-venue reason, journey order, and the migration lock-down). Proving it again by label would run the whole gate once per mutation.',
+    'runs app/vp-track.js in a fake browser: the step list equals the Worker':
+        'its subject is the suite tools/test-journey-client.js itself, proven row by row under that suite\'s own name (11 mutations in the table: '
+        'Do Not Track, robots, the token kept out of events, the cookie, the four Worker-only steps, the lookup with no code, form abandon, the flagged robot link hit, '
+        'the quick game queue, the November rewrite and the HQ escaping). Proving it again by label would run the whole gate once per mutation.',
     'a forged code is refused, a reprint is the same card, no two same-looking titles share a card, and the scan says win, not yet, wrong playlist, replaced, another night, another venue or not a card':
         'its subject is the suite tools/test-paper-cards-v2.js itself, which is proven row by row under that suite\'s own name '
         '(19 mutations in the table: the seal, the hash, the bracket rule, the same-looking titles, the deal, every scan answer, '

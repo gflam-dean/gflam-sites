@@ -17,7 +17,7 @@
   var doc = root.document;
   var H = { post: null, canSee: function () { return true; } };
   var S = { days: 7, loading: false };
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function jyEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
   function n(x) { return Number(x || 0).toLocaleString("en-AU"); }
   function secs(s) { if (s == null) return "&nbsp;"; if (s < 90) return s + " s"; if (s < 5400) return Math.round(s / 60) + " min"; return Math.round(s / 3600) + " h"; }
@@ -39,17 +39,17 @@
   }
   function funnelHtml(r) {
     var rows = (r.steps || []).map(function (s) {
-      return '<tr><td><b>' + esc(s.label) + '</b></td><td>' + n(s.reached) + '</td><td>' + n(s.website) + '</td><td>' + n(s.cold_email) + '</td><td>' + n(s.coaster) + '</td>'
+      return '<tr><td><b>' + jyEsc(s.label) + '</b></td><td>' + n(s.reached) + '</td><td>' + n(s.website) + '</td><td>' + n(s.cold_email) + '</td><td>' + n(s.coaster) + '</td>'
         + '<td>' + (s.lost_pct == null ? "&nbsp;" : s.lost_pct + "%") + '</td><td>' + secs(s.median_secs_to_next) + '</td>'
-        + '<td style="min-width:260px;white-space:normal;line-height:1.45">' + esc(s.reason) + (s.fix ? '<br><span style="color:var(--muted)">Fix: ' + esc(s.fix) + '</span>' : "") + '</td></tr>';
+        + '<td style="min-width:260px;white-space:normal;line-height:1.45">' + jyEsc(s.reason) + (s.fix ? '<br><span style="color:var(--muted)">Fix: ' + jyEsc(s.fix) + '</span>' : "") + '</td></tr>';
     }).join("");
     return '<div style="overflow-x:auto"><table><thead><tr><th>Step</th><th>Reached</th><th>Website</th><th>Cold email</th><th>Coaster</th><th>Lost</th><th>Median to next</th><th>Likely reason and a fix</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
       + '<p class="note">' + n(r.sessions) + ' visits in this period. ' + n(r.scanner_hits) + ' mail-scanner hits were left out (they are not people). "Lost" is against the step before. Median time is from reaching a step to reaching the next one.</p>';
   }
   function formHtml(f) {
     if (!f) return "";
-    var ab = (f.abandoned_at || []).map(function (a) { return esc(String(a.field).replace(/_/g, " ")) + " " + n(a.n) + (a.median_secs != null ? " (about " + a.median_secs + " s on it)" : ""); }).join(", ") || "none yet";
-    var none = (f.searches_found_nothing || []).map(function (a) { return esc(a.q) + (a.n > 1 ? " x" + a.n : ""); }).join(", ") || "none";
+    var ab = (f.abandoned_at || []).map(function (a) { return jyEsc(String(a.field).replace(/_/g, " ")) + " " + n(a.n) + (a.median_secs != null ? " (about " + a.median_secs + " s on it)" : ""); }).join(", ") || "none yet";
+    var none = (f.searches_found_nothing || []).map(function (a) { return jyEsc(a.q) + (a.n > 1 ? " x" + a.n : ""); }).join(", ") || "none";
     var hl = f.highlight_matched + f.highlight_missed;
     return '<p style="margin:0 0 6px">Typed a first name <b>' + n(f.first_name_typed) + '</b> &middot; typed mobile or email <b>' + n(f.contact_typed) + '</b> (mobile ' + n(f.chose_mobile) + ', email ' + n(f.chose_email) + ') &middot; started a venue search <b>' + n(f.venue_search_started) + '</b></p>'
       + '<p style="margin:0 0 6px">Picked their venue from the list <b>' + n(f.venue_picked) + '</b> &middot; tapped "can\'t find it" <b>' + n(f.venue_not_found) + '</b> &middot; add-venue form shown ' + n(f.addvenue_shown) + ', name and suburb typed ' + n(f.addvenue_typed) + '</p>'
@@ -59,14 +59,14 @@
   }
   function whereHtml(w) {
     if (!w) return "";
-    var one = function (o, map) { return Object.keys(o || {}).sort(function (a, b) { return o[b] - o[a]; }).map(function (k) { return esc((map && map[k]) || k) + " " + n(o[k]); }).join(", ") || "none yet"; };
+    var one = function (o, map) { return Object.keys(o || {}).sort(function (a, b) { return o[b] - o[a]; }).map(function (k) { return jyEsc((map && map[k]) || k) + " " + n(o[k]); }).join(", ") || "none yet"; };
     return '<p style="margin:0 0 6px">From: ' + one(w.ref, REF) + '</p><p style="margin:0 0 6px">State or country: ' + one(w.region) + '</p><p style="margin:0">Device: ' + one(w.device) + '</p>'
       + '<p class="note">Counted by visit, no one is named. Only the state or country is kept, never an address.</p>';
   }
   function campHtml(r) {
     var rows = (r.rows || []).map(function (c) {
-      var lbl = Object.keys(c.links_clicked || {}).map(function (k) { return esc(k) + " " + c.links_clicked[k]; }).join(", ");
-      return '<tr><td><b>' + esc(c.campaign) + '</b> &middot; email ' + n(c.email_step) + '</td><td>' + n(c.sent) + '</td><td>' + n(c.clicked) + '</td><td>' + n(c.visited) + '</td><td>' + n(c.enquired) + '</td><td>' + n(c.signed_up) + '</td><td>' + n(c.signed_in) + '</td><td>' + n(c.card) + '</td><td>' + n(c.scanner_only) + '</td><td style="white-space:normal">' + (lbl || "&nbsp;") + '</td></tr>';
+      var lbl = Object.keys(c.links_clicked || {}).map(function (k) { return jyEsc(k) + " " + c.links_clicked[k]; }).join(", ");
+      return '<tr><td><b>' + jyEsc(c.campaign) + '</b> &middot; email ' + n(c.email_step) + '</td><td>' + n(c.sent) + '</td><td>' + n(c.clicked) + '</td><td>' + n(c.visited) + '</td><td>' + n(c.enquired) + '</td><td>' + n(c.signed_up) + '</td><td>' + n(c.signed_in) + '</td><td>' + n(c.card) + '</td><td>' + n(c.scanner_only) + '</td><td style="white-space:normal">' + (lbl || "&nbsp;") + '</td></tr>';
     }).join("");
     if (!rows) return '<div class="note" style="margin:12px">No tracked links are loaded yet. They appear here once the codes for a campaign are loaded and the first email goes out.</div>';
     return '<table><thead><tr><th>Campaign and email</th><th>Sent</th><th>Clicked</th><th>Visited</th><th>Enquired</th><th>Signed up</th><th>Signed in</th><th>Card</th><th>Scanner only</th><th>Links clicked</th></tr></thead><tbody>' + rows + '</tbody></table>'
@@ -76,10 +76,10 @@
     if (!H.post || S.loading) return;
     S.loading = true;
     H.post("/admin/journey-funnel", { days: S.days }).then(function (r) {
-      if (!r || r.error) { $("jyFunnel").innerHTML = '<div class="note" style="margin:0">' + esc((r && r.error) || "Could not load the funnel.") + '</div>'; return; }
+      if (!r || r.error) { $("jyFunnel").innerHTML = '<div class="note" style="margin:0">' + jyEsc((r && r.error) || "Could not load the funnel.") + '</div>'; return; }
       $("jyFunnel").innerHTML = funnelHtml(r); $("jyForm").innerHTML = formHtml(r.form); $("jyWhere").innerHTML = whereHtml(r.where);
     }).then(function () { return H.post("/admin/journey-campaigns", {}); }).then(function (r) {
-      $("jyCamp").innerHTML = (!r || r.error) ? '<div class="note" style="margin:12px">' + esc((r && r.error) || "Could not load the campaigns.") + '</div>' : campHtml(r);
+      $("jyCamp").innerHTML = (!r || r.error) ? '<div class="note" style="margin:12px">' + jyEsc((r && r.error) || "Could not load the campaigns.") + '</div>' : campHtml(r);
     }).then(function () { S.loading = false; }, function () { S.loading = false; });
   }
   /* One venue's journey, in order, inside its row in HQ > Venues. */
@@ -93,7 +93,7 @@
       var j = r.journey || [];
       var when = function (t) { try { return new Date(t).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } };
       box.innerHTML = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)"><b>Journey</b>'
-        + (j.length ? '<ol style="margin:6px 0 0 18px;padding:0;line-height:1.55">' + j.map(function (x) { return '<li>' + esc(when(x.at)) + ' &middot; ' + esc(x.what) + (x.region ? ' <span style="color:var(--muted)">(' + esc(x.region) + ')</span>' : "") + '</li>'; }).join("") + '</ol>'
+        + (j.length ? '<ol style="margin:6px 0 0 18px;padding:0;line-height:1.55">' + j.map(function (x) { return '<li>' + jyEsc(when(x.at)) + ' &middot; ' + jyEsc(x.what) + (x.region ? ' <span style="color:var(--muted)">(' + jyEsc(x.region) + ')</span>' : "") + '</li>'; }).join("") + '</ol>'
           : '<div class="note" style="margin:6px 0 0">Nothing tracked for this venue yet (it did not come in through a tracked link or the quick game).</div>') + '</div>';
     });
   }
