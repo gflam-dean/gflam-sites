@@ -672,7 +672,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             # The ticks are vp-consent.js's own, whichever rule it carries: two ticks (3 Nov 2026) or, from
             # fix/consent-one-tick-6nov, ONE tick "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026).
             one_tick = 'Send me offers from' in io.open(os.path.join(SITE, 'app/vp-consent.js'), encoding='utf-8').read()
-            want_ticks = ["Send me offers from Tugun Bowls Club. I'm 18 or over."] if one_tick else ["I'm 18 or over", "Keep me posted on what's on at the venue"]
+            want_ticks = ["Send me offers from Tugun Bowls Club"] if one_tick else ["I'm 18 or over", "Keep me posted on what's on at the venue"]
             ok('details: the consent ticks are vp-consent.js\'s own (%s)' % ('one tick, "Send me offers from Tugun Bowls Club. I\'m 18 or over."' if one_tick else '"I\'m 18 or over" and "Keep me posted", two separate ticks'), dt.get('ticks') == want_ticks, dt.get('ticks'))
             ok('details: nothing under 15px', not dt.get('small'), dt.get('small'))
         finally:

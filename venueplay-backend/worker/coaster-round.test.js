@@ -175,7 +175,7 @@ var RealDate = Date;
 function FixedDate(x) { if (!(this instanceof FixedDate)) return new RealDate(NOW).toString(); return arguments.length ? new RealDate(x) : new RealDate(NOW); }
 FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; FixedDate.parse = RealDate.parse; FixedDate.prototype = RealDate.prototype;
 
-function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("praffleTz") +
+function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
   "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
@@ -204,7 +204,7 @@ function fresh() {
       { id: "88888888-8888-4888-8888-888888888882", name: "Revolver Upstairs", postcode: "3181", au_state: "VIC", status: "active" },
       { id: "88888888-8888-4888-8888-888888888883", name: "Zeta Motel", postcode: "4350", au_state: "QLD", status: "active" }
     ],
-    vp_venue_screen: [{ venue_id: V_MINI, slug: "the-mini-bar", logo_url: "https://x.supabase.co/storage/v1/object/public/venue-logos/mini.png" }],
+    vp_venue_screen: [{ venue_id: V_MINI, slug: "the-mini-bar", slides: [{ image_url: "https://x.supabase.co/storage/v1/object/public/slides/a.png", starts: "2026-11-01", ends: "2026-12-31" }, { image_url: "http://insecure.example/b.png" }, { image_url: "https://x.supabase.co/c.png&#" }, { note: "no picture" }], logo_url: "https://x.supabase.co/storage/v1/object/public/venue-logos/mini.png" }],
     vp_coaster_venues: [
       { id: C_TUGUN, kind: "coaster", name: "Tugun Tavern", name_key: "tugun tavern", suburb: "Tugun", postcode: "4224", au_state: "QLD", timezone: "Australia/Brisbane", logo_url: "https://x.supabase.co/storage/v1/object/public/venue-logos/coaster/t.png", venue_id: null },
       { id: C_SWITCHED, kind: "coaster", name: "Switched Arms", name_key: "switched arms", suburb: "Burleigh", postcode: "4220", au_state: "QLD", timezone: "Australia/Brisbane", venue_id: V_MINI },
@@ -396,6 +396,8 @@ step(function () {
     var row = DB.vp_coaster_plays[0];
     pass("a round starts and answers its id, a secret, a challenge code and the venue's name and logo",
       r.status === 200 && !!P1.play && !!P1.token && /^[A-Z0-9]{6}$/.test(P1.code) && P1.venue.name === "The Mini Bar" && /mini\.png$/.test(P1.venue.logo_url), r.body);
+    pass("INBOX 405 update 4.7: the round also hands the venue's own phone ad: only https picture slides, as the join lookup gives the real game (a plain http one, a hash-escaped one and a slide with no picture are dropped); a venue with none gets an empty list",
+      Array.isArray(P1.venue.slides) && P1.venue.slides.length === 1 && P1.venue.slides[0].image_url === "https://x.supabase.co/storage/v1/object/public/slides/a.png" && P1.venue.slides[0].starts === "2026-11-01", P1.venue);
     pass("only the FIRST word of the name is kept, capitalised: 'Sam' (no surname, no number)", row.first_name === "Sam" && P1.name === "Sam", row.first_name);
     pass("the row holds nothing about the person but that first name",
       Object.keys(row).sort().join(",") === "answers,asked_at,board,code,correct,finished_at,first_name,from_code,id,ms_total,night,points,qids,started_at,token_hash,week", Object.keys(row).sort());
@@ -740,7 +742,7 @@ step(function () {
   var o0 = BLOCK.indexOf("async function coasterOptinAsk("), o1 = BLOCK.indexOf("/* GET /coaster/board?", o0);
   pass("the venue's sign-up is one piece of the block (coasterOptinAsk, handleCoasterOptin)", o0 > 0 && o1 > o0 && BLOCK.slice(o0, o1).indexOf("async function handleCoasterOptin(") > 0);
   pass("outside the venue's own sign-up, nothing in the coaster block asks for an email, a mobile or a surname",
-    !/email|mobile|phone|surname|last_name/i.test((BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
+    !/email|mobile|phone|surname|last_name/i.test((BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").replace(/phoneSlides/g, "")));   // phoneSlides is the join lookup's own slide filter, the venue's ad, no person's detail
   pass("the sign-up goes through the phones' own gate (gatedCapture) and the venue's own settings (venueCollectCfg), never a copy",
     /gatedCapture\(cfg, /.test(BLOCK) && /venueCollectCfg\(env, where\.venue_id\)/.test(BLOCK) && BLOCK.indexOf("function gatedCapture") < 0);
   return Promise.resolve();

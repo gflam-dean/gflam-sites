@@ -282,7 +282,7 @@
     if (o.offers !== false) {   // the venue's offers tick, only where the venue collects it (the page says)
       var tk = el("label", "tk"); cb = el("input");
       cb.setAttribute("type", "checkbox");
-      tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + (o.venue || "this venue") + ". I\u2019m 18 or over."));
+      tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + (o.venue || "this venue")));
       f.appendChild(tk);
     }
     var err = el("div", "err"); err.setAttribute("role", "status"); f.appendChild(err);
@@ -318,7 +318,7 @@
     if (c.email) em = field("email", "Your email", "email");
     if (c.mobile) mo = field("tel", "Your mobile", "tel");
     var tk = el("label", "tk"), cb = el("input"); cb.setAttribute("type", "checkbox");
-    tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + v + ". I\u2019m 18 or over.")); f.appendChild(tk);
+    tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + v)); f.appendChild(tk);
     var go = el("button", "go", "Join the list"); go.setAttribute("type", "submit"); f.appendChild(go);
     var err = el("div", "err"); err.setAttribute("role", "status"); f.appendChild(err);
     row.onclick = function () { var open = /\bhidden\b/.test(f.className); f.className = "vpt-listform" + (open ? "" : " hidden"); row.setAttribute("aria-expanded", open ? "true" : "false"); };

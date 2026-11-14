@@ -2566,8 +2566,8 @@ def local_checks(which):
     _cp = os.path.join(ROOT, 'venueplay', 'app', 'vp-consent.js')
     csrc = _nocomments(io.open(_cp, encoding='utf-8').read()) if os.path.isfile(_cp) else ''
     if not csrc: onetick.append('venueplay/app/vp-consent.js is missing')
-    if 'var OPTIN_HEAD = "Send me offers from ";' not in csrc or 'var OPTIN_TAIL = ". I\'m 18 or over.";' not in csrc:
-        onetick.append('vp-consent.js does not word the tick "Send me offers from {venue}. I\'m 18 or over."')
+    if 'var OPTIN_HEAD = "Send me offers from ";' not in csrc or 'var OPTIN_TAIL = "";' not in csrc:
+        onetick.append('vp-consent.js does not word the tick "Send me offers from {venue}" (no age words, Dean 14 Nov 2026)')
     if csrc.count('createElement("input")') != 1 or _fn(csrc, '  function render(').count('tick(') != 1:
         onetick.append('vp-consent.js draws other than one checkbox')
     if 'x18' in csrc: onetick.append('vp-consent.js still draws an 18+ tick of its own')

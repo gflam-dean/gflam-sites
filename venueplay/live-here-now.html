@@ -33,18 +33,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking (display=swap) -->
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
+<link rel="stylesheet" href="/app/vp-safe-area.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the venue's own ad slot (#vpAd), the same as the real game -->
 <style>
+  /* THE COASTER PAGE IS A REAL venueplay GAME SCREEN (Dean, 14 Nov 2026, INBOX 405). Everything below is the trivia phone's own look,
+     copied rule for rule from /app/trivia/play.html (the header, the join steps, the question, the reveal, the end) and the shared
+     files /app/vp-phone.css and /app/vp-qring.css. Where a coaster screen and the game's differ, the game's wins. Only the venue
+     search and the add-venue step are new. No glow, no gradient: the plain game background. */
   :root{
-    --ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171A;--card:#1A1A1F;
-    --pink:#FF1F8E;--pink-deep:#C70F69;--green:#2FD08A;--gold:#FFC24B;--roll:#F5A524;
-    --white:#FFFFFF;--text:#E7E7EC;--muted:#A3A3AD;
-    --line:rgba(255,255,255,0.10);--line-2:rgba(255,255,255,0.16);
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524; --green:#2FD08A;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{overflow-x:clip;-webkit-text-size-adjust:100%}
-  body{background:radial-gradient(520px 340px at 100% -6%, rgba(255,31,142,.14), transparent 64%), var(--ink);background-color:var(--ink);
-    color:var(--text);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
-    overflow-x:hidden;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow-x:clip;-webkit-text-size-adjust:100%}
+  body{background:var(--ink);color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;-webkit-tap-highlight-color:transparent}
   a{color:inherit;text-decoration:none}
   [hidden]{display:none!important}
   /* and per class, so the gate can see each one that sets its own display */
@@ -52,284 +60,287 @@
   .picks[hidden]{display:none}
   .btn[hidden]{display:none}
   .linkbtn[hidden]{display:none}
-  .shell{width:100%;max-width:480px;margin:0 auto;padding:0 18px}
-
-  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  /* no top bar (Dean 14 Nov): our logo, or the venue's own, sits at the BOTTOM like the game screens */
-  .vlogo{display:block;height:44px;max-width:200px;object-fit:contain;margin:0 auto}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
-
-  main{flex:1 0 auto}
-  .view{padding-top:max(28px, env(safe-area-inset-top, 0px));padding-bottom:20px;animation:rise .28s ease both}
-  @keyframes rise{from{transform:translateY(6px)}to{transform:none}}   /* a lift only, never a fade: text and buttons are full white and full pink from the first frame */
-  .kick{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--pink);margin-bottom:2px}
-  .kick[hidden]{display:none}
-  .okpill{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:4px 12px;border-radius:999px;background:rgba(47,208,138,.14);border:1px solid rgba(47,208,138,.5);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
-  .okpill[hidden]{display:none}
+  .sndtoggle[hidden]{display:none}
+  .hidden{display:none!important}
+  .app{max-width:460px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+  .pfoot{padding-top:12px}   /* the trivia phone's: our logo 10px closer to the bottom */
+  .pfoot{border-top:0}
+  .ptop{padding-right:16px;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vline{order:3;flex:0 0 100%;display:flex;align-items:center;gap:8px;margin-top:-8px;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1.3;min-width:0}
+  .vline[hidden]{display:none}
+  .vline span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ptop .brand{min-width:0}
+  .ptop .vname{white-space:nowrap}
+  .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
+  .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
+  .field{margin-top:14px}
+  .vp-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .vp-h.one{white-space:nowrap;font-size:clamp(24px,calc((100vw - 40px) / 9.9),44px)}
+  .vp-kicker.pk{color:var(--pink)}
+  .facts{margin-top:2px;color:#fff;font-weight:800;font-size:17px}
+  .okpill{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;min-height:32px;padding:4px 12px;border-radius:999px;background:rgba(47,208,138,.14);border:1px solid rgba(47,208,138,.5);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
   .okpill::before{content:"";width:8px;height:14px;border:solid var(--green);border-width:0 3px 3px 0;transform:rotate(40deg) translateY(-2px);margin:0 4px 0 2px}
-  .pbig{font-family:'Anton',Impact,sans-serif;font-weight:400;font-size:clamp(34px,10.5vw,46px);line-height:1.02;text-transform:uppercase;color:#fff;margin-top:8px;overflow-wrap:break-word}
-  .pbig.one{white-space:nowrap;font-size:clamp(24px,calc((100vw - 36px) / 9.9),44px);letter-spacing:.005em}
-  .facts{margin-top:8px;color:#fff;font-weight:800;font-size:17px}
-  .psub{color:var(--muted);font-size:17px;line-height:1.45;margin-top:10px}
-  .field{margin-top:18px}
-  input[type=text],input[type=search]{width:100%;background:var(--ink-3);border:1px solid var(--line-2);color:#fff;border-radius:14px;
-    padding:16px;font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;outline:none;-webkit-appearance:none;appearance:none}
-  input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.18)}
-  input::placeholder{color:#8E8E99;font-weight:600}
-  #whereIn{padding-right:12px}
-  #whereIn::placeholder{font-size:15px;font-weight:600}
-  @media(max-width:360px){ #whereIn{padding-left:12px;padding-right:8px} #whereIn::placeholder{letter-spacing:-.03em} }   /* the whole sentence fits one line at 320 and stays 15px */
+  .view .vp-field{display:block;margin-top:12px}
+  #nameForm{display:flex;flex-direction:column;flex:1}
+  #nameForm .vp-grow{flex:1;min-height:14px}   /* Play sits low, where the real game's join step has its button */
+  input[type=search].vp-field::placeholder,input.vp-field::placeholder{color:#8E8E99;font-weight:600}
+  #whereIn::placeholder{font-size:16px}   /* the Add it link under the box is 3/4 of this, 12px (Dean, INBOX 405 update 4) */
+  @media(max-width:360px){ #whereIn::placeholder{font-size:15px;letter-spacing:-.025em} }   /* the whole sentence on one line at 320 (the search box keeps room for its clear button) */
+  .vp-field:focus{border-color:var(--pink);box-shadow:none}
   /* the search clear (x): grey and white, never the browser's blue, with a 44px tap area */
+  input[type=search]{-webkit-appearance:none;appearance:none}
   input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
-  input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:44px;height:44px;margin:-12px -6px -12px 0;cursor:pointer;
+  input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:44px;height:44px;margin:-12px -10px -12px 0;cursor:pointer;
     background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Ccircle cx='22' cy='22' r='10' fill='%2338383F'/%3E%3Cpath d='M18 18l8 8M26 18l-8 8' stroke='%23FFFFFF' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center/44px 44px no-repeat}
-  .cerr{color:var(--roll);font-size:16px;min-height:24px;margin-top:8px}
-  .hint{color:var(--muted);font-size:16px;min-height:24px;margin-top:10px}
+  .cerr{color:var(--roll);font-size:15px;min-height:20px;margin-top:10px}
+  .hint{color:var(--muted);font-size:15px;min-height:20px;margin-top:10px}
   .hint:empty{min-height:0;margin-top:0}
-  .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:14px;cursor:pointer;
-    font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:19px;letter-spacing:.01em;touch-action:manipulation;text-align:center}
-  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 10px 26px -8px rgba(255,31,142,.6)}
+  .btn,.vp-step .vp-cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border:none;border-radius:999px;font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;line-height:1.2;padding:10px 18px;cursor:pointer;touch-action:manipulation;text-align:center}
+  .btn.pink{background:var(--pink);color:#fff}
   .btn.pink:active{background:var(--pink-deep)}
-  .btn.ghost{background:var(--ink-3);color:#fff;border:1px solid var(--line-2);margin-top:12px;font-size:17px;min-height:54px}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);margin-top:10px;font-size:16px;min-height:44px}
   .btn:disabled{opacity:.5;cursor:default}
-  .linkbtn{display:flex;align-items:center;min-height:56px;background:none;border:0;padding:8px 0;color:#FF8AC4;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;
-    text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
-  .linkbtn.quiet{color:var(--muted);font-weight:600;font-size:16px}
+  a.btn{text-decoration:none}
+  .linkbtn{display:flex;align-items:center;min-height:32px;background:none;border:0;padding:4px 0;position:relative;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
 
-  /* ---------- WHERE ARE YOU PLAYING: the picks, name first, then suburb and postcode ---------- */
-  .picks{display:grid;gap:10px;margin-top:6px}
-  .pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:64px;padding:12px 16px;border-radius:14px;cursor:pointer;
-    background:var(--card);border:1px solid var(--line-2);color:#fff;text-align:left;font-family:'Manrope',sans-serif;touch-action:manipulation}
-  .pick:active,.pick:focus-visible{border-color:var(--pink)}
+  /* WHERE ARE YOU PLAYING: the picks, as the game's cards */
+  .picks{display:grid;gap:10px;margin-top:12px}
+  .pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:64px;padding:12px 16px;border-radius:16px;cursor:pointer;
+    background:#1A1A1F;border:0;color:#fff;text-align:left;font-family:'Manrope',sans-serif;touch-action:manipulation}
+  .pick:active,.pick:focus-visible{outline:2px solid #fff;outline-offset:-2px}
   .pick b{font-weight:800;font-size:18px;line-height:1.25;overflow-wrap:anywhere}
   .pick span{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;color:var(--muted)}
-  /* Whether the pick is ON venueplay: said in words, never a dot. Only a venue with a venueplay login is "on venueplay". */
   .pick .on{color:var(--green);font-weight:700}
   .pick .off{color:#7C7C86;font-weight:600}
-  .addcard{margin-top:14px;border-radius:16px;background:var(--card);border:1px solid var(--line-2);padding:16px}
-  .addcard h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:#fff}
-  .addcard p{color:var(--muted);font-size:16px;line-height:1.45;margin-top:6px}
-  .addcard .field{margin-top:12px}
-  .addcard label{display:block;color:var(--text);font-size:15px;font-weight:700;margin-bottom:6px}
-  select{width:100%;background:var(--ink-3);border:1px solid var(--line-2);color:#fff;border-radius:14px;padding:16px;font-family:'Manrope',sans-serif;
-    font-weight:700;font-size:19px;outline:none;-webkit-appearance:none;appearance:none;padding-right:48px;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M1 1l7 7 7-7' fill='none' stroke='%23A3A3AD' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 18px center}
-  select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.18)}
-  .addcard .btn{margin-top:6px}
-  .optin-tick label.optin{display:flex;gap:12px;align-items:flex-start;margin-top:14px;color:var(--text);font-size:16px;line-height:1.4;cursor:pointer}
-  .optin-tick label.optin input{flex:none;width:26px;height:26px;margin-top:0;-webkit-appearance:none;appearance:none;border-radius:7px;border:2px solid var(--pink);background:rgba(255,31,142,.10);cursor:pointer;position:relative}
+  .pick.again{box-shadow:inset 0 0 0 2px #3A3A44}
+  /* "Can't find your venue? Add it": 3/4 the size of the placeholder, tucked straight under the box, its tap area reaching 8px each way */
+  .addlink{font-size:12px;line-height:1.3;min-height:0;padding:0;margin:4px 0 0}
+  .addlink::before{content:"";position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+  /* Add your venue: name and suburb only, small */
+  .addcard{margin-top:8px;border-radius:14px;background:#1A1A1F;padding:10px 12px 12px}
+  .addcard h2{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1.2;color:#fff}
+  .addcard .vp-field{margin-top:8px;background:#0F0F12;padding:9px 12px;font-size:16px;border-radius:11px;min-height:42px}
+  .addcard .btn{margin-top:10px;min-height:42px;font-size:16px}
+  .addcard .cerr{margin-top:6px;min-height:0}
+  .optin-tick label.optin{display:flex;gap:12px;align-items:center;margin-top:16px;color:var(--text);font-size:16px;line-height:1.3;cursor:pointer;white-space:nowrap}
+  .optin-tick label.optin input{flex:none;width:26px;height:26px;margin:0;-webkit-appearance:none;appearance:none;border-radius:7px;border:2px solid var(--pink);background:rgba(255,31,142,.10);cursor:pointer;position:relative}
   .optin-tick label.optin input:checked{background:var(--pink)}
   .optin-tick label.optin input:checked::after{content:"";position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid #0A0A0B;border-width:0 3px 3px 0;transform:rotate(40deg)}
   .optin-tick label.optin input:focus-visible{outline:3px solid rgba(255,31,142,.5);outline-offset:2px}
-  .pick.again{border-color:rgba(255,31,142,.5);background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 70%),var(--card)}
 
-  /* ---------- THE QUESTION, IN THE TRIVIA PHONE'S NEW LOOK ---------- */
-  .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .lefts{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-  .sndtoggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px 0 0;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
+  /* THE SOUND TOGGLE, in the header where the game's menu button sits */
+  .sndtoggle{display:inline-flex;align-items:center;gap:8px;flex:none;min-height:44px;padding:0 4px 0 10px;border:0;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation}
   .sndtoggle[aria-pressed="true"]{color:#fff}
   .sndtoggle[aria-pressed="true"] #soundX,.sndtoggle[aria-pressed="false"] #soundWave{display:none}
-  .count{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--muted)}
-  .count b{color:#fff}
-  .pips{display:flex;gap:6px;margin:12px 0 18px}
-  .pip{flex:1;height:6px;border-radius:3px;background:var(--line-2);transition:background .2s ease}
-  .pip.now{background:#fff}
-  .pip.right{background:var(--green)}
-  .pip.wrong{background:#5A5A64}
-  .q{font-family:'Manrope',sans-serif;font-weight:800;font-size:clamp(22px,6.4vw,28px);line-height:1.22;color:#fff;min-height:3.66em;overflow-wrap:break-word;animation:rise .28s ease both}
-  #vPlay.hush .top,#vPlay.hush .pips,#vPlay.hush .loading{visibility:hidden}   /* while the start show plays, nothing of the question screen shows through */
+
+  /* THE QUESTION, NEW LOOK (trivia phone): the ring above, the count under it, the question, the four answers in the TV's colours */
+  .pq-count{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:15px;line-height:1.3;color:var(--muted);margin:0;text-align:center}
+  .pq-count b{color:#fff;font-weight:700}
+  .pq-head{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}
+  .pq-text{align-self:stretch;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word;min-height:3.66em}
+  .pq-text.long{font-size:19px}
   .loading{color:var(--muted);font-size:18px;padding:48px 0;text-align:center}
-  .loading::before{content:"";display:block;width:34px;height:34px;margin:0 auto 16px;border-radius:50%;
-    border:3px solid rgba(255,31,142,.22);border-top-color:var(--pink);animation:spin .8s linear infinite}
+  .loading::before{content:"";display:block;width:34px;height:34px;margin:0 auto 16px;border-radius:50%;border:3px solid #1A1A1F;border-top-color:#fff;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .answers{display:flex;flex-direction:column;gap:12px;margin-top:18px}
-  /* FULL COLOUR, the trivia phone's (Dean 3 Nov) */
-  .ans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:76px;padding:10px 16px 10px 14px;border-radius:16px;border:0;
-    background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.15;
-    overflow-wrap:anywhere;touch-action:manipulation;transition:opacity .15s,box-shadow .15s}
+  .panswers{display:flex;flex-direction:column;gap:12px}
+  .ans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:14px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.15;overflow-wrap:anywhere;touch-action:manipulation;transition:opacity .15s}
   .ans.c0{--c:#FF5A4E}.ans.c1{--c:#4D8DFF}.ans.c2{--c:#FFA53D}.ans.c3{--c:#A57BFF}
-  .ans .l{flex:none;min-width:30px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);font-family:'Anton',sans-serif;font-weight:400;font-size:38px;line-height:1;text-align:center}
+  .ans .l{flex:none;min-width:34px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1;text-align:center}
   .ans.c2 .l{text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 7px rgba(0,0,0,.55)}
   .ans .t{min-width:0;flex:1}
   .ans:disabled{cursor:default}
-  .ans.dim{opacity:.3}
-  /* the reveal: the right answer GREEN and tagged, your wrong pick outlined in its own colour and tagged YOURS */
-  .ans.right{background:var(--green);color:#0A0A0B;box-shadow:0 0 30px -6px rgba(47,208,138,.6);z-index:1}
+  .ans.dim{opacity:.32}
+  .ans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
   .ans.right .l{color:#0A0A0B;text-shadow:none}
-  .ans.mine{background:var(--card);color:#fff;box-shadow:inset 0 0 0 4px var(--c)}
+  .ans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}
   .ans.mine .l{color:var(--c);text-shadow:none}
-  .ans .tg{position:absolute;left:18px;top:-11px;background:#0A0A0B;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;
-    line-height:1;padding:4px 8px;border-radius:6px}
-  .ans.right .tg{color:var(--green)}
+  .ans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1;text-transform:none;padding:4px 8px;border-radius:6px}
   .ans.mine .tg{color:var(--c)}
-  .verdict{margin-top:18px;border-radius:16px;background:var(--card);padding:14px 18px;min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .verdict:empty{visibility:hidden}
-  .verdict .vt{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:#fff}
-  .verdict .vp{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:var(--green)}
-  .verdict.wrong .vt{color:var(--muted)}
-  .ptotal{margin-top:8px;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);min-height:22px}
+  .ans.right .tg{color:var(--green)}
+  .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:12px 18px;display:flex;flex-direction:column;gap:2px;min-height:66px}
+  .vrow{display:flex;align-items:center;gap:12px;min-height:26px}
+  .vrow .vt{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
+  .vrow .vp{font-family:'Anton',sans-serif;font-size:28px;line-height:1;color:var(--green);margin-left:auto}
+  .vrow.wrong .vt{color:var(--muted)}
+  .pcard.idle{visibility:hidden}
+  .ptotal{width:max-content;margin:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);min-height:22px}
   .ptotal b{color:#fff}
+  .pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
+  .pq-ring.done svg,.pq-ring.done span{display:none}
+  .pq-ring.done .n b{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;color:var(--green)}
+  .pq-ring.done.none .n b{color:var(--muted)}
 
-  /* THE END: score, points, place, board */
-  .score{padding-top:18px}
-  .hero{position:relative;text-align:center;padding:6px 0 4px}
-  .score .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;color:var(--pink)}
-  .score h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(64px,22vw,96px);line-height:.95;margin-top:6px}
-  .score .pts{font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;margin-top:8px}
-  .score .placeline{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;color:var(--green);margin-top:4px;overflow-wrap:break-word}
-  .score .sub{color:var(--muted);font-size:17px;margin-top:8px}
-  .btn.ghost.first{margin-top:18px}
-  .challenge{margin-top:18px;text-align:center}
+  /* THE END, as the trivia phone's final screen: the result big in Anton, a gold rule for a winner only, the points, the place; the
+     board as the game's tonight card */
+  .finalwrap{text-align:left;justify-content:flex-start;padding-top:28px}
+  .finalwrap .fk{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:var(--muted);margin-bottom:10px}
+  .finalwrap.winner .fk{color:#FFD93D}
+  .finalwrap #scoreN{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:64px;line-height:.98;color:#fff;margin:0 0 14px}
+  .finalwrap.winner #scoreN{font-size:84px}
+  .finalwrap .frule{display:none;height:6px;background:#FFD93D;box-shadow:0 0 18px rgba(255,217,61,.55);margin:6px 0 18px}
+  .finalwrap.winner .frule{display:block}
+  .finalwrap .pts{font-size:18px;color:var(--muted);font-weight:500}
+  .finalwrap .placeline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:8px;overflow-wrap:break-word}
+  .finalwrap .placeline b{display:inline-block;font-family:'Anton',sans-serif;font-weight:400;font-size:40px;line-height:1;background:var(--pink);color:#fff;border-radius:12px;padding:6px 14px 4px;margin-right:8px;vertical-align:middle}
+  .finalwrap.winner .placeline b{background:#FFD93D;color:#0A0A0B}
+  .finalwrap #scoreN.pop{animation:scorepop .9s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes scorepop{0%{transform:scale(.55);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} .finalwrap #scoreN.pop{animation:none} }
+  .finalwrap .sub{color:var(--muted);font-size:16px;margin-top:8px}
+  .challenge{margin-top:18px}
   .challenge .cq{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px}
-  .challenge .linkbtn{margin:2px auto 0;justify-content:center}
-  .burst{position:absolute;left:50%;top:44%;width:0;height:0;pointer-events:none}
-  .burst i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);animation:burst .9s ease-out both}
-  @keyframes burst{from{transform:translate(0,0) scale(.4);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
-  .board{margin-top:18px;border-radius:18px;background:var(--card);padding:6px 6px 10px}
-  .tabs{display:flex;gap:6px;padding:4px}
-  .tab{flex:1;min-height:46px;border-radius:12px;border:0;background:transparent;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
-  .tab[aria-selected="true"]{background:var(--ink-3);color:#fff;box-shadow:inset 0 0 0 1px var(--line-2)}
-  .rows{list-style:none;margin:6px 4px 0}
-  .row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;font-size:17px}
-  .row .rk{flex:none;width:44px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}
-  .row .nm{flex:1;min-width:0;font-weight:800;color:#fff;overflow-wrap:anywhere}
-  .row .pt{flex:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:#fff}
-  .row.you{background:rgba(255,31,142,.13);box-shadow:inset 0 0 0 1px rgba(255,31,142,.5)}
-  .row.you .rk{color:var(--pink)}
-  .empty{color:var(--muted);font-size:16px;padding:12px}
-  .shared{color:var(--green);font-size:16px;margin-top:6px;text-align:center}
+  .challenge .linkbtn{margin:6px auto 0;justify-content:center;text-align:center;font-size:16px}
+  .shared{color:var(--green);font-size:16px;margin-top:6px}
   .shared:empty{display:none}
   .copyurl{margin-top:8px;font-family:'JetBrains Mono',monospace!important;font-size:15px!important;font-weight:500!important}
-  /* The soft call to action */
-  .bigscreen{margin-top:26px;display:flex;gap:16px;align-items:flex-start;padding:20px 18px;border-radius:18px;
-    background:linear-gradient(160deg,rgba(255,31,142,.13),rgba(255,31,142,.03) 60%),var(--ink-2);border:1px solid rgba(255,31,142,.26)}
+  .board{margin-top:18px}
+  .tabs{display:flex;gap:8px}
+  .tab{flex:none;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #3A3A44;background:none;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;cursor:pointer}
+  .tab[aria-selected="true"]{color:#fff;border-color:#fff}
+  .rows{list-style:none;margin-top:10px;background:#1A1A1F;border-radius:16px;padding:4px 14px}
+  .row{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid rgba(255,255,255,.07);font-size:17px}
+  .row:first-child{border-top:0}
+  .row .rk{flex:none;min-width:56px;text-align:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:4px 8px;border-radius:7px;background:#26262C;color:#9A9AA4}
+  .row .nm{flex:1;min-width:0;font-weight:800;color:#fff;overflow-wrap:anywhere}
+  .row .pt{flex:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:#fff}
+  .row.you .rk{background:var(--pink);color:#0A0A0B}
+  .empty{color:var(--muted);font-size:16px;padding:12px 0;list-style:none}
+  #vpAd{padding:14px 0 0}
+  .bigscreen{margin-top:22px;display:flex;gap:16px;align-items:flex-start;padding:18px;border-radius:16px;background:#1A1A1F}
   .bigscreen .tv{flex:none;width:50px;height:38px;border-radius:9px;border:2px solid rgba(255,255,255,.75);display:grid;place-items:center;position:relative;margin-top:3px}
   .bigscreen .tv::after{content:"";position:absolute;left:50%;bottom:-8px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(255,255,255,.75)}
-  .bigscreen h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:#fff}
+  .bigscreen h2{font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;line-height:1.2;color:#fff}
   .bigscreen p{margin-top:6px;color:#C9C9D0;font-size:16px;line-height:1.5}
-  .owner{display:inline-block;margin-top:12px;color:#FF8AC4;font-weight:700;font-size:16px;text-decoration:underline;text-underline-offset:4px}
+  .owner{display:inline-block;margin-top:10px;color:#fff;font-weight:700;font-size:16px;text-decoration:underline;text-underline-offset:4px}
   .err{color:var(--roll);text-align:center;padding:40px 0 0;font-size:18px}
+  #vPlay,#vPlay{padding-top:0}
+  #vPlay.hush .pq-head,#vPlay.hush .panswers,#vPlay.hush .loading{visibility:hidden}   /* while the start show plays, nothing of the question screen shows through */
 
-  /* THE FOOT: our logo small, then the links */
-  footer{border-top:1px solid var(--line);padding:20px 0 max(18px, env(safe-area-inset-bottom, 0px));margin-top:12px}
-  .foot{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-size:15px;color:var(--muted);line-height:1.6}
-  .foot .mark{color:#fff;display:block;padding:6px 0}
-  .foot .mark svg{width:132px;height:auto}
-  .foot nav{display:flex;flex-wrap:wrap;justify-content:center;gap:0 10px}
-  .foot nav a{color:#C9C9D0;display:inline-block;padding:11px 8px;min-height:44px;box-sizing:border-box}
-  .foot>span{text-wrap:balance}
-  body[data-view=vPlay] .foot nav,body[data-view=vPlay] .foot>span{display:none}   /* a game screen is one screen: just the logo at the bottom */
-
-  @media(max-width:360px){
-    .shell{padding:0 14px}
-    .ans{font-size:18px;min-height:68px;gap:11px;padding:9px 12px 9px 11px}
-    .ans .l{font-size:34px;min-width:26px}
-    .answers{gap:11px}
-    .bigscreen{padding:18px 14px;gap:12px}
-    .bigscreen .tv{width:42px;height:32px}
-    .vlogo{max-width:150px}
+  /* A SHORT PHONE (trivia phone, 6 and 12 Nov): the question screen, the ring, all four answers and our logo are ONE screen, no scrolling */
+  @media (max-height:900px){
+    .view{padding:8px 16px 8px}
+    .pq-head{gap:6px;margin-bottom:10px}
+    .pq-ring{width:56px;height:56px}
+    .pq-ring .n b,.pq-ring .n .pts{font-size:23px}
+    .pq-ring .n span{font-size:15px}
+    .pq-ring.done{border-width:5px}
+    .pq-ring.done .n b{font-size:23px}
+    .pq-text{font-size:20px;line-height:1.18}
+    .panswers{gap:10px}
+    .ans{min-height:72px;padding:14px 14px 6px 12px;border-radius:14px;gap:12px}
+    .ans .l{font-size:36px;min-width:30px}
+    .pcard{margin-top:8px;padding:6px 16px;min-height:56px}
+    .pfoot{padding:6px 16px max(6px, env(safe-area-inset-bottom, 0px))}
+    .finalwrap{padding-top:16px}
   }
-  /* A SHORT PHONE (iPhone SE 568, an iPhone 667 or Safari's 664 visible): the whole game screen, our logo included, fits ONE screen with no scroll */
-  @media(max-height:700px){
-    body[data-view=vPlay] .view{padding-top:max(12px, env(safe-area-inset-top, 0px));padding-bottom:6px}
-    #vPlay .top .pq-ring{width:48px;height:48px} #vPlay .top .pq-ring .n b{font-size:20px} #vPlay .top .pq-ring .n span{display:none}
-    #vPlay .pips{margin:6px 0 10px}
-    #vPlay .q{font-size:clamp(18px,5.6vw,22px);min-height:3.66em}
-    #vPlay .answers{gap:8px;margin-top:10px}
-    #vPlay .ans{min-height:56px;font-size:17px;padding-top:6px;padding-bottom:6px}
-    #vPlay .ans .l{font-size:30px}
-    #vPlay .verdict{margin-top:10px;min-height:44px;padding:8px 14px}
-    #vPlay .ptotal{margin-top:2px;min-height:0}
-    body[data-view=vPlay] footer{margin-top:0;padding:8px 0 max(8px, env(safe-area-inset-bottom, 0px))}
-    body[data-view=vPlay] .foot .mark{padding:2px 0}
+  @media (max-height:700px){
+    .panswers{gap:8px}
+    .ans{min-height:62px;padding-top:14px;padding-bottom:4px}
+    .pq-head{margin-bottom:8px}
+    .pcard{margin-top:6px;padding:4px 16px;min-height:52px}
+    .pq-ring .n span{display:none}
   }
-  @media(min-width:700px){ .view{padding-top:48px} }
+  @media (max-height:600px){
+    .ptop .brand .word{min-height:44px}
+    .pq-ring{width:44px;height:44px}
+    .pq-ring .n b,.pq-ring .n .pts,.pq-ring.done .n b{font-size:20px}
+    .pq-ring .n span{display:none}
+    .pq-text{font-size:17px;min-height:0}
+    .ans{min-height:54px;padding-top:12px;padding-bottom:3px;font-size:17px}
+    .ans .l{font-size:30px}
+    .pcard{min-height:48px}
+  }
+  .view.vp-step{padding:18px 20px 16px}
+  @media (max-height:900px){ .view.vp-step{padding:12px 20px 8px} }
+  @media(min-width:700px){ .view{padding-top:36px} #vPlay{padding-top:16px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 <script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-venuelogo.js" defer></script>
 <script src="/app/vp-analytics.js" defer></script>
 <script src="/app/vp-consent.js"></script>
-<link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
+<script>window.VP_SOUND_GAIN = 0.5;   /* every coaster sound at half volume (Dean, INBOX 405 update 8): vp-celebrate.js multiplies by this */</script>
+<script src="/app/vp-phonead.js"></script>   <!-- the venue's own slides at the foot of the score, as the real game -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show, "Let's play trivia", as on the trivia phone; ?sting=0 switches it off -->
 <link rel="stylesheet" href="/app/vp-podium.css"><script src="/app/vp-trivia-finale.js"></script><script src="/app/vp-podium.js"></script>
 </head>
 <body>
+<h1 class="vp-sr" id="hdrName">Coaster Trivia</h1>
+<div class="app" id="app">
+  <div class="ptop">
+    <div class="brand">
+      <span class="word"><img id="venueLogo" class="vlogo" alt="" hidden><span class="vname" id="hdrVenueName">Coaster Trivia</span></span>
+    </div>
+    <div class="vline" id="vline" hidden><span id="vlineTxt"></span></div>
+    <button class="sndtoggle" id="vpqMute" type="button" aria-pressed="false" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button>
+  </div>
 
-<h1 class="sr" id="hdrName">Coaster Trivia</h1>
-
-<main class="shell" id="game">
-  <!-- 1. THE FIRST NAME -->
-  <section class="view" id="vName" hidden>
-    <p class="okpill" id="addedPill" hidden>Added</p>
-    <p class="kick" id="nameKick" hidden></p>
-    <h2 class="pbig" id="nameHead">Ready to play?</h2>
-    <p class="facts">5 questions, 20 seconds each</p>
-    <p class="psub" id="nameSub">Your first name goes on the board.</p>
-    <form id="nameForm" novalidate autocomplete="off">
-      <div class="field"><input type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name"></div>
-      <div class="field" id="lastRow" hidden><input type="text" id="lastIn" maxlength="40" placeholder="Last name (optional)" autocomplete="family-name" autocapitalize="words" spellcheck="false" aria-label="Your last name, optional"></div>
-      <div class="field" id="optinEmailRow" hidden><input type="text" id="optinEmail" maxlength="200" placeholder="Your email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="Your email"></div>
-      <div class="field" id="optinMobileRow" hidden><input type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
-      <div class="optin-tick" id="optinTick"></div>
-      <p class="cerr" id="nameErr" aria-live="polite"></p>
-      <button class="btn pink" id="nameBtn" type="submit">Play</button>
-    </form>
-  </section>
-
-  <!-- 2. WHERE ARE YOU PLAYING -->
-  <section class="view" id="vWhere" hidden>
-    <p class="kick" id="whereKick">Coaster Trivia</p>
-    <h2 class="pbig one" id="whereHead">What venue are you at?</h2>
-    <div class="picks" id="againBox" hidden></div>
-    <div class="field"><input type="search" id="whereIn" maxlength="60" placeholder="Type 3 letters of your pub or club" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club"></div>
+  <!-- 1. WHERE ARE YOU PLAYING (new: the only step the game does not have) -->
+  <section class="view vp-step" id="vWhere" hidden>
+    <h2 class="vp-h one" id="whereHead">What venue are you at?</h2>
+    <input class="vp-field" type="search" id="whereIn" maxlength="60" placeholder="Start typing your pub or club" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club">
+    <button class="linkbtn addlink" id="notListed" type="button">Can&#8217;t find your venue? Add it</button>
     <p class="hint" id="whereHint" aria-live="polite"></p>
+    <div class="picks" id="againBox" hidden></div>
     <div class="picks" id="picks" role="list"></div>
-    <button class="linkbtn" id="notListed" type="button">Can't find your venue? Add it</button>
     <form class="addcard" id="leadForm" novalidate hidden>
       <h2>Add your venue</h2>
-            <div class="field"><label for="leadIn">Venue name</label><input type="text" id="leadIn" maxlength="60" placeholder="e.g. The Royal Hotel" autocomplete="off" autocapitalize="words"></div>
-      <div class="field"><label for="leadSuburb">Suburb or town</label><input type="text" id="leadSuburb" maxlength="60" placeholder="e.g. Paddington" autocomplete="off" autocapitalize="words"></div>
-      <div class="field"><label for="leadState">State</label><select id="leadState"><option value="">Pick the state</option><option>QLD</option><option>NSW</option><option>VIC</option><option>SA</option><option>WA</option><option>TAS</option><option>NT</option><option>ACT</option></select></div>
-      <div class="field"><label for="leadSite">Website (if you know it)</label><input type="text" id="leadSite" maxlength="200" placeholder="e.g. royalhotel.com.au" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url"></div>
+      <input class="vp-field" type="text" id="leadIn" maxlength="60" placeholder="Venue name" aria-label="Venue name" autocomplete="off" autocapitalize="words">
+      <input class="vp-field" type="text" id="leadSuburb" maxlength="60" placeholder="Suburb" aria-label="Suburb" autocomplete="off" autocapitalize="words">
       <p class="cerr" id="leadErr" aria-live="polite"></p>
       <button class="btn pink" id="leadBtn" type="submit">Add it and play</button>
     </form>
-        <button class="linkbtn quiet" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
+    <button class="linkbtn" id="skipWhere" type="button" hidden>Play now</button>   <!-- only while the search is down (Dean 12 Nov, INBOX 309.1a: they pick or add a venue) -->
   </section>
 
-  <!-- 3. THE QUESTIONS -->
+  <!-- 2. YOUR DETAILS: first name, email, the one offers tick, Play (the trivia phone's join step) -->
+  <section class="view vp-step" id="vName" hidden>
+    <p class="okpill" id="addedPill" hidden>Added</p>
+    <p class="vp-kicker" id="nameKick" hidden></p>
+    <h2 class="vp-h" id="nameHead">Ready to play?</h2>
+    <p class="facts">5 questions, 20 seconds each</p>
+    <form id="nameForm" novalidate autocomplete="off">
+      <input class="vp-field" type="text" id="nameIn" maxlength="20" placeholder="Your first name" autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-label="Your first name">
+      <div id="lastRow" hidden><input class="vp-field" type="text" id="lastIn" maxlength="40" placeholder="Last name (optional)" autocomplete="family-name" autocapitalize="words" spellcheck="false" aria-label="Your last name, optional"></div>
+      <div id="optinEmailRow" hidden><input class="vp-field" type="text" id="optinEmail" maxlength="200" placeholder="Your email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" aria-label="Your email"></div>
+      <div id="optinMobileRow" hidden><input class="vp-field" type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
+      <div class="optin-tick" id="optinTick"></div>
+      <p class="vp-err" id="nameErr" aria-live="polite"></p>
+      <div class="vp-grow"></div>
+      <button class="vp-cta" id="nameBtn" type="submit">Play</button>
+    </form>
+  </section>
+
+  <!-- 3. THE QUESTIONS: the trivia phone's question and reveal -->
   <section class="view" id="vPlay" hidden>
-    <div class="top">
-      <div class="lefts"><span class="count" id="count">Question <b>1</b> of 5</span>
-        <button class="sndtoggle" id="vpqMute" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button></div>
-      <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
+    <div class="pq-head">
+      <div class="pq-ring" id="pqRingBox" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
+      <div class="pq-count" id="count">Question <b>1</b> of 5</div>
+      <p class="loading" id="loading">Getting your first question...</p>
+      <h2 class="pq-text" id="q" hidden></h2>
     </div>
-    <div class="pips" id="pips" aria-hidden="true"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
-    <p class="loading" id="loading">Getting your first question...</p>
-    <h2 class="q" id="q" hidden></h2>
-    <div class="answers" id="answers" role="group" aria-labelledby="q"></div>
-    <div class="verdict" id="verdict" aria-live="polite"></div>
-    <div class="ptotal" id="ptotal"></div>
+    <div class="panswers" id="answers" role="group" aria-labelledby="q"></div>
+    <div class="pcard idle" aria-live="polite"><div class="vrow" id="verdict"></div><div class="ptotal" id="ptotal"></div></div>
   </section>
 
-  <!-- 4. THE END -->
-  <section class="view score" id="score" hidden aria-live="polite">
-    <div class="hero" id="hero">
-      <p class="fk" id="scoreKick">Round done</p>
-      <h2 id="scoreN">0 of 5</h2>
-      <p class="pts" id="scorePts" hidden></p>
-      <p class="placeline" id="scorePlace" hidden></p>
-      <p class="sub" id="scoreSub"></p>
-    </div>
+  <!-- 4. THE END: the trivia phone's final screen, then the tonight board -->
+  <section class="view finalwrap" id="score" hidden aria-live="polite">
+    <p class="fk" id="scoreKick">Round done</p>
+    <h2 id="scoreN">0 of 5</h2>
+    <div class="frule"></div>
+    <p class="pts" id="scorePts" hidden></p>
+    <p class="placeline" id="scorePlace" hidden></p>
+    <p class="sub" id="scoreSub"></p>
     <div class="challenge" id="challengeBox" hidden>
       <p class="cq">Want to challenge your mates?</p>
       <button class="btn pink" id="challenge" type="button">Share</button>
       <button class="linkbtn" id="copyLink" type="button" hidden>Copy link</button>
       <p class="shared" id="shared" aria-live="polite"></p>
-      <input type="text" class="copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
+      <input type="text" class="vp-field copyurl" id="copyUrl" readonly hidden aria-label="Your challenge link">
     </div>
     <div class="board" id="board" hidden>
       <div class="tabs" role="tablist">
@@ -338,7 +349,7 @@
       </div>
       <ol class="rows" id="rows"></ol>
     </div>
-    <button class="btn ghost first" id="again" type="button">Play again</button>
+    <button class="btn ghost" id="again" type="button">Play again</button>
     <a class="btn ghost" id="joinGame" href="/play">Game on the TV? Join it</a>
     <div class="bigscreen">
       <span class="tv" aria-hidden="true"><svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true" data-vp-mark="mark"><path fill="#FF1F8E" d="M1.12 27.35C1.12 27.92 1.42 28.44 1.91 28.72C2.40 29 3.01 28.99 3.49 28.70L24.12 16.35C24.59 16.06 24.88 15.55 24.88 15C24.88 14.45 24.59 13.94 24.12 13.65L3.49 1.30C3.01 1.01 2.40 1 1.91 1.28C1.42 1.56 1.12 2.08 1.12 2.65L1.12 27.35Z"/></svg></span>
@@ -348,22 +359,17 @@
         <a class="owner" id="ownerLink" href="/coaster">From a venue? Click here</a>
       </div>
     </div>
+    <div id="vpAd" hidden></div>   <!-- the venue's own slides, the very bottom of the score (as the real game); nothing when it has none -->
   </section>
 
   <div id="failed" hidden>
     <p class="err">The questions did not load. Check your connection and try again.</p>
     <button class="btn pink" id="retry" type="button" style="margin-top:18px">Try again</button>
   </div>
-</main>
 
-<footer>
-  <div class="shell foot">
-    <img id="venueLogo" class="vlogo" alt="" hidden>
-    <a class="mark" id="footMark" href="/" aria-label="venueplay home"><svg class="vp-wm" height="18" width="89.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></a>
-    <nav aria-label="venueplay"><a href="/help">Help</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
-    <span>&copy; <span id="vp-year"></span> venueplay</span>
-  </div>
-</footer>
+  <!-- our logo, small, at the bottom, as every game screen (the footer is gone: no links, no (c) line, no divider) -->
+  <div class="pfoot" id="footMark"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+</div>
 
 <script>
 /* ===== THE PAGE'S LOGIC: no screen, no network, no clock read inside. venueplay-backend/worker/
@@ -556,12 +562,11 @@ var VPCoaster = (function () {
   var PLACE_HOURS = 12;        // a scan within this long of the last one offers the same venue first
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
-  $('vp-year').textContent = new Date().getFullYear();
 
-  /* SOUND STARTS OFF, with a visible label (396.k): a pub is loud and the phone is in a hand; one tap turns it on */
+  /* SOUND STARTS ON (INBOX 405 update 7, replacing 396.k): the Play tap unlocks the audio, a visible Sound on / Sound off switch sits top right, every sound at half volume (VP_SOUND_GAIN) */
   (function () {
     var C = window.VPCelebrate, btn = $('vpqMute');
-    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '1'); } catch (e) {}
+    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '0'); } catch (e) {}   // sound starts ON (Dean, INBOX 405 update 7): the Play tap unlocks the audio; the switch is top right
     function paint() {
       var on = C && C.muted ? !C.muted() : false;
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -623,19 +628,28 @@ var VPCoaster = (function () {
   var VIEWS = ['vName', 'vWhere', 'vPlay', 'score', 'failed'];
   function view(id) {
     document.body.setAttribute('data-view', id);
+    $('vpqMute').hidden = id !== 'vPlay';
+    try { if (window.VPPhoneAd) window.VPPhoneAd.show(id === 'score'); } catch (e) {}   // the sound switch lives in the header, in the game only
     VIEWS.forEach(function (v) { $(v).hidden = v !== id; });
     try { window.scrollTo(0, 0); } catch (e) {}
   }
-  /* The foot's logo: the venue's own when it is on venueplay and HQ has its logo switched on, else ours. */
+  /* the venue's name under the title, on the name step, the questions and the score (INBOX 405 update 4, item 5) */
+  function venueLine(name) {
+    var v = $('vline');
+    v.hidden = !name;
+    $('vlineTxt').textContent = name || '';
+  }
+  /* The header, as the trivia phone's: the venue's own logo when it is on venueplay and HQ has its logo switched on, else the name of
+     the game, "Coaster Trivia", in the title spot where the real game says "Trivia". */
   function header(venue) {
-    var img = $('venueLogo'), mark = $('footMark');
-    img.hidden = true; mark.hidden = false;
+    var img = $('venueLogo'), nm = $('hdrVenueName');
+    img.hidden = true; nm.hidden = false;
     if (venue && venue.logo_url && /^https:\/\//.test(venue.logo_url)) {
       img.onload = function () {
-        img.hidden = false; mark.hidden = true; img.alt = venue.name || '';
+        img.hidden = false; nm.hidden = true; img.alt = venue.name || '';
         try { if (window.VPVenueLogo) window.VPVenueLogo.fit(img, 'phone'); } catch (e) {}
       };
-      img.onerror = function () { img.hidden = true; mark.hidden = false; };
+      img.onerror = function () { img.hidden = true; nm.hidden = false; };
       img.src = venue.logo_url;
     }
   }
@@ -649,24 +663,31 @@ var VPCoaster = (function () {
   function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
+    venueLine('');   // the name step already says "Playing at <venue>"
     var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
     $('addedPill').hidden = !added;
     $('nameHead').textContent = 'Ready to play?';
-    $('nameSub').textContent = S.code ? 'Same five questions. Your first name goes on the board.' : 'Your first name goes on the board.';
     ['lastRow', 'optinEmailRow', 'optinMobileRow'].forEach(function (id) { $(id).hidden = true; });
     $('optinTick').textContent = '';
     $('nameErr').textContent = '';
     var o = S.optin, done = recall(SIGNED_KEY);
     if (o && done && done.indexOf && done.indexOf(S.place) >= 0) o = S.optin = null;   // already signed up there on this phone
     if (o && (o.email || o.mobile) && venueName && window.VPConsent) {
-      $('nameSub').textContent = 'Your first name goes on the board. Your details go to ' + venueName + ', never on the board.';
       $('optinEmailRow').hidden = !o.email;
       $('optinMobileRow').hidden = !o.mobile;
       $('lastRow').hidden = !o.last_name;
       window.VPConsent.render($('optinTick'), { marketing_optin: o.marketing_optin, email: o.email, mobile: o.mobile }, { venueName: venueName });
     }
     view('vName');
+    fitTick();
+  }
+  /* the one offers line is ONE line at every width: it shrinks to fit (never wraps) */
+  function fitTick() {
+    var l = document.querySelector('#optinTick label.optin'), t = l && l.querySelector('span');
+    if (!l || !t) return;
+    var sz = 16; t.style.fontSize = sz + 'px';
+    while (sz > 11 && l.scrollWidth > l.clientWidth + 1) { sz -= 0.5; t.style.fontSize = sz + 'px'; }
   }
   $('nameForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -700,6 +721,7 @@ var VPCoaster = (function () {
 
   /* 2. WHERE ARE YOU PLAYING */
   function askWhere() {
+    venueLine('');
     S.optin = null; S.details = null; header(null);
     var last = recall(PLACE_KEY), box = $('againBox');
     box.textContent = '';
@@ -733,7 +755,7 @@ var VPCoaster = (function () {
     return b;
   }
   function choose(place, name, label) {
-    S.place = place;
+    S.place = place; S.venueName = name;
     remember(PLACE_KEY, { place: place, name: name, label: label || '', at: Date.now() });
     S.optin = null;
     if (!/^v:/.test(place)) return askDetails(name);
@@ -772,13 +794,22 @@ var VPCoaster = (function () {
   }
   $('notListed').addEventListener('click', function () { openLead($('whereIn').value); $('leadIn').focus(); });
   /* "Can't find your venue? Add it" (INBOX 232): to HQ's review list, never a board */
-  var LEAD_BOX = { name: 'leadIn', suburb: 'leadSuburb', state: 'leadState', website: 'leadSite' };
+  var LEAD_BOX = { name: 'leadIn', suburb: 'leadSuburb' };
+  /* only the name and the suburb are asked. Today's Worker still wants a state with it, so it is the phone's own best guess from its
+     time zone (HQ reviews every added venue); the held backend that works the state out from the suburb is not in this build. */
+  function guessState() {
+    var tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    var m = { 'Australia/Sydney': 'NSW', 'Australia/Melbourne': 'VIC', 'Australia/Brisbane': 'QLD', 'Australia/Adelaide': 'SA', 'Australia/Perth': 'WA',
+      'Australia/Hobart': 'TAS', 'Australia/Darwin': 'NT', 'Australia/Canberra': 'ACT', 'Australia/Lindeman': 'QLD', 'Australia/Broken_Hill': 'NSW' };
+    return m[tz] || 'QLD';
+  }
   /* a stale "what is missing" line goes as soon as they fix it */
   $('leadForm').addEventListener('input', function () { $('leadErr').textContent = ''; });
   $('leadForm').addEventListener('change', function () { $('leadErr').textContent = ''; });
   $('leadForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var f = { name: $('leadIn').value.trim(), suburb: $('leadSuburb').value.trim(), state: $('leadState').value, website: $('leadSite').value.trim() };
+    var f = { name: $('leadIn').value.trim(), suburb: $('leadSuburb').value.trim(), state: guessState(), website: '' };
     var bad = L.addCheck(f);
     if (bad) { $('leadErr').textContent = bad.error; $(LEAD_BOX[bad.field]).focus(); return; }
     $('leadErr').textContent = '';
@@ -788,7 +819,7 @@ var VPCoaster = (function () {
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
       /* an added venue plays on its own trivia-only board when the Worker hands one back (a real venue's stays, any other for 30 days) */
-      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null;
+      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null; S.venueName = f.name;
       /* "Added", then straight on to the name: the old search and its "no venue" line are cleared */
       $('whereIn').value = ''; $('picks').textContent = ''; $('whereHint').textContent = ''; $('notListed').hidden = false;
       askDetails(f.name, st === 200);
@@ -822,6 +853,7 @@ var VPCoaster = (function () {
         var five = L.byIds(BANK, d.qids);
         if (five) {
           S.play = d.play; S.token = d.token; S.myCode = d.code; S.place = d.place; S.venue = d.venue || null; S.optin = d.optin || null;
+          try { if (window.VPPhoneAd) window.VPPhoneAd.set((d.venue && d.venue.slides) || [], (d.venue && d.venue.name) || ''); } catch (e) {}
           sendDetails();
           if (S.name !== d.name && d.name) S.name = d.name;
           return go('board', five);
@@ -854,14 +886,12 @@ var VPCoaster = (function () {
     S.mode = mode;
     if (mode === 'local') { S.play = null; }
     header(S.venue);
+    venueLine((S.venue && S.venue.name) || S.venueName || '');
     round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
     show();
   }
-  function pips() {
-    var p = $('pips').children;
-    for (var i = 0; i < p.length; i++) p[i].className = 'pip' + (results[i] === true ? ' right' : results[i] === false ? ' wrong' : i === at ? ' now' : '');
-  }
+  function pips() {}   // the trivia phone has no pips: the count line says where you are
   function show() {
     var item = round[at];
     markSeen(item[0]);
@@ -871,9 +901,11 @@ var VPCoaster = (function () {
     q.hidden = false;
     q.textContent = item[1];
     q.setAttribute('data-id', item[0]);
-    q.style.animation = 'none'; void q.offsetWidth; q.style.animation = '';
+    q.className = 'pq-text' + (item[1].length > 90 ? ' long' : '');
+    var rb = $('pqRingBox'); rb.className = 'pq-ring'; $('pqCdNum').className = ''; $('pqCdNum').textContent = '20';
     $('verdict').textContent = '';
-    $('verdict').className = 'verdict';
+    $('verdict').className = 'vrow';
+    $('verdict').parentNode.className = 'pcard idle';
     var box = $('answers');
     box.textContent = '';
     item[2].forEach(function (text, i) {
@@ -893,9 +925,18 @@ var VPCoaster = (function () {
     ticker = setInterval(tick, 250);
   }
   function tag(btn, words) { var s = document.createElement('span'); s.className = 'tg'; s.textContent = words; btn.appendChild(s); }
+  /* the ring becomes the points just won, where the countdown was (the trivia phone's result) */
+  function ringDone(good, points) {
+    var rb = $('pqRingBox'), n = $('pqCdNum');
+    rb.className = 'pq-ring done' + (good ? '' : ' none');
+    n.className = 'pts';
+    n.textContent = good ? (points > 0 ? '+' + points : '\u2713') : '0';
+  }
   function paintVerdict(good, points, letter) {
     var v = L.verdict(good, points, letter), el = $('verdict');
-    el.className = 'verdict' + (good ? '' : ' wrong');
+    el.className = 'vrow' + (good ? '' : ' wrong');
+    el.parentNode.className = 'pcard';
+    ringDone(good, points);
     el.innerHTML = '<span class="vt">' + L.esc(v.text) + '</span>' + (v.pts ? '<span class="vp">' + L.esc(v.pts) + '</span>' : '');
   }
   function answer(i) {
@@ -945,13 +986,29 @@ var VPCoaster = (function () {
 
   /* 4. THE END */
   var boardPeriod = 'night', myTonight = 0;
+  /* THE END SHOW (INBOX 405 update 6): the real game's show system again, held as long as it holds the start (vp-sting, phone layout),
+     "THAT'S A WRAP", then the score. With ?sting=0 there is none. */
   function finish() {
     clearInterval(ticker);
+    var ST = window.VPSting;
+    if (ST && ST.on && !endShow) {
+      endShow = true; $('vPlay').classList.add('hush');
+      try { ST.start({ words: { big: 'THAT\u2019S A WRAP', small: 'COASTER TRIVIA' }, layout: 'phone' }); } catch (e) {}
+      setTimeout(function () { endShow = false; $('vPlay').classList.remove('hush'); showScore(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
+      return;
+    }
+    showScore();
+  }
+  var endShow = false;
+  function showScore() {
     view('score');
     var onBoard = S.mode === 'board' && ended && ended.score;
     $('scoreKick').textContent = L.headline(S.name, right, round.length);
     /* THE RESULT HERO before the board: the big number, "3 of 5 correct", the place tonight */
-    $('scoreN').textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
+    $('score').classList.toggle('winner', false);
+    var sn = $('scoreN');
+    sn.textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
+    sn.classList.remove('pop'); void sn.offsetWidth; sn.classList.add('pop');   // the number lands with a pop
     $('scorePts').hidden = !onBoard;
     $('scorePlace').hidden = !onBoard;
     $('board').hidden = !onBoard;
@@ -963,10 +1020,14 @@ var VPCoaster = (function () {
       $('scorePts').textContent = right + ' of ' + round.length + ' correct';
       var b = ended.board || {}, myPl = L.myPlace(b.rows, b.rank);
       myTonight = L.topTenPlace(b.rows);
-      $('scorePlace').textContent = L.placeLine(myPl, 'night', S.venue && S.venue.name);
+      var pl = $('scorePlace'), line = L.placeLine(myPl, 'night', S.venue && S.venue.name), sp = line.indexOf(' ');
+      pl.textContent = '';
+      var bb = document.createElement('b'); bb.textContent = sp > 0 ? line.slice(0, sp) : line;
+      pl.appendChild(bb); pl.appendChild(document.createTextNode(sp > 0 ? line.slice(sp) : ''));   // "4th" big in a pink chip, then "tonight at The Mini Bar"
+      $('score').classList.toggle('winner', myPl === 1);
       $('scoreSub').textContent = '';
       paintBoard(b, 'night');
-      burst();
+      celebrate(myPl);
       /* top 3: the podium first (INBOX 313), then the board */
       if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(myPl), onDone: toMyRow }))) toMyRow();
     } else {
@@ -974,21 +1035,11 @@ var VPCoaster = (function () {
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
   }
-  /* a short pink burst behind the score; none with reduced motion */
-  function burst() {
+  /* the game's own confetti (vp-celebrate): a bigger burst for the top three, a small one for everyone else; none with reduced motion */
+  function celebrate(place) {
     try {
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      var host = $('hero'), old = host.querySelector('.burst'), b = document.createElement('div');
-      if (old) old.remove();
-      b.className = 'burst'; b.setAttribute('aria-hidden', 'true');
-      for (var k = 0; k < 14; k++) {
-        var a = (k / 14) * Math.PI * 2, r = 110 + (k % 3) * 34, d = document.createElement('i');
-        d.style.setProperty('--dx', Math.round(Math.cos(a) * r) + 'px'); d.style.setProperty('--dy', Math.round(Math.sin(a) * r * 0.7) + 'px');
-        d.style.animationDelay = (k % 4) * 0.04 + 's';
-        b.appendChild(d);
-      }
-      host.appendChild(b);
-      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 1500);
+      if (window.VPCelebrate && window.VPCelebrate.burst) window.VPCelebrate.burst(document.body, place > 0 && place <= 3 ? 48 : 22, { className: 'cfetti' });
     } catch (e) {}
   }
   function toMyRow() { try { window.scrollTo(0, 0); } catch (e) {} }   // the result hero first, the board under it (never scrolled past the score)

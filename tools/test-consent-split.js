@@ -55,7 +55,7 @@ function fresh() {   // a new page: a new copy of the module (its "age screen ti
 function field(box, id, v) { var i = new El('input'); i.id = id; i.value = v; box.appendChild(i); }
 function labels(box) { return box.children.filter(function (c) { return c.tagName === 'LABEL'; }); }
 
-var WORDS = "Send me offers from The Test Hotel. I'm 18 or over.";
+var WORDS = "Send me offers from The Test Hotel";
 
 print('vp-consent.js: one tick');
 var box = fresh();
@@ -66,14 +66,14 @@ show('its checkbox is #xOptin, and there is no #x18', L.length === 1 && L[0].que
 show('the words exact: "' + WORDS + '"', L.length === 1 && L[0].textContent.trim() === WORDS, L.map(function (l) { return l.textContent; }));
 show('unticked', L.length === 1 && L[0].querySelector('input').checked === false);
 show('a checkbox, the shared .optin style', L.length === 1 && L[0].querySelector('input').type === 'checkbox' && /\boptin\b/.test(L[0].className));
-show('consent version is bumped to vpc-2-6nov', VPConsent.VERSION === 'vpc-2-6nov', VPConsent.VERSION);
+show('consent version is bumped to vpc-3-14nov, and the old ones are listed so past sign-ups keep theirs', VPConsent.VERSION === 'vpc-3-14nov' && VPConsent.PREVIOUS.join() === 'vpc-1,vpc-2-6nov', VPConsent.VERSION);
 show('no copy of the words has an em dash', (VPConsent.OPTIN_HEAD + VPConsent.OPTIN_TAIL + VPConsent.NO_NAME).indexOf('—') < 0);
 box = fresh(); VPConsent.render(box, { email: true, marketing_optin: true }, { venueName: '' });
-show('no venue name: "Send me offers from this venue. I\'m 18 or over."', labels(box).length === 1 && labels(box)[0].textContent.trim() === "Send me offers from this venue. I'm 18 or over.", labels(box).map(function (l) { return l.textContent; }));
+show('no venue name: "Send me offers from this venue"', labels(box).length === 1 && labels(box)[0].textContent.trim() === "Send me offers from this venue", labels(box).map(function (l) { return l.textContent; }));
 box = fresh(); VPConsent.render(box, { email: true, marketing_optin: true });
-show('no opts at all: the "this venue" words too', labels(box).length === 1 && /from this venue\./.test(labels(box)[0].textContent));
-show('a name ending in a full stop gets one full stop', VPConsent.optinText('Club Inc.') === "Send me offers from Club Inc. I'm 18 or over.", VPConsent.optinText('Club Inc.'));
-show('a name with spaces is tidied', VPConsent.optinText('  The   Bowlo ') === "Send me offers from The Bowlo. I'm 18 or over.", VPConsent.optinText('  The   Bowlo '));
+show('no opts at all: the "this venue" words too', labels(box).length === 1 && /from this venue$/.test(labels(box)[0].textContent.trim()));
+show('a name ending in a full stop does not leave a stray one, and no age words follow', VPConsent.optinText('Club Inc.') === "Send me offers from Club Inc" && !/18/.test(VPConsent.optinText('Club Inc.')), VPConsent.optinText('Club Inc.'));
+show('a name with spaces is tidied', VPConsent.optinText('  The   Bowlo ') === "Send me offers from The Bowlo", VPConsent.optinText('  The   Bowlo '));
 
 box = fresh(); VPConsent.render(box, { first_name: true, mobile: true, marketing_optin: true });
 show('mobile alone is a contact method: one tick', labels(box).length === 1);
@@ -110,7 +110,7 @@ PAGES.forEach(function (p) {
   var c = run(true, false, false);
   show(p + ': not ticked, email typed: no marketing_optin, no consent_version', c.marketing_optin === undefined && c.consent_version === undefined && c.email === 'a@b.co', c);
   c = run(true, false, true);
-  show(p + ': ticked with an email: marketing_optin true and consent_version vpc-2-6nov', c.marketing_optin === true && c.consent_version === 'vpc-2-6nov', c);
+  show(p + ': ticked with an email: marketing_optin true and consent_version vpc-3-14nov', c.marketing_optin === true && c.consent_version === 'vpc-3-14nov', c);
   c = run(false, true, true);
   show(p + ': ticked with a mobile: marketing_optin true', c.marketing_optin === true, c);
   c = run(false, false, true);
