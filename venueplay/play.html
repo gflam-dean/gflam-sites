@@ -217,8 +217,9 @@
      room is found show() takes the class off and the page is the in-game layout as before. */
   .webbar{display:none}
   body.vp-entry .menubtn,body.vp-entry .menupanel{display:none}
-  /* the in-game header is emptied, not removed: the Reconnecting bar hangs from it (vp-connbar.js), so it stays as a zero-height anchor right under the website bar */
-  body.vp-entry .ptop{height:0;min-height:0;padding:0;border:0;overflow:visible;background:none;backdrop-filter:none;top:calc(69px + env(safe-area-inset-top,0px))}
+  /* the in-game header is hidden, not removed: the Reconnecting bar lives in it (vp-connbar.js), so it stays as an invisible anchor right under the website bar */
+  body.vp-entry .ptop{position:absolute;left:0;right:0;top:calc(69px + env(safe-area-inset-top,0px));visibility:hidden;border:0;background:none;backdrop-filter:none}
+  body.vp-entry .ptop .vp-connbar{top:0;visibility:visible}
   body.vp-entry .ptop>*:not(.vp-connbar){display:none}
   body.vp-entry .app{min-height:calc(100vh - 69px - env(safe-area-inset-top,0px));min-height:calc(100dvh - 69px - env(safe-area-inset-top,0px))}
   body.vp-entry .webbar{display:block;position:sticky;top:0;z-index:20;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px);background:rgba(10,10,11,.72);backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line)}
