@@ -278,7 +278,7 @@ def other_games():
         r.close()
 
 
-LAND_SIZES = ((320, 568), (375, 667), (390, 844), (430, 932), (844, 390))
+LAND_SIZES = ((320, 568), (375, 667), (390, 844), (430, 932), (844, 390), (1280, 720), (1440, 900))   # the laptops added 17 Nov 2026 (422 item 1)
 LAND_PAGES = (('/play?demo=1', 'bingo'), ('/app/trivia/play?demo=1', 'trivia'), ('/app/musical/play?demo=1', 'musical bingo'))
 # ours: the show's wordmark group; theirs: the header's own wordmark path (the white letters, triangle apart)
 LAND = r"""(function(){
@@ -489,6 +489,34 @@ def show_fits():
             shot(r, sid, 'sting-8-phone-390x844')
         finally:
             r.close_tab(tid)
+        # 17 Nov 2026 (422 item 1): the phone show is one phone-wide column (never wider than 460 px) centred in the window, on a
+        # laptop as on a phone: both lines inside the column and not on top of each other, the wordmark no wider than the column
+        COL = r"""(function(){ function bx(e){ if(!e) return null; var g=document.createRange(); g.selectNodeContents(e); var b=g.getBoundingClientRect(); return [b.left,b.top,b.right,b.bottom]; }
+          var wg=document.getElementById("vppWg"), w=wg?wg.getBoundingClientRect():null;
+          return {W:innerWidth, H:innerHeight, l1:bx(document.getElementById("vppL1s")||document.getElementById("vppL1")), l2:bx(document.getElementById("vppL2s")), wm:w?[w.left,w.top,w.right,w.bottom]:null}; })()"""
+        for path, what in LAND_PAGES:
+            for w, h in ((390, 844), (1280, 720), (1440, 900)):
+                tag = '%s phone show at %dx%d' % (what, w, h)
+                tid, sid = r.open(path, before='window.__vpStingManual=true;', width=w, height=h)
+                try:
+                    if not phone_show_ready(r, sid):
+                        ok(tag + ': the show starts', False, r.ask(sid, STATS)); continue
+                    r.ask(sid, 'VPSting.stop("test"); VPSting.start({layout:"phone", words:VPSting.phoneWords("BINGO","")}); true')
+                    r.ask(sid, 'VPSting.frame(0.8); true')
+                    a = r.ask(sid, COL) or {}
+                    r.ask(sid, 'VPSting.frame(1.3); true')
+                    b = r.ask(sid, COL) or {}
+                    cw = min(a.get('W', 0), 460); x0 = (a.get('W', 0) - cw) / 2.0
+                    l1, l2, wm = a.get('l1'), a.get('l2'), b.get('wm')
+                    why = ''
+                    if not (l1 and l2 and wm): why = 'not measured %s' % json.dumps([a, b])[:200]
+                    elif l1[0] < x0 - 2 or l1[2] > x0 + cw + 2 or l2[0] < x0 - 2 or l2[2] > x0 + cw + 2: why = 'a line leaves the %d px column: %s %s' % (cw, [round(x) for x in l1], [round(x) for x in l2])
+                    elif l1[3] > l2[1] + 2: why = 'the two lines overlap: first ends at %d, second starts at %d' % (l1[3], l2[1])
+                    elif wm[0] < x0 - 2 or wm[2] > x0 + cw + 2: why = 'the wordmark (%d to %d) is wider than the %d px column' % (wm[0], wm[2], cw)
+                    ok(tag + ': both lines sit in the centred column, apart, and the wordmark is no wider than the column', why == '', why)
+                    shot(r, sid, 'sting-8-phone-%s-%dx%d' % (what.replace(' ', '-'), w, h))
+                finally:
+                    r.close_tab(tid)
     finally:
         r.close()
 
