@@ -76,6 +76,9 @@ def hq_close(sid):
         r['closes_at'] = datetime.datetime.utcfromtimestamp((int(time.time() * 1000) - 1000) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.000Z')
     line({'seed': 'vp_purchase_raffles', 'rows': rows, 'replace': True})
     js(sid, 'location.reload()'); time.sleep(3)
+def confirm_known(sid):
+    # A known mobile asks "Alan S.? 15 entries so far" first (Dean 14 Nov). Tap Yes, add entry.
+    R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo'); time.sleep(0.8)
 def errs(sid): return js(sid, 'JSON.stringify(window.__errs||[])')
 def table(t): return line({'table': t})['body'] or []
 def fits(sid): return js(sid, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True
@@ -159,13 +162,19 @@ try:
     shot(p2, '04-thanks-phone-375.jpg')
     ann_entry = [e for e in table('vp_purchase_raffle_entries')][-1]['id']
 
-    click(p2, '#doneNext'); type_mobile(p2, BOB); click(p2, '#addBtn')
+    click(p2, '#doneNext'); type_mobile(p2, BOB); click(p2, '#addBtn'); confirm_known(p2)
     ok('Bob\'s second purchase, on the OTHER phone, is cumulative: 2 entries (one entrant)',
        R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneBig') == "Thanks Bob, you're in" and text(p2, '#doneSmall') == '2 entries so far. Good luck!' and len(table('vp_purchase_raffle_entrants')) == 2,
        [text(p2, '#doneSmall'), text(p2, '#barMsg')])
     click(p2, '#doneNext')
+    type_mobile(p2, BOB); click(p2, '#addBtn'); R.until(p2, visible('#vpAsk'), 10)
+    ok('a known mobile shows who it is first: "Bob S.? 2 entries so far", with Yes, add entry', 'Bob S' in (text(p2, '#vpAskMsg') or text(p2, '#vpAsk') or '') and '2 entries so far' in (text(p2, '#vpAsk') or ''), text(p2, '#vpAsk'))
+    shot(p2, '05b-confirm-name-phone-375.jpg')
+    ok('the confirm fits the first phone screen', fits(p2) and js(p2, 'document.getElementById("vpAskGo").getBoundingClientRect().bottom<=innerHeight') is True)
+    click(p2, '#vpAskCancel'); time.sleep(0.6)
+    ok('"No, not them" adds nothing, clears the number and says so', len(table('vp_purchase_raffle_entries')) == 3 and text(p2, '#barMsg') == 'Nothing added. Check the number.' and js(p2, 'document.getElementById("phoneIn").value===""') is True, [text(p2, '#barMsg'), len(table('vp_purchase_raffle_entries'))])
     set_clock(240000)
-    type_mobile(p2, BOB); click(p2, '#addBtn')
+    type_mobile(p2, BOB); click(p2, '#addBtn'); confirm_known(p2)
     ok('a third purchase the same day is refused by the cap: says why, nothing added',
        R.until(p2, '/already has 2 entries today/.test(document.getElementById("barMsg").textContent)', 15) is True
        and len([e for e in table('vp_purchase_raffle_entries') if not e.get('voided_at')]) == 3, [text(p2, '#barMsg'), len(table('vp_purchase_raffle_entries'))])
@@ -178,7 +187,7 @@ try:
     # ---------------- undo ----------------
     print('undo: taken back, stops counting, frees the day')
     set_clock(250000)
-    type_mobile(p2, ANN); click(p2, '#addBtn')
+    type_mobile(p2, ANN); click(p2, '#addBtn'); confirm_known(p2)
     R.until(p2, visible('#stepDone'), 15)
     ok('Ann\'s second purchase: 2 entries', text(p2, '#doneSmall') == '2 entries so far. Good luck!', text(p2, '#doneSmall'))
     click(p2, '#doneUndo'); ask_yes(p2)
@@ -188,7 +197,7 @@ try:
     click(p2, '#doneNext')
     type_mobile(p2, ANN); click(p2, '#lookBtn')
     ok('look-up after undo: "Ann L. has 1 entry"', R.until(p2, '/Ann L\\.? has 1 entry/.test(document.getElementById("barMsg").textContent)', 10) is True, text(p2, '#barMsg'))
-    type_mobile(p2, ANN); click(p2, '#addBtn')
+    type_mobile(p2, ANN); click(p2, '#addBtn'); confirm_known(p2)
     ok('after an undo the day is free again: Ann can be added (2 entries)', R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneSmall') == '2 entries so far. Good luck!', [text(p2, '#doneSmall'), text(p2, '#barMsg')])
     click(p2, '#doneNext')
     ok('the recent list shows who added each entry, with an Undo for ones just added', js(p2, 'document.querySelectorAll("#recent li").length>=4 && !!document.querySelector("#recent [data-undo]")') is True, text(p2, '#recent'))

@@ -532,7 +532,7 @@
   }
   function setPhone(d){ $("phoneIn").value=fmtPhone(d); $("barMsg").textContent=""; $("barMsg").classList.remove("ok"); syncAdd(); }
   $("phoneIn").addEventListener("input", function(){ setPhone(digits()); });
-  $("phoneIn").addEventListener("keydown", function(e){ if(e.key==="Enter" && !$("addBtn").disabled){ e.preventDefault(); addEntry(false); } });
+  $("phoneIn").addEventListener("keydown", function(e){ if(e.key==="Enter" && !$("addBtn").disabled){ e.preventDefault(); confirmThenAdd(); } });
   $("keypad").addEventListener("click", function(e){
     var b=e.target.closest(".key"); if(!b || $("phoneIn").disabled) return;
     var k=b.getAttribute("data-k"), d=digits();
@@ -564,7 +564,22 @@
       $("barMsg").textContent=e.message;
     });
   }
-  $("addBtn").addEventListener("click", function(){ addEntry(false); });
+  /* Dean 14 Nov: a known mobile shows who it is first. "Alan S.? 15 entries so far", Yes adds, No adds nothing.
+     An unknown mobile goes straight to the new-customer form. */
+  function confirmThenAdd(){
+    if(G.busy || !G.raffle) return;
+    G.busy=true; syncAdd(); $("barMsg").textContent=""; $("barMsg").classList.remove("ok");
+    api("/host/praffle/lookup", { venue_id:G.venueId, raffle_id:G.raffle.id, phone:digits() }).then(function(res){
+      G.busy=false; syncAdd();
+      if(!res.known) return addEntry(false);
+      var c=res.entries|0;
+      return vpAsk(res.name+"? "+c+(c===1?" entry":" entries")+" so far", { yes:"Yes, add entry", no:"No, not them" }).then(function(yes){
+        if(yes) return addEntry(false);
+        setPhone(""); $("barMsg").textContent="Nothing added. Check the number.";
+      });
+    }).catch(function(e){ G.busy=false; syncAdd(); $("barMsg").textContent=e.message; });
+  }
+  $("addBtn").addEventListener("click", confirmThenAdd);
   /* STAFF LOOK-UP (Stewart, Deepwater, 19 Oct): a customer asks "how many have I got?". Type the mobile, tap
      Look up: "Bob S. has 8 entries". Nothing is added. */
   $("lookBtn").addEventListener("click", function(){

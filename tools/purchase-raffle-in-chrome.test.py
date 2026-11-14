@@ -74,6 +74,9 @@ def hq_close(sid):
         r['closes_at'] = datetime.datetime.utcfromtimestamp((int(time.time() * 1000) - 1000) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.000Z')
     line({'seed': 'vp_purchase_raffles', 'rows': rows, 'replace': True})
     js(sid, 'location.reload()'); time.sleep(3)
+def confirm_known(sid):
+    # A known mobile asks "Alan S.? 15 entries so far" first (Dean 14 Nov). Tap Yes, add entry.
+    R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo'); time.sleep(0.8)
 def errs(sid): return js(sid, 'JSON.stringify(window.__errs||[])')
 
 try:
@@ -118,13 +121,13 @@ try:
     ok('stored once, as +61412345678, marketing false because nobody ticked it', len(ents) == 1 and ents[0]['phone'] == '+61412345678' and ents[0]['marketing_opt_in'] is False, ents)
     shot(sid, '04-bar-thanks-tablet.jpg')
     click(sid, '#doneNext')
-    keypad(sid, '0412345678'); click(sid, '#addBtn')
+    keypad(sid, '0412345678'); click(sid, '#addBtn'); confirm_known(sid)
     ok('the same mobile inside a minute is asked on the page, not with a native dialog', R.until(sid, visible('#vpAsk'), 10) is True, errs(sid))
     shot(sid, '05-bar-add-another-tablet.jpg')
     click(sid, '#vpAskCancel')
     time.sleep(0.6)
     ok('"No" adds nothing', len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 1)
-    click(sid, '#addBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
+    click(sid, '#addBtn'); confirm_known(sid); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
     ok('"Yes, a new purchase" adds exactly one', R.until(sid, visible('#stepDone'), 15) is True and text(sid, '#doneSmall') == '2 entries so far. Good luck!' and len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 2, text(sid, '#doneSmall'))
     entries = line({'table': 'vp_purchase_raffle_entries'})['body']
     ok('every entry names the staff login that added it', all(e.get('created_by') == 'host:staff-1' and e.get('created_by_name') == 'Sarah' for e in entries), entries)
@@ -148,7 +151,7 @@ try:
     ok('the keypad keys are big enough for a thumb', js(sid2, 'document.querySelector(".key").getBoundingClientRect().height>=48') is True)
     shot(sid2, '06-bar-phone.jpg')
     line({'now': now_ms() + 120000})   # two minutes after the seeded entries, so this is a new purchase, not a double tap
-    keypad(sid2, '44'); click(sid2, '#addBtn')
+    keypad(sid2, '44'); click(sid2, '#addBtn'); confirm_known(sid2)
     ok('a known customer is one tap: "Thanks Chris, you\'re in. 8 entries"', R.until(sid2, visible('#stepDone'), 15) is True and text(sid2, '#doneSmall') == '8 entries so far. Good luck!', [text(sid2, '#doneBig'), text(sid2, '#doneSmall'), text(sid2, '#barMsg')])
     shot(sid2, '07-bar-phone-thanks.jpg')
     ok('no errors on the phone', errs(sid2) == '[]', errs(sid2))

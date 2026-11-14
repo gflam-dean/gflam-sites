@@ -138,6 +138,7 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('a minute later it adds without asking', e.status === 200 && e.body.entries === 3 && e.body.message === "Thanks Bob, you're in. 3 entries so far. Good luck!", e.body.message);
   var l = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412345678' });
   show('lookup: known, first name and count, mobile masked', l.status === 200 && l.body.known && l.body.first_name === 'Bob' && l.body.entries === 3 && l.body.phone_masked === '04xx xxx 678' && JSON.stringify(l.body).indexOf('345678') < 0, JSON.stringify(l.body));
+  show('lookup gives the name as first name and last initial, with the count, for the confirm card', l.body.name === 'Bob S.' || l.body.name === 'Bob S', l.body.name);
   l = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0499 000 111' });
   show('lookup: a new mobile is not known', l.status === 200 && l.body.known === false);
   NOWMS += 61000;
@@ -192,6 +193,12 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   show('search by name', li.body.total === 1 && li.body.entrants[0].name === 'Bob Smith');
   li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '0111' });
   show('search by the end of the mobile', li.body.total === 1 && li.body.entrants[0].name === 'Ann Lee');
+  li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '0412345678' });
+  show('search by the FULL mobile as typed (0412345678) finds Bob, with his entry count', li.body.total === 1 && li.body.entrants[0].name === 'Bob Smith' && li.body.entrants[0].entries === 5, JSON.stringify(li.body.entrants));
+  li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '678' });
+  show('search by the last three digits (678) finds Bob, with his count', li.body.total === 1 && li.body.entrants[0].name === 'Bob Smith' && li.body.entrants[0].entries === 5, JSON.stringify(li.body.entrants));
+  li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: 'Bob' });
+  show('search by first name (Bob) finds Bob, with his count', li.body.total === 1 && li.body.entrants[0].name === 'Bob Smith' && li.body.entrants[0].entries === 5, JSON.stringify(li.body.entrants));
   li = await call(handlePraffleEntrants, { venue_id: VENUE, raffle_id: raffle().id, q: '4123' });
   show('the search box says LAST digits: digits from the middle of a mobile find nobody', li.status === 200 && li.body.total === 0, JSON.stringify(li.body.total));
   var st = await call(handlePraffleState, { venue_id: VENUE });
