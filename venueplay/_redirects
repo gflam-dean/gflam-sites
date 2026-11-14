@@ -50,6 +50,19 @@
 /offer-feb  /nsw  200
 /offer-mar  /nsw  200
 /offer      /     302
+# JOURNEY TRACKING (INBOX 413): a tracked email link is the page's own address plus a short code, venueplay.com.au/offer-nov/MPYXPG.
+# The page is served as is (200 rewrite, the address stays); /app/vp-track.js reads the code from the path.
+/offer-oct/:code  /nsw  200
+/offer-nov/:code  /nsw  200
+/offer-dec/:code  /nsw  200
+/offer-jan/:code  /nsw  200
+/offer-feb/:code  /nsw  200
+/offer-mar/:code  /nsw  200
+/nsw/:code        /nsw  200
+/gflam/:code      /nsw  200
+/coaster/:code    /nsw  200
+/home/:code       /     200
+/quick/:code      /quick 200
 
 # THE GFLAM GROUP SITE'S BANNER (Dean, 4 Nov 2026). gflam.com.au links venueplay.com.au/gflam. It is
 # the same offer page, showing whichever month's offer is live today (VPOffer.forPath), so the
