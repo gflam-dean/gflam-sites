@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="/app/vp-phone.css">
 <link rel="stylesheet" href="/app/vp-qring.css">   <!-- the trivia phone's ring and Time's up, one copy -->
 <link rel="stylesheet" href="/app/vp-safe-area.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the venue's own ad slot (#vpAd), the same as the real game -->
 <style>
   /* THE COASTER PAGE IS A REAL venueplay GAME SCREEN (Dean, 14 Nov 2026, INBOX 405). Everything below is the trivia phone's own look,
      copied rule for rule from /app/trivia/play.html (the header, the join steps, the question, the reveal, the end) and the shared
@@ -64,7 +65,10 @@
   .app{max-width:460px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
   .pfoot{padding-top:12px}   /* the trivia phone's: our logo 10px closer to the bottom */
   .pfoot{border-top:0}
-  .ptop{padding-right:16px;justify-content:space-between;gap:10px}
+  .ptop{padding-right:16px;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vline{order:3;flex:0 0 100%;display:flex;align-items:center;gap:8px;margin-top:-8px;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1.3;min-width:0}
+  .vline[hidden]{display:none}
+  .vline span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ptop .brand{min-width:0}
   .ptop .vname{white-space:nowrap}
   .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
@@ -77,8 +81,10 @@
   .okpill{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;min-height:32px;padding:4px 12px;border-radius:999px;background:rgba(47,208,138,.14);border:1px solid rgba(47,208,138,.5);color:#fff;font-weight:800;font-size:16px;margin-bottom:10px}
   .okpill::before{content:"";width:8px;height:14px;border:solid var(--green);border-width:0 3px 3px 0;transform:rotate(40deg) translateY(-2px);margin:0 4px 0 2px}
   .view .vp-field{display:block;margin-top:12px}
+  #nameForm{display:flex;flex-direction:column;flex:1}
+  #nameForm .vp-grow{flex:1;min-height:14px}   /* Play sits low, where the real game's join step has its button */
   input[type=search].vp-field::placeholder,input.vp-field::placeholder{color:#8E8E99;font-weight:600}
-  #whereIn::placeholder{font-size:16px}
+  #whereIn::placeholder{font-size:16px}   /* the Add it link under the box is 3/4 of this, 12px (Dean, INBOX 405 update 4) */
   @media(max-width:360px){ #whereIn::placeholder{font-size:15px;letter-spacing:-.025em} }   /* the whole sentence on one line at 320 (the search box keeps room for its clear button) */
   .vp-field:focus{border-color:var(--pink);box-shadow:none}
   /* the search clear (x): grey and white, never the browser's blue, with a 44px tap area */
@@ -89,13 +95,13 @@
   .cerr{color:var(--roll);font-size:15px;min-height:20px;margin-top:10px}
   .hint{color:var(--muted);font-size:15px;min-height:20px;margin-top:10px}
   .hint:empty{min-height:0;margin-top:0}
-  .btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border:none;border-radius:999px;font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;line-height:1.2;padding:14px 18px;cursor:pointer;touch-action:manipulation;text-align:center}
+  .btn,.vp-step .vp-cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border:none;border-radius:999px;font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;line-height:1.2;padding:10px 18px;cursor:pointer;touch-action:manipulation;text-align:center}
   .btn.pink{background:var(--pink);color:#fff}
   .btn.pink:active{background:var(--pink-deep)}
-  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);margin-top:12px;font-size:17px}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);margin-top:10px;font-size:16px;min-height:44px}
   .btn:disabled{opacity:.5;cursor:default}
   a.btn{text-decoration:none}
-  .linkbtn{display:flex;align-items:center;min-height:44px;background:none;border:0;padding:6px 0;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
+  .linkbtn{display:flex;align-items:center;min-height:32px;background:none;border:0;padding:4px 0;position:relative;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:4px;cursor:pointer;text-align:left}
 
   /* WHERE ARE YOU PLAYING: the picks, as the game's cards */
   .picks{display:grid;gap:10px;margin-top:12px}
@@ -107,11 +113,15 @@
   .pick .on{color:var(--green);font-weight:700}
   .pick .off{color:#7C7C86;font-weight:600}
   .pick.again{box-shadow:inset 0 0 0 2px #3A3A44}
-  .addcard{margin-top:6px;border-radius:16px;background:#1A1A1F;padding:16px}
-  .addcard h2{font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:#fff}
-  .addcard label{display:block;color:var(--text);font-size:15px;font-weight:700;margin:12px 0 0}
-  .addcard .vp-field{margin-top:6px;background:#0F0F12}
-  .addcard .btn{margin-top:14px}
+  /* "Can't find your venue? Add it": 3/4 the size of the placeholder, tucked straight under the box, its tap area reaching 8px each way */
+  .addlink{font-size:12px;line-height:1.3;min-height:0;padding:0;margin:4px 0 0}
+  .addlink::before{content:"";position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+  /* Add your venue: name and suburb only, small */
+  .addcard{margin-top:8px;border-radius:14px;background:#1A1A1F;padding:10px 12px 12px}
+  .addcard h2{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1.2;color:#fff}
+  .addcard .vp-field{margin-top:8px;background:#0F0F12;padding:9px 12px;font-size:16px;border-radius:11px;min-height:42px}
+  .addcard .btn{margin-top:10px;min-height:42px;font-size:16px}
+  .addcard .cerr{margin-top:6px;min-height:0}
   .optin-tick label.optin{display:flex;gap:12px;align-items:center;margin-top:16px;color:var(--text);font-size:16px;line-height:1.3;cursor:pointer;white-space:nowrap}
   .optin-tick label.optin input{flex:none;width:26px;height:26px;margin:0;-webkit-appearance:none;appearance:none;border-radius:7px;border:2px solid var(--pink);background:rgba(255,31,142,.10);cursor:pointer;position:relative}
   .optin-tick label.optin input:checked{background:var(--pink)}
@@ -170,11 +180,18 @@
   .finalwrap .frule{display:none;height:6px;background:#FFD93D;box-shadow:0 0 18px rgba(255,217,61,.55);margin:6px 0 18px}
   .finalwrap.winner .frule{display:block}
   .finalwrap .pts{font-size:18px;color:var(--muted);font-weight:500}
-  .finalwrap .placeline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:6px;overflow-wrap:break-word}
+  .finalwrap .placeline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:8px;overflow-wrap:break-word}
+  .finalwrap .placeline b{display:inline-block;font-family:'Anton',sans-serif;font-weight:400;font-size:40px;line-height:1;background:var(--pink);color:#fff;border-radius:12px;padding:6px 14px 4px;margin-right:8px;vertical-align:middle}
+  .finalwrap.winner .placeline b{background:#FFD93D;color:#0A0A0B}
+  .finalwrap #scoreN.pop{animation:scorepop .9s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes scorepop{0%{transform:scale(.55);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} .finalwrap #scoreN.pop{animation:none} }
   .finalwrap .sub{color:var(--muted);font-size:16px;margin-top:8px}
   .challenge{margin-top:18px}
   .challenge .cq{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:10px}
-  .challenge .linkbtn{margin:0}
+  .challenge .linkbtn{margin:6px auto 0;justify-content:center;text-align:center;font-size:16px}
   .shared{color:var(--green);font-size:16px;margin-top:6px}
   .shared:empty{display:none}
   .copyurl{margin-top:8px;font-family:'JetBrains Mono',monospace!important;font-size:15px!important;font-weight:500!important}
@@ -190,6 +207,7 @@
   .row .pt{flex:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:#fff}
   .row.you .rk{background:var(--pink);color:#0A0A0B}
   .empty{color:var(--muted);font-size:16px;padding:12px 0;list-style:none}
+  #vpAd{padding:14px 0 0}
   .bigscreen{margin-top:22px;display:flex;gap:16px;align-items:flex-start;padding:18px;border-radius:16px;background:#1A1A1F}
   .bigscreen .tv{flex:none;width:50px;height:38px;border-radius:9px;border:2px solid rgba(255,255,255,.75);display:grid;place-items:center;position:relative;margin-top:3px}
   .bigscreen .tv::after{content:"";position:absolute;left:50%;bottom:-8px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(255,255,255,.75)}
@@ -245,6 +263,8 @@
 <script src="/app/vp-consent.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-qring.js"></script>
+<script>window.VP_SOUND_GAIN = 0.5;   /* every coaster sound at half volume (Dean, INBOX 405 update 8): vp-celebrate.js multiplies by this */</script>
+<script src="/app/vp-phonead.js"></script>   <!-- the venue's own slides at the foot of the score, as the real game -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show, "Let's play trivia", as on the trivia phone; ?sting=0 switches it off -->
 <link rel="stylesheet" href="/app/vp-podium.css"><script src="/app/vp-trivia-finale.js"></script><script src="/app/vp-podium.js"></script>
 </head>
@@ -255,6 +275,7 @@
     <div class="brand">
       <span class="word"><img id="venueLogo" class="vlogo" alt="" hidden><span class="vname" id="hdrVenueName">Coaster Trivia</span></span>
     </div>
+    <div class="vline" id="vline" hidden><span id="vlineTxt"></span></div>
     <button class="sndtoggle" id="vpqMute" type="button" aria-pressed="false" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="soundWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path id="soundX" d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="soundTxt">Sound off</span></button>
   </div>
 
@@ -262,14 +283,14 @@
   <section class="view vp-step" id="vWhere" hidden>
     <h2 class="vp-h one" id="whereHead">What venue are you at?</h2>
     <input class="vp-field" type="search" id="whereIn" maxlength="60" placeholder="Start typing your pub or club" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="search" aria-label="Your pub or club">
+    <button class="linkbtn addlink" id="notListed" type="button">Can&#8217;t find your venue? Add it</button>
     <p class="hint" id="whereHint" aria-live="polite"></p>
     <div class="picks" id="againBox" hidden></div>
     <div class="picks" id="picks" role="list"></div>
-    <button class="linkbtn" id="notListed" type="button">Can&#8217;t find your venue? Add it</button>
     <form class="addcard" id="leadForm" novalidate hidden>
       <h2>Add your venue</h2>
-      <label for="leadIn">Venue name</label><input class="vp-field" type="text" id="leadIn" maxlength="60" placeholder="e.g. The Royal Hotel" autocomplete="off" autocapitalize="words">
-      <label for="leadSuburb">Suburb</label><input class="vp-field" type="text" id="leadSuburb" maxlength="60" placeholder="e.g. Paddington" autocomplete="off" autocapitalize="words">
+      <input class="vp-field" type="text" id="leadIn" maxlength="60" placeholder="Venue name" aria-label="Venue name" autocomplete="off" autocapitalize="words">
+      <input class="vp-field" type="text" id="leadSuburb" maxlength="60" placeholder="Suburb" aria-label="Suburb" autocomplete="off" autocapitalize="words">
       <p class="cerr" id="leadErr" aria-live="polite"></p>
       <button class="btn pink" id="leadBtn" type="submit">Add it and play</button>
     </form>
@@ -289,6 +310,7 @@
       <div id="optinMobileRow" hidden><input class="vp-field" type="text" id="optinMobile" maxlength="20" placeholder="Your mobile" autocomplete="tel" inputmode="tel" aria-label="Your mobile"></div>
       <div class="optin-tick" id="optinTick"></div>
       <p class="vp-err" id="nameErr" aria-live="polite"></p>
+      <div class="vp-grow"></div>
       <button class="vp-cta" id="nameBtn" type="submit">Play</button>
     </form>
   </section>
@@ -337,6 +359,7 @@
         <a class="owner" id="ownerLink" href="/coaster">From a venue? Click here</a>
       </div>
     </div>
+    <div id="vpAd" hidden></div>   <!-- the venue's own slides, the very bottom of the score (as the real game); nothing when it has none -->
   </section>
 
   <div id="failed" hidden>
@@ -540,10 +563,10 @@ var VPCoaster = (function () {
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
 
-  /* SOUND STARTS OFF, with a visible label (396.k): a pub is loud and the phone is in a hand; one tap turns it on */
+  /* SOUND STARTS ON (INBOX 405 update 7, replacing 396.k): the Play tap unlocks the audio, a visible Sound on / Sound off switch sits top right, every sound at half volume (VP_SOUND_GAIN) */
   (function () {
     var C = window.VPCelebrate, btn = $('vpqMute');
-    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '1'); } catch (e) {}
+    try { if (window.localStorage.getItem('vpqMute') === null) window.localStorage.setItem('vpqMute', '0'); } catch (e) {}   // sound starts ON (Dean, INBOX 405 update 7): the Play tap unlocks the audio; the switch is top right
     function paint() {
       var on = C && C.muted ? !C.muted() : false;
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -605,9 +628,16 @@ var VPCoaster = (function () {
   var VIEWS = ['vName', 'vWhere', 'vPlay', 'score', 'failed'];
   function view(id) {
     document.body.setAttribute('data-view', id);
-    $('vpqMute').hidden = id !== 'vPlay';   // the sound switch lives in the header, in the game only
+    $('vpqMute').hidden = id !== 'vPlay';
+    try { if (window.VPPhoneAd) window.VPPhoneAd.show(id === 'score'); } catch (e) {}   // the sound switch lives in the header, in the game only
     VIEWS.forEach(function (v) { $(v).hidden = v !== id; });
     try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  /* the venue's name under the title, on the name step, the questions and the score (INBOX 405 update 4, item 5) */
+  function venueLine(name) {
+    var v = $('vline');
+    v.hidden = !name;
+    $('vlineTxt').textContent = name || '';
   }
   /* The header, as the trivia phone's: the venue's own logo when it is on venueplay and HQ has its logo switched on, else the name of
      the game, "Coaster Trivia", in the title spot where the real game says "Trivia". */
@@ -633,6 +663,7 @@ var VPCoaster = (function () {
   function askDetails(venueName, added) {
     var saved = recall(NAME_KEY);
     if (saved && typeof saved === 'string' && !$('nameIn').value) $('nameIn').value = saved;
+    venueLine(venueName || (S.venue && S.venue.name) || '');
     var kick = S.code ? 'You have been challenged' : venueName ? 'Playing at ' + venueName : 'Coaster Trivia';
     $('nameKick').textContent = kick; $('nameKick').hidden = !kick;
     $('addedPill').hidden = !added;
@@ -690,6 +721,7 @@ var VPCoaster = (function () {
 
   /* 2. WHERE ARE YOU PLAYING */
   function askWhere() {
+    venueLine('');
     S.optin = null; S.details = null; header(null);
     var last = recall(PLACE_KEY), box = $('againBox');
     box.textContent = '';
@@ -723,7 +755,7 @@ var VPCoaster = (function () {
     return b;
   }
   function choose(place, name, label) {
-    S.place = place;
+    S.place = place; S.venueName = name;
     remember(PLACE_KEY, { place: place, name: name, label: label || '', at: Date.now() });
     S.optin = null;
     if (!/^v:/.test(place)) return askDetails(name);
@@ -787,7 +819,7 @@ var VPCoaster = (function () {
       if (st === 400) { $('leadErr').textContent = d.error || 'Check the venue\'s details.'; if (LEAD_BOX[d.field]) $(LEAD_BOX[d.field]).focus(); return; }
       $('leadForm').hidden = true;
       /* an added venue plays on its own trivia-only board when the Worker hands one back (a real venue's stays, any other for 30 days) */
-      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null;
+      S.place = (st === 200 && d && /^c:/.test(d.place || '')) ? d.place : null; S.venue = null; S.optin = null; S.venueName = f.name;
       /* "Added", then straight on to the name: the old search and its "no venue" line are cleared */
       $('whereIn').value = ''; $('picks').textContent = ''; $('whereHint').textContent = ''; $('notListed').hidden = false;
       askDetails(f.name, st === 200);
@@ -821,6 +853,7 @@ var VPCoaster = (function () {
         var five = L.byIds(BANK, d.qids);
         if (five) {
           S.play = d.play; S.token = d.token; S.myCode = d.code; S.place = d.place; S.venue = d.venue || null; S.optin = d.optin || null;
+          try { if (window.VPPhoneAd) window.VPPhoneAd.set((d.venue && d.venue.slides) || [], (d.venue && d.venue.name) || ''); } catch (e) {}
           sendDetails();
           if (S.name !== d.name && d.name) S.name = d.name;
           return go('board', five);
@@ -853,6 +886,7 @@ var VPCoaster = (function () {
     S.mode = mode;
     if (mode === 'local') { S.play = null; }
     header(S.venue);
+    venueLine((S.venue && S.venue.name) || S.venueName || '');
     round = five; at = 0; right = 0; results = []; total = 0; ended = null; tooks = [];
     clearInterval(ticker);
     show();
@@ -952,14 +986,29 @@ var VPCoaster = (function () {
 
   /* 4. THE END */
   var boardPeriod = 'night', myTonight = 0;
+  /* THE END SHOW (INBOX 405 update 6): the real game's show system again, held as long as it holds the start (vp-sting, phone layout),
+     "THAT'S A WRAP", then the score. With ?sting=0 there is none. */
   function finish() {
     clearInterval(ticker);
+    var ST = window.VPSting;
+    if (ST && ST.on && !endShow) {
+      endShow = true; $('vPlay').classList.add('hush');
+      try { ST.start({ words: { big: 'THAT\u2019S A WRAP', small: 'COASTER TRIVIA' }, layout: 'phone' }); } catch (e) {}
+      setTimeout(function () { endShow = false; $('vPlay').classList.remove('hush'); showScore(); }, Math.round((ST.phoneSeconds || 2.3) * 1000) + 120);
+      return;
+    }
+    showScore();
+  }
+  var endShow = false;
+  function showScore() {
     view('score');
     var onBoard = S.mode === 'board' && ended && ended.score;
     $('scoreKick').textContent = L.headline(S.name, right, round.length);
     /* THE RESULT HERO before the board: the big number, "3 of 5 correct", the place tonight */
     $('score').classList.toggle('winner', false);
-    $('scoreN').textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
+    var sn = $('scoreN');
+    sn.textContent = onBoard ? ended.score.points + ' pts' : right + ' of ' + round.length;
+    sn.classList.remove('pop'); void sn.offsetWidth; sn.classList.add('pop');   // the number lands with a pop
     $('scorePts').hidden = !onBoard;
     $('scorePlace').hidden = !onBoard;
     $('board').hidden = !onBoard;
@@ -971,16 +1020,27 @@ var VPCoaster = (function () {
       $('scorePts').textContent = right + ' of ' + round.length + ' correct';
       var b = ended.board || {}, myPl = L.myPlace(b.rows, b.rank);
       myTonight = L.topTenPlace(b.rows);
-      $('scorePlace').textContent = L.placeLine(myPl, 'night', S.venue && S.venue.name);
+      var pl = $('scorePlace'), line = L.placeLine(myPl, 'night', S.venue && S.venue.name), sp = line.indexOf(' ');
+      pl.textContent = '';
+      var bb = document.createElement('b'); bb.textContent = sp > 0 ? line.slice(0, sp) : line;
+      pl.appendChild(bb); pl.appendChild(document.createTextNode(sp > 0 ? line.slice(sp) : ''));   // "4th" big in a pink chip, then "tonight at The Mini Bar"
       $('score').classList.toggle('winner', myPl === 1);
       $('scoreSub').textContent = '';
       paintBoard(b, 'night');
+      celebrate(myPl);
       /* top 3: the podium first (INBOX 313), then the board */
       if (!(window.VPPodium && window.VPPodium.show(b.rows, { title: L.podiumTitle(myPl), onDone: toMyRow }))) toMyRow();
     } else {
       $('scoreSub').textContent = L.doneLine(L.roundSecs(tooks)) + ' ' + (right === round.length ? 'A perfect round. Beat the table?'
         : right >= 3 ? 'Not bad at all. Beat the table?' : 'Five fresh questions are one tap away.');
     }
+  }
+  /* the game's own confetti (vp-celebrate): a bigger burst for the top three, a small one for everyone else; none with reduced motion */
+  function celebrate(place) {
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (window.VPCelebrate && window.VPCelebrate.burst) window.VPCelebrate.burst(document.body, place > 0 && place <= 3 ? 48 : 22, { className: 'cfetti' });
+    } catch (e) {}
   }
   function toMyRow() { try { window.scrollTo(0, 0); } catch (e) {} }   // the result hero first, the board under it (never scrolled past the score)
   function paintBoard(b, period) {

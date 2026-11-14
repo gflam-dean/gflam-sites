@@ -175,13 +175,15 @@ pass("Share (396 update 2): 'Want to challenge your mates?' then ONE pink Share 
 pass("equal scores share a place (725 and 725 are both 1st, the next is 3rd), and your own place follows it", L.sharedPlaces([{ place: 1, points: 725 }, { place: 2, points: 725 }, { place: 3, points: 580 }]).join() === "1,1,3" &&
   L.myPlace([{ place: 1, points: 725 }, { place: 2, points: 725, you: true }], 2) === 1);
 pass("the reveal beat: 'The answer was B' and 'Time's up. The answer was B.'", L.verdict(false, 0, "B").text === "The answer was B" && L.verdict(null, 0, "B").text === "Time's up. The answer was B." && L.verdict(true, 120, "B").text === "Correct!");
-pass("the sting plays before question 1 and the round starts after it (Worker clock); sound starts off with a label",
-  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /if \(ST && ST\.on && !startShow\) \{/.test(PAGE) && /setItem\('vpqMute', '1'\)/.test(PAGE) && /id="soundTxt">Sound off</.test(PAGE));
+pass("the sting plays before question 1 and the round starts after it (Worker clock); sound starts ON (update 7) at half volume (update 8) with the switch top right",
+  /<script src="\/app\/vp-sting\.js"><\/script>/.test(PAGE) && /ST\.start\(\{ words: ST\.phoneWords\('TRIVIA'\), layout: 'phone' \}\)/.test(PAGE) && /if \(ST && ST\.on && !startShow\) \{/.test(PAGE) && /setItem\('vpqMute', '0'\)/.test(PAGE) && /id="soundTxt">Sound on</.test(PAGE) === false && /window\.VP_SOUND_GAIN = 0\.5/.test(PAGE));
 
 print("\nA PUBLIC PAGE'S RULES");
 var css = PAGE.slice(PAGE.indexOf("<style>"), PAGE.indexOf("</style>"));
 var small = (css.match(/font-size:\s*(\d+(?:\.\d+)?)px/g) || []).filter(function (x) { return parseFloat(x.replace(/[^\d.]/g, "")) < 15; });
-pass("nothing on the page is under 15px", small.length === 0, small);
+/* the one exception is Dean's own: "Can't find your venue? Add it" is 3/4 the size of the search placeholder (INBOX 405 update 4) */
+var addlink = /\.addlink\{font-size:12px;/.test(css);
+pass("nothing on the page is under 15px (but the Add it link, 12px at Dean's word, and the offers line that shrinks to fit)", small.length === (addlink ? 1 : 0) && (!addlink || small[0] === "font-size:12px"), small);
 var text = PAGE.replace(/<!--[\s\S]*?-->/g, "").replace(/<script[\s\S]*?<\/script>/g, function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, ""); });
 pass("'From a venue? Click here' goes to /coaster, today's offer, never the home page", /<a class="owner" id="ownerLink" href="\/coaster">From a venue\? Click here<\/a>/.test(PAGE));
 pass("the games are named in order: trivia, musical bingo, bingo", /Trivia, musical bingo and bingo on the pub TV/.test(PAGE) && !/Trivia, bingo and musical bingo/.test(PAGE));
@@ -205,9 +207,9 @@ pass("the venue first, then the details: picking a venueplay venue asks the Work
   /else askWhere\(\);   \/\/ the venue first/.test(PAGE));
 pass("a ticked sign-up carries consent_version; no tick, no consent recorded", /cap\.marketing_optin = !!\(window\.VPConsent && window\.VPConsent\.optedIn\(cap\)\);\n      if \(cap\.marketing_optin\) cap\.consent_version = window\.VPConsent\.VERSION;/.test(det.concat(PAGE.slice(PAGE.indexOf("  $('nameForm').addEventListener"), PAGE.indexOf("  function sendDetails()")))));
 pass("the details go to /coaster/optin only once the round has started there (its secret proves the round), then are dropped from the page",
-  /S\.optin = d\.optin \|\| null;\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
+  /S\.optin = d\.optin \|\| null;\n[^\n]*VPPhoneAd[^\n]*\n          sendDetails\(\);/.test(PAGE) && /var c = S\.details;\n    S\.details = null;\n    if \(!c \|\| !S\.play \|\| !S\.optin\) return;/.test(PAGE));
 pass("an added venue is sent to /coaster/lead and the round starts with NO place (no board from typed text)",
-  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
+  /call\('POST', '\/coaster\/lead', f, /.test(PAGE) && /S\.place = \(st === 200 && d && \/\^c:\/\.test\(d\.place \|\| ''\)\) \? d\.place : null; S\.venue = null; S\.optin = null; S\.venueName = f\.name;\n[^\n]*\n[^\n]*\n      askDetails\(f\.name, st === 200\);/.test(PAGE) && !/choose\(d\.place/.test(PAGE));
 pass("the page says nothing untrue or off-brand (396): no '60-second trivia', no lowercase 'Coaster trivia' eyebrow, no Gflam in the foot, no top header bar",
   !/60-second/i.test(PAGE) && !/Coaster trivia/.test(PAGE) && !/Gflam/.test(PAGE) && !/<header>/.test(PAGE));
 pass("INBOX 405: no footer at all (no Help, Privacy or Terms, no (c) line, no divider above our logo); the game's own header says COASTER TRIVIA in the title spot; no pink glow or gradient",
@@ -215,6 +217,23 @@ pass("INBOX 405: no footer at all (no Help, Privacy or Terms, no (c) line, no di
   /<div class="ptop">/.test(PAGE) && /<div class="pfoot" id="footMark">/.test(PAGE) && !/radial-gradient|linear-gradient/.test(css) && !/shadow:[^;}]*(255,31,142|var\(--pink\))/.test(css));
 pass("under the title, '5 questions, 20 seconds each' is the one honest line (396.a), and the search box carries its own placeholder (396.2)",
   /5 questions, 20 seconds each/.test(PAGE) && /placeholder="Start typing your pub or club"/.test(PAGE));
+print("\nINBOX 405 UPDATES 4 TO 8");
+pass("4.1 'Can't find your venue? Add it' sits straight under the search box (before the hint line), 3/4 the placeholder's size (12px of 16px), its tap area reaching past the text",
+  PAGE.indexOf('id="whereIn"') < PAGE.indexOf('id="notListed"') && PAGE.indexOf('id="notListed"') < PAGE.indexOf('id="whereHint"') && /#whereIn::placeholder\{font-size:16px\}/.test(css) && /\.addlink\{font-size:12px;/.test(css) && /\.addlink::before\{content:"";position:absolute;left:0;right:0;top:-10px;bottom:-10px\}/.test(css));
+pass("4.2 Add your venue is compact: no labels, two small fields and a small button (42px), a 15px heading",
+  !/<label for="lead/.test(PAGE) && /\.addcard \.vp-field\{[^}]*min-height:42px/.test(css) && /\.addcard \.btn\{[^}]*min-height:42px/.test(css) && /\.addcard h2\{[^}]*font-size:15px/.test(css));
+pass("4.3 buttons are smaller than before everywhere (48px, 17px, the join step's pill; ghost 44px)", /\.btn,\.vp-step \.vp-cta\{[^}]*min-height:48px;[^}]*font-size:17px/.test(css) && /\.btn\.ghost\{[^}]*min-height:44px/.test(css));
+pass("4.4 Play sits low on the details step, the real join step's way (a growing spacer before it)", /<div class="vp-grow"><\/div>\s*<button class="vp-cta" id="nameBtn"/.test(PAGE) && /#nameForm \.vp-grow\{flex:1/.test(css));
+pass("4.5 the venue's name sits under the title on the name step, the questions and the score (venueLine), the logo in the header when it has one",
+  /<div class="vline" id="vline" hidden>/.test(PAGE) && /function venueLine\(name\)/.test(PAGE) && /venueLine\(venueName \|\| \(S\.venue && S\.venue\.name\) \|\| ''\);/.test(PAGE) && /venueLine\(\(S\.venue && S\.venue\.name\) \|\| S\.venueName \|\| ''\);/.test(PAGE) && /img\.onload = function \(\) \{\n        img\.hidden = false; nm\.hidden = true;/.test(PAGE));
+pass("4.6 the score is a bigger moment: the number pops in, the place stands out as a big chip, the game's confetti (vp-celebrate) bursts, Copy link is centred under Share",
+  /#scoreN\.pop\{animation:scorepop/.test(css) && /\.placeline b\{[^}]*font-size:40px/.test(css) && /window\.VPCelebrate\.burst\(document\.body, place > 0 && place <= 3 \? 48 : 22, \{ className: 'cfetti' \}\)/.test(PAGE) && /\.challenge \.linkbtn\{margin:6px auto 0;justify-content:center/.test(css));
+pass("4.7 the venue's own ad is the very bottom of the score (the last thing in it, before our logo), set from the round's venue and shown on the score only; the page loads vp-phonead.js and vp-tonight.css",
+  PAGE.indexOf('id="vpAd"') > PAGE.indexOf('class="bigscreen"') && /<div id="vpAd" hidden><\/div>[^\n]*\n  <\/section>/.test(PAGE) && /VPPhoneAd\.set\(\(d\.venue && d\.venue\.slides\) \|\| \[\]/.test(PAGE) && /VPPhoneAd\.show\(id === 'score'\)/.test(PAGE) && /<script src="\/app\/vp-phonead\.js"><\/script>/.test(PAGE) && /vp-tonight\.css/.test(PAGE));
+pass("6 the END show: the real game's phone show again before the score, \"THAT'S A WRAP\", held as long as the start show (phoneSeconds + 120 ms), the question screen hushed behind it; none with ?sting=0",
+  /if \(ST && ST\.on && !endShow\) \{/.test(PAGE) && /words: \{ big: 'THAT\\u2019S A WRAP', small: 'COASTER TRIVIA' \}, layout: 'phone'/.test(PAGE) && /\(ST\.phoneSeconds \|\| 2\.3\) \* 1000\) \+ 120\);\n      return;\n    \}\n    showScore\(\);/.test(PAGE));
+pass("8 every coaster sound is at half volume: the page sets VP_SOUND_GAIN 0.5 and vp-celebrate.js multiplies each sound by it (unchanged where no page sets it)",
+  /window\.VP_SOUND_GAIN = 0\.5/.test(PAGE) && /root\.VP_SOUND_GAIN > 0 \? root\.VP_SOUND_GAIN : 1/.test(find("venueplay/app/vp-celebrate.js")));
 pass("the end has no second sign-up card", PAGE.indexOf('id="optinCard"') < 0);
 
 print("\nONE SOUND PLAYER, A NAMED SLOT PER MOMENT (INBOX 317/318)");
