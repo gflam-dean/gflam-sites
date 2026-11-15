@@ -14,6 +14,10 @@ song is played, and with a phone's claim in:
   - the Claims heading and the claim queue's first box (the empty note, or the claim's name line) are inside it
   - the settings are behind one closed "Settings" control (#hostSettings) and that control sits BELOW the claim
     queue, never above it (put the rows back on top of the Claims and this goes red)
+  - "This song did not work" is NOT in Settings: it is a mid-game action, on the main view under Play song and
+    above the Claims, wholly on screen, and live once a song has played (Dean, 16 Nov 2026)
+  - when the TV has no sound (the rig's headless TV), its question reads as one sentence with Yes and No side by
+    side on a row of their own under it, never "this device? [Yes] [No]" squeezed onto the last line
 
 and that the settings still work from there: opened, the "TV reveals" select is on screen and a change saves it
 for the next game (vpMusicReveal), and the volume slider still saves (vpMusicVolume).
@@ -65,7 +69,12 @@ MEASURE = r'''(function(){
     head:R(document.getElementById("claimHead")), first:R(top), firstText: first ? first.textContent.replace(/\s+/g," ").trim().slice(0,60) : null,
     queue:R(q), settings:R(hs), summary:R(sum), summaryText: sum ? sum.textContent.replace(/\s+/g," ").trim() : null, open: hs ? !!hs.open : null,
     reveal:V(document.getElementById("revealSelLive")), vol:V(document.getElementById("volRange")), monitor:V(document.getElementById("monitorBtn")),
-    flag:V(document.getElementById("flagSongBtn")), spotify:V(document.getElementById("spotifyBtn")) });
+    flag:V(document.getElementById("flagSongBtn")), flagOff:!!(document.getElementById("flagSongBtn")||{}).disabled, spotify:V(document.getElementById("spotifyBtn")),
+    /* the TV-sound question (the rig's headless TV has no sound): the sentence, then Yes and No together on a row of their own */
+    sound:(function(){ var n=document.getElementById("tvAudioNote"); if(!n || n.classList.contains("hidden")) return null;
+      var y=document.getElementById("tvSoundYes"), no=document.getElementById("tvSoundNo"), t=n.firstChild, rr=null;
+      if(t && t.nodeType===3){ var g=document.createRange(); g.selectNodeContents(t); var rs=g.getClientRects(); if(rs.length) rr=rs[rs.length-1]; }
+      return { text:n.textContent, yes:R(y), no:R(no), textBottom: rr ? Math.round(rr.bottom) : null, note:R(n) }; })() });
 })()'''
 
 ERRT = '((document.getElementById("hostErrText")||{}).textContent||"")+" | "+JSON.stringify(window.__errs)'
@@ -104,7 +113,17 @@ def fits(r, sid, state, first_has):
         ok(tag + ': the Claims heading and the first claim line (%s) are on screen' % first_has,
            bool(hd) and bool(f) and hd['top'] >= 0 and f['bottom'] <= m['h'] and first_has in (m.get('firstText') or ''), m)
         ok(tag + ': the settings are closed, behind one "Settings" control', m['open'] is False and bool(m['summary'])
-           and (m['summaryText'] or '').startswith('Settings') and not any(m[k] for k in ('reveal', 'vol', 'monitor', 'flag', 'spotify')), m)
+           and (m['summaryText'] or '').startswith('Settings') and not any(m[k] for k in ('reveal', 'vol', 'monitor', 'spotify')), m)
+        fl = m.get('flag')
+        ok(tag + ': "This song did not work" is on the main view, under Play song and above the Claims, wholly on screen (16 Nov 2026)',
+           bool(fl) and bool(p) and bool(hd) and fl['top'] >= p['bottom'] and fl['bottom'] <= hd['top'] and fl['bottom'] <= m['h'], m)
+        if state != 'start':
+            ok(tag + ': and with a song played it can be tapped', m.get('flagOff') is False, m)
+        so = m.get('sound')
+        if so:
+            ok(tag + ': the TV-sound question reads as one sentence, then Yes and No side by side on their own row under it',
+               bool(so['yes']) and bool(so['no']) and so['textBottom'] is not None and so['yes']['top'] >= so['textBottom'] - 1
+               and abs(so['yes']['top'] - so['no']['top']) <= 1 and so['note']['bottom'] <= (hd or {}).get('top', 0), so)
         ok(tag + ': and that control sits below the claim queue, never above the Claims',
            bool(s) and bool(m.get('queue')) and bool(hd) and s['top'] >= m['queue']['bottom'] and s['top'] > hd['bottom'] and bool(p) and s['top'] > p['bottom'], m)
 

@@ -359,6 +359,12 @@
     body.vp-live #bingoView .runpanel{padding:10px 12px}
     body.vp-live #bingoView .stat{margin-bottom:6px}
     body.vp-live #bingoView .stat .box{padding:6px 10px}
+    /* the three stat boxes say "2 of 90" and "One line" in full on a 375 px phone, never "2 of ..." / "One li..." (16 Nov 2026):
+       a smaller mono value that may wrap, and labels without the wide letter spacing */
+    body.vp-live #bingoView .stat{gap:6px}
+    body.vp-live #bingoView .stat .box{min-width:0;padding:6px 8px}
+    body.vp-live #bingoView .stat .box .k{font-size:13px;letter-spacing:0}
+    body.vp-live #bingoView .stat .box .v{font-size:16px!important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.2}
     body.vp-live #bingoView .lastball{padding:8px 10px;margin-bottom:6px}
     body.vp-live #bingoView .lbval{width:72px;height:72px;margin:4px auto;font-size:36px}
     body.vp-live #bingoView .prevballs{margin-top:4px}

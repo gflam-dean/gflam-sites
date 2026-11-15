@@ -202,6 +202,10 @@
   #flagSongBtn.done{border-color:rgba(255,194,75,.5);color:var(--gold)}
   .paperplay{margin-top:10px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .paperchg{background:none;border:0;padding:6px 2px;min-height:36px;color:#FF8CC6;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+  /* THE "NO SOUND ON THE TV" QUESTION READS AS ONE SENTENCE, THEN ITS TWO ANSWERS ON THEIR OWN ROW (16 Nov 2026): the words
+     are one text node and Yes / No are appended after it, so as a wrapping flex box the sentence takes the whole first line
+     and the buttons sit together under it, never "this device? [Yes] [No]" squeezed onto the last line. */
+  #tvAudioNote{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
   .clipwarn{margin-top:10px;font-size:12px;color:var(--roll);background:rgba(245,165,36,.1);border:1px solid rgba(245,165,36,.28);border-radius:9px;padding:9px 11px;line-height:1.45}
   .spotrow{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
   .spotrow .btn{flex:1;min-width:120px}
@@ -231,6 +235,8 @@
     body.vp-live .audioctl{margin-top:9px}
     body.vp-live .audioctl .btn{min-height:48px}
     body.vp-live .prizeline2{margin:0 0 8px}
+    body.vp-live #flagSongBtn{min-height:42px;margin-top:8px}
+    body.vp-live .clipwarn{margin-top:8px;padding:8px 10px}
   }
 
   /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
@@ -429,6 +435,10 @@
               <button class="btn pink" id="playNextBtn">Play song</button>
               <button class="btn ghost wide" id="revealBtn" disabled>Reveal on TV now</button>
             </div>
+            <!-- MID-GAME, SO ON THE MAIN VIEW (Dean, 16 Nov 2026): a song that died in the room is flagged at once, never from
+                 inside Settings. Same id, same handler, same one vote per venue. -->
+            <button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>&#9873; This song did not work</button>
+            <div class="flagnote hidden" id="flagNote"></div>
             <div class="clipwarn hidden" id="tvAudioNote" role="status"></div>
             <div class="clipwarn hidden" id="clipWarn">No clip for this one. Play it yourself through your sound system. It is already marked as called, and the TV reveals it when you tap Reveal on TV now.</div>
           </div>
@@ -451,7 +461,7 @@
                monitor, flag a song and the Spotify links fold behind one closed "Settings" control BELOW the Claims.
                Same rows, same ids, same handlers, same saved values. -->
           <details class="hostset" id="hostSettings">
-            <summary><span>Settings<small class="hostset-sub">TV reveals, room volume, sound here, flag a song, Spotify links</small></span></summary>
+            <summary><span>Settings<small class="hostset-sub">TV reveals, room volume, sound here, Spotify links</small></span></summary>
             <div class="hostset-body">
                 <div class="liveopts">
                   <label for="revealSelLive">TV reveals
@@ -471,8 +481,6 @@
                   <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
                 </div>
                 <button class="btn ghost vp-wbtn" id="monitorBtn">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
-                <button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>&#9873; This song did not work</button>
-                <div class="flagnote hidden" id="flagNote"></div>
                 <div class="spotrow">
                   <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
                   <span class="copyok hidden" id="spotifyOk">Copied</span>
@@ -2131,7 +2139,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     var y=document.createElement("button"), no=document.createElement("button");
     y.type="button"; y.id="tvSoundYes"; y.className="btn pink"; y.textContent="Yes";
     no.type="button"; no.id="tvSoundNo"; no.className="btn ghost"; no.textContent="No";
-    y.style.cssText=no.style.cssText="width:auto;min-width:72px;padding:8px 16px;margin:8px 8px 0 0";
+    y.style.cssText=no.style.cssText="width:auto;min-width:88px;min-height:40px;padding:6px 18px;margin:0";
     y.addEventListener("click", tvSoundYes); no.addEventListener("click", tvSoundNo);
     n.appendChild(y); n.appendChild(no);
   }

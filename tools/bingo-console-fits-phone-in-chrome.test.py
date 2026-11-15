@@ -14,6 +14,8 @@ couple of balls and again with the phone's BINGO call in the queue:
   - the claim queue heading and its first box (the empty note, or the claim's name line) are inside it
   - the early-calls switch is behind one closed "Settings" control (#hostSettings), and that control sits BELOW
     the claim queue, never above it (put the row back on top and this goes red)
+  - the Called, Pattern and Playing boxes paint their values in full ("2 of 90", "One line"), never cut to
+    "2 of ..." / "One li..." at 375 px (16 Nov 2026)
 
 and that the switch still works from there: opened, it is on screen, ticked (as set before the game), and a tap
 turns early calls off for the setup box too (the same G.allowEarly), and back on.
@@ -58,7 +60,10 @@ MEASURE = r'''(function(){
     next:R(document.getElementById("nextBtn")), ball:R(document.getElementById("lastBallVal")),
     head:R(document.getElementById("claimLbl")), first:R(top), firstText: first ? first.textContent.replace(/\s+/g," ").trim().slice(0,80) : null,
     queue:R(q), settings:R(hs), summary:R(sum), summaryText: sum ? sum.textContent.replace(/\s+/g," ").trim() : null, open: hs ? !!hs.open : null,
-    early:V(document.getElementById("allowEarlyLiveRow")) });
+    early:V(document.getElementById("allowEarlyLiveRow")),
+    /* the three stat boxes: each value painted in full, never cut to "2 of ..." / "One li..." (16 Nov 2026) */
+    stats:[].map.call(document.querySelectorAll("#liveStats .box .v"),function(v){ var b=v.getBoundingClientRect(), bx=v.parentNode.getBoundingClientRect();
+      return { id:v.id, text:v.textContent, cut:v.scrollWidth>v.clientWidth+1, inBox:b.left>=bx.left-1 && b.right<=bx.right+1 && b.bottom<=bx.bottom+1, h:Math.round(b.height) }; }) });
 })()'''
 
 
@@ -92,6 +97,10 @@ def fits(r, sid, state, first_has):
            bool(hd) and bool(f) and hd['top'] >= 0 and f['bottom'] <= m['h'] and first_has in (m.get('firstText') or ''), m)
         ok(tag + ': early calls are behind one closed "Settings" control', m['open'] is False and bool(m['summary'])
            and (m['summaryText'] or '').startswith('Settings') and m['early'] is None, m)
+        st = m.get('stats') or []
+        ok(tag + ': the Called, Pattern and Playing boxes show their values in full ("2 of 90", "One line"), nothing cut short',
+           len(st) == 3 and all(not x['cut'] and x['inBox'] for x in st)
+           and any(x['id'] == 'liveCount' and ' of 90' in x['text'] for x in st) and any(x['id'] == 'livePattern' and x['text'] == 'One line' for x in st), st)
         ok(tag + ': and that control sits below the claim queue, never above Next number',
            bool(s) and bool(m.get('queue')) and bool(n) and s['top'] >= m['queue']['bottom'] and s['top'] > n['bottom'], m)
 
