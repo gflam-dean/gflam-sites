@@ -72,6 +72,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('and the console is told to show it', C.G.noPlayersNote === true);
   show('no error bar at all', C.errors.length === 0, JSON.stringify(C.errors));
   show('the TV is sent "nobody", not a podium or a board', C.types() === 'nobody', C.types());
+  show('the real end: no between flag, so the TV says Thanks for playing', C.sent[0] && C.sent[0].between !== true, JSON.stringify(C.sent[0]));
   show('the night is not ended, so the button stays for a late joiner', C.G.status === 'reveal', C.G.status);
   show('the console repainted', C.renders() >= 1);
 
@@ -110,6 +111,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('reveal went to the TV first', C.types() === 'reveal', C.types());
   C.timers.forEach(function (f) { f(); });
   show('with nobody joined the 5 second follow-up is the calm state, not an empty board', C.types() === 'reveal,nobody', C.types());
+  show('and it says between:true, so the TV keeps the game going, never "Thanks for playing" (Dean, 15 Nov 2026)', C.sent[1] && C.sent[1].between === true, JSON.stringify(C.sent[1]));
 
   C = makeConsole({ players: 3, qseq: 3, fetchBoard: [{ name: 'A', points: 100 }] });
   C.G.status = 'question'; C.reveal(); await flush();
@@ -130,6 +132,31 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   var BLOCK = bi < 0 || bj < 0 ? '' : SCREEN.slice(bi, bj).replace(/\/\*[\s\S]*?\*\//g, '');   // the TV's own handler, comments left out
   show('the TV has a handler for it', BLOCK.length > 50);
   show('the TV paints "Thanks for playing" for it', /renderBoardPaged\("Thanks for playing", \[\]\)/.test(BLOCK), BLOCK.slice(0, 120));
+  /* BETWEEN QUESTIONS (Dean, 15 Nov 2026): the TV's own handlers, run on a fake wall. */
+  var fnB = (function(){ var i=SCREEN.indexOf('function betweenJoin('); if(i<0) return ''; var dd=0,k=SCREEN.indexOf('{',i); do{ if(SCREEN[k]==='{')dd++; else if(SCREEN[k]==='}')dd--; k++; }while(dd>0); return SCREEN.slice(i,k); })();
+  show('the TV has betweenJoin()', fnB.length > 50);
+  var wi = SCREEN.indexOf('else if(m.t==="nobody" && m.between===true)');
+  show('the TV sends a between:true "nobody" to betweenJoin, before the Thanks for playing branch', wi > 0 && wi < bi && /betweenJoin\(\)/.test(SCREEN.slice(wi, wi + 120)));
+  var li = SCREEN.indexOf('else if(m.t==="leaderboard"){'), lj = SCREEN.indexOf('else if(m.t==="nobody"', li);
+  var LB = SCREEN.slice(li, lj);
+  show('an empty non-final leaderboard goes to betweenJoin, never an empty board', /!\(Array\.isArray\(m\.rows\) && m\.rows\.length\) && !\/\^final\/i\.test\(String\(m\.title\|\|""\)\)\)\{ betweenJoin\(\); return; \}/.test(LB) &&
+       LB.indexOf('betweenJoin') < LB.indexOf('renderBoardPaged'));
+  var ri = SCREEN.indexOf('function renderReveal('), rr = SCREEN.slice(ri, SCREEN.indexOf('function renderRows(', ri));
+  show('the TV\'s own roll to the board after a reveal goes to betweenJoin when the board is empty', /if\(!_lb\.length\)\{ betweenJoin\(\); return; \}/.test(rr));
+  /* run the TV's real betweenJoin() on a fake wall */
+  var R = (function (SRC) {
+    var els = {}; function $(id){ return els[id] || (els[id] = { id:id, textContent:'' }); }
+    var shown = '', state = { phase:'reveal' }, boardRollTimer = 7, celebrateTimer = null;
+    function show(w){ shown = w; } function renderLobby(){ $('lobbySub').textContent = 'Grab your phone and join, the quiz is about to start'; }
+    function clearTimeout(){} function clearInterval(){}
+    eval(SRC + ';betweenJoin();');
+    return { shown: shown, phase: state.phase, sub: $('lobbySub').textContent, roll: boardRollTimer, title: $('tvBoardTitle').textContent };
+  })(fnB);
+  show('betweenJoin puts up the join screen (the lobby layer, its QR and code)', R.shown === 'tvLobby', R.shown);
+  show('with "Next question coming up", never "Thanks for playing"', /^Next question coming up\./.test(R.sub) && !/thanks/i.test(R.sub + R.title), R.sub);
+  show('and stops the roll to the board, so no empty Leaderboard follows', R.roll === null);
+  show('the phase is not "lobby", so a late host_here or session message does not repaint "the quiz is about to start"', R.phase !== 'lobby', R.phase);
+
   show('and it never paints an error word on the wall for it', !/could not|error|failed|connection/i.test(BLOCK), BLOCK);
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });
 drainMicrotasks();

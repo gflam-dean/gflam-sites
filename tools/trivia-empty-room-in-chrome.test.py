@@ -7,8 +7,8 @@ wrong: the connection was fine and there were simply no players. This opens a RE
 (a signed-in trivia host and tv.html on the venue's link, the real game Worker in jsc), plays a two-question
 quiz with no phones, and checks what the host reads and what the wall paints:
 
-  - the between-question auto leaderboard, with nobody joined: the TV shows "Thanks for playing" and the
-    join code for next time, never an empty Leaderboard
+  - the between-question auto leaderboard, with nobody joined: the TV shows the join screen with "Next
+    question coming up" (Dean, 15 Nov 2026), never "Thanks for playing" and never an empty Leaderboard
   - Reveal leaderboard with nobody joined: the console says, plainly, "Nobody has joined this game yet, so
     there are no scores to show. Players join with the code on the TV.", the red error bar stays down, and
     the TV shows the same calm end state with no error word on it
@@ -100,12 +100,18 @@ def play():
 
         # 1. THE BETWEEN-QUESTION AUTO LEADERBOARD, with nobody joined
         print('the between-question leaderboard, nobody joined')
-        ok('the TV shows "Thanks for playing" after the 5 second wait, not an empty Leaderboard',
-           r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var t=d&&d.getElementById("tvBoardTitle"); return !!t && /Thanks for playing/.test(t.textContent) && !d.getElementById("tvBoard").classList.contains("hidden");})()', 25) is True,
+        # Dean, 15 Nov 2026 (The Mini Bar): "the screen says thanks for playing between questions", and a LEADERBOARD
+        # title with nothing under it. Between questions the game is not over: the join screen, "Next question coming up".
+        ok('after the 5 second wait the TV shows the join screen with "Next question coming up"',
+           r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var l=d&&d.getElementById("tvLobby"), s=d&&d.getElementById("lobbySub"); return !!l && !l.classList.contains("hidden") && !!s && /Next question coming up/.test(s.textContent);})()', 25) is True,
            r.ask(tv, TV))
+        time.sleep(1.5)   # past both 5.2 s timers (the console's and the TV's own roll to the board): nothing replaces it
         w = r.json(tv, TV)
-        ok('  on the board layer, no score rows, the join code for next time in the corner', w.get('layer') == 'tvBoard' and w.get('rows') == 0 and w.get('join') is True
-           and len(w.get('joinCode') or '') == 6, w)
+        ok('  still the join screen a beat later: never "Thanks for playing", never an empty Leaderboard',
+           w.get('layer') == 'tvLobby' and 'thanks for playing' not in (w.get('text') or '').lower(), w)
+        ok('  the board layer is not up with an empty title', w.get('layer') != 'tvBoard', w)
+        fit = r.json(tv, '(function(){var d=document.getElementById("gameFrame").contentDocument, q=d.getElementById("qrBig"), c=d.getElementById("lobbyCode"); var de=d.documentElement; return JSON.stringify({qr: !!q && q.getBoundingClientRect().width>100, code: c?c.textContent:"", scroll: de.scrollHeight>de.clientHeight+1 || de.scrollWidth>de.clientWidth+1});})()')
+        ok('  its QR and the 6-letter code are up, and it fits one screen with no scroll', fit.get('qr') is True and len(fit.get('code') or '') == 6 and fit.get('scroll') is False, fit)
         ok('  no error words on the wall', not any(x in (w.get('text') or '').lower() for x in ('could not', 'error', 'failed', 'check your connection')), w.get('text'))
         if SHOTS: r.shot(tv, os.path.join(SHOTS, 'no-players-auto-board-1920.jpg'))
 

@@ -1452,7 +1452,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 29,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -1656,7 +1656,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
-  "checks": 22,
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/trivia-join-in-chrome.test.py": {

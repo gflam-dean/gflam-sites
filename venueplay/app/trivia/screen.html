@@ -750,10 +750,22 @@
        leaderboard between rounds off (Game settings, INBOX 78): the console then says board:false. */
     if(m.board!==false) boardRollTimer=setTimeout(function(){
       /* Never in the sales-page demo: its script puts the scores up only at the end of the round (7 Nov 2026). */
-      if(state.phase==="reveal" && !VP_DEMO){ show("tvBoard"); renderBoardPaged("Leaderboard", m.leaderboard||[]); }
+      if(state.phase==="reveal" && !VP_DEMO){ var _lb=m.leaderboard||[]; if(!_lb.length){ betweenJoin(); return; } show("tvBoard"); renderBoardPaged("Leaderboard", _lb); }
     }, 5200);
   }
 
+  /* BETWEEN QUESTIONS WITH NOBODY ON THE BOARD (Dean, 15 Nov 2026, The Mini Bar: "the screen says thanks for playing
+     between questions", and a LEADERBOARD title with nothing under it). The game is not over, so the wall never says
+     Thanks for playing here and never puts up an empty board: it shows the join screen, its QR and code, with
+     "Next question coming up". Thanks for playing is only the real end (a "nobody" message without between:true). */
+  function betweenJoin(){
+    state.phase="leaderboard";
+    if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+    if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; }
+    show("tvLobby");
+    renderLobby();
+    $("lobbySub").textContent="Next question coming up. Scan to join in";
+  }
   function renderRows(container, rows, limit){
     container.innerHTML="";
     var n=Math.min(limit, rows.length), ranks=sharedRanks(rows);
@@ -1235,12 +1247,15 @@
          announced (6 Nov 2026). This used to be held back 9 seconds behind a podium that finish() sent in the same breath as the
          scores, which is how the leaderboard came up before the podium. Nothing is held now. */
       if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; }
+      /* An empty board between questions is never painted: a title with nothing under it (15 Nov 2026). */
+      if(!(Array.isArray(m.rows) && m.rows.length) && !/^final/i.test(String(m.title||""))){ betweenJoin(); return; }
       if(/^final/i.test(String(m.title||""))) triviaEndShow(m.rows, "FINAL SCORES");   // Punters Reckon ends on its final scores, with no podium
       state.phase="leaderboard";
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
       show("tvBoard");
       renderBoardPaged(m.title||"Leaderboard", m.rows||[]);
     }
+    else if(m.t==="nobody" && m.between===true){ betweenJoin(); }   // between questions: the game goes on (15 Nov 2026)
     else if(m.t==="nobody"){
       /* NOBODY JOINED (6 Nov 2026): a calm end state, never an error and never an empty board. The join corner
          (shown on every board) carries the QR and code for next time. */

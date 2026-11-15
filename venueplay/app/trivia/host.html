@@ -1370,8 +1370,9 @@
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
       if(!isLast && G.roundBoard!==false){ setTimeout(function(){ if(G.status==="reveal"){
-        /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
-        if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
+        /* No players: never an empty board, and never "Thanks for playing" between questions (Dean, 15 Nov 2026):
+           between:true puts the join screen up with "Next question coming up". The real end sends it without. */
+        if(!G.board.length && playerCount()===0){ bcast({ t:"nobody", between:true }); }
         else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
       } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
