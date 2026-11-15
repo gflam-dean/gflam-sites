@@ -479,6 +479,9 @@
       <p class="vp-wait" id="waitNote">The game will start here when the host is ready.</p>
     </div></div>
     <div class="vpt hidden" id="vpTonight"></div>
+    <!-- WHICH GAME IS ON IS ASKED FIRST (live play, 15 Nov 2026): a phone that has played here before used to say "You're in,
+         Next Bingo Tonight" while a TRIVIA lobby was open, until the lookup moved it. Until the Worker has answered, this. -->
+    <div class="vp-in hidden" id="waitFind" role="status"><div class="vp-h" style="font-size:40px">One moment</div><p class="vp-wait">Finding tonight&#39;s game here&hellip;</p></div>
   </div>
 
   <!-- CARD: the called number in a ring with the last five, then up to three tickets (closest first), then the claim -->
@@ -904,7 +907,7 @@
   // pid/name are only cosmetic (the host roster + count). token/sessionId/gameId
   // are the real server identity/handles; the ticket + verdict come from the Worker.
   var P={
-    room:"", pid:"", name:"", joined:false, hostSeen:false,
+    room:"", pid:"", name:"", joined:false, hostSeen:false, fmtKnown:false,
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, paidMode:"", assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
@@ -1175,6 +1178,12 @@
     /* THE PLAIN LOBBY (nothing else to say) is the shared round 7 layout (Dean, 6 Nov 2026). */
     var plain = !P.droppedClaim && !P.active && !(P.stageWins && P.stageWins.length);
     var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(plain && tn && inb && typeof VPTonight==="object");
+    /* NOT "BINGO" UNTIL IT IS BINGO (live play, 15 Nov 2026): the plain lobby names this page's game, and a phone off the TV's
+       QR lands here first whatever is open. Until the first lookup says what is on (fmtSettled), the lobby waits behind
+       "Finding tonight's game here"; a trivia or musical night moves the phone on before bingo is ever named. */
+    var finding=!!(plain && !P.fmtKnown), fb=$("waitFind");
+    if(fb) fb.classList.toggle("hidden", !finding);
+    if(finding){ if(tn) tn.classList.add("hidden"); if(inb) inb.classList.add("hidden"); show("vWait"); return; }
     if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
     if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; setTimeout(loadJoinInfo, 1500); }   // once in: the week and the ad, after the seat
     if(useT) VPTonight.lobby(tn, { name:P.name, me:"bingo", prize:"", week:P.week, nights:P.nights, games:P.games, events:P.events, wait:"Waiting for the host to start the game. Your card will appear here." });
@@ -2493,6 +2502,11 @@
     try{ var nm=(($("nameIn")||{}).value||"").trim() || String(P.name||"").trim() || String(loadName(P.room||"")||"").trim(); if(nm) sessionStorage.setItem("vpHopName", nm.slice(0,20)); }catch(e){}
     window.location.replace(url);
   }
+  /* THE FIRST LOOKUP HAS ANSWERED, AND THIS PHONE STAYS HERE (bingo, or nothing on yet): the plain lobby may name bingo now.
+     Also on a lookup that fails, and after six seconds whatever happens, so a slow or missing Worker never strands a phone
+     on "Finding tonight's game here". A trivia or musical answer never calls this: the page is leaving. */
+  function fmtSettled(){ if(P.fmtKnown) return; P.fmtKnown=true; try{ if(P.joined && !$("vWait").classList.contains("hidden")) route(); }catch(e){} }
+  function fmtSoon(){ setTimeout(fmtSettled, 6000); }
   function goToCode(code){
     // Connect to the code we were given, exactly as this has always worked: for bingo that is the
     // venue's permanent code and the channel is live right now. Identity is claimed alongside,
@@ -2506,6 +2520,7 @@
     // lookup at all, so making every player wait on a round trip to catch the rarer trivia and
     // musical codes would be paying the cost in the wrong place. Same shape watchVenue already
     // uses for a table-talker link.
+    fmtSoon();
     connect(code);
     /* KEEP ASKING. A single lookup answered "no game" for anyone who typed the code before the
        host started round one, which is most of the room: the join code goes up on the TV during
@@ -2548,16 +2563,17 @@
              a flag that arrives once a bingo lobby opens is acted on, and one that clears later
              (the lobby closed, trivia opened) takes the notice down again. A phone shown the paper
              notice keeps asking, so it can still follow the room to trivia or musical. */
-          if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); lookLater(); return; }
+          if(r && r.paper_bingo){ fmtSettled(); showPaperBingo(r.paper_reason); lookLater(); return; }
           hidePaperBingo();
           if(r && r.age_gate===true) ageAnswer(r); else if(r && r.age_gate===false) ageClear();
-          if(r && r.exists===false){ unknownCode(); return; }   // no game behind it: stop asking
+          if(r && r.exists===false){ fmtSettled(); unknownCode(); return; }   // no game behind it: stop asking
           if(playingHere()){ lookLater(); return; }
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
              code they typed, or the phone lands in the right app on the wrong channel. */
           if(to){ hopToApp(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
+          fmtSettled();   // bingo, or nothing on yet: this page is the right one
           /* THE CHANNEL IS NOT THE CODE. The TV, the console and every phone off a table talker
              meet on a channel hashed from the venue's slug, which never changes. The code on the
              wall is the one the owner was ISSUED, and since Change code shipped the owner can
@@ -2568,7 +2584,7 @@
           if(r && r.channel && CODE_RE.test(r.channel) && r.channel!==P.room){ rehome(r.channel, code); }
           lookLater();     // eight seconds for the first half hour (a lobby routinely outlasts 4), then thirty
         })
-        .catch(function(){ lookLater(); });  // worker blip: bingo still works
+        .catch(function(){ fmtSettled(); lookLater(); });  // worker blip: bingo still works
     }
     look(true);
   }
@@ -2709,6 +2725,7 @@
   function watchVenue(slug){
     P.venueSlug=slug;
     var code=venueCode(slug);
+    fmtSoon();
     connect(code);                              // broadcast bingo is live on this code right now
     claimIdentity(code, true);                  // and quietly pick up a server identity if one is going (the same fresh ask as the first look below)
     var hopped=false;
@@ -2732,19 +2749,21 @@
       try{
         askLive(code, fresh===true)
           .then(function(d){
-            if(!d || hopped) return;
+            if(!d){ fmtSettled(); return; }
+            if(hopped) return;
             /* THE STATE'S PHONE RULES, ON EVERY POLL (16 Oct 2026). A phone off a table talker sat
                here through the whole night, so a paper flag or an age tick that arrived once the
                bingo lobby opened was never acted on, and one that cleared later never took the
                notice down. The Worker decides; this only does what it says, each time it answers. */
             if(d.paper_bingo===true) showPaperBingo(d.paper_reason); else hidePaperBingo();
             if(d.age_gate===true) ageAnswer(d); else if(d.age_gate===false) ageClear();
-            if(P.active) return;
+            if(P.active){ fmtSettled(); return; }
             /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)
                connects to a channel nobody is on, and the punter sat on "waiting for the host"
                all night with nothing to tell them why. The TV has warned about this since
                validateVenue(); the phone never did. */
             if(d.exists===false){
+              fmtSettled();
               var je=$("joinErr");
               if(je) je.textContent="That venue link does not look right. Check the code on your table or ask the bar staff.";
               return;
@@ -2755,12 +2774,13 @@
                sessions are now opened on the venue's code too, so every phone off the TV's QR saw
                "trivia is live" and stayed on the bingo screen all night. Found at The Mini Bar,
                10 Oct 2026: two phones joined, zero answers. Bingo still stays put: no "to" below. */
-            if(!d.live || !d.join_code) return;
+            if(!d.live || !d.join_code){ fmtSettled(); return; }
             var f=String(d.format||"");
             var to = f.indexOf("trivia")===0  ? "/app/trivia/play"
                    : f.indexOf("musical")===0 ? "/app/musical/play" : "";
             if(to){ hopped=true; hopToApp(to+"?room="+encodeURIComponent(d.join_code)); }
-          }).catch(function(){});               // worker unreachable/old: bingo still works
+            else fmtSettled();
+          }).catch(function(){});               // worker unreachable/old: bingo still works (fmtSoon lets the lobby show after six seconds)               // worker unreachable/old: bingo still works
       }catch(e){}
     }
     /* THE HOP IS PUSHED NOW, AND THIS IS THE BACKSTOP.
@@ -2801,7 +2821,7 @@
        the thing worth showing. */
     if(/[?&]demo=1/.test(window.location.search||"")){
       document.documentElement.setAttribute("data-vp-demo","1");
-      P.room="VENUE2"; P.name="Ann"; P.joined=true; P.numCards=1;
+      P.room="VENUE2"; P.name="Ann"; P.joined=true; P.numCards=1; P.fmtKnown=true;
       /* ASSIST ON, so the ticket marks itself. A demo with nobody tapping sat there
          nagging "2 numbers away, you have not marked 6 called numbers, tap the glowing
          squares", which on a sales page reads as a product that is not working rather

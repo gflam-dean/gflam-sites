@@ -407,6 +407,10 @@
   "checks": 502,
   "counted_by": "lines"
  },
+ "tools/older-faults-tue17-in-chrome.test.py": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
  "tools/old-tv-syntax.test.py": {
   "checks": 152,
   "counted_by": "lines"
@@ -708,7 +712,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-tonight.js": {
-  "checks": 11,
+  "checks": 14,
   "counted_by": "lines"
  },
  "tools/test-bingo-worker-15-oct.js": {

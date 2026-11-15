@@ -163,6 +163,7 @@
   /* the board a little smaller; a draw at its maximum gets a banner */
   .board{gap:1.3cqw} .drow{padding:1.6cqw 2.6cqw} .drow .dn{font-size:2.8cqw} .drow .dc{font-size:1.8cqw} .drow .dj{font-size:5.4cqw}
   #idleBoardWrap .jsub{font-size:2.2cqw}
+  #idleSingle.hold .jsub{font-size:3.4cqw;color:#fff;margin-top:0}   /* no draw set up: the holding line is the screen (15 Nov 2026) */
   .drow{position:relative}
   .drow .dc.mxl{color:#fff;font-weight:700}   /* a draw at its maximum: one plain line, no frame or banner (Dean, 9 Nov 2026) */
   /* the rollover: its own moment, in the sans face and its own words, the figure counting up */
@@ -205,9 +206,9 @@
       <div class="toplbl"><span class="tl-night">Members draw</span></div>
       <!-- single-draw fallback (used until the host sends the draws list) -->
       <div id="idleSingle" class="body">
-        <div class="lab pk" id="idleDrawName">Members Draw</div>
-        <div class="jack" id="idleJack">$0</div>
-        <div class="jsub">Be here when your number is drawn</div>
+        <div class="lab pk" id="idleDrawName"></div>
+        <div class="jack hidden" id="idleJack"></div>
+        <div class="jsub" id="idleSub">The draw will start here when the host is ready</div>
       </div>
       <!-- multi-draw board -->
       <div id="idleBoardWrap" class="body hidden">
@@ -390,7 +391,14 @@
   // ---- idle / ads ----
   function fillIdle(){
     // single-draw fallback stays in sync
-    $("idleDrawName").textContent=state.drawName; $("idleJack").textContent=money(state.jackpotCents);
+    /* NO DRAW SET UP IS A CLEAN HOLDING SCREEN (live play, 15 Nov 2026): it showed a giant "$0" under "MEMBERS DRAW"
+       twice. The top label already says Members draw, so the draw's name shows only when it is its own ("Thursday
+       Draw"); the jackpot only when there is one; and with neither, one line saying the draw starts here. */
+    var nm=String(state.drawName||"").trim(), own=!!nm && !/^members\s+draw$/i.test(nm), pot=(state.jackpotCents|0)>0;
+    $("idleDrawName").textContent=own ? nm : "";
+    $("idleJack").textContent=pot ? money(state.jackpotCents) : ""; $("idleJack").classList.toggle("hidden", !pot);
+    $("idleSub").textContent=(own || pot) ? "Be here when your number is drawn" : "The draw will start here when the host is ready";
+    $("idleSingle").classList.toggle("hold", !own && !pot);
     // if the host has sent the week's draws, show the multi-draw board instead
     var hasBoard=Array.isArray(state.draws) && state.draws.length>0;
     $("idleSingle").classList.toggle("hidden", hasBoard);

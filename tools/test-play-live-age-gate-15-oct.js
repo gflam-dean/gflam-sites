@@ -278,6 +278,7 @@ else {
   globalThis.route = function () { routes++; };
   globalThis.setConn = function (st) { conns.push(st); };
   globalThis.setHeaderBall = function () {};
+  globalThis.fmtSettled = function () {};   // the lobby's "which game is on" wait (15 Nov 2026): nothing to paint here
   var ageBox0 = fakeEl(); _ageBox = ageBox0; _ageHold = true;
   P.active = true; P.cards = [{ cardNo: 1 }]; P.called = [5, 9];
   boxes = []; var bodyKids = document.body.children.length;

@@ -1628,7 +1628,10 @@
     /* PRODUCT UPDATES BY EMAIL (Dean, 5 Nov 2026, INBOX item 21a): after their name and mobile and the venue pick,
        a staff login (never HQ View as) may be offered a card at the foot of the screen, at most once a month, when
        the billing Worker says so. It never blocks the console, and it asks once per page load. */
-    if(window.VPUpdatesOptin && VPUpdatesOptin.wants(__ctx) && window.VP && VP.getClient){ try{ VPUpdatesOptin.maybe(__ctx, { client:VP.getClient() }); }catch(e){} }
+    /* Never over a game (live play, 15 Nov 2026): busy is a bingo game running on this console, or a night running on another
+       console on this device (liveNightElsewhere). The card waits for a calm moment and steps aside if a game starts under it. */
+    if(window.VPUpdatesOptin && VPUpdatesOptin.wants(__ctx) && window.VP && VP.getClient){ try{ VPUpdatesOptin.maybe(__ctx, { client:VP.getClient(),
+      busy:function(){ return (typeof G==="object" && G && G.status==="running") || !!liveNightElsewhere(); } }); }catch(e){} }
     if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
     if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
     /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new
