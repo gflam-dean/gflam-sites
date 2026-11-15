@@ -24809,6 +24809,19 @@ MUTATIONS = [
      '    if (!c || !S.play || !c.mobile) return;',
      '    if (!c || !S.play || !S.optin) return;',
      "an added venue's mobile is never sent to be kept"),
+    # THE TRIVIA CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026)
+    ('trivia-console-fits-phone-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '.runpanel.is-live>#hostSettings{order:9;margin:14px 0 0;', '.runpanel.is-live>#hostSettings{order:-1;margin:0 0 14px;',
+     'during a game the Settings go back on top of the question card'),
+    ('trivia-console-fits-phone-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '    if(hs) hs.open=!live;\n', '    if(hs) hs.open=true;\n',
+     'during a game the settings rows stay open above the run'),
+    ('trivia-console-fits-phone-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '<div class="panel runpanel" id="runPanel">', '<div class="panel">',
+     'the console panel loses its live layout, so the settings rows sit on top as before 15 Nov'),
+    ('trivia-console-fits-phone-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '  @media (max-width:640px){\n    body.vp-live .bar{', '  @media (max-width:1px){\n    body.vp-live .bar{',
+     'on a phone the header, gutters and question card do not tighten during a game'),
 ]
 
 

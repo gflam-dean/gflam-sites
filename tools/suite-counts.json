@@ -1651,6 +1651,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/trivia-console-fits-phone-in-chrome.test.py": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
  "tools/trivia-demo-phone-in-chrome.test.py": {
   "checks": 56,
   "counted_by": "lines"
