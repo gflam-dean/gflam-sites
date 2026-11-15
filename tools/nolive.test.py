@@ -228,7 +228,7 @@ src = {f: io.open(os.path.join(ROOT, 'tools', f), encoding='utf-8').read() for f
 src.update({'browser-rig/' + f: io.open(os.path.join(ROOT, 'tools', 'browser-rig', f), encoding='utf-8').read()
             for f in os.listdir(os.path.join(ROOT, 'tools', 'browser-rig')) if f.endswith('.py')})
 LIVE_RE = re.compile(r'Browser\(\s*live\s*=\s*True|^\s*LIVE\s*=\s*True', re.M)
-live_users = sorted(f for f, s in src.items() if LIVE_RE.search(s) and f not in ('nolive.test.py', 'nolive.py'))
+live_users = sorted(f for f, s in src.items() if LIVE_RE.search(s) and f not in ('nolive.test.py', 'nolive.py', 'prove-checks.py'))   # prove-checks only quotes it
 ok('the only live Browsers are verify-live\'s own run, live-join-own-domain.py and measure-reconnect-in-chrome.py',
    live_users == ['live-join-own-domain.py', 'measure-reconnect-in-chrome.py', 'verify-live.py'], live_users)
 
