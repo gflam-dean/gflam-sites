@@ -127,7 +127,8 @@
      and the Save button sat under the fold. While the form is open the counts and the raffle name step aside, first and last
      name share a row, and the spacing tightens, so the form and Add them are on one screen at 360, 375 and 390 wide. */
   @media (max-width:640px) and (orientation:portrait){
-    #barReady.newing>.stats,#barReady.newing #barRaffleName,#barReady.newing #barRaffleWhen{display:none}
+    #barReady.newing>.stats,#barReady.newing #barRaffleName,#barReady.newing #barRaffleWhen,#barReady.newing .bargrid>.panel:last-child{display:none}
+    .wrap:has(#barReady.newing){padding-top:12px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     #barReady.newing .bargrid>.panel:first-child{padding:12px}
     #stepNew{padding:12px}
     #stepNew .two{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
