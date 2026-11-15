@@ -24850,7 +24850,7 @@ MUTATIONS = [
      '  #tvAudioNote{display:flex;flex-wrap:wrap;align-items:center;gap:8px}', '  #tvAudioNote{}',
      'the TV-sound question squeezes Yes and No onto the last line of its sentence'),
     ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
-     '    body.vp-live #bingoView .stat .box .v{font-size:16px!important;white-space:normal;', '    body.vp-live #bingoView .stat .box .vx{font-size:16px!important;white-space:normal;',
+     '    body.vp-live #bingoView .stat{gap:6px}\n    body.vp-live #bingoView .stat .box{min-width:0;padding:6px 8px}\n    body.vp-live #bingoView .stat .box .k{font-size:13px;letter-spacing:0}\n    body.vp-live #bingoView .stat .box .v{font-size:16px!important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.2}\n', '',
      'on a phone the bingo stat boxes cut "2 of 90" and "One line" short'),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '{ question:1, ta_board:1 }, undefined, { intro:1 }); }catch(e){} }', '{ question:1, ta_board:1 }, undefined, { started:1 }); }catch(e){} }',
