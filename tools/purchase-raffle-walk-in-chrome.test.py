@@ -55,6 +55,8 @@ TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
+line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': True, 'collect_marketing_optin': True}], 'replace': True})
+line({'seed': 'vp_captures', 'rows': [], 'replace': True})
 for t in ('vp_purchase_raffles', 'vp_purchase_raffle_entrants', 'vp_purchase_raffle_entries', 'vp_purchase_raffle_draws', 'vp_admin_audit'):
     line({'seed': t, 'rows': [], 'replace': True})
 R.db['vp_venues'][0].update({'name': 'Deepwater Hotel', 'timezone': 'Australia/Sydney', 'au_state': 'NSW'})
@@ -68,6 +70,17 @@ def shot(sid, name):
     if SHOTS: time.sleep(0.5); R.shot(sid, os.path.join(SHOTS, name))
 def keypad(sid, digits):
     for d in digits: click(sid, '.key[data-k="%s"]' % d)
+def hq_close(sid):
+    # Closing early is venueplay HQ only now (Dean 14 Nov). The owner has no button, so this stands in for HQ:
+    # the raffle row is closed in the fake database the way /host/praffle/close does it for an admin.
+    rows = line({'table': 'vp_purchase_raffles'})['body'] or []
+    for r in rows:
+        r['closes_at'] = datetime.datetime.utcfromtimestamp((int(time.time() * 1000) - 1000) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    line({'seed': 'vp_purchase_raffles', 'rows': rows, 'replace': True})
+    js(sid, 'location.reload()'); time.sleep(3)
+def confirm_known(sid):
+    # A known mobile asks "Alan S.? 15 entries so far" first (Dean 14 Nov). Tap Yes, add entry.
+    R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo'); time.sleep(0.8)
 def errs(sid): return js(sid, 'JSON.stringify(window.__errs||[])')
 def table(t): return line({'table': t})['body'] or []
 def fits(sid): return js(sid, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True
@@ -89,7 +102,7 @@ try:
     setv(sid, '#prizes .pt', 'Trip for two to Fiji'); setv(sid, '#prizes .pv', '5000')
     click(sid, '#addPrize'); setv(sid, '#prizes .prize:nth-child(2) .pt', '$500 bar tab'); setv(sid, '#prizes .prize:nth-child(2) .pv', '500')
     setv(sid, '#sCap', '2'); setv(sid, '#sPlace', 'the main bar at Deepwater Hotel')
-    click(sid, '#saveBtn')
+    click(sid, '#saveBtn'); ask_yes(sid)   # the first-create confirm
     ok('saving writes the terms', R.until(sid, '/one entry/.test(document.getElementById("termsBox").textContent)', 20) is True, text(sid, '#setupMsg'))
     terms = text(sid, '#termsBox') or ''
     ok('the terms carry the cap: no more than 2 entries a day', 'no more than 2 entries a day' in terms, terms[:600])
@@ -121,8 +134,22 @@ try:
     R.until(p4, visible('#keypad') + ' && ' + visible('#barReady'), 60); type_mobile(p4, '0499999999')
     g = js(p4, '(function(){function b(i){return document.getElementById(i).getBoundingClientRect().bottom;} return {add:b("addBtn"),h:innerHeight};})()') or {}
     ok('a small Android (360x740): Add entry is on the first screen', g.get('add', 9999) <= g.get('h', 0), g)
-    shot(p4, '02-bar-phone-360-start.jpg'); R.close_tab(t4)
-    shot(p1, '02-bar-phone-390-start.jpg'); shot(p2, '02-bar-phone-375-start.jpg')
+    shot(p4, '02-bar-phone-360-start.jpg');     shot(p1, '02-bar-phone-390-start.jpg'); shot(p2, '02-bar-phone-375-start.jpg')
+    # THE NEW-CUSTOMER FORM IS ONE SCREEN, NO SCROLL (16 Nov 2026), with every box the venue collects switched on (first and
+    # last name, email, postcode, the offers tick and the notice): the form and the Add them button are above the fold.
+    def new_form_one_screen(sid, label, name):
+        type_mobile(sid, '0455555555'); click(sid, '#addBtn'); R.until(sid, visible('#stepNew'), 15)
+        setv(sid, '#nFirst', 'Alexandra'); setv(sid, '#nLast', 'Montgomery'); setv(sid, '#nEmail', 'alexandra.montgomery@example.com'); setv(sid, '#nPost', '4000')
+        time.sleep(0.4)
+        g = js(sid, '(function(){function b(i){return document.getElementById(i).getBoundingClientRect().bottom;} var t=document.getElementById("termsLink").getBoundingClientRect(); return {save:b("newSave"),terms:t.bottom,h:innerHeight,doc:document.documentElement.scrollHeight,sw:document.documentElement.scrollWidth,iw:innerWidth,sy:scrollY};})()') or {}
+        ok(label + ': every box on, the new-customer form and Add them are on one screen, no scrolling', g.get('save', 9999) <= g.get('h', 0) and g.get('terms', 9999) <= g.get('h', 0) and g.get('doc', 9999) <= g.get('h', 0) + 1 and g.get('sw', 9999) <= g.get('iw', 0) + 1, g)
+        shot(sid, name)
+        click(sid, '#newCancel'); time.sleep(0.4)
+        ok(label + ': Cancel brings the keypad back, the counts show again and nothing was added', js(sid, visible('#stepPhone') + ' && ' + visible('#stToday')) is True and not table('vp_purchase_raffle_entries'))
+    new_form_one_screen(p4, 'a small Android (360x740)', '03-new-customer-phone-360.jpg')
+    new_form_one_screen(p1, 'phone 1 (390x844)', '03b-new-customer-all-boxes-phone-390.jpg')
+    new_form_one_screen(p2, 'phone 2 (375x812)', '03b-new-customer-all-boxes-phone-375.jpg')
+    R.close_tab(t4)
 
     type_mobile(p1, BOB)
     click(p1, '#lookBtn')
@@ -130,7 +157,7 @@ try:
        R.until(p1, '/not in the raffle yet/i.test(document.getElementById("barMsg").textContent)', 10) is True and not table('vp_purchase_raffle_entries'), text(p1, '#barMsg'))
     click(p1, '#addBtn')
     R.until(p1, visible('#stepNew'), 15)
-    setv(p1, '#nFirst', 'Bob'); setv(p1, '#nLast', 'Smith'); setv(p1, '#nEmail', 'bob@example.com'); click(p1, '#nAge')
+    setv(p1, '#nFirst', 'Bob'); setv(p1, '#nLast', 'Smith'); setv(p1, '#nEmail', 'bob@example.com')
     ok('phone 1: the new-customer form fits the phone', fits(p1))
     shot(p1, '03-new-customer-phone-390.jpg')
     click(p1, '#newSave')
@@ -145,19 +172,31 @@ try:
     set_clock(120000)    # two minutes on: a new purchase, not a double tap
     keypad(p2, ANN[:0])
     type_mobile(p2, ANN); click(p2, '#addBtn'); R.until(p2, visible('#stepNew'), 15)
-    setv(p2, '#nFirst', 'Ann'); setv(p2, '#nLast', 'Lee'); setv(p2, '#nEmail', 'ann@example.com'); click(p2, '#nAge'); click(p2, '#nOpt')
+    setv(p2, '#nFirst', 'Ann'); setv(p2, '#nLast', 'Lee'); setv(p2, '#nEmail', 'ann@example.com'); click(p2, '#nOpt')
     click(p2, '#newSave')
     ok('Ann on the second phone: in, 1 entry', R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneSmall') == '1 entry so far. Good luck!', text(p2, '#doneSmall'))
     shot(p2, '04-thanks-phone-375.jpg')
     ann_entry = [e for e in table('vp_purchase_raffle_entries')][-1]['id']
 
-    click(p2, '#doneNext'); type_mobile(p2, BOB); click(p2, '#addBtn')
+    click(p2, '#doneNext'); type_mobile(p2, BOB); click(p2, '#addBtn'); confirm_known(p2)
     ok('Bob\'s second purchase, on the OTHER phone, is cumulative: 2 entries (one entrant)',
        R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneBig') == "Thanks Bob, you're in" and text(p2, '#doneSmall') == '2 entries so far. Good luck!' and len(table('vp_purchase_raffle_entrants')) == 2,
        [text(p2, '#doneSmall'), text(p2, '#barMsg')])
     click(p2, '#doneNext')
+    type_mobile(p2, BOB); click(p2, '#addBtn'); R.until(p2, visible('#vpAsk'), 10)
+    ok('a known mobile shows who it is first: "Bob S.? 2 entries so far", with Yes, add entry', 'Bob S' in (text(p2, '#vpAskMsg') or text(p2, '#vpAsk') or '') and '2 entries so far' in (text(p2, '#vpAsk') or ''), text(p2, '#vpAsk'))
+    shot(p2, '05b-confirm-name-phone-375.jpg')
+    ok('the confirm fits the first phone screen', fits(p2) and js(p2, 'document.getElementById("vpAskGo").getBoundingClientRect().bottom<=innerHeight') is True)
+    click(p2, '#vpAskCancel'); time.sleep(0.6)
+    ok('"No, not them" adds nothing, clears the number and says so', len(table('vp_purchase_raffle_entries')) == 3 and text(p2, '#barMsg') == 'Nothing added. Check the number.' and js(p2, 'document.getElementById("phoneIn").value===""') is True, [text(p2, '#barMsg'), len(table('vp_purchase_raffle_entries'))])
+    # a mobile on the venue's members list (not yet in this raffle): the same card, "On your members list"
+    line({'seed': 'vp_captures', 'rows': [{'id': 'cap-gus', 'venue_id': VENUE, 'first_name': 'Gus', 'last_name': 'Hall', 'email': 'gus@example.com', 'mobile': '0400999111', 'marketing_optin': False, 'created_at': '2026-09-01T00:00:00Z'}], 'replace': True})
+    type_mobile(p2, '0400999111'); click(p2, '#addBtn'); R.until(p2, visible('#vpAsk'), 10)
+    ok('a member shows the card "Gus H.? On your members list." with Yes, add entry', 'On your members list' in (text(p2, '#vpAsk') or '') and 'Gus H' in (text(p2, '#vpAsk') or ''), text(p2, '#vpAsk'))
+    click(p2, '#vpAskCancel'); time.sleep(0.6)
+    ok('"No, not them" on a member adds nothing', not [e for e in table('vp_purchase_raffle_entrants') if e.get('first_name') == 'Gus'])
     set_clock(240000)
-    type_mobile(p2, BOB); click(p2, '#addBtn')
+    type_mobile(p2, BOB); click(p2, '#addBtn'); confirm_known(p2)
     ok('a third purchase the same day is refused by the cap: says why, nothing added',
        R.until(p2, '/already has 2 entries today/.test(document.getElementById("barMsg").textContent)', 15) is True
        and len([e for e in table('vp_purchase_raffle_entries') if not e.get('voided_at')]) == 3, [text(p2, '#barMsg'), len(table('vp_purchase_raffle_entries'))])
@@ -170,7 +209,7 @@ try:
     # ---------------- undo ----------------
     print('undo: taken back, stops counting, frees the day')
     set_clock(250000)
-    type_mobile(p2, ANN); click(p2, '#addBtn')
+    type_mobile(p2, ANN); click(p2, '#addBtn'); confirm_known(p2)
     R.until(p2, visible('#stepDone'), 15)
     ok('Ann\'s second purchase: 2 entries', text(p2, '#doneSmall') == '2 entries so far. Good luck!', text(p2, '#doneSmall'))
     click(p2, '#doneUndo'); ask_yes(p2)
@@ -180,7 +219,7 @@ try:
     click(p2, '#doneNext')
     type_mobile(p2, ANN); click(p2, '#lookBtn')
     ok('look-up after undo: "Ann L. has 1 entry"', R.until(p2, '/Ann L\\.? has 1 entry/.test(document.getElementById("barMsg").textContent)', 10) is True, text(p2, '#barMsg'))
-    type_mobile(p2, ANN); click(p2, '#addBtn')
+    type_mobile(p2, ANN); click(p2, '#addBtn'); confirm_known(p2)
     ok('after an undo the day is free again: Ann can be added (2 entries)', R.until(p2, visible('#stepDone'), 15) is True and text(p2, '#doneSmall') == '2 entries so far. Good luck!', [text(p2, '#doneSmall'), text(p2, '#barMsg')])
     click(p2, '#doneNext')
     ok('the recent list shows who added each entry, with an Undo for ones just added', js(p2, 'document.querySelectorAll("#recent li").length>=4 && !!document.querySelector("#recent [data-undo]")') is True, text(p2, '#recent'))
@@ -194,7 +233,7 @@ try:
     for ph, f, l, k in [('0400111222', 'Chris', 'Nguyen', 7), ('0400555666', 'Dana', 'Kelly', 2), ('0400777888', 'Eli', 'Brown', 1)]:
         for i in range(k):
             body = {'venue_id': VENUE, 'raffle_id': raffle_id, 'phone': ph, 'again': True}
-            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': f != 'Eli', 'age_confirmed': True}
+            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': f != 'Eli'}
             W.ask('POST', '/host/praffle/enter', body)
     # (the cap of 2 a day stops the bulk adds above past 2 each: the list below counts what the Worker really kept)
     live = [e for e in table('vp_purchase_raffle_entries') if not e.get('voided_at')]
@@ -255,9 +294,10 @@ try:
     tv2, tvs2 = R.open('/tv?venue=' + W.info['slug'], width=1920, height=1080)
     for s in (tvs1, tvs2): R.until(s, 'document.readyState==="complete"', 30)
     time.sleep(2)
-    click(sid, '#tabs button[data-tab="setup"]'); R.until(sid, visible('#closeBtn'), 10)
+    click(sid, '#tabs button[data-tab="setup"]'); time.sleep(1)
+    ok('a venue owner has no close-early button, and the started raffle is locked read-only', js(sid, visible('#closeBtn')) is not True and js(sid, 'document.getElementById("sName").disabled') is True, text(sid, '#setupMsg'))
     set_clock(0)
-    click(sid, '#closeBtn'); ask_yes(sid); time.sleep(1)
+    hq_close(sid)
     set_clock(20000)
     click(sid, '#tabs button[data-tab="draw"]')
     ok('Draw is ready once entries are closed', R.until(sid, '!document.getElementById("drawBtn").disabled', 15) is True, text(sid, '#drawWarn'))

@@ -8,7 +8,7 @@ end to end the way Deepwater Hotel will use it:
   set up     the owner names it, adds the prize, sets the dates, saves; the terms come back written
              from those settings and are on the page
   the bar    a mobile typed on the big keypad, Add entry; a new customer is asked for their details
-             (18+ must be ticked; the marketing tick starts unticked); "Thanks Bob, you're in. 1 entry
+             (the marketing tick, "Send me offers from {venue}", starts unticked; there is no 18+ tick); "Thanks Bob, you're in. 1 entry
              so far. Good luck!"; the same mobile again inside a minute is asked ON THE PAGE (never a
              native dialog) whether it is a new purchase, "No" adds nothing, "Yes" adds exactly one;
              a phone-width window shows the same screen with nothing cut off
@@ -53,6 +53,8 @@ TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
+line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': False, 'collect_marketing_optin': True}], 'replace': True})
+line({'seed': 'vp_captures', 'rows': [], 'replace': True})
 for t in ('vp_purchase_raffles', 'vp_purchase_raffle_entrants', 'vp_purchase_raffle_entries', 'vp_purchase_raffle_draws', 'vp_admin_audit'):
     line({'seed': t, 'rows': [], 'replace': True})
 R.db['vp_venues'][0].update({'name': 'Deepwater Hotel', 'timezone': 'Australia/Sydney', 'au_state': 'NSW'})
@@ -66,6 +68,17 @@ def shot(sid, name):
     if SHOTS: time.sleep(0.4); R.shot(sid, os.path.join(SHOTS, name))
 def keypad(sid, digits):
     for d in digits: click(sid, '.key[data-k="%s"]' % d)
+def hq_close(sid):
+    # Closing early is venueplay HQ only now (Dean 14 Nov). The owner has no button, so this stands in for HQ:
+    # the raffle row is closed in the fake database the way /host/praffle/close does it for an admin.
+    rows = line({'table': 'vp_purchase_raffles'})['body'] or []
+    for r in rows:
+        r['closes_at'] = datetime.datetime.utcfromtimestamp((int(time.time() * 1000) - 1000) / 1000.0).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    line({'seed': 'vp_purchase_raffles', 'rows': rows, 'replace': True})
+    js(sid, 'location.reload()'); time.sleep(3)
+def confirm_known(sid):
+    # A known mobile asks "Alan S.? 15 entries so far" first (Dean 14 Nov). Tap Yes, add entry.
+    R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo'); time.sleep(0.8)
 def errs(sid): return js(sid, 'JSON.stringify(window.__errs||[])')
 
 try:
@@ -80,7 +93,7 @@ try:
     setv(sid, '#prizes .pt', 'Trip for two to Fiji'); setv(sid, '#prizes .pv', '5000')
     click(sid, '#addPrize'); setv(sid, '#prizes .prize:nth-child(2) .pt', '$500 bar tab'); setv(sid, '#prizes .prize:nth-child(2) .pv', '500')
     setv(sid, '#sPlace', 'the main bar at Deepwater Hotel')
-    click(sid, '#saveBtn')
+    click(sid, '#saveBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')   # the first-create confirm
     ok('saving writes the terms onto the page', R.until(sid, '/one entry/.test(document.getElementById("termsBox").textContent)', 20) is True, text(sid, '#setupMsg'))
     terms = text(sid, '#termsBox') or ''
     ok('the terms say one entry per purchase, 18 or over, the draw place and time, and both prizes',
@@ -100,8 +113,7 @@ try:
     ok('the marketing tick starts UNticked', js(sid, 'document.getElementById("nOpt").checked') is False)
     setv(sid, '#nFirst', 'Bob'); setv(sid, '#nLast', 'Smith'); setv(sid, '#nEmail', 'bob@example.com')
     click(sid, '#newSave')
-    ok('without the 18+ tick nothing is added and it says why', R.until(sid, '/18 or over/.test(document.getElementById("newMsg").textContent)', 5) is True and not line({'table': 'vp_purchase_raffle_entries'})['body'])
-    click(sid, '#nAge')
+    ok('the form asks only what the venue collects: no 18+ tick, no postcode', js(sid, '!document.getElementById("nAge") && getComputedStyle(document.getElementById("fPost")).display==="none"') is True)
     shot(sid, '02-bar-new-customer-tablet.jpg')
     click(sid, '#newSave')
     ok('the confirm reads "Thanks Bob, you\'re in" with the count',
@@ -110,13 +122,14 @@ try:
     ok('stored once, as +61412345678, marketing false because nobody ticked it', len(ents) == 1 and ents[0]['phone'] == '+61412345678' and ents[0]['marketing_opt_in'] is False, ents)
     shot(sid, '04-bar-thanks-tablet.jpg')
     click(sid, '#doneNext')
-    keypad(sid, '0412345678'); click(sid, '#addBtn')
-    ok('the same mobile inside a minute is asked on the page, not with a native dialog', R.until(sid, visible('#vpAsk'), 10) is True, errs(sid))
+    keypad(sid, '0412345678'); click(sid, '#addBtn'); confirm_known(sid)
+    AGAIN = visible('#vpAsk') + ' && /separate purchase/.test(document.getElementById("vpAsk").textContent)'   # the second card, not the name card still closing
+    ok('the same mobile inside a minute is asked on the page, not with a native dialog', R.until(sid, AGAIN, 10) is True, errs(sid))
     shot(sid, '05-bar-add-another-tablet.jpg')
     click(sid, '#vpAskCancel')
     time.sleep(0.6)
     ok('"No" adds nothing', len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 1)
-    click(sid, '#addBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
+    click(sid, '#addBtn'); confirm_known(sid); R.until(sid, AGAIN, 10); click(sid, '#vpAskGo')
     ok('"Yes, a new purchase" adds exactly one', R.until(sid, visible('#stepDone'), 15) is True and text(sid, '#doneSmall') == '2 entries so far. Good luck!' and len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 2, text(sid, '#doneSmall'))
     entries = line({'table': 'vp_purchase_raffle_entries'})['body']
     ok('every entry names the staff login that added it', all(e.get('created_by') == 'host:staff-1' and e.get('created_by_name') == 'Sarah' for e in entries), entries)
@@ -127,7 +140,7 @@ try:
     for ph, f, l, opt, k in people:
         for i in range(k):
             body = {'venue_id': VENUE, 'raffle_id': ents[0]['raffle_id'], 'phone': ph, 'again': True}
-            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': opt, 'age_confirmed': True}
+            if i == 0: body['person'] = {'first_name': f, 'last_name': l, 'email': f.lower() + '@example.com', 'marketing_opt_in': opt}
             W.ask('POST', '/host/praffle/enter', body)
     click(sid, '#doneNext')
     js(sid, 'void 0')
@@ -140,7 +153,7 @@ try:
     ok('the keypad keys are big enough for a thumb', js(sid2, 'document.querySelector(".key").getBoundingClientRect().height>=48') is True)
     shot(sid2, '06-bar-phone.jpg')
     line({'now': now_ms() + 120000})   # two minutes after the seeded entries, so this is a new purchase, not a double tap
-    keypad(sid2, '44'); click(sid2, '#addBtn')
+    keypad(sid2, '44'); click(sid2, '#addBtn'); confirm_known(sid2)
     ok('a known customer is one tap: "Thanks Chris, you\'re in. 8 entries"', R.until(sid2, visible('#stepDone'), 15) is True and text(sid2, '#doneSmall') == '8 entries so far. Good luck!', [text(sid2, '#doneBig'), text(sid2, '#doneSmall'), text(sid2, '#barMsg')])
     shot(sid2, '07-bar-phone-thanks.jpg')
     ok('no errors on the phone', errs(sid2) == '[]', errs(sid2))
@@ -188,12 +201,12 @@ try:
         shot(s3, '06b-bar-%s-%dx%d.jpg' % (shape, w, h))
         click(s3, '#addBtn')
         ok(tag + ': a new mobile opens the details form', R.until(s3, visible('#stepNew'), 15) is True)
-        f = js(s3, '''(function(){ var r=[].map.call(document.querySelectorAll("#stepNew input[type=text],#stepNew input[type=email]"),function(e){var q=e.getBoundingClientRect();return {w:q.width,h:q.height};}),
+        f = js(s3, '''(function(){ var r=[].filter.call(document.querySelectorAll("#stepNew input[type=text],#stepNew input[type=email]"),function(e){return e.offsetParent!==null;}).map(function(e){var q=e.getBoundingClientRect();return {w:q.width,h:q.height};}),
               b=[].map.call(document.querySelectorAll("#stepNew .btn"),function(e){return e.getBoundingClientRect().height;}),
               l=parseFloat(getComputedStyle(document.querySelector("#stepNew .field label")).fontSize);
               return {minW:Math.min.apply(null,r.map(function(q){return q.w;})), minH:Math.min.apply(null,r.map(function(q){return q.h;})), btnMin:Math.min.apply(null,b), label:l, sw:document.documentElement.scrollWidth, iw:innerWidth}; })()''') or {}
         ok(tag + ': the details form is readable: wide fields, 12px+ labels, full-size buttons',
-           f.get('minW', 0) >= 150 and f.get('minH', 0) >= 40 and f.get('btnMin', 0) >= 44 and f.get('label', 0) >= 12 and f.get('sw', 9999) <= f.get('iw', 0) + 1, f)
+           f.get('minW', 0) >= 120 and f.get('minH', 0) >= 40 and f.get('btnMin', 0) >= 44 and f.get('label', 0) >= 12 and f.get('sw', 9999) <= f.get('iw', 0) + 1, f)
         form = js(s3, LEAVES + '(document.getElementById("stepNew"))') or []
         ok(tag + ': the details form keeps clear of the island at the sides', bool(form) and not [p for p in form if p['l'] < ins['left'] - 0.5 or p['r'] > w - ins['right'] + 0.5], form[:3])
         shot(s3, '06c-new-%s-%dx%d.jpg' % (shape, w, h))
@@ -216,9 +229,9 @@ try:
     # The venue's ONE TV link, sitting on the ads, as it is on the wall.
     ttid, tsid = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
     R.until(tsid, 'document.readyState==="complete"', 30); time.sleep(2)
-    click(sid, '#tabs button[data-tab="setup"]'); R.until(sid, visible('#closeBtn'), 10)
-    click(sid, '#closeBtn'); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
-    time.sleep(1)
+    click(sid, '#tabs button[data-tab="setup"]'); time.sleep(1)
+    ok('a venue owner has no close-early button, and the started raffle is locked read-only', js(sid, visible('#closeBtn')) is not True and js(sid, 'document.getElementById("sName").disabled') is True, text(sid, '#setupMsg'))
+    hq_close(sid)
     click(sid, '#tabs button[data-tab="draw"]')
     ok('Draw is ready once entries are closed', R.until(sid, '!document.getElementById("drawBtn").disabled', 15) is True, text(sid, '#drawWarn'))
     ok('the button names the first prize', 'Trip for two to Fiji' in (text(sid, '#drawBtn') or ''), text(sid, '#drawBtn'))

@@ -816,6 +816,13 @@ rollback in the file.
 RUN on LIVE by Dean 15 Nov 2026 ~06:45 (INBOX MAIN 06:31, read back OK). The file is FROZEN: never edit it. RLS-BASELINE.json
 still to be re-dumped for its new SECURITY DEFINER function vp_settings_manager_ticks_guard (dump-rls-baseline.py against live).
 
+`venueplay-197-purchase-raffle-members.sql` (Dean, 14 Nov 2026, INBOX 415 purchase raffle rework, branch `fix/t17-praffle`):
+vp_purchase_raffle_entrants gains postcode and member_capture_id (+ index), last_name may be empty (not null and the length check
+relaxed). Additive and safe to re-run. RUN on TEST only (tools/staging/run-on-test.py). NOT RUN ON LIVE. The file as committed
+carries the VP-STAGING-GUARD block, which REFUSES on the live project: the live run is the statements between the guard's END
+marker and the end of the file. Run it on LIVE BEFORE the game Worker of this release ships (that Worker writes the columns).
+Rollback: in the file.
+
 `venueplay-198-coaster-contacts.sql` (Dean, 15 Nov 2026, Coaster Trivia name + mobile always, branch `fix/sun15-coaster-mobile`): one new table
 vp_coaster_contacts (board, coaster_venue_id, play_id, first_name, mobile +614..., unique board+mobile), RLS on, no policies, revoked from
 public/anon/authenticated: the first name and mobile from a round at a board with NO venueplay account (a player-added venue, a coaster venue,
