@@ -291,6 +291,10 @@
   "checks": 78,
   "counted_by": "lines"
  },
+ "tools/home-counts-in-chrome.test.py": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/home-hero-in-chrome.test.py": {
   "checks": 26,
   "counted_by": "lines"
@@ -953,6 +957,10 @@
  },
  "tools/test-legal-gaps-28-oct.js": {
   "checks": 46,
+  "counted_by": "lines"
+ },
+ "tools/test-library-counts.js": {
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
