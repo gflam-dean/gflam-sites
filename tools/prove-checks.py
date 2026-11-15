@@ -2010,6 +2010,10 @@ MUTATIONS = [
      '".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;color:#0A0A0B}"',
      '".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;flex-direction:row-reverse;color:#0A0A0B}"',
      'the raffle ticket stub sits on the right of its ticket on the TV reel (INBOX 355)'),
+    ('real-night-dryrun-in-chrome.test.py', 'venueplay/app/members/host.html',
+     '    $("wcName").textContent=((window.VPDrawStyle&&VPDrawStyle.niceName)?VPDrawStyle.niceName(r.winner_name):r.winner_name)||"\u00b7";',
+     '    $("wcName").textContent=r.winner_name||"\u00b7";',
+     'the members console winner card says "Willow,Mitchell", not First Last (12 Nov D4, 16 Nov)'),
     # THE SAVED-SETTINGS SHAPES THE REAL-SETTINGS SUITE PLAYS (INBOX 295.3, 12 Nov 2026, tools/prefs-shapes.test.py)
     ('prefs-shapes.test.py', 'tools/prefs-shapes.py',
      "            v = 'Prize' if isinstance(v, str) and v.strip() else None",

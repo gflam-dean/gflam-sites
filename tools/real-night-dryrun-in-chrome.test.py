@@ -44,6 +44,11 @@ SET = '5e75e75e-0000-4000-8000-000000000003'
 ran = bad = 0
 
 
+# Every member is "Last,First" as members lists often are (16 Nov 2026: the D4 check below only bit when member 101,
+# the one comma name, happened to win, 1 draw in 12; now whoever wins, the console and TV must say First Last).
+MEMBER_NAMES = ['Willow,Mitchell', 'Lucas,Lawson', 'Brown,Ava', 'Nguyen,Liam', 'Smith,Olivia', 'Taylor,Noah',
+                'Wilson,Mia', 'Martin,Leo', 'White,Isla', 'Walker,Jack', 'Hall,Ruby', 'Young,Oscar']
+
 def ok(name, cond, saw=''):
     global ran, bad
     ran += 1
@@ -387,7 +392,7 @@ def night():
     print('\n5 MEMBERS DRAW: flip board on the TV')
     made = W.ask('POST', '/host/members/settings', {'venue_id': W.info['venue'], 'name': 'Thursday draw', 'current_jackpot_cents': 20000}, {})['body']
     did = (made.get('draw') or {}).get('id')
-    imp = W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'number': 101 + i, 'name': ('Willow,Mitchell' if i == 0 else 'Member %d' % i)} for i in range(12)]}, {})['body']
+    imp = W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'number': 101 + i, 'name': n} for i, n in enumerate(MEMBER_NAMES)]}, {})['body']
     ok('members: CONTROL a draw with 12 members through the real Worker', bool(did) and imp.get('added') == 12, (made, imp))
     for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members'): R.db[t] = table(t)
     t_h, host = R.open('/app/members/host.html', width=1000, height=1100)

@@ -838,7 +838,7 @@
     if(d){ $("drawSel").value=d.id; }
     renderStats(); renderMembers(); renderSettings();
     $("wcNum").textContent="#"+G.round.number;
-    $("wcName").textContent=G.round.name||"\u00b7";
+    $("wcName").textContent=((window.VPDrawStyle&&VPDrawStyle.niceName)?VPDrawStyle.niceName(G.round.name):G.round.name)||"\u00b7";
     updateClaimCd();
     $("winnerCard").classList.add("show");
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
@@ -956,9 +956,9 @@
     syncStep(); applyPresentRule();
     // broadcast the winner to the TV (claimSecs drives the TV countdown too)
     send({ t:"winner", number:r.member_number, name:r.winner_name, claimSecs:claimSecs });
-    // console winner card
+    // console winner card. The name reads First Last as the TV says it ("Willow,Mitchell" is Mitchell Willow, 12 Nov D4)
     $("wcNum").textContent="#"+r.member_number;
-    $("wcName").textContent=r.winner_name||"·";
+    $("wcName").textContent=((window.VPDrawStyle&&VPDrawStyle.niceName)?VPDrawStyle.niceName(r.winner_name):r.winner_name)||"·";
     updateClaimCd();
     $("winnerCard").classList.add("show");
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
