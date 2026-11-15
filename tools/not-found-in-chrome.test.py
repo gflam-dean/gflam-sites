@@ -127,7 +127,7 @@ LOOK = r'''(function(){
   return JSON.stringify({vw:vw, vh:vh, sw:document.documentElement.scrollWidth, sh:document.documentElement.scrollHeight, out:out.slice(0,6), clipped:clipped.slice(0,6),
     h1:box("h1"), code:box("#code"), go:box("#go"), ways:ways, foot:box("footer"), join:box("#join"), lede:lcs?box(".lede"):null, logo:lg?{nat:lg.naturalWidth,h:lr.height,w:lr.width,left:lr.left}:null, mainTop:box(".hero"), lastWay:box(".ways a:last-child"),
     value:document.getElementById("code").value, found:found.hidden?"":found.textContent, title:document.title,
-    h1text:document.querySelector("h1").textContent});
+    h1text:document.querySelector("h1").textContent,h1fs:parseFloat(getComputedStyle(document.querySelector("h1")).fontSize)});
 })()'''
 
 
@@ -209,8 +209,10 @@ def main():
                   (s['h1'], s.get('lede'), s['join'], [(x['top'], x['bottom']) for x in s['ways']], s['foot']))
             check('%dx%d: the real logo file is painted at a readable size (at least 20 px tall, 90 px wide), top left' % (w, h),
                   s['logo'] and s['logo']['nat'] > 0 and s['logo']['h'] >= 20 and s['logo']['w'] >= 90 and s['logo']['left'] <= 24, s.get('logo'))
-            check('%d px: the headline is big: "That page is not on tonight."' % w,
-                  s.get('h1text') == 'That page is not on tonight.' and s['h1']['h'] >= 70, (s.get('h1text'), s.get('h1')))
+            # 16 Nov 2026: judged by the type size (34 px floor, the page's clamp), not the box height: with the real Anton
+            # (or Impact) it is two lines, 65 px; only a box with no Anton/Impact falls back wider, wraps to three and passed 70.
+            check('%d px: the headline is big: "That page is not on tonight." (type at least 34 px)' % w,
+                  s.get('h1text') == 'That page is not on tonight.' and (s.get('h1fs') or 0) >= 34, (s.get('h1text'), s.get('h1fs'), s.get('h1')))
             if A.shots:
                 t.shot(os.path.join(A.shots, 'not-found-%d.png' % w))
             t.close()

@@ -292,9 +292,14 @@ def run_draw(name):
             for _ in range(n): reload(host)
             ok('%s: %s: the console is back and ready' % (name, label), R.until(host, DRAW_READY, 60) is True, text(host))
             ok('%s: %s: what the host had set up is still set up' % (name, label), js(host, STATE) == before, [js(host, STATE), before])
-            ok('%s: %s: the TV can be taken again with one tap (Put on TV is offered)' % (name, label), R.until(host, TVOFFER, 20) is True, text(host))
+            # 16 Nov 2026: the TV is still on this draw after the refresh, and once it says so the console rightly offers
+            # nothing (vp-tvclaim line(): showing() -> no button). So: the button is offered, OR the TV is already on it.
+            # (A fresh-profile TV on vp-tests-1 answered late, so the button showed there; the Mac's TV answered first.)
+            TV_ON = '/%s/.test((document.getElementById("gameFrame")||{getAttribute:function(){return ""}}).getAttribute("src")||"")' % name
+            offered = R.until(host, TVOFFER, 20) is True
+            ok('%s: %s: the TV is still on the %s, or one tap puts it back (Put on TV is offered)' % (name, label, name), offered or js(tv, TV_ON) is True, [text(host), js(tv, TV_ON)])
             shot(host, '%s-2-after-%d-1024' % (name, n))
-        js(host, 'document.querySelector("#tvLine .tvline-btn").click(); true')
+        js(host, 'var b=document.querySelector("#tvLine .tvline-btn"); if(b) b.click(); true')   # no button = the TV is already on it
         ok('%s: the TV takes the %s again after the refresh' % (name, name), R.until(tv, '/%s/.test((document.getElementById("gameFrame")||{getAttribute:function(){return ""}}).getAttribute("src")||"")' % name, 40) is True, '')
         js(host, 'setTimeout(function(){ document.getElementById("drawBtn").click(); }, 0); true')
         for _ in range(12):
