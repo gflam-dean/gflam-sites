@@ -12188,7 +12188,7 @@ async function handlePraffleSave(request, env, json) {
    only when collect_marketing_optin is on. */
 function praffleFormFields(cfg) {
   cfg = cfg || {};
-  return { first_name: cfg.collect_first_name !== false || !cfg.collect_last_name, last_name: !!cfg.collect_last_name,
+  return { first_name: true, last_name: !!cfg.collect_last_name,
     email: !!cfg.collect_email, postcode: !!cfg.collect_postcode, marketing_optin: !!cfg.collect_marketing_optin };
 }
 /* THIS VENUE'S MEMBERS LIST: vp_captures, scoped by venue_id (where every game's opt-in and the "Join {venue}'s list"

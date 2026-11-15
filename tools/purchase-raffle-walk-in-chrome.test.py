@@ -55,7 +55,7 @@ TODAY = datetime.datetime.now(zoneinfo.ZoneInfo('Australia/Sydney')).strftime('%
 line({'seed': 'vp_venues', 'replace': True, 'rows': [{'id': VENUE, 'name': 'Deepwater Hotel', 'slug': W.info['slug'], 'status': 'active',
       'join_code': W.info['code'], 'au_state': 'NSW', 'timezone': 'Australia/Sydney', 'purchase_raffle_on': True, 'max_players': 100}]})
 line({'seed': 'vp_venue_staff', 'rows': [{'id': 'staff-1', 'display_name': 'Sarah'}]})
-line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': False, 'collect_marketing_optin': True}], 'replace': True})
+line({'seed': 'vp_venue_settings', 'rows': [{'venue_id': VENUE, 'collect_first_name': True, 'collect_last_name': True, 'collect_email': True, 'collect_postcode': True, 'collect_marketing_optin': True}], 'replace': True})
 line({'seed': 'vp_captures', 'rows': [], 'replace': True})
 for t in ('vp_purchase_raffles', 'vp_purchase_raffle_entrants', 'vp_purchase_raffle_entries', 'vp_purchase_raffle_draws', 'vp_admin_audit'):
     line({'seed': t, 'rows': [], 'replace': True})
@@ -134,8 +134,22 @@ try:
     R.until(p4, visible('#keypad') + ' && ' + visible('#barReady'), 60); type_mobile(p4, '0499999999')
     g = js(p4, '(function(){function b(i){return document.getElementById(i).getBoundingClientRect().bottom;} return {add:b("addBtn"),h:innerHeight};})()') or {}
     ok('a small Android (360x740): Add entry is on the first screen', g.get('add', 9999) <= g.get('h', 0), g)
-    shot(p4, '02-bar-phone-360-start.jpg'); R.close_tab(t4)
-    shot(p1, '02-bar-phone-390-start.jpg'); shot(p2, '02-bar-phone-375-start.jpg')
+    shot(p4, '02-bar-phone-360-start.jpg');     shot(p1, '02-bar-phone-390-start.jpg'); shot(p2, '02-bar-phone-375-start.jpg')
+    # THE NEW-CUSTOMER FORM IS ONE SCREEN, NO SCROLL (16 Nov 2026), with every box the venue collects switched on (first and
+    # last name, email, postcode, the offers tick and the notice): the form and the Add them button are above the fold.
+    def new_form_one_screen(sid, label, name):
+        type_mobile(sid, '0455555555'); click(sid, '#addBtn'); R.until(sid, visible('#stepNew'), 15)
+        setv(sid, '#nFirst', 'Alexandra'); setv(sid, '#nLast', 'Montgomery'); setv(sid, '#nEmail', 'alexandra.montgomery@example.com'); setv(sid, '#nPost', '4000')
+        time.sleep(0.4)
+        g = js(sid, '(function(){function b(i){return document.getElementById(i).getBoundingClientRect().bottom;} var t=document.getElementById("termsLink").getBoundingClientRect(); return {save:b("newSave"),terms:t.bottom,h:innerHeight,doc:document.documentElement.scrollHeight,sw:document.documentElement.scrollWidth,iw:innerWidth,sy:scrollY};})()') or {}
+        ok(label + ': every box on, the new-customer form and Add them are on one screen, no scrolling', g.get('save', 9999) <= g.get('h', 0) and g.get('terms', 9999) <= g.get('h', 0) and g.get('doc', 9999) <= g.get('h', 0) + 1 and g.get('sw', 9999) <= g.get('iw', 0) + 1, g)
+        shot(sid, name)
+        click(sid, '#newCancel'); time.sleep(0.4)
+        ok(label + ': Cancel brings the keypad back, the counts show again and nothing was added', js(sid, visible('#stepPhone') + ' && ' + visible('#stToday')) is True and not table('vp_purchase_raffle_entries'))
+    new_form_one_screen(p4, 'a small Android (360x740)', '03-new-customer-phone-360.jpg')
+    new_form_one_screen(p1, 'phone 1 (390x844)', '03b-new-customer-all-boxes-phone-390.jpg')
+    new_form_one_screen(p2, 'phone 2 (375x812)', '03b-new-customer-all-boxes-phone-375.jpg')
+    R.close_tab(t4)
 
     type_mobile(p1, BOB)
     click(p1, '#lookBtn')

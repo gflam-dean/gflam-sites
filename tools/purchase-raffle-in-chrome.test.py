@@ -123,12 +123,13 @@ try:
     shot(sid, '04-bar-thanks-tablet.jpg')
     click(sid, '#doneNext')
     keypad(sid, '0412345678'); click(sid, '#addBtn'); confirm_known(sid)
-    ok('the same mobile inside a minute is asked on the page, not with a native dialog', R.until(sid, visible('#vpAsk'), 10) is True, errs(sid))
+    AGAIN = visible('#vpAsk') + ' && /separate purchase/.test(document.getElementById("vpAsk").textContent)'   # the second card, not the name card still closing
+    ok('the same mobile inside a minute is asked on the page, not with a native dialog', R.until(sid, AGAIN, 10) is True, errs(sid))
     shot(sid, '05-bar-add-another-tablet.jpg')
     click(sid, '#vpAskCancel')
     time.sleep(0.6)
     ok('"No" adds nothing', len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 1)
-    click(sid, '#addBtn'); confirm_known(sid); R.until(sid, visible('#vpAsk'), 10); click(sid, '#vpAskGo')
+    click(sid, '#addBtn'); confirm_known(sid); R.until(sid, AGAIN, 10); click(sid, '#vpAskGo')
     ok('"Yes, a new purchase" adds exactly one', R.until(sid, visible('#stepDone'), 15) is True and text(sid, '#doneSmall') == '2 entries so far. Good luck!' and len(line({'table': 'vp_purchase_raffle_entries'})['body']) == 2, text(sid, '#doneSmall'))
     entries = line({'table': 'vp_purchase_raffle_entries'})['body']
     ok('every entry names the staff login that added it', all(e.get('created_by') == 'host:staff-1' and e.get('created_by_name') == 'Sarah' for e in entries), entries)
@@ -200,12 +201,12 @@ try:
         shot(s3, '06b-bar-%s-%dx%d.jpg' % (shape, w, h))
         click(s3, '#addBtn')
         ok(tag + ': a new mobile opens the details form', R.until(s3, visible('#stepNew'), 15) is True)
-        f = js(s3, '''(function(){ var r=[].map.call(document.querySelectorAll("#stepNew input[type=text],#stepNew input[type=email]"),function(e){var q=e.getBoundingClientRect();return {w:q.width,h:q.height};}),
+        f = js(s3, '''(function(){ var r=[].filter.call(document.querySelectorAll("#stepNew input[type=text],#stepNew input[type=email]"),function(e){return e.offsetParent!==null;}).map(function(e){var q=e.getBoundingClientRect();return {w:q.width,h:q.height};}),
               b=[].map.call(document.querySelectorAll("#stepNew .btn"),function(e){return e.getBoundingClientRect().height;}),
               l=parseFloat(getComputedStyle(document.querySelector("#stepNew .field label")).fontSize);
               return {minW:Math.min.apply(null,r.map(function(q){return q.w;})), minH:Math.min.apply(null,r.map(function(q){return q.h;})), btnMin:Math.min.apply(null,b), label:l, sw:document.documentElement.scrollWidth, iw:innerWidth}; })()''') or {}
         ok(tag + ': the details form is readable: wide fields, 12px+ labels, full-size buttons',
-           f.get('minW', 0) >= 150 and f.get('minH', 0) >= 40 and f.get('btnMin', 0) >= 44 and f.get('label', 0) >= 12 and f.get('sw', 9999) <= f.get('iw', 0) + 1, f)
+           f.get('minW', 0) >= 120 and f.get('minH', 0) >= 40 and f.get('btnMin', 0) >= 44 and f.get('label', 0) >= 12 and f.get('sw', 9999) <= f.get('iw', 0) + 1, f)
         form = js(s3, LEAVES + '(document.getElementById("stepNew"))') or []
         ok(tag + ': the details form keeps clear of the island at the sides', bool(form) and not [p for p in form if p['l'] < ins['left'] - 0.5 or p['r'] > w - ins['right'] + 0.5], form[:3])
         shot(s3, '06c-new-%s-%dx%d.jpg' % (shape, w, h))

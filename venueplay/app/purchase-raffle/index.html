@@ -123,6 +123,22 @@
   }
   @media (max-width:480px) and (max-height:760px) and (orientation:portrait){ #stepPhone .key{min-height:46px} }
 
+  /* THE NEW-CUSTOMER FORM ON A PHONE (16 Nov 2026): with every box the venue collects switched on it ran off the first screen
+     and the Save button sat under the fold. While the form is open the counts and the raffle name step aside, first and last
+     name share a row, and the spacing tightens, so the form and Add them are on one screen at 360, 375 and 390 wide. */
+  @media (max-width:640px) and (orientation:portrait){
+    #barReady.newing>.stats,#barReady.newing #barRaffleName,#barReady.newing #barRaffleWhen{display:none}
+    #barReady.newing .bargrid>.panel:first-child{padding:12px}
+    #stepNew{padding:12px}
+    #stepNew .two{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+    #stepNew .field{margin-bottom:9px}
+    #stepNew .field label{margin-bottom:4px}
+    #stepNew input[type=text],#stepNew input[type=email]{padding:9px 12px}
+    #stepNew .note{font-size:13px;line-height:1.4}
+    #stepNew .tickrow{padding:9px 12px;margin-bottom:6px}
+    #stepNew #nNotice{margin:2px 0 10px!important}
+    #stepNew #newMsg{min-height:0;margin:0 0 6px!important}
+  }
   .done{text-align:center;padding:26px 16px;border-radius:16px;background:rgba(53,208,127,.10);border:1px solid rgba(53,208,127,.45)}
   .done .tick{width:64px;height:64px;border-radius:50%;background:var(--win);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
   .done .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(26px,5.5vw,40px);color:#fff;line-height:1.05}
@@ -600,7 +616,7 @@
   });
 
   function openNew(){
-    show("stepPhone",false); show("stepDone",false); show("stepNew",true);
+    show("stepPhone",false); show("stepDone",false); show("stepNew",true); $("barReady").classList.add("newing");
     $("newPhone").textContent=fmtPhone(digits());
     ["nFirst","nLast","nEmail"].forEach(function(id){ $(id).value=""; });
     $("nPost").value=""; $("nOpt").checked=false; $("newMsg").textContent="";
@@ -610,7 +626,7 @@
     $("nOptText").textContent="Send me offers from "+((G.venue&&G.venue.name)||"the venue");
     try{ $("nFirst").focus(); }catch(e){}
   }
-  function closeNew(){ show("stepNew",false); show("stepPhone",true); }
+  function closeNew(){ show("stepNew",false); show("stepPhone",true); $("barReady").classList.remove("newing"); }
   $("newCancel").addEventListener("click", function(){ closeNew(); $("barMsg").textContent="Nothing added."; });
   $("newSave").addEventListener("click", function(){
     var f=G.form||{ first_name:true, last_name:false, email:false, postcode:false, marketing_optin:false };
@@ -623,7 +639,7 @@
   });
 
   function showDone(res){
-    show("stepNew",false); show("stepPhone",false); show("stepDone",true);
+    show("stepNew",false); show("stepPhone",false); show("stepDone",true); $("barReady").classList.remove("newing");
     $("doneBig").textContent="Thanks "+(res.first_name||"")+", you're in";
     $("doneSmall").textContent=(res.entries|0)+((res.entries|0)===1?" entry":" entries")+" so far. Good luck!";
     G.lastEntry=res.entry_id; $("doneUndo").disabled=false;

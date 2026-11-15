@@ -370,6 +370,10 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: false, collect_last_name: false }]; NOWMS += 61000;
   lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412000002' });
   show('no name collected at all: the first name is still asked (the winner is named on the TV)', lk.body.form.first_name === true && lk.body.form.last_name === false);
+  DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: false, collect_last_name: true }];
+  lk = await call(handlePraffleLookup, { venue_id: VENUE, raffle_id: raffle().id, phone: '0412000003' });
+  show('only a last name switched on: the first name is still asked, always', lk.body.form.first_name === true && lk.body.form.last_name === true, JSON.stringify(lk.body.form));
+  DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: false, collect_last_name: false }];
   e = await enter('0412000002', { last_name: 'NoFirst' });
   show('and a first name is required by the server too', e.status === 400 && e.body.needs_details === true && DB.vp_purchase_raffle_entrants.length === 1, JSON.stringify(e.body));
   DB.vp_venue_settings = [{ venue_id: VENUE, collect_first_name: true, collect_last_name: true, collect_email: true, collect_postcode: true, collect_marketing_optin: true }]; NOWMS += 61000;
