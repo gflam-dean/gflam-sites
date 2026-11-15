@@ -24822,6 +24822,25 @@ MUTATIONS = [
     ('trivia-console-fits-phone-in-chrome.test.py', 'venueplay/app/trivia/host.html',
      '  @media (max-width:640px){\n    body.vp-live .bar{', '  @media (max-width:1px){\n    body.vp-live .bar{',
      'on a phone the header, gutters and question card do not tighten during a game'),
+    # THE MUSICAL BINGO AND BINGO CONSOLES ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026)
+    ('musical-console-fits-phone-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '<details class="hostset" id="hostSettings">', '<details class="hostset" id="hostSettings" open>',
+     'during a game the musical settings rows stay open'),
+    ('musical-console-fits-phone-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '  #hostSettings{margin:12px 0 14px;', '  #liveBlock:not(.hidden){display:flex;flex-direction:column}#hostSettings{order:-1;margin:12px 0 14px;',
+     'during a game the musical Settings go back on top, above Play song and the Claims'),
+    ('musical-console-fits-phone-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '  @media (max-width:640px){\n    body.vp-live .bar{padding:8px 16px', '  @media (max-width:1px){\n    body.vp-live .bar{padding:8px 16px',
+     'on a phone the musical header, gutters and now-playing card do not tighten during a game'),
+    ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
+     '<details class="hostset" id="hostSettings">', '<details class="hostset" id="hostSettings" open>',
+     'during a game the bingo early-calls row stays open'),
+    ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
+     '  #bingoView #hostSettings{margin:14px 0 0;', '  #bingoView #liveBlock:not(.hidden){display:flex;flex-direction:column}#bingoView #hostSettings{order:-1;margin:14px 0 0;',
+     'during a game the bingo early-calls row goes back on top, above Next number'),
+    ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
+     '  @media (max-width:640px){\n    body.vp-live .bar{padding-top:8px', '  @media (max-width:1px){\n    body.vp-live .bar{padding-top:8px',
+     'on a phone the bingo header, coach line and last ball do not tighten, so the claim queue drops below the fold'),
 ]
 
 

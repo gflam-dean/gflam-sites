@@ -208,6 +208,31 @@
   .copyok{font-size:11.5px;color:var(--win);font-weight:600}
   .pill.playing{background:rgba(255,194,75,.16);color:var(--gold);border-color:rgba(255,194,75,.34)}
 
+  /* THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026). During a game the settings rows sit in one closed box
+     (its own class: the setup keeps exactly one Advanced disclosure) under the Claims, drawn like "Advanced settings",
+     and on a phone (body.vp-live, set in renderConsole) the header, gutters and now-playing card tighten so Play song
+     and the Claims fit one screen. */
+  #hostSettings{margin:12px 0 14px;border:1px solid var(--line-2);border-radius:12px;background:var(--ink-3)}
+  #hostSettings>.hostset-body{padding:0 14px 12px}
+  #hostSettings>.hostset-body>.liveopts{margin-top:0}
+  .hostset>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border-radius:12px;
+    font:700 14px/1.3 'Hanken Grotesk',Manrope,system-ui,sans-serif;color:var(--text)}
+  .hostset>summary::-webkit-details-marker{display:none}
+  .hostset>summary::after{content:"";flex:none;width:8px;height:8px;margin:-4px 4px 0 0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.7;transition:transform .15s}
+  .hostset[open]>summary::after{transform:rotate(-135deg);margin-top:4px}
+  .hostset>summary:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  .hostset-sub{display:block;margin-top:2px;font:500 12px/1.4 Manrope,system-ui,sans-serif;color:var(--faint)}
+  @media (max-width:640px){
+    body.vp-live .bar{padding:8px 16px;row-gap:4px}
+    body.vp-live .wrap{padding:10px 16px 22px}
+    body.vp-live #consoleView>.lbl{margin-bottom:6px}
+    body.vp-live .runpanel{padding:12px}
+    body.vp-live .nowbar{padding:10px 12px;margin-bottom:8px}
+    body.vp-live .audioctl{margin-top:9px}
+    body.vp-live .audioctl .btn{min-height:48px}
+    body.vp-live .prizeline2{margin:0 0 8px}
+  }
+
   /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
      and while the host is scrolled down mid-round. hostError() is the ONLY error surface:
      the small status pill is for connection state only. */
@@ -303,7 +328,7 @@
     <div class="console">
 
       <!-- left: run -->
-      <div class="panel">
+      <div class="panel runpanel">
         <div id="setupBlock">
           <div class="field hidden" id="fbBlock" style="background:rgba(53,208,127,.07);border:1px solid rgba(53,208,127,.25);border-radius:12px;padding:12px 14px">
             <div class="lbl" style="margin-bottom:6px">How the room found it</div>
@@ -404,38 +429,8 @@
               <button class="btn pink" id="playNextBtn">Play song</button>
               <button class="btn ghost wide" id="revealBtn" disabled>Reveal on TV now</button>
             </div>
-            <div class="liveopts">
-              <label for="revealSelLive">TV reveals
-                <select id="revealSelLive">
-                  <option value="instant">straight away</option>
-                  <option value="15">after 15 seconds</option>
-                  <option value="end">when the clip ends</option>
-                  <option value="never">only when I tap Reveal</option>
-                </select>
-              </label>
-            </div>
-            <div class="volrow" style="margin-top:10px">
-              <label for="volRange" style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
-                <span>Room volume</span><span id="volVal">240%</span>
-              </label>
-              <input type="range" id="volRange" min="100" max="400" step="10" value="240" style="width:100%;accent-color:var(--pink)">
-              <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
-            </div>
-            <button class="btn ghost vp-wbtn" id="monitorBtn">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
             <div class="clipwarn hidden" id="tvAudioNote" role="status"></div>
             <div class="clipwarn hidden" id="clipWarn">No clip for this one. Play it yourself through your sound system. It is already marked as called, and the TV reveals it when you tap Reveal on TV now.</div>
-            <button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>&#9873; This song did not work</button>
-            <div class="flagnote hidden" id="flagNote"></div>
-            <div class="spotrow">
-              <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
-              <span class="copyok hidden" id="spotifyOk">Copied</span>
-            </div>
-            <p class="note" style="margin-top:8px">Prefer full tracks off your own subscription? Copy the Spotify search links, paste them into a new Spotify playlist, and play that through the PA instead. The marking and winners still run from here.</p>
-          </div>
-          <div class="stat">
-            <div class="box"><div class="k">Played</div><div class="v" id="livePlayed">0</div></div>
-            <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line across</div></div>
-            <div class="box"><div class="k">Playing</div><div class="v g" id="livePlayers">0</div></div>
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
 
@@ -451,6 +446,45 @@
           </div>
           <div class="lbl" id="claimHead">Claims</div>
           <div id="claimQueue"></div>
+          <!-- THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026: "my one rule is to make everything easier").
+               During a game Play song and the Claims are what the host needs; the TV reveal timing, room volume, sound
+               monitor, flag a song and the Spotify links fold behind one closed "Settings" control BELOW the Claims.
+               Same rows, same ids, same handlers, same saved values. -->
+          <details class="hostset" id="hostSettings">
+            <summary><span>Settings<small class="hostset-sub">TV reveals, room volume, sound here, flag a song, Spotify links</small></span></summary>
+            <div class="hostset-body">
+                <div class="liveopts">
+                  <label for="revealSelLive">TV reveals
+                    <select id="revealSelLive">
+                      <option value="instant">straight away</option>
+                      <option value="15">after 15 seconds</option>
+                      <option value="end">when the clip ends</option>
+                      <option value="never">only when I tap Reveal</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="volrow" style="margin-top:10px">
+                  <label for="volRange" style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+                    <span>Room volume</span><span id="volVal">240%</span>
+                  </label>
+                  <input type="range" id="volRange" min="100" max="400" step="10" value="240" style="width:100%;accent-color:var(--pink)">
+                  <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
+                </div>
+                <button class="btn ghost vp-wbtn" id="monitorBtn">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
+                <button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>&#9873; This song did not work</button>
+                <div class="flagnote hidden" id="flagNote"></div>
+                <div class="spotrow">
+                  <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
+                  <span class="copyok hidden" id="spotifyOk">Copied</span>
+                </div>
+                <p class="note" style="margin-top:8px">Prefer full tracks off your own subscription? Copy the Spotify search links, paste them into a new Spotify playlist, and play that through the PA instead. The marking and winners still run from here.</p>
+            </div>
+          </details>
+          <div class="stat">
+            <div class="box"><div class="k">Played</div><div class="v" id="livePlayed">0</div></div>
+            <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line across</div></div>
+            <div class="box"><div class="k">Playing</div><div class="v g" id="livePlayers">0</div></div>
+          </div>
 
           <div class="lbl" style="margin-top:18px">Played so far</div>
           <div class="playedstrip" id="playedStrip"></div>
@@ -1461,6 +1495,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
+    if(document.body) document.body.classList.toggle("vp-live", live);   // the console on one phone screen (15 Nov 2026)
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
       if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }

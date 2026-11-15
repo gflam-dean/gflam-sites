@@ -337,6 +337,34 @@
   .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
   .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
   .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+  /* THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026). During a game the early-calls switch sits in one closed
+     box (its own class: the setup keeps exactly one Advanced disclosure) under the claim queue, and on a phone
+     (body.vp-live, set in renderConsole) the header, gutters, coach line and last ball tighten so Next number, the
+     last ball and the claim queue fit one screen. Presentation only: no draw, claim or win logic. */
+  #bingoView #hostSettings{margin:14px 0 0;border:1px solid var(--line-2);border-radius:12px;background:var(--ink-3)}
+  #bingoView #hostSettings>.hostset-body{padding:0 14px 2px}
+  #bingoView.callermode #hostSettings{display:none}
+  .hostset>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 14px;border-radius:12px;
+    font:700 15px/1.3 'Hanken Grotesk',Manrope,system-ui,sans-serif;color:var(--text)}
+  .hostset>summary::-webkit-details-marker{display:none}
+  .hostset>summary::after{content:"";flex:none;width:8px;height:8px;margin:-4px 4px 0 0;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);opacity:.7;transition:transform .15s}
+  .hostset[open]>summary::after{transform:rotate(-135deg);margin-top:4px}
+  .hostset>summary:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  .hostset-sub{display:block;margin-top:2px;font:500 13px/1.4 Manrope,system-ui,sans-serif;color:var(--faint)}
+  @media (max-width:640px){
+    body.vp-live .bar{padding-top:8px;padding-bottom:8px;row-gap:4px}
+    body.vp-live .wrap{padding:10px 16px 22px}
+    body.vp-live #bingoView{row-gap:8px}
+    body.vp-live #bingoView #coach{min-height:0!important;padding:6px 12px!important;line-height:1.35!important}
+    body.vp-live #bingoView .runpanel{padding:10px 12px}
+    body.vp-live #bingoView .stat{margin-bottom:6px}
+    body.vp-live #bingoView .stat .box{padding:6px 10px}
+    body.vp-live #bingoView .lastball{padding:8px 10px;margin-bottom:6px}
+    body.vp-live #bingoView .lbval{width:72px;height:72px;margin:4px auto;font-size:36px}
+    body.vp-live #bingoView .prevballs{margin-top:4px}
+    body.vp-live #bingoView .prizeline2{margin:0 0 6px}
+    body.vp-live #bingoView #claimLbl{margin-top:10px!important;margin-bottom:4px}
+  }
   /* ============ THE NEW LOOK, NUMBER BINGO CALLER CONSOLE (12 Nov 2026) ============
      The caller console wears the same pieces as the phone and the wall (Dean, 3 Nov 2026): the last ball in a flat pink ring,
      the last five as small tiles, the board with called numbers solid pink and the newest white, and nothing under 15px.
@@ -544,7 +572,7 @@
       <div id="coach" style="grid-column:1/-1;margin:0 0 4px;padding:11px 15px;background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);border-radius:12px;color:var(--text);font-size:13.5px;line-height:1.5;min-height:65px"></div>
       <div class="vp-warn" id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px"></div>
       <!-- left: run -->
-      <div class="panel">
+      <div class="panel runpanel">
         <div id="setupBlock">
           <!-- First on the form, so a real-balls night is chosen before anything else is set up. -->
           <label class="callerpick" for="callerChk">
@@ -611,8 +639,6 @@
         </div>
 
         <div id="liveBlock" class="hidden">
-          <label id="allowEarlyLiveRow" style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
-            <input type="checkbox" id="allowEarlyLive" autocomplete="off" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
           <div class="stat" id="liveStats">
             <div class="box"><div class="k">Called</div><div class="v" id="liveCount">0 of 90</div></div>
             <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line</div></div>
@@ -660,6 +686,16 @@
           </div>
           <div class="lbl" id="claimLbl" style="margin-top:18px">Claim queue</div>
           <div id="claimQueue"></div>
+          <!-- THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026: "my one rule is to make everything easier").
+               During a game Next number, the last ball and the claim queue come first; the early-calls switch folds
+               behind one closed "Settings" control BELOW the claim queue. Same box, same id, same handler, same saved value. -->
+          <details class="hostset" id="hostSettings">
+            <summary><span>Settings<small class="hostset-sub">Allow early BINGO calls</small></span></summary>
+            <div class="hostset-body">
+              <label id="allowEarlyLiveRow" style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
+                <input type="checkbox" id="allowEarlyLive" autocomplete="off" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+            </div>
+          </details>
           <div class="resolve" style="margin-top:16px">
             <button class="btn ghost" id="newGameBtn">New game</button>
             <button class="btn roll" id="endGameBtn">End game / Back to ads</button>
@@ -3023,6 +3059,7 @@
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
+    if(document.body) document.body.classList.toggle("vp-live", live);   // the console on one phone screen (15 Nov 2026)
     var _real=(G.status==="setup") ? callerChosen() : !!G.caller;
     $("startBtn").textContent = lobby ? "Start calling numbers" : (_real ? "Put bingo on the TV" : "Open lobby");
     $("cancelLobbyBtn").style.display = lobby ? "" : "none";
