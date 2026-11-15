@@ -246,47 +246,16 @@ async function main() {
   section('8. The card gate (one constant) and the email helpers');
   check('a placeholder is not a real email', vpqRealEmail('m412345678.ab12@phone.venueplay.com.au') === null && vpqRealEmail('') === null && vpqRealEmail('a@b.com.au') === 'a@b.com.au');
   check('with the gate off (the default) the card goes straight to Stripe', vpqCardGate('') === null);
-  section('9. The funnel: one row per step, no personal data');
-  world(); listed(); DB.vp_quick_events = [];
-  var SID = 'a1b2c3d4e5f6a1b2c3d4e5f6';
-  function ev(b, h) { return call('/quick/event', b, h || NET()); }
-  await ev({ sid: SID, step: 'page_opened', src: 'website', taps: 0 });
-  await ev({ sid: SID, step: 'form_sent', src: 'cold_email', taps: 3, name: 'Sam', mobile: '0412345678', venue: 'The Grand' });
-  var row0 = DB.vp_quick_events[1] || {};
-  check('a known step is kept with its session, source and taps', DB.vp_quick_events.length === 2 && row0.sid === SID && row0.src === 'cold_email' && row0.taps === 3, DB.vp_quick_events);
-  check('a name, mobile or venue sent along is never kept', JSON.stringify(DB.vp_quick_events).indexOf('Sam') === -1 && JSON.stringify(DB.vp_quick_events).indexOf('0412') === -1 && JSON.stringify(DB.vp_quick_events).indexOf('Grand') === -1, DB.vp_quick_events);
-  await ev({ sid: SID, step: 'made_up_step' }); await ev({ sid: 'not-a-session', step: 'page_opened' }); await ev({ step: 'page_opened' });
-  check('an unknown step, a bad session id or none is dropped, and still answered ok', DB.vp_quick_events.length === 2);
-  var badEv = await ev({ sid: SID, step: 'page_opened', src: 'evil', taps: 99999 });
-  check('an unknown source is read as website and taps are capped', badEv.status === 200 && DB.vp_quick_events[2].src === 'website' && DB.vp_quick_events[2].taps === 500, DB.vp_quick_events[2]);
-  await ev({ sid: SID, step: 'page_left', last: 'demo_q3' });
-  check('page left keeps the last step reached', DB.vp_quick_events[3].last_step === 'demo_q3', DB.vp_quick_events[3]);
-  for (var e1 = 0; e1 < 90; e1++) await ev({ sid: 'bbbbbbbbbbbbbbbbbbbbbbbb', step: 'page_opened' });
-  check('one session id is held to 80 events an hour; the rest are dropped', DB.vp_quick_events.filter(function (r) { return r.sid === 'bbbbbbbbbbbbbbbbbbbbbbbb'; }).length === 80);
-  world(); listed(); DB.vp_quick_events = [];
-  var sv = await qstart({}); var vid2 = DB.vp_venues[0].id, ow2 = DB.vp_venue_staff[0].auth_user_id;
-  await ev({ sid: SID, step: 'signed_in' }, Object.assign(NET(), AS(ow2), { 'X-VP-Venue': vid2 }));
-  await ev({ sid: SID, step: 'card_added' }, Object.assign(NET(), AS(ow2), { 'X-VP-Venue': U(424242) }));
-  await ev({ sid: SID, step: 'podium_seen' }, NET());
-  check('signed in, the venue comes from the sign-in', DB.vp_quick_events[0].venue_id === vid2, DB.vp_quick_events[0]);
-  check('a venue the login does not belong to is not recorded', !DB.vp_quick_events[1].venue_id, DB.vp_quick_events[1]);
-  check('not signed in: no venue', !DB.vp_quick_events[2].venue_id, DB.vp_quick_events[2]);
-  var tab = vpqFunnelTable([{ sid: 'a', step: 'page_opened', src: 'website', taps: 0 }, { sid: 'b', step: 'page_opened', src: 'cold_email', taps: 0 }, { sid: 'a', step: 'form_sent', src: 'website', taps: 2 },
-    { sid: 'a', step: 'signed_in', src: 'website', taps: 4 }, { sid: 'a', step: 'signed_in', src: 'website', taps: 4 }]);
-  var po = tab.steps[0], fs = tab.steps.filter(function (x) { return x.step === 'form_sent'; })[0], si = tab.steps.filter(function (x) { return x.step === 'signed_in'; })[0];
-  check('the funnel counts each session once per step, by source, with the percent lost', po.all === 2 && po.website === 1 && po.cold_email === 1 && fs.all === 1 && fs.lost_pct === 50 && si.all === 1, tab);
-  check('and the median taps to signed in', tab.median_taps_to_signed_in === 4, tab);
-  var fa = await call('/admin/quick-funnel', { days: 7 }, {});
-  var fb = await call('/admin/quick-funnel', { days: 7 }, AS(STAFFADMIN));
-  var fc = await call('/admin/quick-funnel', { days: 7 }, AS(ADMIN));
-  check('the funnel is for HQ owner or accounts only', fa.status === 401 && fb.status === 403 && fc.status === 200 && Array.isArray(fc.body.steps), [fa.status, fb.status, fc.status]);
+  section('9. The steps go to the journey store (413); the quick game keeps no table of its own (15 Nov 2026)');
   var WS = readFile('venueplay-backend/worker/venueplay-api-FULL.js'), CS = readFile('venueplay/app/vp-quick-config.js');
-  var wsteps = /const VPQ_EVENT_STEPS = \[([^\]]*)\]/.exec(WS)[1].replace(/[' \n]/g, '').split(',');
+  var wsteps = /const VPJ_EVENTS = \[([^\]]*)\]/.exec(WS)[1].replace(/[' \n]/g, '').split(',');
   var csteps = /var EVENTS = \[([^\]]*)\]/.exec(CS)[1].replace(/[" \n]/g, '').split(',');
-  check('the page and the Worker list the same steps', JSON.stringify(wsteps) === JSON.stringify(csteps), [wsteps, csteps]);
+  check('every step the page sends is one the journey store keeps (VPJ_EVENTS)', csteps.length > 10 && csteps.every(function (x) { return wsteps.indexOf(x) >= 0; }), csteps.filter(function (x) { return wsteps.indexOf(x) < 0; }));
+  var gone = await call('/quick/event', { sid: 'a1b2c3d4e5f6a1b2c3d4e5f6', step: 'page_opened' }, NET());
+  check('the retired /quick/event route is gone, and the page never calls it', gone.status === 404 && CS.indexOf('/quick/event') === -1, [gone.status, CS.indexOf('/quick/event')]);
 
   section('10. The per-lead link (cold email): unguessable, one answer, tied to the account');
-  world(); listed(); DB.vp_quick_leads = []; DB.vp_quick_events = [];
+  world(); listed(); DB.vp_quick_leads = [];
   var CODE = 'Zk3-Q9xT_aB7cD2eF5gH8j', EXP = 'Zk3-Q9xT_aB7cD2eF5gH9k';
   DB.vp_quick_leads.push({ id: 7, code_hash: await vpqLeadHash(ENV, CODE), first_name: 'Pat', venue_name: 'The Grand Hotel', postcode: '4217', suburb: 'Surfers Paradise',
     source: 'cold_email', expires_at: new Date(Date.now() + 86400000).toISOString(), revoked_at: null, claimed_venue_id: null });

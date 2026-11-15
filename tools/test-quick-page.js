@@ -63,11 +63,10 @@ posts.length = 0; win.localStorage = { d: {}, getItem: function (k) { return thi
 win.crypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (i * 37 + 11) & 255; return a; } };
 (0, eval)(CONFIG); Q = win.VPQuick;
 check('an unknown step is refused', Q.track('typed_a_name') === false && posts.length === 0);
-check('a known step posts once, with session, step, source and taps only', Q.track('page_opened') === true && posts.length === 1 && Object.keys(posts[0].body).sort().join(',') === 'sid,src,step,taps' && /^[a-f0-9]{24}$/.test(posts[0].body.sid), posts);
-check('the same step again on the page posts nothing', Q.track('page_opened') === false && posts.length === 1);
-Q.track('signed_in', { token: 'tok' });
-check('signed in, the token goes in the header (the Worker takes the venue from it), not the body', posts[1].headers.Authorization === 'Bearer tok' && JSON.stringify(posts[1].body).indexOf('tok') === -1, posts[1]);
-check('the session id is one random id kept in this browser', posts[0].body.sid === posts[1].body.sid);
+check('a known step is passed on once; the page posts nothing itself (the 413 journey store sends it)', Q.track('page_opened') === true && posts.length === 0, posts);
+check('the same step again on the page is not passed on again', Q.track('page_opened') === false && posts.length === 0);
+check('no route of its own: the config never fetches or beacons anything', !/\.fetch\(|sendBeacon\(/.test(CONFIG));
+check('the session id is one random id kept in this browser', /^[a-f0-9]{24}$/.test(Q.sid()) && Q.sid() === Q.sid());
 check('the page, the demo and the choices never send a name, mobile or venue name to the funnel', !/track\([^)]*(name|mobile|venue)/.test(QJS + TRY.slice(TRY.indexOf('function qtrack'), TRY.indexOf('function qtrack') + 200)));
 check('taps are counted on every press and stored as a number', /pointerdown/.test(CONFIG) && Q.taps() === 0);
 var evs = /var EVENTS = \[([^\]]*)\]/.exec(CONFIG)[1];
@@ -79,7 +78,7 @@ posts.length = 0; delete win.vpTrackStepImpl; delete win.__vpTrackQueue; win.loc
 check('vpTrackStep is a window function', typeof win.vpTrackStep === 'function');
 check('an unknown step is refused and queued nowhere', win.vpTrackStep('typed_a_name', {}) === false && !win.__vpTrackQueue && posts.length === 0);
 win.vpTrackStep('page_opened', { x: 1 });
-check('before the 413 store is there, a step is QUEUED for it to flush (and sent to the fallback route)', win.__vpTrackQueue && win.__vpTrackQueue.length === 1 && win.__vpTrackQueue[0][0] === 'page_opened' && posts.length === 1, [win.__vpTrackQueue, posts.length]);
+check('before the 413 store is there, a step is QUEUED for it to flush, with the taps count, and nothing is posted', win.__vpTrackQueue && win.__vpTrackQueue.length === 1 && win.__vpTrackQueue[0][0] === 'page_opened' && typeof win.__vpTrackQueue[0][1].taps === 'number' && posts.length === 0, [win.__vpTrackQueue, posts.length]);
 var got = []; win.vpTrackStepImpl = function (st, pr) { got.push([st, pr]); };
 win.vpTrackStep('form_sent', { a: 1 });
 check('once the 413 store defines vpTrackStepImpl, steps go to it, not the queue', got.length === 1 && got[0][0] === 'form_sent' && win.__vpTrackQueue.length === 1, got);

@@ -62,7 +62,7 @@
 /gflam/:code      /nsw  200
 /coaster/:code    /nsw  200
 /home/:code       /     200
-# /quick/:code -> /quick 200 is added when the Play a quick game page (INBOX 412) is merged: this test refuses a rule whose target does not exist yet.
+/quick/:code      /quick  200   # a tracked link to Play a quick game (INBOX 412 + 413, merged 15 Nov 2026)
 
 # THE GFLAM GROUP SITE'S BANNER (Dean, 4 Nov 2026). gflam.com.au links venueplay.com.au/gflam. It is
 # the same offer page, showing whichever month's offer is live today (VPOffer.forPath), so the

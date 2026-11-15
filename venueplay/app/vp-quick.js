@@ -156,11 +156,24 @@
     $("qVenue").addEventListener("input", function () { root.clearTimeout(S.timer); S.timer = root.setTimeout(search, 220); });
     doc.addEventListener("click", function (e) { if (!e.target.closest || !e.target.closest(".row")) hidePick(); });
     turnstile();
+    if (typeof root.vpTrackWatchForm === "function") root.vpTrackWatchForm({ qName: "first_name", qMobile: "contact", qVenue: "venue" });   // field_* and form_abandon (413)
     prefill();
   }
   /* A per-lead link from a cold email (/quick?l=<code>): the venue and the first name, when we have them, before they type.
      An unknown or run-out code is silently nothing: the form is just the form. */
+  function fillFrom(j) {
+    if (!j || !j.found) return false;
+    if (j.first_name && !val("qName")) $("qName").value = j.first_name;
+    if (j.venue && !val("qVenue")) { $("qVenue").value = j.venue; S.typed = j.venue; S.pc = j.postcode || ""; S.suburb = j.suburb || ""; }
+    var mo = $("qMobile"); if (mo && !val("qMobile")) mo.focus();
+    return true;
+  }
   function prefill() {
+    /* A tracked link (/quick/<code>, 413): the venue and first name its lead has, before they type. */
+    if (typeof root.vpTrackLookup === "function" && typeof root.vpTrackCode === "function" && root.vpTrackCode()) {
+      root.vpTrackLookup().then(fillFrom).catch(function () {});
+      return;
+    }
     var m = /[?&]l=([A-Za-z0-9_-]{22,64})(&|$)/.exec(root.location.search || "");
     if (!m) return;
     root.fetch(API + "/quick/lead?l=" + encodeURIComponent(m[1])).then(function (r) { return r.json(); }).then(function (j) {

@@ -22,7 +22,7 @@
     PATH: "/quick",
     API: root.VP_START_API || "https://api.venueplay.com.au"
   };
-  /* The step names the Worker accepts (kept identical to VPQ_EVENT_STEPS in the Worker; a suite compares them). */
+  /* The step names the journey store accepts (kept identical to VPJ_EVENTS in the Worker; a suite compares them). */
   var EVENTS = ["page_opened", "button_tapped", "form_started", "form_sent", "account_made", "signed_in",
     "demo_q1", "demo_q2", "demo_q3", "demo_q4", "demo_q5", "podium_seen", "games_answered",
     "card_screen_seen", "card_added", "choice_another", "choice_info", "choice_setup", "page_left"];
@@ -60,35 +60,28 @@
   /* THE ONE TRACKING DOOR (the contract with the 413 tracking build, 15 Nov 2026):
        window.vpTrackStep(step, props)   step: a name in EVENTS (the 412 UPDATE 8 names); props: optional small object (never a name,
                                          mobile, email or venue name). Returns true when the step was passed on.
-     The 413 build defines window.vpTrackStepImpl(step, props) when its event store is live; until then a call is QUEUED in
-     window.__vpTrackQueue (for it to flush) AND sent to this build's own fallback route (/quick/event, to be removed when 413 lands). */
-  function vpTrackStep(step, props) {
-    if (EVENTS.indexOf(step) < 0) return false;
-    if (typeof root.vpTrackStepImpl === "function") { try { root.vpTrackStepImpl(step, props || {}); } catch (e) {} }
-    else { (root.__vpTrackQueue = root.__vpTrackQueue || []).push([step, props || {}, Date.now()]); }
-    return track(step, props);
-  }
-  root.vpTrackStep = vpTrackStep;
+     /app/vp-track.js (413, loaded first) defines window.vpTrackStepImpl, which keeps the step in the journey store
+     (vp_journey_events). A page without it QUEUES the step in window.__vpTrackQueue for vp-track.js to flush. This build's own
+     fallback route and table were retired when 413 landed (15 Nov 2026). The taps count rides
+     along in props (413 keeps "taps"). */
   var seen = {};
   function track(step, extra) {
     if (EVENTS.indexOf(step) < 0) return false;
     if (seen[step] && step !== "page_left") return false;   // once per step per page
     seen[step] = true;
     put(LAST_KEY, step);
-    var body = { sid: sid(), step: step, src: source(), taps: taps() };
-    if (extra && typeof extra.last === "string") body.last = extra.last;
-    var headers = { "Content-Type": "application/json" };
-    if (extra && extra.token) headers.Authorization = "Bearer " + extra.token;
-    try {
-      var payload = JSON.stringify(body);
-      if (step === "page_left" && root.navigator && root.navigator.sendBeacon && !headers.Authorization) {
-        root.navigator.sendBeacon(CFG.API + "/quick/event", new root.Blob([payload], { type: "text/plain" }));
-      } else {
-        root.fetch(CFG.API + "/quick/event", { method: "POST", headers: headers, body: payload, keepalive: true }).catch(function () {});
-      }
-    } catch (e) {}
     return true;
   }
+  function vpTrackStep(step, props) {
+    if (!track(step, props)) return false;
+    var p = {}, k; props = props || {};
+    for (k in props) p[k] = props[k];
+    if (p.taps == null) p.taps = taps();
+    if (typeof root.vpTrackStepImpl === "function") { try { root.vpTrackStepImpl(step, p); } catch (e) {} }
+    else { (root.__vpTrackQueue = root.__vpTrackQueue || []).push([step, p, Date.now()]); }
+    return true;
+  }
+  root.vpTrackStep = vpTrackStep;
   function labels() {
     if (!doc) return;
     var els = doc.querySelectorAll("[data-vpq-label]");

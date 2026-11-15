@@ -80,7 +80,7 @@ try:
         {'id': 1, 'name': 'Kirra Beach Hotel', 'name_key': 'kirra-beach-hotel', 'postcode': '4225', 'suburb': 'Kirra', 'au_state': 'QLD', 'source': 'venue master list'},
         {'id': 2, 'name': 'The Railway Hotel', 'name_key': 'railway-hotel', 'postcode': '2000', 'suburb': 'Sydney', 'au_state': 'NSW', 'source': 'send list'},
         {'id': 3, 'name': 'Kirra Surf Club', 'name_key': 'kirra-surf-club', 'postcode': '4225', 'suburb': 'Kirra', 'au_state': 'QLD', 'source': 'send list'}])
-    for t in ('vp_signup_starts', 'vp_prospects', 'vp_help_tickets', 'vp_sessions', 'vp_prospect_welcomes', 'auth', 'vp_quick_events', 'vp_quick_leads'):
+    for t in ('vp_signup_starts', 'vp_prospects', 'vp_help_tickets', 'vp_sessions', 'vp_prospect_welcomes', 'auth', 'vp_quick_leads'):
         S.W.seed(t, [])
     S.W.seed('vp_platform_admins', [{'auth_user_id': S.W.info['uid'], 'role': 'owner', 'label': 'Dean'}])
 
@@ -120,8 +120,13 @@ try:
         S.close_tab(t1)
 
     print('\nA BRAND-NEW VENUE ON OUR LIST, ON A PHONE (the taps are counted)')
-    S.W.seed('vp_quick_events', [])
-    tid, sid = S.open('/quick?src=website', 390, 844, mobile=True)
+    # 15 Nov 2026 (412 on 413): the steps go through the one door to the journey store (/app/vp-track.js). A headless browser
+    # is a robot to vp-track (it sends nothing for it, on purpose), so the door is watched here: every step handed to
+    # window.vpTrackStepImpl is recorded in window.__steps and still passed on to the real one.
+    STEPS_SPY = ('(function(){ var real = null; window.__steps = []; Object.defineProperty(window, "vpTrackStepImpl", { configurable: true,'
+                 ' get: function(){ return function(s, p){ window.__steps.push([s, JSON.parse(JSON.stringify(p || {}))]); if (real) { try { real(s, p); } catch (e) {} } }; },'
+                 ' set: function(f){ real = f; } }); })();')
+    tid, sid = S.open('/quick?src=website', 390, 844, mobile=True, pre=STEPS_SPY)
     S.until(sid, '!!window.VPQuick && !!document.getElementById("qGo")', 20)
     S.js(sid, 'localStorage.clear(); VPQuick.taps(); true')
     typ(sid, 'qName', 'Kim Smith')                       # tap 1 (focus)
@@ -158,11 +163,11 @@ try:
     ok('the account is a card-free prospect at 10 players, a pub', len(mine) == 1 and len(vp) >= 1 and (S.W.table('vp_venues') or [{}])[-1].get('max_players') == 10, [fo, vp])
     ok('NO EMAIL ANYWHERE: account email empty, prospect email empty, the login a placeholder', fo[0].get('contact_email') == '' and not vp[0].get('email') and any('@phone.venueplay.com.au' in (u.get('email') or '') for u in au), [fo, vp, au])
     ok('no email was sent to anyone', not [m for m in S.W.sent() if 'phone.venueplay' in json.dumps(m)], S.W.sent()[:2])
-    ev = S.W.table('vp_quick_events')
-    steps = [e.get('step') for e in ev]
-    ok('the funnel has a row for each step reached', all(x in steps for x in ('page_opened', 'form_started', 'form_sent', 'account_made')), steps)
-    ok('and no name, mobile or venue in any row', 'Kim' not in json.dumps(ev) and '0412' not in json.dumps(ev) and 'Kirra' not in json.dumps(ev), ev[:3])
-    ok('the taps and the source are in the rows', any((e.get('taps') or 0) == 5 and e.get('src') == 'website' for e in ev if e.get('step') == 'account_made'), [e for e in ev if e.get('step') == 'account_made'])
+    ev = S.json(sid, 'JSON.stringify(window.__steps || [])', []) or []
+    steps = [e[0] for e in ev]
+    ok('the journey store is handed a step for each step reached', all(x in steps for x in ('page_opened', 'form_started', 'form_sent', 'account_made')), steps)
+    ok('and no name, mobile or venue in any step', 'Kim' not in json.dumps(ev) and '0412' not in json.dumps(ev) and 'Kirra' not in json.dumps(ev), ev[:3])
+    ok('the taps ride along with the steps', any((e[1].get('taps') or 0) == 5 for e in ev if e[0] == 'account_made'), [e for e in ev if e[0] == 'account_made'])
     S.close_tab(tid)
 
     print('\nA VENUE NOT ON THE LIST: SUBURB, THEN POSTCODE ONLY IF THE SUBURB IS UNKNOWN')

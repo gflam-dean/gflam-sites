@@ -1252,7 +1252,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-start.js": {
-  "checks": 72,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {

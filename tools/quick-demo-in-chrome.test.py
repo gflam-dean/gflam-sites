@@ -55,7 +55,7 @@ def IF(r, s, js):
 
 
 def steps(r, s):
-    return json.loads(r.ask(s, 'JSON.stringify((window.__vpTrackQueue||[]).map(function(x){return x[0];}).concat(window.__steps))') or '[]')
+    return r.json(s, 'JSON.stringify((window.__vpTrackQueue||[]).map(function(x){return x[0];}).concat(window.__steps))', [])
 
 
 def wait_step(r, s, name, secs):
@@ -150,14 +150,14 @@ def scene_a(RIG):
            r.ask(lap, '["qpInfo","qpSetup","qpCard"].filter(function(i){return !document.getElementById(i).hidden;}).map(function(i){return document.getElementById(i).textContent;}).join("|")') == "I'd like more info|Set up my venue|Add my card" and
            r.ask(lap, 'document.getElementById("qpAnother").hidden') is True and
            'ready to play' not in (r.ask(lap, 'document.getElementById("qpChoices").innerText') or '').lower(), r.ask(lap, 'document.getElementById("qpChoices").innerText'))
-        saved = json.loads(r.ask(lap, 'JSON.stringify(window.__saved)') or '[]')
+        saved = r.json(lap, 'JSON.stringify(window.__saved)', [])
         ok('what games do you run was saved through the wizard\'s saver (setup_answers.games)', len(saved) == 1 and sorted(((saved[0] or {}).get('setup_answers') or {}).get('games', [])) == ['musical', 'trivia'], saved)
         ok('the setup wizard is marked dismissed, and nothing opened or posted on its own', r.ask(lap, '(JSON.parse(localStorage.getItem("vpFirstRun:"+VPTry.venueId)||"{}")).dismissed') is True and
-           not [c for c in json.loads(r.ask(lap, 'JSON.stringify(window.__calls)')) if re.search(r'more-info|card-link', c[0])])
+           not [c for c in r.json(lap, 'JSON.stringify(window.__calls)', []) if re.search(r'more-info|card-link', c[0])])
         if SHOTS: r.shot(lap, os.path.join(SHOTS, 'quick-choices-1440.jpg'))
         ok('before more info is tapped, the thank-you is NOT on the screen (only the four buttons are)', r.ask(lap, 'getComputedStyle(document.getElementById("qpThanks")).display') == 'none' and r.ask(lap, 'getComputedStyle(document.getElementById("qpChoiceBox")).display') != 'none')
         TD.clickid(r, lap, 'qpInfo')
-        calls = json.loads(r.ask(lap, 'JSON.stringify(window.__calls)'))
+        calls = r.json(lap, 'JSON.stringify(window.__calls)', [])
         ok('"I\'d like more info" posts once with the venue and the game played, says Got it / Thanks, we\'ll be in touch, and leaves Set up my venue and Add my card (no dead end)',
            r.until(lap, '!document.getElementById("qpThanks").hidden', 10) is True and r.ask(lap, 'document.getElementById("qpThanksWords").textContent') == "Thanks, we'll be in touch." and
            r.ask(lap, 'document.querySelector("#qpThanks h3").textContent') == 'Got it' and r.ask(lap, 'document.getElementById("qpInfo").hidden') is True and r.ask(lap, '!document.getElementById("qpSetup").hidden && !document.getElementById("qpCard").hidden') is True and len([c for c in calls if 'more-info' in c[0]]) == 1 and '"game":"trivia"' in [c for c in calls if 'more-info' in c[0]][0][1].replace(' ', ''), calls)
@@ -257,7 +257,7 @@ def scene_c(RIG):
             if SHOTS: r.shot(s, os.path.join(SHOTS, 'quick-choices-%dpx.jpg' % w))
             TD.clickid(r, s, 'qpCard')
             ok('%dpx: "Add my card" asks for the card page (never automatic) and says so if one is already on' % w,
-               r.until(s, '/already added/.test(document.getElementById("qpErr").textContent)', 10) is True and any('card-link' in c[0] for c in json.loads(r.ask(s, 'JSON.stringify(window.__calls)'))), r.ask(s, 'document.getElementById("qpErr").textContent'))
+               r.until(s, '/already added/.test(document.getElementById("qpErr").textContent)', 10) is True and any('card-link' in c[0] for c in r.json(s, 'JSON.stringify(window.__calls)', [])), r.ask(s, 'document.getElementById("qpErr").textContent'))
             r.close_tab(t)
     finally:
         r.close()
