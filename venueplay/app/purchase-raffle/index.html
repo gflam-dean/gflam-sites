@@ -77,6 +77,7 @@
   .tabs{display:flex;gap:6px;background:var(--ink-3);padding:5px;border-radius:12px;border:1px solid var(--line-2);margin-bottom:18px;overflow-x:auto}
   .tabs button{flex:1;min-width:max-content;padding:10px 14px;min-height:42px;border:none;background:transparent;color:var(--muted);border-radius:9px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
   .tabs button.on{background:var(--pink);color:#0A0A0B}
+  @media (max-width:400px){ .tabs{gap:3px;padding:4px} .tabs button{padding:10px 9px} }   /* all four tabs show at 360, none clipped */
 
   /* stats */
   .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
