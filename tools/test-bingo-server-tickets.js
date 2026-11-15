@@ -106,6 +106,9 @@ async function worker(path, body, headers, who) {
 /* A SLOW route answers after that many ms. Past the caller's own timeout it is an outage: the
    console's request is aborted, as vp-session.js gameApiCall aborts it, and the Worker never sees it. */
 var SLOW = {}, DEAD = 1e9;
+/* A LATE route is what a busy night really does (16 Nov 2026): the Worker DOES the work, that many ms after it was
+   asked, whether or not the console is still listening. The console's own timeout decides only whether it hears it. */
+var LATE = {};
 function pageFetch(who) {
   return function (url, opts) {
     var path = String(url).replace(/^https?:\/\/[^\/]+/, ''), o = opts || {};
@@ -125,7 +128,8 @@ function bootHost3() {
       var ms = timeoutMs || 4000, slow = SLOW[path] || 0, done = false;
       return new Promise(function (res, rej) {
         fSetTimeout(function () { if (!done) { done = true; rej(new Error('timed out')); } }, ms);
-        if (slow < DEAD) fSetTimeout(function () { if (done) return; worker(path, body, {}, 'host').then(function (r) { if (!done) { done = true; res({ status: r.status, json: r.body }); } }); }, slow);
+        if (LATE[path]) fSetTimeout(function () { worker(path, body, {}, 'host').then(function (r) { if (!done) { done = true; res({ status: r.status, json: r.body }); } }); }, LATE[path]);
+        else if (slow < DEAD) fSetTimeout(function () { if (done) return; worker(path, body, {}, 'host').then(function (r) { if (!done) { done = true; res({ status: r.status, json: r.body }); } }); }, slow);
       });
     },
     setGameActive: function () {}, enforceShift: function () {}, noteOpenSession: function () {}, closeOpenSessions: function () {}, listVenues: function () { return Promise.resolve([]); }, signOut: function () {},
@@ -577,6 +581,39 @@ function frontOfDraw(numbers) {
         host.$('ngWarn').style.display === '' && host.$('ngWarn').textContent === 'This game has not reached a full house yet. It finished on Any 3 & up.' && host.$('ngGo').textContent === 'Yes, start a new game',
         [host.$('ngWarn').textContent, host.$('ngGo').textContent]);
   host.$('ngModal').classList.add('hidden');
+  host.endGame(); await advance(3000);
+
+  /* A SLOW SEAT CHECK MUST NOT LEAVE A PHONE ON "YOUR TICKETS ARE ON THE WAY" ALL GAME (16 Nov 2026). The full gate's
+     real-settings suite went red under load: a phone that came in before the lobby sat on that line through the game,
+     the Worker had dealt it nothing, and the server was working. Played here: the seat check (the only way the console
+     learns a phone's deal key) answered in 7 s, past the console's 6 s; the console fell back to "everybody seated",
+     the deal refused a phone it named without its key, and nothing ever asked again. */
+  print('GAME SIX: the seat check answers in 7 s on a busy night (the Worker does it; the console stopped listening at 6 s)');
+  var eve = bootPhone3('Eve'); await advance(50);
+  eve.$('nameIn').value = 'Eve'; eve.join(); await advance(3000);
+  host.$('patternSel').value = 'one'; host.$('cardsSel').value = '2';
+  LATE['/host/bingo/seat'] = 7000;
+  host.openLobby(); await advance(4000);
+  host.startGame(); await advance(25000);
+  var D7 = lastDraw().id, room6 = phones.concat([eve]);
+  check('the phone that came in before the lobby is dealt the SERVER\'s two tickets inside 25 s of Start, not left "on the way"',
+        eve.P.cards.length === 2 && phoneMatchesRecord(eve, D7), { cards: eve.P.cards.length, server: ticketsOf(D7, eve.P.pid).length, note: eve.$('waitNote').innerHTML.slice(0, 80) });
+  check('and so is everybody else in the room, from the server, none from the tablet',
+        room6.every(function (ph) { return ph.P.cards.length === 2 && phoneMatchesRecord(ph, D7); }) && host.G.dealMode === 'server' &&
+        DB.vp_bingo_tickets.filter(function (t) { return t.draw_id === D7 && t.source === 'tablet'; }).length === 0,
+        { cards: room6.map(function (ph) { return [ph.P.cards.length, ticketsOf(D7, ph.P.pid).length]; }), mode: host.G.dealMode });
+  LATE = {};
+  host.endGame(); await advance(3000);
+
+  print('GAME SIX B: the deal answers in 5 s, past the 4 s first try (the Worker deals it anyway)');
+  LATE['/host/bingo/deal'] = 5000;
+  host.openLobby(); await advance(9000);
+  host.startGame(); await advance(15000);
+  var D8 = lastDraw().id;
+  check('every phone gets the tickets the Worker dealt, one hand each: the late answer is heard on the next try, nothing dealt twice',
+        room6.every(function (ph) { return ph.P.cards.length === 2 && phoneMatchesRecord(ph, D8) && ticketsOf(D8, ph.P.pid).length === 2; }) && host.G.dealMode === 'server',
+        { cards: room6.map(function (ph) { return [ph.P.cards.length, ticketsOf(D8, ph.P.pid).length]; }), mode: host.G.dealMode });
+  LATE = {};
   host.endGame(); await advance(3000);
 
   print('the Worker\'s own rules, asked directly');

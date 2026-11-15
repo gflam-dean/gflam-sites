@@ -2495,7 +2495,7 @@
       var next=keep.concat(list.map(function(t){ return { card:t.cells, cardNo:t.card_no, src:(t.source==="tablet"?"tablet":"server"), rec:true }; }));
       if(!sameHand(p.cards, next)){ p.cards=next; p._books=[]; sendCards(pid); }
     });
-    (j.refused||[]).forEach(function(pid){ var p=G.players[pid]; if(p){ p.dealNo=now+10000; p.seatSid=null; } });
+    (j.refused||[]).forEach(function(pid){ var p=G.players[pid]; if(p){ p.dealNo=now+10000; p.dealNoKey=p.dealKey||p.did||null; p.seatSid=null; } });
     G.dealSince=0; G.dealFails=0;
     saveGame(); syncNextBtn(); setCoach(); renderPlayers();
     seatSoon(300);                                       // stamp the new holders as dealt: that is who this game bills
@@ -2793,7 +2793,16 @@
      (three seconds, five times, then doubling to a minute), so a stranger on the channel costs a
      request a minute, not one every few seconds all night. A phone that announces itself again
      is asked about straight away: that is what a phone does the moment its /join lands. */
-  var _seatT=0, _seatAt=0, _seatBusy=false;
+  var _seatT=0, _seatAt=0, _seatBusy=false, _seatMiss=0;
+  /* A SLOW SEAT CHECK IS WAITED FOR, NOT CUT OFF (16 Nov 2026, the gate's "tickets on the way" red). The seat check is the
+     only way this console learns each phone's deal key (A1), and the deal refuses a phone named without one. It was cut
+     off at 6 s every time and asked again only every 15 s, so a busy database that answered it in 7 s was never heard:
+     the room fell back to "everybody seated", every deal was refused, and every phone sat on "Your tickets are on the
+     way" for the whole game with the server working. Now, as the deal does (DEAL_SLOW_CALL_MS), a seat check that got no
+     answer is asked again with longer to answer each time (12 s, 24 s, then 30 s), in 2 s for the first three misses and
+     every 15 s after, as before. One check is out at a time (_seatBusy), so a slow server is never asked twice at once. */
+  var SEAT_CALL_MS=6000, SEAT_SLOW_CALL_MS=30000;
+  function seatCallMs(){ return _seatMiss ? Math.min(SEAT_SLOW_CALL_MS, SEAT_CALL_MS*Math.pow(2, _seatMiss)) : SEAT_CALL_MS; }
   // One timer, and an earlier ask always wins: a stranger's minute-long backoff must never hold
   // up the room's next lobby behind it.
   function seatSoon(ms){
@@ -2815,19 +2824,22 @@
     }
     if(!want.length){ if(later) seatSoon(Math.max(500, later-now)); return; }
     _seatBusy=true;
-    VP.gameApiCall("/host/bingo/seat", { session_id:sid, dids:want, deal:running }, 6000).then(function(r){
+    VP.gameApiCall("/host/bingo/seat", { session_id:sid, dids:want, deal:running }, seatCallMs()).then(function(r){
       _seatBusy=false;
       if(sid!==G.sessionId) return;                      // a reply about the session before this one
       var j=r && r.json;
       if(!(r && r.status===200 && j && j.ok && Array.isArray(j.seated))){ seatFailed(); return; }
-      var wasDown=G.seatDown; G.seatDown=false;
+      var wasDown=G.seatDown; G.seatDown=false; _seatMiss=0;
       var seated={}; j.seated.forEach(function(d){ seated[d]=true; });
       wantP.forEach(function(pid){
         var q=G.players[pid]; if(!q) return;
         if(seated[q.did]){ q.seatSid=sid; q.seatTries=0; q.seatNext=0; if(running && q.cards && q.cards.length) q.stampSid=sid;
           /* The deal key (security review 13 Nov 2026, A1): the room hears a phone's public id; the deal asks by the seat's
              device id, which only this signed-in console is told, by /host/bingo/seat. Never sent into the room. */
-          if(j.keys && typeof j.keys[q.did]==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(j.keys[q.did])) q.dealKey=j.keys[q.did]; }
+          if(j.keys && typeof j.keys[q.did]==="string" && /^[A-Za-z0-9_-]{6,64}$/.test(j.keys[q.did])) q.dealKey=j.keys[q.did];
+          /* A deal refused while this phone had no deal key (the seat check had not answered) is not the server saying
+             it is not here: it now has its key, so it is dealt now, not left out until something else asks. */
+          if(q.dealNo && q.dealKey && q.dealNoKey!==q.dealKey) q.dealNo=0; }
         else {
           q.seatTries=(q.seatTries||0)+1;
           q.seatNext=Date.now()+(q.seatTries<5 ? 3000 : Math.min(60000, 3000*Math.pow(2, q.seatTries-4)));
@@ -2845,7 +2857,8 @@
     // No answer, or an answer this console cannot use (an older Worker, a signed-out tablet). The
     // night must not stall on a server: everyone is seated until the server answers again.
     if(!G.seatDown){ G.seatDown=true; if(G.status==="running") dealSeated(); sendPlayers(); renderJoinCounts(); }
-    seatSoon(15000);
+    _seatMiss++;
+    seatSoon(_seatMiss<=3 ? 2000 : 15000);   // asked again soon, given longer to answer (seatCallMs)
   }
   // Deal to every seated phone that has no tickets yet: the late arrival, the phone whose /join was slow.
   function dealSeated(){
@@ -3257,7 +3270,7 @@
         if(!r || r.error || !r.session_id) return;
         G.sessionId = r.session_id;
         G.joinCode  = r.join_code || null;
-        G.seatDown  = false;   // a new session is asked afresh
+        G.seatDown  = false; _seatMiss = 0;   // a new session is asked afresh
         if(r.plan_cap != null) G.planCapAtStart = r.plan_cap;
         try{ VP.noteOpenSession(r.session_id, v.id); }catch(e){}   // so sign-out closes it and bills the night
         sendState();     // the TV needs the join code: it is what the phones scan now
