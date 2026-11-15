@@ -195,15 +195,20 @@
   function buildPhone(){
     root=document.createElement("div"); root.id="vpSting";
     root.style.cssText="position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden;background:rgba(5,5,6,0)";
-    var W=innerWidth, H=innerHeight;
+    /* THE SHOW IS ONE PHONE-WIDE COLUMN, CENTRED (17 Nov 2026, 422 item 1). The phone page is a 460 px column; in a 1280 or 1440 px
+       laptop window the show used to size itself from the whole window, so the wordmark was 890 px wide and BINGO ran over LET'S PLAY.
+       W is now the column (never wider than 460 px), X0 its left edge. The dark stays the whole window, the drawing space (the svg)
+       stays the whole window too, so the landing on the header logo still uses the window's own coordinates. A portrait phone is
+       narrower than 460, so for it X0 is 0 and nothing changes. */
+    var IW=innerWidth, W=Math.min(IW,460), X0=(IW-W)/2, H=innerHeight;
     root.innerHTML=
       '<div class="vpp-t" id="vppL1" style="top:'+(H*0.40).toFixed(0)+'px;font-size:'+(W*0.10).toFixed(1)+'px;letter-spacing:.06em;color:#FF1F8E;text-shadow:0 0 14px rgba(255,31,142,.55)"></div>'+
       '<div class="vpp-t" id="vppL2" style="top:'+(H*0.465).toFixed(0)+'px;font-size:'+(W*0.24).toFixed(1)+'px;letter-spacing:.015em;color:#fff"><span id="vppL2s"></span></div>'+
-      '<svg id="vppSvg" viewBox="0 0 '+W+' '+H+'" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">'+
+      '<svg id="vppSvg" viewBox="0 0 '+IW+' '+H+'" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">'+
         '<g id="vppWg" opacity="0"><path fill="#fff" d="'+REST+'"/><path fill="#fff" d="'+ANEON+'"/></g>'+
         '<g id="vppTg"><path id="vppBand" fill="#FF1F8E" fill-rule="evenodd"/><path id="vppCore" fill="#FFD6EA" fill-rule="evenodd"/></g></svg>';
     var st=document.createElement("style"); st.id="vpStingCss";
-    st.textContent=".vpp-t{position:absolute;left:0;right:0;display:flex;justify-content:center;font-family:Anton,Impact,sans-serif;font-weight:400;white-space:nowrap;line-height:1;opacity:0}.vpp-t i{font-style:normal;color:#FF1F8E}";
+    st.textContent=".vpp-t{position:absolute;left:"+X0.toFixed(1)+"px;width:"+W+"px;display:flex;justify-content:center;font-family:Anton,Impact,sans-serif;font-weight:400;white-space:nowrap;line-height:1;opacity:0}.vpp-t i{font-style:normal;color:#FF1F8E}";
     document.head.appendChild(st); document.body.appendChild(root);
     ["vppL1","vppL2","vppL2s","vppSvg","vppWg","vppTg","vppBand","vppCore"].forEach(function(i){ el[i]=document.getElementById(i); });
     L1S=1;
@@ -216,8 +221,8 @@
     }
     else { el.vppL1.textContent=WORDS.l1; el.vppL2s.textContent=WORDS.l2; }
     var sw=el.vppL2s.offsetWidth||1; L2S=Math.min(1,W*0.88/sw);
-    PH={ W:W, H:H, kw:W*0.62/INKW, tx:W/2, ty:H*0.27, th:Math.min(W*0.30,H*0.17) };
-    PH.ox=W/2-(INKW/2+INKL)*PH.kw; PH.oy=H*0.56+261*PH.kw;
+    PH={ W:W, H:H, kw:W*0.62/INKW, tx:X0+W/2, ty:H*0.27, th:Math.min(W*0.30,H*0.17) };
+    PH.ox=X0+W/2-(INKW/2+INKL)*PH.kw; PH.oy=H*0.56+261*PH.kw;
     el.vppWg.setAttribute("transform","translate("+f(PH.ox)+" "+f(PH.oy)+") scale("+PH.kw.toFixed(6)+")");
     /* WHERE IT LANDS (Dean, 2 Nov 2026: "land where the logo actually sits", as the TV's flies to its corner).
        The page's own header wordmark, measured where it is painted, never a hard-coded spot. If the page
