@@ -517,6 +517,11 @@
   var state={ phase:"lobby", hostSeen:false, colour:true, title:"" };
   var _prBoard=null;   // Punters Reckon board, mounted on first use
   var curQ=null, ringTimer=null, boardRollTimer=null;
+  /* THE CONSOLE'S BOARD WINS OVER THE ONE IN THE REVEAL (15 Nov 2026). The reveal can carry an empty board (the console
+     fills it a moment later from /host/trivia/board) and the console's own leaderboard then arrived while this roll was
+     pending and was dropped, so the wall rolled to the EMPTY one: a LEADERBOARD title with nothing under it. A board
+     that arrives while the roll is pending is kept here and the roll paints it. No rows at all: the answer stays up. */
+  var rollRows=null;
 
   // ---- layers ----
   var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];
@@ -750,18 +755,20 @@
     renderRows($("tvRevBoard"), m.leaderboard||[], 5);
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
+    rollRows=null;
     /* Not after the last answer (the end of the night follows it), and not when the venue switched the
        leaderboard between rounds off (Game settings, INBOX 78): the console then says board:false. */
     if(m.board!==false) boardRollTimer=setTimeout(function(){
       /* Never in the sales-page demo: its script puts the scores up only at the end of the round (7 Nov 2026). */
-      if(state.phase==="reveal" && !VP_DEMO){ var _lb=m.leaderboard||[]; if(!_lb.length){ betweenJoin(); return; } show("tvBoard"); renderBoardPaged("Leaderboard", _lb); }
+      if(state.phase==="reveal" && !VP_DEMO){ var _lb=(rollRows && rollRows.length) ? rollRows : (m.leaderboard||[]); rollRows=null; if(!_lb.length) return; show("tvBoard"); renderBoardPaged("Leaderboard", _lb); }
     }, 5200);
   }
 
   /* BETWEEN QUESTIONS WITH NOBODY ON THE BOARD (Dean, 15 Nov 2026, The Mini Bar: "the screen says thanks for playing
      between questions", and a LEADERBOARD title with nothing under it). The game is not over, so the wall never says
-     Thanks for playing here and never puts up an empty board: it shows the join screen, its QR and code, with
-     "Next question coming up". Thanks for playing is only the real end (a "nobody" message without between:true). */
+     Thanks for playing here and never puts up an empty board: with nobody joined (the console's "nobody", between:true)
+     it shows the join screen, its QR and code, with "Next question coming up"; with teams in but no rows yet the answer
+     just stays up. Thanks for playing is only the real end (a "nobody" message without between:true). */
   function betweenJoin(){
     state.phase="leaderboard";
     if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
@@ -1246,13 +1253,13 @@
     else if(m.t==="leaderboard"){
       /* The answer is up and its own timer brings this same board ~5 s after it (renderReveal): a board replayed to a TV
          that reconnected in those seconds must not cut the answer short. */
-      if(state.phase==="reveal" && boardRollTimer && !/^final/i.test(String(m.title||""))) return;
+      if(state.phase==="reveal" && boardRollTimer && !/^final/i.test(String(m.title||""))){ if(Array.isArray(m.rows) && m.rows.length) rollRows=m.rows; return; }
       /* The final scores arrive only when the host taps "Show the leaderboard", after the podium and after first place was
          announced (6 Nov 2026). This used to be held back 9 seconds behind a podium that finish() sent in the same breath as the
          scores, which is how the leaderboard came up before the podium. Nothing is held now. */
       if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; }
-      /* An empty board between questions is never painted: a title with nothing under it (15 Nov 2026). */
-      if(!(Array.isArray(m.rows) && m.rows.length) && !/^final/i.test(String(m.title||""))){ betweenJoin(); return; }
+      /* An empty board between questions is never painted, a title with nothing under it (15 Nov 2026): the wall keeps what it has up. */
+      if(!(Array.isArray(m.rows) && m.rows.length) && !/^final/i.test(String(m.title||""))) return;
       if(/^final/i.test(String(m.title||""))) triviaEndShow(m.rows, "FINAL SCORES");   // Punters Reckon ends on its final scores, with no podium
       state.phase="leaderboard";
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }

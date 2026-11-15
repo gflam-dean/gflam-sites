@@ -1452,7 +1452,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 39,
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {

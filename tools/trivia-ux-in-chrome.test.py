@@ -192,8 +192,9 @@ def open_quiz(host, tv, n):
 
 # The console shows the host the right answer (".opt.correct"); the questions come in the Worker's own order.
 RIGHT = '((document.querySelector("#runBody .opt.correct .otx")||{}).textContent||"")'
-def play_question(host, phones, label, mid=None):
-    """Phone A taps the right answer, phone B a wrong one. mid(): run while the question is up, before the reveal."""
+def play_question(host, phones, label, mid=None, pre=None):
+    """Phone A taps the right answer, phone B a wrong one. mid(): run while the question is up, before the reveal.
+    pre(): run once the answers are in, just before Reveal answer."""
     click_text(host, 'First question') or click_text(host, 'Next question')
     for tag, ph in phones:
         ok('%s: the question reaches phone %s' % (label, tag), R.until(ph, '!document.getElementById("vQ").classList.contains("hidden") && document.querySelectorAll("#pAnswers .pans:not(:disabled)").length===4', 30) is True, text(ph))
@@ -206,6 +207,7 @@ def play_question(host, phones, label, mid=None):
            % (json.dumps(right), 'true' if i == 0 else 'false'))
         ok('%s: phone %s answers' % (label, tag), R.until(ph, '/Answer in|Locked in/i.test(document.body.innerText) || !!document.querySelector("#pAnswers .pans.picked")', 15) is True, text(ph))
     time.sleep(0.8)
+    if pre: pre()
     click_text(host, 'Reveal answer')
     for tag, ph in phones:
         ok('%s: the answer reaches phone %s' % (label, tag), R.until(ph, '!document.getElementById("vRes").classList.contains("hidden")', 25) is True, text(ph))
@@ -258,10 +260,13 @@ def night():
            R.json(tv, MARKED, {}) == {'q': True, 'rev': None}, [R.json(tv, MARKED, {}), tv_tl(tv)[1][-4:]])
     def mark_tv():
         js(tv, '(function(){ try{ var d=%s.document; var a=d.querySelector("#tvAnswers .ans"); if(a) a.__vpMark=1; var r=d.querySelector("#tvRevAnswers .ans"); if(r) r.__vpMark=1; return true; }catch(e){ return false; } })()' % FRAME)
-    play_question(host, phones, 'question 1', mid=hello_q)
+    # The rig's leaderboard view is seeded by hand. Seeded only AFTER the reveal, /host/reveal answered an empty board and
+    # the TV put up a LEADERBOARD title with nothing under it, which this line accepted (Dean's photo, 15 Nov 2026). Seeded
+    # before it, as the real view would be, the board has the two teams; the TV never paints an empty board now.
+    play_question(host, phones, 'question 1', mid=hello_q, pre=lambda: seed_board(gid, sess))
     seed_board(gid, sess)
     shot(phones[0][1], 'q1-result-A'); shot(phones[1][1], 'q1-result-B')
-    ok('question 1: the TV puts the leaderboard up after the answer', R.until(tv, '(function(){ try{ return !%s.document.getElementById("tvBoard").classList.contains("hidden"); }catch(e){ return false; } })()' % FRAME, 15) is True,
+    ok('question 1: the TV puts the leaderboard up after the answer, with the teams on it', R.until(tv, '(function(){ try{ var d=%s.document; return !d.getElementById("tvBoard").classList.contains("hidden") && d.querySelectorAll("#tvBoardRows .brow").length>=2; }catch(e){ return false; } })()' % FRAME, 15) is True,
        tv_tl(tv)[1][-6:])
     time.sleep(1.5)
     play_question(host, phones, 'question 2')

@@ -139,10 +139,43 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('the TV sends a between:true "nobody" to betweenJoin, before the Thanks for playing branch', wi > 0 && wi < bi && /betweenJoin\(\)/.test(SCREEN.slice(wi, wi + 120)));
   var li = SCREEN.indexOf('else if(m.t==="leaderboard"){'), lj = SCREEN.indexOf('else if(m.t==="nobody"', li);
   var LB = SCREEN.slice(li, lj);
-  show('an empty non-final leaderboard goes to betweenJoin, never an empty board', /!\(Array\.isArray\(m\.rows\) && m\.rows\.length\) && !\/\^final\/i\.test\(String\(m\.title\|\|""\)\)\)\{ betweenJoin\(\); return; \}/.test(LB) &&
-       LB.indexOf('betweenJoin') < LB.indexOf('renderBoardPaged'));
-  var ri = SCREEN.indexOf('function renderReveal('), rr = SCREEN.slice(ri, SCREEN.indexOf('function renderRows(', ri));
-  show('the TV\'s own roll to the board after a reveal goes to betweenJoin when the board is empty', /if\(!_lb\.length\)\{ betweenJoin\(\); return; \}/.test(rr));
+  /* THE ROLL AFTER A REVEAL, run for real: the TV's renderReveal() and its leaderboard branch, on a fake wall whose
+     timers are fired by hand. The reveal can carry an empty board that the console fills a moment later. */
+  var li = SCREEN.indexOf('else if(m.t==="leaderboard"){'), lj = SCREEN.indexOf('else if(m.t==="nobody"', li);
+  var LBSRC = 'function onLb(m){ if(false){} ' + SCREEN.slice(li, lj) + ' }';
+  function wall() {
+    var els = {}, painted = [], shown = [], timers = [];
+    function mk(id) { var c = {}; return { id:id, textContent:'', innerHTML:'', className:'', style:{}, children:[], parentNode:null, nextSibling:null,
+      classList:{ add:function(x){ c[x]=1; }, remove:function(x){ delete c[x]; }, toggle:function(x,on){ if(on) c[x]=1; else delete c[x]; }, contains:function(x){ return !!c[x]; } },
+      appendChild:function(k){ this.children.push(k); return k; }, setAttribute:function(){}, removeAttribute:function(){}, getAttribute:function(){ return null; } }; }
+    function $(id) { return els[id] || (els[id] = mk(id)); }
+    var env = { $:$, el:function(){ return mk('x'); }, esc:String, LETTERS:['A','B','C','D'], VP_DEMO:false, state:{ phase:'reveal' },
+      show:function(w){ shown.push(w); }, qClass:function(){ return 'qtext'; }, ansLenClass:function(){ return ''; }, applyColour:function(){},
+      renderRows:function(){}, stopRing:function(){}, triviaEndShow:function(){},
+      renderBoardPaged:function(t, rows){ painted.push([t, (rows || []).length]); },
+      setTimeout:function(f){ timers.push(f); return timers.length; }, clearTimeout:function(){}, clearInterval:function(){} };
+    var src = 'var curQ={ options:["a","b","c","d"], label:"Question 1", text:"Q?" }, boardRollTimer=null, rollRows=null, celebrateTimer=null;\n' +
+      fnB + '\n' + (function(){ var i=SCREEN.indexOf('function renderReveal('), dd=0, k=SCREEN.indexOf('{',i); do{ if(SCREEN[k]==='{')dd++; else if(SCREEN[k]==='}')dd--; k++; }while(dd>0); return SCREEN.slice(i,k); })() +
+      '\n' + LBSRC + '\n; return { rev: renderReveal, lb: onLb, roll: function(){ var f=__t.pop(); if(f) f(); } };';
+    var names = Object.keys(env).concat(['__t', 'renderLobby']);
+    var vals = names.map(function (k) { return k === '__t' ? timers : k === 'renderLobby' ? function(){} : env[k]; });
+    var api = new Function(names.join(','), src).apply(null, vals);
+    api.painted = painted; api.shown = shown; api.state = env.state;
+    return api;
+  }
+  var REV = { t:'reveal', qseq:1, correctIndex:1, options:['a','b','c','d'], split:[0,1,0,0] };
+  var w1 = wall(); w1.rev(Object.assign({ leaderboard: [] }, REV));
+  w1.lb({ t:'leaderboard', title:'Leaderboard', rows:[{ name:'Quiz Kids', points:100 }] });   // the console's own board, while the roll is pending
+  w1.roll();
+  show('the reveal carried an empty board and the console\'s filled one came during the wait: the wall rolls to the FILLED board',
+       JSON.stringify(w1.painted) === '[["Leaderboard",1]]', JSON.stringify(w1.painted));
+  var w2 = wall(); w2.rev(Object.assign({ leaderboard: [] }, REV)); w2.roll();
+  show('no rows anywhere: no board is painted at all (never a LEADERBOARD title with nothing under it); the answer stays up',
+       w2.painted.length === 0 && w2.shown.indexOf('tvBoard') < 0 && w2.shown.indexOf('tvLobby') < 0, JSON.stringify([w2.painted, w2.shown]));
+  var w3 = wall(); w3.state.phase = 'reveal'; w3.lb({ t:'leaderboard', title:'Leaderboard', rows:[] });
+  show('an empty leaderboard message (not the final scores) paints nothing', w3.painted.length === 0 && w3.shown.indexOf('tvBoard') < 0, JSON.stringify([w3.painted, w3.shown]));
+  var w4 = wall(); w4.rev(Object.assign({ leaderboard: [{ name:'A', points:100 }, { name:'B', points:0 }] }, REV)); w4.roll();
+  show('CONTROL: a reveal that carries its board still rolls to it', JSON.stringify(w4.painted) === '[["Leaderboard",2]]', JSON.stringify(w4.painted));
   /* run the TV's real betweenJoin() on a fake wall */
   var R = (function (SRC) {
     var els = {}; function $(id){ return els[id] || (els[id] = { id:id, textContent:'' }); }
