@@ -24845,7 +24845,7 @@ MUTATIONS = [
      '      busy:function(){ return !!liveNightElsewhere(); } }); }catch(e){} }',
      'the bingo console no longer tells the card its own game is running'),
     ('older-faults-tue17-in-chrome.test.py', 'venueplay/app/trivia/play.html',
-     '    var r=(P.total>0) ? (P.rank||0) : 0, wrap=$("vFinal");', '    var r=P.rank||0, wrap=$("vFinal");',
+     '    if(r===1 && !(P.total>0)) r=0;', '',
      'a trivia phone on 0 points ranked 1st says "YOU WON! 0 points" again'),
 ]
 

@@ -18,8 +18,8 @@ on the REAL pages served from this checkout, in headless Chrome:
        a. let go while a bingo game is RUNNING: no card while it runs; End game, and the card comes up
        b. let go in the lobby: the card is up; Start the game, and it steps out of the way; End game, and it is back
   4. NO "YOU WON!" ON 0 POINTS. A trivia phone at the podium where the score says rank 1 and 0 points (nobody scored):
-     "That's a wrap", no trophy, no "1st place". 0 points and rank 2: no "2nd place!" either. CONTROL: a real winner on
-     290 points still gets "YOU WON!".
+     "That's a wrap", no trophy, no "1st place". CONTROLS: a team on 0 behind a scorer keeps "You finished 2nd" (Dean's
+     "show the place", pinned by trivia-ux-in-chrome); a real winner on 290 points still gets "YOU WON!".
 
 The pages are served with one line added beside the trivia phone's and the members wall's own onMsg (window.__tvMsg), so
 the suite can hand them a host message the way the channel does; nothing else in a page is changed. Nothing here
@@ -391,7 +391,7 @@ def trivia_end(C):
     print('\n4. THE TRIVIA PHONE AT THE PODIUM')
     R.update(fmt='trivia', delay=0)
     for tag, score, want_win in (('rank 1 on 0 points (nobody scored)', {'total': 0, 'rank': 1, 'players_count': 2}, False),
-                                 ('rank 2 on 0 points', {'total': 0, 'rank': 2, 'players_count': 3}, False),
+                                 ('CONTROL: rank 2 on 0 points, behind a team that scored', {'total': 0, 'rank': 2, 'players_count': 3}, 'second'),
                                  ('CONTROL: rank 1 on 290 points', {'total': 290, 'rank': 1, 'players_count': 3}, True)):
         R['score'] = score
         tid, sid = C.open('/app/trivia/play.html?room=ACDE23&sting=0', 390, 844, True, 'try{ localStorage.clear(); }catch(e){}')
@@ -404,7 +404,11 @@ def trivia_end(C):
         C.js(sid, '__tvMsg(%s); true' % json.dumps({'t': 'podium', 'reveal': 1}))
         C.until(sid, '!document.getElementById("vFinal").classList.contains("hidden")', 10); time.sleep(1.5)
         x = C.json(sid, FINAL, {})
-        if want_win:
+        if want_win == 'second':
+            ok(tag + ': the final screen is up', x.get('shown') is True, x)
+            ok(tag + ': no "YOU WON!" on 0 points', 'WON' not in (x.get('big') or '').upper(), x)
+            ok(tag + ': keeps its place, as tools/trivia-ux-in-chrome.test.py pins it ("You finished 2nd")', x.get('rank') == 'You finished 2nd', x)
+        elif want_win:
             ok(tag + ': "YOU WON!", 1st place, 290 points', x.get('big') == 'YOU WON!' and x.get('rank') == '1st place' and x.get('score') == '290 points', x)
         else:
             ok(tag + ': the final screen is up', x.get('shown') is True, x)

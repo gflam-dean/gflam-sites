@@ -1153,10 +1153,11 @@
   function ordinal(n){ var s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
 
   function decorateFinal(){
-    /* NO WIN, AND NO PLACE, ON 0 POINTS (live play, 15 Nov 2026): a night where nobody scored ranked every team 1st, and the
-       phone said "YOU WON! 0 points" with the trophy and the fanfare. A place needs points, as it already does when the
-       host ends the game (endedFinal): 0 points is "That's a wrap, thanks for playing tonight". */
-    var r=(P.total>0) ? (P.rank||0) : 0, wrap=$("vFinal");
+    /* NO WIN ON 0 POINTS (live play, 15 Nov 2026): a night where nobody scored ranked every team 1st, and the phone said
+       "YOU WON! 0 points" with the trophy and the fanfare. First place needs points: 0 points is "That's a wrap, thanks for
+       playing tonight". A team behind a scorer keeps its place on 0 ("You finished 2nd", Dean's "show the place", T3). */
+    var r=P.rank||0, wrap=$("vFinal");
+    if(r===1 && !(P.total>0)) r=0;
     $("finalScore").textContent=P.total+" points";
     if(r===1){
       $("finalEmoji").innerHTML="&#127942;";                       // trophy
