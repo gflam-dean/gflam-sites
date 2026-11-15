@@ -446,11 +446,18 @@ def loop_linked():
         r.W.seed('v_vp_screen_draws', [{'slug': slug, 'name': 'Members draw', 'draw_day': 'Tuesday', 'draw_time': '7pm', 'current_jackpot_cents': 123400, 'timezone': 'Australia/Brisbane'}], replace=True)
         tid, sid = r.open('/tv?venue=' + slug, width=1920, height=1080)
         LIT = '(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.querySelector(".wo-its");});return a[0]||null;})()'
-        got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && +getComputedStyle(s).opacity>0.99;})()', 90)
-        time.sleep(1.5)
-        m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + '; if(!s) return {}; return {t:s.innerText.replace(/\\s+/g," "), titles:[].map.call(s.querySelectorAll(".wo-itw b"),function(b){return b.textContent;}), over:s.querySelector(".wo-wall").getAttribute("data-wo-over")};})())', {})
+        # Lit, settled 1.5 s, measured. A card that has moved on by then (the wait first saw it at the end of its turn on a
+        # loaded server: "saw: {}", 15 Nov 2026) is waited for on its next turn, inside the same 90 s; a card that IS lit is
+        # judged as it is.
+        end = time.time() + 90
+        while True:
+            got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && +getComputedStyle(s).opacity>0.99;})()', max(1, end - time.time()))
+            time.sleep(1.5)
+            m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + '; if(!s) return {}; return {t:s.innerText.replace(/\\s+/g," "), titles:[].map.call(s.querySelectorAll(".wo-itw b"),function(b){return b.textContent;}), over:s.querySelector(".wo-wall").getAttribute("data-wo-over")};})())', {})
+            if got is not True or m or time.time() > end: break
+            print('  ..   the card moved on before it was measured; waiting for its next turn')
         ok('THE REAL LOOP: the Tuesdays card on the wall holds the typed Roast Night and the three ticked games, one card, in time order, the jackpot from the real draw, nothing cut',
-           got is True and m.get('titles') == ['Meat raffle', 'Members draw', 'Trivia night', 'Roast Night'] and '$1,234' in m.get('t', '') and m.get('over') != '1', m)
+           got is True and m.get('titles') == ['Meat raffle', 'Members draw', 'Trivia night', 'Roast Night'] and '$1,234' in m.get('t', '') and m.get('over') != '1', [m, 'lit' if got is True else 'never lit'])
         if SHOTS: shot_jpg(r, sid, os.path.join(SHOTS, 'tv-loop-linked-%s.jpg' % TAG))
         r.close_tab(tid)
     finally:

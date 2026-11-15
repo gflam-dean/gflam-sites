@@ -700,7 +700,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
-  "checks": 103,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {

@@ -42,6 +42,26 @@ MEASURE = ('JSON.stringify((function(){var s=' + LIT + ';if(!s)return {};var q=s
            'var cb=c?c.getBoundingClientRect():null;o.cbox=cb?[cb.width,cb.height]:null;}'
            'return o;})())')
 
+# When the QR slide never lights, say why: the picture loads the TV counted as failed, and every slide in the rotation.
+WHY = ('JSON.stringify({imgErrors:window.__vpTvImgErrors||0, ads:[].map.call(document.querySelectorAll("#tvAds .ad"),function(a){'
+       'var p=a.querySelector(".adimg");return (p?p.style.backgroundImage:"").split("/").pop().slice(0,32)+(a.querySelector(".slideqr")?" +qr":"");})})')
+
+def lit_then_measure(r, sid, lit, photo, settle, secs):
+    """Wait for the slide to be lit, let it settle, measure it. A SLIDE THAT HAS MOVED ON IS NOT A FAIL (16 Nov 2026): on a
+    loaded test server the wait could first see the slide at the end of its 6 s turn, and `settle` seconds later the
+    measure read the NEXT slide (tugun-friday, no QR): red twice, green on every rerun. So when the lit slide is no longer
+    the photo waited for, its next turn is waited for, inside the same deadline. A slide that IS that photo is judged as
+    it is, so a QR missing from the QR slide is still red at once."""
+    end = time.time() + secs
+    while True:
+        got = r.until(sid, lit, max(1, end - time.time()))
+        time.sleep(settle)
+        m = r.json(sid, MEASURE, {})
+        if got is not True or photo in (m.get('img') or '') or time.time() > end:
+            return m, got
+        print('  ..   the lit slide moved on before it was measured (%s); waiting for its next turn' % (m.get('img') or '')[-40:])
+
+
 def inside_safe(m):
     b = m.get('box') or [0, 0, 0, 0]
     sx, sy = 0.05 * m['w'], 0.05 * m['h']
@@ -59,9 +79,8 @@ def run():
         for (W, H) in ((1920, 1080), (1280, 720)):
             tag = '%dx%d' % (W, H)
             tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
-            got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".slideqr") && +getComputedStyle(s).opacity>0.99;})()', 70)
-            time.sleep(1.0)
-            m = r.json(sid, MEASURE, {})
+            m, got = lit_then_measure(r, sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".slideqr") && +getComputedStyle(s).opacity>0.99;})()', 'tugun-tuesday', 1.0, 70)
+            if got is not True: m['why'] = r.json(sid, WHY, {})
             ok('%s: the "scan to join" slide comes up with its QR box shown' % tag, got is True and m.get('vis') is True and m.get('op', 0) > 0.99, m)
             ok('%s: the QR is drawn at 240 (dark and light modules on its canvas, not a blank square)' % tag, m.get('cw') == 240 and (m.get('dark') or 0) > 200 and (m.get('light') or 0) > 200, {k: m.get(k) for k in ('dark', 'light', 'cw', 'cbox')})
             ok('%s: it encodes the venue\'s own join address, /play?venue=%s' % (tag, slug), (m.get('url') or '').endswith('/play?venue=' + slug), m.get('url'))
@@ -75,9 +94,7 @@ def run():
             ok('%s: the photo under it is still full-bleed (window edge to edge)' % tag, m.get('pic') == [0, 0, W, H], m.get('pic'))
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-slide-qr-%d.jpg' % W))
             # the next slide carries no qr: no QR on it
-            r.until(sid, '(function(){var s=' + LIT + ';return !!s && !s.querySelector(".slideqr") && +getComputedStyle(s).opacity>0.99;})()', 20)
-            time.sleep(0.6)
-            m2 = r.json(sid, MEASURE, {})
+            m2, _ = lit_then_measure(r, sid, '(function(){var s=' + LIT + ';return !!s && !s.querySelector(".slideqr") && +getComputedStyle(s).opacity>0.99;})()', 'tugun-friday', 0.6, 20)
             ok('%s: the next slide (no qr) has no QR on it' % tag, m2.get('anyqr') is False and 'tugun-friday' in (m2.get('img') or ''), m2)
             GONE = '[].filter.call(document.querySelectorAll(".slideqr"),function(q){var a=q.closest(".ad");return a&&+getComputedStyle(a).opacity>0.05;}).length'
             r.until(sid, '(%s)===0' % GONE, 5)   # the 0.8 s cross-fade
