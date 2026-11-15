@@ -12294,8 +12294,17 @@ async function handlePraffleEnter(request, env, json) {
       if (memberId) {
         await sbPatch(env, 'vp_captures', 'id=eq.' + enc(memberId) + '&venue_id=eq.' + enc(g.venue.id) + '&marketing_optin=not.is.true', { marketing_optin: true, marketing_optin_at: now });
       } else {
-        const cap = (await sbInsert(env, 'vp_captures', { venue_id: g.venue.id, first_name: first, last_name: last || null, email: email, mobile: phone,
-          postcode: postcode, marketing_optin: true, marketing_optin_at: now, source: 'purchase-raffle', during_game: true }, true))[0];
+        /* The words they agreed to: "Send me offers from {venue}", no age words (vpc-3-14nov). Before migration 174 the column is
+           unknown to the database, so the row is tried once more without it and the sign-up is never lost. */
+        const capRow = { venue_id: g.venue.id, first_name: first, last_name: last || null, email: email, mobile: phone,
+          postcode: postcode, marketing_optin: true, marketing_optin_at: now, source: 'purchase-raffle', during_game: true, consent_version: 'vpc-3-14nov' };
+        let cap;
+        try { cap = (await sbInsert(env, 'vp_captures', capRow, true))[0]; }
+        catch (e) {
+          if (e && e.status && e.status !== 502) throw e;
+          const r2 = Object.assign({}, capRow); delete r2.consent_version;
+          cap = (await sbInsert(env, 'vp_captures', r2, true))[0];
+        }
         memberId = cap && cap.id || null;
       }
     }

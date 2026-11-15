@@ -385,6 +385,7 @@ function liveEntries() { return DB.vp_purchase_raffle_entries.filter(function (e
   e = await enter('0412000004', { first_name: 'Eli', last_name: 'Tick', email: 'eli@x.au', postcode: '4001', marketing_opt_in: true });
   var cap = DB.vp_captures[0], eli = DB.vp_purchase_raffle_entrants.filter(function (x) { return x.first_name === 'Eli'; })[0];
   show('a ticked new entrant joins this venue\'s members list, from the purchase raffle, with consent time', DB.vp_captures.length === 1 && cap.venue_id === VENUE && cap.marketing_optin === true && !!cap.marketing_optin_at && cap.source === 'purchase-raffle' && cap.mobile === '+61412000004' && cap.email === 'eli@x.au', JSON.stringify(cap));
+  show('the tick records the words they saw: vpc-3-14nov, no age words in the offers text', cap.consent_version === 'vpc-3-14nov' && !/18/.test(String(cap.consent_version)));
   show('and the entrant is linked to that member', eli.member_capture_id === cap.id && eli.marketing_opt_in === true);
   DB.vp_captures.push({ id: 'c-dee', venue_id: VENUE, first_name: 'Dee', email: 'dee@x.au', mobile: null, marketing_optin: false, created_at: '2026-09-01T00:00:00Z' },
                       { id: 'c-eve', venue_id: VENUE, first_name: 'Eve', email: 'eve@x.au', mobile: '+61411222333', marketing_optin: false, created_at: '2026-09-01T00:00:00Z' },
