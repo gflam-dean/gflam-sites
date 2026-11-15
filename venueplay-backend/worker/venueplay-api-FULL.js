@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:10 · f6e9942b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Nov 2026, 00:06 · d91cc5d9';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -277,6 +277,12 @@ export default {
       if (request.method === 'GET' && path === '/trusted-logos') return await vpbTrustedLogosRoute(env, json);
 
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);
+      // JOURNEY TRACKING (INBOX 413, 15 Nov 2026; migration 196). Public routes answer the same whatever is sent; rate-limited.
+      if (request.method === 'POST' && path === '/track')            return await vpjTrack(request, env, json);
+      if (request.method === 'GET'  && path === '/track/lookup')     return await vpjLookup(request, env, json);
+      if (request.method === 'POST' && path === '/admin/journey-funnel')    return await vpjAdminFunnel(request, env, json);
+      if (request.method === 'POST' && path === '/admin/journey-campaigns') return await vpjAdminCampaigns(request, env, json);
+      if (request.method === 'POST' && path === '/admin/journey-venue')     return await vpjAdminVenue(request, env, json);
       // Followed from an HQ-onboarded venue's welcome email, in a browser, so it answers with a
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
       if (request.method === 'GET'  && path === '/add-card' && typeof vpaAddCardRedirect === 'function') return await vpaAddCardRedirect(request, env);
@@ -24242,4 +24248,365 @@ async function vpaHandleFeedbackHq(request, env, json) {
     notes: ns.slice().reverse().slice(0, 500).map((n) => ({ venue: (vOf[n.venue_id] || {}).name || '', state: (vOf[n.venue_id] || {}).au_state || '',
       format: fmt(n.format), night: n._night, at: n.created_at, rating: n.rating, tags: vpfTagWords(n.rating, n.tags), note: n.note || '',
       wants_reply: !!n.wants_reply, has_ticket: !!n.ticket_id })) });
+}
+
+/* ============================================================================================================
+   JOURNEY TRACKING (INBOX 413, Dean 15 Nov 2026). Migration 196 (written, NOT run: until it is, every route here answers
+   "nothing recorded" and the pages carry on). Plan: reports/journey-413-15nov/PLAN.md.
+   WHAT IT KEEPS: an anonymous session id, the step reached, the page path (a link code is replaced by :code), where from
+   (a referrer FAMILY), the AU state or country Cloudflare reports, a device kind, and the tracked link if the visitor came by
+   one. WHAT IT NEVER KEEPS: an IP address, a user agent, a fingerprint, a name, an email, a mobile, a venue name. The address
+   is read once to rate-limit (as a hash, by helpIpLimit) and thrown away.
+   EVERY PUBLIC ROUTE ANSWERS THE SAME WHATEVER YOU SEND: no "bad code", no "too many", so nothing here can be used to find
+   out which codes exist. ============================================================================================================ */
+/* Every step a page may report. Order of the funnel is VPJ_FUNNEL below; these are the NAMES the database accepts. */
+const VPJ_EVENTS = ['page_opened', 'button_tapped', 'form_started', 'form_sent', 'account_made', 'signed_in',
+  'demo_q1', 'demo_q2', 'demo_q3', 'demo_q4', 'demo_q5', 'podium_seen', 'games_answered', 'card_screen_seen', 'card_added',
+  'choice_another', 'choice_info', 'choice_setup', 'page_left',
+  'field_first_name', 'field_contact', 'field_venue', 'contact_kind', 'venue_search', 'venue_search_none', 'venue_picked',
+  'venue_not_found', 'addvenue_shown', 'addvenue_typed', 'form_abandon', 'highlight_result',
+  'page_view', 'link_hit', 'scanner_hit', 'human', 'enquiry_sent', 'first_game'];
+const VPJ_SOURCES = ['website', 'cold_email', 'coaster'];
+const VPJ_PER_IP = 400;             // batches per network per hour (a pub's wifi is one address)
+const VPJ_PER_SID = 150;            // batches per session per hour
+const VPJ_LOOKUP_PER_IP = 40;       // code lookups per network per hour
+const VPJ_MAX_BODY = 6000;          // bytes
+const VPJ_MAX_EVENTS = 12;          // per batch
+const VPJ_SCANNER_WINDOW_MS = 60000;
+/* Mail scanners and link checkers that open a link before a person does. UA words are HARD (never upgraded by a later 'human'); a
+   scanner network or a hit within 60 s of the send is SOFT (a real person who then scrolls or taps upgrades it). */
+const VPJ_SCANNER_UA = /(safelinks|microsoft office|ms-office|mimecast|proofpoint|barracuda|symantec|forcepoint|zscaler|trendmicro|trend micro|mcafee|bitdefender|sophos|cisco|fireeye|paloalto|urlscan|linkcheck|link-checker|python-requests|curl\/|wget\/|go-http-client|okhttp|java\/|libwww|httpclient|headlesschrome|phantomjs|puppeteer|playwright|selenium|node-fetch|axios|postman|googleimageproxy|slackbot|facebookexternalhit|twitterbot|whatsapp|linkedinbot|skypeuripreview|bingpreview|outlook-ios|outlook-android)/i;
+const VPJ_BOT_UA = /(bot\b|crawler|spider|slurp|duckduck|baidu|yandex|semrush|ahrefs|mj12|petalbot|bytespider|gptbot|claudebot|ccbot|monitor|uptime|pingdom|lighthouse|gtmetrix)/i;
+const VPJ_SCANNER_ASN = { 8075: 'Microsoft', 8068: 'Microsoft', 8069: 'Microsoft', 30031: 'Mimecast', 42214: 'Mimecast', 22843: 'Proofpoint', 26211: 'Proofpoint', 13916: 'Proofpoint', 15830: 'Barracuda', 14420: 'Barracuda' };
+const VPJ_DATACENTRE_ORG = /(amazon|aws|microsoft corporation|google cloud|digitalocean|hetzner|ovh|linode|vultr|oracle cloud|mimecast|proofpoint|barracuda|zscaler)/i;
+const VPJ_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';   // no I L O U 0 1: nothing to misread in a plain-text email
+const VPJ_CODE_RE = /^[A-Za-z0-9]{5,7}$/;
+const VPJ_FIELDS = ['first_name', 'contact', 'venue', 'addvenue_name', 'addvenue_suburb', 'code'];
+const VPJ_GAMES = ['trivia', 'musical_bingo', 'bingo', 'raffle', 'members_draw'];
+
+async function vpjHash(env, code) {
+  return await helpSha256Hex(String(env.TRACK_LINK_SALT || 'vp-track-v1') + '|track|' + String(code).toUpperCase());
+}
+/* The link behind a code, or null. Malformed, unknown, expired and revoked take the SAME road: one hash, one select. */
+async function vpjLinkFor(env, code) {
+  const c = VPJ_CODE_RE.test(String(code || '')) ? String(code) : 'AAAAAA';
+  let row = null;
+  try {
+    const r = await vpaSelect(env, 'vp_track_links', 'code_hash=eq.' + (await vpjHash(env, c)) +
+      '&select=id,lead_ref,venue_name,first_name,state,likely_games,campaign,email_step,link_label,page,sent_at,expires_at,revoked_at,venue_id&limit=1');
+    row = (r && r[0]) || null;
+  } catch (e) { row = null; }
+  if (c === 'AAAAAA' && code !== 'AAAAAA') return null;
+  if (!row || row.revoked_at || !(Date.parse(row.expires_at) > Date.now())) return null;
+  return row;
+}
+function vpjDevice(ua) {
+  const u = String(ua || '');
+  if (/ipad|tablet|kindle|silk/i.test(u) || (/android/i.test(u) && !/mobile/i.test(u))) return 'tablet';
+  if (/mobi|iphone|ipod|android/i.test(u)) return 'mobile';
+  return 'desktop';
+}
+/* Where from, as a FAMILY (never the URL): the referrer host the page sends, the page being its own site means direct. */
+function vpjRefSource(host, src) {
+  if (src === 'coaster') return 'coaster';
+  const h = String(host || '').toLowerCase().replace(/^www\./, '');
+  if (!h || /(^|\.)venueplay\.com\.au$/.test(h)) return 'direct';
+  if (/(^|\.)(google|bing|duckduckgo|yahoo)\./.test(h) || /^(google|bing)\./.test(h)) return 'google';
+  if (/(^|\.)(facebook|fb)\.(com|me)$|^l\.facebook\.com$|^lm\.facebook\.com$/.test(h)) return 'facebook';
+  if (/(^|\.)instagram\.com$|^l\.instagram\.com$/.test(h)) return 'instagram';
+  if (/(^|\.)(mail\.google|outlook\.live|outlook\.office|mail\.yahoo)\.com$|^mail\./.test(h)) return 'email';
+  return 'other';
+}
+/* Person or scanner? Pure. {ua, asn, org, sentAt, now, webdriver} -> { scanner, why, hard } */
+function vpjClassify(x) {
+  const ua = String((x && x.ua) || '');
+  if (x && x.webdriver) return { scanner: true, why: 'webdriver', hard: true };
+  if (!ua || VPJ_SCANNER_UA.test(ua) || VPJ_BOT_UA.test(ua)) return { scanner: true, why: 'ua', hard: true };
+  if (x && VPJ_SCANNER_ASN[x.asn]) return { scanner: true, why: 'asn', hard: false };
+  const sent = x && x.sentAt ? Date.parse(x.sentAt) : NaN;
+  if (isFinite(sent) && x.now - sent >= 0 && x.now - sent <= VPJ_SCANNER_WINDOW_MS) return { scanner: true, why: 'timing', hard: false };
+  if (x && VPJ_DATACENTRE_ORG.test(String(x.org || '')) && !/mobi|iphone|android/i.test(ua)) return { scanner: true, why: 'asn', hard: false };
+  return { scanner: false, why: '', hard: false };
+}
+/* A path with any code segment replaced, so a code never lands in the table twice. */
+function vpjCleanPath(p) {
+  let s = String(p || '').split('?')[0].split('#')[0].slice(0, 80);
+  if (!/^\/[A-Za-z0-9\/_.-]*$/.test(s)) return null;
+  s = s.replace(/\/+$/, '') || '/';
+  return s.replace(/\/[A-Za-z0-9]{5,7}$/, function (m) { return /^\/(app|help|terms|privacy|start|quick|nsw|play|signage|training|screen-check|live-here-now|see-a-night|offer-[a-z]+)$/i.test(m) ? m : '/:code'; });
+}
+/* props: only these keys, only these shapes. Anything else is dropped, so nothing personal can ride in. */
+function vpjProps(event, p) {
+  const out = {}; p = (p && typeof p === 'object') ? p : {};
+  const str = (v, n) => String(v == null ? '' : v).replace(/[^\w .,'&-]/g, '').slice(0, n);
+  if (VPJ_FIELDS.indexOf(p.field) >= 0) out.field = p.field;
+  if (p.kind === 'mobile' || p.kind === 'email') out.kind = p.kind;
+  if (typeof p.matched === 'boolean') out.matched = p.matched;
+  if (p.ms != null && isFinite(+p.ms)) out.ms = Math.max(0, Math.min(3600000, Math.round(+p.ms)));
+  if (p.n != null && isFinite(+p.n)) out.n = Math.max(0, Math.min(1000, Math.round(+p.n)));
+  if (p.taps != null && isFinite(+p.taps)) out.taps = Math.max(0, Math.min(500, Math.round(+p.taps)));
+  if (p.ticket != null && isFinite(+p.ticket)) out.ticket = Math.max(0, Math.min(99999999, Math.round(+p.ticket)));
+  if (VPJ_GAMES.indexOf(p.game) >= 0) out.game = p.game;
+  if (VPJ_EVENTS.indexOf(p.last) >= 0) out.last = p.last;
+  if (typeof p.games === 'string') out.games = p.games.split(',').filter((g) => VPJ_GAMES.indexOf(g) >= 0).slice(0, 5).join(',');
+  if (p.btn) out.btn = str(p.btn, 30);
+  if (event === 'venue_search_none' && p.q) {
+    // What they typed when our list had nothing. HQ only. Digits and @ out, so a phone number or an email can never be kept here.
+    const q = String(p.q).replace(/[0-9@+]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (q.length >= 2) out.q = q;
+  }
+  return out;
+}
+/* POST /track. A batch from vp-track.js: { sid, code?, src?, ref?, path, wd?, events: [{ e, p?, age? }] }. Answers {ok:true} to everything. */
+async function vpjTrack(request, env, json) {
+  const ok = json({ ok: true });
+  try {
+    if ((request.headers.get('DNT') || '') === '1') return ok;
+    const ua = request.headers.get('User-Agent') || '';
+    if (!ua || VPJ_BOT_UA.test(ua)) return ok;
+    const ip = request.headers.get('cf-connecting-ip') || '';
+    if (!(await helpIpLimit(env, 'jtrack', ip, VPJ_PER_IP, 3600))) return ok;
+    let raw = await request.text();                       // sendBeacon sends text/plain
+    if (raw.length > VPJ_MAX_BODY) return ok;
+    let b; try { b = JSON.parse(raw); } catch (e) { return ok; }
+    if (!b || typeof b !== 'object' || !Array.isArray(b.events) || !b.events.length) return ok;
+    const sid = String(b.sid || '');
+    if (!/^[a-f0-9]{24}$/.test(sid)) return ok;
+    if (!(await helpLimit(env, 'jtrack:s:' + sid, VPJ_PER_SID, 3600))) return ok;
+    const now = Date.now();
+    const where = vpsWhere(request);
+    const cf = request.cf || {};
+    const src0 = VPJ_SOURCES.indexOf(b.src) >= 0 ? b.src : 'website';
+    const link = b.code ? await vpjLinkFor(env, String(b.code)) : null;
+    const src = link ? 'cold_email' : (src0 === 'cold_email' ? 'website' : src0);   // a claimed cold_email with no real code is not believed
+    const base = { sid: sid, link_id: link ? link.id : null, src: src, path: vpjCleanPath(b.path),
+      ref_source: vpjRefSource(String(b.ref || '').slice(0, 120), src), region: where.country === 'AU' ? (where.region || 'AU') : (where.country || null),
+      device: vpjDevice(ua) };
+    // Who is signed in, if anyone: the venue comes from the sign-in itself, never from what the page says.
+    let venueId = null;
+    if ((request.headers.get('Authorization') || '').trim()) {
+      try {
+        const o = await vpbRequireOwner(request, env);
+        let want = (request.headers.get('X-VP-Venue') || '').trim();
+        if (!want && (o.venues || []).length === 1) want = o.venues[0].id;   // one venue: the sign-in alone says which
+        if (!o.error && !o.actingAsAdmin && want && (o.venues || []).some((v) => v.id === want)) venueId = want;
+      } catch (e) { /* anonymous is fine */ }
+    }
+    // Is this session already known to be a scanner (a hard one: nothing a later tap can undo)?
+    let hardScanner = false;
+    const hasHit = b.events.some((x) => x && x.e === 'link_hit');
+    if (link && !hasHit) {
+      try { const prev = await vpaSelect(env, 'vp_journey_events', 'sid=eq.' + sid + '&scanner=eq.true&select=id,props&limit=5'); hardScanner = (prev || []).some((r) => r.props && r.props.hard); } catch (e) {}
+    }
+    const rows = []; let upgrade = false;
+    b.events.slice(0, VPJ_MAX_EVENTS).forEach((x) => {
+      if (!x || VPJ_EVENTS.indexOf(x.e) < 0) return;
+      const row = Object.assign({}, base, { event: x.e, props: vpjProps(x.e, x.p), scanner: hardScanner });
+      const age = Math.max(0, Math.min(300000, parseInt(x.age, 10) || 0));
+      if (age) row.at = new Date(now - age).toISOString();
+      if (x.e === 'link_hit') {
+        if (!link) return;                                // no such link: nothing kept, nothing said
+        const c = vpjClassify({ ua: ua, asn: cf.asn, org: cf.asOrganization, sentAt: link.sent_at, now: now, webdriver: !!b.wd });
+        if (c.scanner) { row.event = 'scanner_hit'; row.scanner = true; row.props = { why: c.why, hard: c.hard }; if (c.hard) hardScanner = true; }
+      }
+      if (x.e === 'scanner_hit') return;                  // only the Worker decides that
+      if (x.e === 'human') upgrade = true;
+      if (venueId) row.venue_id = venueId;
+      rows.push(row);
+    });
+    if (hardScanner) rows.forEach((r) => { r.scanner = true; });
+    if (!rows.length) return ok;
+    try { await vpaInsert(env, 'vp_journey_events', rows, false); } catch (e) { return ok; }   // migration 196 not run: nothing kept, nothing said
+    // A person who then scrolls or taps upgrades a SOFT scanner flag (network or timing). A hard one (UA / webdriver) never.
+    if (upgrade && !hardScanner && !b.wd) {
+      try {
+        const soft = await vpaSelect(env, 'vp_journey_events', 'sid=eq.' + sid + '&event=eq.scanner_hit&select=id,props&limit=20');
+        for (const r of (soft || [])) {
+          if (r.props && !r.props.hard) await vpaPatch(env, 'vp_journey_events', 'id=eq.' + r.id, { event: 'link_hit', scanner: false, props: { upgraded: r.props.why } });
+        }
+      } catch (e) {}
+    }
+    // Signed in: tie this browser's earlier anonymous steps and its link to the venue (once).
+    if (venueId) {
+      try { await vpaPatch(env, 'vp_journey_events', 'sid=eq.' + sid + '&venue_id=is.null', { venue_id: venueId }); } catch (e) {}
+      if (link) { try { await vpaPatch(env, 'vp_track_links', 'id=eq.' + link.id + '&venue_id=is.null', { venue_id: venueId }); } catch (e) {} }
+    }
+  } catch (e) { /* never a 500: a page must never feel the tracker */ }
+  return ok;
+}
+/* GET /track/lookup?c=CODE: what the quiet pre-fill needs and nothing else. Unknown = the same answer as no code. */
+async function vpjLookup(request, env, json) {
+  const none = { found: false };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'jlookup', ip, VPJ_LOOKUP_PER_IP, 3600))) return json(none);   // over the limit looks like no code
+  const l = await vpjLinkFor(env, new URL(request.url).searchParams.get('c'));
+  if (!l) return json(none);
+  return json({ found: true, venue: l.venue_name || '', first_name: l.first_name || '',
+    games: (l.likely_games || []).filter((g) => VPJ_GAMES.indexOf(g) >= 0), state: l.state || '' });
+}
+
+/* ---- HQ: the numbers (owner | accounts) ---- */
+/* Funnel order, with the plain-English reason and fix beside each step (main reviews these monthly, sign-up audit, Recurring row 23). */
+const VPJ_FUNNEL = [
+  { step: 'page_opened', label: 'Opened the page', reason: 'Not a drop. This is everyone who arrived.', fix: '' },
+  { step: 'button_tapped', label: 'Tapped "Play a quick game"', reason: 'Looked at the page and did not tap the button: the headline or button did not pull them in, or they are not a venue owner.', fix: 'Check the headline and the button above the fold at phone width. Try a clearer button word.' },
+  { step: 'form_started', label: 'Started the form', reason: 'Tapped the button and did not touch the form: it looked like work, or the page was slow to open.', fix: 'One box only at the start. Check the page opens in under 2 seconds on mobile data.' },
+  { step: 'form_sent', label: 'Sent the form', reason: 'Started the form and did not send it. The form detail below says at which box.', fix: 'Fix the box that loses most people (form detail).' },
+  { step: 'account_made', label: 'Account made', reason: 'Sent the form and never finished the code: the text or email did not arrive, or they did not type the code.', fix: 'Check this week\'s text and email delivery. Make sure resend is easy to see.' },
+  { step: 'signed_in', label: 'Signed in', reason: 'Account made but never landed signed in: the sign-in link failed or they closed the page.', fix: 'Play the sign-in from a fresh phone. Check the one-tap link is not expiring.' },
+  { step: 'demo_q1', label: 'Demo question 1', reason: 'Signed in and never started the demo: the next step was not obvious.', fix: 'Make the demo start by itself or with one big button.' },
+  { step: 'demo_q2', label: 'Demo question 2', reason: 'Left after the first question: it was slow to start or the phone did not join.', fix: 'Check the QR join on a real phone.' },
+  { step: 'demo_q3', label: 'Demo question 3', reason: 'Left part-way: no players joined, or it felt slow.', fix: 'Check the question timing and that a player can join in one tap.' },
+  { step: 'demo_q4', label: 'Demo question 4', reason: 'Left part-way through the quiz.', fix: 'Check the question timing.' },
+  { step: 'demo_q5', label: 'Demo question 5', reason: 'Left on the last question.', fix: 'Check the last question shows the answer quickly.' },
+  { step: 'podium_seen', label: 'Saw the podium', reason: 'Finished the quiz but did not reach the podium: the screen hung or they left.', fix: 'Play it to the end and look at the podium screen.' },
+  { step: 'games_answered', label: 'Answered "what games do you run"', reason: 'Saw the podium and left before answering which games they run.', fix: 'Make the question one tap and put it above the fold.' },
+  { step: 'card_screen_seen', label: 'Saw the card screen', reason: 'Never opened the card screen: the offer to add a card was not clear.', fix: 'Make "Add your card" a clear single button after the demo.' },
+  { step: 'card_added', label: 'Added a card', reason: 'Saw the card screen and did not add a card: price, trust, or no card to hand.', fix: 'Check the price line and the free month wording. Check Stripe\'s page loads fast. A reminder text later may win some back.' }
+];
+function vpjMedian(a) { if (!a.length) return null; const x = a.slice().sort((p, q) => p - q); return x[Math.floor(x.length / 2)]; }
+/* Pure. events: person events only ({sid, event, props, src, at}). Returns steps with reached / by source / % lost / median seconds to the next step, plus the form detail. */
+function vpjFunnelTable(events) {
+  const bySid = {};
+  events.forEach((e) => { (bySid[e.sid] = bySid[e.sid] || []).push(e); });
+  const steps = []; let prev = null; const names = VPJ_FUNNEL.map((s) => s.step);
+  const first = {};   // sid -> step -> ms of first time
+  Object.keys(bySid).forEach((sid) => {
+    first[sid] = {};
+    bySid[sid].forEach((e) => { const t = Date.parse(e.at); if (!(e.event in first[sid]) || t < first[sid][e.event]) first[sid][e.event] = t; });
+  });
+  const srcOf = (sid) => { const l = bySid[sid]; for (let i = 0; i < l.length; i++) if (l[i].src === 'cold_email') return 'cold_email'; for (let i = 0; i < l.length; i++) if (l[i].src === 'coaster') return 'coaster'; return 'website'; };
+  names.forEach((s, i) => {
+    const sids = Object.keys(first).filter((sid) => s in first[sid]);
+    const per = { website: 0, cold_email: 0, coaster: 0 }; sids.forEach((sid) => { per[srcOf(sid)]++; });
+    const nxt = names.slice(i + 1);
+    const gaps = [];
+    sids.forEach((sid) => { const t0 = first[sid][s]; let t1 = null; nxt.forEach((n2) => { if (n2 in first[sid] && first[sid][n2] >= t0 && (t1 === null || first[sid][n2] < t1)) t1 = first[sid][n2]; }); if (t1 !== null) gaps.push(Math.round((t1 - t0) / 1000)); });
+    const n = sids.length;
+    steps.push({ step: s, label: VPJ_FUNNEL[i].label, reached: n, website: per.website, cold_email: per.cold_email, coaster: per.coaster,
+      lost_pct: prev === null || !prev ? null : Math.max(0, Math.round(100 * (prev - n) / prev)),
+      median_secs_to_next: vpjMedian(gaps) });
+    if (n > 0) prev = n;
+  });
+  // Form detail
+  const cnt = (ev, f) => events.filter((e) => e.event === ev && (!f || f(e))).length;
+  const abandon = {}; events.filter((e) => e.event === 'form_abandon').forEach((e) => { const f = (e.props && e.props.field) || 'unknown'; abandon[f] = abandon[f] || { n: 0, ms: [] }; abandon[f].n++; if (e.props && e.props.ms) abandon[f].ms.push(e.props.ms); });
+  const nothing = {}; events.filter((e) => e.event === 'venue_search_none' && e.props && e.props.q).forEach((e) => { const q = e.props.q.toLowerCase(); nothing[q] = (nothing[q] || 0) + 1; });
+  const hl = events.filter((e) => e.event === 'highlight_result');
+  const form = {
+    first_name_typed: cnt('field_first_name'), contact_typed: cnt('field_contact'), venue_search_started: cnt('venue_search'),
+    chose_mobile: cnt('contact_kind', (e) => e.props && e.props.kind === 'mobile'), chose_email: cnt('contact_kind', (e) => e.props && e.props.kind === 'email'),
+    venue_picked: cnt('venue_picked'), venue_not_found: cnt('venue_not_found'), addvenue_shown: cnt('addvenue_shown'), addvenue_typed: cnt('addvenue_typed'),
+    abandoned_at: Object.keys(abandon).map((f) => ({ field: f, n: abandon[f].n, median_secs: abandon[f].ms.length ? Math.round(vpjMedian(abandon[f].ms) / 1000) : null })).sort((a, c) => c.n - a.n),
+    searches_found_nothing: Object.keys(nothing).map((q) => ({ q: q, n: nothing[q] })).sort((a, c) => c.n - a.n).slice(0, 40),
+    highlight_matched: hl.filter((e) => e.props && e.props.matched === true).length, highlight_missed: hl.filter((e) => e.props && e.props.matched === false).length
+  };
+  // The reason beside every step, sharpened by the form detail where it applies.
+  steps.forEach((s, i) => {
+    const def = VPJ_FUNNEL[i]; let reason = def.reason, fix = def.fix;
+    if (s.reached === 0) { if (i > 0) { reason = 'Nobody reached this step yet.'; fix = ''; } }
+    else if (s.lost_pct === null || s.lost_pct < 5 || !prev) { if (i > 0) { reason = s.reached ? 'Small loss here.' : 'Nobody reached this step yet.'; fix = ''; } }
+    else if (steps.slice(0, i).reduce((m, x) => x.reached > 0 ? x.reached : m, 0) < 5) { reason = 'Too few people so far to say why (' + steps.slice(0, i).reduce((m, x) => x.reached > 0 ? x.reached : m, 0) + ').'; fix = 'Wait for more traffic.'; }
+    else if (s.step === 'form_sent') {
+      const top = form.abandoned_at[0];
+      if (form.searches_found_nothing.length && form.searches_found_nothing.reduce((a, c) => a + c.n, 0) >= 3) {
+        reason = 'Searched for their venue ' + form.searches_found_nothing.reduce((a, c) => a + c.n, 0) + ' times and found nothing: the venue is missing from our list.'; fix = 'Add the venues in the "found nothing" list below to our venue list.';
+      } else if (top && top.field === 'contact') { reason = 'Stopped at the mobile or email box (' + top.n + '): they may not want to give a number or an email yet.'; fix = 'Say what the code is for next to the box, or ask for the venue first.'; }
+      else if (top && top.field === 'venue') { reason = 'Stopped at the venue box (' + top.n + '): hard to find their venue or not sure what to type.'; fix = 'Check the first match appears after 1 to 2 letters.'; }
+      else if (top) { reason = 'Stopped at the ' + String(top.field).replace(/_/g, ' ') + ' box (' + top.n + ').'; fix = 'Look at that box on a phone.'; }
+    }
+    s.reason = reason; s.fix = fix;
+  });
+  return { steps: steps, form: form };
+}
+/* Person events for a window; scanners and their sessions are out. */
+async function vpjPersonEvents(env, sinceIso) {
+  const rows = await vpaSelectAll(env, 'vp_journey_events', 'at=gte.' + encodeURIComponent(sinceIso) + '&select=sid,link_id,event,props,src,path,ref_source,region,device,scanner,venue_id,at&order=at.asc');
+  const scan = {}; rows.forEach((r) => { if (r.scanner || r.event === 'scanner_hit') scan[r.sid] = true; });
+  return { all: rows, person: rows.filter((r) => !scan[r.sid] && r.event !== 'scanner_hit'), scannerHits: rows.filter((r) => r.event === 'scanner_hit').length };
+}
+async function vpjAdminFunnel(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json); if (!_b.ok) return _b.res;
+  const days = Math.max(1, Math.min(90, parseInt((_b.body && _b.body.days), 10) || 7));
+  let d;
+  try { d = await vpjPersonEvents(env, new Date(Date.now() - days * 86400000).toISOString()); }
+  catch (e) { return json({ error: 'The journey report needs migration 196.' }, 503); }
+  const t = vpjFunnelTable(d.person);
+  // Who arrived: source, region, device (anonymous; counts of sessions).
+  const seen = {}; const where = { ref: {}, region: {}, device: {} };
+  d.person.forEach((r) => { if (seen[r.sid]) return; seen[r.sid] = 1; ['ref_source:ref', 'region:region', 'device:device'].forEach((p) => { const a = p.split(':'); const v = r[a[0]] || 'unknown'; where[a[1]][v] = (where[a[1]][v] || 0) + 1; }); });
+  return json(Object.assign({ ok: true, days: days, scanner_hits: d.scannerHits, sessions: Object.keys(seen).length, where: where }, t));
+}
+/* Pure. links: vp_track_links rows; events: journey rows with link_id. Per campaign and email step. */
+function vpjCampaignTable(links, events) {
+  const byLink = {}; events.forEach((e) => { if (e.link_id) (byLink[e.link_id] = byLink[e.link_id] || []).push(e); });
+  const groups = {};
+  links.forEach((l) => {
+    const k = l.campaign + '|' + l.email_step; const g = groups[k] = groups[k] || { campaign: l.campaign, email_step: l.email_step, leads: {}, labels: {} };
+    const ev = byLink[l.id] || []; const person = ev.filter((e) => !e.scanner && e.event !== 'scanner_hit');
+    const has = (n) => person.some((e) => e.event === n);
+    g.leads[l.lead_ref || ('l' + l.id)] = g.leads[l.lead_ref || ('l' + l.id)] || { clicked: false, visited: false, enquired: false, signed_up: false, signed_in: false, card: false, scanner: false };
+    const x = g.leads[l.lead_ref || ('l' + l.id)];
+    if (has('link_hit')) x.clicked = true;
+    if (has('link_hit') && person.some((e) => e.event !== 'link_hit')) x.visited = true;
+    if (has('enquiry_sent') || has('form_sent')) x.enquired = true;
+    if (has('account_made')) x.signed_up = true;
+    if (has('signed_in')) x.signed_in = true;
+    if (has('card_added')) x.card = true;
+    if (ev.some((e) => e.event === 'scanner_hit')) x.scanner = true;
+    if (has('link_hit')) { g.labels[l.link_label] = (g.labels[l.link_label] || 0) + 1; }
+  });
+  return Object.keys(groups).sort().map((k) => {
+    const g = groups[k]; const L = Object.keys(g.leads).map((i) => g.leads[i]);
+    const c = (f) => L.filter((x) => x[f]).length;
+    return { campaign: g.campaign, email_step: g.email_step, sent: L.length, clicked: c('clicked'), visited: c('visited'), enquired: c('enquired'),
+      signed_up: c('signed_up'), signed_in: c('signed_in'), card: c('card'), scanner_only: L.filter((x) => x.scanner && !x.clicked).length, links_clicked: g.labels };
+  });
+}
+async function vpjAdminCampaigns(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let links, ev;
+  try {
+    links = await vpaSelectAll(env, 'vp_track_links', 'select=id,lead_ref,campaign,email_step,link_label&order=id.asc');
+    ev = await vpaSelectAll(env, 'vp_journey_events', 'link_id=not.is.null&select=link_id,event,scanner,sid&order=id.asc');
+  } catch (e) { return json({ error: 'The journey report needs migration 196.' }, 503); }
+  return json({ ok: true, rows: vpjCampaignTable(links || [], ev || []) });
+}
+/* One venue's journey, in order, in plain words. */
+function vpjSayEvent(e, links) {
+  const l = e.link_id ? links[e.link_id] : null;
+  switch (e.event) {
+    case 'link_hit': return 'Clicked' + (l ? ' the ' + l.link_label + ' link in email ' + l.email_step + ' of ' + l.campaign : ' a tracked link') + (e.path ? ' (' + e.path + ')' : '');
+    case 'scanner_hit': return 'A mail scanner opened the link (not counted as a person)';
+    case 'page_view': return 'Looked at ' + (e.path || 'a page');
+    case 'enquiry_sent': return 'Sent a website enquiry' + (e.props && e.props.ticket ? ' (ticket ' + e.props.ticket + ')' : '');
+    case 'account_made': return 'Account made'; case 'signed_in': return 'Signed in'; case 'card_added': return 'Added a card';
+    case 'first_game': return 'Played a first real game';
+    default: { const s = VPJ_FUNNEL.filter((f) => f.step === e.event)[0]; return s ? s.label : e.event.replace(/_/g, ' '); }
+  }
+}
+async function vpjAdminVenue(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json); if (!_b.ok) return _b.res;
+  const vid = String((_b.body && _b.body.venue_id) || '');
+  if (!/^[0-9a-f-]{36}$/i.test(vid)) return json({ error: 'Which venue?' }, 400);
+  let links, ev;
+  try {
+    links = await vpaSelectAll(env, 'vp_track_links', 'venue_id=eq.' + vid + '&select=id,lead_ref,campaign,email_step,link_label,page,sent_at,state&order=email_step.asc');
+    ev = await vpaSelectAll(env, 'vp_journey_events', 'venue_id=eq.' + vid + '&select=sid,link_id,event,props,path,at,src,region,device&order=at.asc');
+  } catch (e) { return json({ error: 'The journey report needs migration 196.' }, 503); }
+  const sids = {}; (ev || []).forEach((e) => { sids[e.sid] = 1; });
+  let early = [];
+  const sl = Object.keys(sids).slice(0, 20);
+  if (sl.length) { try { early = await vpaSelectAll(env, 'vp_journey_events', 'sid=in.(' + sl.join(',') + ')&venue_id=is.null&select=sid,link_id,event,props,path,at,src,region,device&order=at.asc'); } catch (e) {} }
+  const lm = {}; (links || []).forEach((l) => { lm[l.id] = l; });
+  const items = [];
+  (links || []).forEach((l) => { if (l.sent_at) items.push({ at: l.sent_at, what: 'Email ' + l.email_step + ' of ' + l.campaign + ' sent (' + l.link_label + ' link)' }); });
+  (early || []).concat(ev || []).forEach((e) => { if (e.event === 'page_left') return; items.push({ at: e.at, what: vpjSayEvent(e, lm), region: e.region, device: e.device }); });
+  items.sort((a, c) => Date.parse(a.at) - Date.parse(c.at));
+  return json({ ok: true, journey: items.slice(0, 300) });
 }

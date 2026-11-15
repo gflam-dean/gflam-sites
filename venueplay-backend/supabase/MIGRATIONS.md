@@ -887,3 +887,14 @@ list of ticks (`venueplay:sales,partyplay:venue_support,...`) as well as the thr
 then add). Run AFTER 137. Any order with the billing Worker: until it is run, a device that picks teams is kept on every
 ticket and HQ says why; the named sets keep working. Branch `feature/help-alerts-by-team-2nov`, merged into release/tuesday-17nov 14 Nov 2026. RUN on LIVE by Dean 14 Nov 2026 ~22:50
 (Sydney project) and on the TEST database by main 14 Nov ~23:00 (tools/staging/run-on-test.py). Rollback: in the file.
+
+`venueplay-196-journey-tracking.sql` (Dean, 15 Nov 2026, INBOX 413 journey tracking; 195 is the 412 quick game's): two new tables, nothing existing is touched.
+`vp_track_links` (one row per tracked email link: lead_ref, venue name, first name, state, likely games, campaign, email step, link label, page,
+sent_at, expiry, revoked_at, venue_id; only a SALTED SHA-256 of the 6-character code is kept, never the code or an email address) and
+`vp_journey_events` (one row per step: anonymous session id, event name, small props, source, path with any code cut out, referrer family,
+AU state or country, device kind, scanner flag, venue_id once signed in; NO IP, user agent, fingerprint or personal data; the only free text
+is the venue search that found nothing, digits and @ stripped; clear that text after 90 days, delete rows after 400). Both: RLS on, everything
+revoked from public / anon / authenticated, select/insert/update to service_role only (so RLS-BASELINE.json gains two tables after it is run:
+dump it then). Safe to run any time: until it runs, POST /track, GET /track/lookup and the HQ Journey routes answer "nothing recorded" and the pages
+carry on. Needs vp_venues. Any order with the billing Worker. After loading the codes (tools/make-journey-codes.py output) set sent_at per send.
+Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.

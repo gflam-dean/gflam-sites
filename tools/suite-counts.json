@@ -307,6 +307,10 @@
   "checks": 1086,
   "counted_by": "lines"
  },
+ "tools/hq-journey-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -328,6 +332,10 @@
   "counted_by": "lines"
  },
  "tools/logo-tools-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/make-journey-codes.test.py": {
   "checks": 28,
   "counted_by": "lines"
  },
@@ -925,6 +933,14 @@
  },
  "tools/test-join-list.js": {
   "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-journey-client.js": {
+  "checks": 61,
+  "counted_by": "lines"
+ },
+ "tools/test-journey-track.js": {
+  "checks": 71,
   "counted_by": "lines"
  },
  "tools/test-legal-gaps-28-oct.js": {
