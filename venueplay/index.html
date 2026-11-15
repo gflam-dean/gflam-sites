@@ -559,6 +559,7 @@
      Placed in the head so a bounce still registers. -->
 <script src="/app/vp-analytics.js"></script>
 <script src="/app/vp-track.js"></script>   <!-- journey tracking, first party (INBOX 413) -->
+<script src="/app/vp-quick-config.js"></script>
 <script src="/app/vp-pixel.js"></script>
 <link rel="stylesheet" href="/app/vp-footer.css">
 <link rel="stylesheet" href="/app/vp-skip.css">
@@ -681,6 +682,7 @@
       </div>
       <div class="h2-under">
         <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
+        <a class="btn btn-ghost h2-watch" href="/quick?src=website" data-cta="hero-quick-game" data-vpq-label>Play a quick game</a>
       </div>
     </div>
   </div>
@@ -770,7 +772,7 @@
   </div>
 </section>
 
-<!-- #preview removed 1 Oct 2026: the hero already shows the real screens -->
+<!-- #preview removed 1 Oct 2026: the hero already shows the real screens and links /quick (it was /see-a-night until 14 Nov 2026) -->
 
 <section class="sec" id="replaces">
   <div class="wrap">
@@ -1150,6 +1152,7 @@
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>You're on the list</h3>
           <p>Your first email lands early <span data-vps-month>next month</span>. Nobody will ring you.</p>
+          <p><a href="/quick?src=website" data-vpq-label>Play a quick game</a> while you wait</p>
         </div>
       </div>
     </div>

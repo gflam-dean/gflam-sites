@@ -42,6 +42,7 @@ contract and no setup fee.
 ## Links
 
 - Home: https://venueplay.com.au
+- Play a quick game: https://venueplay.com.au/quick
 - 60-second trivia (the drink-coaster QR, five questions, no sign-up; venueplay.com.au/here is the short address): https://venueplay.com.au/live-here-now
 - Pricing: https://venueplay.com.au/#offer
 - Contact: https://venueplay.com.au/#contact

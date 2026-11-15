@@ -757,6 +757,11 @@
 </div>
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
+<script>
+/* PLAY A QUICK GAME (INBOX 412): the funnel's "card added" is sent only when Stripe sends the visitor back (?card=added), never when the card page opens. Only a browser that came through the quick game (it holds the funnel's session id). */
+(function(){ try{ if(!/[?&]card=added(&|$)/.test(location.search) || !localStorage.getItem("vpqSid")) return;
+  var s=document.createElement("script"); s.src="/app/vp-quick-config.js"; s.onload=function(){ try{ window.vpTrackStep("card_added"); }catch(e){} }; document.head.appendChild(s); }catch(e){} })();
+</script>
 <script src="vp-session.js"></script>
 <script src="vp-setupuse.js"></script>
 <script src="/app/vp-venuepick.js"></script>

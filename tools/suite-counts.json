@@ -419,6 +419,14 @@
   "checks": 152,
   "counted_by": "lines"
  },
+ "tools/quick-demo-in-chrome.test.py": {
+  "checks": 83,
+  "counted_by": "lines"
+ },
+ "tools/quick-game-in-chrome.test.py": {
+  "checks": 52,
+  "counted_by": "lines"
+ },
  "tools/real-night-dryrun-in-chrome.test.py": {
   "checks": 151,
   "counted_by": "lines"
@@ -1239,6 +1247,14 @@
   "checks": 92,
   "counted_by": "lines"
  },
+ "tools/test-quick-page.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
+ "tools/test-quick-start.js": {
+  "checks": 72,
+  "counted_by": "lines"
+ },
  "tools/test-raffle-console.js": {
   "checks": 77,
   "counted_by": "lines"
@@ -1496,7 +1512,7 @@
   "counted_by": "lines"
  },
  "tools/test-try-demo.js": {
-  "checks": 49,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-tv-does-not-flap.js": {

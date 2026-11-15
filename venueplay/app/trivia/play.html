@@ -1540,13 +1540,13 @@
          /app/try.html and read once (VPDemo.takePrefill), go into the boxes. The offers tick stays theirs to tap. */
       if(typeof VPDemo==="object") VPDemo.applyPrefill(document);
       if(r && r.demo){ var dn=document.createElement("p"); dn.id="demoNote"; dn.setAttribute("style","font-size:14px;line-height:1.5;color:#B9B9C6;margin:8px 0 0");
-        dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo. Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list."; box.appendChild(dn); }
+        dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo."+(c.marketing_optin ? " Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list." : ""); box.appendChild(dn); }   /* no tick on the quick game's demo (no email on the account): nothing to tick, and nothing is kept */
       /* Collection notice. Australian privacy law wants people told what is being collected and
          who gets it AT THE POINT they are asked, not only in a policy page they never open. This
          screen asked for last name, postcode, email and mobile with no notice and no link to the
          policy at all, while the policy itself said capturing more than a name was a future
          feature. */
-      if(h){
+      if(h && !(r && r.demo && !c.marketing_optin)){   // a demo with no tick keeps nothing: no notice about where details go
         var vn=(P.venueName||"").trim();
         var n=document.createElement("p");
         n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");

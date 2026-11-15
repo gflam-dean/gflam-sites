@@ -57,12 +57,17 @@
   function ago(days) { return days <= 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"; }
 
   /* ---- what one prospect row says, from what the Worker sent ---- */
-  function flagHtml(p) {
+  function flagHtml(p) { return flagCore(p) + leadHtml(p); }   // the lead badge rides with the flag (INBOX 412)
+  function flagCore(p) {
     if (p.flag === "call_requested") return '<span class="badge prreq prflag">Call requested</span>';
     /* The yellow "Call them" only when there is a number to ring (Dean, 3 Nov 2026). The Worker only sends the
        flag with a phone now; this holds the same line if an older Worker still sends it without one. */
     if (p.flag === "no_sign_in" && p.tel) return '<span class="badge roll prflag">Call them</span>';
     return "";
+  }
+  /* WHERE THEY CAME FROM (INBOX 412): an account made from a per-lead link in a cold email. */
+  function leadHtml(p) {
+    return p.lead_source === "cold_email" ? '<span class="badge prlead" data-pr-lead="cold_email">Came from cold email</span>' : "";
   }
   /* DAY 21 (Dean, 10 Nov 2026, INBOX 129): from day 21 of their free month, the games they picked in the setup wizard
      and have not played, in the Worker's words (vpaDay21Flag, house order, musical bingo never "bingo"): "Bingo not
