@@ -53,6 +53,9 @@ import tempfile
 import time
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import nolive   # a test browser never reaches production (16 Nov 2026): see tools/nolive.py
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 SITE = 'https://venueplay.com.au'
@@ -159,7 +162,10 @@ class WS(object):
             payload, self.buf = self.buf[at:at + n], self.buf[at + n:]
             op = b0 & 0x0F
             if op == 1:
-                return json.loads(payload.decode('utf-8', 'replace'))
+                m = json.loads(payload.decode('utf-8', 'replace'))
+                if 'method' in m and m['method'].startswith('Network.'):
+                    nolive.note_event(m)
+                return m
             if op == 8:
                 raise IOError('Chrome closed the debug socket')
 
@@ -189,6 +195,9 @@ def close_all_browsers():
             b.close()
         except Exception:
             pass
+
+
+nolive.on_exit_close(close_all_browsers)
 
 
 def _on_signal(signum, frame):
@@ -257,9 +266,21 @@ def kill_tree(pid, grace=10):
 
 
 class Browser(object):
-    def __init__(self, extra_args=()):
+    # A TEST browser by default: every production host goes to tools/nolive.py's trap and an attempt fails the
+    # suite. Only the deliberately live tools say live=True (this file's own run, live-join-own-domain.py,
+    # measure-reconnect-in-chrome.py). Never set it to get a suite green: point the suite at its own rig instead.
+    LIVE = False
+
+    def __init__(self, extra_args=(), live=None):
         """`extra_args`: more Chrome switches for one suite (11 Nov 2026), e.g. a TV whose browser blocks sound until
-        it is clicked ('--autoplay-policy=document-user-activation-required'). Default none: every caller unchanged."""
+        it is clicked ('--autoplay-policy=document-user-activation-required'). Default none: every caller unchanged.
+        `live`: True only for a tool whose job is to look at production (see LIVE above)."""
+        self.live = self.LIVE if live is None else bool(live)
+        if not self.live:
+            nolive.refuse_bypass(extra_args)
+            guard = nolive.chrome_args()
+        else:
+            guard = []
         if not os.path.exists(CHROME):
             raise SystemExit('Google Chrome is not at %s. This tool needs a real browser;\n'
                              'there is no way to check what a screen PAINTS without one.' % CHROME)
@@ -270,7 +291,7 @@ class Browser(object):
             [CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--no-first-run',
              '--no-default-browser-check', '--window-size=1280,800',
              '--user-data-dir=' + self.profile,
-             '--remote-debugging-port=%d' % self.port] + list(extra_args or ()) + ['about:blank'],
+             '--remote-debugging-port=%d' % self.port] + guard + list(extra_args or ()) + ['about:blank'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         _LIVE.append(self)
         # Two minutes, not forty seconds, and stop early if Chrome has died. On 20 Oct 2026, with the
@@ -314,7 +335,14 @@ class Browser(object):
             if m.get('id') == self.n:
                 if 'error' in m:
                     raise IOError('%s: %s' % (method, m['error']))
-                return m.get('result', {})
+                res = m.get('result', {})
+                if method == 'Target.attachToTarget' and not self.live and res.get('sessionId'):
+                    # so tools/nolive.py knows the full address of anything this tab sends to production
+                    try:
+                        self.call('Network.enable', {'maxPostDataSize': 0}, session=res['sessionId'])
+                    except Exception:
+                        pass
+                return res
 
     def open_tab(self, url):
         """Every page gets a WINDOW of its own, so every page is on screen.
@@ -639,7 +667,7 @@ def main():
           '  game walls; PartyPlay plays thirty balls of its practice run. Allow a minute or\n'
           '  two apiece.%s\n' % (DIM, len(jobs), OFF))
 
-    br = Browser()
+    br = Browser(live=True)   # this tool's whole job is to look at the live screens
     results = []
     try:
         for slug, url in jobs:
