@@ -44,10 +44,18 @@ this tree; an empty, unreadable or wrong-version record; no signature or a bad o
 than 2 h or from the future; a Chrome suite the gate would run that is missing from the record; a suite that is not
 green the way the gate judges green; a suite with a FAIL line; a suite that counted fewer checks than
 tools/suite-counts.json, printed only a total where the ledger counts lines, or is not in the ledger at all; a record
-carrying re-runs (the server never retries). There is no partial acceptance: one bad suite and the record covers none.
+carrying re-runs in the old (v1) form. There is no partial acceptance: one bad suite and the record covers none.
 
-FLAKES. No retries on the server. A red in the 4-at-a-time pass means NO record is signed, and the hook then runs
-every Chrome suite on the Mac under its usual one-retry rule. MAC_ONLY (signin-logo-in-chrome: it flakes on Linux
+FLAKES: ONE LONE RE-RUN (v3, 16 Nov 2026, proposed on fix/gate-flakes-tue17; NEEDS DEAN'S YES, it changes the 13 Nov
+"any red on the server = no record" rule). Each of the 134-suite runs of 15 Nov had ONE different red, each green
+alone. The Mac's own gate already gives every Chrome suite one retry, so the server now does the same, and no more:
+a suite red in the 4-at-a-time pass is run ONCE more, alone (-j 1, only the reds, at most MAX_RERUNS of them), under
+a FRESH nonce, with the server hashing the files again before and after, and judged HERE on its raw output by the
+same rules. It counts green only if that re-run is fully green (exit 0, the one pass judge, no FAIL line, at or over
+its ledger count); a suite red twice leaves no record. More than MAX_RERUNS reds in the first pass is a broken tree,
+not flakes: nothing is re-run and nothing is signed. The record keeps BOTH results (the red first run, with the
+re-run under it as 'rerun'), so a flake is never hidden, and the acceptance line names every suite that needed one.
+A re-run on a suite that was green, a re-run inside a re-run, or more re-runs than MAX_RERUNS: refused. MAC_ONLY (signin-logo-in-chrome: it flakes on Linux
 only, TEST-SERVER.md) is never sent to the server and never covered: the Mac runs it under the existing rule. Whether
 to keep that, or send it to the server and let its Linux flake block, is a decision for main (DESIGN.md).
 
@@ -61,9 +69,10 @@ fixed here, never taken from the environment, so no environment variable can put
 import ast, fnmatch, hashlib, hmac, io, json, os, re, secrets, stat, subprocess, sys, tempfile, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERSION = 2
+VERSION = 3
 MAX_AGE_S = 2 * 60 * 60
 JOBS = 4
+MAX_RERUNS = 3          # first-pass reds the server may re-run alone; more than this and nothing is re-run or signed
 MAC_ONLY = ('signin-logo-in-chrome.test.py',)
 KEY_NAME = 'GATE_RECORD_KEY'
 KEY_FILE = os.path.expanduser('~/.gflam-gate.env')
@@ -286,13 +295,26 @@ def suite_green(entry, want, passed_rule):
 
 
 def suite_accepted(name, entry, want, passed_rule):
-    """A suite is covered only when its ONE 4-at-a-time run is green (13 Nov 2026, INBOX 357A: no retries on the
-    server, a red blocks). A record that carries re-runs at all is from the old rule and is refused."""
+    """A suite is covered when its 4-at-a-time run is green, or (v3) when that run was red and its ONE lone re-run is
+    fully green. A record carrying re-runs in the old v1 form ('reruns', several, 24 h) is refused."""
     if not isinstance(entry, dict):
         return 'no result'
     if 'reruns' in entry:
-        return 'it carries re-runs, and the server never retries'
-    return suite_green(entry, want, passed_rule)
+        return 'it carries re-runs in the old form (v1), which this gate never trusts'
+    first = suite_green(entry, want, passed_rule)
+    rr = entry.get('rerun')
+    if not first:
+        if 'rerun' in entry:
+            return 'it was green and still carries a re-run'
+        return ''
+    if not isinstance(rr, dict):
+        return first
+    if 'rerun' in rr or 'reruns' in rr:
+        return 'its re-run carries a re-run of its own'
+    again = suite_green(rr, want, passed_rule)
+    if again:
+        return 'red on the server (%s) and red again on its one lone re-run (%s)' % (first, again)
+    return ''
 
 
 # ---------------------------------------------------------------- the verdict
@@ -342,13 +364,17 @@ def verify(raw, tree, key, now, required, counts, passed_rule, max_age_s=MAX_AGE
     missing = [s for s in need if s not in suites]
     if missing:
         return set(), 'the gate record does not cover %d Chrome suite(s) the gate runs: %s' % (len(missing), ', '.join(missing[:4]))
+    again = sorted(s for s, e in suites.items() if isinstance(e, dict) and 'rerun' in e)
+    if len(again) > MAX_RERUNS:
+        return set(), 'the gate record leans on %d lone re-runs, over the limit of %d' % (len(again), MAX_RERUNS)
     for s in need:
         why = suite_accepted(s, suites[s], counts.get('tools/' + s), passed_rule)
         if why:
             return set(), 'the gate record has %s not green: %s' % (s, why)
-    return set(need), ('%d Chrome suite(s) ran green on %s (%s jobs) on this tree %s, %d min ago at %s, signed on this Mac; %s'
+    return set(need), ('%d Chrome suite(s) ran green on %s (%s jobs) on this tree %s, %d min ago at %s, signed on this Mac; %s%s'
                        % (len(need), rec.get('host', '?'), rec.get('jobs', '?'), tree[:12], (now - t) // 60, rec.get('when', '?'),
-                          'on the Mac: ' + ', '.join(s for s in MAC_ONLY if s in required)))
+                          'on the Mac: ' + ', '.join(s for s in MAC_ONLY if s in required),
+                          ('; red once, green on one lone re-run: ' + ', '.join(again)) if again else ''))
 
 
 def record_path(tree, record_dir=RECORD_DIR):
@@ -374,21 +400,44 @@ def accepted(root=ROOT, now=None, key_file=KEY_FILE, record_dir=RECORD_DIR):
 
 # ---------------------------------------------------------------- the one trusted writer
 
-def collect(root, runner, suites, nonce, paths, jobs=JOBS, say=print):
-    """Run `suites` ONCE through runner(suites, jobs, nonce, paths) -> {name: entry, RUN_KEY: run facts}. No re-runs.
-    Returns (results, still red, run facts)."""
+def _entry(got, s):
+    e = dict(got.get(s) or {'rc': 'missing', 'last': '', 'bad': ['the runner returned no result'], 'checks': 0})
+    if 'rerun' in e or 'reruns' in e:   # the Mac makes these, never the server: a runner that sends one is not believed
+        e = {'rc': 'refused', 'last': '', 'checks': 0, 'bad': ['the runner sent its own re-run'], 'verdict': [False, 'runner re-run']}
+    return e
+
+
+def collect(root, runner, suites, nonce, paths, jobs=JOBS, say=print, rerun_nonce=None):
+    """Run `suites` through runner(suites, jobs, nonce, paths) -> {name: entry, RUN_KEY: run facts}. Then (v3) the
+    first-pass reds, if there are 1 to MAX_RERUNS of them, ONCE more alone (-j 1) under rerun_nonce, each kept under
+    its first run as 'rerun'. Returns (results, still red, run facts, re-run facts or None)."""
     counts, passed_rule = ledger(root), suite_passed_rule(root)
     got = runner(suites, jobs, nonce, paths) or {}
     run = got.get(RUN_KEY) if isinstance(got.get(RUN_KEY), dict) else {}
     results, red = {}, []
     for s in suites:
-        e = dict(got.get(s) or {'rc': 'missing', 'last': '', 'bad': ['the runner returned no result'], 'checks': 0})
+        e = _entry(got, s)
         why = suite_accepted(s, e, counts.get('tools/' + s), passed_rule)
         if why:
             say('  %s red on the server (%s)' % (s, why))
             red.append(s)
         results[s] = e
-    return results, red, run
+    rerun = None
+    if red and len(red) <= MAX_RERUNS and rerun_nonce:
+        say('  re-running %d red suite(s) once, alone: %s' % (len(red), ', '.join(red)))
+        got2 = runner(list(red), 1, rerun_nonce, paths) or {}
+        rerun = got2.get(RUN_KEY) if isinstance(got2.get(RUN_KEY), dict) else {}
+        still = []
+        for s in red:
+            results[s] = dict(results[s], rerun=_entry(got2, s))
+            why = suite_accepted(s, results[s], counts.get('tools/' + s), passed_rule)
+            say('  %s %s' % (s, ('red again on its lone re-run (%s)' % why) if why else 'green on its lone re-run'))
+            if why:
+                still.append(s)
+        red = still
+    elif len(red) > MAX_RERUNS:
+        say('  %d suites red on the server, over the %d a lone re-run is for: nothing re-run' % (len(red), MAX_RERUNS))
+    return results, red, run, rerun
 
 
 RUN_KEY = '__run__'
@@ -422,22 +471,27 @@ def make_record(root, runner, key, now=None, say=print, host=HOST, host_key='', 
     digest, paths = manifest(root)
     if not digest:
         return False, 'not run: the manifest of this tree could not be read', None
-    nonce = secrets.token_hex(16)
+    nonce, nonce2 = secrets.token_hex(16), secrets.token_hex(16)
     t0 = time.time()
-    results, red, run = collect(root, runner, suites, nonce, paths, jobs=jobs, say=say)
+    results, red, run, rerun = collect(root, runner, suites, nonce, paths, jobs=jobs, say=say, rerun_nonce=nonce2)
     tree2, head2, dirty2 = current_tree(root)
     if tree2 != tree:
         return False, 'NOT SIGNED: the checkout changed while the suites ran (tree %s, now %s)' % (tree[:12], (tree2 or 'dirty')[:12]), None
     why = run_bound(run, nonce, digest)
     if why:
         return False, 'NOT SIGNED: ' + why, None
+    if rerun is not None:
+        why = run_bound(rerun, nonce2, digest)
+        if why:
+            return False, 'NOT SIGNED: the lone re-run: ' + why, None
     if red:
         return False, 'NOT SIGNED: %d Chrome suite(s) red on the server: %s' % (len(red), ', '.join(red[:6])), None
     now = time.time() if now is None else now
     body = {'v': VERSION, 'tree': tree, 'head': head, 'manifest': digest, 'files': len(paths), 'time': now,
             'when': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now)), 'host': host, 'host_key': host_key,
             'jobs': jobs, 'mac_only': list(MAC_ONLY), 'wall_s': round(time.time() - t0),
-            'server_wall_s': run.get('wall'), 'suites': results}
+            'server_wall_s': run.get('wall'), 'rerun_jobs': 1 if rerun is not None else None,
+            'rerun_server_wall_s': (rerun or {}).get('wall'), 'suites': results}
     rec = sign(body, key)
     covered, why = verify(json.dumps(rec), tree, key, now, chrome_suites(root), ledger(root), suite_passed_rule(root))
     if not covered:

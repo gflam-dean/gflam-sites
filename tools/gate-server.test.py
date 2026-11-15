@@ -10,8 +10,12 @@ vp-tests-1. Two throwaway keys are made in the temp folder; the real ~/.gflam-ga
 
   1. the writer     a green run is signed and accepted; signin-logo is never sent and never covered; a dirty tree
                     is refused; a tree that moves during the run is not signed; a red suite is not signed
-  2. no retries     (13 Nov 2026, INBOX 357A) the server runs each suite ONCE: one red and nothing is signed, the
-                    runner is called once; a signed record that carries re-runs is refused
+  2. one lone re-run (v3, 16 Nov 2026; replaces 13 Nov's no retries, needs Dean's yes) a red is run ONCE more, alone,
+                    under a fresh nonce: green then = signed, with both results kept; RED TWICE = not signed; a re-run
+                    with a FAIL line, too few checks or no judge = not signed; over MAX_RERUNS reds = nothing re-run,
+                    not signed; a re-run not tied to its own nonce and these files = not signed; a runner that sends
+                    its own re-run is not believed; signed records: a green suite with a re-run, a re-run in a re-run,
+                    too many re-runs, a red re-run, an edited re-run, the old v1 'reruns': refused
   2b. binding       results not tied to THIS request and THESE files are never signed: no run facts, another nonce,
                     a server manifest that is not this tree's (at the start or at the end), files missing on the server
   3. every bypass   (each refused, so the gate runs that suite on the Mac): no key, a key others can read, no
@@ -164,11 +168,59 @@ try:
     ok('... and a record that fails its own check is never signed either (the second lock behind the first)',
        "return False, 'NOT SIGNED: the record would not pass its own check: ' + why, None" in io.open(os.path.join(TOOLS, 'gate-server.py'), encoding='utf-8').read())
 
-    print('\n2. no retries: one red on the server and nothing is signed')
+    print('\n2. one lone re-run: red once and green alone is signed with both results; red twice is never signed')
     sent[:] = []
-    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN, GREEN, GREEN]}), KEY, say=lambda s: None)
-    ok('red once (it would have been green alone): NOT signed', not good and 'red on the server: ' + CHROME[1] in text, text)
-    ok('... and the server was asked exactly once, 4 at a time, never a lone re-run', sent == [(CHROME[:2], 4)], sent)
+    good, text, rec_rr = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN, GREEN, GREEN]}), KEY, say=lambda s: None)
+    ok('red once, fully green on its one lone re-run: signed', good and rec_rr and rec_rr.get('sig'), text)
+    ok('... the server was asked twice: all 4 at a time, then ONLY the red suite, alone (-j 1)', sent == [(CHROME[:2], 4), ([CHROME[1]], 1)], sent)
+    ok('... and the record keeps BOTH results: the red first run, the green re-run under it',
+       rec_rr and rec_rr['suites'][CHROME[1]].get('rc') == 1 and rec_rr['suites'][CHROME[1]].get('rerun', {}).get('rc') == 0
+       and 'rerun' not in rec_rr['suites'][CHROME[0]] and rec_rr.get('rerun_jobs') == 1, rec_rr and rec_rr['suites'])
+    gs.write_record(rec_rr, rec_dir)
+    c_rr, w_rr = acc()
+    ok('... accepted, and the acceptance line names the suite that needed its re-run',
+       c_rr == set(CHROME[:2]) and 'red once, green on one lone re-run: ' + CHROME[1] in w_rr, w_rr)
+    io.open(path, 'w', encoding='utf-8').write(signed_good)
+    sent[:] = []
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, red]}), KEY, say=lambda s: None)
+    ok('RED TWICE (on the 4-at-a-time run and on its lone re-run): NOT signed', not good and 'red on the server: ' + CHROME[1] in text, text)
+    ok('... and it was re-run once, never a third time', sent == [(CHROME[:2], 4), ([CHROME[1]], 1)], sent)
+    for lbl, again in (('a FAIL line', dict(GREEN, bad=['FAIL the logo'])), ('fewer checks than the ledger', dict(GREEN, checks=4)),
+                       ('a last line that is not a pass', dict(GREEN, last='4 of 5 checks passed')),
+                       ('no verdict from the one pass judge', {k: v for k, v in GREEN.items() if k != 'verdict'}),
+                       ('a total where the ledger counts lines', dict(GREEN, counted_by='total'))):
+        good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red, again]}), KEY, say=lambda s: None)
+        ok('red, then a re-run with %s: NOT signed (the re-run must be FULLY green)' % lbl, not good and CHROME[0] in text, text)
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red, dict(GREEN, rerun=dict(GREEN))]}), KEY, say=lambda s: None)
+    ok('a runner that sends its own re-run inside an entry is not believed: NOT signed', not good, text)
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [dict(red, rerun=dict(GREEN)), red]}), KEY, say=lambda s: None)
+    ok('a red first run that arrives with a green "re-run" of the runner\'s own making: still re-run by the Mac, red again, NOT signed', not good and CHROME[0] in text, text)
+    sent[:] = []
+    gs.MAX_RERUNS = 1
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red, GREEN], CHROME[1]: [red, GREEN]}), KEY, say=lambda s: None)
+    gs.MAX_RERUNS = 3
+    ok('more reds than MAX_RERUNS (a broken tree, not flakes): nothing re-run, NOT signed', not good and sent == [(CHROME[:2], 4)], (text, sent))
+    calls_n = [0]
+
+    def bad_rerun_nonce(f):
+        calls_n[0] += 1
+        return dict(f, nonce='0' * 32) if calls_n[0] == 2 else f
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN]}, bad_rerun_nonce), KEY, say=lambda s: None)
+    ok('a lone re-run that answers another request (its nonce is not the re-run\'s own): NOT signed', not good and 'lone re-run' in text and 'another request' in text, text)
+    calls_n[0] = 0
+
+    def bad_rerun_files(f):
+        calls_n[0] += 1
+        return dict(f, manifest_end='b' * 64) if calls_n[0] == 2 else f
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN]}, bad_rerun_files), KEY, say=lambda s: None)
+    ok('a lone re-run whose files changed under it (manifest): NOT signed', not good and 'lone re-run' in text and 'changed while' in text, text)
+    calls_n[0] = 0
+
+    def no_rerun_facts(f):
+        calls_n[0] += 1
+        return None if calls_n[0] == 2 else f
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN]}, no_rerun_facts), KEY, say=lambda s: None)
+    ok('a lone re-run that sends no run facts: NOT signed', not good and 'lone re-run' in text, text)
     green_only = dict(GREEN)
     green_only.pop('verdict')
     good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [green_only]}), KEY, say=lambda s: None)
@@ -241,8 +293,24 @@ try:
     refused('stale at exactly 2 h: refused', resigned(lambda r: r.update(time=time.time() - 2 * 3600 - 1)), 'over the 2 h limit')
     io.open(path, 'w', encoding='utf-8').write(resigned(lambda r: r.update(time=time.time() - 119 * 60)))
     ok('1 h 59 min old: still accepted', acc()[0] == set(CHROME[:2]), acc()[1])
-    refused('a validly signed record carrying re-runs (the old rule): refused',
-            resigned(lambda r: r['suites'][CHROME[1]].update(reruns=[dict(GREEN)] * 3)), 'never retries')
+    refused('a validly signed record carrying re-runs in the old v1 form: refused',
+            resigned(lambda r: r['suites'][CHROME[1]].update(reruns=[dict(GREEN)] * 3)), 'old form (v1)')
+    refused('a validly signed suite RED, with a RED lone re-run: refused',
+            resigned(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN, rc=1, bad=['FAIL x']))), 'red again on its one lone re-run')
+    refused('a validly signed suite red with NO re-run: refused', resigned(lambda r: r['suites'][CHROME[1]].update(rc=1)), 'exit 1')
+    refused('a validly signed GREEN suite that still carries a re-run: refused',
+            resigned(lambda r: r['suites'][CHROME[1]].update(rerun=dict(GREEN))), 'was green and still carries a re-run')
+    refused('a validly signed re-run inside a re-run: refused',
+            resigned(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN, rerun=dict(GREEN)))), 'a re-run of its own')
+    _mr = gs.MAX_RERUNS
+    gs.MAX_RERUNS = 1
+    refused('a validly signed record leaning on more re-runs than MAX_RERUNS: refused',
+            resigned(lambda r: [r['suites'][c].update(rc=1, rerun=dict(GREEN)) for c in CHROME[:2]]), 'over the limit of 1')
+    gs.MAX_RERUNS = _mr
+    io.open(path, 'w', encoding='utf-8').write(resigned(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN))))
+    ok('a validly signed suite red once, fully green on its lone re-run: accepted', acc()[0] == set(CHROME[:2]), acc()[1])
+    refused('that re-run edited after signing (red made green): refused',
+            edited(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN))), 'edited after it was signed')
     refused('a validly signed suite with no verdict from the one pass judge: refused',
             resigned(lambda r: r['suites'][CHROME[0]].pop('verdict')), 'never read its output')
     refused('dated in the future: refused', resigned(lambda r: r.update(time=time.time() + 3600)), 'future')
@@ -323,7 +391,9 @@ try:
        not re.search(r'environ\.get|getenv|environ\[', gs_src) and "KEY_FILE = os.path.expanduser('~/.gflam-gate.env')" in gs_src)
     ok('signin-logo-in-chrome stays on the Mac', "MAC_ONLY = ('signin-logo-in-chrome.test.py',)" in gs_src)
     ok('the age limit is 2 hours and there are no lone re-runs', 'MAX_AGE_S = 2 * 60 * 60' in gs_src and 'LONE_RERUNS' not in gs_src)
-    ok('the record version is 2 (a v1 record, 24 h with lone re-runs, is refused)', 'VERSION = 2' in gs_src)
+    ok('the record version is 3 (a v2 record, from before the one lone re-run, and a v1 record are refused)', 'VERSION = 3' in gs_src)
+    ok('a lone re-run is at most once, alone, for at most 3 suites, under its own nonce',
+       'MAX_RERUNS = 3 ' in gs_src and 'got2 = runner(list(red), 1, rerun_nonce, paths)' in gs_src and "why = run_bound(rerun, nonce2, digest)" in gs_src)
     ok('the signature is compared in constant time', 'hmac.compare_digest(' in gs_src)
 
     # The REAL hook, run the way git runs it, in the throwaway, with a fake gate that writes down its arguments.
