@@ -38,6 +38,9 @@ PLAIN (no switch in its address) unless it is testing the off switch. On the rig
      centred, and the 16:9 stage is painted as the biggest box that fits, centred.
   9. A trivia or musical console's "started" (stamped fmt) on the venue's channel never plays LET'S PLAY BINGO
      on /tv; a bingo "started" on the same road still does (Dean, 15 Nov 2026, The Mini Bar).
+     And the trivia show plays at First question, not at Start round (Dean, 16 Nov 2026), with nobody joined:
+     none after Start round, the show on First question with the console counting down, the question up after
+     it, the show never cut short. PNGs of the 1280x720 TV mid-show and with the question go to $VP_SHOTS.
 
     python3 tools/tv-sting-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -519,11 +522,40 @@ def other_format_started():
             if r.ask(host, '!!document.getElementById("vpAskGo") || !!document.querySelector(".vp-ask button")') is True:
                 r.ask(host, '(function(){ var b=document.getElementById("vpAskGo")||document.querySelector(".vp-ask button"); b.click(); return true; })()'); time.sleep(1)
         FS = 'document.getElementById("gameFrame").contentWindow.VPSting.stats()'
-        ok('CONTROL: the round starts and the trivia screen in the frame plays its own show (it heard "started")',
-           r.until(t1, FS + '.plays>=1', 15) is True, r.ask(t1, FS))
+        ok('CONTROL: the round starts: the console offers First question',
+           r.until(host, '!!document.getElementById("firstQBtn") && document.getElementById("firstQBtn").textContent==="First question"', 20) is True,
+           r.ask(host, '(document.getElementById("runBody")||{}).innerText'))
+        time.sleep(4.5)
+        ok('Start round no longer plays the show: the trivia screen in the frame has played none yet (Dean, 16 Nov 2026)',
+           (r.ask(t1, FS) or {}).get('plays') == 0, r.ask(t1, FS))
+        # FIRST QUESTION PLAYS IT, and the question waits for it (no answer time lost under the show)
+        r.ask(host, 'document.getElementById("firstQBtn").click(); true')
+        ok('First question plays the trivia screen\'s own show (it heard "intro"), with nobody joined',
+           r.until(t1, FS + '.plays>=1', 6) is True, r.ask(t1, FS))
         ok('  its words are LET\'S PLAY / TRIVIA', r.ask(t1, '(function(){var d=document.getElementById("gameFrame").contentDocument, e=d.getElementById("vpsL2s"); return e ? e.textContent : null;})()') == 'TRIVIA',
            r.ask(t1, '(function(){var d=document.getElementById("gameFrame").contentDocument, e=d.getElementById("vpsL2s"); return e ? e.textContent : null;})()'))
-        time.sleep(4.5)
+        hb = r.ask(host, '(document.getElementById("firstQBtn")||{}).textContent||""') or ''
+        ok('  the console counts the show down on the button, the way bingo holds its first ball ("Starting the show... 4")',
+           hb.startswith('Starting the show... ') and r.ask(host, '!!(document.getElementById("firstQBtn")||{}).disabled') is True, hb)
+        time.sleep(1.3)
+        if SHOTS:
+            try:
+                import base64
+                d = r.B.call('Page.captureScreenshot', {'format': 'png'}, session=t1)
+                with open(os.path.join(SHOTS, 'trivia-first-question-show-1280x720.png'), 'wb') as f: f.write(base64.b64decode(d['data']))
+            except Exception as e:
+                print('  (screenshot not saved: %s)' % e)
+        QUP = '(function(){var d=document.getElementById("gameFrame").contentDocument, q=d && d.getElementById("tvQ"); return !!q && !q.classList.contains("hidden") && q.getBoundingClientRect().height>0;})()'
+        ok('  mid-show the question is not up yet on the TV', r.ask(t1, QUP) is False, r.ask(t1, FS))
+        ok('then the first question comes up on the TV', r.until(t1, QUP, 15) is True, r.ask(t1, '(function(){var d=document.getElementById("gameFrame").contentDocument; return [].map.call(d.querySelectorAll(".layer"),function(l){return l.id+":"+l.className;}).join(" ");})()'))
+        st = r.ask(t1, FS) or {}
+        ok('  and the show ran its whole length: played once, never cut short by the question', st.get('plays') == 1 and st.get('cutShort') == 0 and st.get('playing') is False, st)
+        if SHOTS:
+            try:
+                d = r.B.call('Page.captureScreenshot', {'format': 'png'}, session=t1)
+                with open(os.path.join(SHOTS, 'trivia-first-question-up-1280x720.png'), 'wb') as f: f.write(base64.b64decode(d['data']))
+            except Exception as e:
+                print('  (screenshot not saved: %s)' % e)
         after = r.ask(t1, STATS) or {}
         ok('/tv itself played NO show: no LET\'S PLAY BINGO over the trivia game', after.get('plays') == before.get('plays') == 0, [before, after])
     finally:

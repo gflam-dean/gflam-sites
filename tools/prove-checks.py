@@ -24841,6 +24841,26 @@ MUTATIONS = [
     ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
      '  @media (max-width:640px){\n    body.vp-live .bar{padding-top:8px', '  @media (max-width:1px){\n    body.vp-live .bar{padding-top:8px',
      'on a phone the bingo header, coach line and last ball do not tighten, so the claim queue drops below the fold'),
+    # THE CONSOLES ON ONE PHONE SCREEN, ROUND 2 (16 Nov 2026): flag a song back on the main view, the TV-sound
+    # question laid out as a sentence then its two answers, bingo's stat values in full; the trivia show at First question
+    ('musical-console-fits-phone-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '<button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>', '<button class="btn ghost vp-wbtn hidden" id="flagSongBtn" disabled>',
+     '"This song did not work" is not on the main musical game view'),
+    ('musical-console-fits-phone-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '  #tvAudioNote{display:flex;flex-wrap:wrap;align-items:center;gap:8px}', '  #tvAudioNote{}',
+     'the TV-sound question squeezes Yes and No onto the last line of its sentence'),
+    ('bingo-console-fits-phone-in-chrome.test.py', 'venueplay/app/index.html',
+     '    body.vp-live #bingoView .stat .box .v{font-size:16px!important;white-space:normal;', '    body.vp-live #bingoView .stat .box .vx{font-size:16px!important;white-space:normal;',
+     'on a phone the bingo stat boxes cut "2 of 90" and "One line" short'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     '{ question:1, ta_board:1 }, undefined, { intro:1 }); }catch(e){} }', '{ question:1, ta_board:1 }, undefined, { started:1 }); }catch(e){} }',
+     'in Chrome: the trivia TV plays its show at Start round again, not at First question'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     'INTRO_HOLD_MS=4200;', 'INTRO_HOLD_MS=0;',
+     'in Chrome: the trivia console does not hold the first question for the show, so the question cuts it short'),
+    ('trivia-empty-room-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '    bcast({ t:"intro", game_id:gid,', '    bcast({ t:"intro_off", game_id:gid,',
+     'in Chrome: First question with nobody joined plays no show on the wall'),
 ]
 
 

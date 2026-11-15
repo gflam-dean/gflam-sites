@@ -960,7 +960,10 @@
         '<div class="qtext-h">'+(G.setTitle?esc(G.setTitle)+': ':'')+G.questionCount+' questions loaded</div>'+
         '<div class="since" style="margin:0">Players are joining on their phones. Show the first question when the room is ready.</div>';
       body.appendChild(rd);
-      var nb=el("button","btn pink big","First question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
+      var _hold=introHolding();
+      var nb=el("button","btn pink big", _hold ? "Starting the show... "+_hold : "First question"); nb.id="firstQBtn";
+      if(_hold) nb.disabled=true;
+      nb.addEventListener("click", firstQuestion); body.appendChild(nb);
       body.appendChild(endBtn("End round"));
       return;
     }
@@ -1345,6 +1348,30 @@
     }).catch(function(e){ hostError(e.message); }).then(function(){
       G.busy=false; if(btn){ btn.disabled=false; btn.textContent=(G.status==="lobby"?"Start round":"Open lobby"); }
     });
+  }
+  /* THE START-OF-GAME SHOW PLAYS AT FIRST QUESTION, NOT AT START ROUND (Dean, 16 Nov 2026). Start round arms the quiz
+     while the room is still joining; the LET'S PLAY TRIVIA show belongs to the moment the quiz begins. First question
+     sends "intro" (the TV and the joined phones play their show on it, /app/vp-sting.js forGame) and holds the question
+     for the show's length, counting down on the button, the way bingo holds its first ball (index.html
+     STING_HOLD_SECONDS), so no answer time is lost under the show. Once per game; never for round 2 on. Off with
+     ?sting=0 on the console's address, like the TV's. Works the same with nobody joined (the TV still plays it). */
+  var TRIVIA_STING=!/[?&]sting=0(&|$)/.test(location.search||""), INTRO_HOLD_MS=4200;   // the show is 3.95 s (vp-sting.js DUR), plus a beat for the room's channel
+  function introHolding(){ var l=(G.introUntil||0)-Date.now(); return l>0 ? Math.ceil(l/1000) : 0; }
+  function firstQuestion(){
+    if(G.busy || !G.gameId || G.status!=="ready" || introHolding()) return;
+    if(!TRIVIA_STING || G.introFor===G.gameId){ nextQuestion(); return; }
+    var gid=G.gameId;
+    G.introFor=gid; G.introUntil=Date.now()+INTRO_HOLD_MS;
+    bcast({ t:"intro", game_id:gid, session_id:G.sessionId, title:G.setTitle });
+    renderRun();
+    var tk=setInterval(function(){
+      var b=$("firstQBtn"), left=introHolding();
+      if(b && left) b.textContent="Starting the show... "+left;
+      if(!left || G.status!=="ready" || G.gameId!==gid){
+        clearInterval(tk); G.introUntil=0;
+        if(G.status==="ready" && G.gameId===gid) nextQuestion();
+      }
+    }, 250);
   }
   function nextQuestion(){
     if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
@@ -2518,7 +2545,7 @@
     if(G.busy) return;
     if(G.status==="setup"){ if(G.questionCount>0 && since>800 && !_demo.opened){ _demo.opened=true; openLobby(); } return; }
     if(G.status==="lobby"){ if(joined>=1 && (joined>=DEMO_N || _demo.start)) startRound(); return; }
-    if(G.status==="ready"){ if(since>=3000) nextQuestion(); return; }
+    if(G.status==="ready"){ if(since>=3000) firstQuestion(); return; }   // the show plays at the first question, as on a real night (16 Nov 2026)
     if(G.status==="question"){ if(VPDemo.shouldReveal(remainingSecs(), answeredCount(), DEMO_N, joined)) reveal(); return; }   // joined: the server's count as well as this console's roster, so one answer never stands for two phones
     if(G.status==="reveal"){
       var last=G.qtotal && G.current && (G.current.qi||G.current.qseq)>=G.qtotal;

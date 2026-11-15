@@ -144,7 +144,7 @@
   "counted_by": "lines"
  },
  "tools/bingo-console-fits-phone-in-chrome.test.py": {
-  "checks": 29,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/bingo-reveal-rings-in-chrome.test.py": {
@@ -1664,7 +1664,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
-  "checks": 24,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/trivia-join-in-chrome.test.py": {
@@ -1772,7 +1772,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 154,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/tv-takeover-12nov-in-chrome.test.py": {
@@ -2232,7 +2232,7 @@
   "counted_by": "lines"
  },
  "tools/musical-console-fits-phone-in-chrome.test.py": {
-  "checks": 38,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/musical-console-sound-in-chrome.test.py": {
