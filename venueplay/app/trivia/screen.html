@@ -659,7 +659,11 @@
     setRing(frac);
     $("tvCdNum").textContent=rem;
     $("tvRing").style.stroke = rem<=5 ? "var(--roll)" : "var(--pink)";
-    if(remMs<=0){ stopRing(); }
+    /* THE BUZZER SOUNDS WHEN THE WALL SAYS 0 (Dean, 15 Nov 2026, The Mini Bar: "not timed right"). It waited for the
+       console's "lock", which leaves the console on a half-second poll and then crosses the network, so the room
+       saw 0 and heard the buzzer up to a second later. Now the tick that paints 0 sounds it; the lock still sounds
+       it if this tick never ran (timesUp plays once per question, live questions only, never after a reveal). */
+    if(remMs<=0){ stopRing(); try{ timesUp(); }catch(e){} }
   }
 
   /* One size rule for the question text, used by the question AND its reveal so the two can never differ. */
@@ -1475,7 +1479,8 @@
              this would blank the name the demo block just set. */
           var nt=VP_DEMO ? null : document.getElementById("venueNameTag");
           if(nt){ var nm=String(d.name||"").trim();
-            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||""); } })   // one object now, not an array
+            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||"");
+            try{ if(window.VPHostedBy && VPHostedBy.recheck) VPHostedBy.recheck(); }catch(_){} } })   // a card in the venue's own name is not shown (15 Nov 2026)   // one object now, not an array
         .catch(function(){});
     }catch(e){}
     }

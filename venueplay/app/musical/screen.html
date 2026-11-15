@@ -1516,7 +1516,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
              this would blank the name the demo block just set. */
           var nt=VP_DEMO ? null : document.getElementById("venueNameTag");
           if(nt){ var nm=String(d.name||"").trim();
-            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||""); } })   // one object now, not an array
+            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||"");
+            try{ if(window.VPHostedBy && VPHostedBy.recheck) VPHostedBy.recheck(); }catch(_){} } })   // a card in the venue's own name is not shown (15 Nov 2026)   // one object now, not an array
         .catch(function(){});
     }catch(e){}
     }

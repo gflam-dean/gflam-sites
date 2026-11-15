@@ -203,6 +203,10 @@
     if (cn) cn.style.marginTop = v;
     if (lg) lg.style.marginTop = v;
     try { if (w.VPVenueLogo && w.VPVenueLogo.alignName) w.VPVenueLogo.alignName(cn); } catch (e) {}
+    /* ONE VENUE LOGO, NOT TWO (Dean, 15 Nov 2026, The Mini Bar: "the mini bar." twice top left). In /tv's frame the
+       TV page draws its own copy of the venue's logo exactly over this one, so a drop here left that copy where it
+       was and the two showed a few pixels apart. Tell /tv, which moves its copy by the same amount. */
+    try { if (w.parent && w.parent !== w) w.parent.postMessage({ vp: "logodrop", px: px }, w.location.origin); } catch (e) {}
   }
 
   var placedAt = "";
@@ -281,8 +285,22 @@
     }
   }
 
+  /* A VENUE THAT HOSTS ITSELF (Dean, 15 Nov 2026, The Mini Bar: its name twice top left). A card whose name is the
+     venue's own adds nothing to the venue's own logo or name beside it, so the wall shows neither its logo nor
+     "hosted by <the venue>". The venue's name is the one the screen holds in #venueNameTag (set from /screen even
+     when a logo hides it); "The" and anything but letters and digits are left out of the comparison. */
+  function norm(v) { return String(v == null ? "" : v).toLowerCase().replace(/^\s*the\s+/, "").replace(/[^a-z0-9]+/g, ""); }
+  function selfHosted(c) {
+    if (!c) return false;
+    var t = d.getElementById("venueNameTag"), vn = norm(t ? t.textContent : "");
+    return !!vn && norm(c.name) === vn;
+  }
+  var lastCard = null;
+  function recheck() { if (lastCard == null) return; shown = null; paint(lastCard); }   /* the venue's name arrived after the card */
   function paint(card) {
+    lastCard = card;
     var c = clean(card);
+    if (selfHosted(c)) c = null;
     var key = c ? JSON.stringify(c) : "";
     if (key === shown) return;
     shown = key;
@@ -330,6 +348,6 @@
     return clean({ name: dec(n[1]), logo: SITE_RE.test(logo) ? logo : "" });
   }
 
-  w.VPHostedBy = { load: load, tag: tag, paint: paint, fromMessage: fromMessage, fromQuery: fromQuery, clean: clean,
+  w.VPHostedBy = { load: load, tag: tag, paint: paint, recheck: recheck, selfHosted: selfHosted, fromMessage: fromMessage, fromQuery: fromQuery, clean: clean,
                    place: place, titleTop: titleTop, _cards: function () { return cards; } };
 })(window, document);

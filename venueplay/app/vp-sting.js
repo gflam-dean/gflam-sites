@@ -335,6 +335,10 @@
   /* Called by tv.html with every message, before the TV acts on it. info: the TV's own view. */
   function onMsg(m, info){
     if(!ON || !m) return;
+    /* BINGO'S OWN WORDS, FOR BINGO ONLY (Dean, 15 Nov 2026, The Mini Bar: "the let's play bingo intro" during trivia).
+       Trivia and musical consoles talk on the venue's own channel too, stamped fmt, and their "started" played
+       LET'S PLAY BINGO over the trivia game on /tv. Their own screens play their own show (forGame). */
+    if(m.fmt && m.fmt!=="bingo") return;
     if(m.t==="ball"){ lastBall=Date.now(); }
     if(m.t==="ball" && playing){ finish("ball"); return; }        // the room's number wins over the show
     if(m.t!=="started") return;

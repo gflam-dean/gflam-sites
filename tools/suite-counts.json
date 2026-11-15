@@ -1764,7 +1764,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 150,
+  "checks": 154,
   "counted_by": "lines"
  },
  "tools/tv-takeover-12nov-in-chrome.test.py": {
@@ -2225,6 +2225,14 @@
  },
  "tools/musical-console-sound-in-chrome.test.py": {
   "checks": 31,
+  "counted_by": "lines"
+ },
+ "tools/tv-one-venue-logo-in-chrome.test.py": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-buzzer-on-zero.js": {
+  "checks": 14,
   "counted_by": "lines"
  }
 }

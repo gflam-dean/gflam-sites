@@ -543,6 +543,7 @@
   "tv-logo-in-chrome.test.py",
   "tv-logo.test.js",
   "tv-no-counts-in-chrome.test.py",
+  "tv-one-venue-logo-in-chrome.test.py",
   "tv-safe-area-in-chrome.test.py",
   "tv-screen.test.js",
   "tv-slide-qr-in-chrome.test.py",

@@ -2330,6 +2330,9 @@
     if(e.origin !== window.location.origin) return;
     var d = e.data;
     if(d && d.vp === "sting"){ showState(!!d.on); return; }   // the game in the frame is playing its show
+    /* the game in the frame dropped its header for a "Hosted by" card: this page's copy of the venue logo, drawn
+       exactly over the frame's, drops with it, or the two show a few pixels apart (15 Nov 2026, The Mini Bar) */
+    if(d && d.vp === "logodrop"){ var gf=document.getElementById("gameFrame"); if(gf && e.source===gf.contentWindow){ frameDrop=Math.max(0, Math.min(400, Number(d.px)||0)); applyVenueLogo(); } return; }
     if(d && d.vp === "to-ads"){ if(tvMode==="embed" && e.source===document.getElementById("gameFrame").contentWindow) enterAds(); return; }   // the frame went back to /tv: the ads, here (top of <head>)
     if(!d || d.vp !== "show-game" || !d.game) return;
     if(d.game === "bingo"){ enterAds(); return; }   // bingo is drawn by this page, not in the frame
@@ -2408,10 +2411,12 @@
       if(!keepBox && el.style.display!=="none") logoOffT=setTimeout(function(){ logoOffT=null; if(el.style.opacity==="0") el.style.display="none"; }, LOGO_FADE_MS+40);
     }
   }
+  var frameDrop=0;   // how far the game in the frame has dropped its own copy of the logo ("logodrop", from /app/vp-hostedby.js)
   function applyVenueLogo(){
     try{
       var el=document.getElementById("venueLogo");
-      if(el){ var want=logoWanted(); fadeLogo(el, want && !showPlaying, want && showPlaying); }
+      if(el){ var want=logoWanted(); fadeLogo(el, want && !showPlaying, want && showPlaying);
+        el.style.marginTop=(tvMode==="embed" && frameDrop) ? frameDrop+"px" : ""; }
       /* The small venue-name caption does NOT come back when the logo goes. A venue that
          uploaded a logo has already chosen how it is named on the wall, and a caption that
          appears only on the ad slides is worse than none. It lives inside #tvCorner, which
@@ -2437,6 +2442,7 @@
   }
   // ---- live-game surface (iframe): games render in place so browser fullscreen survives a game start ----
   function hideGameFrame(){
+    frameDrop=0;   // the frame's header drop goes with it
     var f=document.getElementById("gameFrame"); if(!f) return;
     f.style.display="none";
     var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
@@ -2467,7 +2473,7 @@
        click with: it never asks for a click, and tells the console it is the app. */
     try{ var _app=window.VP_TV_APP && window.VP_TV_APP.platform; if(/^(tizen|webos)$/.test(_app||"")) url+="&app="+_app; }catch(e){}
     var fresh = f.getAttribute("src")!==url;
-    if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
+    if(fresh){ embedLoaded=false; frameDrop=0; try{ var _vl=document.getElementById("venueLogo"); if(_vl) _vl.style.marginTop=""; }catch(e){} try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
        game" card away, and an iframe that has not loaded paints nothing, so the wall went black
        for as long as the screen took to come up. On a pub TV over a pub connection that read as

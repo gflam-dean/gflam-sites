@@ -36,6 +36,8 @@ PLAIN (no switch in its address) unless it is testing the off switch. On the rig
      the triangle and wordmark are inside the window too, and at 1920x1080 the logo is /brand/vp-mark.svg's,
      and the phone show at 390x844: the painted LET'S PLAY and game-name text sit wholly inside the window,
      centred, and the 16:9 stage is painted as the biggest box that fits, centred.
+  9. A trivia or musical console's "started" (stamped fmt) on the venue's channel never plays LET'S PLAY BINGO
+     on /tv; a bingo "started" on the same road still does (Dean, 15 Nov 2026, The Mini Bar).
 
     python3 tools/tv-sting-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -491,12 +493,50 @@ def show_fits():
         r.close()
 
 
+def other_format_started():
+    print('\n9. A trivia console starts its round with /tv on air: /tv never plays LET\'S PLAY BINGO over it (Dean, 15 Nov 2026)')
+    SET = '33333333-3333-4333-8333-333333333339'
+    r = RIG.Rig(host_pages=('/app/trivia/host.html',))
+    try:
+        row = {'id': SET, 'title': 'Pub Classics', 'question_count': 2, 'visibility': 'public', 'owner_venue_id': r.W.info['venue'], 'status': 'active'}
+        r.db['vp_question_sets'] = [row]
+        r.W.seed('vp_question_sets', [row])
+        r.W.seed('vp_questions', [{'id': 'q9-%d' % i, 'set_id': SET, 'seq': i, 'question': 'Question %d?' % i, 'text': 'Question %d?' % i,
+                                   'options': ['Red', 'Green', 'Blue', 'Gold'], 'correct_index': 2} for i in (1, 2)])
+        _, t1 = r.open('/tv?venue=' + r.W.info['slug'], width=1280, height=720)
+        r.until(t1, '!!document.getElementById("adsRoot") && !!window.VPSting', 15); time.sleep(1.5)
+        _, host = r.open('/app/trivia/host.html?venue=' + r.W.info['venue'], width=1280, height=900)
+        r.until(host, 'document.readyState==="complete" && !!document.getElementById("startBtn") && !document.getElementById("startBtn").disabled', 25); time.sleep(2)
+        r.ask(host, 'document.getElementById("cfgCount").value="2"; document.getElementById("cfgCount").dispatchEvent(new Event("input")); true')
+        r.ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true'); time.sleep(2)
+        if r.ask(host, '!!document.getElementById("vpTakeover")') is True:
+            r.ask(host, 'document.getElementById("vpTakeoverGo").click(); true'); time.sleep(2)
+        FR = '(function(){var f=document.getElementById("gameFrame");try{return f.style.display==="block" && (f.getAttribute("src")||"").indexOf("/app/trivia/screen")>=0 && !!f.contentWindow.VPSting;}catch(x){return false;}})()'
+        ok('the trivia lobby is open and /tv has the trivia screen in its frame', r.until(t1, FR, 30) is True, r.ask(t1, '(document.getElementById("gameFrame")||{}).src'))
+        before = r.ask(t1, STATS) or {}
+        r.ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true'); time.sleep(1)
+        for _ in range(3):
+            if r.ask(host, '!!document.getElementById("vpAskGo") || !!document.querySelector(".vp-ask button")') is True:
+                r.ask(host, '(function(){ var b=document.getElementById("vpAskGo")||document.querySelector(".vp-ask button"); b.click(); return true; })()'); time.sleep(1)
+        FS = 'document.getElementById("gameFrame").contentWindow.VPSting.stats()'
+        ok('CONTROL: the round starts and the trivia screen in the frame plays its own show (it heard "started")',
+           r.until(t1, FS + '.plays>=1', 15) is True, r.ask(t1, FS))
+        ok('  its words are LET\'S PLAY / TRIVIA', r.ask(t1, '(function(){var d=document.getElementById("gameFrame").contentDocument, e=d.getElementById("vpsL2s"); return e ? e.textContent : null;})()') == 'TRIVIA',
+           r.ask(t1, '(function(){var d=document.getElementById("gameFrame").contentDocument, e=d.getElementById("vpsL2s"); return e ? e.textContent : null;})()'))
+        time.sleep(4.5)
+        after = r.ask(t1, STATS) or {}
+        ok('/tv itself played NO show: no LET\'S PLAY BINGO over the trivia game', after.get('plays') == before.get('plays') == 0, [before, after])
+    finally:
+        r.close()
+
+
 if __name__ == '__main__':
     full_show()
     ball_mid_show()
     other_games()
     phone_landing()
     show_fits()
+    other_format_started()
     # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)
