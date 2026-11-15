@@ -3920,6 +3920,16 @@ MUTATIONS = [
      'the guard goes and .tv-status sets display:flex, so the Reconnecting pill sits on the '
      'venue television all night with nothing able to hide it'),
 
+    # 15 Nov 2026 (T17 merge): a page's own linked stylesheet now counts as declaring; break that stylesheet and it must go red.
+    ('no page uses a CSS variable it never defines', 'venueplay/app/vp-site.css',
+     '    --fs-lg:22px;\n',
+     '',
+     'the website stylesheet /quick and the quick game page link loses a size the pages use, and they quietly lose the rule'),
+    # 15 Nov 2026 (T17 merge, INBOX 419 (3)): money.test.js now says a cut banks no credit.
+    ('money.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const dAdj = null;\n',
+     "  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name, venueId + ':down' + (basis - players)) : null;\n",
+     'a player cut banks a credit again (the old yearly rule)'),
     ('no page uses a CSS variable it never defines', 'venueplay/tv.html',
      'font-size:clamp(9px,1.2cqw,24px);color:var(--muted)}',
      'font-size:clamp(9px,1.2cqw,24px);color:var(--muted-2)}',
@@ -25424,6 +25434,14 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    # 15 Nov 2026 (merge agent, T17): the D412 and D413 gate lines came in with 412 without an entry here.
+    'runs the billing Worker: a blank name, a landline or a blank venue refused':
+        'its subject is the suite tools/test-quick-start.js itself, proven row by row under that suite\'s own name (27 mutations in the table: '
+        'the three boxes, the postcode, the card-free account, the free month, the limits, the picker, more info, the card gate, the journey store, '
+        'the per-lead link and the unverified Stripe email). Proving it again by label would run the whole gate once per mutation.',
+    'reads the pages and runs the config: the home, help, llms.txt and sitemap links':
+        'its subject is the suite tools/test-quick-page.js itself, proven row by row under that suite\'s own name. '
+        'Proving it again by label would run the whole gate once per mutation.',
     'runs the billing Worker: a batch keeps the session id, the step, the page (a code cut out of the path)':
         'its subject is the suite tools/test-journey-track.js itself, proven row by row under that suite\'s own name (35 mutations in the table: '
         'Do Not Track, bots, both rate limits, the size and batch caps, the session id shape, the step whitelist, the props whitelist, the search-text scrub, '

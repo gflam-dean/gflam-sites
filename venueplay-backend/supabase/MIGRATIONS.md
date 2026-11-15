@@ -799,6 +799,8 @@ keeping the OLDEST row, nothing deleted) to run BEFORE the index. Paste the CREA
 transaction). Run EARLY by hand, never on a push morning. Index only: nothing the REST probe can see, no RLS-BASELINE.json or
 COLUMNS-BASELINE.json change. NUMBER: 191 live, 190 on a branch, nothing at 192 or above on any branch or worktree, checked 13 Nov 2026.
 Proved in tools/rig-join-unique-index.test.py (the rig enforces the index and can make the other join win). Rollback in the file.
+RUN on LIVE by Dean 15 Nov 2026 ~06:50 (INBOX MAIN 06:31, read back OK), after the clean-up of 4 twin rows; the backup table
+`vp_backup_192_duplicate_players` is kept until about 22 Nov 2026, then dropped. The file is FROZEN: never edit it.
 
 `venueplay-193-manager-ticks-guard.sql` (13 Nov 2026, branch `fix/billing-security-13nov`, security review part B finding B9, INBOX 370):
 a BEFORE UPDATE trigger on vp_venue_settings beside migration 77's, same shape (it KEEPS, it does not refuse): a manager whose
@@ -811,6 +813,8 @@ it would break Game settings, which saves from the browser). NOT RUN, and NOT TO
 read-only checks in the file's header against LIVE. After running: dump RLS-BASELINE.json (one new SECURITY DEFINER
 function). No column change. NUMBER: 192 is the highest on any branch or worktree, checked 13 Nov 2026, so 193. Read-back and
 rollback in the file.
+RUN on LIVE by Dean 15 Nov 2026 ~06:45 (INBOX MAIN 06:31, read back OK). The file is FROZEN: never edit it. RLS-BASELINE.json
+still to be re-dumped for its new SECURITY DEFINER function vp_settings_manager_ticks_guard (dump-rls-baseline.py against live).
 
 `venueplay-198-coaster-contacts.sql` (Dean, 15 Nov 2026, Coaster Trivia name + mobile always, branch `fix/sun15-coaster-mobile`): one new table
 vp_coaster_contacts (board, coaster_venue_id, play_id, first_name, mobile +614..., unique board+mobile), RLS on, no policies, revoked from
@@ -887,6 +891,15 @@ list of ticks (`venueplay:sales,partyplay:venue_support,...`) as well as the thr
 then add). Run AFTER 137. Any order with the billing Worker: until it is run, a device that picks teams is kept on every
 ticket and HQ says why; the named sets keep working. Branch `feature/help-alerts-by-team-2nov`, merged into release/tuesday-17nov 14 Nov 2026. RUN on LIVE by Dean 14 Nov 2026 ~22:50
 (Sydney project) and on the TEST database by main 14 Nov ~23:00 (tools/staging/run-on-test.py). Rollback: in the file.
+
+`venueplay-195-quick-game.sql` (Dean, 14 Nov 2026, INBOX 412 Play a quick game): `vp_quick_events` (the quick game's own step table),
+`vp_quick_leads` (per-lead cold-email links, hashed codes only), `vp_signup_starts.lead_id`, `vp_prospects.lead_source`, and
+`venueplay_founding.unverified_email` / `unverified_email_at` with a partial unique index. All additive, all nullable.
+RUN on LIVE by Dean 15 Nov 2026 ~02:44, from the ORIGINAL file (the one on feature/try-it-412-15nov, 322668be; identical in
+ef44613b and on the 412 redo head 8cefd1d5). The file is FROZEN: never edit it (its header still says "WRITTEN, NOT RUN": that is the
+text Dean ran, leave it). `vp_quick_events` is now UNUSED on live: the 413 journey store (196, `vp_journey_events`) replaced it and
+no Worker code reads or writes it since 15 Nov 2026. Harmless; retire it later with a NEW migration (next free number, 199 or
+above), never by editing 195. Rollback: in the file's read-back notes.
 
 `venueplay-196-journey-tracking.sql` (Dean, 15 Nov 2026, INBOX 413 journey tracking; 195 is the 412 quick game's): two new tables, nothing existing is touched.
 `vp_track_links` (one row per tracked email link: lead_ref, venue name, first name, state, likely games, campaign, email step, link label, page,

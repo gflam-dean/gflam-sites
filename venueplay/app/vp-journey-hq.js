@@ -30,7 +30,7 @@
       '<div class="rowbetween"><div class="lblk" style="margin:0">Journey: where people drop off</div>'
       + '<select id="jyDays" class="sp" aria-label="Period" style="width:auto"><option value="7" selected>Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>'
       + '<button class="mini" id="jyRefresh">Refresh</button></div>'
-      + '<style>@media (max-width:640px){#jyFunnel table{min-width:0}#jyFunnel th:nth-child(3),#jyFunnel td:nth-child(3),#jyFunnel th:nth-child(4),#jyFunnel td:nth-child(4),#jyFunnel th:nth-child(5),#jyFunnel td:nth-child(5),#jyFunnel th:nth-child(7),#jyFunnel td:nth-child(7){display:none}#jyFunnel td:last-child{min-width:0!important}#jyFunnel th,#jyFunnel td{padding:8px 6px}}</style>'
+      + '<style>@media (max-width:640px){#jyFunnel table{min-width:0}#jyFunnel th:nth-child(3),#jyFunnel td:nth-child(3),#jyFunnel th:nth-child(4),#jyFunnel td:nth-child(4),#jyFunnel th:nth-child(5),#jyFunnel td:nth-child(5),#jyFunnel th:nth-child(7),#jyFunnel td:nth-child(7){display:none}#jyFunnel td:last-child{min-width:0!important}#jyFunnel th,#jyFunnel td{padding:8px 4px}}</style>'
       + '<div class="panel pad" id="jyFunnel"><div class="note" style="margin:0">Counting&hellip;</div></div>'
       + '<div class="lblk">The sign-up form, box by box</div><div class="panel pad" id="jyForm"><div class="note" style="margin:0">&nbsp;</div></div>'
       + '<div class="lblk">Where visitors come from</div><div class="panel pad" id="jyWhere"><div class="note" style="margin:0">&nbsp;</div></div>'

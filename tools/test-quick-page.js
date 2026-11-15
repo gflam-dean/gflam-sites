@@ -15,7 +15,8 @@ check('/see-a-night and /see-a-night.html are 301s to /quick (cold emails and th
 var exists = true; try { rd('venueplay/see-a-night.html'); } catch (e) { exists = false; }
 check('the old page file is kept (unlinked) so a rollback is one line', exists);
 var P404 = rd('venueplay/404.html'), TRAIN = rd('venueplay/training.html'), WK = rd('venueplay-backend/worker/venueplay-api-FULL.js');
-check('the 404 page, the training page and the subscriber welcome email no longer point at /see-a-night', !/href="\/see-a-night/.test(P404) && !/\/see-a-night/.test(TRAIN.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '')) && WK.indexOf("site + '/see-a-night") === -1 && /site \+ '\/quick\?src=website&utm_source=subscriber/.test(WK));
+/* 15 Nov 2026 (T17 merge): 419 sends the subscriber welcome button to the HOME PAGE with its utm tags (test-vp-subscribers checks the button), not /quick. */
+check('the 404 page, the training page and the subscriber welcome email no longer point at /see-a-night', !/href="\/see-a-night/.test(P404) && !/\/see-a-night/.test(TRAIN.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '')) && WK.indexOf("site + '/see-a-night") === -1 && /site \+ '\/\?utm_source=subscriber&utm_medium=email&utm_campaign=welcome'/.test(WK));
 check('the home page and help load the label setting', /vp-quick-config\.js/.test(INDEX) && /vp-quick-config\.js/.test(HELP));
 
 section('2. The label and the step order are ONE setting each');
