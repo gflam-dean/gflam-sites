@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 201: a known phone at a venue, and each consent box kept on its own (INBOX 416, Jobs "Known phone + wizard
+-- Migration 202: a known phone at a venue, and each consent box kept on its own (INBOX 416, Jobs "Known phone + wizard
 -- asks what to collect", Sunday 22 Nov 2026 games release)
 -- ---------------------------------------------------------------------
 -- Dean, 14 Nov 2026: "if they have already given us their details via trivia they do not get asked the same details over
@@ -11,7 +11,7 @@
 -- WRITTEN, NOT RUN. Branch feature/known-phone-416-sun22. Run it on TEST first (tools/staging/run-on-test.py), then Dean
 -- pastes it on live EARLY, before the push. Safe to run twice. Additive only: two new tables, nothing existing changes.
 -- NUMBER: 199 is fix/thu19-billing-credit, 200 is fix/members-upload-thu19 (uncommitted on 16 Nov 14:20, the file
--- venueplay-200-members-upload-contacts.sql in that worktree), so 201.
+-- venueplay-200-members-upload-contacts.sql in that worktree), so 202 (main, 16 Nov: 201 is the retention sweep, sites-wt-retention-16nov).
 --
 -- WHAT IT ADDS
 --   vp_known_players     one row per phone per VENUE: the first name, mobile, and whatever else that venue asked, so
@@ -75,9 +75,9 @@ alter table public.vp_player_consents enable row level security;
 revoke all on public.vp_player_consents from public, anon, authenticated;
 
 comment on table public.vp_known_players is
-  'A phone that gave its details at a venue (first name, mobile, and what that venue asks), found only by the hash of a key the phone holds. Per venue, never shared. Service role only. Migration 201, INBOX 416.';
+  'A phone that gave its details at a venue (first name, mobile, and what that venue asks), found only by the hash of a key the phone holds. Per venue, never shared. Service role only. Migration 202, INBOX 416.';
 comment on table public.vp_player_consents is
-  'One row per consent box answer (venueplay / venue / host), with wording version, source and session. Each sender reads only its own. Service role only. Migration 201, INBOX 416.';
+  'One row per consent box answer (venueplay / venue / host), with wording version, source and session. Each sender reads only its own. Service role only. Migration 202, INBOX 416.';
 
 -- Read back (read-only):
 --   select relname, relrowsecurity from pg_class where relname in ('vp_known_players', 'vp_player_consents');   expects both true

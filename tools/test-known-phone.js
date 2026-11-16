@@ -11,7 +11,7 @@
      4. /join/known tells the phone a first name and the NAMES of missing fields, never a value (no mobile, no email)
      5. a field the venue adds later is the only one asked; what is given is added to the row; nothing is overwritten
      6. never across venues: the same key at another venue is not known and fills nothing
-     7. before migration 201 (the tables missing) every join works exactly as today
+     7. before migration 202 (the tables missing) every join works exactly as today
      8. consent: 'single' unless env.CONSENT_BLOCK is 'three'; then venueplay + the venue, plus the host only when a
         HOST login with a brand card opened the game (never the owner); each box its own row with its answer, version,
         source; the venue box is the venue's own marketing tick on the player row (only where the venue collects it);
@@ -144,7 +144,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   show('...and its join fills nothing from the first venue', p.session_id === so.id && p.mobile === undefined && p.first_name === undefined, JSON.stringify(p));
   show('...and the first venue\'s row is untouched by it', DB.vp_known_players.filter(function (r) { return r.venue_id === OTHER; }).length === 0 && DB.vp_known_players[0].venue_id === VENUE);
 
-  print('6. BEFORE MIGRATION 201');
+  print('6. BEFORE MIGRATION 202');
   world();
   MISSING = true;
   s1 = await open();

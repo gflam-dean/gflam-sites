@@ -842,8 +842,8 @@ async function sweepRetention(env) {
       // Broadcast bingo keeps its captures against the venue directly, with no session.
       await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK_CAPTURE);
       captures++;
-      /* A KNOWN PHONE'S ROW AND ITS CONSENT BOXES (migration 201, INBOX 416) go with the rest: DELETED, nothing points
-         at them. Before 201 the tables do not exist: a refusal is only forgiven when the table really is not there. */
+      /* A KNOWN PHONE'S ROW AND ITS CONSENT BOXES (migration 202, INBOX 416) go with the rest: DELETED, nothing points
+         at them. Before 202 the tables do not exist: a refusal is only forgiven when the table really is not there. */
       await purgeKnownPlayers(env, v.id);
       /* THE MEMBERS LIST IS PERSONAL DATA TOO, and it was never touched: every club member's
          first and last name, kept for ever after the club had gone. BLANKED, NOT DELETED, on
@@ -880,8 +880,8 @@ async function sweepRetention(env) {
   }
 }
 
-/* The 90-day purge of one venue's known phones and consent boxes (migration 201). Then it LOOKS: a row left is a
-   failed purge, and the venue is not stamped. A database without the tables (before 201) is skipped. */
+/* The 90-day purge of one venue's known phones and consent boxes (migration 202). Then it LOOKS: a row left is a
+   failed purge, and the venue is not stamped. A database without the tables (before 202) is skipped. */
 async function purgeKnownPlayers(env, venueId) {
   for (const t of ['vp_player_consents', 'vp_known_players']) {
     try { await sbDelete(env, t, 'venue_id=eq.' + enc(venueId)); }
@@ -2399,7 +2399,7 @@ function gatedCapture(cfg, b) {
 }
 
 /* =====================================================================
- * A KNOWN PHONE, AND ONE BOX PER SENDER (INBOX 416, Dean 14 Nov 2026, Sunday 22 Nov games release; migration 201)
+ * A KNOWN PHONE, AND ONE BOX PER SENDER (INBOX 416, Dean 14 Nov 2026, Sunday 22 Nov games release; migration 202)
  *
  * "If they have already given us their details via trivia they do not get asked the same details over a raffle or
  * anything else." Rules, all Dean's:
@@ -2423,7 +2423,7 @@ function gatedCapture(cfg, b) {
  *     Dean's lawyer has said yes to pre-ticked boxes: the Spam Act wants express consent). Off, the phones keep the
  *     one unticked "Send me offers from {venue}" exactly as today.
  *   - Service messages (a win, a change to a game) never need a box (UPDATE 5): nothing here gates them.
- * Fails OPEN to today's behaviour: before migration 201 every read answers "not known" and nothing is written.
+ * Fails OPEN to today's behaviour: before migration 202 every read answers "not known" and nothing is written.
  * ===================================================================== */
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
@@ -2460,7 +2460,7 @@ function knownNeeds(cfg, row) {
   const asks = joinAsks(cfg);
   return KNOWN_FIELDS.filter((f) => asks[f] && !(row && row[f]));
 }
-/* This venue's row for one of the phone's keys, or null. Never throws: a database without migration 201, or any read
+/* This venue's row for one of the phone's keys, or null. Never throws: a database without migration 202, or any read
    fault, is "not known", and the phone shows the full form as it does today. */
 async function knownFor(env, venueId, keys) {
   if (!venueId || !keys || !keys.length) return null;

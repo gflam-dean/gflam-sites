@@ -45,8 +45,8 @@ function arm(opts) {
      reports as still holding a contact detail AFTER the update. */
   counts = [];
   sbCount = function (env, table, q) { counts.push(table + '?' + q); return Promise.resolve(opts.stillHeld || 0); };
-  /* The known phones and their consent boxes (migration 201, INBOX 416) are DELETED, by venue. opts.knownMissing: a
-     database before 201 (the delete is refused and the table answers no read). */
+  /* The known phones and their consent boxes (migration 202, INBOX 416) are DELETED, by venue. opts.knownMissing: a
+     database before 202 (the delete is refused and the table answers no read). */
   deletes = [];
   sbDelete = function (env, table, q) {
     deletes.push({ table: table, q: q });
@@ -125,7 +125,7 @@ check('it LOOKS before stamping: the database is asked who still holds a contact
 check('broadcast bingo captures are cleared too, by venue',
   patches.some(function (p) { return p.table === 'vp_captures' && /venue_id=eq\.v1/.test(p.q); }), patches);
 
-check('a known phone\'s row is deleted with the venue (migration 201)',
+check('a known phone\'s row is deleted with the venue (migration 202)',
   deletes.some(function (d) { return d.table === 'vp_known_players' && /venue_id=eq\.v1/.test(d.q); }), deletes);
 check('and its consent boxes, by venue',
   deletes.some(function (d) { return d.table === 'vp_player_consents' && /venue_id=eq\.v1/.test(d.q); }), deletes);
@@ -181,9 +181,9 @@ var pcount = patches.filter(function (p) { return p.table === 'vp_players'; }).l
 check('120 sessions are done in batches, not one giant request', pcount === 3, pcount);
 check('and every one of them is accounted for', r3.players === 120, r3.players);
 
-/* 6b. Before migration 201 the two tables do not exist: the sweep carries on and stamps. */
+/* 6b. Before migration 202 the two tables do not exist: the sweep carries on and stamps. */
 var r5 = run({ venues: [{ id: 'v1', name: 'Old', closed_at: '2026-01-01T00:00:00Z' }], sessions: [{ id: 's1' }], knownMissing: true });
-check('before migration 201 the sweep still completes (no known tables to purge)', r5 && r5.venues === 1, r5);
+check('before migration 202 the sweep still completes (no known tables to purge)', r5 && r5.venues === 1, r5);
 
 /* 7. It stops rather than carrying on half-done. */
 var r4 = run({ venues: [{ id: 'v1', name: 'X', closed_at: '2026-01-01T00:00:00Z' }], sessions: [{ id: 's1' }], patchFails: true });
