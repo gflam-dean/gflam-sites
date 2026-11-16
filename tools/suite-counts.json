@@ -2316,7 +2316,7 @@
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {
-  "checks": 252,
+  "checks": 309,
   "counted_by": "lines"
  }
 }
