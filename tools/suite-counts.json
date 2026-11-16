@@ -2308,11 +2308,11 @@
   "counted_by": "lines"
  },
  "tools/test-known-phone.js": {
-  "checks": 68,
+  "checks": 75,
   "counted_by": "lines"
  },
  "tools/test-vp-known.js": {
-  "checks": 58,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {

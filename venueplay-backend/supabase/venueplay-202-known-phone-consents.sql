@@ -22,6 +22,9 @@
 --                        vp_captures row): venue B asking first name + mobile never gets the email venue A collected.
 --                        first_venue_id says where it began; notice_version / notice_at the first-game notice the player
 --                        saw (shown once per player, again only when its version changes).
+--                        shared: which CONTACT details (mobile, email) each venue already has from this phone. A venue that
+--                        asks a contact detail it does not have gets it only when the player taps Use this on a masked
+--                        row ("04.. ... 246") AND ticks that venue's offers box (Dean 16 Nov 2026).
 --   vp_player_consents   one row per box per answer: party 'venueplay' | 'venue' | 'host', granted true/false, the
 --                        wording version the person saw, the game it came from, the session, and for a host box the host's
 --                        login and the brand name shown. Each sender reads only its own rows. An unsubscribe is a NEW row
@@ -48,6 +51,7 @@ create table if not exists public.vp_known_players (
   postcode      text check (postcode is null or char_length(postcode) <= 10),
   notice_version text check (notice_version is null or char_length(notice_version) <= 20),
   notice_at     timestamptz,
+  shared        jsonb not null default '{}'::jsonb,   -- { "<venue id>": ["mobile", "email"] }: the contact details each venue has from this phone
   created_at    timestamptz not null default now(),
   last_seen_at  timestamptz not null default now()
 );
@@ -79,7 +83,7 @@ alter table public.vp_player_consents enable row level security;
 revoke all on public.vp_player_consents from public, anon, authenticated;
 
 comment on table public.vp_known_players is
-  'A phone that gave its details at a venue (first name, mobile, and what that venue asks), found only by the hash of a key the phone holds. Per venue, never shared. Service role only. Migration 202, INBOX 416.';
+  'A phone that gave its details (first name, mobile, and what venues asked), held by venueplay, found only by the hash of a key the phone holds. Each venue receives only the fields it asks; a contact detail only on Use this with its own box ticked (shared). Service role only. Migration 202, INBOX 416.';
 comment on table public.vp_player_consents is
   'One row per consent box answer (venueplay / venue / host), with wording version, source and session. Each sender reads only its own. Service role only. Migration 202, INBOX 416.';
 

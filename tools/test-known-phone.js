@@ -135,19 +135,38 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   jk = await call(handleJoinKnown, { code: s2.join_code, keys: [KEY] });
   show('asked once: nothing needed after', jk.body.known && jk.body.known.need.length === 0, JSON.stringify(jk.body.known));
 
-  print('5. ANOTHER VENUE: STRAIGHT IN, AND ONLY WHAT IT ASKS (Dean 16 Nov 2026)');
+  print('5. ANOTHER VENUE: ONLY WHAT IT ASKS; A CONTACT DETAIL ONLY ON ONE TAP AND ITS OWN TICK (Dean 16 Nov 2026)');
   var so = await open(OTHER);
   jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
-  show('the same phone at another venue asking first name + mobile: known, nothing to ask', jk.body.known && jk.body.known.hello === 'Alan' && jk.body.known.need.length === 0, JSON.stringify(jk.body));
+  var cf = (jk.body.known && jk.body.known.confirm) || [];
+  show('another venue: known, nothing to type; the mobile we hold is a one-tap row, masked to its last three digits', jk.body.known && jk.body.known.need.length === 0 && cf.length === 1 && cf[0].field === 'mobile' && cf[0].masked === '04\u2022\u2022 \u2022\u2022\u2022 678', JSON.stringify(jk.body.known));
+  show('...the email the first venue collected is never shown (this venue does not ask it)', JSON.stringify(jk.body).indexOf('example.com') < 0 && JSON.stringify(jk.body).indexOf('412345') < 0, JSON.stringify(jk.body));
+  DB.vp_known_players[0].last_name = 'Smith';   // as if the first venue had asked it
   j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY] });
   p = lastPlayer();
-  show('...its player row gets the first name and mobile, server side', p.session_id === so.id && p.first_name === 'Alan' && p.mobile === '+61412345678', JSON.stringify(p));
-  show('...and NOT the email the first venue collected (this venue does not ask it)', p.email === undefined, JSON.stringify(p));
+  show('fields we hold that this venue does not ask (a last name) are never sent to it', p.last_name === undefined, JSON.stringify(p));
+  show('no tap: the first name fills silently, the mobile is NOT passed to this venue', p.session_id === so.id && p.first_name === 'Alan' && p.mobile === undefined && p.email === undefined, JSON.stringify(p));
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], use_fields: ['mobile'] });
+  show('Use this, but this venue\'s offers box NOT ticked: still not passed', lastPlayer().mobile === undefined, JSON.stringify(lastPlayer()));
+  DB.vp_venue_settings[1].collect_marketing_optin = true;
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], use_fields: ['mobile'], marketing_optin: true });
+  show('Use this AND its box ticked: this venue gets the mobile, and its tick', lastPlayer().mobile === '+61412345678' && lastPlayer().marketing_optin === true && lastPlayer().email === undefined, JSON.stringify(lastPlayer()));
+  jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
+  show('...after that this venue has it: no row next time, it fills silently', jk.body.known && jk.body.known.confirm.length === 0, JSON.stringify(jk.body.known));
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY] });
+  show('...the next game at this venue carries the mobile without a tap', lastPlayer().mobile === '+61412345678', JSON.stringify(lastPlayer()));
   show('...one row still, not a copy per venue', DB.vp_known_players.length === 1);
   DB.vp_venue_settings[1].collect_postcode = true;
   jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
   show('this venue asks for MORE (postcode): only the postcode is asked', jk.body.known && JSON.stringify(jk.body.known.need) === '["postcode"]', JSON.stringify(jk.body.known));
-  DB.vp_venue_settings[1].collect_postcode = false;
+  DB.vp_venue_settings[1].collect_postcode = false; DB.vp_venue_settings[1].collect_marketing_optin = false;
+  DB.vp_venue_settings[1].collect_email = true;
+  jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
+  cf = jk.body.known.confirm;
+  show('this venue starts asking email: a one-tap row, first letter and domain only', cf.length === 1 && cf[0].field === 'email' && cf[0].masked === 'a\u2022\u2022\u2022@example.com', JSON.stringify(cf));
+  DB.vp_venue_settings[1].collect_email = false;
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], mobile: '0499 888 777', marketing_optin: false });
+  show('Different number: the number typed is this venue\'s; what we held is not overwritten', lastPlayer().mobile === '+61499888777' && DB.vp_known_players[0].mobile === '+61412345678', JSON.stringify(lastPlayer()));
 
   print('5b. THE FIRST-GAME NOTICE, ONCE PER PLAYER');
   world();

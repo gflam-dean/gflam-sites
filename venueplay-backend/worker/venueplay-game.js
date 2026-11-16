@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 15:58 · b7b6a7d6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 16:38 · b47cd0ac';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2468,10 +2468,47 @@ function joinCapture(cfg, b) {
 function joinAsks(cfg) {
   return { first_name: true, mobile: true, last_name: !!(cfg && cfg.collect_last_name), email: !!(cfg && cfg.collect_email), postcode: !!(cfg && cfg.collect_postcode) };
 }
-/* The fields this venue asks that a known row does not hold yet. Names only. */
-function knownNeeds(cfg, row) {
-  const asks = joinAsks(cfg);
-  return KNOWN_FIELDS.filter((f) => asks[f] && !(row && row[f]));
+/* A CONTACT DETAIL WE HOLD IS NEVER PASSED TO A VENUE SILENTLY (Dean 16 Nov 2026, through main). Venue A asks the mobile
+   that the phone gave at venue B: the player decides with ONE tap, a row "Mobile for {venue}: 04•• ••• 246  [Use this]
+   [Different number]" (email the same way, "g•••@gmail.com"). A receives it only after Use this AND only when A's own
+   offers box is ticked. Details we hold that A does not ask are never shown or sent; details A asks that are not
+   contact details (first name, last name, postcode) fill silently. 'retype' instead asks the contact detail again as an
+   empty box (main's switch, if Dean prefers). vp_known_players.shared = { <venue id>: ["mobile", ...] } records which
+   contact details each venue already has from this phone (typed there, or Use this with its box ticked). */
+const CONTACT_FIELDS = ['email', 'mobile'];
+/* A ticked venue box with the contact detail only filled in by Use this: the venue's tick, by gatedCapture's own rule
+   (the venue collects the tick, and there is now a way to reach them). */
+function optinAfterFill(cfg, cap, yes, version) {
+  if (yes === true && cfg && cfg.collect_marketing_optin && !cap.marketing_optin && (cap.email || cap.mobile)) {
+    cap.marketing_optin = true; cap.marketing_optin_at = new Date().toISOString();
+    if (version) cap.consent_version = version;
+  }
+}
+const CONTACT_REUSE = 'confirm';   // 'confirm' | 'retype'
+function sharedWith(row, venueId, f) {
+  const sh = row && row.shared && typeof row.shared === 'object' ? row.shared[venueId] : null;
+  return Array.isArray(sh) && sh.indexOf(f) >= 0;
+}
+/* The masked form: the mobile's last three digits, the email's first letter and domain. Nothing else ever leaves. */
+function maskContact(f, v) {
+  const s = String(v || '');
+  if (f === 'mobile') { const d = s.replace(/[^0-9]/g, ''); return d.length >= 3 ? '04\u2022\u2022 \u2022\u2022\u2022 ' + d.slice(-3) : ''; }
+  const at = s.indexOf('@');
+  return at > 0 ? s.charAt(0) + '\u2022\u2022\u2022' + s.slice(at) : '';
+}
+/* What this venue asks of a known row: need (empty, ask as a box) and confirm (a contact detail held but not yet this
+   venue's: the one-tap row, masked). */
+function knownAsk(cfg, row, venueId) {
+  const asks = joinAsks(cfg), need = [], confirm = [];
+  for (const f of KNOWN_FIELDS) {
+    if (!asks[f]) continue;
+    if (!(row && row[f])) { need.push(f); continue; }
+    if (CONTACT_FIELDS.indexOf(f) >= 0 && !sharedWith(row, venueId, f)) {
+      if (CONTACT_REUSE === 'confirm') { const m = maskContact(f, row[f]); if (m) confirm.push({ field: f, masked: m }); else need.push(f); }
+      else need.push(f);
+    }
+  }
+  return { need: need, confirm: confirm };
 }
 /* The phone's row for one of its keys, or null. Never throws: a database without migration 202, or any read fault, is
    "not known", and the phone shows the full form as it does today. venueplay's row, not a venue's: what a venue may
@@ -2482,7 +2519,7 @@ async function knownFor(env, venueId, keys) {
     const hashes = [];
     for (const k of keys) hashes.push(await sha256Hex('vpk:' + k));
     const rows = await sbGet(env, 'vp_known_players', 'key_hash=in.(' + hashes.join(',') +
-      ')&select=id,key_hash,first_name,last_name,email,mobile,postcode,notice_version&order=last_seen_at.desc&limit=1');
+      ')&select=id,key_hash,first_name,last_name,email,mobile,postcode,notice_version,shared&order=last_seen_at.desc&limit=1');
     const row = rows && rows[0];
     if (!row) return null;
     return { row: row, ix: hashes.indexOf(row.key_hash) };
@@ -2544,17 +2581,28 @@ async function writeConsents(env, o) {
 /* THE KNOWN ROW AT JOIN. Fills the capture's empty fields from this venue's row (only fields this venue asks), adds
    what the player just gave to the row (never overwriting), or makes the row for a first join that gave a first name
    and a mobile. Returns { knownId, key } (key only when a NEW row was made: the phone keeps it). Never throws. */
-async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen) {
+async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen, use, venueYes) {
   const asks = joinAsks(cfg);
   const k = await knownFor(env, venueId, keys);
   const sawNotice = noticeSeen === JOIN_NOTICE.version;   // the phone drew the current notice on this join
+  const useList = Array.isArray(use) ? use.map(String) : [];
   if (k) {
     const add = {};
+    const shared = Object.assign({}, (k.row.shared && typeof k.row.shared === 'object') ? k.row.shared : {});
+    const mine = Array.isArray(shared[venueId]) ? shared[venueId].slice() : [];
+    const share = (f) => { if (mine.indexOf(f) < 0) mine.push(f); };
     for (const f of KNOWN_FIELDS) {
       if (!asks[f]) continue;
-      if (cap[f] == null && k.row[f] != null) cap[f] = k.row[f];
-      else if (cap[f] != null && k.row[f] == null) add[f] = cap[f];
+      const contact = CONTACT_FIELDS.indexOf(f) >= 0;
+      if (cap[f] == null && k.row[f] != null) {
+        if (!contact || sharedWith(k.row, venueId, f)) cap[f] = k.row[f];                        // silent: not contact, or this venue's already
+        else if (useList.indexOf(f) >= 0 && venueYes === true) { cap[f] = k.row[f]; share(f); }   // Use this, and this venue's box ticked
+      } else if (cap[f] != null) {
+        if (k.row[f] == null) add[f] = cap[f];
+        if (contact) share(f);                                                                    // typed here: this venue has it
+      }
     }
+    if (mine.length && JSON.stringify(mine) !== JSON.stringify(shared[venueId] || [])) { shared[venueId] = mine; add.shared = shared; }
     add.last_seen_at = new Date().toISOString();
     if (sawNotice && k.row.notice_version !== JOIN_NOTICE.version) { add.notice_version = JOIN_NOTICE.version; add.notice_at = add.last_seen_at; }
     try { await sbPatch(env, 'vp_known_players', 'id=eq.' + enc(k.row.id), add); } catch (e) { /* the join goes on */ }
@@ -2564,6 +2612,8 @@ async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen) {
   const key = randomTokenHex(32);
   const row = { first_venue_id: venueId, key_hash: await sha256Hex('vpk:' + key) };
   for (const f of KNOWN_FIELDS) if (cap[f] != null && asks[f]) row[f] = cap[f];
+  const typed = CONTACT_FIELDS.filter((f) => row[f] != null);
+  if (typed.length) { row.shared = {}; row.shared[venueId] = typed; }
   if (sawNotice) { row.notice_version = JOIN_NOTICE.version; row.notice_at = new Date().toISOString(); }
   try {
     const ins = await sbInsert(env, 'vp_known_players', row, true);
@@ -2604,7 +2654,8 @@ async function handleJoinKnown(request, env, json) {
     sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1').catch(function () { return []; })]);
   const venueName = (vrows && vrows[0] && String(vrows[0].name || '')) || '';
   const k = await knownFor(env, venueId, knownKeysFrom(b.keys));
-  const known = k ? { hello: String(k.row.first_name || '').trim().split(/\s+/)[0].slice(0, 20), need: knownNeeds(cfg, k.row), ix: k.ix } : null;
+  const ka = k ? knownAsk(cfg, k.row, venueId) : null;
+  const known = k ? { hello: String(k.row.first_name || '').trim().split(/\s+/)[0].slice(0, 20), need: ka.need, confirm: ka.confirm, ix: k.ix } : null;
   /* the first-game notice: until this phone's row says it saw the current version */
   const notice = (k && k.row.notice_version === JOIN_NOTICE.version) ? null : JOIN_NOTICE;
   let consent = { mode: 'single' };
@@ -2714,10 +2765,11 @@ async function handleCapture(request, env, json) {
   /* THE BINGO PHONE'S DETAILS (INBOX 416): first name + mobile at every venue (joinCapture), the venue box of the three
      as the venue's own tick, and the known row for this venue, exactly as /join does for trivia and musical bingo. */
   const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
-  if (consentAns && (consentAns.venue === true || consentAns.venue === false)) b.marketing_optin = consentAns.venue === true;
   const capIn = joinCapture(cfg, b);
   if (consentAns && capIn.marketing_optin) capIn.consent_version = CONSENT_THREE_VERSION;
-  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version);
+  const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
+  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
+  optinAfterFill(cfg, capIn, venueYes, consentAns ? CONSENT_THREE_VERSION : '');
   const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
@@ -4953,7 +5005,6 @@ async function handleJoin(request, env, json) {
   /* THE THREE BOXES (INBOX 416 UPDATE 4, env.CONSENT_BLOCK 'three'): the venue's own box is the venue's marketing tick,
      kept on the player row through gatedCapture exactly as the single tick always was. */
   const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
-  if (consentAns && (consentAns.venue === true || consentAns.venue === false)) b.marketing_optin = consentAns.venue === true;
   /* FIRST NAME + MOBILE AT EVERY VENUE (INBOX 416 UPDATE 2): joinCapture, never for the demo (DEMO_COLLECT). */
   const cap = isDemoSession(session) ? demoCapture(b) : joinCapture(cfgRow, b);
   if (consentAns && cap.marketing_optin) cap.consent_version = CONSENT_THREE_VERSION;
@@ -5048,7 +5099,11 @@ async function handleJoin(request, env, json) {
   /* A KNOWN PHONE AT THIS VENUE (INBOX 416): its details filled in from this venue's row, server side, or a row made
      for it now. Never for the demo. Never stops a join (knownAtJoin cannot throw). */
   let knownRes = { knownId: null, key: null };
-  if (!isDemoSession(session)) knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys), b.notice_version);
+  if (!isDemoSession(session)) {
+    const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
+    knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
+    optinAfterFill(cfgRow, cap, venueYes, consentAns ? CONSENT_THREE_VERSION : String(b.consent_version || '').slice(0, 20));
+  }
 
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
   const tokenHash = await sha256Hex(token);    // only the hash is stored

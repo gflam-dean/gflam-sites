@@ -73,7 +73,7 @@
   /* o = { box, collect, info (known_info), kind:"person"|"team", venueName, nameIn, head, after(h) }
      Draws the boxes and the consent into o.box and calls o.after(h) (h: the boxes' html, "" when none), so the page adds
      its own notice under them. Answers h. */
-  var _last = null, _known = null, _notice = null;
+  var _last = null, _known = null, _notice = null, _use = {};
   function paint(o) {
     _last = o; o = o || {};
     var d = root.document, info = o.info || null, known = info && info.known && typeof info.known === "object" ? info.known : null;
@@ -115,9 +115,46 @@
     }
     var VD = root.VPDetails, VC = root.VPConsent;
     var h = (VD && typeof VD.html === "function") ? VD.html(c, { firstBox: team }) : "";
+    _use = {};
+    var confirm = (known && Array.isArray(known.confirm)) ? known.confirm.filter(function (x) { return x && (x.field === "mobile" || x.field === "email") && x.masked; }) : [];
     if (o.box) {
       o.box.innerHTML = h;
-      if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known });
+      /* A CONTACT DETAIL WE HOLD, NOT YET THIS VENUE'S (Dean 16 Nov 2026): one row, masked by the Worker, and one tap.
+         "Use this" passes it to this venue (only with its offers box ticked, the Worker checks); "Different number" turns
+         the row into the normal empty box. No tap: nothing is passed. */
+      var vname = String((info && info.organiser) || o.venueName || "this venue");
+      confirm.forEach(function (x) {
+        var row = d.createElement("div");
+        row.className = "vpk-use"; row.id = "vpkUse_" + x.field;
+        row.setAttribute("style", "margin-top:12px;padding:10px 12px;border:1px solid #2A2A31;border-radius:12px;text-align:left");
+        var t = d.createElement("div");
+        t.setAttribute("style", "font-size:15px;line-height:1.35;color:#E7E7EC");
+        t.textContent = (x.field === "mobile" ? "Mobile" : "Email") + " for " + vname + ": " + String(x.masked);
+        row.appendChild(t);
+        var bs = d.createElement("div"); bs.setAttribute("style", "display:flex;gap:8px;margin-top:8px");
+        var BTN = "flex:1 1 0;min-height:40px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;";
+        var yes = d.createElement("button"); yes.type = "button"; yes.id = "vpkUseYes_" + x.field; yes.textContent = "Use this";
+        yes.setAttribute("aria-pressed", "false");
+        yes.setAttribute("style", BTN + "background:#17171A;color:#fff;border:1.5px solid #FF1F8E");
+        var no = d.createElement("button"); no.type = "button"; no.id = "vpkUseNo_" + x.field; no.textContent = x.field === "mobile" ? "Different number" : "Different email";
+        no.setAttribute("style", BTN + "background:#17171A;color:#C9C9D1;border:1.5px solid #2A2A31");
+        yes.addEventListener("click", function () {
+          _use[x.field] = true; yes.setAttribute("aria-pressed", "true");
+          yes.setAttribute("style", BTN + "background:#FF1F8E;color:#0A0A0B;border:1.5px solid #FF1F8E");
+        });
+        no.addEventListener("click", function () {
+          delete _use[x.field];
+          var c1 = {}; c1[x.field] = true;
+          var holder = d.createElement("div");
+          holder.innerHTML = VD && typeof VD.html === "function" ? VD.html(c1, {}) : "";
+          var box1 = holder.firstElementChild || holder.firstChild || (holder.children && holder.children[0]);
+          if (box1 && row.parentNode) row.parentNode.replaceChild(box1, row); else if (row.parentNode) row.parentNode.removeChild(row);
+          try { var inp = d.getElementById(x.field === "mobile" ? "xMobile" : "xEmail"); if (inp) inp.focus(); } catch (e) {}
+        });
+        bs.appendChild(yes); bs.appendChild(no); row.appendChild(bs);
+        o.box.appendChild(row);
+      });
+      if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known && !confirm.length });
     }
     /* a venue asking for (nearly) everything plus the three boxes: the tighter join step (vp-phone.css, .vp-long) */
     var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length;
@@ -151,6 +188,10 @@
     cap = cap || {}; kind = kind || (_last && _last.kind);
     var VC = root.VPConsent, a = (VC && typeof VC.answers === "function") ? VC.answers() : null;
     if (a) cap.consent = a;
+    var uf = Object.keys(_use).filter(function (f) { return _use[f] === true; });
+    if (uf.length) cap.use_fields = uf;   // Use this was tapped on these held contact details (the Worker decides with the venue's box)
+    /* the venue's own tick with a held detail: the page's optedIn needs a typed contact, so ask the tick itself */
+    if (uf.length && !cap.marketing_optin && VC && typeof VC.optedIn === "function" && VC.optedIn({ mobile: "held" })) { cap.marketing_optin = true; cap.consent_version = VC.VERSION; }
     if (_notice) cap.notice_version = _notice;   // the notice this join showed (the Worker records it once)
     if (_known && kind === "team" && _known.need && _known.need.indexOf("first_name") < 0 && !(root.document && root.document.getElementById("xFirst"))) delete cap.first_name;
     return cap;

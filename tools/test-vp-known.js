@@ -20,6 +20,7 @@ function El(tag) {
 }
 El.prototype.appendChild = function (c) { if (c.parentNode) c.parentNode.removeChild(c); c.parentNode = this; this.children.push(c); return c; };
 El.prototype.insertBefore = function (c, ref) { if (c.parentNode) c.parentNode.removeChild(c); var i = this.children.indexOf(ref); c.parentNode = this; if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); return c; };
+El.prototype.replaceChild = function (n, o) { var i = this.children.indexOf(o); if (n.parentNode) n.parentNode.removeChild(n); i = this.children.indexOf(o); n.parentNode = this; this.children[i] = n; o.parentNode = null; return o; };
 El.prototype.removeChild = function (c) { var i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); c.parentNode = null; return c; };
 El.prototype.addEventListener = function (t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); };
 El.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); if (k === 'id') this.id = String(v); };
@@ -183,6 +184,32 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' } }, kind: 'person', nameIn: P.nameIn });
   show('single mode: no answers object (the one tick, as today)', VPConsent.answers() === null && !('consent' in VPKnown.capture({})));
+
+  print('4b. A CONTACT DETAIL WE HOLD, NOT YET THIS VENUE\'S: ONE TAP (Dean 16 Nov)');
+  var M = '04\u2022\u2022 \u2022\u2022\u2022 246';
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Grace', need: [], confirm: [{ field: 'mobile', masked: M }], ix: 0 }, consent: { mode: 'single' }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, venueName: 'The Royal' });
+  var ur = document.getElementById('vpkUse_mobile');
+  show('one row: "Mobile for The Royal: 04.. ... 246" with Use this and Different number', ur && ur.textContent.indexOf('Mobile for The Royal: ' + M) === 0 && document.getElementById('vpkUseYes_mobile').textContent === 'Use this' && document.getElementById('vpkUseNo_mobile').textContent === 'Different number', ur && ur.textContent);
+  show('...no mobile box, nothing else we hold, no name', ids(P.box).indexOf('xMobile') < 0 && !/grace/i.test(shownText()), ids(P.box));
+  show('...and the venue\'s own tick is offered (unticked, as today) so the player can pass it', !!document.getElementById('xOptin') && document.getElementById('xOptin').checked === false);
+  cap = VPKnown.capture({ first_name: 'Grace' });
+  show('no tap: nothing is asked to be passed', !('use_fields' in cap) && !cap.marketing_optin, cap);
+  document.getElementById('vpkUseYes_mobile').click();
+  show('Use this: one tap, shown pressed', document.getElementById('vpkUseYes_mobile').getAttribute('aria-pressed') === 'true');
+  cap = VPKnown.capture({ first_name: 'Grace' });
+  show('...the join asks for the mobile to be used, and without the tick it is not a yes', cap.use_fields && cap.use_fields.join() === 'mobile' && !cap.marketing_optin, cap);
+  document.getElementById('xOptin').click();
+  cap = VPKnown.capture({ first_name: 'Grace' });
+  show('...with the venue\'s tick: Use this plus the venue\'s yes go together', cap.use_fields.join() === 'mobile' && cap.marketing_optin === true, cap);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Grace', need: [], confirm: [{ field: 'mobile', masked: M }], ix: 0 }, consent: { mode: 'single' } }, kind: 'person', nameIn: P.nameIn, venueName: 'The Royal' });
+  document.getElementById('vpkUseNo_mobile').click();
+  show('Different number: the row becomes the normal empty mobile box', !document.getElementById('vpkUse_mobile') && ids(P.box).indexOf('xMobile') >= 0 && document.getElementById('xMobile').value === '', ids(P.box));
+  show('...and nothing held is asked to be used', !('use_fields' in VPKnown.capture({})));
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Grace', need: [], confirm: [{ field: 'email', masked: 'g\u2022\u2022\u2022@gmail.com' }, { field: 'evil', masked: 'x' }, { field: 'mobile', masked: '' }], ix: 0 }, consent: { mode: 'single' }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn });
+  show('email the same way ("Email for The Royal: g...@gmail.com", Different email); an unknown field or an empty mask is never drawn', document.getElementById('vpkUse_email') && document.getElementById('vpkUse_email').textContent.indexOf('Email for The Royal: g\u2022\u2022\u2022@gmail.com') === 0 && document.getElementById('vpkUseNo_email').textContent === 'Different email' && !document.getElementById('vpkUse_evil') && !document.getElementById('vpkUse_mobile'));
 
   print('5b. THE FIRST-GAME NOTICE');
   var NOTE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
