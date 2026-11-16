@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:10 · f6e9942b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 14:39 · ac861336';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -474,6 +474,8 @@ export default {
       if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
+      // Rename an HQ staff login (Dean, 2 Nov 2026): any admin their own, an Owner anyone's.
+      if (request.method === 'POST' && path === '/admin/staff-name'      && typeof vpaHandleStaffName === 'function')      return await vpaHandleStaffName(request, env, json);
       // Remove a login that belongs to no other venue (Dean, 30 Oct 2026). HQ only; the delete is owner only, on his own tap.
       if (request.method === 'POST' && path === '/admin/logins'          && typeof vpaHandleLogins === 'function')         return await vpaHandleLogins(request, env, json);
       if (request.method === 'POST' && path === '/admin/login-find'      && typeof vpaHandleLoginFind === 'function')      return await vpaHandleLoginFind(request, env, json);
@@ -9765,6 +9767,35 @@ async function vpaHandleOptinApprove(request, env, json) {
   return json({ ok: true, approved: approved });
 }
 
+
+/* ===========================================================================
+ * POST /admin/staff-name   { auth_user_id, name }   -> { ok:true, label }
+ *    (Dean, 2 Nov 2026: "How do I change my name to give it a capital D everywhere that it appears?")
+ *    The name HQ shows on the Team tab and signs help desk replies with (vp_platform_admins.label).
+ *    ANY admin may rename THEMSELVES; only an Owner may rename somebody else. Only the label
+ *    changes, never the role: RLS on vp_platform_admins lets any admin write any column of any
+ *    row from the browser, so a rename goes through here, where the rule is enforced, and is in
+ *    the audit log. No migration: label is an existing column.
+ * ======================================================================== */
+async function vpaHandleStaffName(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, null);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const target = String(b.auth_user_id || actor.actorId || '');
+  const name = String(b.name || '').replace(/\s+/g, ' ').trim();
+  if (!VPA_UUID_RE.test(target)) return json({ error: 'auth_user_id is required.' }, 400);
+  if (target !== actor.actorId && actor.role !== 'owner') return json({ error: 'Only an Owner can change somebody else\'s name.' }, 403);
+  if (!name) return json({ error: 'Type a name.' }, 400);
+  if (name.length > 40 || /[<>]/.test(name)) return json({ error: 'Keep the name to 40 letters or fewer.' }, 400);
+  const was = await vpaSelect(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target) + '&select=auth_user_id,label&limit=1');
+  if (!was || !was[0]) return json({ error: 'That staff login is not there any more.' }, 404);
+  const from = was[0].label || null;   // read before the write, so the audit keeps the old name
+  await vpaPatch(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target), { label: name });
+  await vpaAudit(env, actor, 'staff_renamed', 'admin:' + target, { from: from, to: name });
+  return json({ ok: true, label: name });
+}
 
 /* ===========================================================================
  * 4) POST /admin/staff   (owner only)
@@ -21341,9 +21372,16 @@ function helpBareSubject(s) {
 /* WHO SIGNS. A person, never a department: "Dean" over "VenuePlay support". An HQ reply is signed by
    the admin who sent it when their HQ label is a name. The acknowledgement is never signed by a person: it is
    "The venueplay team" (Dean, 9 Nov 2026, helpAckHtml). */
+/* NAMES IN CAPITALS (Dean, 2 Nov 2026: "a capital D everywhere"): the label is kept as it was typed in
+   HQ ("dean"), and the first letter of each word, and of each part after a hyphen or an apostrophe, is
+   made a capital here, so "dean" signs "Dean" and "mary-jane" signs "Mary-Jane". The rest is left as
+   typed ("McDonald" stays McDonald). */
+function helpNameCaps(s) {
+  return String(s || '').replace(/(^|[\s'-])([a-z])/g, (m, pre, c) => pre + c.toUpperCase());
+}
 function helpFirstName(label) {
   const l = helpLine(label, 40);
-  return /^[A-Za-z][A-Za-z' -]{1,39}$/.test(l) ? l.split(/\s+/)[0] : '';
+  return /^[A-Za-z][A-Za-z' -]{1,39}$/.test(l) ? helpNameCaps(l.split(/\s+/)[0]) : '';
 }
 /* FIRST NAME ONLY (Dean, 5 Nov 2026: "Kind regards, Kayla"): the sign-off and the signature's name line never carry a surname. */
 function helpSigner(env, label) {
@@ -21414,8 +21452,9 @@ function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
     + L('E', '<a href="mailto:' + replyTo + '" ' + HELP_LINK + '>' + replyTo + '</a>') + '<br>'
     + L('W', '<a href="https://' + site + '" ' + HELP_LINK + '>' + site + '</a>') + '</p>'
     + '</td></tr></table>'
-    + '<p class="hd-mute" style="margin:22px 0 0;font-size:11px;line-height:1.55;color:#8a8a95"><strong>CONFIDENTIAL EMAIL:</strong> The contents of this email and any attachments are private and confidential. Any unauthorised use of all or any part of this email and any attachments is prohibited.</p>'
-    + '<p class="hd-mute" style="margin:8px 0 0;font-size:11px;line-height:1.55;color:#8a8a95">' + helpCountry(pp) + '</p>';
+    /* The small print, smaller and quieter (Dean, 2 Nov 2026: "a little bit smaller"): 10px, the same grey. */
+    + '<p class="hd-mute" style="margin:22px 0 0;font-size:10px;line-height:1.45;color:#8a8a95"><strong>CONFIDENTIAL EMAIL:</strong> The contents of this email and any attachments are private and confidential. Any unauthorised use of all or any part of this email and any attachments is prohibited.</p>'
+    + '<p class="hd-mute" style="margin:8px 0 0;font-size:10px;line-height:1.45;color:#8a8a95">' + helpCountry(pp) + '</p>';
 }
 /* A reply that already signs off ("Cheers,", "Thanks,", "Kind regards,") gets no second sign-off. */
 function helpSignsOff(body) {

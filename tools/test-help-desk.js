@@ -1307,6 +1307,35 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('if the help desk cannot be read it says so (503, so the Mac tries again), never "nothing to solve"', asDown.status === 503 && T(asOther.ticket_no).status === 'new', asDown);
   check('a time with no zone is read as Brisbane time', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')) === '3 Nov 2026, 2:15pm', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')));
 
+  print('SIGNATURES (Dean, 2 Nov 2026): A CAPITAL D, AND THE SMALL PRINT SMALLER');
+  world();
+  check('helpSigner("dean") signs "Dean"', helpSigner(ENV, 'dean') === 'Dean', helpSigner(ENV, 'dean'));
+  check('a first name after a hyphen gets its capital too: "mary-jane o\'neil" signs "Mary-Jane" (first name only, 5 Nov rule)', helpSigner(ENV, "mary-jane o'neil") === 'Mary-Jane', helpSigner(ENV, "mary-jane o'neil"));
+  check('the rest of a name is left as typed ("McKenzie" stays McKenzie) and a surname is still dropped', helpSigner(ENV, 'McKenzie smith') === 'McKenzie', helpSigner(ENV, 'McKenzie smith'));
+  check('a label that is not a name still falls back to Dean, and HELP_SIGNER gets its capital too', helpSigner(ENV, 'dean@venueplay.com.au') === 'Dean' && helpSigner(ENV, '<b>x</b>') === 'Dean' && helpSigner({ HELP_SIGNER: 'sue' }, '') === 'Sue');
+  DB.vp_platform_admins[0].label = 'dean';
+  DB.vp_help_tickets.push({ id: U(700), ticket_no: 1700, brand: 'venueplay', category: 'sales', channel: 'web_form', status: 'open', priority: 'normal', subject: 'Pricing', contact_email: 'sam@pub.com.au', contact_name: 'Sam', reply_token: 'tok12345678abcd', created_at: NOW() });
+  sent.length = 0;
+  r = await call(helpAdminReply, ADMIN, { id: U(700), body: 'Happy to help, Sam.' });
+  check('a real HQ reply from the login labelled "dean" is signed "Dean"', r.status === 200 && sent.length === 1 && /\nKind regards,\n\nDean\nvenueplay\n/.test(sent[0].text) && !/\ndean\n/.test(sent[0].text), sent[0] && sent[0].text);
+  var sigH = sent[0] ? sent[0].html : '';
+  check('the small print (confidential note and the Acknowledgement of Country) is 10px, line-height 1.45, the same grey', /font-size:10px;line-height:1\.45;color:#8a8a95"><strong>CONFIDENTIAL EMAIL:/.test(sigH) && /font-size:10px;line-height:1\.45;color:#8a8a95">venueplay and The Gflam Group of Companies acknowledge/.test(sigH) && sigH.indexOf('font-size:11px;line-height:1.55') === -1, sigH.slice(-700));
+  var ackH = helpAckHtml({ brand: 'venueplay', category: 'venue_support', contact_name: 'Sam', ticket_no: 1 });
+  check('the acknowledgement carries the same smaller small print', /font-size:10px;line-height:1\.45;color:#8a8a95">venueplay and The Gflam/.test(ackH) && ackH.indexOf('font-size:11px;line-height:1.55') === -1);
+
+  print('HQ TEAM: EDIT NAME (POST /admin/staff-name)');
+  world();
+  r = await call(vpaHandleStaffName, STAFF_ADMIN, { auth_user_id: STAFF_ADMIN, name: '  Support   Sue  ' });
+  check('any admin may rename themselves (spaces tidied)', r.status === 200 && r.body.label === 'Support Sue' && DB.vp_platform_admins[1].label === 'Support Sue', r);
+  r = await call(vpaHandleStaffName, STAFF_ADMIN, { auth_user_id: ADMIN, name: 'Hacked' });
+  check('a staff admin may NOT rename somebody else', r.status === 403 && DB.vp_platform_admins[0].label === 'Dean', r);
+  r = await call(vpaHandleStaffName, ADMIN, { auth_user_id: STAFF_ADMIN, name: 'Sue Smith', role: 'owner' });
+  check('an Owner may rename anyone, and only the name changes, never the role', r.status === 200 && DB.vp_platform_admins[1].label === 'Sue Smith' && DB.vp_platform_admins[1].role === 'staff', DB.vp_platform_admins[1]);
+  check('the rename is in the audit log, old and new name', (DB.vp_admin_audit || []).some(function (a) { return a.action === 'staff_renamed' && a.target === 'admin:' + STAFF_ADMIN && a.detail && a.detail.from === 'Support Sue' && a.detail.to === 'Sue Smith'; }), DB.vp_admin_audit);
+  check('nobody signed in, and a login that is not HQ, are refused', (await call(vpaHandleStaffName, null, { auth_user_id: ADMIN, name: 'X' })).status === 401 && (await call(vpaHandleStaffName, OWNER_A, { auth_user_id: OWNER_A, name: 'X' })).status === 403);
+  check('an empty, over-long or tag-shaped name is refused', (await call(vpaHandleStaffName, ADMIN, { auth_user_id: ADMIN, name: ' ' })).status === 400 && (await call(vpaHandleStaffName, ADMIN, { auth_user_id: ADMIN, name: new Array(42).join('a') })).status === 400 && (await call(vpaHandleStaffName, ADMIN, { auth_user_id: ADMIN, name: '<b>Dean</b>' })).status === 400 && DB.vp_platform_admins[0].label === 'Dean');
+  check('a login that is not there any more is a 404, and nothing is written', (await call(vpaHandleStaffName, ADMIN, { auth_user_id: U(999), name: 'Ghost' })).status === 404 && DB.vp_platform_admins.length === 2);
+
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};
   ALLMAIL.forEach(function (m2) { var k = (m2.headers && m2.headers['X-VP-Help']) || (/^Re: /.test(m2.subject) ? 'reply' : 'other'); kinds[k] = (kinds[k] || 0) + 1; });

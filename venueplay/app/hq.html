@@ -4113,13 +4113,35 @@
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(a.label||"(no label)")+(isMe?' <span class="vt">(you)</span>':'')+'</td>'+
         '<td><span class="srole '+esc(role)+'">'+esc(role)+'</span></td>'+
-        '<td style="text-align:right">'+((canTeam()&&!isMe)?'<button class="mini roll" data-rmadmin="'+esc(a.auth_user_id)+'" data-label="'+esc(a.label||"")+'">Remove</button>':'')+'</td>';
+        '<td style="text-align:right">'+
+          /* Edit name (Dean, 2 Nov 2026): your own row always; an Owner on anyone's. Saved by the Worker
+             (/admin/staff-name), which enforces the same rule. Help desk replies sign with this name. */
+          ((isMe||canTeam())?'<button class="mini" data-nameadmin="'+esc(a.auth_user_id)+'" data-label="'+esc(a.label||"")+'">Edit name</button>':'')+
+          ((canTeam()&&!isMe)?' <button class="mini roll" data-rmadmin="'+esc(a.auth_user_id)+'" data-label="'+esc(a.label||"")+'">Remove</button>':'')+'</td>';
       b.appendChild(tr);
     });
     show("teamGate", !canTeam());
     $("tmName").disabled=$("tmMobile").disabled=$("tmEmail").disabled=$("tmRole").disabled=$("tmAdd").disabled=!canTeam();
   }
   $("teamRows").addEventListener("click", function(e){
+    var nb=e.target.closest("button[data-nameadmin]");
+    if(nb){
+      var nuid=nb.getAttribute("data-nameadmin"), was=nb.getAttribute("data-label")||"";
+      vpAskText("Edit name\n\nThis is the name on the Team list and on help desk replies sent from this login. Capitals as you want them shown, for example Dean.", was, { yes: "Save", id: "vpAskName" }).then(function(name){
+        if(name===null || name===undefined) return;
+        name=String(name).replace(/\s+/g," ").trim();
+        if(!name || name===was) return;
+        nb.disabled=true;
+        workerPost("/admin/staff-name", { auth_user_id: nuid, name: name }).then(function(res){
+          nb.disabled=false;
+          if(!res || res.error){ vpTell("Could not change the name: "+((res&&res.error)||"try again")); return; }
+          S.admins.forEach(function(a){ if(a.auth_user_id===nuid) a.label=res.label; });
+          renderTeam();
+          flash("tmOk","Name changed to "+res.label+".");
+        });
+      });
+      return;
+    }
     var b=e.target.closest("button[data-rmadmin]"); if(!b || !canTeam()) return;
     var uid=b.getAttribute("data-rmadmin"), label=b.getAttribute("data-label");
     vpAsk("Remove the venueplay staff login "+(label||uid)+"? This strips their admin access.").then(function(ok){ if (!ok) return;
