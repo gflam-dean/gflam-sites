@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/cancelled-account-in-chrome.test.py": {
-  "checks": 42,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/cancelled-prospect-hq-in-chrome.test.py": {
@@ -873,6 +873,10 @@
  },
  "tools/test-fail-closed-batch.js": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-failed-card-left.js": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-fallback-switch.js": {
