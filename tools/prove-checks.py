@@ -26380,7 +26380,7 @@ MUTATIONS = [
      'cid:G.consoleId, rev:(G.nowSong && G.revealed) ? songKey(G.nowSong) : "" })', 'cid:G.consoleId })',
      'the musical console forgets which song it revealed when it saves for a reload'),
     ('test-tv-reload-state-17nov.js', 'venueplay/app/raffle/host.html',
-     '  function addLookFields(m){ if(styleKey()){', '  function addLookFields(m){ if(false){',
+     '  function winnerMsg(time){ return addLookFields({', '  function winnerMsg(time){ return ({',
      'a raffle winner replay carries no draw look, so a reloaded TV paints the plain winner screen'),
     ('test-tv-reload-state-17nov.js', 'venueplay/app/raffle/host.html',
      'time:time, total:(G.round.total||0) }); }', 'time:time }); }',
@@ -26391,6 +26391,17 @@ MUTATIONS = [
     ('test-tv-reload-state-17nov.js', 'venueplay/app/members/host.html',
      '    if(look==="flip" || look==="race"){\n      m.style=look;', '    if(false){\n      m.style=look;',
      'a members winner replay carries no draw look, so a reloaded TV paints the plain winner screen'),
+    # Chrome rows (17 Nov 2026), proved by breaking a scratch copy and running the suite alone on vp-tests-1. They name the audit gap 12 suites
+    # (dc80c914), which land with that commit; until then these rows point at suites this branch does not carry.
+    ('five-games-host-only-refresh-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '    return p.rev===songKey(song);', '    return false;',
+     'in Chrome: a musical console reloaded mid-game sends the revealed song as a mystery, so the TV loses the title and the count'),
+    ('five-games-host-only-refresh-2-in-chrome.test.py', 'venueplay/app/raffle/host.html',
+     '  function winnerMsg(time){ return addLookFields({', '  function winnerMsg(time){ return ({',
+     'in Chrome: a raffle TV reloaded mid-claim repaints a plain winner screen instead of the venue\'s draw look'),
+    ('five-games-host-only-refresh-2-in-chrome.test.py', 'venueplay/app/members/host.html',
+     '    if(look==="flip" || look==="race"){\n      m.style=look;', '    if(false){\n      m.style=look;',
+     'in Chrome: a members draw TV reloaded mid-claim repaints a plain winner screen instead of the flip board'),
 ]
 
 
