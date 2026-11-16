@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 60,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
@@ -268,7 +268,7 @@
   "counted_by": "lines"
  },
  "tools/gate-server.test.py": {
-  "checks": 144,
+  "checks": 161,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {

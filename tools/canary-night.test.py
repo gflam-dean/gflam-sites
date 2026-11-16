@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tools/canary-night.py and release.py step 3c, offline (421 gap 2, 16 Nov 2026). No network: a fake game Worker and a fake
+"""tools/canary-night.py and release.py step 4c (was 3c), offline (421 gap 2, 16 Nov 2026). No network: a fake game Worker and a fake
 Supabase stand in, and each can be told to get one thing wrong.
 
   GREEN    a correct night is green (exit 0), every call went to the target's own hosts, the database was only read
@@ -7,7 +7,7 @@ Supabase stand in, and each can be told to get one thing wrong.
            a chargeable venue, a non-comp account, the once-a-week rule still on, a host login that is staff at a real
            venue, a night already on, the wrong project, a real email for the host, a foreign host, a REST write, an RPC
   RED      each product fault the canary exists for is red (exit 1), and the night is still closed afterwards
-  RELEASE  step 3c: OFF by default and says NOT CHECKED; green passes; RED runs the rollback lane with --go and stops;
+  RELEASE  step 4c: OFF by default and says NOT CHECKED; green passes; RED runs the rollback lane with --go and stops;
            NOT RUN never rolls back and writes to the INBOX; no runner = nothing started
 """
 import copy, importlib.util, io, json, os, sys, urllib.parse, uuid
@@ -357,7 +357,7 @@ for fault, label in (('health_bad', 'the game Worker /health is not ok'),
     ok('RED: %s -> the night was still closed (or closing was tried)' % label,
        w.closed or any(c[2] == '/session/close' for c in w.calls) or not w.session, w.calls[-3:])
 
-# ------------------------------------------------------------------ RELEASE step 3c
+# ------------------------------------------------------------------ RELEASE step 4c
 lines = R.canary_step('abcdef1234', env={}, run=lambda *a, **k: (_ for _ in ()).throw(AssertionError('ran')))
 ok('RELEASE: the canary is OFF by default, says Dean\'s yes and NOT CHECKED, and starts nothing',
    any('Dean' in l and 'NOT CHECKED' in l for l in lines), lines)
@@ -411,9 +411,10 @@ ok('RELEASE: NOT RUN -> loud line and an INBOX line', any('NOT RUN' in l and 'NO
 plan = R.canary_plan('abcdef1234', env={})
 ok('RELEASE: --plan says the canary is off until Dean says yes', plan and 'not play the canary' in plan[0], plan)
 src = open(os.path.join(HERE, 'release.py')).read()
-i3, i4 = src.find("step('3c'"), src.find('step(4,')
-ok('RELEASE: step 3c runs after the Workers and Pages (3) and before the gate (5)', 0 < src.find('step(3,') < i3 < i4 < src.find('step(5,'))
-ok('RELEASE: main() hands step 3c a runner', 'canary_step(head, run=subprocess.run)' in src)
+i4, i4c = src.find('step(4,'), src.find("step('4c'")
+ok('RELEASE: step 4c runs after the Workers (2), Pages (3) and the screens (4), and before the live half (5) (16 Nov 2026 order)',
+   0 < src.find('step(2,') < src.find('step(3,') < i4 < i4c < src.find('step(5,'))
+ok('RELEASE: main() hands step 4c a runner', 'canary_step(head, run=subprocess.run)' in src)
 
 total = N['ok'] + N['fail']
 if N['fail']:
