@@ -2310,5 +2310,13 @@
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
   "counted_by": "lines"
+ },
+ "tools/canary-night.test.py": {
+  "checks": 102,
+  "counted_by": "lines"
+ },
+ "tools/staging/db-functions-on-test.test.py": {
+  "checks": 130,
+  "counted_by": "lines"
  }
 }

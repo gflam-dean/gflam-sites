@@ -23,6 +23,11 @@ the steps and stops at the first one that is not true:
        (Workers first: the site lands minutes later, and a page asking an old Worker for
        something new reaches a customer)
     3. wait until Cloudflare Pages is serving every served file the push changed
+    3c. THE CANARY NIGHT (421 gap 2, 16 Nov 2026), OFF until Dean's yes for the first live run, then VP_CANARY=1:
+       tools/canary-night.py --target live plays a 3-question trivia night and one musical bingo deal + claim at Test Alpha
+       through the live game Worker, with two headless phones and a TV, and reads the rows back. RED (exit 1) = the
+       rollback lane runs AT ONCE (release-lanes rollback, --go) back to the last live-checked release and says so.
+       NOT RUN (exit 2: refused, a precondition missing) never rolls back; it is said loudly and written to the INBOX.
     4. if a screen file changed, run verify-live --stamp and commit the stamp (the full
        gate's "a browser has looked" line is red until this has happened)
     5. run the full gate (release-check.py, live half included). Since 27 Oct 2026: when the
@@ -161,6 +166,8 @@ def main():
                             if server_gate_on() else 'not use vp-tests-1 (VP_GATE_SERVER=0): the hook runs every Chrome suite on the Mac'))
         for l in real_night_plan(head):
             print('  would ' + l)
+        for l in canary_plan(head):
+            print('  would ' + l)
         print('  would then record what is live on main in tools/live-releases.json (the rollback lane\'s list), if the real night is green')
         return 0
 
@@ -232,6 +239,10 @@ def main():
     else:
         print('  nothing served changed')
 
+    step('3c', 'the canary night: a short real game at Test Alpha on the live system (red = roll back now)')
+    for l in canary_step(head, run=subprocess.run):
+        print('  ' + l)
+
     live_sha = head
     step(4, 'a real browser looks at the screens (before the gate: its stamp check is red until this runs)')
     if screens:
@@ -272,6 +283,59 @@ def main():
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0
+
+
+def canary_on(env=None):
+    """(on, why). OFF until Dean says yes to the first live canary; then main sets VP_CANARY=1 (and makes it the default)."""
+    env = os.environ if env is None else env
+    if (env.get('VP_CANARY') or '').strip() == '1':
+        return True, ''
+    return False, ('the canary night is OFF: its first live run needs Dean\'s yes (tools/canary-night.py; then VP_CANARY=1). '
+                   'NOT CHECKED: no game was played on live by this release')
+
+
+def canary_plan(build, env=None):
+    on, why = canary_on(env)
+    if not on:
+        return ['not play the canary night (' + why + ')']
+    return ['play the canary night at Test Alpha on live after the Workers and Pages are up (tools/canary-night.py --target live); '
+            'RED = the rollback lane runs at once']
+
+
+CANARY_LOG = os.path.expanduser('~/venue-enrich/reports/canary-night')
+
+
+def canary_step(build, env=None, run=None, roll=None, alert=None):
+    """Step 3c. Lines to print. Never runs without a runner (only main() passes one). Exit 0 green; exit 1 RED: the rollback
+    lane runs with --go AT ONCE and this stops the release; any other exit is NOT RUN: never rolls back, loud + INBOX."""
+    env = os.environ if env is None else env
+    on, why = canary_on(env)
+    if not on:
+        return ['%s%s%s' % (YEL, why, OFF)]
+    if run is None:
+        return ['the canary night was not started: canary_step() was called without a runner']
+    try:
+        os.makedirs(CANARY_LOG, exist_ok=True)
+        report = os.path.join(CANARY_LOG, '%s-%s.json' % (build[:8], time.strftime('%Y%m%d-%H%M%S')))
+    except Exception:
+        report = None
+    argv = [PY, 'tools/canary-night.py', '--target', 'live', '--live-ok-by-dean'] + (['--report', report] if report else [])
+    r = run(argv, cwd=ROOT, env=dict(env))
+    rc = getattr(r, 'returncode', 2)
+    if rc == 0:
+        return ['%scanary night GREEN at Test Alpha on live%s' % (GRN, OFF) + (' (%s)' % report if report else '')]
+    if rc == 1:
+        print('  %sCANARY NIGHT RED on %s: ROLLING BACK NOW with the rollback lane (tools/release.py --rollback --go)%s'
+              % (RED, build[:8], OFF))
+        reason = 'canary night red on %s (%s)' % (build[:8], report or 'no report')
+        rb = (roll or (lambda why: lanes().rollback(lanes().Ops(ROOT), print, go=True, reason=why, root=ROOT)))(reason)
+        (alert or (lambda t: lanes().alert(t, print)))('%s; rollback lane exit %s' % (reason, rb))
+        stop('the canary night went RED on live, and the rollback lane %s. Read the canary lines above and %s.'
+             % ('rolled the release back' if rb == 0 else 'did NOT finish (exit %s): roll back by hand now, python3 tools/release.py --rollback --go' % rb,
+                report or 'the release log'))
+    (alert or (lambda t: lanes().alert(t, print)))('canary night NOT RUN on %s (exit %s): nothing rolled back, a person must look' % (build[:8], rc))
+    return ['%scanary night NOT RUN (exit %s, reasons above): NOTHING ROLLED BACK and NOTHING PLAYED ON LIVE. A person must look.%s'
+            % (YEL, rc, OFF)]
 
 
 def server_gate_on(env=None):
