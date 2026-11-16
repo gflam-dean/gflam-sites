@@ -75,10 +75,10 @@ def scene(r, logo, w, h):
     time.sleep(9)   # the start show (a blurred splash) is over before the wall is judged or framed
     name = r.ask(tv, 'document.getElementById("lobbyAtName").textContent') or ''
     ok('%s: the venue has a name to show' % tag, len(name) > 2, name)
-    s = json.loads(r.ask(tv, PROBE + '(%s)' % json.dumps(name)) or '{}')
+    s = (r.json(tv, PROBE + '(%s)' % json.dumps(name), {}) or {})
     for _ in range(20):   # the logo fades in after the start show
         if not logo or s.get('logo'): break
-        time.sleep(1); s = json.loads(r.ask(tv, PROBE + '(%s)' % json.dumps(name)) or '{}')
+        time.sleep(1); s = (r.json(tv, PROBE + '(%s)' % json.dumps(name), {}) or {})
     if SHOTS: r.shot(tv, os.path.join(SHOTS, 'bingo-lobby-%s-%dx%d.jpg' % ('logo' if logo else 'nologo', w, h)))
     if not logo:
         ok('%s: the name is on the wall exactly once' % tag, len(s.get('hits', [])) == 1, s)
