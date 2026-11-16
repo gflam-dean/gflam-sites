@@ -57,8 +57,10 @@ fi
 # no record: the Chrome suites run on the Mac.
 CHROME_FLAG="--chrome-record"
 HERE_TREE=$(git rev-parse 'HEAD^{tree}' 2>/dev/null)
+PUSH_SHA=""; REMOTE_SHA=""; PUSH_REFS=0; PUSH_REF=""
 while read -r _lref LSHA _rref _rsha; do
   [ -z "$LSHA" ] && continue
+  PUSH_REFS=$((PUSH_REFS + 1)); PUSH_SHA="$LSHA"; REMOTE_SHA="$_rsha"; PUSH_REF="$_rref"
   case "$LSHA" in *[!0]*) ;; *) continue;; esac          # a delete pushes no files
   if [ "$(git rev-parse "$LSHA^{tree}" 2>/dev/null)" != "$HERE_TREE" ]; then
     CHROME_FLAG=""
@@ -76,6 +78,19 @@ if [ "${VP_HOOK_DRY_RUN:-}" = "1" ]; then
   fi
   echo "DRY RUN (VP_HOOK_DRY_RUN=1): nothing gated, PUSH REFUSED."
   exit 1
+fi
+
+# THE RELEASE LANES (Jobs 442, 16 Nov 2026, tools/release-lanes.py hook_accept). One push of this checkout to main is let
+# through WITHOUT the gate only when every file in it has already been through one: a bookkeeping push (the record of
+# live-checked releases, .verify-live.json), a rollback (every file a live-checked release's, or exactly what is on main
+# now), or an urgent fix whose exact tree the urgent lane gated and signed on this Mac under an hour ago. Anything else,
+# or any doubt, and the gate below runs as it always has. It can only ever skip the gate for those three.
+if [ -n "$CHROME_FLAG" ] && [ "$PUSH_REFS" = "1" ] && [ "$PUSH_REF" = "refs/heads/main" ] && [ -f "$ROOT/tools/release-lanes.py" ]; then
+  if python3 "$ROOT/tools/release-lanes.py" hook-accept "$PUSH_SHA" "$REMOTE_SHA"; then
+    echo "── ok, pushing (release lane, above) ──"
+    echo
+    exit 0
+  fi
 fi
 
 if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG; then
