@@ -127,7 +127,7 @@ function world() {
         shown === 3 && els[0].textContent === '39,412' && els[2].textContent === '39,412' && els[1].textContent === '6,740', els.map(function (e) { return e.textContent; }));
   var bads = [
     ['the fetch fails', function () { return Promise.reject(new Error('offline')); }],
-    ['the Worker answers 500', function () { return Promise.resolve({ ok: false, status: 500, json: function () { return Promise.resolve({ questions: 5, songs: 5 }); } }); }],
+    ['the Worker answers 500 (with a body that looks like counts)', function () { return Promise.resolve({ ok: false, status: 500, json: function () { return Promise.resolve({ questions: 39412, songs: 6740 }); } }); }],
     ['the answer is not JSON', function () { return Promise.resolve({ ok: true, json: function () { return Promise.reject(new Error('bad json')); } }); }],
     ['both counts are null', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: null, songs: null }); } }); }],
     ['the counts are NaN', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: NaN, songs: NaN }); } }); }],
@@ -135,6 +135,7 @@ function world() {
     ['the counts are zero', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: 0, songs: 0 }); } }); }],
     ['the counts are negative or fractions', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: -4, songs: 12.5 }); } }); }],
     ['the counts are absurd', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: 1e12, songs: Infinity }); } }); }],
+    ['the counts are under a thousand (the test database holds 10 questions; a library that lost its sets)', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: 10, songs: 999 }); } }); }],
     ['the answer is null', function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(null); } }); }]
   ];
   for (var b = 0; b < bads.length; b++) {
@@ -143,6 +144,9 @@ function world() {
     check(bads[b][0] + ': the fallback words stay, never blank or NaN',
           shown === 0 && els.every(function (e) { return e.textContent === 'Thousands'; }), els.map(function (e) { return e.textContent; }));
   }
+  fresh(); window.fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: 1000, songs: 6740 }); } }); };
+  shown = await C.load('https://venueplay-api.example');
+  check('exactly 1,000 is a count and is shown', shown === 3 && els[0].textContent === '1,000' && els[1].textContent === '6,740', els.map(function (e) { return e.textContent; }));
   fresh(); window.fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ questions: 39412, songs: null }); } }); };
   shown = await C.load('https://venueplay-api.example');
   check('one half good, one half null: the good one is shown, the other keeps its words',

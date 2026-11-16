@@ -296,7 +296,7 @@
   "counted_by": "lines"
  },
  "tools/home-counts-in-chrome.test.py": {
-  "checks": 34,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/home-hero-in-chrome.test.py": {
@@ -980,7 +980,7 @@
   "counted_by": "lines"
  },
  "tools/test-library-counts.js": {
-  "checks": 41,
+  "checks": 43,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
