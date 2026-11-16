@@ -1798,20 +1798,23 @@ footer .powered .powered-by-text{font-family:'Manrope',system-ui,sans-serif}
   .h2-host{margin-top:12px;max-width:46ch;font-family:'Manrope',system-ui,sans-serif;font-weight:500;color:var(--muted);font-size:var(--fs-base);line-height:1.5}
   .hero-ended{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2);font-size:var(--fs-base);color:#D8D8DD;line-height:1.5}
   .hero-ended b{color:#fff;font-weight:700}
-  .h2-stage{position:relative;padding-bottom:6%}
+  .h2-stage{position:relative;padding-bottom:0}
+  /* Job 447 (Dean, 16 Nov 2026): the telly is CENTRED in the stage and stands on a neck and a foot, like a real TV; the phone stands in the empty space to its right and never covers the screen. */
   /* The phone stands beside the telly, over the bezel only, so no score or ball is hidden. */
   /* The SCREEN is the 16:9 element and the bezel wraps it. With the ratio on the bezel, its 9px
      padding made the screen wider than 16:9 and the wall's bottom row was clipped (Dean, 22 Sep
      2026: "our screen is not really fitting it properly"). */
-  .h2-tv{margin-right:19%;transition:margin-right .35s cubic-bezier(.22,1,.36,1);background:#050506;border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:16px;padding:9px;box-shadow:0 0 0 1px rgba(255,31,142,.18),0 30px 80px -30px rgba(255,31,142,.45)}
+  .h2-tv{width:66%;margin:0 auto;transition:width .35s cubic-bezier(.22,1,.36,1);background:#050506;border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:16px;padding:9px;box-shadow:0 0 0 1px rgba(255,31,142,.18),0 30px 80px -30px rgba(255,31,142,.45)}
   /* The wall renders at a real telly's size and is scaled down, like the phone. Drawn at the
      frame's own 320px the walls hit every clamp() minimum, so the corner badge stood three
      times taller than it does on a pub TV and sat on the question. */
   .h2-tvscreen{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:9px;background:#0A0A0B}
   .h2-tv iframe{position:absolute;top:0;left:0;width:1280px;height:720px;border:0;background:#0A0A0B;display:block;pointer-events:none;transform-origin:top left}
-  .h2-tvstand{width:22%;height:7px;margin:0 auto;background:linear-gradient(#2a2a30,#121214);border-radius:0 0 8px 8px}
-  .h2-phone{position:absolute;right:0;bottom:0;width:21%;min-width:96px;transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}
-  .h2-stage.nophone .h2-tv{margin-right:0}   /* advertising is the wall alone: let it have the room */
+  .h2-tvstand{position:relative;width:100%;height:clamp(18px,4.2vw,30px)}
+  .h2-tvstand::before{content:"";position:absolute;top:0;left:50%;width:7%;height:calc(100% - 7px);transform:translateX(-50%);background:linear-gradient(90deg,#16161a,#34343b 45%,#16161a)}
+  .h2-tvstand::after{content:"";position:absolute;bottom:0;left:50%;width:30%;height:7px;transform:translateX(-50%);background:linear-gradient(#34343b,#121214);border-radius:3px 3px 8px 8px;box-shadow:0 10px 24px -8px rgba(255,31,142,.35)}
+  .h2-phone{position:absolute;right:0;bottom:0;width:17%;min-width:0;transition:opacity .35s cubic-bezier(.22,1,.36,1),transform .35s cubic-bezier(.22,1,.36,1)}
+  .h2-stage.nophone .h2-tv{width:100%}   /* advertising is the wall alone: let it have the room */
   .h2-phone.off{opacity:0;transform:translateY(10px);pointer-events:none}
   .h2-phonebox{position:relative;aspect-ratio:390/844;overflow:hidden;border-radius:18px;border:3px solid #26262c;background:#0A0A0B radial-gradient(60% 40% at 50% 8%, rgba(255,31,142,.22), transparent 70%);box-shadow:0 18px 40px -12px rgba(0,0,0,.9)}
   /* While the phone page fetches its fonts the frame shows the mark, not a black hole. */
@@ -1829,7 +1832,7 @@ footer .powered .powered-by-text{font-family:'Manrope',system-ui,sans-serif}
     .h2-modes{flex-wrap:wrap} .h2-modes button{flex:1 1 30%}
     .hero2 > .wrap.h2-grid{grid-template-columns:1fr;gap:18px}
     /* No taller than the telly, or it climbs into the headline. */
-    .h2-phone{width:20%;min-width:0} .h2-tv{margin-right:18%}
+    .h2-phone{width:17%;min-width:0}
     /* On a phone "Start your free month" sits straight under the headline (Dean, 23 Oct 2026:
        it was two screens down), then the show, then the words. The copy's children become grid
        items so the button and the demo can sit between the headline and the words. */
