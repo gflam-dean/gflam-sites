@@ -264,11 +264,11 @@
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
-  "checks": 72,
+  "checks": 74,
   "counted_by": "lines"
  },
  "tools/gate-server.test.py": {
-  "checks": 125,
+  "checks": 144,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {

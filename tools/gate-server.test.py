@@ -82,6 +82,8 @@ try:
     counts['tools/plain.test.py'] = {'checks': 2, 'counted_by': 'lines'}
     put(os.path.join(repo, 'tools', 'suite-counts.json'), json.dumps(counts, indent=1))
     put(os.path.join(repo, 'venueplay', 'index.html'), '<html>one</html>\n')
+    git(repo, 'commit', '-q', '--allow-empty', '-m', 'base')
+    git(repo, 'update-ref', 'refs/remotes/origin/main', 'HEAD')   # the billing rule reads what HEAD changes from origin/main
     git(repo, 'add', '-A')
     git(repo, 'commit', '-q', '-m', 'one')
     gs = load('gate_server_t', os.path.join(repo, 'tools', 'gate-server.py'))
@@ -144,6 +146,20 @@ try:
     ok('accepted: covers the two server suites', covered == set(CHROME[:2]), why)
     ok('... and never signin-logo, which the Mac runs', 'signin-logo-in-chrome.test.py' not in covered and 'on the Mac: signin-logo' in why, why)
     signed_good = io.open(path, encoding='utf-8').read()
+    # release-check's acceptance (gate-server.accepted) refuses a record when HEAD changes billing code from origin/main
+    put(os.path.join(repo, 'venueplay', 'app', 'billing.html'), '<p>bill</p>\n')
+    git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'billing change')
+    good, text, rec_b = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
+    gs.write_record(rec_b, rec_dir)
+    c_b, w_b = acc()
+    ok('release-check --chrome-record: a validly signed record for a tree that changes billing.html is NOT used',
+       c_b == set() and 'changes billing code' in w_b and 'billing.html' in w_b, w_b)
+    git(repo, 'reset', '-q', '--hard', 'HEAD~1')
+    _om = git(repo, 'rev-parse', 'refs/remotes/origin/main').stdout.strip()
+    git(repo, 'update-ref', '-d', 'refs/remotes/origin/main')
+    c_b, w_b = acc()
+    ok('... and with no origin/main to measure from, no record is used (treated as billing)', c_b == set() and 'treated as billing' in w_b, w_b)
+    git(repo, 'update-ref', 'refs/remotes/origin/main', _om)
 
     put(os.path.join(repo, 'venueplay', 'index.html'), '<html>dirty</html>\n')
     good, text, _ = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
@@ -230,6 +246,24 @@ try:
     good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [dict(GREEN, reruns=[])]}), KEY, say=lambda s: None)
     ok('a server entry that carries re-runs: not signed', not good, text)
 
+    print('\n2a. Dean\'s condition (16 Nov): a money, billing, sign-in, security or player-data suite is NEVER re-run')
+    _nr = gs.NEVER_RERUN
+    gs.NEVER_RERUN = (CHROME[1],)
+    sent[:] = []
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[1]: [red, GREEN]}), KEY, say=lambda s: None)
+    ok('a NEVER_RERUN suite red once (green if re-run): NOT signed, one red = no record', not good and CHROME[1] in text, text)
+    ok('... and it was never re-run: the server was asked once, 4 at a time', sent == [(CHROME[:2], 4)], sent)
+    sent[:] = []
+    good, text, _ = gs.make_record(repo, runner_from({CHROME[0]: [red, GREEN], CHROME[1]: [red, GREEN]}), KEY, say=lambda s: None)
+    ok('a NEVER_RERUN red beside an ordinary red: nothing re-run at all, NOT signed', not good and sent == [(CHROME[:2], 4)], (text, sent))
+    gs.NEVER_RERUN = _nr
+    ok('never_rerun: a named suite, and new suites caught by their names (billing, refund, stripe, sign-in, consent)',
+       gs.never_rerun('subscribe-in-chrome.test.py') and gs.never_rerun('tools/phone-signin-in-chrome.test.py')
+       and all(gs.never_rerun(n) for n in ('new-billing-in-chrome.test.py', 'refund-flow-in-chrome.test.py',
+                                             'stripe-card-in-chrome.test.py', 'host-sign-in-in-chrome.test.py',
+                                             'player-consent-in-chrome.test.py', 'members-export-in-chrome.test.py'))
+       and not gs.never_rerun('tv-sting-in-chrome.test.py') and not gs.never_rerun(CHROME[0]))
+
     print('\n2b. binding: results not tied to this request and these files are never signed')
     good, text, _ = gs.make_record(repo, runner_from({}, lambda f: None), KEY, say=lambda s: None)
     ok('no run facts from the server: not signed', not good and 'no run facts' in text, text)
@@ -309,6 +343,11 @@ try:
     gs.MAX_RERUNS = _mr
     io.open(path, 'w', encoding='utf-8').write(resigned(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN))))
     ok('a validly signed suite red once, fully green on its lone re-run: accepted', acc()[0] == set(CHROME[:2]), acc()[1])
+    _nr = gs.NEVER_RERUN
+    gs.NEVER_RERUN = (CHROME[1],)
+    refused('a validly signed NEVER_RERUN suite red once, green on a lone re-run: refused (Dean, 16 Nov)',
+            resigned(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN))), 'never re-run')
+    gs.NEVER_RERUN = _nr
     refused('that re-run edited after signing (red made green): refused',
             edited(lambda r: r['suites'][CHROME[1]].update(rc=1, rerun=dict(GREEN))), 'edited after it was signed')
     refused('a validly signed suite with no verdict from the one pass judge: refused',
@@ -395,12 +434,22 @@ try:
     ok('a lone re-run is at most once, alone, for at most 3 suites, under its own nonce',
        'MAX_RERUNS = 3 ' in gs_src and 'got2 = runner(list(red), 1, rerun_nonce, paths)' in gs_src and "why = run_bound(rerun, nonce2, digest)" in gs_src)
     ok('the signature is compared in constant time', 'hmac.compare_digest(' in gs_src)
+    real_gs = load('gate_server_real_nr', os.path.join(TOOLS, 'gate-server.py'))
+    gone = [n for n in real_gs.NEVER_RERUN if not os.path.exists(os.path.join(TOOLS, n))]
+    ok('NEVER_RERUN: every named suite still exists on this tree (a renamed suite cannot drop off silently)', not gone, gone)
+    ok('NEVER_RERUN: on this tree it holds the money, billing, sign-in and player-data suites',
+       all(real_gs.never_rerun(n) for n in ('subscribe-in-chrome.test.py', 'billing-words-in-chrome.test.py',
+                                           'trial-cancel-page-in-chrome.test.py', 'purchase-raffle-in-chrome.test.py',
+                                           'phone-signin-in-chrome.test.py', 'consent-split-in-chrome.test.py')))
+    ok('NEVER_RERUN is read in exactly the two places that decide a re-run (collect and suite_accepted)',
+       gs_src.count('never_rerun(s)') == 1 and gs_src.count('if never_rerun(name):') == 1 and gs_src.count('NEVER_RERUN = (') == 1)
 
     # The REAL hook, run the way git runs it, in the throwaway, with a fake gate that writes down its arguments.
     hrepo = os.path.join(TMP, 'hookrepo')
     os.makedirs(os.path.join(hrepo, 'tools', 'hooks'))
     git(hrepo, 'init', '-q')
     shutil.copy(os.path.join(TOOLS, 'hooks', 'pre-push'), os.path.join(hrepo, 'tools', 'hooks', 'pre-push'))
+    shutil.copy(os.path.join(TOOLS, 'gate-server.py'), os.path.join(hrepo, 'tools', 'gate-server.py'))
     put(os.path.join(hrepo, 'tools', 'stamp-workers.py'), 'import sys; sys.exit(0)\n')
     put(os.path.join(hrepo, 'tools', 'release-check.py'),
         'import os, sys\nhere = os.path.dirname(os.path.abspath(__file__))\n'
@@ -408,6 +457,7 @@ try:
         'sys.exit(1 if os.path.exists(os.path.join(here, "RED")) else 0)\n')
     put(os.path.join(hrepo, '.gitignore'), 'tools/ARGS\ntools/RED\n')
     git(hrepo, 'add', '-A'); git(hrepo, 'commit', '-qm', 'h')
+    git(hrepo, 'update-ref', 'refs/remotes/origin/main', 'HEAD')
     henv = dict(ENV)
     henv.pop('VP_GATE_SERVER', None)
     r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True, input='')
@@ -445,6 +495,47 @@ try:
                        input='refs/heads/x %s refs/heads/main %s\n' % (other, '0' * 40))
     ok('... and for other files says the record is not used, still refusing',
        r.returncode == 1 and "gate record: not used: the pushed files are not this checkout's" in r.stdout and 'DRY RUN' in r.stdout, r.stdout[-300:])
+    print('\n4b. billing code runs on the Mac too (Dean, 16 Nov 2026): the pushed range decides')
+
+    def push_of(path, text, rsha=None):
+        put(os.path.join(hrepo, path), text)
+        git(hrepo, 'add', '-A'); git(hrepo, 'commit', '-qm', 'c ' + path)
+        h = git(hrepo, 'rev-parse', 'HEAD').stdout.strip()
+        rr = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True,
+                            text=True, input='refs/heads/x %s refs/heads/main %s\n' % (h, rsha or '0' * 40))
+        a = io.open(os.path.join(hrepo, 'tools', 'ARGS')).read()
+        git(hrepo, 'reset', '-q', '--hard', 'HEAD~1')
+        return rr, a
+    r, a = push_of('venueplay/app/billing.html', '<p>your bill</p>\n')
+    ok('a push that changes venueplay/app/billing.html: no record, every Chrome suite on the Mac',
+       r.returncode == 0 and a.strip() == '--local' and 'changes billing code' in r.stdout, (a, r.stdout[-300:]))
+    r, a = push_of('venueplay-backend/worker/venueplay-api-FULL.js', 'function x(){ return stripe.invoices.create(); }\n')
+    ok('a push that changes Stripe code in the billing Worker: no record', a.strip() == '--local', (a, r.stdout[-300:]))
+    r, a = push_of('venueplay/app/index.html', '<script>var k = "pk_test"; Stripe(k);</script>\n')
+    ok('a push that adds Stripe code to any other page: no record', a.strip() == '--local', (a, r.stdout[-300:]))
+    r, a = push_of('venueplay-backend/worker/venueplay-api-FULL.js', 'function lobbyTitle(){ return "Trivia"; }\n')
+    ok('a push that changes the billing Worker away from billing (a lobby title): the record may be used',
+       a == '--local --chrome-record', (a, r.stdout[-300:]))
+    r, a = push_of('tools/test-stripe-thing.js', 'print("stripe invoice");\n')
+    ok('a push that changes only a TEST that mentions Stripe: the record may be used', a == '--local --chrome-record', (a, r.stdout[-300:]))
+    r, a = push_of('venueplay/app/billing.html', '<p>your bill</p>\n', rsha=hhead)
+    ok('... and with the remote\'s own sha as the start of the range, billing.html still runs the Mac', a.strip() == '--local', (a, r.stdout[-300:]))
+    os.remove(os.path.join(hrepo, 'tools', 'gate-server.py'))
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (hhead, '0' * 40))
+    ok('no gate-server.py to judge the range: treated as billing, no record', io.open(os.path.join(hrepo, 'tools', 'ARGS')).read().strip() == '--local')
+    shutil.copy(os.path.join(TOOLS, 'gate-server.py'), os.path.join(hrepo, 'tools', 'gate-server.py'))
+    git(hrepo, 'update-ref', '-d', 'refs/remotes/origin/main')
+    r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
+                       input='refs/heads/x %s refs/heads/main %s\n' % (hhead, '0' * 40))
+    ok('a new branch with no origin/main to measure from: treated as billing, no record',
+       io.open(os.path.join(hrepo, 'tools', 'ARGS')).read().strip() == '--local', r.stdout[-300:])
+    git(hrepo, 'update-ref', 'refs/remotes/origin/main', hhead)
+
+    ok('the hook asks gate-server.py billing for the EXACT pushed range, and accepted() measures from origin/main',
+       'python3 "$ROOT/tools/gate-server.py" billing "$PBASE" "$LSHA"' in hook_src
+       and "['git', 'merge-base', 'HEAD', BILLING_BASE_REF]" in gs_src and "BILLING_FILES = ('venueplay/app/billing.html',)" in gs_src)
+
     ok('the hook runs the server only when asked (VP_GATE_SERVER=1) and never fails the push on it',
        '[ "${VP_GATE_SERVER:-}" = "1" ]' in hook_src and 'gate-server.py" run || echo' in hook_src)
 

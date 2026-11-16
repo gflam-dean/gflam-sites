@@ -55,7 +55,10 @@ same rules. It counts green only if that re-run is fully green (exit 0, the one 
 its ledger count); a suite red twice leaves no record. More than MAX_RERUNS reds in the first pass is a broken tree,
 not flakes: nothing is re-run and nothing is signed. The record keeps BOTH results (the red first run, with the
 re-run under it as 'rerun'), so a flake is never hidden, and the acceptance line names every suite that needed one.
-A re-run on a suite that was green, a re-run inside a re-run, or more re-runs than MAX_RERUNS: refused. MAC_ONLY (signin-logo-in-chrome: it flakes on Linux
+A re-run on a suite that was green, a re-run inside a re-run, or more re-runs than MAX_RERUNS: refused. DEAN'S
+CONDITION (16 Nov 2026): a suite on NEVER_RERUN (money, billing, charges, refunds, free months, sign-in, security,
+player data) is never re-run: one red there and nothing is re-run or signed, and a record carrying a re-run of one is
+refused. MAC_ONLY (signin-logo-in-chrome: it flakes on Linux
 only, TEST-SERVER.md) is never sent to the server and never covered: the Mac runs it under the existing rule. Whether
 to keep that, or send it to the server and let its Linux flake block, is a decision for main (DESIGN.md).
 
@@ -74,6 +77,101 @@ MAX_AGE_S = 2 * 60 * 60
 JOBS = 4
 MAX_RERUNS = 3          # first-pass reds the server may re-run alone; more than this and nothing is re-run or signed
 MAC_ONLY = ('signin-logo-in-chrome.test.py',)
+# NEVER RE-RUN (Dean, 16 Nov 2026: yes to the one lone re-run, ON CONDITION that a suite covering MONEY, BILLING,
+# CHARGES, REFUNDS, FREE MONTHS, SIGN-IN, SECURITY or PLAYER DATA is NEVER re-run). One red on any of these = no record:
+# nothing is re-run, nothing is signed, and the hook runs every Chrome suite on the Mac as before. A suite is on the list
+# when its file is NAMED here, or its name matches one of the PATTERNS (so a new billing or sign-in suite is caught by
+# its name the day it is added). This is the ONE place the list lives: collect() and suite_accepted() both read
+# never_rerun(). Add to it freely; take a suite OFF it only with Dean's yes. gate-server.test.py checks every named
+# file still exists, so a renamed suite cannot drop off silently.
+NEVER_RERUN = (
+    # money, billing, charges, refunds, free months, prices and offers
+    'account-review-in-chrome.test.py', 'account-structure-in-chrome.test.py', 'account-tabs-in-chrome.test.py',
+    'billing-words-in-chrome.test.py', 'cancelled-account-in-chrome.test.py', 'cancelled-prospect-hq-in-chrome.test.py',
+    'console-paid-and-draw-max-in-chrome.test.py', 'night-pass-hq-in-chrome.test.py', 'leave-behinds-in-chrome.test.py',
+    'offer-ended-in-chrome.test.py', 'offer-free-play-in-chrome.test.py', 'offer-float-done-in-chrome.test.py',
+    'purchase-raffle-in-chrome.test.py', 'purchase-raffle-walk-in-chrome.test.py', 'raffle-ticket-stub-in-chrome.test.py',
+    'site-offer-footer-in-chrome.test.py', 'subscribe-in-chrome.test.py', 'trial-cancel-page-in-chrome.test.py',
+    'quick-game-in-chrome.test.py',
+    # sign-in and security
+    'phone-signin-in-chrome.test.py', 'signin-logo-in-chrome.test.py', 'signup-start-in-chrome.test.py',
+    'signup-tick-in-chrome.test.py', 'welcome-name-in-chrome.test.py', 'partyplay-resend-in-chrome.test.py',
+    'session-lifecycle-in-chrome.test.py',
+    # player data
+    'consent-split-in-chrome.test.py', 'details-autofill-in-chrome.test.py', 'feedback-followup-in-chrome.test.py',
+    'one-phone-a-night-in-chrome.test.py', 'hq-journey-in-chrome.test.py',
+)
+NEVER_RERUN_PATTERNS = ('*billing*', '*bill-*', '*subscri*', '*charge*', '*refund*', '*invoice*', '*stripe*', '*money*',
+                        '*paid*', '*purchase*', '*payment*', '*price*', '*pricing*', '*offer*', '*free-month*', '*cancel*',
+                        '*signin*', '*sign-in*', '*signup*', '*sign-up*', '*login*', '*session*', '*security*', '*nolive*',
+                        '*no-live*', '*consent*', '*privacy*', '*player-data*', '*details*', '*members*', '*export*')
+
+
+# BILLING CODE IS JUDGED ON THE MAC TOO (Dean, 16 Nov 2026). The push may use the signed server record EXCEPT when the
+# pushed range changes billing code; then the record is not used and every Chrome suite runs on the Mac as well. Billing
+# code is: a file NAMED in BILLING_FILES; a non-tools file whose path matches BILLING_PATH_PATTERNS; in BILLING_WORKER,
+# a changed line or the function around it (the hunk header) that matches BILLING_WORDS; in any other non-tools code
+# file, a changed line that matches STRIPE_WORDS (Stripe code, invoices). Read by billing_changes(), which both the
+# hook (the exact pushed range, `gate-server.py billing <base> <head>`) and accepted() (HEAD against origin/main, so
+# release-check --chrome-record refuses the record too) use. Add freely; take off only with Dean's yes.
+BILLING_FILES = ('venueplay/app/billing.html',)
+BILLING_PATH_PATTERNS = ('*stripe*', '*invoice*', '*billing*')
+BILLING_WORKER = 'venueplay-backend/worker/venueplay-api-FULL.js'
+BILLING_WORDS = re.compile(r'stripe|invoice|billing|subscri|charge|refund|credit|free.?month|pric(?:e|ing)|checkout|'
+                           r'payment|past.?due|pro.?rat|yearly|plan_', re.I)
+STRIPE_WORDS = re.compile(r'stripe|invoice', re.I)
+BILLING_BASE_REF = 'origin/main'
+
+
+def billing_changes(root, base, head='HEAD'):
+    """[(path, why)] for the billing code that base..head changes (BILLING_* above); None when the range cannot be
+    read, which every caller treats as billing (the safe side)."""
+    r = subprocess.run(['git', 'diff', '-U0', '--no-color', '--no-ext-diff', base, head], cwd=root, capture_output=True,
+                       text=True, errors='replace')
+    if r.returncode:
+        return None
+    found, path, seen = [], None, set()
+    for line in r.stdout.split('\n'):
+        if line.startswith('diff --git '):
+            m = re.match(r'diff --git a/(.*?) b/(.*)$', line)
+            path = m.group(2) if m else None
+            if path and path not in seen and not path.startswith('tools/'):
+                base_name = os.path.basename(path)
+                if path in BILLING_FILES or any(fnmatch.fnmatch(base_name, p) for p in BILLING_PATH_PATTERNS):
+                    found.append((path, 'a billing file'))
+                    seen.add(path)
+            continue
+        if not path or path in seen or path.startswith('tools/'):
+            continue
+        if line.startswith('@@'):
+            text, kind = line.split('@@', 2)[-1], 'the function it is in'
+        elif line[:1] in '+-' and not line.startswith(('+++', '---')):
+            text, kind = line[1:], 'a changed line'
+        else:
+            continue
+        rx = BILLING_WORDS if path == BILLING_WORKER else (STRIPE_WORDS if path.endswith(('.js', '.html', '.ts', '.py', '.sql')) else None)
+        m = rx.search(text) if rx else None
+        if m:
+            found.append((path, '%s says "%s"' % (kind, m.group(0))))
+            seen.add(path)
+    return found
+
+
+def billing_verdict(root, base, head='HEAD'):
+    """'' when base..head changes no billing code; otherwise the one line that says why the record is not used."""
+    found = billing_changes(root, base, head)
+    if found is None:
+        return 'the range %s..%s could not be read, so it is treated as billing' % (base[:12], head[:12])
+    if not found:
+        return ''
+    return ('it changes billing code (%s), so every Chrome suite runs on this Mac as well (Dean, 16 Nov 2026)'
+            % '; '.join('%s: %s' % f for f in found[:3]))
+
+
+def never_rerun(name):
+    """True for a suite that is never re-run on the server (NEVER_RERUN above: Dean's 16 Nov condition)."""
+    base = os.path.basename(name)
+    return base in NEVER_RERUN or any(fnmatch.fnmatch(base, p) for p in NEVER_RERUN_PATTERNS)
 KEY_NAME = 'GATE_RECORD_KEY'
 KEY_FILE = os.path.expanduser('~/.gflam-gate.env')
 RECORD_DIR = os.path.expanduser('~/venue-enrich/reports/gate-records')
@@ -309,6 +407,9 @@ def suite_accepted(name, entry, want, passed_rule):
         return ''
     if not isinstance(rr, dict):
         return first
+    if never_rerun(name):
+        return ('red on the server (%s), and it covers money, billing, sign-in, security or player data, which is never '
+                're-run (NEVER_RERUN, Dean 16 Nov)' % first)
     if 'rerun' in rr or 'reruns' in rr:
         return 'its re-run carries a re-run of its own'
     again = suite_green(rr, want, passed_rule)
@@ -391,6 +492,11 @@ def accepted(root=ROOT, now=None, key_file=KEY_FILE, record_dir=RECORD_DIR):
         key, why = read_key(key_file)
         if key is None:
             return set(), why
+        mb = subprocess.run(['git', 'merge-base', 'HEAD', BILLING_BASE_REF], cwd=root, capture_output=True, text=True)
+        bill = billing_verdict(root, mb.stdout.strip(), 'HEAD') if mb.returncode == 0 and mb.stdout.strip() else (
+            'no %s here to tell what this push changes, so it is treated as billing' % BILLING_BASE_REF)
+        if bill:
+            return set(), 'not used: ' + bill
         p = record_path(tree, record_dir)
         raw = io.open(p, encoding='utf-8', errors='replace').read() if os.path.isfile(p) else None
         return verify(raw, tree, key, now, chrome_suites(root), ledger(root), suite_passed_rule(root))
@@ -423,7 +529,11 @@ def collect(root, runner, suites, nonce, paths, jobs=JOBS, say=print, rerun_nonc
             red.append(s)
         results[s] = e
     rerun = None
-    if red and len(red) <= MAX_RERUNS and rerun_nonce:
+    never = [s for s in red if never_rerun(s)]
+    if never:
+        say('  red on a suite that is never re-run (money, billing, sign-in, security or player data): %s; nothing re-run'
+            % ', '.join(never))
+    elif red and len(red) <= MAX_RERUNS and rerun_nonce:
         say('  re-running %d red suite(s) once, alone: %s' % (len(red), ', '.join(red)))
         got2 = runner(list(red), 1, rerun_nonce, paths) or {}
         rerun = got2.get(RUN_KEY) if isinstance(got2.get(RUN_KEY), dict) else {}
@@ -586,6 +696,12 @@ def main(argv=None):
         covered, why = accepted(ROOT)
         print('  gate record: %s: %s' % ('ACCEPTED' if covered else 'not used', why))
         return 0 if covered else 1
+    if cmd == 'billing' and len(argv) == 3:
+        # The pre-push hook asks this of the EXACT pushed range: exit 0 = billing code changed (the record is not
+        # used), 1 = no billing code. Read only.
+        why = billing_verdict(ROOT, argv[1], argv[2])
+        print('  billing: ' + (why or 'this range changes no billing code'))
+        return 0 if why else 1
     if cmd == 'run':
         key, why = read_key()
         if key is None:

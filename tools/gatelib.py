@@ -274,11 +274,18 @@ def hold_lock_or_refuse(tool, say=print, wait_s=0):
 SUITE_NAME = re.compile(r'(\.test\.(js|py)$|^test-[\w.-]+\.js$)')
 
 
-def uses_chrome(path):
+# A suite that LOADS another suite's module (importlib's spec_from_file_location on a *.test.py) drives whatever that
+# suite drives: phone-lobby-fit-in-chrome and trivia-live-fixes-in-chrome reuse trivia-newlook-in-chrome's rig and were
+# read as plain suites, so --skip-chrome still opened Chrome for them (16 Nov 2026).
+SUITE_LOAD = re.compile(r"""spec_from_file_location\([^)]*?['"]([\w.-]+\.test\.py)['"]""")
+
+
+def uses_chrome(path, _seen=None):
     """Does this SUITE drive a real Chrome? Judged by what it imports, not by its name:
     touring-cards.test.py, touring-signups.test.py and help-desk-pages.test.py all open
     Chrome and none of them says in-chrome. Only a suite file can say yes: release-check.py
-    and prove-checks.py mention verify-live in prose and start no Chrome of their own."""
+    and prove-checks.py mention verify-live in prose and start no Chrome of their own.
+    A suite that loads another suite's module (SUITE_LOAD) is Chrome when that suite is."""
     if not SUITE_NAME.search(os.path.basename(path)):
         return False
     try:
@@ -287,7 +294,14 @@ def uses_chrome(path):
         return False
     if 'GATELIB_NO_CHROME' in src:        # a suite that talks ABOUT Chrome without starting one says so
         return False
-    return 'verify-live.py' in src or 'browser-rig' in src or 'browser_rig' in src or '--headless' in src
+    if 'verify-live.py' in src or 'browser-rig' in src or 'browser_rig' in src or '--headless' in src:
+        return True
+    seen = (_seen or set()) | {os.path.abspath(path)}
+    for name in SUITE_LOAD.findall(src):
+        other = os.path.abspath(os.path.join(os.path.dirname(path), name))
+        if other not in seen and uses_chrome(other, seen):
+            return True
+    return False
 
 
 def headless_chrome(pgid=None):

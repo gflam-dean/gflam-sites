@@ -64,6 +64,17 @@ while read -r _lref LSHA _rref _rsha; do
     CHROME_FLAG=""
     echo "  the push sends ${LSHA:0:8}, whose files are not this checkout's: no server record is used, every Chrome suite runs here"
   fi
+  # BILLING CODE RUNS ON THE MAC TOO (Dean, 16 Nov 2026): when the pushed range changes billing code (the billing parts
+  # of venueplay-api-FULL.js, Stripe code, invoices, venueplay/app/billing.html: BILLING_* in tools/gate-server.py),
+  # the server record is not used and every Chrome suite runs here as well. A new branch (remote sha all zeros) is
+  # judged from where it leaves origin/main; a range that cannot be read counts as billing.
+  case "$_rsha" in *[!0]*) PBASE="$_rsha" ;; *) PBASE=$(git merge-base "$LSHA" origin/main 2>/dev/null) ;; esac
+  if [ -n "$CHROME_FLAG" ]; then
+    if [ -z "$PBASE" ] || [ ! -f "$ROOT/tools/gate-server.py" ] || python3 "$ROOT/tools/gate-server.py" billing "$PBASE" "$LSHA"; then
+      CHROME_FLAG=""
+      echo "  the push changes billing code (or its range could not be read): no server record is used, every Chrome suite runs here"
+    fi
+  fi
 done
 
 # VP_HOOK_DRY_RUN=1 (13 Nov 2026, INBOX 357A): say what the gate WOULD do with the Chrome half for this push, then

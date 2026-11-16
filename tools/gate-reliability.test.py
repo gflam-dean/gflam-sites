@@ -139,6 +139,22 @@ try:
        'gatelib.run_suite_with_retry(' in rc_src and 'chrome = gatelib.uses_chrome(p)' in rc_src)
     ok('uses_chrome is judged by what a suite imports, not its name',
        gatelib.uses_chrome(os.path.join(TOOLS, 'touring-cards.test.py')) and not gatelib.uses_chrome(os.path.join(TOOLS, 'redirect-verdict.test.py')))
+    ok('uses_chrome: a suite that LOADS a Chrome suite\'s module is Chrome (phone-lobby-fit, trivia-live-fixes: --skip-chrome left them in, 16 Nov)',
+       gatelib.uses_chrome(os.path.join(TOOLS, 'phone-lobby-fit-in-chrome.test.py'))
+       and gatelib.uses_chrome(os.path.join(TOOLS, 'trivia-live-fixes-in-chrome.test.py')))
+    uc = os.path.join(TMP, 'uses-chrome')
+    os.makedirs(uc, exist_ok=True)
+    for n, body in (('rig-in-chrome.test.py', "# drives tools/browser-rig\n"),
+                    ('loader.test.py', "import importlib.util\n_s = importlib.util.spec_from_file_location('r', os.path.join(ROOT, 'tools', 'rig-in-chrome.test.py'))\n"),
+                    ('plainload.test.py', "import importlib.util\n_s = importlib.util.spec_from_file_location('p', os.path.join(ROOT, 'tools', 'plain.test.py'))\n"),
+                    ('plain.test.py', "print('ALL 1 CHECKS PASSED')\n"),
+                    ('names.test.py', "print('see rig-in-chrome.test.py for the rig')\n"),
+                    ('loop-a.test.py', "spec_from_file_location('b', 'loop-b.test.py')\n"),
+                    ('loop-b.test.py', "spec_from_file_location('a', 'loop-a.test.py')\n")):
+        io.open(os.path.join(uc, n), 'w', encoding='utf-8').write(body)
+    ok('uses_chrome: loading a plain suite, or only NAMING a Chrome suite, is not Chrome; two suites loading each other end',
+       gatelib.uses_chrome(os.path.join(uc, 'loader.test.py')) and not gatelib.uses_chrome(os.path.join(uc, 'plainload.test.py'))
+       and not gatelib.uses_chrome(os.path.join(uc, 'names.test.py')) and not gatelib.uses_chrome(os.path.join(uc, 'loop-a.test.py')))
 
     print('\n4. the heavy lock')
     gatelib.HEAVY_LOCK = os.path.join(TMP, 'vp-heavy.lock')
@@ -274,7 +290,7 @@ try:
     sms = dw.suites_naming('venueplay-sms-hook.js', 'venueplay-sms')
     ok('the game Worker: dozens of suites, among them the Worker rig suites and no PartyPlay ones',
        len(game) >= 30 and any('bingo-server-draw' in s for s in game) and not any('/partyplay' in s for s in game), len(game))
-    ok('the SMS hook: its two suites and the outbox guard\'s (13 Nov 2026: the guard block sits in the hook), nothing else', [os.path.basename(s) for s in sms] == ['test-outbox-guard.js', 'sms-hook-failover.test.js', 'sms-hook-secrets.test.js'], sms)
+    ok('the SMS hook: its two suites, the outbox guard\'s (13 Nov 2026: the guard block sits in the hook) and the no-/see-a-night email check (16 Nov), nothing else', [os.path.basename(s) for s in sms] == ['test-demo-returns-to-offer.js', 'test-outbox-guard.js', 'sms-hook-failover.test.js', 'sms-hook-secrets.test.js'], sms)
     ok('the labels the full gate still judges on the file are listed by name',
        any('is whole' in l for l in dw.labels_naming('venueplay-game.js')))
     # A scratch repo with just what the fast gate needs for the SMS hook, and ONE suite naming it, broken.
