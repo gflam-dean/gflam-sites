@@ -18555,6 +18555,16 @@ MUTATIONS = [
     ('tv-first-slide-in-chrome.test.py', 'venueplay/tv.html',
      '      } else if(!on && arriving && s.classList.contains("show")) under.push(s);\n', '      }\n',
      'a rebuild inside a hand-over takes the old slide away under the new one, and the floor shows through'),
+    # ---- 16 Nov 2026, release gate (release/sun-22nov): ONE saw the broken picture LIT at 118 ms. The clock's slide was lit
+    # before its picture's check had answered. Broken on vp-tests-1: SLOW PICTURE went red (lit for the whole 3 s wait).
+    ('tv-first-slide-in-chrome.test.py', 'venueplay/tv.html',
+     '  function adReady(s){ try{', '  function adReady(s){ return true; try{',
+     'in Chrome, a picture slide is lit before its picture has loaded, so a broken one is on the wall while its error is on the way'),
+    # The SLOW scene's "floor goes on to its finished line" now reads the samples taken after the slide was seen lit (it read the
+    # last sample, stale on a loaded Mac, 16 Nov 2026). Broken on vp-tests-1: the floor kept the loading line, and it went red.
+    ('tv-first-slide-in-chrome.test.py', 'venueplay/tv.html',
+     '    screenLoadingNow = false;\n    try{ document.body.classList.remove("tv-loading"); }catch(e){}\n', '    screenLoadingNow = false;\n',
+     'in Chrome, the floor under the venue\'s slide still says "Setting up this screen" after the screen has answered'),
     # ---- 2 Nov 2026 (Dean): a square or tall venue logo, the venueplay mark drops so the two are centred on
     # each other, on every TV screen: one helper, VPVenueLogo.alignMark in /app/vp-venuelogo.js.
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
