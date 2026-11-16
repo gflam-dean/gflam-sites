@@ -836,6 +836,8 @@
 <!-- The sign-in page's mobile rules, one copy (VPAboutYou.mobileE164), for Change mobile on a login (INBOX 138). It draws nothing here. -->
 <script src="vp-about-you.js"></script>
 <script src="vp-logins-hq.js"></script>
+<!-- Rename venue: the display name only, never the TV address or join code (vp-rename-hq.js, Jobs sheet "HQ Rename venue button"). Owner only. -->
+<script src="vp-rename-hq.js"></script>
 <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): the monthly report for every venue and the news. HQ only; started by hq.html below. -->
 <script src="vp-reports-hq.js"></script>
 <!-- HQ > Journey (vp-journey-hq.js, INBOX 413): HQ only; started by hq.html below. -->
@@ -995,6 +997,7 @@
   function auditBestEffort(action, target, detail){ workerPost("/admin/audit", { action:action, target:target, detail:detail||{} }); }
   /* Remove a login: this page's own sign-in, questions and owner test, nothing of its own (vp-logins-hq.js). */
   if(window.VPLogins) window.VPLogins.init({ post:workerPost, ask:vpAsk, tell:vpTell, isOwner:function(){ return S.adminRole==="owner"; } });
+  if(window.VPRename) window.VPRename.init({ post:workerPost, ask:vpAsk, askText:vpAskText, tell:vpTell, isOwner:function(){ return S.adminRole==="owner"; } });
   /* HQ > Reports: this page's own sign-in, owner test and Show-test switch (vp-reports-hq.js). */
   if(window.VPJourney) window.VPJourney.init({ post:workerPost, canSee:function(){ return S.adminRole==="owner"||S.adminRole==="accounts"; } });
   if(window.VPReports) window.VPReports.init({ post:workerPost, isOwner:function(){ return S.adminRole==="owner"||S.adminRole==="accounts"; }, showTest:function(){ return !!S.showTest; } });
@@ -2490,7 +2493,9 @@
         (canBilling() ? '<button class="mini" data-signinlink="'+esc(v.id)+'">Send them a new sign-in link</button>' : '')+
         // Marks it ours. Off every count and chase list, still reachable under Test venues.
         '<button class="mini" data-testflag="'+esc(v.id)+'">'+(isTest(v)?"Not a test venue":"Mark as a test venue")+'</button>'+
-        '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
+        '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>'+
+        /* Rename venue: HQ Owner only, the display name only (vp-rename-hq.js). */
+        (window.VPRename ? window.VPRename.button(v) : '');
       if(canBilling()){
         /* SEPARATED, AND TYPED, NOT CLICKED. These two stop a venue trading. They sat
            in the same undifferentiated row as "Resend welcome", one click from a live
@@ -2750,6 +2755,8 @@
     if(sl){ hqSigninLink(sl.getAttribute("data-signinlink"), sl); return; }
     var dt=e.target.closest("button[data-details]");
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
+    var rnm=e.target.closest("button[data-rename]");
+    if(rnm){ var rv=venueById(rnm.getAttribute("data-rename")); if(rv && window.VPRename) window.VPRename.rename(rv).then(function(r){ if(r){ renderStats(); renderVenues(); vpTell("Renamed. "+r.from+" is now "+r.name+"."); } }); return; }
     var dc=e.target.closest("button[data-compliance]");
     if(dc){ loadCompliance(dc.getAttribute("data-compliance"), dc); return; }
     var sh=e.target.closest("button[data-scrhist]");

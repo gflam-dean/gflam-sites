@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 00:40 · cc3d43c9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 00:41 · 7b707239';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -471,6 +471,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-rename'    && typeof vpaHandleVenueRename === 'function')    return await vpaHandleVenueRename(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/permit-register-check' && typeof vpaHandlePermitRegisterCheck === 'function') return await vpaHandlePermitRegisterCheck(request, env, json);
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
@@ -9657,6 +9658,76 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
 
   return { ok: true, days: days, dry_run: dryRun, checked: venues.length,
            archived: archived, skipped: skipped };
+}
+
+/* POST /admin/venue-rename  {venue_id, name, confirm_same_name?}   (HQ OWNER ONLY)
+   HQ "Rename venue" (Jobs sheet "HQ Rename venue button", Dean 9 Nov 2026 after the Lunatic Hotel).
+   Changes the venue's DISPLAY NAME only: vp_venues.name, which every screen reads live (TV, phones,
+   consoles, paper cards, account page, emails, HQ). It NEVER touches the slug (the TV address) or
+   the join code, so no TV, QR, printed card or saved link stops working.
+   - HQ owner role only (not accounts, not support): a name is what a pub sees on its own TV.
+   - Another venue already called the same thing: refused until the caller confirms
+     (confirm_same_name), so two pubs are never made to look the same by accident.
+   - A one-venue account whose account name was the old venue name gets the new name too (the
+     card page and emails read venueplay_founding.venue_name). A multi-venue account's own name
+     is the owner's, not one pub's, and is left alone.
+   - AUDITED with the old and the new name. If the audit row cannot be written the rename is
+     put back and refused: a name change nobody can trace is not allowed. */
+function vpaCleanVenueName(raw) {
+  const s = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!s) return { error: 'Type the new venue name.' };
+  if (s.length > 120) return { error: 'That name is too long (120 characters at most).' };
+  if (/[<>]/.test(s)) return { error: 'A venue name cannot have < or > in it.' };
+  return { name: s };
+}
+async function vpaHandleVenueRename(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const c = vpaCleanVenueName(b.name);
+  if (c.error) return json({ error: c.error }, 400);
+  const name = c.name;
+
+  const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,join_code,founding_id&limit=1');
+  const v = rows && rows[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  const oldName = String(v.name || '');
+  if (oldName === name) return json({ error: 'That is already its name.' }, 400);
+
+  /* Same name as another venue (any letter case): ask first. ilike with the wildcards escaped,
+     so a name with % or _ in it matches only itself. */
+  const pat = name.replace(/[\\%_*]/g, function (ch) { return '\\' + ch; });
+  const same = ((await vpaSelect(env, 'vp_venues', 'name=ilike.' + encodeURIComponent(pat) + '&id=neq.' + encodeURIComponent(venueId) + '&select=id,name,slug&limit=5')) || [])
+    .filter(function (o) { return String(o.name || '').toLowerCase() === name.toLowerCase(); });
+  if (same.length && b.confirm_same_name !== true) {
+    return json({ needs_confirm: true, same_name: same.map(function (o) { return { id: o.id, name: o.name, slug: o.slug }; }) }, 409);
+  }
+
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { name: name });
+
+  let account = null;
+  if (v.founding_id) {
+    const acc = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,venue_name&limit=1')) || [])[0];
+    const sibs = (await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(v.founding_id) + '&select=id&limit=2')) || [];
+    if (acc && sibs.length === 1 && String(acc.venue_name || '').trim().toLowerCase() === oldName.trim().toLowerCase()) {
+      await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id), { venue_name: name });
+      account = { id: acc.id, from: acc.venue_name || '', to: name };
+    }
+  }
+
+  const audited = await vpaAudit(env, actor, 'venue_renamed', 'venue:' + venueId, {
+    from: oldName, to: name, slug: v.slug || null, account_renamed: !!account, same_name_confirmed: same.length > 0,
+  });
+  if (!audited) {
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { name: oldName });
+    if (account) await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(account.id), { venue_name: account.from });
+    return json({ error: 'The change could not be recorded, so the name was put back. Nothing changed. Try again.' }, 500);
+  }
+  return json({ ok: true, venue_id: venueId, from: oldName, name: name, slug: v.slug || null, account_renamed: !!account });
 }
 
 async function vpaHandleVenueStatus(request, env, json) {

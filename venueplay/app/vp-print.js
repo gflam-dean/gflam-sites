@@ -108,6 +108,15 @@
     '.pcc .nameln{display:flex;align-items:flex-end;gap:2mm;font-weight:700;font-size:9pt;margin-top:2.6mm}.pcc .nameln span{flex:1;border-bottom:.3mm solid #0A0A0B;height:1em}' +
     '.pcc .scanbox{align-self:stretch;border-left:var(--fw) solid #0A0A0B;display:flex;align-items:center;gap:3mm;padding:3mm 3.4mm;background:#F3F3F5}' +
     '.pcc .foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-top:3mm;padding:0 var(--rad)}';
+  /* PORTRAIT, ONE CARD TO A PAGE (Jobs sheet "Musical bingo paper cards: landscape A4", 16 Nov 2026). Landscape, two cards side
+     by side, stays the default. For a venue that prints portrait, o.layout 'portrait' prints each card on an A4 portrait page of
+     its own: the same card scaled up by the square root of 2 (an A5 card fills an A4 page exactly), nothing cut off, no cut
+     line. Its own @page, added after CARD_CSS so it wins. NOT a print media query on orientation: Chrome judges that against
+     the printer's default paper, not this sheet's page size, and it broke the landscape print in the test (four pages). */
+  var PORTRAIT_CSS =
+    '@page{size:210mm 297mm;margin:0}' +
+    '.pcs.pt{width:210mm;height:297mm}' +
+    '.pcs.pt .pcc.L{left:0;zoom:1.414;padding:10mm 10mm 7mm}';
   /* The pub's logo box in the footer (/app/vp-paper-style.js): every shape of logo fits it, contained. */
   var LOGO_BOX = { w: 52, h: 17 };   /* INBOX 392 (14 Nov): was 42 x 12, the bottom of the sheet had spare room */
 
@@ -144,7 +153,8 @@
   function playlistSize(name) { var n = String(name || '').length; return n > 22 ? 17 : (n > 16 ? 20 : (n > 11 ? 23 : 25)); }
 
   /* cards: [{no, titles:[25 strings, '' at the FREE centre], code}] from /host/paper/print (titles already carry the bracket
-     rule). o: {venue, playlist, printedLabel, logo:{url,dark}|null}. Two cards to an A4 landscape sheet. */
+     rule). o: {venue, playlist, printedLabel, logo:{url,dark}|null, layout?:'portrait'}. Two cards to an A4 landscape sheet, or one
+     card to an A4 portrait page with layout 'portrait'. */
   function musical(w, cards, o) {
     o = o || {};
     var origin = '';
@@ -173,13 +183,14 @@
         '<div class="gwrap"><div class="pcgrid">' + g + '</div></div>' +
         '<div class="pcstrip"><div style="flex:1;padding:3mm 4mm"><div class="pchow">' + how + '</div><div class="nameln">Name <span></span></div></div>' + qr + '</div></div>' + foot + '</div>';
     }
-    var html = '';
-    for (var i = 0; i < cards.length; i += 2) {
+    var html = '', portrait = o.layout === 'portrait';
+    if (portrait) for (var k = 0; k < cards.length; k++) html += '<div class="pcs pt">' + one(cards[k], 'L') + '</div>';
+    else for (var i = 0; i < cards.length; i += 2) {
       var two = i + 1 < cards.length;
       html += '<div class="pcs' + (two ? '' : ' one') + '">' + one(cards[i], 'L') + (two ? one(cards[i + 1], 'R') + '<div class="pccut"></div><div class="pccutlbl">cut here</div>' : '') + '</div>';
     }
     return fill(w, 'Musical bingo paper cards', html, cards.length, 'card', {
-      css: PS.CSS + CARD_CSS, head: CARD_FONTS,
+      css: PS.CSS + CARD_CSS + (portrait ? PORTRAIT_CSS : ''), head: CARD_FONTS,
       ready: function (win) {
         var d = win.document, fonts = d.fonts && d.fonts.ready ? d.fonts.ready : Promise.resolve();
         var imgs = Array.prototype.slice.call(d.images || []).map(function (im) { return im.complete ? 0 : new Promise(function (r) { im.onload = im.onerror = r; }); });

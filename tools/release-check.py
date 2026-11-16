@@ -4305,6 +4305,12 @@ def local_checks(which):
              'test-paper-scan-screens.js',
              'a win leads with Confirm winner, every refusal says not to pay out, the lock says why a playlist cannot be switched', 20,
              'A host is told to pay a card that cannot win, or switches the playlist under paper cards on the tables'),
+            # Jobs sheet "HQ Rename venue button" (16 Nov 2026), branch fix/cards-rename-sun22. No migration: vp_venues.name and vp_admin_audit exist.
+            ('D441. HQ Rename venue changes the display name only, is HQ Owner only, asks before copying another venue\'s name, and is audited or undone',
+             'test-venue-rename.js',
+             'runs POST /admin/venue-rename through the billing Worker: accounts, support, a venue login and no login are refused with nothing written; the patch is the name only (never the slug or join code); the audit row holds the old and new name, and a failed audit puts the name back; another venue\'s name needs a confirm; a one-venue account named after the pub follows it, a multi-venue account does not; HQ shows the button to an Owner only and Cancel or No sends nothing', 34,
+             'A support login renaming a pub, a rename that changes the TV address and blanks the TV, two venues made to look the same by accident, '
+             'or a name change nobody can trace'),
             ('D215. Game sounds are per game and the host\'s switch: off until switched on, the three recorded sounds sit in their named slots, and the two paid picks have empty named slots',
              'test-game-sounds.js',
              'trivia, musical bingo and bingo each keep a Game sounds switch through the Worker (junk dropped, default Off), a slot plays nothing until its game is told ON, a phone needs a tap and the mute button, a demo page is silent', 34,
