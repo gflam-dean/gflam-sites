@@ -46,7 +46,8 @@ EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': 
 THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
 # The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
-NOTICE = {'version': 'vpn-2-16nov', 'text': "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay. A ticked box shares your details with that sender (venue / host) for news and offers.", 'link': 'Privacy policy', 'href': '/privacy'}
+NOTICE = {'version': 'vpn-3-16nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. A ticked box shares your details with that sender for news and offers.', 'href': '/privacy'}
+NOTICE['text'] = NOTICE['before'] + NOTICE['link'] + NOTICE['after']
 PRIV = os.path.expanduser('~/venue-enrich/reports/privacy-update-16nov/returning')
 try: os.makedirs(PRIV, exist_ok=True)
 except Exception: PRIV = ''
@@ -208,12 +209,12 @@ def phone(game, path, w, h):
         ok('N %s %s: a venue that collects nothing asks %s' % (game, size, ', '.join(want)), L.get('ids') == want, L.get('ids'))
         ok('N %s %s: no line saying the venue gets the details (only a ticked box shares them, Dean 16 Nov)' % (game, size), 'Your details go to' not in L.get('text', '') and 'go to the venue' not in L.get('text', ''), L.get('text'))
         ok('N %s %s: one screen, no scroll, Join on screen' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
-        ok('N %s %s: the first-game notice, once, with the Privacy policy link' % (game, size), NOTICE['text'] + ' Privacy policy' in L.get('text', '') and ask(sid, '!!document.querySelector("#vpJoinNotice a[href=\\"/privacy\\"]")'), L.get('text'))
+        ok('N %s %s: the first-game notice, once, its link on "venueplay\'s terms and privacy policy"' % (game, size), NOTICE['text'] in L.get('text', '') and ask(sid, '!!document.querySelector("#vpJoinNotice a[href=\\"/privacy\\"]")'), L.get('text'))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Alan', 'xFirst': 'Alan', 'xMobile': '0412 345 678'})
         ask(sid, 'document.getElementById("joinBtn").click(); true')
         got = joins(c)
         ok('J %s %s: the join sends the first name and mobile' % (game, size), bool(got) and got[0].get('first_name') == 'Alan' and got[0].get('mobile') == '0412 345 678', got)
-        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-2-16nov', got)
+        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-3-16nov', got)
         ok('J %s %s: the key the Worker hands back is kept on the phone' % (game, size), until(sid, 'localStorage.getItem("vpKnownKeys")===%s' % json.dumps(json.dumps([KEY])), 6), ask(sid, 'localStorage.getItem("vpKnownKeys")'))
     finally:
         B.close_tab(tid)
@@ -227,7 +228,7 @@ def phone(game, path, w, h):
         kb = knowns(c)
         ok('K %s %s: /join/known was asked with the key' % (game, size), bool(kb) and KEY in (kb[-1].get('keys') or []), kb)
         ok('K %s %s: no name, no hello, only a small "Not my details" link' % (game, size), 'Not my details' in L.get('text', '') and L.get('notme') and 'alan' not in L.get('text', '').lower() and 'welcome' not in L.get('text', '').lower(), [L.get('head'), L.get('text')])
-        ok('K %s %s: the notice does not show again' % (game, size), 'We keep a record' not in L.get('text', ''), L.get('text'))
+        ok('K %s %s: the notice does not show again' % (game, size), 'A ticked box shares' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: no box for anything held (%s)' % (game, size, 'the team name only' if team else 'none at all'), L.get('ids') == (['nameIn'] if team else []), L.get('ids'))
         ok('K %s %s: no detail we hold anywhere on the screen (no number, no @)' % (game, size), '0412' not in L.get('text', '') and '@' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: one screen, no scroll' % (game, size), fits(L), L)
@@ -252,7 +253,8 @@ def phone(game, path, w, h):
     finally:
         B.close_tab(tid)
 
-    # T: everything asked, plus the three boxes (a visiting host)
+    # T: everything asked, plus the three boxes (a visiting host); a 667 px phone is not asked to fit all of that
+    if h < 700: return
     c = code('THR'); tid, sid = open_page(path + sep + 'room=' + c, w, h)
     try:
         until(sid, READY + ' && !!document.getElementById("xConsent3")'); time.sleep(0.6)
@@ -291,7 +293,7 @@ def returning(game, path, w, h):
             ok('R %s %s %s: no name, never a number, an address or a venue played at; only "Not my details"' % (game, size, tag), 'Not my details' in t and 'grace' not in t.lower() and '04' not in t and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
             ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
-            ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'We keep a record' not in t, t)
+            ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'A ticked box shares' not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RNT':
                 ask(sid, 'document.getElementById("vpKnownNotMe").click(); true'); time.sleep(0.5)
@@ -315,7 +317,7 @@ if __name__ == '__main__':
     BASE = 'http://127.0.0.1:%d' % srv.server_address[1]
     B = VL.Browser()
     try:
-        for w, h in ((375, 812), (390, 844)):
+        for w, h in ((375, 667), (375, 812), (390, 844)):
             for g, p in PAGES:
                 phone(g, p, w, h)
         for w, h in ((375, 667), (390, 844)):

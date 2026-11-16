@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 15:45 · cde65373';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 15:58 · b7b6a7d6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2436,7 +2436,8 @@ function gatedCapture(cfg, b) {
 const JOIN_MOBILE_REQUIRED = false;
 /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026, through main). ONE constant: the words are being drafted for the lawyer; swap the
    text and bump the version and every player sees the new one once. The phone draws exactly this text, with the link. */
-const JOIN_NOTICE = { version: 'vpn-2-16nov', text: "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay. A ticked box shares your details with that sender (venue / host) for news and offers.", link: 'Privacy policy', href: '/privacy' };
+const JOIN_NOTICE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
+JOIN_NOTICE.text = JOIN_NOTICE.before + JOIN_NOTICE.link + JOIN_NOTICE.after;   // the whole line as a person reads it
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
 const CONSENT_THREE_VERSION = 'vpc-4-22nov';

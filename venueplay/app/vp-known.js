@@ -125,17 +125,20 @@
     /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026): one line, once per player; the Worker sends it until the phone's row says
        this version was seen, and the join records it (notice_version). Words and link from the Worker's one constant. */
     _notice = null;
-    var nt = info && info.notice && typeof info.notice === "object" && info.notice.text ? info.notice : null;
+    var nt = info && info.notice && typeof info.notice === "object" && (info.notice.text || info.notice.link) ? info.notice : null;
     if (o.box && nt) {
       var np = d.createElement("p");
       np.id = "vpJoinNotice"; np.className = "collectnote";
       np.setAttribute("style", "margin:10px 0 0;font-size:13px;line-height:1.4;color:#9A9AA4;text-align:left");
-      np.appendChild(d.createTextNode(String(nt.text) + " "));
+      /* the link sits inside the line (Dean 16 Nov 2026: "venueplay's terms and privacy policy" is the link) */
+      var split = typeof nt.before === "string" && typeof nt.after === "string";
+      np.appendChild(d.createTextNode(split ? nt.before : String(nt.text) + " "));
       var na = d.createElement("a");
       na.href = /^\/[a-z0-9\/-]*$/.test(String(nt.href || "")) ? String(nt.href) : "/privacy"; na.target = "_blank"; na.rel = "noopener";
       na.setAttribute("style", "color:#fff;text-decoration:underline");
       na.textContent = String(nt.link || "Privacy policy");
       np.appendChild(na);
+      if (split) np.appendChild(d.createTextNode(nt.after));
       o.box.appendChild(np);
       _notice = String(nt.version || "");
     }

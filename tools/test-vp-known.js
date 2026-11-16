@@ -185,13 +185,14 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('single mode: no answers object (the one tick, as today)', VPConsent.answers() === null && !('consent' in VPKnown.capture({})));
 
   print('5b. THE FIRST-GAME NOTICE');
-  var NOTE = { version: 'vpn-2-16nov', text: "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay. A ticked box shares your details with that sender (venue / host) for news and offers.", link: 'Privacy policy', href: '/privacy' };
+  var NOTE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
   var np = document.getElementById('vpJoinNotice');
-  show('the notice is drawn: the Worker\'s words then the Privacy policy link', np && np.textContent === NOTE.text + ' Privacy policy' && np.querySelector('a').href === '/privacy', np && np.textContent);
+  show('the notice reads, word for word: "By playing you agree to venueplay\'s terms and privacy policy. A ticked box shares your details with that sender for news and offers."', np && np.textContent === "By playing you agree to venueplay's terms and privacy policy. A ticked box shares your details with that sender for news and offers.", np && np.textContent);
+  show('...with "venueplay\'s terms and privacy policy" as the link, to the privacy page', np && np.querySelector('a').textContent === "venueplay's terms and privacy policy" && np.querySelector('a').href === '/privacy');
   cap = VPKnown.capture({ first_name: 'Sam' });
-  show('the join says which notice it showed', cap.notice_version === 'vpn-2-16nov', cap);
+  show('the join says which notice it showed', cap.notice_version === 'vpn-3-16nov', cap);
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, notice: null }, kind: 'person', nameIn: P.nameIn });
   show('no notice from the Worker (seen already): none drawn, none claimed', !document.getElementById('vpJoinNotice') && !('notice_version' in VPKnown.capture({})));
