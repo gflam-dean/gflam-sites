@@ -68,6 +68,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         if u.path.startswith('/__worker'):
             return self.send(404, '{}', 'application/json')
+        if u.path.startswith('/__api'):     # no billing Worker here: "not reachable", never the live one (tools/nolive.py)
+            return self.send(404, '{"error":"not reachable in this test"}', 'application/json')
         if u.path == '/__fake/supabase.js':
             pre = 'window.__FAKE_DB={};window.__FAKE_SIGNED_IN=false;window.__FAKE_UID="x";\n'
             return self.send(200, pre + io.open(os.path.join(ROOT, 'tools/browser-rig/fake-supabase.js'), encoding='utf-8').read(), 'application/javascript')
@@ -86,6 +88,8 @@ class Site(http.server.BaseHTTPRequestHandler):
             t = t.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js')
             t = t.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
             t = t.replace('https://game.venueplay.com.au', '/__worker')
+            # The demo pages asked the LIVE billing Worker for /trusted-logos (demo-pairs-in-chrome, 16 Nov 2026).
+            t = t.replace('https://api.venueplay.com.au', '/__api')
             return self.send(200, t, {'.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json'}[ext] + '; charset=utf-8')
         ct = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
         return self.send(200, open(f, 'rb').read(), ct)
