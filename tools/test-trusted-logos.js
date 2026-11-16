@@ -64,6 +64,10 @@ function world() {
   venue('Test Lounge', { slug: 'lounge-two' });
   venue('Gone Hotel', { status: 'archived' });
   venue('Suspended Arms', { status: 'suspended' });
+  var D = 86400000;
+  venue('Left Recently Hotel', { status: 'suspended', closed_at: new Date(Date.now() - 89 * D).toISOString() });
+  venue('Left Long Ago Hotel', { status: 'suspended', closed_at: new Date(Date.now() - 91 * D).toISOString() });
+  venue('Left Archived Group Pub', { status: 'archived', closed_at: new Date(Date.now() - 30 * D).toISOString() });
   venue('Not Chosen Hotel', { show_logo_on_site: false });
   venue('Foreign Logo Hotel', {}, {}, 'https://evil.example/logo.png');
   venue('Borrowed Logo Hotel', {}, {}, OUR + 'venue-logos/' + V(1) + '/' + '1'.repeat(64) + '.png');   // venue 1's folder
@@ -79,16 +83,19 @@ function world() {
   var logos = (r.body && r.body.logos) || [];
   var names = logos.map(function (l) { return l.name; });
   check('200 with a list', r.status === 200 && Array.isArray(r.body.logos), r);
-  var want = GOOD.concat(['Old Ad Bucket Logo']).sort();
-  check('exactly the six good venues and the one whose logo predates the logo bucket, in name order', JSON.stringify(names) === JSON.stringify(want), names);
+  var want = GOOD.concat(['Old Ad Bucket Logo', 'Left Recently Hotel', 'Left Archived Group Pub']).sort();
+  check('exactly the six good venues, the one whose logo predates the logo bucket and the two that left under 90 days ago, in name order', JSON.stringify(names) === JSON.stringify(want), names);
   check('each entry is a name and a logo address and NOTHING else (no id, slug, plan or contact)', logos.every(function (l) { return JSON.stringify(Object.keys(l).sort()) === '["logo_url","name"]'; }), logos[0]);
   check('HQ chose a venue on a 1-player plan (The Mini Bar\'s case): it is shown', names.indexOf('Ferry RSL') !== -1, names);
   check('HQ chose a venue whose account never paid: it is shown (HQ decides now, not the meter)', names.indexOf('Coral Hotel') !== -1, names);
   check('HQ chose a comp account: it is shown', names.indexOf('Dock Inn') !== -1, names);
   check('HQ\'s old hide_from_trusted flag no longer overrules HQ\'s new switch', names.indexOf('Esplanade Bar') !== -1, names);
+  check('a venue that left 89 days ago is still shown, single venue', names.indexOf('Left Recently Hotel') !== -1, names);
+  check('an archived group venue that left 30 days ago is still shown', names.indexOf('Left Archived Group Pub') !== -1, names);
   [['Test Alpha', 'test-alpha'], ['Test Bravo', 'test-bravo'], ['Charlie Testing Rooms', 'test-charlie (by its slug, whatever its name)'],
    ['Test Lounge', 'a venue named "Test ..." (by its name, whatever its slug)'],
    ['Gone Hotel', 'an archived venue'], ['Suspended Arms', 'a suspended venue'],
+   ['Left Long Ago Hotel', 'a venue that left 91 days ago (comes off at 90)'],
    ['Not Chosen Hotel', 'a venue HQ has not switched on'],
    ['Foreign Logo Hotel', 'a logo address outside our storage'], ['Borrowed Logo Hotel', 'a logo in ANOTHER venue\'s folder'],
    ['No Logo Hotel', 'a venue with no logo (Tugun Bowls Club today)']].forEach(function (p) {
@@ -96,7 +103,7 @@ function world() {
   });
   var asked = (globalThis.__asked || []).filter(function (u) { return u.indexOf('/rest/v1/vp_venues') !== -1; });
   check('the venue read asks the database for show_logo_on_site=true, so a missing switch can never mean yes',
-        asked.length >= 1 && asked.every(function (u) { return u.indexOf('show_logo_on_site=eq.true') !== -1 && u.indexOf('status=eq.active') !== -1; }), asked);
+        asked.length >= 1 && asked.every(function (u) { return u.indexOf('show_logo_on_site=eq.true') !== -1 && u.indexOf('status.eq.active') !== -1 && u.indexOf('closed_at.gte.') !== -1; }), asked);
   print('the Worker: when the database refuses the switch');
   world(); REFUSE_COLUMN = 'show_logo_on_site';
   r = await vpbTrustedLogosRoute(ENV, J);
@@ -106,6 +113,18 @@ function world() {
   check('a failed read of the logos shows nobody, never a half list', r.status === 200 && r.body.logos.length === 0, r.body);
   var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   check('the dispatcher answers GET /trusted-logos with no login', src.indexOf("if (request.method === 'GET' && path === '/trusted-logos') return await vpbTrustedLogosRoute(env, json);") !== -1);
+
+  print('Gflam Touring: a tour button saved without a leading slash is a root link (Search Console listed /rest/v1/drag-bingo-at-the-bowlo)');
+  ['touring/index.html', 'touring/current-tours.html'].forEach(function (p) {
+    var tsrc = readFile(p);
+    var m = tsrc.match(/function tcHref\(u\)\{[^\n]*\}/);
+    check(p + ' has tcHref', !!m);
+    if (!m) return;
+    var tcHref = eval('(' + m[0].replace('function tcHref', 'function') + ')');
+    check(p + ' a bare slug (as saved live today) gets a leading slash', tcHref('drag-bingo-at-the-bowlo') === '/drag-bingo-at-the-bowlo', tcHref('drag-bingo-at-the-bowlo'));
+    check(p + ' a root link, a full address and a hash are kept', tcHref('/a') === '/a' && tcHref('https://example.com/x') === 'https://example.com/x' && tcHref('#signup') === '#signup');
+    check(p + ' no button_link reaches an href raw', (tsrc.match(/href="\$\{esc\(c\.button_link\)\}"/g) || []).length === 0);
+  });
 
   print('the page: /app/vp-trusted.js');
   var made = [];

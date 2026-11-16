@@ -1528,7 +1528,7 @@
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
-  "checks": 48,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-try-demo-billing.js": {
