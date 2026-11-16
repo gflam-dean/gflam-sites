@@ -451,6 +451,7 @@
 <script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
+<script src="/app/vp-known.js"></script>   <!-- a known phone: never asked the same details twice at a venue (INBOX 416, 22 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
@@ -1222,7 +1223,9 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     if(P.token){ return Promise.resolve(); }
     var body={ code:P.room, name:P.name, pid:deviceId(), tokens:vpHeldTokens(P.room) };   // pid = billing/rejoin device key, see deviceId(); tokens prove a seat it already has (A1)
     if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
+    if(typeof VPKnown==="object") VPKnown.addTo(body);   // the keys this phone holds (INBOX 416)
     return playerPost("/join", body).then(function(r){
+      if(typeof VPKnown==="object") VPKnown.keep(r);    // a first join hands back this venue's key
       P.token=r.token; saveToken(P.room, P.token);
       applySnap(r.snapshot);
     });
@@ -1256,7 +1259,8 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
   }
   function loadJoinInfo(){
     if(!P.room) return;
-    playerPost("/join/info",{ code:P.room, ad:1 }).then(function(r){   // ad:1, the venue's slides for its ad too (4 Nov 2026)
+    /* with this phone's /join/known answer on it (r.known_info): a known phone at this venue (INBOX 416, /app/vp-known.js) */
+    (typeof VPKnown==="object" ? VPKnown.withInfo(playerPost("/join/info",{ code:P.room, ad:1 }), VP_GAME_API, P.room) : playerPost("/join/info",{ code:P.room, ad:1 })).then(function(r){   // ad:1, the venue's slides for its ad too (4 Nov 2026)
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
@@ -1268,46 +1272,49 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       if(P.joined && !$("vWait").classList.contains("hidden")) route();
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
-      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
-      var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
-      box.innerHTML=h;
-      /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
-         shared by all three phones. Not ticking it changes nothing about playing. */
-      if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
-      /* Collection notice. Australian privacy law wants people told what is being collected and
-         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
-         screen asked for last name, postcode, email and mobile with no notice and no link to the
-         policy at all, while the policy itself said capturing more than a name was a future
-         feature. */
-      /* Collection notice. Australian privacy law wants people told what is being collected and
-         who gets it AT THE POINT they are asked, not only in a policy page they never open. The new look
-         (Dean, 3 Nov 2026): "YOUR DETAILS", then "<venue> would like your details. They go to the venue.
-         Privacy", the link inline with the notice. */
-      var jn=$("joinNotice");
-      if(h){
-        var vn=(P.venueName||"").trim();
-        $("joinHead").textContent="Your details";
-        if(jn){
-          jn.textContent=(vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ";
-          var a=document.createElement("a");
-          a.href="/privacy"; a.target="_blank"; a.rel="noopener";
-          a.textContent="Privacy";
-          jn.appendChild(a);
-          jn.classList.remove("hidden");
+      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them.
+         A KNOWN PHONE (/app/vp-known.js, INBOX 416): "Welcome back, Alan", the name box filled and out of the way, and only the
+         boxes still missing. The consent is the one tick, or the three boxes when the Worker says so. */
+      /* Collection notice, AT THE POINT they are asked (Australian privacy law): "YOUR DETAILS", then who gets them and
+         why (INBOX 416 UPDATE 7: "Your details go to {account owner} to run tonight's game and contact winners."), the
+         Privacy link inline. The demo keeps its own words (its boxes stay optional). */
+      var details=function(h, info){
+        var jn=$("joinNotice"), kn=info && info.known;
+        if(h || kn){
+          var vn=((info && info.organiser) || P.venueName || "").trim();
+          if(!kn) $("joinHead").textContent="Your details";
+          if(jn){
+            jn.textContent=(r && r.demo) ? ((vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ")
+                                         : ((typeof VPKnown==="object") ? VPKnown.line(vn) : ("Your details go to "+(vn||"the venue you are playing at")+" to run tonight's game and contact winners. "));
+            var a=document.createElement("a");
+            a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+            a.textContent="Privacy";
+            jn.appendChild(a);
+            jn.classList.remove("hidden");
+          }
+        } else {
+          $("joinHead").textContent="Your name";
+          if(jn) jn.classList.add("hidden");
         }
-      } else {
-        $("joinHead").textContent="Your name";
-        if(jn) jn.classList.add("hidden");
+      };
+      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:(r && !r.demo) ? r.known_info : null, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Your details", after:details }); }
+      else {
+        var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
+        box.innerHTML=h;
+        if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
+        details(h, null);
       }
     }).catch(function(){});
   }
   function gatherCapture(nm){
-    var cap={ first_name:nm.slice(0,80) }, v;
+    /* the player's OWN first name (xFirst, INBOX 416), never a trivia team name, when the box is there */
+    var fn=$("xFirst"), cap={ first_name:((fn && fn.value.trim()) || nm).slice(0,80) }, v;
     if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
     if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers + 18+ tick ONLY, and only with a contact method (/app/vp-consent.js)
+    if(typeof VPKnown==="object") VPKnown.capture(cap);   // the three boxes' answers (INBOX 416)
     return cap;
   }
   // Fetch (or lazily be dealt) this player's 5x5 card for the running game.

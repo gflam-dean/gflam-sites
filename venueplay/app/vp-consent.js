@@ -70,16 +70,75 @@
 
   /* Append the one tick to the details box. opts.venueName names the venue in the words. */
   function render(box, collect, opts) {
-    _optEl = null;
+    _optEl = null; _three = null;
+    if (box && opts && opts.consent && renderThree(box, opts.consent)) return;   // the three boxes replace the one tick
+    if (opts && opts.known) return;   // a known phone is not asked the one tick again (it had it the first time)
     if (!box || !offered(collect)) return;
     var o = tick("xOptin", optinText(opts && opts.venueName));
     _optEl = o.querySelector("input");
     box.appendChild(o);
   }
 
-  /* Was consent given (offers from this venue, and 18 or over)? From the one tick ONLY, and only with
-     a way to reach them. */
+  /* ONE BOX PER SENDER, LIKE MOSHTIX (Dean, 14 Nov 2026, INBOX 416 UPDATES 4 and 7; Sunday 22 Nov). Drawn only when the
+     game Worker says so (POST /join/known answers consent.mode "three", which it does only with env.CONSENT_BLOCK set,
+     after Dean's lawyer has said yes to boxes that start ticked). Then, in place of the one tick:
+
+       Yes! Send me news and offers by SMS and email from:
+       [x] venueplay   [x] {venue}   [x] {host brand, only when a host who is not the account owner runs the game}
+       Each one uses your details under its own privacy policy. Unsubscribe any time.
+
+     PRE-TICKED, as the Moshtix checkout is (checked live 14 Nov). The parties and their names come from the Worker,
+     never from the page. answers() hands back { venueplay:bool, venue:bool, host:bool } for the boxes drawn; the Worker
+     keeps each as its own row (wording version THREE_VERSION) and the venue's box as the venue's own tick. A box the
+     player already answered is not drawn again (the Worker leaves it out). */
+  var THREE_VERSION = "vpc-4-22nov";
+  var THREE_HEAD = "Yes! Send me news and offers by SMS and email from:";
+  var THREE_NOTE = "Each one uses your details under its own privacy policy. Unsubscribe any time.";
+  var _three = null;   // [{ party, el }] while the block is on the page
+  function renderThree(box, consent) {
+    _three = null;
+    if (!box || !consent || consent.mode !== "three" || !consent.parties || !consent.parties.length) return false;
+    var wrap = document.createElement("div");
+    wrap.className = "vpc3"; wrap.id = "xConsent3";
+    var h = document.createElement("p");
+    h.className = "vpc3-head"; h.setAttribute("style", "margin:14px 0 0;font-size:15px;line-height:1.35;color:#fff;font-weight:700;text-align:left");
+    h.textContent = THREE_HEAD;
+    wrap.appendChild(h);
+    _three = [];
+    for (var i = 0; i < consent.parties.length && i < 3; i++) {
+      var pt = consent.parties[i] || {}, party = String(pt.party || "");
+      if (party !== "venueplay" && party !== "venue" && party !== "host") continue;
+      var nm = String(pt.name == null ? "" : pt.name).replace(/\s+/g, " ").trim() || (party === "venue" ? NO_NAME : party);
+      var l = tick("xC_" + party, nm);
+      l.setAttribute("style", "margin-top:8px");
+      var inp = l.querySelector("input");
+      inp.checked = true; inp.setAttribute("data-party", party);
+      wrap.appendChild(l);
+      _three.push({ party: party, el: inp });
+    }
+    var n = document.createElement("p");
+    n.className = "vpc3-note"; n.setAttribute("style", "margin:8px 0 0;font-size:13px;line-height:1.4;color:#9A9AA4;text-align:left");
+    n.textContent = THREE_NOTE;
+    wrap.appendChild(n);
+    box.appendChild(wrap);
+    return true;
+  }
+  function threeOn() { return !!(_three && _three.length && _three.some(function (t) { return onPage(t.el); })); }
+  /* The answers to the boxes on the page, or null when the block is not drawn. */
+  function answers() {
+    if (!threeOn()) return null;
+    var out = {};
+    _three.forEach(function (t) { if (onPage(t.el)) out[t.party] = t.el.checked === true; });
+    return out;
+  }
+
+  /* Was consent given (offers from this venue)? From the one tick, or the venue's box of the three, ONLY, and only
+     with a way to reach them. */
   function optedIn(cap) {
+    if (threeOn()) {
+      var v = _three.filter(function (t) { return t.party === "venue" && onPage(t.el); })[0];
+      return !!(v && v.el.checked === true && cap && (cap.email || cap.mobile));
+    }
     var o = _optEl;
     return !!(onPage(o) && o.checked === true && cap && (cap.email || cap.mobile));
   }
@@ -89,7 +148,8 @@
   function ageOk() { return true; }
   function age18Done() {}
 
-  root.VPConsent = { render: render, optedIn: optedIn, offered: offered, optinText: optinText,
+  root.VPConsent = { render: render, optedIn: optedIn, offered: offered, optinText: optinText, answers: answers, renderThree: renderThree,
+                     THREE_VERSION: THREE_VERSION, THREE_HEAD: THREE_HEAD, THREE_NOTE: THREE_NOTE,
                      VERSION: VERSION, PREVIOUS: PREVIOUS, OPTIN_HEAD: OPTIN_HEAD, OPTIN_TAIL: OPTIN_TAIL, NO_NAME: NO_NAME,
                      ageOk: ageOk, age18Done: age18Done, AGE_NEEDED: "" };
 })(typeof window !== "undefined" ? window : this);

@@ -29,6 +29,12 @@
    Nothing new is collected. No em dashes in anything a person reads. */
 (function (root) {
   "use strict";
+  /* FIRST NAME + MOBILE AT EVERY VENUE (Dean, 14 Nov 2026, INBOX 416 UPDATE 2; Sunday 22 Nov). The game Worker now says
+     first_name and mobile (with mobile_required) for every venue. The bingo and musical phones' #nameIn IS the first
+     name; trivia's #nameIn is a TEAM name, so trivia asks html(collect, { firstBox:true }) for its own first-name box
+     (xFirst). A required mobile box carries data-required and mobileError() refuses it empty. A known phone (/app/vp-known.js)
+     passes a collect with only the fields still missing, so a returning player sees no box for what is already held. */
+  var FIRST = { key: "first_name", id: "xFirst", type: "text", ph: "Your first name", name: "given-name", ac: "given-name", ml: 40 };
   var BOXES = [
     { key: "last_name", id: "xLast", type: "text", ph: "Last name", name: "family-name", ac: "family-name", ml: 40 },
     { key: "postcode", id: "xPost", type: "text", ph: "Postcode", name: "postal-code", ac: "postal-code", ml: 4, im: "numeric", pattern: "[0-9]*" },
@@ -36,16 +42,17 @@
     { key: "mobile", id: "xMobile", type: "tel", ph: "Mobile", name: "tel", ac: "tel", ml: 16, im: "tel" }
   ];
 
-  function box(b) {
+  function box(b, req) {
     return '<div class="field"><input type="' + b.type + '" id="' + b.id + '" name="' + b.name + '" placeholder="' + b.ph +
       '" aria-label="' + b.ph + '" autocomplete="' + b.ac + '" maxlength="' + b.ml + '"' +
-      (b.im ? ' inputmode="' + b.im + '"' : "") + (b.pattern ? ' pattern="' + b.pattern + '"' : "") + '></div>';
+      (b.im ? ' inputmode="' + b.im + '"' : "") + (b.pattern ? ' pattern="' + b.pattern + '"' : "") + (req ? ' data-required="1"' : "") + '></div>';
   }
 
   /* The boxes the venue asks for, in the order the phones always showed them. */
-  function html(collect) {
+  function html(collect, opts) {
     var h = "";
-    for (var i = 0; i < BOXES.length; i++) if (collect && collect[BOXES[i].key]) h += box(BOXES[i]);
+    if (collect && collect.first_name && opts && opts.firstBox) h += box(FIRST);
+    for (var i = 0; i < BOXES.length; i++) if (collect && collect[BOXES[i].key]) h += box(BOXES[i], BOXES[i].key === "mobile" && collect.mobile_required === true);
     return h;
   }
 
@@ -100,11 +107,13 @@
   }
   /* What to say when the mobile box holds something that is not a mobile; "" when it is fine or empty (it is optional). */
   var MOBILE_WRONG = "That mobile number doesn\u2019t look right. An Australian mobile starts 04 and has 10 digits; a New Zealand one starts 02.";
+  var MOBILE_NEEDED = "Pop your mobile in, so you can be told if you win.";
   function mobileError() {
     var b = document.getElementById("xMobile"); if (!b) return "";
     var v = String(b.value || "").trim();
+    if (!v && b.getAttribute && b.getAttribute("data-required") === "1") return MOBILE_NEEDED;
     return (v && !mobile(v)) ? MOBILE_WRONG : "";
   }
 
-  root.VPDetails = { wire: wire, html: html, mobile: mobile, mobileError: mobileError, MOBILE_WRONG: MOBILE_WRONG };
+  root.VPDetails = { wire: wire, html: html, mobile: mobile, mobileError: mobileError, MOBILE_WRONG: MOBILE_WRONG, MOBILE_NEEDED: MOBILE_NEEDED };
 })(typeof window !== "undefined" ? window : this);

@@ -80,7 +80,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var s1 = await open();
   var ji = await call(handleJoinInfo, { code: s1.join_code, fresh: 1 });
   var c = ji.body.collect || {};
-  show('a venue that collects nothing: /join/info asks first name and mobile, mobile required', c.first_name === true && c.mobile === true && c.mobile_required === true && !c.email && !c.marketing_optin, JSON.stringify(c));
+  show('a venue that collects nothing: /join/info asks first name and mobile (mobile not required until Dean says)', c.first_name === true && c.mobile === true && c.mobile_required === false && !c.email && !c.marketing_optin, JSON.stringify(c));
   var j = await call(handleJoin, { code: s1.join_code, name: 'Quiz Kids', pid: pid(), first_name: 'Alan', mobile: '0412 345 678' });
   var p = lastPlayer();
   show('/join keeps the first name and the mobile there, the mobile in the one form +614xxxxxxxx', j.status === 200 && p.first_name === 'Alan' && p.mobile === '+61412345678', JSON.stringify(p));
@@ -190,6 +190,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   show('the venue box unticked: the venue\'s own marketing tick is NOT on the player row', lastPlayer().marketing_optin !== true, JSON.stringify(lastPlayer()));
   jk = await call(handleJoinKnown, { code: sh.join_code, keys: [KEY] });
   show('a known phone that answered every box is not asked again', jk.body.consent.parties.length === 0, JSON.stringify(jk.body.consent));
+  show('...but every box is there for Not me (consent.all), names only', jk.body.consent.all && jk.body.consent.all.length === 3 && jk.body.consent.all[2].name === 'Quiz Masters Co' && JSON.stringify(jk.body.consent.all).indexOf('u-host') === -1, JSON.stringify(jk.body.consent.all));
   close(sh);
   STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' };
   DB.vp_venue_staff.push({ id: '5a5a5a5a-0000-4000-8000-000000000022', venue_id: VENUE, role: 'host', auth_user_id: 'u-host2', hosted_by: { musical: true } });

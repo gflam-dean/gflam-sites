@@ -1963,7 +1963,8 @@ async function joinInfoLookup(env, code, fresh) {
       demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: true, mobile: true, marketing_optin: true } }, venueId: venueId };
   }
   /* FIRST NAME + MOBILE AT EVERY VENUE (INBOX 416 UPDATE 2, Dean 14 Nov 2026): asked of every player, whatever the
-     venue's switches; the mobile must be given (mobile_required), as on Coaster Trivia. /join keeps both (joinCapture).
+     venue's switches. /join keeps both (joinCapture). mobile_required (as on Coaster Trivia) is OFF for the games until
+     Dean says so: a room that cannot join without a mobile is a night that stops (the phones honour it when it is on).
      A known phone is told what is still missing by POST /join/known, never here: this answer is cached per code. */
   return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, paper_reason: paperReason, age_gate: ageGate, collect: {
     first_name: true,
@@ -1971,7 +1972,7 @@ async function joinInfoLookup(env, code, fresh) {
     postcode: !!cfg.collect_postcode,
     email: !!cfg.collect_email,
     mobile: true,
-    mobile_required: true,
+    mobile_required: JOIN_MOBILE_REQUIRED,
     marketing_optin: !!cfg.collect_marketing_optin,
   }, ...joinNights(cfg.setup_answers) }, venueId: venueId };
 }
@@ -2425,6 +2426,8 @@ function gatedCapture(cfg, b) {
  *   - Service messages (a win, a change to a game) never need a box (UPDATE 5): nothing here gates them.
  * Fails OPEN to today's behaviour: before migration 202 every read answers "not known" and nothing is written.
  * ===================================================================== */
+/* Dean's call (INBOX 416 decision): true makes the games' mobile box required, as Coaster Trivia's is. */
+const JOIN_MOBILE_REQUIRED = false;
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
 const CONSENT_THREE_VERSION = 'vpc-4-22nov';
@@ -2593,6 +2596,12 @@ async function handleJoinKnown(request, env, json) {
   if (consentMode(env) === 'three') {
     const cp = await consentParties(env, session, venueName, k && k.row.id);
     consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => ({ party: p.party, name: p.name })) };
+    /* every box this game has, for "Not me" (someone else on this phone answers them all) */
+    if (k) {
+      const all = [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: venueName || 'this venue' }];
+      if (cp.host) all.push({ party: 'host', name: cp.host.name });
+      consent.all = all;
+    }
   }
   return json({ known: known, consent: consent, organiser: venueName });
 }

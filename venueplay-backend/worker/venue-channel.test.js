@@ -116,6 +116,7 @@ var env72 = { SUPABASE_URL: 'https://db' };
 eval(lift('fnvVenueCode'));
 eval(liftLine(/^let _vcMap = null[^\n]*/m));
 eval(liftLine(/^let _vcDupes[^\n]*/m));
+eval(liftLine(/^const JOIN_MOBILE_REQUIRED = [^\n]*/m));   // INBOX 416: the games' mobile box required or not (joinInfoLookup reads it)
 eval(liftLine(/^const AMBIGUOUS[^\n]*/m));
 eval(lift('refreshVenueCodes'));
 eval(lift('venueByCode'));
