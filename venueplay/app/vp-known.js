@@ -128,7 +128,7 @@
     var nt = info && info.notice && typeof info.notice === "object" && (info.notice.text || info.notice.link) ? info.notice : null;
     if (o.box && nt) {
       var np = d.createElement("p");
-      np.id = "vpJoinNotice"; np.className = "collectnote";
+      np.id = "vpJoinNotice"; np.className = "vp-joinnote";   // its own class: the bingo page makes .collectnote links white
       np.setAttribute("style", "margin:10px 0 0;font-size:13px;line-height:1.4;color:#9A9AA4;text-align:left");
       /* the link sits inside the line (Dean 16 Nov 2026: "venueplay's terms and privacy policy" is the link) */
       var split = typeof nt.before === "string" && typeof nt.after === "string";
