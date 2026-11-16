@@ -77,6 +77,43 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 16 Nov 2026 (INBOX 414): the welcome lands in the inbox, tools/test-welcome-inbox.js
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      html: html, text: helpPlainFromHtml(html), headers: await vpUnsubHeaders(env, email, 'prospect-welcome') };",
+     '      html: html, text: helpPlainFromHtml(html) };',
+     'the prospect welcome goes without List-Unsubscribe, so no mail app shows its own Unsubscribe button'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    const msg = { from: vpaProspectFrom(o.senderName, o.senderEmail), reply_to: VPA_PROSPECT_REPLY_TO, to: [email],',
+     "    const msg = { from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email],",
+     'the welcome comes from plain "venueplay", a stranger, not the name they met in the cold thread'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "|| first.toLowerCase() === 'dean') return VPA_PROSPECT_FROM;",
+     ') return VPA_PROSPECT_FROM;',
+     "a welcome from one of Dean's boxes says Dean at venueplay on the From line"),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!first || !/^[A-Za-z][A-Za-z'-]{0,19}$/.test(first) ||",
+     '  if (!first ||',
+     'a name that is not plain letters reaches the From line'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (stopped !== false) return { ok: false, reason: stopped ? 'unsubscribed' : 'unsub_unread', to: email };",
+     "    if (stopped === true) return { ok: false, reason: 'unsubscribed', to: email };",
+     'a nudge goes when the unsubscribe list cannot be read'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    try { stopped = await vpUnsubBlocks(env, email); } catch (_) { stopped = null; }',
+     '    try { stopped = false; } catch (_) { stopped = null; }',
+     'an unsubscribed prospect still gets the automatic nudge'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge')); } catch (_) { sentN = false; }",
+     'VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }',
+     'the nudge goes without List-Unsubscribe'),
+    ('test-welcome-inbox.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '        + \'" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a> from reminders like this one.\');',
+     '        + \'">x</a>\');',
+     'the nudge has no Unsubscribe link in its footer'),
+    ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "        headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });",
+     '        }) });',
+     'the card reminders go without List-Unsubscribe'),
     # ---- 16 Nov 2026 (421 gap 2): THE CANARY NIGHT, tools/canary-night.py + release.py step 4c, was 3c (canary-night.test.py)
     ('canary-night.test.py', 'tools/canary-night.py',
      "        if venue_slug not in ALLOW:",
@@ -14060,8 +14097,8 @@ MUTATIONS = [
      ": site + '/app/?signin=email';",
      'the welcome with no one-click link opens the email-code sign-in again'),
     ('test-phone-signin.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '    const msg = { from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email],',
-     '    const msg = { from: VPA_PROSPECT_FROM, reply_to: o.senderEmail || VPA_PROSPECT_REPLY_TO, to: [email],',
+     '    const msg = { from: vpaProspectFrom(o.senderName, o.senderEmail), reply_to: VPA_PROSPECT_REPLY_TO, to: [email],',
+     '    const msg = { from: vpaProspectFrom(o.senderName, o.senderEmail), reply_to: o.senderEmail || VPA_PROSPECT_REPLY_TO, to: [email],',
      'a prospect\'s replies go to a cold mailbox instead of hello@ (Dean: "it all should come from hello")'),
     ('test-phone-signin.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if (!m || email.length > 120 || VPA_OUR_MAIL_DOMAINS.indexOf(m[1]) === -1) return",
@@ -14359,8 +14396,8 @@ MUTATIONS = [
      'HQ is told to ring a prospect who said no'),
     # A prospect's free month, its reminders and the pause (Dean, 29 Oct 2026; migration 127), branch feature/prospects-tab.
     ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     "from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });",
-     "from: VPA_PROSPECT_FROM, reply_to: 'support@venueplay.com.au', to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });",
+     "from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),\n        headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });",
+     "from: VPA_PROSPECT_FROM, reply_to: 'support@venueplay.com.au', to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),\n        headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });",
      'a card reminder\'s reply goes to support@, not hello@ where the welcome\'s did'),
     ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "    .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder",
@@ -26016,6 +26053,11 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    # 16 Nov 2026 (INBOX 414): the D414W gate line, proven row by row under its suite's name.
+    'runs the billing Worker: the prospect welcome comes from the name they met':
+        'its subject is the suite tools/test-welcome-inbox.js itself, proven row by row under that suite\'s own name (8 mutations: the welcome\'s '
+        'List-Unsubscribe, the named From, the Dean and plain-name guards, the nudge\'s unsubscribe refusal both ways, its header and its footer link). '
+        'Proving it again by label would run the whole gate once per mutation.',
     # 15 Nov 2026 (merge agent, T17): the D412 and D413 gate lines came in with 412 without an entry here.
     'runs the billing Worker: a blank name, a landline or a blank venue refused':
         'its subject is the suite tools/test-quick-start.js itself, proven row by row under that suite\'s own name (27 mutations in the table: '

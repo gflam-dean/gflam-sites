@@ -388,7 +388,7 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   var pr = await vpaAutopilotProspect(auto(Object.assign({ sender_name: 'Harry', sender_email: 'Harry@venueplay.online' }, BASE)), ENV, J);
   var wm = sent[0] || {}, wtxt = visibleText(wm.html);
   check('the autopilot with sender_name and sender_email: set up, ONE welcome', pr.status === 200 && pr.body.ok === true && sent.length === 1, pr.body);
-  check('it is FROM venueplay hello@ and replies go to hello@venueplay.com.au, never Harry\'s cold mailbox', wm.from === 'venueplay <hello@send.venueplay.com.au>' && wm.reply_to === 'hello@venueplay.com.au' &&
+  check('it is FROM hello@ under the name they met ("Harry at venueplay", INBOX 414) and replies go to hello@venueplay.com.au, never Harry\'s cold mailbox', wm.from === 'Harry at venueplay <hello@send.venueplay.com.au>' && wm.reply_to === 'hello@venueplay.com.au' &&
     JSON.stringify(wm).indexOf('harry@venueplay.online') === -1, [wm.from, wm.reply_to]);
   check('signed "Cheers, Harry", then "the venueplay team", then venueplay.com.au', signoffOf(wm.html) === 'Cheers, Harry the venueplay team venueplay.com.au', signoffOf(wm.html));
   check('no Dean, no Gflam Group line and no phone in the sign-off, and no em dash anywhere', !/Dean|Gflam|\d{4} ?\d{3}/.test(signoffOf(wm.html)) && !/[\u2014\u2013]/.test(wtxt), signoffOf(wm.html));
