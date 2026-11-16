@@ -396,6 +396,17 @@
       var bd = el("div", "vpds-board", c.world); bd.style.width = W + "px"; bd.style.height = H + "px"; bd.style.top = (members ? 160 : 168) + "px";
       [[18, 18], [W - 40, 18], [18, H - 40], [W - 40, H - 40]].forEach(function (p) { var s = el("div", "vpds-screw", bd); s.style.left = p[0] + "px"; s.style.top = p[1] + "px"; });
       var row = el("div", "vpds-row", bd); row.style.left = (W - rowW) / 2 + "px"; row.style.top = pad0 + "px"; row.style.display = "flex";
+      /* THE NAME ROW MUST SHOW WHOLE LETTERS AT ANY LENGTH (INBOX 426 item 6, 16 Nov 2026). It was 96 px type lifted 17 px, so the caps rode
+         the top of the row, the seam sliced the foot of the letters and the descenders (g, j, y) had no room; and a long name ran past the
+         flap's sides. Now the type is 88 px, centred on the seam like the digits (line-height is the row's height), and a name wider than
+         the row steps down in size until it fits. */
+      var meas = document.createElement("canvas").getContext("2d");
+      function fitFs(txt, w, fs) {
+        if (!txt || !meas) return fs;
+        meas.font = "700 " + fs + "px 'Hanken Grotesk',sans-serif";
+        var tw = meas.measureText(txt).width, room = w - 56;
+        return tw > room ? Math.max(30, Math.floor(fs * room / tw)) : fs;
+      }
       function makeMod(parent, w, h, fs, anton, dy) {
         var gap = Math.round(h * 0.012) + 2, hh = (h - gap) / 2;
         var m = el("div", "vpds-m", parent); if (parent.children.length > 1 && (parent === row || parent.__gap)) m.style.marginLeft = (parent.__gap || g) + "px"; m.style.width = w + "px"; m.style.height = h + "px";
@@ -407,23 +418,24 @@
         }
         var sT = mk("vpds-ht"), sB = mk("vpds-hb"), fT = mk("vpds-ht"), fB = mk("vpds-hb");
         [0, 1].forEach(function (q) { var p = el("div", "vpds-pin", m); p.style.height = Math.round(h * .06) + "px"; p.style.top = (hh + gap / 2 - h * .03) + "px"; p.style[q ? "right" : "left"] = "-3px"; });
+        function put(x, txt) { x.c.textContent = txt; if (!anton) x.c.style.fontSize = fitFs(txt, w, fs) + "px"; }
         var last = [null, null];
         return { m: m, set: function (o2, n2, p, flut) {
-          if (last[0] !== o2 || last[1] !== n2) { sT.c.textContent = n2; sB.c.textContent = o2; fT.c.textContent = o2; fB.c.textContent = n2; last = [o2, n2]; }
+          if (last[0] !== o2 || last[1] !== n2) { put(sT, n2); put(sB, o2); put(fT, o2); put(fB, n2); last = [o2, n2]; }
           var a = p < .5 ? Math.pow(p * 2, 1.5) : 1, b = p < .5 ? 0 : Math.pow((p - .5) * 2, 0.8);
           fT.d.style.visibility = p < .5 ? "visible" : "hidden"; fB.d.style.visibility = (p >= .5 && p < 1) ? "visible" : "hidden";
           fT.d.style.transform = "rotateX(" + (-90 * a) + "deg)"; fT.s.style.opacity = .55 * a;
           fB.d.style.transform = "rotateX(" + (90 * (1 - b)) + "deg)"; fB.s.style.opacity = .45 * (1 - b);
           sB.s.style.opacity = p < 1 ? .32 * (p < .5 ? a : (1 - b)) : 0;
           sB.d.style.transform = (p >= 1 && flut) ? "rotateX(" + flut + "deg)" : "";
-          if (p >= 1) { sB.c.textContent = n2; last[0] = n2; fT.c.textContent = n2; }
+          if (p >= 1) { put(sB, n2); last[0] = n2; put(fT, n2); }
         } };
       }
       var fs = Math.min(Math.round(mh * .86), Math.round(mw * 1.75));
       for (var k = 0; k < n; k++) mods.push(makeMod(row, mw, mh, fs, true, 0));
       if (withName) {
         var nr = el("div", "vpds-row", bd); nr.style.left = (W - rowW) / 2 + "px"; nr.style.top = (pad0 + mh + 26) + "px";
-        nmods.push(makeMod(nr, rowW, nh, 96, false, -17));
+        nmods.push(makeMod(nr, rowW, nh, 88, false, 0));
       }
       var bottom = (members ? 160 : 168) + H;
       prizeEl.style.top = (bottom + 16) + "px"; prizeEl.style.fontSize = (members ? 76 : 90) + "px";

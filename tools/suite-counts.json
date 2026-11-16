@@ -1795,6 +1795,10 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/tv-flip-name-in-chrome.test.py": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
  "tools/tv-fullbleed-in-chrome.test.py": {
   "checks": 114,
   "counted_by": "lines"

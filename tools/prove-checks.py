@@ -7463,6 +7463,12 @@ MUTATIONS = [
     ('trivia-reopen-tv-in-chrome.test.py', 'venueplay/tv.html',
      "                       sounds:1, buzzer:1,\n", "",
      'opening the trivia console again puts TRIVIA, SCAN TO PLAY on the TV that was on the ads'),
+    ('tv-flip-name-in-chrome.test.py', 'venueplay/app/vp-drawstyle.js',
+     "nmods.push(makeMod(nr, rowW, nh, 88, false, 0));", "nmods.push(makeMod(nr, rowW, nh, 96, false, -17));",
+     'the flip board name rides the top of its flap and the seam slices the foot of the letters'),
+    ('tv-flip-name-in-chrome.test.py', 'venueplay/app/vp-drawstyle.js',
+     "return tw > room ? Math.max(30, Math.floor(fs * room / tw)) : fs;", "return fs;",
+     'a long winner name runs out of the sides of its flap on the flip board'),
     # 16 Nov 2026 (INBOX 426 item 2): the Pay step and the time-up bar read First Last, never "Wilson,Mia".
     ('test-members-console.js', 'venueplay/app/members/host.html',
      '((nice(x.name)||"The winner")+" won "', '((x.name||"The winner")+" won "',
