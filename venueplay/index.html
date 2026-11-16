@@ -31,7 +31,7 @@
 <!-- Structured data: helps Google understand venueplay + the trivia bank (rich results). The name is
      lowercase here too, and there is no telephone: the support line is never public (INBOX 280). -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"venueplay","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Pub trivia, musical bingo, bingo and raffles for pubs, clubs, bowls clubs and RSLs, run from one screen. Backed by one of Australia's largest trivia question banks, over 37,000 questions.","offers":{"@type":"Offer","price":"3.00","priceCurrency":"AUD"},"areaServed":"AU","url":"https://venueplay.com.au","publisher":{"@type":"Organization","name":"venueplay","url":"https://venueplay.com.au","email":"hello@venueplay.com.au","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"support@venueplay.com.au","areaServed":"AU","availableLanguage":"en-AU"}}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"venueplay","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Pub trivia, musical bingo, bingo and raffles for pubs, clubs, bowls clubs and RSLs, run from one screen. Backed by one of Australia's largest trivia question banks, growing every week.","offers":{"@type":"Offer","price":"3.00","priceCurrency":"AUD"},"areaServed":"AU","url":"https://venueplay.com.au","publisher":{"@type":"Organization","name":"venueplay","url":"https://venueplay.com.au","email":"hello@venueplay.com.au","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"support@venueplay.com.au","areaServed":"AU","availableLanguage":"en-AU"}}}
 </script>
 
 <!-- Tracking lives in /app/vp-analytics.js (GA4) and /app/vp-pixel.js (Meta), loaded below: one copy of each id. -->
@@ -558,6 +558,8 @@
      guarded with a typeof check, so those conversions were being thrown away until this loaded.
      Placed in the head so a bounce still registers. -->
 <script src="/app/vp-analytics.js"></script>
+<script src="/app/vp-track.js"></script>   <!-- journey tracking, first party (INBOX 413) -->
+<script src="/app/vp-quick-config.js"></script>
 <script src="/app/vp-pixel.js"></script>
 <link rel="stylesheet" href="/app/vp-footer.css">
 <link rel="stylesheet" href="/app/vp-skip.css">
@@ -680,6 +682,7 @@
       </div>
       <div class="h2-under">
         <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
+        <a class="btn btn-ghost h2-watch" href="/quick?src=website" data-cta="hero-quick-game" data-vpq-label>Play a quick game</a>
       </div>
     </div>
   </div>
@@ -769,7 +772,7 @@
   </div>
 </section>
 
-<!-- #preview removed 1 Oct 2026: the hero already shows the real screens -->
+<!-- #preview removed 1 Oct 2026: the hero already shows the real screens and links /quick (it was /see-a-night until 14 Nov 2026) -->
 
 <section class="sec" id="replaces">
   <div class="wrap">
@@ -815,12 +818,12 @@
   <div class="wrap banks">
     <div class="bank">
       <div class="label">The trivia bank</div>
-      <div class="counter"><div class="big"><span id="vp-trivia-count">37,678</span></div><div class="sub">questions and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-trivia-count" data-vp-count="questions">Thousands</span></div><div class="sub">questions and counting</div></div>
       <p class="sec-sub">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. A fresh trivia night every week, all included.</p>
     </div>
     <div class="bank">
       <div class="label">The music library</div>
-      <div class="counter"><div class="big"><span id="vp-music-count">5,146</span></div><div class="sub">songs and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-music-count" data-vp-count="songs">Thousands</span></div><div class="sub">songs and counting</div></div>
       <p class="sec-sub">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. A fresh musical bingo night every week, all included.</p>
     </div>
   </div>
@@ -1149,6 +1152,7 @@
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>You're on the list</h3>
           <p>Your first email lands early <span data-vps-month>next month</span>. Nobody will ring you.</p>
+          <p><a href="/quick?src=website" data-vpq-label>Play a quick game</a> while you wait</p>
         </div>
       </div>
     </div>
@@ -1178,6 +1182,7 @@
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
 <script src="/app/vp-trusted.js"></script>
+<script src="/app/vp-counts.js"></script>
 <script src="/app/vp-subscribe.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -1197,13 +1202,14 @@
   var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
   var _SBU = 'https://ijkzgmdtwtgfkedqspxm.supabase.co';
   var _SBK = 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
-  var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
   var PRICE = { monthly: 3.00, annual: 2.85 };
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
   // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
   // /app/vp-trusted.js draws them, or nothing at all when there are fewer than six.
   if (workerReady && window.VPTrusted) VPTrusted.load(VP_WORKER);
+  // The two bank counts, live from the Worker (INBOX 233.1). The page says "Thousands" until they land, or if they never do.
+  if (workerReady && window.VPCounts) VPCounts.load(VP_WORKER);
   var plan = 'monthly';
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();
@@ -1223,76 +1229,6 @@
     }
     requestAnimationFrame(step);
   }
-
-  /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
-  (function(){
-    var el = document.getElementById('vp-trivia-count');
-    var sec = document.getElementById('trivia-bank');
-    if (!el) return;
-    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-        var done = false;
-    function animateTo(target){
-      if (done) return; done = true;
-      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026): show the real number
-      function step(ts){
-        if (!t0) t0 = ts;
-        var p = Math.min(1, (ts - t0) / dur);
-        var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    fetch('/data/trivia-count.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = parseInt(d && d.count, 10) || 0;
-      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
-      el.textContent = n.toLocaleString('en-AU');
-      if (sec && 'IntersectionObserver' in window){
-        var io = new IntersectionObserver(function(entries){
-          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
-        }, { threshold: 0.4 });
-        io.observe(sec);
-      } else {
-        animateTo(n);
-      }
-    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
-  })();
-
-  /* ---------- Live music library counter (counts /data/musical-library.json songs) ---------- */
-  (function(){
-    var el = document.getElementById('vp-music-count');
-    var sec = document.getElementById('music-bank');
-    if (!el) return;
-    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-    var done = false;
-    function animateTo(target){
-      if (done) return; done = true;
-      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026): show the real number
-      function step(ts){
-        if (!t0) t0 = ts;
-        var p = Math.min(1, (ts - t0) / dur);
-        var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    // Live count: read the small backend count file (regenerated whenever songs are added),
-    // so the homepage never downloads the whole song library just to show a number.
-    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = (d && d.count) || 0;
-      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
-      el.textContent = n.toLocaleString('en-AU');
-      if (sec && 'IntersectionObserver' in window){
-        var io = new IntersectionObserver(function(entries){
-          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
-        }, { threshold: 0.4 });
-        io.observe(sec);
-      } else {
-        animateTo(n);
-      }
-    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
-  })();
 
   /* ---------- Plan toggle ---------- */
   var planWrap = document.getElementById('vp-plan');

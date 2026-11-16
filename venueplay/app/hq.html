@@ -350,6 +350,8 @@
     <button data-pane="usage">Usage</button>
     <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): every venue's month, who is trending down, and the news in the monthly email. -->
     <button data-pane="reports">Reports</button>
+    <!-- HQ > Journey (vp-journey-hq.js, INBOX 413): the funnel step by step with the likely reason, the campaign table, and each venue's journey. -->
+    <button data-pane="journey">Journey</button>
     <button data-pane="team">Team</button>
     <button data-pane="flagged">Flagged</button>
     <button data-pane="audit">Audit</button>
@@ -679,6 +681,8 @@
 
   <!-- ============ REPORTS (vp-reports-hq.js builds it) ============ -->
   <div id="paneReports" class="hidden"></div>
+  <!-- ============ JOURNEY (vp-journey-hq.js builds it) ============ -->
+  <div id="paneJourney" class="hidden"></div>
 
   <!-- ============ TEAM ============ -->
   <div id="paneTeam" class="hidden">
@@ -834,6 +838,8 @@
 <script src="vp-logins-hq.js"></script>
 <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): the monthly report for every venue and the news. HQ only; started by hq.html below. -->
 <script src="vp-reports-hq.js"></script>
+<!-- HQ > Journey (vp-journey-hq.js, INBOX 413): HQ only; started by hq.html below. -->
+<script src="vp-journey-hq.js"></script>
 <!-- HQ > Subscribers (vp-subscribers-hq.js, 31 Oct 2026): the monthly email sign-ups. HQ only; it draws its own pane. -->
 <script src="vp-subscribers-hq.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
@@ -990,6 +996,7 @@
   /* Remove a login: this page's own sign-in, questions and owner test, nothing of its own (vp-logins-hq.js). */
   if(window.VPLogins) window.VPLogins.init({ post:workerPost, ask:vpAsk, tell:vpTell, isOwner:function(){ return S.adminRole==="owner"; } });
   /* HQ > Reports: this page's own sign-in, owner test and Show-test switch (vp-reports-hq.js). */
+  if(window.VPJourney) window.VPJourney.init({ post:workerPost, canSee:function(){ return S.adminRole==="owner"||S.adminRole==="accounts"; } });
   if(window.VPReports) window.VPReports.init({ post:workerPost, isOwner:function(){ return S.adminRole==="owner"||S.adminRole==="accounts"; }, showTest:function(){ return !!S.showTest; } });
 
   /* ---- state ---- */
@@ -1414,7 +1421,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","prospects","subscribers","live","screens","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
+  var PANES=["venues","prospects","subscribers","live","screens","quiet","cancelled","billing","groups","usage","reports","journey","team","flagged","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
   /* Venues > Prospects reads that same list, which the Worker gives owner and accounts only. So the option is taken out
@@ -1437,6 +1444,7 @@
     if(pane==="cancelled") loadCancelled();
     if(pane==="audit") runAuditSearch(!AU.loaded);
     if(pane==="reports" && window.VPReports) window.VPReports.open();
+    if(pane==="journey" && window.VPJourney) window.VPJourney.open();
     /* THE METER IS ASKED FOR HERE, not inside renderBilling. It used to be kicked off by the
        billing tab alone, so opening Usage first sat on "Reading the meter..." for ever and
        there was no way to tell that from a slow request. Two screens need it; the pane switch
@@ -2552,6 +2560,7 @@
         '<div class="vphd" data-vphd="'+esc(v.id)+'"></div>'+
         /* Its logins, with Remove login for one that belongs to no other venue (Dean, 30 Oct 2026; vp-logins-hq.js). */
         (canBilling() ? '<div class="vplogins" data-vplogins="'+esc(v.id)+'"></div>' : '')+
+        '<div data-vpjourney="'+esc(v.id)+'"></div>'+
         gaming+
         /* The seven controls that used to sit in the row. Here, where somebody is
            already looking at this one venue, rather than repeated 400 times down a
@@ -2565,6 +2574,7 @@
     if(capV.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("venues", capV.hidden, 5, 100));
     if(S.openVenue && window.VPHelpdesk) window.VPHelpdesk.venueTickets(S.openVenue);
     if(S.openVenue && window.VPLogins && canBilling()) window.VPLogins.venueBlock(S.openVenue, venueName(S.openVenue));
+    if(S.openVenue && window.VPJourney) window.VPJourney.venueBlock(S.openVenue);
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
 

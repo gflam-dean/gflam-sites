@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Nov 2026, 06:30 · 952374b2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 07:41 · fe0eebde';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1434,6 +1434,16 @@ const DEMO_MAX_PLAYERS = 10, DEMO_QUESTIONS = 5, DEMO_SECONDS = 30, DEMO_PER_DAY
 const DEMO_FULL_MSG = 'Up to 10 for the demo, and this one is full.';
 const DEMO_OFF = '&is_demo=not.is.true';   // PostgREST: false, and (before migration 172 backfills) null
 function isDemoSession(s) { return !!(s && s.is_demo === true); }
+/* A venue whose account has an EMPTY contact email (made by Play a quick game: its login is a mobile). Never throws. */
+async function venueHasNoEmail(env, venueId) {
+  try {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=founding_id&limit=1');
+    const fid = v && v[0] && v[0].founding_id;
+    if (!fid) return false;
+    const f = await sbGet(env, 'venueplay_founding', 'id=eq.' + enc(fid) + '&select=contact_email&limit=1');
+    return !!(f && f[0] && f[0].contact_email === '');   // exactly the empty string a quick start writes; a missing or null email is an older account
+  } catch (e) { return false; }
+}
 /* What the demo's join screen asks: a name, email and mobile (pre-filled from sign-up on their own phone)
    and the one offers tick, so they see how venueplay builds their list. Kept: the name always; the email
    and mobile ONLY with the tick, which is the same gate (gatedCapture) a real player passes. */
@@ -1921,6 +1931,13 @@ async function joinInfoLookup(env, code, fresh) {
   }
   /* THE DEMO'S JOIN SCREEN asks for the name, email and mobile and offers the one tick (DEMO_COLLECT), so a
      new venue sees how its list is built. /join keeps them by the same rule (demoCapture). */
+  /* PLAY A QUICK GAME (INBOX 412, 15 Nov 2026): a venue made by the three-box start has no email of its own (the account's contact
+     email is empty), so its demo's join screen asks for NO email and offers NO tick: Dean, "no email field anywhere". A venue with an
+     email keeps the demo it always had (the next block, unchanged). A read that will not answer keeps the email box. */
+  if (isDemoSession(liveSession) && await venueHasNoEmail(env, venueId)) {
+    return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: false, paper_reason: '', age_gate: false,
+      demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: false, mobile: true, marketing_optin: false } }, venueId: venueId };
+  }
   if (isDemoSession(liveSession)) {
     return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: false, paper_reason: '', age_gate: false,
       demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: true, mobile: true, marketing_optin: true } }, venueId: venueId };
@@ -11995,7 +12012,7 @@ function purchaseRaffleTerms(r, venue) {
   lines.push('7. The draw takes place at ' + where + ' on ' + praffleLocalWords(r.draw_at, tz, true) +
     '. It is drawn by computer on the venueplay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
     (prizes.length > 1 ? 'Each entrant can win only one prize.' : 'There is one winner.'));
-  lines.push('8. Winners will be contacted by phone and email within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
+  lines.push('8. Winners will be contacted by phone, and by email if they gave one, within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
   lines.push('9. If a winner cannot be contacted within 14 days, or is not eligible, the prize is redrawn at the same place at the same time 14 days after the draw.');
   lines.push('10. Prizes are not transferable and cannot be exchanged for cash. The promoter may substitute a prize of equal or greater value if a prize becomes unavailable.');
   lines.push('11. Entrant details are collected by the promoter to run this promotion and contact winners. They are used for marketing only if the entrant ticks the box to agree, and can be removed on request.');
@@ -12086,7 +12103,7 @@ async function handlePraffleState(request, env, json) {
   const tz = g.venue.timezone;
   const list = await sbGet(env, 'vp_purchase_raffles', 'venue_id=eq.' + enc(g.venue.id) + '&status=neq.archived&select=' + PRAFFLE_COLS + '&order=created_at.desc&limit=1');
   const r = list[0] || null;
-  const out = { enabled: true, can_manage: g.canManage, venue: { id: g.venue.id, name: g.venue.name, slug: g.venue.slug, timezone: tz || null },
+  const out = { enabled: true, can_manage: g.canManage, is_admin: !!g.staff.is_admin, form: praffleFormFields(await praffleVenueCfg(env, g.venue.id)), venue: { id: g.venue.id, name: g.venue.name, slug: g.venue.slug, timezone: tz || null },
     today: praffleLocalDay(tz), raffle: null };
   if (!r) return json(out);
   out.raffle = r;
@@ -12124,10 +12141,18 @@ async function handlePraffleSave(request, env, json) {
   const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
   const tz = g.venue.timezone;
   let prior = null;
+  let lockReason = null;
   if (b.raffle_id) {
     prior = JSON.parse(JSON.stringify(await praffleLoad(env, String(b.raffle_id))));   // a copy: the audit compares before with after
     if (prior.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
     if (prior.status !== 'open') return json({ error: 'This raffle has been drawn, so its settings are part of the record and cannot change.' }, 409);
+    /* Dean 14 Nov: once a raffle has started, or has any entry (voided or not), its terms are locked for a venue login. Only HQ changes them, with a reason. */
+    const anyEntry = await sbCount(env, 'vp_purchase_raffle_entries', 'raffle_id=eq.' + enc(prior.id) + '&select=id');
+    if (new Date(prior.starts_at).getTime() <= Date.now() || anyEntry > 0) {
+      if (!g.staff.is_admin) return json({ error: 'This raffle has started, so its dates, prizes and terms are locked. To change them, contact venueplay on 07 5228 3667.' }, 409);
+      lockReason = praffleCleanText(b.reason, 300);
+      if (lockReason.length < 3) return json({ error: 'Give a reason (3 to 300 characters) for changing a raffle that has started.' }, 400);
+    }
   }
   const name = praffleCleanText(b.name, 120);
   if (!name) return json({ error: 'Give the raffle a name, for example "Summer Purchase Raffle".' }, 400);
@@ -12169,8 +12194,42 @@ async function handlePraffleSave(request, env, json) {
   const changed = {};
   if (prior) Object.keys(row).forEach(function (k) { if (k !== 'updated_at' && k !== 'terms_text' && JSON.stringify(prior[k]) !== JSON.stringify(saved[k])) changed[k] = { from: prior[k], to: saved[k] }; });
   await praffleAudit(env, g.staff, prior ? 'purchase_raffle_updated' : 'purchase_raffle_created', g.venue.id,
-    { raffle_id: saved.id, name: saved.name, changes: prior ? changed : row });
+    { raffle_id: saved.id, name: saved.name, changes: prior ? changed : row, reason: lockReason || undefined });
   return json({ ok: true, raffle: saved });
+}
+
+/* THE NEW-CUSTOMER FORM FOLLOWS THE VENUE'S OWN SUBSCRIBER SETTINGS (Dean, 14 Nov 2026): the mobile always, and only the
+   fields the venue switched on in vp_venue_settings (collect_*, the same switches the join screen reads, migration 132).
+   A first name is always asked: if the venue collects no name at all the winner still has to be named on the TV, the
+   same reason gatedCapture keeps a first name unless collect_first_name is explicitly false. The offers tick appears
+   only when collect_marketing_optin is on. */
+function praffleFormFields(cfg) {
+  cfg = cfg || {};
+  return { first_name: true, last_name: !!cfg.collect_last_name,
+    email: !!cfg.collect_email, postcode: !!cfg.collect_postcode, marketing_optin: !!cfg.collect_marketing_optin };
+}
+/* THIS VENUE'S MEMBERS LIST: vp_captures, scoped by venue_id (where every game's opt-in and the "Join {venue}'s list"
+   sign-up land; the venue's export reads it). Matched by NORMALISED mobile: rows come back by the last nine digits and
+   are kept only if praffleNormPhone says it is the same number. Never another venue: venue_id is in every query. */
+async function praffleFindMember(env, venueId, phone) {
+  const d9 = String(phone).slice(-9).split('').join('*');   // 4*9*7*...: also finds "0497 605 423" or "0497-605-423"; the exact test is the normalised compare below
+  const rows = await sbGet(env, 'vp_captures', 'venue_id=eq.' + enc(venueId) + '&or=(mobile.like.*' + d9 + ')&select=id,venue_id,first_name,last_name,email,mobile,marketing_optin,marketing_optin_at,created_at&order=created_at.desc&limit=20');
+  const mine = (rows || []).filter(function (r) { return r.venue_id === venueId && praffleNormPhone(r.mobile) === phone; });
+  const named = mine.filter(function (r) { return praffleCleanText(r.first_name, 60); });
+  if (!named.length) return null;                       // no name to show staff: treated as a new customer
+  const optd = named.filter(function (r) { return r.marketing_optin === true; })[0];
+  const m = optd || named[0];
+  return { id: m.id, first_name: praffleCleanText(m.first_name, 60), last_name: praffleCleanText(m.last_name, 60),
+    email: praffleCleanText(m.email, 200).toLowerCase(), marketing_opt_in: m.marketing_optin === true,
+    opted_in_at: m.marketing_optin === true ? (m.marketing_optin_at || null) : null };
+}
+/* A new entrant who gives an email that is already on THIS venue's list with no mobile: link them, and fill the mobile in.
+   A mobile that is already there is never overwritten, and another venue's list is never touched. */
+async function praffleVenueCfg(env, venueId) { return await venueCollectCfg(env, venueId); }
+async function praffleEmailMember(env, venueId, email) {
+  if (!email) return null;
+  const rows = await sbGet(env, 'vp_captures', 'venue_id=eq.' + enc(venueId) + '&email=eq.' + enc(email) + '&select=id,venue_id,mobile,marketing_optin&order=created_at.desc&limit=20');
+  return (rows || []).filter(function (r) { return r.venue_id === venueId; })[0] || null;
 }
 
 /* POST /host/praffle/lookup { venue_id, raffle_id, phone } : is this mobile in already? */
@@ -12183,7 +12242,12 @@ async function handlePraffleLookup(request, env, json) {
   const phone = praffleNormPhone(b.phone);
   if (!phone) return json({ error: 'That is not an Australian mobile number. It starts 04 and has 10 digits.' }, 400);
   const p = await sbGet(env, 'vp_purchase_raffle_entrants', 'raffle_id=eq.' + enc(r.id) + '&phone=eq.' + enc(phone) + '&select=id,first_name,last_name&limit=1');
-  if (!p.length) return json({ known: false, phone_masked: praffleMaskPhone(phone) });
+  if (!p.length) {
+    const m = await praffleFindMember(env, g.venue.id, phone);
+    const form = praffleFormFields(await praffleVenueCfg(env, g.venue.id));
+    if (m) return json({ known: false, member: true, first_name: m.first_name, name: formatMemberName(m.first_name, m.last_name, 'abbrev_last'), phone_masked: praffleMaskPhone(phone), form: form });
+    return json({ known: false, member: false, phone_masked: praffleMaskPhone(phone), form: form });
+  }
   return json({ known: true, first_name: p[0].first_name, name: formatMemberName(p[0].first_name, p[0].last_name, 'abbrev_last'),
     entries: await praffleEntrantCount(env, p[0].id), phone_masked: praffleMaskPhone(phone) });
 }
@@ -12207,19 +12271,66 @@ async function handlePraffleEnter(request, env, json) {
   let isNew = false;
   if (!person) {
     const d = b.person || {};
-    const first = praffleCleanText(d.first_name, 60), last = praffleCleanText(d.last_name, 60);
-    const email = praffleCleanText(d.email, 200).toLowerCase();
-    if (!first || !last) return json({ error: 'New entrant: add their first and last name.', needs_details: true }, 400);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'New entrant: add their email, so the winner can be contacted.', needs_details: true }, 400);
-    /* 18+ is the customer's own confirmation, asked every time someone new is added. */
-    if (d.age_confirmed !== true) return json({ error: 'The customer has to confirm they are 18 or over before they can enter.', needs_details: true }, 400);
-    /* The marketing tick is THEIRS. Only a real true counts; anything else is no. */
-    const optIn = d.marketing_opt_in === true;
     const now = new Date().toISOString();
+    const cfg = await praffleVenueCfg(env, g.venue.id);
+    const form = praffleFormFields(cfg);
+    /* A member of THIS venue's list: their own details and their own opt-in are used, no form. The server decides this
+       itself, so a request cannot invent an opt-in for a member or take one away. */
+    const member = await praffleFindMember(env, g.venue.id, phone);
+    let first, last, email, postcode = null, optIn, optAt = null, memberId = null, fromMember = false;
+    if (member) {
+      fromMember = true; memberId = member.id;
+      first = member.first_name; last = member.last_name; email = member.email || null;
+      optIn = member.marketing_opt_in === true; optAt = optIn ? (member.opted_in_at || now) : null;
+    } else {
+      first = praffleCleanText(d.first_name, 60);
+      last = form.last_name ? praffleCleanText(d.last_name, 60) : '';
+      email = form.email ? praffleCleanText(d.email, 200).toLowerCase() : null;
+      postcode = form.postcode ? (praffleCleanText(d.postcode, 10) || null) : null;
+      if (!first) return json({ error: 'New entrant: add their first name.', needs_details: true, form: form }, 400);
+      if (form.last_name && !last) return json({ error: 'New entrant: add their last name.', needs_details: true, form: form }, 400);
+      if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'New entrant: add an email that works.', needs_details: true, form: form }, 400);
+      /* The offers tick is THEIRS: only a real true, and only when the venue's settings ask for it. */
+      optIn = form.marketing_optin && d.marketing_opt_in === true;
+      optAt = optIn ? now : null;
+    }
+    /* (b) the email matches somebody already on this venue's list with no mobile: link and fill the mobile in, never overwrite. */
+    if (!memberId && email) {
+      const em = await praffleEmailMember(env, g.venue.id, email);
+      if (em) {
+        const empty = em.mobile == null || String(em.mobile).trim() === '';
+        if (empty) {
+          await sbPatch(env, 'vp_captures', 'id=eq.' + enc(em.id) + '&venue_id=eq.' + enc(g.venue.id) + (em.mobile == null ? '&mobile=is.null' : '&mobile=eq.'), { mobile: phone });
+          memberId = em.id;
+        }
+      }
+    }
+    /* (a) ticking "Send me offers from {venue}" puts them on this venue's members list, the same table the games' opt-ins
+       use, recorded as coming from the purchase raffle. No tick, no list. A person already on the list is not added twice. */
+    if (!fromMember && optIn) {
+      if (memberId) {
+        await sbPatch(env, 'vp_captures', 'id=eq.' + enc(memberId) + '&venue_id=eq.' + enc(g.venue.id) + '&marketing_optin=not.is.true', { marketing_optin: true, marketing_optin_at: now });
+      } else {
+        /* The words they agreed to: "Send me offers from {venue}", no age words (vpc-3-14nov). Before migration 174 the column is
+           unknown to the database, so the row is tried once more without it and the sign-up is never lost. */
+        const capRow = { venue_id: g.venue.id, first_name: first, last_name: last || null, email: email, mobile: phone,
+          postcode: postcode, marketing_optin: true, marketing_optin_at: now, source: 'purchase-raffle', during_game: true, consent_version: 'vpc-3-14nov' };
+        let cap;
+        try { cap = (await sbInsert(env, 'vp_captures', capRow, true))[0]; }
+        catch (e) {
+          if (e && e.status && e.status !== 502) throw e;
+          const r2 = Object.assign({}, capRow); delete r2.consent_version;
+          cap = (await sbInsert(env, 'vp_captures', r2, true))[0];
+        }
+        memberId = cap && cap.id || null;
+      }
+    }
     try {
+      /* age_confirmed_at is NOT NULL and stays: it now holds the entry time. There is no 18+ tick any more (the law does not
+         need it, the terms still say the raffle is open to people aged 18 or over), and no migration is needed for that. */
       person = (await sbInsert(env, 'vp_purchase_raffle_entrants', {
-        raffle_id: r.id, venue_id: g.venue.id, phone: phone, first_name: first, last_name: last, email: email,
-        marketing_opt_in: optIn, opted_in_at: optIn ? now : null, age_confirmed_at: now, created_by: by,
+        raffle_id: r.id, venue_id: g.venue.id, phone: phone, first_name: first, last_name: last || '', email: email, postcode: postcode,
+        marketing_opt_in: optIn, opted_in_at: optAt, age_confirmed_at: now, created_by: by, member_capture_id: memberId,
       }, true))[0];
       isNew = true;
     } catch (e) {
@@ -12308,6 +12419,10 @@ async function handlePraffleClose(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const g = await praffleGate(env, authUserId, String(b.venue_id || '').trim(), true);
+  /* Dean 14 Nov: closing early is venueplay HQ only. A venue contacts us. */
+  if (!g.staff.is_admin) return json({ error: 'Entries close on the end date in your terms. To close early, contact venueplay on 07 5228 3667.' }, 403);
+  const reason = praffleCleanText(b.reason, 300);
+  if (reason.length < 3) return json({ error: 'Give a reason (3 to 300 characters) for closing early.' }, 400);
   const r = await praffleLoad(env, String(b.raffle_id || ''));
   if (r.venue_id !== g.venue.id) throw httpError(404, 'That raffle was not found.');
   if (r.status !== 'open') return json({ error: 'This raffle has already been drawn.' }, 409);
@@ -12317,7 +12432,7 @@ async function handlePraffleClose(request, env, json) {
   if (new Date(r.starts_at).getTime() >= Date.now()) patch.starts_at = new Date(Date.now() - 1000).toISOString();
   if (new Date(r.draw_at).getTime() < Date.now()) patch.draw_at = now;
   await sbPatch(env, 'vp_purchase_raffles', 'id=eq.' + enc(r.id) + '&status=eq.open', patch);
-  await praffleAudit(env, g.staff, 'purchase_raffle_closed_early', g.venue.id, { raffle_id: r.id, name: r.name, was_closing: r.closes_at, closed_at: now });
+  await praffleAudit(env, g.staff, 'purchase_raffle_closed_early', g.venue.id, { raffle_id: r.id, name: r.name, was_closing: r.closes_at, closed_at: now, reason: reason });
   return json({ ok: true });
 }
 

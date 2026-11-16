@@ -578,6 +578,7 @@
      guarded with a typeof check, so those conversions were being thrown away until this loaded.
      Placed in the head so a bounce still registers. -->
 <script src="/app/vp-analytics.js"></script>
+<script src="/app/vp-track.js"></script>   <!-- journey tracking, first party (INBOX 413) -->
 <script src="/app/vp-pixel.js"></script>
 <link rel="stylesheet" href="/app/vp-footer.css">
 <link rel="stylesheet" href="/app/vp-skip.css">
@@ -906,12 +907,12 @@
   <div class="wrap banks">
     <div class="bank">
       <div class="label">The trivia bank</div>
-      <div class="counter"><div class="big"><span id="vp-trivia-count">37,678</span></div><div class="sub">questions and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-trivia-count" data-vp-count="questions">Thousands</span></div><div class="sub">questions and counting</div></div>
       <p class="sec-sub">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. A fresh trivia night every week, all included.</p>
     </div>
     <div class="bank">
       <div class="label">The music library</div>
-      <div class="counter"><div class="big"><span id="vp-music-count">5,146</span></div><div class="sub">songs and counting</div></div>
+      <div class="counter"><div class="big"><span id="vp-music-count" data-vp-count="songs">Thousands</span></div><div class="sub">songs and counting</div></div>
       <p class="sec-sub">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. A fresh musical bingo night every week, all included.</p>
     </div>
   </div>
@@ -1264,6 +1265,7 @@
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
 <script src="/app/vp-trusted.js"></script>
+<script src="/app/vp-counts.js"></script>
 <script src="/app/vp-subscribe.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -1295,25 +1297,11 @@
   // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
   // /app/vp-trusted.js draws them, or nothing at all when there are fewer than six.
   if (workerReady && window.VPTrusted) VPTrusted.load(VP_WORKER);
+  // The two bank counts, live from the Worker (INBOX 233.1). The page says "Thousands" until they land, or if they never do.
+  if (workerReady && window.VPCounts) VPCounts.load(VP_WORKER);
   var plan = 'monthly';
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();
-
-  /* ---------- The two bank counters: the real number, once, in plain type ----------
-     Dean, 7 Nov 2026 (round 3, note 4): the zero had a dot in it and the number "flicked up".
-     No roll-up now and no mono face: the HTML number shows until the live count lands, then the
-     live count replaces it once. */
-  function showCount(id, url){
-    var el = document.getElementById(id);
-    if (!el) return;
-    fetch(url).then(function(r){ return r.json(); }).then(function(d){
-      var n = parseInt(d && d.count, 10) || 0;
-      if (n) el.textContent = n.toLocaleString('en-AU');
-    }).catch(function(){});
-  }
-  showCount('vp-trivia-count', '/data/trivia-count.json');
-  // the small count file the homepage reads, never the 760 KB song library (23 Oct 2026 audit)
-  showCount('vp-music-count', '/data/music-count.json');
 
   /* ---------- Plan toggle ---------- */
   var planWrap = document.getElementById('vp-plan');

@@ -2781,6 +2781,21 @@ def local_checks(which):
         # And a variable the page sets from JavaScript is declared, just not in the CSS.
         # --cz is the bingo card zoom: setProperty("--cz", n) on every pinch.
         declared |= set(re.findall(r'setProperty\(\s*["\'](--[a-zA-Z0-9-]+)', clean))
+        # And one the page's OWN stylesheet declares (15 Nov 2026: /quick and app/play-quick.html take the website's
+        # look from <link rel="stylesheet" href="/app/vp-site.css">). Only a file in this repo counts, read the same way.
+        for href in re.findall(r'<link\b[^>]*rel=["\']stylesheet["\'][^>]*href=["\']([^"\'?#]+\.css)', clean):
+            if '//' in href:
+                continue
+            if href.startswith('/'):
+                rel_top = os.path.relpath(f, ROOT).split(os.sep)[0]
+                css_path = os.path.join(ROOT, rel_top, href.lstrip('/'))
+            else:
+                css_path = os.path.join(os.path.dirname(f), href)
+            try:
+                css = re.sub(r'/\*.*?\*/', ' ', io.open(css_path, encoding='utf-8', errors='ignore').read(), flags=re.S)
+            except (IOError, OSError):
+                continue
+            declared |= set(re.findall(r'(--[a-zA-Z0-9-]+)\s*:', css))
         for used in set(re.findall(r'var\(\s*(--[a-zA-Z0-9-]+)', clean)):
             if used not in declared:
                 var_hits.append('%s %s' % (short(f), used))
@@ -4012,7 +4027,7 @@ def local_checks(which):
             # branch fix/try-demo-10nov.
             ('D160. The try-it demo runs on the real trivia engine and is never billed, never metered and never remembered',
              'test-try-demo.js',
-             'runs the game Worker: a demo session carries is_demo, a real night never runs on one and a demo never takes over a real night, 3 a day, trivia only; its join screen asks name, email, mobile and the one tick; 50 phones and 10 get in; ticked, the player is on that venue\'s list and nowhere else, not ticked no contact is kept; 5 questions of 30 s whatever is sent, no weekly check or stamp, no asked-question memory, no saved prefs, no 402; never charged with 50 players and approval, the streak untouched; a real night beside it does all of those; metering leaves it out; a venue plays it before the Terms tick, its real night still waits', 49,
+             'runs the game Worker: a demo session carries is_demo, a real night never runs on one and a demo never takes over a real night, 3 a day, trivia only; its join screen asks name, email, mobile and the one tick; 50 phones and 10 get in; ticked, the player is on that venue\'s list and nowhere else, not ticked no contact is kept; 5 questions of 30 s whatever is sent, no weekly check or stamp, no asked-question memory, no saved prefs, no 402; never charged with 50 players and approval, the streak untouched; a real night beside it does all of those; metering leaves it out; a venue plays it before the Terms tick, its real night still waits; a venue made by Play a quick game (empty account email) gets a demo join screen with no email box and no tick, a venue with an email keeps the old one', 51,
              'A venue billed, moved up a plan or locked out of its trivia night by a demo, a real night run unbilled as a demo, or a demo player\'s details kept without their tick'),
             ('D162. The try-it demo asks how many players (up to 10), reveals at 30 s or when all have answered, and pre-fills only their own details',
              'test-vp-demo.js',
@@ -4033,6 +4048,11 @@ def local_checks(which):
              'test-welcome-details.js',
              'runs the billing Worker with a fake Resend, Mobile Message, Auth and clock as a new prospect: a tap signs in without burning the link, "carry on" with no mobile keeps it, name + mobile saved retire every unused link and copy the name and verified mobile onto the account holder record (first time only, existing accounts untouched), the link again is the normal sign-in, a link past 90 days the same; the short link stays open after a text-code sign-in until the name is confirmed; the account email\'s login is the owner; the welcome screen asks only the name when the mobile is on the login; the People tab says Account holder', 36,
              'A prospect locked out because one tap spent their only link, a link that keeps signing in after they have a mobile, or the account holder shown as a manager'),
+            # D210: the homepage bank counts read live (Dean, 11 Nov 2026, INBOX 233.1), branch fix/sunday-small.
+            ('D210. The homepage question and song counts come from the live library through the Worker, never typed',
+             'test-library-counts.js',
+             'GET /library-counts answers only { questions, songs }: library-set questions counted by the database, songs with a playable clip counted once; a failed half is null; /app/vp-counts.js paints a good number once and keeps the "Thousands" words for anything else; index.html and nsw.html type no count', 41,
+             'A homepage that says a number the library does not have, or shows blank, 0 or NaN when the Worker is down'),
             # D195: change my mobile, Edit mobile on a host, and HQ changes a venue login's mobile (Dean, 8 Nov 2026; INBOX 138),
             # branch fix/change-mobile-9nov. No migration: Supabase Auth holds the phone, vp_admin_audit the record.
             ('D195. A venue login changes its own mobile only after a code to the new number, and a host\'s or HQ\'s change is guarded and audited',
@@ -4469,6 +4489,25 @@ def local_checks(which):
              'a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room\'s) it joins as a phone; POST /room/ticket answers only a login that is staff at the room\'s venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one', 21,
              'Anybody who reads the venue code off the TV floods every phone and TV with 240 messages of 16 KB a second '
              'and stalls a night'),
+            # D413J: journey tracking (Dean, 15 Nov 2026; INBOX 413), branch feature/journey-413-15nov.
+            ('D413J1. Journey tracking: /track keeps a step with no IP, no user agent and no personal data, answers every stranger the same, and the scanner filter never counts a mail scanner as a person',
+             'test-journey-track.js',
+             'runs the billing Worker: a batch keeps the session id, the step, the page (a code cut out of the path), the referrer family, the AU state from Cloudflare and the device kind, and no address or user agent; rubbish, a crawler, Do Not Track, an over-size body and a made-up step all answer {ok:true} and keep nothing; 400 batches an hour per network and 150 per session; props keep only the whitelist (a name, email or mobile sent along is dropped; the venue search text loses digits and @); a code resolves to its link and a person hit is logged against it; a hit inside 60 s of the send, from a Microsoft or Mimecast network, from a scanner agent or a webdriver is a scanner_hit, a hard one never upgrades and a soft one is lifted by a human tap; the lookup returns venue, first name, likely games and state only, and an unknown, revoked, expired, malformed or missing code is the same answer, held to 40 an hour per network; the venue comes from the sign-in, earlier steps are tied to it; HQ funnel counts distinct sessions per step with the percent lost, the median time, the form detail, the searches that found nothing and a reason and fix, leaves scanner sessions out, and refuses a missing or staff login; the campaign table counts sent, clicked, visited, enquired, signed up, signed in and card per email step; a venue journey comes back in time order; migration 196 not run changes nothing for the page; migration 196 is locked down', 71,
+             'A mail scanner counted as a person, an address kept, a code that can be guessed from the answer, or a stranger able to flood or read the tracking tables'),
+            ('D413J2. Journey tracking: the page file sends nothing for Do Not Track or a robot, keeps the code in a first-party cookie, and the code links are served by _redirects',
+             'test-journey-client.js',
+             'runs app/vp-track.js in a fake browser: the step list equals the Worker\'s, a step it does not know is refused, a code in the path (not a query string) makes a link_hit and a cookie and the source cold_email, the first tap sends one human beacon, Do Not Track and the team opt-out send nothing while the pre-fill lookup still works, a robot on a code link sends only a flagged link_hit, the quick game queue is drained, the login token is a header and never in an event, form boxes send field steps once and a form_abandon with the last box on leaving, no canvas or fingerprint reads and no third-party host; every offer page, /nsw and /home take /<page>/<code> as a 200 rewrite; nsw and the home page load the file; HQ > Journey is wired and escapes every word it shows', 61,
+             'A tracker that ignores Do Not Track, a tracked link that 404s, or an HQ page that injects what a visitor typed'),
+            # D412: Play a quick game (Dean, 14 Nov 2026; INBOX 412), branch feature/try-it-412-15nov.
+            ('D412. Play a quick game: three boxes (first name, mobile, venue), a text code, a card-free prospect account with a login that has no email and is never mailed, a picker that cannot be walked, and one sales ticket for more info',
+             'test-quick-start.js',
+             'runs the billing Worker: a blank name, a landline or a blank venue refused, the honeypot and the bot check, eight starts an hour per network and three codes an hour per mobile; the postcode from the picked venue or the one postcode of the typed suburb, asked for (never guessed) when the suburb is unknown or has two; the account at 10 players as a pub with an empty account email, no prospect email, a flagged placeholder login that no email or reminder ever goes to, no welcome queued; one free month per mobile still holds; the picker answers only name, suburb, postcode and state, five at most, three letters at least, forty a minute; more info makes ONE sales ticket with name, mobile, venue and game, sends nothing to the prospect, refuses a stranger and another venue; the card gate is one constant; the steps go to the 413 journey store and the quick game keeps no step route or table of its own; the per-lead link answers one way for an unknown, expired or revoked code, hands out only first name, venue, postcode and suburb, is held to 20 lookups an hour per network, keeps only a hash, and ties the account made from it to the lead; the email Stripe asks for on the card page is kept only as an UNVERIFIED note: never the login, never confirmed, never the account or prospect email, nothing of ours mailed to it, one address one account, not an address another account or login has', 61,
+             'A bot or a stranger given an account, a placeholder address emailed or shown, a venue list that can be walked, or a prospect sent mail they never asked for'),
+            # D414 (quick-demo-in-chrome.test.py) is a Chrome .test.py: section C runs it with python3 like every other Chrome suite; jsc here gave it 0 checks.
+            ('D413. Play a quick game: every see-a-night link and the old URL land on /quick, the button words and the step order are one setting each, the form has three boxes and no email, the demo opens with no setup wizard, the card offer is one tap and never forced, and the funnel sends step names only',
+             'test-quick-page.js',
+             'reads the pages and runs the config: the home, help, llms.txt and sitemap links, the two 301s, the old file kept; the label once in the config and the pages\' defaults equal to it; the step order swapped by one array line; no email box, a honeypot, the bot check, phone autofill; the hand-off accepts only the quick path and the two older ones; the wizard marked dismissed on first entry and only Set up my venue reopens it; the games question saved through the wizard\'s saver; the three choices and the card button; the funnel client refuses an unknown step, passes a step on once and posts nothing itself, and never sends a name, mobile or venue name; no em dash, lowercase venueplay, no Gflam or .dev, no phone number but the support line; the one tracking door window.vpTrackStep(step, props) refuses an unknown step, queues for the 413 store until it exists and passes steps to it after; the 404 page and the training page point at /quick and the subscriber welcome email at the home page (419); on brand: app/vp-site.css is nsw.html\'s own style lifted unchanged and the two pages carry no look of their own, the form is the website\'s start form in the order first name, mobile, venue, the demo draws no game screen of its own (the real /tv and the real phone page), a phone visitor is asked first, the one set of words, only true statements, a hidden thank-you that stays hidden, no stacked headings; card_added only from the Stripe return; Play another game only with a second game, the games question never twice; a way on for a laptop with no phone; an upright tablet asked first; Text myself the code; Got it with no dead end, a way back from the held screen', 60,
+             'A cold email that lands on the old page, a button that says the wrong thing, the wizard in a new venue\'s face, or the funnel carrying a name'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

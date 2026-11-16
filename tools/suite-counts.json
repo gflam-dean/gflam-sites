@@ -291,6 +291,10 @@
   "checks": 78,
   "counted_by": "lines"
  },
+ "tools/home-counts-in-chrome.test.py": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/home-hero-in-chrome.test.py": {
   "checks": 26,
   "counted_by": "lines"
@@ -305,6 +309,10 @@
  },
  "tools/hosted-by-in-chrome.test.py": {
   "checks": 1086,
+  "counted_by": "lines"
+ },
+ "tools/hq-journey-in-chrome.test.py": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -328,6 +336,10 @@
   "counted_by": "lines"
  },
  "tools/logo-tools-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/make-journey-codes.test.py": {
   "checks": 28,
   "counted_by": "lines"
  },
@@ -409,6 +421,14 @@
  },
  "tools/old-tv-syntax.test.py": {
   "checks": 152,
+  "counted_by": "lines"
+ },
+ "tools/quick-demo-in-chrome.test.py": {
+  "checks": 83,
+  "counted_by": "lines"
+ },
+ "tools/quick-game-in-chrome.test.py": {
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/real-night-dryrun-in-chrome.test.py": {
@@ -516,7 +536,7 @@
   "counted_by": "lines"
  },
  "tools/safe-area-in-chrome.test.py": {
-  "checks": 86,
+  "checks": 125,
   "counted_by": "lines"
  },
  "tools/sant-bingo-in-chrome.test.py": {
@@ -784,7 +804,7 @@
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {
-  "checks": 25,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-demo-sync.js": {
@@ -927,8 +947,20 @@
   "checks": 21,
   "counted_by": "lines"
  },
+ "tools/test-journey-client.js": {
+  "checks": 61,
+  "counted_by": "lines"
+ },
+ "tools/test-journey-track.js": {
+  "checks": 71,
+  "counted_by": "lines"
+ },
  "tools/test-legal-gaps-28-oct.js": {
   "checks": 46,
+  "counted_by": "lines"
+ },
+ "tools/test-library-counts.js": {
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
@@ -1220,7 +1252,15 @@
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle.js": {
-  "checks": 92,
+  "checks": 133,
+  "counted_by": "lines"
+ },
+ "tools/test-quick-page.js": {
+  "checks": 60,
+  "counted_by": "lines"
+ },
+ "tools/test-quick-start.js": {
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
@@ -1480,7 +1520,7 @@
   "counted_by": "lines"
  },
  "tools/test-try-demo.js": {
-  "checks": 49,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-tv-does-not-flap.js": {
@@ -1596,7 +1636,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
-  "checks": 114,
+  "checks": 116,
   "counted_by": "lines"
  },
  "tools/test-vp-tonight.js": {
@@ -1768,7 +1808,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 154,
+  "checks": 169,
   "counted_by": "lines"
  },
  "tools/tv-takeover-12nov-in-chrome.test.py": {
@@ -1780,7 +1820,7 @@
   "counted_by": "lines"
  },
  "tools/ux-fixes-in-chrome.test.py": {
-  "checks": 38,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
@@ -2212,7 +2252,7 @@
   "counted_by": "lines"
  },
  "tools/lobby-refresh-in-chrome.test.py": {
-  "checks": 163,
+  "checks": 228,
   "counted_by": "lines"
  },
  "tools/rig-join-unique-index.test.py": {

@@ -312,7 +312,7 @@ def run_draw(name):
         R.close()
 
 
-def run_gone(G):
+def run_gone(G, pw=320, ph_h=640, auto=False):
     """6 + 7: a lobby the host closed is not brought back by a refresh; a night that is really gone is not a ghost lobby,
     and a phone waiting on it says so with a way back."""
     global R
@@ -328,7 +328,7 @@ def run_gone(G):
         ok('%s: the lobby is open' % G.name, G.lobby_up(host), [js(host, ERRT), text(host)])
         phones = []
         for tag, name in PHONES[:1]:
-            tid, ph = phone_join(code, tag, name)
+            tid, ph = phone_join(code, tag, name, w=pw, h=ph_h)
             phones.append((tag, ph))
         ph = phones[0][1]
         ok('%s: the phone follows the room' % G.name, R.until(ph, '%s.test(location.pathname)' % G.follow_re, 45) is True, js(ph, 'location.href'))
@@ -343,7 +343,17 @@ def run_gone(G):
         shot(host, '%s-6-gone-host-1024' % G.name)
         ok('%s: the waiting phone says the game has ended (never "You\'re in" for ever)' % G.name, R.until(ph, '!!document.getElementById("vpGone") && /game has ended/i.test(document.getElementById("vpGone").innerText)', 90) is True, text(ph))
         ok('%s: and offers a way back (Join)' % G.name, js(ph, '!!document.getElementById("vpGoneBtn") && document.getElementById("vpGoneBtn").getBoundingClientRect().height>=44') is True, text(ph))
-        shot(ph, '%s-7-gone-phone-390' % G.name)
+        shot(ph, '%s-7-gone-phone-%d' % (G.name, pw))
+        ok('%s: the ended screen says the next one will show up here (it is watching the venue)' % G.name, js(ph, '/When the next one starts, it.ll show up here\\./.test(document.getElementById("vpGone").innerText)') is True, text(ph))
+        ok('%s: nothing on the ended screen runs off the %d px phone' % (G.name, pw), js(ph, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True, '')
+        if auto:
+            # 17 Nov 2026, 417B: the host opens the next lobby; the phone opens it by itself, no tap
+            G.open_lobby(host)
+            ok('%s: the host opened the next lobby' % G.name, G.lobby_up(host), [js(host, ERRT), text(host)])
+            ok('%s: the ended screen opens the next game by itself (no tap)' % G.name, R.until(ph, '!document.getElementById("vpGone")', 150) is True, text(ph))
+            ok('%s: and lands on the join form or the lobby of the new night' % G.name, R.until(ph, '(' + JOIN_FORM + ') || /You.re in/i.test(document.body.innerText)', 60) is True, text(ph))
+            shot(ph, '%s-8-auto-opened-%d' % (G.name, pw))
+            return
         js(ph, 'document.getElementById("vpGoneBtn").click(); true')
         time.sleep(1.5)
         R.until(ph, 'document.readyState==="complete"', 30)
@@ -447,7 +457,7 @@ def run_unit():
     lines = [l for l in p.stdout.splitlines() if l.startswith('  ok   waitwatch:') or l.startswith('  FAIL waitwatch:')]
     for l in lines:
         ok(l[7:].strip(), l.startswith('  ok'), l)
-    ok('waitwatch: the hand-driven watcher ran all 13 checks', len(lines) == 13 and p.returncode == 0, p.stdout[-400:])
+    ok('waitwatch: the hand-driven watcher ran all 33 checks', len(lines) == 33 and p.returncode == 0, p.stdout[-400:])
     play = open(os.path.join(ROOT, 'venueplay', 'play.html')).read()
     ok('waitwatch: the bingo phone falls back to the night the console named (P.lastSid) while its own join is late', 'u.test(P.lastSid||"") ? P.lastSid' in play)
 
@@ -466,6 +476,7 @@ def main():
                 else:
                     run_game(GAMES[n]())
                     run_gone(GAMES[n]())
+                    run_gone(GAMES[n](), pw=375, ph_h=667, auto=True)
             except Exception as e:
                 import traceback; traceback.print_exc()
                 ok('%s ran to the end' % n, False, repr(e))

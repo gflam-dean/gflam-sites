@@ -391,7 +391,8 @@
        night, the same big screen, host console and phone a venue gets, so this points there. -->
   <div class="comingsoon hidden" id="comingSoon">
     <div class="cs-name" id="csName">Trivia</div>
-    <div class="cs-sub">This format is live. Every format uses the same three screens: the big screen, the host console and a player's phone. Once you can run bingo here you can run them all, so pick Bingo to walk through it.</div>
+    <div class="cs-sub">This format is live. Its walkthrough runs on the real screens: the big screen, the host console and a player's phone, side by side, with no sign in. Every format uses the same three screens, so once you can run bingo here you can run them all.</div>
+    <a class="cs-pill" id="csLink" href="/quick?src=website" target="_blank" rel="noopener" style="text-decoration:none">Open the live demo</a>
   </div>
 
   <!-- TROUBLESHOOTING -->
@@ -1017,6 +1018,7 @@
       $("stage").classList.add("hidden");
       $("comingSoon").classList.remove("hidden");
       $("csName").textContent=sc.label;
+      $("csLink").setAttribute("href", "/quick?src=website");
       $("playBtn").disabled=true; $("stepBtn").disabled=true; $("restartBtn").disabled=true;
       $("coachCap").textContent=sc.label+" is live. It uses the same three screens as bingo.";
       $("coachHint").innerHTML='Pick <b>Bingo</b> to run the step-by-step training game here.';
