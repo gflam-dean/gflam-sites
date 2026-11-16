@@ -126,13 +126,13 @@
       confirm.forEach(function (x) {
         var row = d.createElement("div");
         row.className = "vpk-use"; row.id = "vpkUse_" + x.field;
-        row.setAttribute("style", "margin-top:12px;padding:10px 12px;border:1px solid #2A2A31;border-radius:12px;text-align:left");
+        row.setAttribute("style", "margin-top:10px;padding:8px 10px;border:1px solid #2A2A31;border-radius:12px;text-align:left");
         var t = d.createElement("div");
         t.setAttribute("style", "font-size:15px;line-height:1.35;color:#E7E7EC");
         t.textContent = (x.field === "mobile" ? "Mobile" : "Email") + " for " + vname + ": " + String(x.masked);
         row.appendChild(t);
-        var bs = d.createElement("div"); bs.setAttribute("style", "display:flex;gap:8px;margin-top:8px");
-        var BTN = "flex:1 1 0;min-height:40px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;";
+        var bs = d.createElement("div"); bs.setAttribute("style", "display:flex;gap:8px;margin-top:6px");
+        var BTN = "flex:1 1 0;min-height:38px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;";
         var yes = d.createElement("button"); yes.type = "button"; yes.id = "vpkUseYes_" + x.field; yes.textContent = "Use this";
         yes.setAttribute("aria-pressed", "false");
         yes.setAttribute("style", BTN + "background:#17171A;color:#fff;border:1.5px solid #FF1F8E");
@@ -157,7 +157,7 @@
       if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known && !confirm.length });
     }
     /* a venue asking for (nearly) everything plus the three boxes: the tighter join step (vp-phone.css, .vp-long) */
-    var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length;
+    var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length + 2 * confirm.length;   // a one-tap row is about two boxes tall
     if (vj && vj.classList) vj.classList.toggle("vp-long", !!(VC && typeof VC.answers === "function" && VC.answers()) && nBoxes >= 3);
     /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026): one line, once per player; the Worker sends it until the phone's row says
        this version was seen, and the join records it (notice_version). Words and link from the Worker's one constant. */
