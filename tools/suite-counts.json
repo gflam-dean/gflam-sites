@@ -2326,5 +2326,9 @@
  "tools/staging/db-functions-on-test.test.py": {
   "checks": 130,
   "counted_by": "lines"
+ },
+ "tools/look-page-in-chrome.test.py": {
+  "checks": 32,
+  "counted_by": "lines"
  }
 }

@@ -228,6 +228,7 @@
   "lobby-refresh-in-chrome.test.py",
   "logo-tools-in-chrome.test.py",
   "make-journey-codes.test.py",
+  "look-page-in-chrome.test.py",
   "look-page.test.js",
   "look-publish.test.py",
   "manager-permissions.test.js",
