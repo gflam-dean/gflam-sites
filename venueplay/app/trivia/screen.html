@@ -251,6 +251,17 @@
   .brow .n{flex:1;min-width:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.85cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .brow .s{flex:none;margin-left:1.6cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75cqw;color:#fff}
   .brow.pinned{margin-bottom:1.1cqw}   /* the leader kept at the top of a later page, a gap under it */
+  /* A SHORT BOARD FILLS THE WALL (17 Nov 2026, staging play: two players after question 1 were two thin rows at the top of an empty black
+     screen). Up to five rows: bigger rows, centred in the space under the title. Counted by the rows themselves (CSS quantity queries), so
+     a full board of ten is exactly as before, and an older TV that cannot do this keeps the old board. */
+  #tvBoardRows{bottom:5.2cqw}
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5){margin-top:auto}
+  #tvBoardRows .brow.brow.brow:last-child:nth-child(-n+5){margin-bottom:auto}   /* beats the row gap below (specificity) */
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5), #tvBoardRows .brow:first-child:nth-last-child(-n+5) ~ .brow{height:4.7cqw;margin-bottom:.75cqw;border-radius:1.2cqw;padding:0 3cqw}
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5) .r, #tvBoardRows .brow:first-child:nth-last-child(-n+5) ~ .brow .r{width:7.5cqw;font-size:2.45cqw}
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5) .n, #tvBoardRows .brow:first-child:nth-last-child(-n+5) ~ .brow .n{font-size:2.9cqw}
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5) .s, #tvBoardRows .brow:first-child:nth-last-child(-n+5) ~ .brow .s{font-size:2.75cqw}
+  #tvBoardRows .brow:first-child:nth-last-child(-n+5).top1::before{width:.7cqw}
   .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:49.3cqw;text-align:center;font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;font-size:1.15cqw;color:#8A8A95}
 
   /* THE WINNERS SCREEN: three steps, second, first, third, the team names and scores standing on them,

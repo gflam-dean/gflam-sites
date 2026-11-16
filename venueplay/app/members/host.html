@@ -330,6 +330,9 @@
                 <button type="button" data-wb="off">Off</button>
                 <button type="button" data-wb="on">On</button>
               </div>
+              <!-- A FLIP BOARD MOMENT (17 Nov 2026, staging play): INBOX 285 option 2 is the flip board's own giant name tiles, so with the race plate
+                   as the usual look the switch is greyed out with the reason, and the saved choice is kept for the day the venue picks the flip board. -->
+              <div class="note hidden" id="winBigNote" style="margin-top:6px">Works with the flip board look. Your usual look is the race plate.</div>
             </div>
             <div class="field2" id="cdField">
               <span class="flab">Countdown before the draw<small>Shows a Draw in 5:00 clock on the TV, a big final ten seconds, then the claim clock in the same band. You start it above the Draw button.</small></span>
@@ -376,6 +379,7 @@
           <button type="button" data-once="flip">Flip board</button>
           <button type="button" data-once="race">Race plate</button>
         </div>
+        <div class="note hidden" id="onceNote" style="margin-top:6px">This draw uses the race plate, so the winner does not take the screen.</div>
       </div>
       <!-- THE COUNTDOWN CONTROL (13 Nov 2026): only when "Countdown before the draw" is on in Draw and jackpot settings -->
       <div class="field2 hidden" id="cdCtl">
@@ -500,11 +504,15 @@
      countdown's claim band) so a TV that loads mid-claim paints the same thing. Off sends nothing extra: the TV draws exactly what it always did. */
   function sendMoments(obj){
     if(obj && (obj.t==="drawing" || obj.t==="winner" || obj.t==="claimed")){
-      if(G.winBig && currentLook()==="flip") obj.wx=1;
+      if(winBigOn()) obj.wx=1;
       if(G.cdOn) obj.cd=1;
     }
     return obj;
   }
+  /* THE WINNER TAKES THE SCREEN only ever goes with the flip board (INBOX 285 option 2 is the flip board's name tiles): the usual look AND this
+     draw's look must both be the flip board (17 Nov 2026). With the race plate the console greys the switch out and says why. */
+  function usualIsFlip(){ return (typeof VPDrawStyle!=="undefined" ? VPDrawStyle.usual("members", G.drawStyle) : G.drawStyle)!=="race"; }
+  function winBigOn(){ return !!G.winBig && usualIsFlip() && currentLook()==="flip"; }
   function currentLook(){ return (typeof VPDrawStyle!=="undefined") ? VPDrawStyle.lookFor("members", G.drawStyle, G.styleOnce) : ""; }
   function send(obj){ sendMoments(obj); if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
@@ -1327,6 +1335,7 @@
     b=document.querySelectorAll("#timeChips button");
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-dt")===G.drawTime);
     $("timeField").classList.toggle("hidden", false);
+    if(typeof renderMoments==="function" && document.getElementById("winBigNote")) renderMoments();
   }
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
@@ -1334,8 +1343,10 @@
   /* THE DRAW MOMENTS: the two switches, and the countdown control above the Draw button. The clock is this console's; the TV is told the seconds left. */
   var CD=null;
   function renderMoments(){
-    var b=document.querySelectorAll("#winBigChips button"), i;
-    for(i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-wb")==="on")===!!G.winBig);
+    var b=document.querySelectorAll("#winBigChips button"), i, flip=usualIsFlip();
+    for(i=0;i<b.length;i++){ b[i].classList.toggle("on", (b[i].getAttribute("data-wb")==="on")===(!!G.winBig && flip)); b[i].disabled=!flip; }   // race plate: shown Off and greyed, the saved choice kept
+    $("winBigNote").classList.toggle("hidden", flip);
+    if(typeof renderOnce==="function") renderOnce();
     b=document.querySelectorAll("#cdChips button");
     for(i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-cdon")==="on")===!!G.cdOn);
     $("cdCtl").classList.toggle("hidden", !G.cdOn);
@@ -1350,7 +1361,7 @@
   CD=(window.VPDrawCount ? VPDrawCount.host({ send:function(m){ send(m); },
     extra:function(){ var d=curDraw(), x={ look:currentLook() }, nums=d ? activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; }) : [];
       if(nums.length){ x.minNumber=Math.min.apply(null,nums); x.maxNumber=Math.max.apply(null,nums); }
-      if(G.winBig && x.look==="flip") x.wx=1; return x; },
+      if(winBigOn()) x.wx=1; return x; },
     onZero:cdStartDraw, onChange:renderCd }) : null);
   $("winBigChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-wb]"); if(!b) return; G.winBig=b.getAttribute("data-wb")==="on"; G.momentsSet=true; renderMoments(); queueMembersPrefs(); });
   $("cdChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-cdon]"); if(!b) return; G.cdOn=b.getAttribute("data-cdon")==="on"; G.momentsSet=true; if(!G.cdOn && CD) CD.cancel(); renderMoments(); queueMembersPrefs(); });
@@ -1361,7 +1372,8 @@
   });
   $("cdCancel").addEventListener("click", function(){ if(CD) CD.cancel(); renderCd(); });
   renderMoments();
-  function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce); }
+  function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce);
+    $("onceNote").classList.toggle("hidden", !(G.winBig && usualIsFlip() && currentLook()==="race")); }
   $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
   renderOnce();
   function applyMembersPrefs(p){

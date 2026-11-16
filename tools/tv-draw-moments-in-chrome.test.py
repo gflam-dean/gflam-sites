@@ -13,6 +13,8 @@ Both are OFF for every venue until a host switches them on, so this suite plays 
      and shows one huge number with "Get to the screen"; raffle = the band over Get your tickets, "Last tickets, now"; the draw cancels it;
      count_off returns; a screen that never hears a count makes no overlay at all
   4. SILENT: no audio is made; no page errors
+  5. NAMES: a members-list "Last,First" is First Last in the flip and race looks with the winner screen OFF, on the
+     collected card and the missed line; a purchase raffle winner is left alone (17 Nov 2026)
 
     python3 tools/tv-draw-moments-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -228,6 +230,57 @@ def countdown_raffle():
     finally:
         r.close()
 
+WALL_TEXT = '(function(){var t=document.getElementById("tv");return t?t.innerText.replace(/\\s+/g," ").trim():"";})()'
+def names_every_look():
+    print('\n5. A MEMBERS-LIST NAME IS FIRST LAST ON THE TV IN EVERY LOOK, WINNER SCREEN ON OR OFF (17 Nov 2026, staging: "Lee,Daniel")')
+    r = RIG.Rig()
+    tabs = []
+    def fresh():   # one wall at a time: a wall left running in a tab behind hangs the next one's answers on the rig
+        while tabs: r.close_tab(tabs.pop())
+        slug = r.W.info['slug']
+        tid, sid = r.open('/app/members/screen?venue=' + slug + '&sting=0', width=1280, height=720,
+                          before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){};' % json.dumps(slug) + BC_BEFORE)
+        tabs.append(tid)
+        r.until(sid, 'document.readyState==="complete" && (window.__bcNames||[]).some(function(n){return /^fake-rt:vp-/.test(n);})', 20)
+        time.sleep(1.5)
+        return sid
+    try:
+        for look in ('flip', 'race'):   # the two looks a venue can choose (INBOX 284: the old spinning draw is no longer one)
+            s = fresh()
+            says(r, s, [{'t': 'state', 'drawName': 'Friday members draw', 'jackpotCents': 145000, 'playing': False}])
+            d = {'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 3.2, 'drawSecs': 2}
+            if look: d['style'] = look
+            says(r, s, [d, {'t': 'pick', 'number': 418, 'name': 'Lee,Daniel'}])
+            time.sleep(4.2)
+            says(r, s, [{'t': 'winner', 'number': 418, 'name': 'Lee,Daniel', 'claimSecs': 45}])
+            time.sleep(4.5)
+            txt = (r.ask(s, WALL_TEXT) or '') + ' ' + (r.ask(s, STAGE_TEXT) or '')
+            nm = look or 'classic'
+            ok('%s look, winner screen off: the winner is "Daniel Lee", never "Lee,Daniel"' % nm, 'Daniel Lee' in txt and 'Lee,Daniel' not in txt, txt[:300])
+            shot(r, s, 'moments-name-%s' % nm)
+            says(r, s, [{'t': 'claimed', 'name': 'Lee,Daniel', 'amountCents': 145000, 'nextResetCents': 20000}])
+            r.until(s, vis('tvResult'), 4)
+            res = r.ask(s, 'document.getElementById("resWinName").textContent')
+            ok('%s look: the collected card says "Daniel Lee" with the setting off, and still counts up the amount' % nm, res == 'Daniel Lee' and r.ask(s, vis('resWon')) is True, res)
+        s = fresh()   # a draw as a night has it: drawing, pick, winner, then nobody claims
+        says(r, s, [{'t': 'state', 'drawName': 'Friday members draw', 'jackpotCents': 145000, 'playing': False}])
+        says(r, s, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 3.2, 'drawSecs': 2, 'style': 'flip'}, {'t': 'pick', 'number': 418, 'name': 'Lee,Daniel'}])
+        time.sleep(4.2)
+        says(r, s, [{'t': 'winner', 'number': 418, 'name': 'Lee,Daniel', 'claimSecs': 45}])
+        time.sleep(3)
+        says(r, s, [{'t': 'rollover', 'nextJackpotCents': 150000, 'incrementCents': 5000, 'missedNumber': 418, 'missedName': 'Lee,Daniel'}])
+        r.until(s, vis('tvResult'), 4)
+        mm = r.ask(s, 'document.getElementById("resMissed").textContent') or ''
+        ok('a missed winner is "Daniel Lee" too', 'Daniel Lee' in mm and 'Lee,Daniel' not in mm, mm)
+        errs1 = r.ask(s, 'window.__errs') or []
+        s2 = fresh()
+        says(r, s2, [{'t': 'drawing', 'drawName': 'Friday members draw', 'kind': 'entries', 'entriesTotal': 30}, {'t': 'winner', 'kind': 'entries', 'name': 'Kate H', 'entries': 3, 'prizeNo': 1}])
+        r.until(s2, vis('tvWin'), 4)
+        ok('a purchase raffle winner ("Kate H", no comma) is left exactly as it was', r.ask(s2, 'document.getElementById("tvWinNum").textContent') == 'Kate H', r.ask(s2, 'document.getElementById("tvWinNum").textContent'))
+        ok('no page errors', not errs1 and not (r.ask(s2, 'window.__errs') or []), [errs1, r.ask(s2, 'window.__errs')])
+    finally:
+        r.close()
+
 if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('tv-draw-moments-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
@@ -240,5 +293,6 @@ if __name__ == '__main__':
     part('off', off_as_before)
     part('members', countdown_members)
     part('raffle', countdown_raffle)
+    part('names', names_every_look)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)

@@ -17,6 +17,8 @@ the venue's real raffle wall, /see-a-night's wall and the raffle console's TV pr
      Strips of five consecutive numbers are how tickets are SOLD, never how they are drawn (the draw looks never make one)
   7. END TO END, TWO PHONES: the real console draws, the TV (/tv) rolls the ticket and lands on the server's winner, the host claims it;
      two phones are joined to the room throughout (a raffle has no phone game: the ticket is checked against the wall)
+  8. A VENUE WITH NO LOGO (17 Nov 2026): its name once a frame (top left only, not on the ticket again); the stub's and ticket's words
+     wrap and shrink, never an ellipsis or a cut word, with a long raffle name too
 
 Set VP_SHOTS=<folder> to keep screenshots.
     python3 tools/raffle-ticket-stub-in-chrome.test.py
@@ -280,6 +282,44 @@ try:
        R.ask(host, 'document.getElementById("winnersBody").textContent'))
     ok('the two phones are still in the room and neither threw', all(not (R.ask(ph, 'window.__errs') or []) for _, ph, _ in phones), [R.ask(ph, 'window.__errs') for _, ph, _ in phones])
     ok('no script error on the console or the TV', not (R.ask(host, 'window.__errs') or []) and not (R.ask(tv, 'window.__errs') or []), [R.ask(host, 'window.__errs'), R.ask(tv, 'window.__errs')])
+
+    # ---------------------------------------------------------------------------------------------- 8 the venue once, the stub's words whole
+    print('\n8. A VENUE WITH NO LOGO: ITS NAME ONCE A FRAME, AND THE STUB\'S WORDS FIT OR SHRINK, NEVER CUT (17 Nov 2026, staging play)')
+    WORDS = r"""(function(){var nt=document.getElementById("venueNameTag"),vn=(nt&&!nt.hidden)?nt.textContent.trim():"",k=0;
+      /* what a person SEES: every text with the name, on the screen, not hidden, not faded out (the roll keeps tickets off screen and faded) */
+      function seen(e){ var b=e.getBoundingClientRect(); if(!b.width||!b.height||b.right<0||b.bottom<0||b.left>innerWidth||b.top>innerHeight) return false;
+        var op=1; for(var x=e;x&&x.nodeType===1;x=x.parentElement){ var c=getComputedStyle(x); if(c.display==="none"||c.visibility==="hidden") return false; op*=parseFloat(c.opacity); } return op>0.1; }
+      if(vn){ var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null),nd; while((nd=tw.nextNode())){ if(nd.nodeValue.indexOf(vn)>=0 && nd.parentElement && seen(nd.parentElement)) k++; } }
+      var bad=[],tks=0;[].forEach.call(document.querySelectorAll("#tvStyleHost .vpds-tk"),function(t){ var it=t.parentNode; if(getComputedStyle(it).visibility==="hidden") return; if(seen(t)) tks++;
+        [t.querySelector(".vpds-sl i"), t.querySelector(".vpds-rn")].forEach(function(e){ if(!e||!e.textContent) return; var cs=getComputedStyle(e);
+          if(e.scrollWidth>e.clientWidth+1) bad.push(["a word is wider than its box", e.className||"sl", e.textContent, e.scrollWidth, e.clientWidth]);
+          if(cs.textOverflow==="ellipsis"&&cs.whiteSpace==="nowrap") bad.push(["cut with an ellipsis", e.textContent]); });
+        var sl=t.querySelector(".vpds-sl"),li=t.querySelector(".vpds-sl i"),sno=t.querySelector(".vpds-sno");
+        if(li&&li.textContent&&li.offsetHeight>sl.offsetHeight+1) bad.push(["the stub label is taller than its box", li.offsetHeight, sl.offsetHeight]);
+        if(li&&li.textContent){ var a=li.getBoundingClientRect(),b=sno.getBoundingClientRect(); if(sno.textContent&&a.bottom>b.top+1) bad.push(["the stub label runs into the stub number", Math.round(a.bottom), Math.round(b.top)]); } });
+      var ov=[].some.call(document.querySelectorAll(".vpEndShow,#vpEndShow"),function(e){ return seen(e); });
+      var tt=document.getElementById("tvStyleTitle"),tb=tt&&tt.parentNode; if(tt&&tb&&seen(tt)&&tt.scrollWidth>tb.clientWidth+1) bad.push(["the top bar cuts the raffle name", tt.textContent, tt.scrollWidth, tb.clientWidth]);
+      return JSON.stringify({name:vn,count:k,bad:bad,tks:tks,overlay:ov});})()"""
+    R.close(); R = rig.Rig()   # a fresh rig: the night above ended with a claim, and its end show would sit over a new wall
+    for (w, h) in ((1280, 720), (1920, 1080)):
+        for raffle in ('Saturday charity raffle', 'Saturday charity raffle for the Harbour surf club juniors', 'Supercalifragilistic raffle'):   # the last: one word wider than the stub at full size
+            s = wall(R, w, h)
+            says(R, s, [{'t': 'state', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 300}])
+            says(R, s, [{'t': 'drawing', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 300, 'spinSecs': 4.2, 'style': 'ticket', 'drawSecs': 3,
+                         'raffle': raffle, 'prizeNo': 1, 'prizeOf': 1}, {'t': 'pick', 'numbers': [226], 'pad': 3, 'min': 1, 'max': 300}])
+            R.until(s, vis('tvStyle') + ' && document.querySelectorAll("#tvStyleHost .vpds-tk").length>=5', 8); time.sleep(1.2)
+            mid = (R.json(s, WORDS, {}) or {})
+            shot(R, s, 'ticket-venue-once-roll-%d-%d.jpg' % (w, len(raffle)))
+            R.until(s, STAGE_T + '>' + STAGE_WIN + '+0.2', 8)
+            says(R, s, [{'t': 'winner', 'prizeLabel': 'Meat tray', 'numbers': [226], 'pad': 3, 'allowRedraw': True, 'time': 60}])
+            time.sleep(3.2)
+            win = (R.json(s, WORDS, {}) or {})
+            tag = '%d, "%s"' % (w, raffle[:28])
+            ok('%s: the wall has the venue in words top left (no logo), and the tickets are on show (mid roll %s, winner %s)' % (tag, mid.get('tks'), win.get('tks')),
+               bool(win.get('name')) and (mid.get('tks') or 0) >= 2 and (win.get('tks') or 0) >= 1 and not mid.get('overlay') and not win.get('overlay'), [mid, win])
+            ok('%s: the venue\'s name is on the frame ONCE, mid roll and on the winner (was 3: top left and twice on the ticket)' % tag, mid.get('count') == 1 and win.get('count') == 1, [mid.get('count'), win.get('count')])
+            ok('%s: every stub, ticket and top bar line is whole: no ellipsis, no word wider than its box, the stub words above the stub number, the raffle name not cut at the top' % tag, mid.get('bad') == [] and win.get('bad') == [], [mid.get('bad'), win.get('bad')])
+            shot(R, s, 'ticket-venue-once-%d-%d.jpg' % (w, len(raffle)))
 finally:
     if R: R.close()
 

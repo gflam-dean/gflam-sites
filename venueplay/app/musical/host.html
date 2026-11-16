@@ -581,6 +581,7 @@
 <script src="../vp-gamesetup.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-weekly.js"></script>
+<script src="/app/vp-songsafe.js"></script>   <!-- no rude song on a card, the TV or a search (Dean 16 Nov 2026) -->
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
@@ -689,7 +690,19 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       if(!r.ok) throw new Error("http "+r.status);
       return r.json();
     }).then(function(data){
-      LIB.songs=(data.songs||[]).slice();
+      /* NO RUDE SONG ON A CARD, THE TV, A PHONE OR A SEARCH (Dean, 16 Nov 2026: "We can change the name displayed if they are super popular").
+         A song can carry a DISPLAY title ("displayTitle" in the library): from here on it is the title everything shows and sends (cards, TV,
+         phones, search, paper), while realTitle is kept and indexed so a game stored under the old title still finds its clip. A hidden song,
+         or one whose shown title or artist has a word on the one list (/app/vp-songsafe.js), never joins this console's library, so no
+         playlist, search, Surprise Mix or card can reach it. Without the list file the hidden mark and display title still hold. */
+      LIB.songs=[];
+      (data.songs||[]).forEach(function(s0){
+        if(!s0 || s0.hidden===true) return;
+        var s=s0;
+        if(typeof s0.displayTitle==="string" && s0.displayTitle.trim()){ s={}; for(var k in s0) if(Object.prototype.hasOwnProperty.call(s0,k)) s[k]=s0[k]; s.realTitle=s0.title; s.title=s0.displayTitle.trim(); }
+        if(window.VPSongSafe && !VPSongSafe.usable(s)) return;
+        LIB.songs.push(s);
+      });
       LIB.byId={}; LIB.byTitle={}; LIB.byTitleArtist={};
       for(var i=0;i<LIB.songs.length;i++){
         var s=LIB.songs[i];
@@ -701,6 +714,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
         // purely as a last resort for a song whose artist we somehow lost.
         LIB.byTitleArtist[taKey(s.title, s.artist)]=s;
         if(!LIB.byTitle[normTitle(s.title)]) LIB.byTitle[normTitle(s.title)]=s;
+        if(s.realTitle){ if(!LIB.byTitleArtist[taKey(s.realTitle, s.artist)]) LIB.byTitleArtist[taKey(s.realTitle, s.artist)]=s; if(!LIB.byTitle[normTitle(s.realTitle)]) LIB.byTitle[normTitle(s.realTitle)]=s; }   // a game stored under the old title
       }
       LIB.playlists=(data.playlists||[]).slice();
       LIB.plById={};

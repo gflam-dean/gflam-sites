@@ -43,7 +43,8 @@
     return (typeof once === "string" && CHOICES[m].hasOwnProperty(once)) ? once : usual(m, usualLook);
   }
   /* THE WINNER TAKES THE SCREEN (13 Nov 2026, INBOX 285 option 2; OFF unless the venue's "Winner takes the screen" setting is on, game_prefs
-     draw_winner_big, default off). A member's name from the members list is "Last,First" or "First Last": always say it First Last. */
+     draw_winner_big, default off). A member's name from the members list is "Last,First" or "First Last": always say it First Last.
+     THE ONE NAME RULE for every place a member's name is painted (the TV in every look, the members wall, the console's winner card). */
   function niceName(raw) {
     var s = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim();
     var i = s.indexOf(",");
@@ -117,7 +118,7 @@
     ".vpds-tk .vpds-ticket-body{position:relative;flex:1;padding:26px 38px 0 34px;box-sizing:border-box;min-width:0}",
     ".vpds-tk .vpds-ticket-body:before{content:'';position:absolute;top:14px;right:16px;bottom:14px;left:12px;border:3px solid #FF1F8E;border-radius:4px}",
     ".vpds-tk .vpds-vn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-tk .vpds-rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-tk .vpds-rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;overflow-wrap:normal;word-break:normal}",
     ".vpds-tk .vpds-lb{position:relative;font:600 20px/1.1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:3px}",
     ".vpds-tk .vpds-no{position:relative;font:400 150px/1 Anton,sans-serif;margin-top:4px;letter-spacing:2px;white-space:nowrap}",
     /* THE STUB IS THE START OF THE TICKET (Dean, 13 Nov 2026, INBOX 355): a raffle book's stub is on the left, torn off at the perforation, and the two
@@ -128,7 +129,9 @@
     ".vpds-tk .vpds-sno{transform:rotate(-90deg);font:400 66px/1 Anton,sans-serif;white-space:nowrap}",
     ".vpds-tk .vpds-sl{position:absolute;top:20px;left:8px;right:8px;text-align:center;font:700 16px/1.25 'Hanken Grotesk',sans-serif;color:#55555E;overflow:hidden}",
     ".vpds-tk .vpds-sl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#0A0A0B}",
-    ".vpds-tk .vpds-sl i{display:block;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#C70F69}",
+    /* THE STUB'S WORDS FIT OR SHRINK, NEVER CUT (17 Nov 2026, staging play: "Saturday charit..." on the stub): they wrap at spaces, up to three
+       lines, and fitWords() takes the size down until every word is whole on the stub. */
+    ".vpds-tk .vpds-sl i{display:block;font-style:normal;white-space:normal;overflow-wrap:normal;word-break:normal;color:#C70F69}",
     ".vpds-cd{width:560px;height:353px;border-radius:26px;background:#1B1B20;border:2px solid #34343C;box-sizing:border-box;position:relative;overflow:hidden;color:#fff}",
     ".vpds-cd img{position:absolute;left:30px;top:24px;height:74px;max-width:250px;object-fit:contain;object-position:left top}",
     ".vpds-cd .vpds-ml{position:absolute;right:30px;top:36px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
@@ -290,7 +293,7 @@
       seek: function (t) { buildItemsOnce(); if (st.raf) root.cancelAnimationFrame(st.raf); st.dead = false; render(clamp(t, 0, TOTAL)); },
       setPick: function (p) {
         if (!p) return; buildItemsOnce();
-        st.winNo = pad(p.number == null ? "" : p.number, n, members ? " " : "0"); st.winName = p.name ? (bigWin ? niceName(p.name) : String(p.name)) : "";
+        st.winNo = pad(p.number == null ? "" : p.number, n, members ? " " : "0"); st.winName = p.name ? (members ? niceName(p.name) : String(p.name)) : "";   /* a members-list name is ALWAYS First Last, every look, winner-takes-the-screen on or off (17 Nov) */
         st.items[st.N] = { no: st.winNo, nm: st.winName }; st.picked = true; clearWinFromReel();
         view.refresh(); applyClaim(); render(st.t);
       },
@@ -318,6 +321,15 @@
     return ctl;
 
     /* ------------------------------------------------------------------------------------------------ TICKET ROLL */
+    /* shrink a line of words until no word is wider than its box and it is no more than `lines` lines tall (never an ellipsis, never a cut word) */
+    function fitWords(e, maxPx, minPx, lines) {
+      if (!e || !e.textContent) return;
+      for (var f = maxPx; f >= minPx; f--) {
+        e.style.fontSize = f + "px"; e.style.lineHeight = "1.2";
+        if (!e.clientWidth) return;                                 // not laid out (no layout yet): the next refresh measures again
+        if (e.scrollWidth <= e.clientWidth + 1 && e.offsetHeight <= Math.ceil(f * 1.2 * lines) + 1) return;
+      }
+    }
     function ticketView(c) {
       var POOL = 9, pitch = members ? 608 : 636, W = members ? 560 : 600, H = members ? 353 : 320;
       var v = { N: Math.round(c.DRAW * 5.2), moveDur: 0.26, freezeT: 1e9, S: null }, strip = el("div", "vpds-strip", c.world), els = [], k;
@@ -338,12 +350,14 @@
           if (!vname) d.querySelector(".vpds-vn").style.display = "none"; if (!o.name) d.querySelector(".vpds-rn").style.display = "none"; d.querySelector(".vpds-no").style.fontSize = numFs + "px";
           d.querySelector(".vpds-sno").style.fontSize = Math.min(66, Math.round(66 * 4 / Math.max(4, n))) + "px";
         }
+        if (!members) { fitWords(d.querySelector(".vpds-sl i"), 16, 9, 3); fitWords(d.querySelector(".vpds-rn"), 26, 15, 2); }
         els.push({ d: d, idx: -1, key: "", no: d.querySelector(".vpds-no"), s: d.querySelector(".vpds-sno"), nm: d.querySelector(".vpds-nm"), card: d.firstChild });
       }
       claimEl.style.top = (members ? 906 : 896) + "px"; clockEl.style.bottom = "12px"; clockEl.style.fontSize = "38px"; prizeEl.style.top = (members ? 810 : 768) + "px"; if (members) prizeEl.style.fontSize = "90px";
       if (o.noClock && !members) { claimEl.style.top = "820px"; prizeEl.style.top = "712px"; prizeEl.style.fontSize = "96px"; }   // the countdown band owns the bottom of the screen: the claim line and prize sit above it
       v.after = function () {};
-      v.refresh = function () { for (var i = 0; i < els.length; i++) els[i].idx = -1; };
+      v.refresh = function () { for (var i = 0; i < els.length; i++) { els[i].idx = -1; if (!members) { fitWords(els[i].d.querySelector(".vpds-sl i"), 16, 9, 3); fitWords(els[i].d.querySelector(".vpds-rn"), 26, 15, 2); } } };
+      if (!members && root.document && root.document.fonts && root.document.fonts.ready) root.document.fonts.ready.then(function () { if (!st.dead) v.refresh(); });   // the real font is wider than the stand-in
       v.render = function (t) {
         var S = v.S, items = st.items, N = st.N; if (!S) return;
         var td = t - INTRO, p = S.pos(clamp(td, 0, DRAW));
