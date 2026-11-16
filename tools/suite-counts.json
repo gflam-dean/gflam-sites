@@ -1312,7 +1312,7 @@
   "counted_by": "lines"
  },
  "tools/test-retention-sweep.js": {
-  "checks": 40,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
@@ -2305,6 +2305,14 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-known-phone.js": {
+  "checks": 51,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-known.js": {
+  "checks": 52,
   "counted_by": "lines"
  }
 }
