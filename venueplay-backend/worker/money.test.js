@@ -235,13 +235,7 @@ print("\nAN IDEMPOTENCY KEY DESCRIBES THE MOVE, NOT THE DESTINATION");
    Stripe's 24 hour window reused the first decrease's key, so the second credit
    never happened and the venue ended on 50 players having paid a year for capacity
    it gave back. Reverse it and the venue ends on 150 having paid nothing. */
-/* 15 Nov 2026 (INBOX 419 (3), merged into T17): a player cut moves no money on either plan (held to the next bill, no
-   credit, no refund), so there is no 'down' adjustment and no 'down' key any more. What stays true: a cut never banks
-   a credit through vpbAdjustPlayerBilling, and the two moves that do charge keep their direction and delta in the key. */
-pass("a player cut banks no credit: no down adjustment and no down key",
-     !!setp && setp.indexOf("const dAdj = null;") !== -1 && setp.indexOf("':down'") === -1,
-     "the 13 Nov yearly rule paid a credit for capacity the venue kept using");
-['up', 'restore'].forEach(function (dir) {
+['up', 'down', 'restore'].forEach(function (dir) {
   pass("the " + dir + " key carries its direction and delta",
        // Plain indexOf, not a built regex: escaping a paren through two layers
        // of quoting got it wrong and the error read as a malformed Worker.

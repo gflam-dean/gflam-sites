@@ -692,7 +692,7 @@
   "counted_by": "lines"
  },
  "tools/test-billing-abuse-13nov.js": {
-  "checks": 98,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
@@ -804,7 +804,7 @@
   "counted_by": "lines"
  },
  "tools/test-demo-returns-to-offer.js": {
-  "checks": 26,
+  "checks": 25,
   "counted_by": "lines"
  },
  "tools/test-demo-sync.js": {
@@ -1636,7 +1636,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
-  "checks": 116,
+  "checks": 114,
   "counted_by": "lines"
  },
  "tools/test-vp-tonight.js": {

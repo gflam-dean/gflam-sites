@@ -142,8 +142,7 @@ print('a yearly plan is its own rule and is untouched');
 var rA = run({ plan: 'annual', priceId: ANNUAL }, { venue_id: 'v1', players: 81 });
 check('yearly: adding is pro rata to the renewal, one amount, and the line says so', charges().length === 1 && typeof charges()[0].params.amount === 'number' && /pro rata to renewal/.test(charges()[0].params.description), charges()[0] && charges()[0].params);
 var rAd = run({ plan: 'annual', priceId: ANNUAL, current: 110 }, { venue_id: 'v1', players: 80 });
-/* INBOX 419 (3), 14 Nov 2026: a yearly cut is the same as a monthly one now: the 110 stay, the 80 is pending, nothing is credited or refunded. */
-check('yearly: lowering is scheduled for the next bill, keeps the 110 until then, and credits nothing', rAd && rAd.applied === 'next_renewal' && rAd.credit_cents === 0 && credits().length === 0 && patched[0].body.pending_players === 80 && patched[0].body.max_players === undefined, [rAd, credits(), patched]);
+check('yearly: lowering releases the players today and banks the unused value as credit', rAd && rAd.applied === 'now' && credits().length === 1 && credits()[0].params.amount < 0 && patched[0].body.max_players === 80, [rAd, credits(), patched]);
 
 print('rule 4: the one-hour undo, behind VPB_BILLING_RULES_3NOV');
 var ON = envWith({ VPB_BILLING_RULES_3NOV: '1' });
@@ -183,9 +182,9 @@ var u7 = run({ current: 110 }, { venue_id: 'v1', players: 80 }, ON);
 check('no add on record: an ordinary reduction', deletes.length === 0 && u7 && u7.applied === 'next_renewal', [deletes, u7]);
 var u8 = run({ current: 110, lastUp: { created_at: minutesAgo(5), detail: { from: 80, to: 110, billing: null } } }, { venue_id: 'v1', players: 80 }, ON);
 check('an add that charged nothing (free month) has no line to delete: an ordinary reduction', deletes.length === 0 && u8 && u8.applied === 'next_renewal', [deletes, u8]);
-/* A yearly plan never undoes: its reduction is scheduled for the next bill with nothing credited (INBOX 419 (3)). */
+/* A yearly plan never undoes: its reduction releases and credits today, which is already fair. */
 var u9 = run({ plan: 'annual', priceId: ANNUAL, current: 110, lastUp: lastUp(10, 80, 110) }, { venue_id: 'v1', players: 80 }, ON);
-check('yearly plan: no undo, an ordinary scheduled cut with no credit', deletes.length === 0 && u9 && u9.applied === 'next_renewal' && credits().length === 0, [deletes, u9, calls]);
+check('yearly plan: no undo, the yearly release-and-credit path as before', deletes.length === 0 && u9 && u9.applied === 'now' && credits().length === 1, [deletes, u9, calls]);
 
 /* WHO NEVER GETS THE UNDO (Dean, 4 Nov 2026): it is for an existing venue adding more players OUTSIDE its
    free month. Not inside the account's own free month, not a venue still inside the free month a new pub
