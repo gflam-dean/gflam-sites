@@ -50,8 +50,26 @@ print("\nRAFFLE: every winner message carries the draw look and the claim window
   look = "";
   var m2 = api(0);
   pass("a classic-look venue sends no look fields (the plain winner screen stays)", m2.style === undefined && m2.prizeNo === undefined, JSON.stringify(m2));
-  var src = RH.slice(RH.indexOf("function revealServer"));
   pass("the first send, the time-up resend and the hello replay all use winnerMsg", (RH.match(/winnerMsg\(/g) || []).length >= 4 && !/send\(\{ t:"winner"/.test(RH) && !/send\(\{\s*t:"winner"/.test(RH));
+})();
+
+var MEH = readFile("venueplay/app/members/host.html");
+print("\nMEMBERS DRAW: every winner message carries the look, the draw and the jackpot");
+(function(){
+  var G = { round: { number: 107, name: "Willow,Mitchell", prizeCents: 20000, total: 180 }, drawTime: "normal" };
+  var look = "flip", draw = { name: "Thursday draw", members: [] };
+  var api = new Function("G", "curDraw", "currentLook", "VPDrawStyle", "activeMembers",
+    grab("winnerMsg", MEH) + "\nreturn winnerMsg;")(G, function(){ return draw; }, function(){ return look; }, { secs: function(){ return 9; } },
+    function(){ return [{ member_number: 101 }, { member_number: 112 }, { member_number: 105 }]; });
+  var m = api(150);
+  pass("the replay says the flip board, nine seconds", m.style === "flip" && m.drawSecs === 9, JSON.stringify(m));
+  pass("and the jackpot it plays for, so the wall can say Playing for $200", m.jackpotCents === 20000 && m.drawName === "Thursday draw", JSON.stringify(m));
+  pass("and the number range the board was built for", m.minNumber === 101 && m.maxNumber === 112, JSON.stringify(m));
+  pass("claimSecs is what is left, claimTotal the whole window", m.claimSecs === 150 && m.claimTotal === 180 && m.number === 107, JSON.stringify(m));
+  look = "";
+  var m2 = api(0);
+  pass("the old draw look sends no look fields", m2.style === undefined && m2.minNumber === undefined && m2.jackpotCents === 20000, JSON.stringify(m2));
+  pass("the first send, the restored round and the hello replay all use winnerMsg", (MEH.match(/winnerMsg\(/g) || []).length >= 4 && !/send\(\{ t:"winner"/.test(MEH));
 })();
 print("\n" + ran + " checks, " + bad + " failed");
 if (bad) throw new Error(bad + " failed");

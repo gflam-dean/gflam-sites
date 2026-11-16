@@ -854,7 +854,7 @@
     $("claimBtn").disabled=false; $("rollBtn").disabled=false; syncStep(); applyPresentRule(); updateClaimCd();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
     $("drawNote").textContent= noPresent() ? ("Picked up where you left off. "+NO_PRESENT_NOTE) : "Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
-    send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:0 });
+    send(winnerMsg(0));
     return true;
   }
   function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
@@ -951,6 +951,23 @@
       .then(function(r){ revealWinner(r); })
       .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
+  /* ONE WINNER MESSAGE FOR EVERY SEND (first send, a restored round, the replay to a TV that reloaded or opened mid-claim). Besides the
+     number and name it carries what the screen only ever learned from "drawing" and "state": the draw look, the draw's name, the jackpot
+     it is playing for and the number range, so a TV that missed those paints the flip board and "Playing for $200", not a plain winner
+     screen. claimSecs is what is left of the claim window; claimTotal is the window the draw started with (its bar stays true). */
+  function winnerMsg(claimSecs){
+    var m={ t:"winner", number:G.round.number, name:G.round.name, claimSecs:claimSecs };
+    var d=curDraw(), look=currentLook();
+    if(d && d.name) m.drawName=d.name;
+    if(G.round.prizeCents!=null) m.jackpotCents=G.round.prizeCents;
+    if(look==="flip" || look==="race"){
+      m.style=look; m.drawSecs=VPDrawStyle.secs(G.drawTime);
+      var nums=d ? activeMembers(d).map(function(x){ return x.member_number|0; }).filter(function(n){ return n>0; }) : [];
+      if(nums.length){ m.minNumber=Math.min.apply(null,nums); m.maxNumber=Math.max.apply(null,nums); }
+    }
+    if(G.round.total>0) m.claimTotal=G.round.total;
+    return m;
+  }
   function revealWinner(r){
     G.busy=false;
     // Re-arm the resolve buttons for THIS draw. They are disabled on use and were only ever
@@ -964,7 +981,7 @@
               total:claimSecs, locked:claimSecs>0 };   // NOT HERE WAITS FOR THE CLAIM CLOCK (Dean, 6 Nov 2026): it opens at zero
     syncStep(); applyPresentRule();
     // broadcast the winner to the TV (claimSecs drives the TV countdown too)
-    send({ t:"winner", number:r.member_number, name:r.winner_name, claimSecs:claimSecs });
+    send(winnerMsg(claimSecs));
     // console winner card. The name reads First Last as the TV says it ("Willow,Mitchell" is Mitchell Willow, 12 Nov D4)
     $("wcNum").textContent="#"+r.member_number;
     $("wcName").textContent=((window.VPDrawStyle&&VPDrawStyle.niceName)?VPDrawStyle.niceName(r.winner_name):r.winner_name)||"·";
@@ -1283,7 +1300,7 @@
         send({ t:"host_here" });
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, INBOX 286)
         send({ t:"mode", mode:"members", claim:1 });   // so a /tv that just reloaded mid-draw comes back to it
-        if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:(G.round.remaining>0?G.round.remaining:0) }); }
+        if(G.round){ send(winnerMsg(G.round.remaining>0?G.round.remaining:0)); }
         else if(typeof CD!=="undefined" && CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }
