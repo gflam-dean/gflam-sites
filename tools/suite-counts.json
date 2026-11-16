@@ -2320,7 +2320,11 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-inbox.js": {
-  "checks": 38,
+  "checks": 39,
+  "counted_by": "lines"
+ },
+ "tools/test-onboarding-same-person.js": {
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-members-upload.js": {

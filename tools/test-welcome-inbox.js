@@ -89,6 +89,8 @@ function welcome(o) {
   check('a sender on a mailbox that is not ours is not used as a name', x.m.from === 'venueplay <hello@send.venueplay.com.au>', x.m.from);
   var y = await welcome({ senderName: 'Harry <a@b>', senderEmail: 'harry@venueplay.online' });
   check('a name that is not plain letters never reaches the From line', y.m.from === 'venueplay <hello@send.venueplay.com.au>', y.m.from);
+  var jr = await welcome({ senderName: 'J.R. Smith', senderEmail: 'jr@venueplay.online' });
+  check('a first name with a dot in it (the sender check allows dots, the From line does not): plain "venueplay"', jr.m.from === 'venueplay <hello@send.venueplay.com.au>', jr.m.from);
   check('the From line has one address and no "VenuePlay" capitals (lowercase name rule)', [h.m, k.m, d.m, n.m].every(function (m) { return (m.from.match(/@/g) || []).length === 1 && !/VenuePlay/.test(m.from); }));
 
   section('2. List-Unsubscribe on the welcome, one-click (RFC 8058)');

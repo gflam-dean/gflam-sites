@@ -4518,9 +4518,14 @@ def local_checks(which):
             # D414W: the welcome lands in the inbox (Dean, 16 Nov 2026; INBOX 414), branch fix/welcome-inbox-wed18.
             ('D414W. The prospect welcome lands in the inbox: a sender name they know, one-click unsubscribe where it belongs, a text part, only our own links',
              'test-welcome-inbox.js',
-             'runs the billing Worker: the prospect welcome comes from the name they met (never Dean) on hello@, with List-Unsubscribe one-click and a text part, no .dev host or link shortener and two logos against real words; the nudge carries the header and a footer link and is refused for an unsubscribed address; the sign-in link and the HQ welcome stay without it', 38,
+             'runs the billing Worker: the prospect welcome comes from the name they met (never Dean) on hello@, with List-Unsubscribe one-click and a text part, no .dev host or link shortener and two logos against real words; the nudge carries the header and a footer link and is refused for an unsubscribed address; the sign-in link and the HQ welcome stay without it', 39,
              'A welcome from a stranger\'s name junked by Gmail or Outlook, a Report spam where an Unsubscribe button should be, a nudge to someone '
              'who asked us to stop, or an Unsubscribe header on a sign-in link'),
+            # D430: every onboarding mail from the same person (Dean, 17 Nov 2026; INBOX 430), branch feat/onboarding-from-same-person-sun22.
+            ('D430. Onboarding mail comes from the same person: the welcome, nudges, sign-in link and card reminders all from the name they met, plain venueplay once they are a venue',
+             'test-onboarding-same-person.js',
+             'runs the billing Worker: every onboarding mail to a prospect (welcome, day-3 and expiry nudges, sign-in link, card reminders, cancelled-month note) comes From the first name they met and is signed by it, plain venueplay with no name for an unnamed prospect or a venue with a card, comp, invoice or group, and never Dean', 37,
+             'Harry on the welcome and a stranger on the reminder, Dean on a nudge, or a name still on the mail after the card is in'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

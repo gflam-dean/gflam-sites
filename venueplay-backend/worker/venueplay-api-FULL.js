@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 09:20 · 35644674';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 09:21 · 8bfdb293';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -5583,6 +5583,8 @@ async function vpaAutopilotProspectNudge(request, env, json) {
     return json({ error: 'The subject must be one short line, with no long dash, and venueplay in lowercase.' }, 400);
   }
   if (/[\u2014\u2013]/.test(text) || /VenuePlay/.test(text)) return json({ error: 'The email must have no long dash, and venueplay in lowercase.' }, 400);
+  /* INBOX 430 (17 Nov 2026): the sign-off is the Worker's (vpaNudgeSignoff); the rest of the words never name Dean. */
+  if (/\bDean\b/i.test(vpaNudgeSignoff(text, 'X'))) return json({ error: 'The email must not name Dean; it is signed by the person they met.' }, 400);
   const winN = await vpaProspectLinkWindow(env, venueId);
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
   /* NOT hq: an automatic follow-up never restarts the 90 days, and after them it sends nothing (reason 'ended'
@@ -6328,7 +6330,7 @@ function vpaRenderTrialEndNote(env, o) {
     + vpaEsc(when) + ', and everything carries on just as it is.</p>'
     + (o.cardUrl ? vpaEmailButton(vpaEsc(o.cardUrl), 'Keep it going') : '')
     + '<p style="margin:20px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Either way, thanks for giving venueplay a go. This is the last email you’ll get from us about it.</p>'
-    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff('') + '</p>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(o.senderFirst || '') + '</p>'
     + vpaEmailFootBlock('You are getting this because we set up venueplay for ' + vpaEsc(venue) + ' at your request.', [
         'Need a hand? Just reply to this email,',
         'or call ' + vpaFootPhone(' and press 2.'),
@@ -6374,13 +6376,14 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
       { venue_id: v.id, name: v.name || null, cancelled_at: p.cancelled_at, free_month_ends_at: p.free_month_ends_at });
     if (!claimed) { out.skipped += 1; continue; }
     const first = String(p.contact_name || (f && f.contact_name) || '').trim().split(/\s+/)[0] || '';
-    const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, email: email, endsLong: vpaBneLongDate(end), endsShort: vpaBneDayMonth(end),
+    const voice = await vpaProspectVoice(env, v.id);
+    const msg = vpaRenderTrialEndNote(env, { venueName: v.name, firstName: first, senderFirst: voice.name, email: email, endsLong: vpaBneLongDate(end), endsShort: vpaBneDayMonth(end),
       cardUrl: await vpaCardLink(env, v.founding_id) });
     let res = null;
     try {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',
         headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: [email], from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+        body: JSON.stringify({ to: [email], from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
     } catch (_) { res = null; }
     const ok = !!(res && res.ok);
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,
@@ -6791,7 +6794,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
-    .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
+    .replace(/{{signoff}}/g, vpaProspectSignoff(o.senderFirst || ''));   // a card reminder: signed by the name they met (Dean, 17 Nov 2026), else the team
   const subject = o.kind === 'final' ? 'Last day of your first month at ' + (o.venueName || 'your venue')
     : o.kind === 'last' ? 'Your first month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
     : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
@@ -6862,7 +6865,8 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
     /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
     const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
-    const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
+    const voice = await vpaProspectVoice(env, v.id);
+    const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name, senderFirst: voice.name,
       endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
       cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id),
@@ -6871,7 +6875,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!msg) continue;
     const res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
+      body: JSON.stringify({ from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
         headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
     if (!res || !res.ok) continue;
     due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
@@ -7509,6 +7513,8 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const url = vpaOneClickUrl(site, token, email);
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
+  /* WHO IT COMES FROM (INBOX 430): a prospect gets the name they met, a venue (card added) plain venueplay. */
+  const voice = win ? await vpaProspectVoice(env, pick.venue_id) : { from: VPA_PROSPECT_FROM, name: null };
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
   const BUTTON = vpaEmailButton(vpaEsc(url), 'Open your venueplay') + '<div style="height:18px;line-height:18px;font-size:0">&nbsp;</div>';
   const done = { ok: true, to: email, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
@@ -7522,14 +7528,14 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
      own hello and sign-off), then the same button. {days} and {expires} in his words are filled from THIS
      link, after it was minted (Dean, 4 Nov 2026: never a number that is not the real expiry). */
   if (opts.nudge) {
-    const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
+    const words = vpaNudgeSignoff(vpaFillDays(opts.nudge, daysLeft, expiresAt), voice.name);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
       + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
       + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(String(email).trim().toLowerCase()))
         + '" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a> from reminders like this one.');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
-    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge')); } catch (_) { sentN = false; }
+    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge'), null, { from: voice.from }); } catch (_) { sentN = false; }
     if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
@@ -7543,12 +7549,12 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
-    + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>'
+    + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(voice.name) + '</p>'
     + vpaReplyEmailFoot('');
   let sent = false;
   try {
     sent = await vpaSendEmail(env, email, 'Your venueplay sign-in link',
-      vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO);
+      vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO, null, null, { from: voice.from });
   } catch (_) { sent = false; }
   if (!sent) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
   return done;
@@ -8273,7 +8279,8 @@ function vpaProspectSender(rawName, rawEmail) {
 /* The sign-off: their first name, the venueplay team, the website. No phone but the support line, which the footer carries. */
 function vpaProspectSignoff(senderName) {
   /* Dean, 5 Nov 2026: the sender's FIRST name (never the surname), then "the venueplay team", lowercase t. */
-  const first = String(senderName || '').trim().split(/\s+/)[0];
+  let first = String(senderName || '').trim().split(/\s+/)[0];
+  if (first) first = first.charAt(0).toUpperCase() + first.slice(1);
   return 'Cheers,<br>' + (first ? vpaEsc(first) + '<br>' : '') + 'the venueplay team<br><a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
 }
 /* THE NAME ON THE WELCOME (INBOX 414, 16 Nov 2026: "between emails not being delivered and our delayed replies").
@@ -8289,6 +8296,61 @@ function vpaProspectFrom(senderName, senderEmail) {
   const first = String((s && s.name) || '').trim().split(/\s+/)[0];
   if (!first || !/^[A-Za-z][A-Za-z'-]{0,19}$/.test(first) || first.toLowerCase() === 'dean') return VPA_PROSPECT_FROM;
   return first.charAt(0).toUpperCase() + first.slice(1) + ' at venueplay <hello@send.venueplay.com.au>';
+}
+/* ONE VOICE FOR THE WHOLE ONBOARDING (Dean, 17 Nov 2026, INBOX 430: "the emails to onboard them they should get from the
+   same people. Then Harry would disappear."). Every onboarding mail to a PROSPECT (the welcome, the day-3 nudge, the
+   "expires in 3 days" nudge, the card reminders, the sign-in link, the cancelled-month note) comes From
+   "<first name> at venueplay" and is signed by that name: the person whose cold email they replied to. The name is
+   read from where the welcome already got it: the prospect_set_up audit row (sender_name + sender_email, written by
+   vpaProspectSetUp), else the newest vp_prospect_welcomes detail. It is read the same way for every mail, so they cannot
+   disagree.
+   THE SWITCH-OVER: a prospect is a venue with a vp_prospects row that has not signed up (vpaProspectSignedUp: a card
+   on file = a Stripe subscription, comp, invoiced, or in a group). The moment that is true the name is gone for good
+   and everything comes from plain "venueplay" signed "the venueplay team". No prospect row (a self sign-up, a venue we
+   onboarded on request), no recorded sender, a sender that is not a plain first name, Dean, or a read that fails:
+   plain "venueplay" too. Never Dean, never blank. Returns { from, name } (name is the capitalised first name or null). */
+async function vpaProspectVoice(env, venueId) {
+  const plain = { from: VPA_PROSPECT_FROM, name: null };
+  if (!venueId) return plain;
+  try {
+    const id = encodeURIComponent(venueId);
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + id + '&select=id,group_id,founding_id&limit=1');
+    const v = vr && vr[0];
+    if (!v) return plain;
+    const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
+    if (vpaProspectSignedUp(v, fr && fr[0])) return plain;
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + id + '&select=venue_id&limit=1');
+    if (!pr || !pr[0]) return plain;
+    let s = {};
+    const au = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) + '&action=eq.prospect_set_up&select=detail,created_at&order=created_at.desc&limit=1');
+    const d = (au && au[0] && au[0].detail && typeof au[0].detail === 'object') ? au[0].detail : null;
+    if (d) s = vpaProspectSender(d.sender_name, d.sender_email);
+    if (s.error || !s.name) {
+      const w = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + id + '&select=detail,send_at&order=send_at.desc&limit=1');
+      const l = (w && w[0] && w[0].detail && typeof w[0].detail === 'object') ? w[0].detail : null;
+      s = l ? vpaProspectSender(l.senderName, l.senderEmail) : {};
+    }
+    if (s.error || !s.name) return plain;
+    const from = vpaProspectFrom(s.name, s.email);
+    if (from === VPA_PROSPECT_FROM) return plain;
+    return { from: from, name: from.split(' at venueplay')[0] };
+  } catch (_) { return plain; }
+}
+/* The nudge words come from the Mac with their own sign-off ("Cheers,\nDean" until 17 Nov 2026). The Worker is the
+   one that knows who the prospect met, so it writes the name line itself: the last line after "Cheers," becomes the
+   prospect's first name, or goes (leaving "Cheers," then "the venueplay team") when they have none. */
+function vpaNudgeSignoff(text, first) {
+  const lines = String(text || '').replace(/\s+$/, '').split('\n');
+  const i = lines.length - 1;
+  if (i >= 1 && /^\s*cheers,?\s*$/i.test(lines[i - 1]) && lines[i].trim().split(/\s+/).length <= 2) lines.pop();
+  else if (i >= 0 && /^\s*cheers,?\s*$/i.test(lines[i])) { /* "Cheers," with no name */ }
+  else return lines.join('\n');
+  return lines.join('\n') + '\n' + (first ? first + '\n' : '') + 'the venueplay team';
+}
+/* The first name that goes on the From line AND the sign-off, or '' when the From line is plain. One rule for both. */
+function vpaProspectNameOn(senderName, senderEmail) {
+  const f = vpaProspectFrom(senderName, senderEmail);
+  return f === VPA_PROSPECT_FROM ? '' : f.split(' at venueplay')[0];
 }
 function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
@@ -8335,7 +8397,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     // The sign-off (and, until the new template is on Pages, the old fixed one in its place).
-    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(vpaProspectSender(o.senderName, o.senderEmail).name));
+    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(vpaProspectNameOn(o.senderName, o.senderEmail)));   // the same name as the From line, never Dean
   return vpaEmailDocument(vpaFillSupport(html), vpaProspectSubject(o.venueName));
 }
 async function vpaFireProspectWelcome(env, o) {
@@ -11777,6 +11839,7 @@ async function vpaSendEmail(env, to, subject, html, replyTo, headers, attachment
   };
   if (headers && typeof headers === 'object' && Object.keys(headers).length) msg.headers = headers;
   if (Array.isArray(attachments) && attachments.length) msg.attachments = attachments.map((a) => ({ filename: String(a.filename), content: String(a.content) }));
+  if (opts && typeof opts.from === 'string' && opts.from) msg.from = opts.from;   // a prospect's onboarding mail: the name they met (vpaProspectVoice)
   if (opts && opts.sendAtMs && opts.sendAtMs > Date.now()) msg.scheduled_at = new Date(opts.sendAtMs).toISOString();
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',

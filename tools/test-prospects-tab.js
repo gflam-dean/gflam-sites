@@ -244,7 +244,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var mail = sent[sent.length - 1] || {};
   check('Dean said yes: the nudge goes to their account email, with the words he approved and the sign-in button', nz.status === 200 && sent.length === before + 1 &&
     String(mail.html || '').indexOf('Just checking your venueplay account reached you.') >= 0 && String(mail.html || '').indexOf('Open your venueplay') >= 0 && /reached you/.test(mail.subject + mail.html), [nz.status, nz.body, mail.subject]);
-  check('...their words are escaped, paragraph by paragraph, never markup', String(mail.html || '').indexOf('<p style="margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44">Cheers,<br>Dean</p>') >= 0, String(mail.html || '').slice(0, 900));
+  check('...their words are escaped, paragraph by paragraph, never markup, and the old Dean sign-off becomes the team (INBOX 430)', String(mail.html || '').indexOf('<p style="margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44">Cheers,<br>the venueplay team</p>') >= 0 && !/Dean/.test(String(mail.html || '')), String(mail.html || '').slice(0, 900));
   check('...and it is audited as prospect_nudge_sent', DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_nudge_sent' && a.target === 'venue:' + ngVenue.id; }));
   var nk = await call('/autopilot/prospect/nudge', { venue_id: ngVenue.id, text: WORDS }, { 'X-Autopilot-Key': 'nope-nope-nope-nope-nope-nope-nope-nope' });
   check('the nudge without the key: refused, nothing sent', nk.status === 401 && sent.length === before + 1, nk.status);
