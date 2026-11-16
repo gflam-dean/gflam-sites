@@ -129,10 +129,13 @@ class Rig(object):
                 self.send(r.get('status', 500), json.dumps(r.get('body')), 'application/json')
             def do_POST(self):
                 if self.path.startswith('/__worker'): return self.worker('POST')
-                self.send(404, '{}', 'application/json')
+                self.send(404, '{"error":"not reachable in this test"}' if self.path.startswith('/__api') else '{}', 'application/json')
+            def do_OPTIONS(self):
+                self.send(204, b'', 'text/plain')
             def do_GET(self):
                 u = urllib.parse.urlparse(self.path)
                 if u.path.startswith('/__worker'): return self.worker('GET')
+                if u.path.startswith('/__api'): return self.send(404, '{"error":"not reachable in this test"}', 'application/json')
                 if u.path in rig.hold: time.sleep(rig.hold[u.path])
                 if u.path == '/__fake/supabase.js':
                     host = urllib.parse.parse_qs(u.query).get('host', ['0'])[0] == '1'
@@ -159,6 +162,9 @@ class Rig(object):
                     text = text.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
                     if not rig.real_qr: text = text.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
                     text = text.replace('https://game.venueplay.com.au', '/__worker')
+                    # The billing Worker (16 Nov 2026): this rig has none, and vp-updates-optin.js / vp-session.js asked
+                    # the LIVE api.venueplay.com.au (tools/nolive.py caught it). /__api answers "not reachable" here.
+                    text = text.replace('https://api.venueplay.com.au', '/__api')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')
                 ctype = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')

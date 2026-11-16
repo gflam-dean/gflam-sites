@@ -383,6 +383,14 @@
   "checks": 12,
   "counted_by": "lines"
  },
+ "tools/no-live-in-chrome.test.py": {
+  "checks": 7,
+  "counted_by": "lines"
+ },
+ "tools/nolive.test.py": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/not-found-in-chrome.test.py": {
   "checks": 63,
   "counted_by": "lines"

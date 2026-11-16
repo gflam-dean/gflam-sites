@@ -2,6 +2,18 @@
 
 Repo tooling for tests, gates and releases. Plain Python 3.9 and jsc, no third party modules. Most tools here start Chrome or touch the live site: read a tool's docstring before running it, and do not run a tool with --help (several run the real thing).
 
+## A test Chrome never reaches production (16 Nov 2026)
+
+Every suite's Chrome is started by `verify-live.py` `Browser`, and that is where the block lives (`nolive.py`). Chrome is started with `--host-resolver-rules` sending venueplay.com.au, partyplay.com.au, getvenueplay/getpartyplay, the dean-tindale workers.dev account and the live database (and every subdomain of each) to a trap on 127.0.0.1. Nothing reaches the internet, from any tab, frame, worker, fetch, image or WebSocket. When the suite ends, each host that hit the trap is printed as `FAIL the test browser tried to reach production: <url> (<suite>)` and the exit code is 1. So a suite that leaned on live goes red: point it at its rig (`/__worker`, `/__game`, `/__api`), never at an allow.
+
+| file | what it does |
+|---|---|
+| `nolive.py` | the host list, the trap, the URL record (Network events), the verdict at exit, `nolive.allow(url_prefix, reason)` for a suite that tries production ON PURPOSE (it is still stopped) |
+| `nolive.test.py` | 22 checks, no Chrome: every host mapped and nothing else, the trap reads TLS and http, the FAIL line and exit 1, allow and its reason, Browser args, live=True, the refused bypasses (own resolver rules, a proxy) |
+| `no-live-in-chrome.test.py` | a real Chrome tries production by fetch, WebSocket, image, script, beacon and a Worker: all fail, all reach the trap, a child run with no allow ends with the FAIL lines and exit 1 |
+
+Only the deliberately live tools start `Browser(live=True)`: `verify-live.py` itself, `live-join-own-domain.py`, `measure-reconnect-in-chrome.py`. `nolive.test.py` fails if any other file does. A suite may not pass its own `--host-resolver-rules` or `--proxy-server`.
+
 ## One queue, one order, a result cache (10 Nov 2026)
 
 Test a release once, in order, and never re-run a suite on files it already passed on.

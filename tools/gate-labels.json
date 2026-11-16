@@ -271,6 +271,8 @@
   "no suite tried to push, fetch, pull or clone anywhere but a local path",
   "no ternary picks between two identical strings",
   "no-dev-links.test.py",
+  "no-live-in-chrome.test.py",
+  "nolive.test.py",
   "not-found-in-chrome.test.py",
   "nothing buzzes a phone except venueplay/app/vp-celebrate.js",
   "nothing claims the bingo cards mark themselves",

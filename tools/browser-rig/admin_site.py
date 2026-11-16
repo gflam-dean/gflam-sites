@@ -263,6 +263,9 @@ class Site(object):
                         # A shared script that calls the billing Worker itself (vp-oneclick.js, vp-about-you.js,
                         # vp-prospects-hq.js) talks to THIS rig's Worker, never the live one (29 Oct 2026).
                         text = text.replace('https://api.venueplay.com.au', '/__api')
+                        # ...and the game Worker too (16 Nov 2026): vp-gamesetup.js and vp-session.js name it in a .js file,
+                        # so Game settings asked the LIVE /host/game-prefs (tools/nolive.py caught it).
+                        text = text.replace('https://game.venueplay.com.au', '/__game')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
                              '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')
