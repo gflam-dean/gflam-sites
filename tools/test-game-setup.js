@@ -48,7 +48,7 @@ async function settle() { for (var i = 0; i < 30; i++) await Promise.resolve(); 
 
 var GAMING = readFile('venueplay/app/vp-gaming.js'), SETUPUSE = readFile('venueplay/app/vp-setupuse.js'), HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
 var NOW = Date.parse('2026-11-06T15:30:00Z');   // 1:30am on Sat 7 Nov in Brisbane: the Brisbane date is the 7th, not the 6th
-var CALLS, PREFS, SAVED, STORE, RELOADS;
+var CALLS, PREFS, SAVED, STORE, RELOADS, COLLECTED = [];
 function page(over) {
   over = over || {};
   CALLS = []; SAVED = []; RELOADS = 0; STORE = over.store || {}; PREFS = over.prefs || {};
@@ -80,11 +80,13 @@ function page(over) {
   (new Function('window', GS))(window);
   var ctx = { role: over.role || 'owner', venue: Object.assign({ id: 'V1', name: 'The Test Arms', au_state: 'QLD', entity_type: 'for_profit' }, over.venue || {}), settings: { setup_answers: over.answers || {} } };
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, now: NOW, ctx: ctx,
-    saveSettings: function (id, patch) { SAVED.push({ id: id, patch: JSON.parse(JSON.stringify(patch)) }); return over.saveFail ? Promise.reject(new Error('no column')) : Promise.resolve({}); },
+    saveSettings: function (id, patch) { if (!patch.setup_answers) { COLLECTED.push({ id: id, patch: JSON.parse(JSON.stringify(patch)) }); return over.collectFail ? Promise.reject(new Error('refused')) : Promise.resolve({}); } SAVED.push({ id: id, patch: JSON.parse(JSON.stringify(patch)) }); return over.saveFail ? Promise.reject(new Error('no column')) : Promise.resolve({}); },
     onSaved: function () { RELOADS++; } };
   return { doc: document, body: body, W: window, GS: window.VPGameSetup, H: window.VPSetupHelp, ctx: ctx, deps: deps };
 }
 function $(P, id) { return P.doc.getElementById(id); }
+/* the wizard's first run now has a collect step after the nights (job 416): the older flows pass straight through it */
+function passWeek(P, id) { $(P, id).click(); if ($(P, 'vpGsCollectNext')) $(P, 'vpGsCollectNext').click(); }
 function T(P, id) { var e = $(P, id); return e ? seen(e) : ''; }
 function gameBtn(P, g) { return walk($(P, 'vpGsGames'), function (e) { return e.getAttribute && e.getAttribute('data-game') === g; }); }
 function srtj(o) { var r = {}; Object.keys(o || {}).sort().forEach(function (x) { r[x] = o[x]; }); return JSON.stringify(r); }
@@ -154,7 +156,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('Next waits for a tick', $(P, 'vpGsNext').disabled === true);
   gameBtn(P, 'members').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click();
   check('a tick shows ticked', gameBtn(P, 'trivia').getAttribute('aria-checked') === 'true' && gameBtn(P, 'bingo').getAttribute('aria-checked') === 'false');
-  $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); await settle();
+  $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) passWeek(P, 'vpGsWeekSkip'); await settle();
   var sa = SAVED.length ? SAVED[SAVED.length - 1].patch.setup_answers : null;
   check('STORED for the venue: setup_answers.games in Dean\'s order, whatever order they were tapped', sa && sa.games.join() === 'trivia,musical,members', sa);
   check('with games_at, the Brisbane date (1:30am Saturday is the 7th)', sa && sa.games_at === '2026-11-07', sa && sa.games_at);
@@ -173,14 +175,14 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('each Worker call carries the signed-in token', CALLS.filter(function (c) { return /host\//.test(c.url); }).every(function (c) { return c.auth === 'Bearer TOKEN-1'; }));
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('all three kept as "later", so each opens its own setup the first time', sa.setup && sa.setup.trivia === 'later' && sa.setup.musical === 'later' && sa.setup.members === 'later', sa.setup);
-  var P3 = page({ prefsReadFail: true, answers: { games: ['trivia'] } }); P3.GS.run(P3.ctx, P3.deps); await settle(); $(P3, 'vpGsGo').click(); $(P3, 'vpGsNext').click(); if ($(P3, 'vpGsWeekSkip')) $(P3, 'vpGsWeekSkip').click(); $(P3, 'vpGsAllNo').click(); await settle();
+  var P3 = page({ prefsReadFail: true, answers: { games: ['trivia'] } }); P3.GS.run(P3.ctx, P3.deps); await settle(); $(P3, 'vpGsGo').click(); $(P3, 'vpGsNext').click(); if ($(P3, 'vpGsWeekSkip')) passWeek(P3, 'vpGsWeekSkip'); $(P3, 'vpGsAllNo').click(); await settle();
   check('when what the venue has cannot be read, nothing is written over it', posts('/host/game-prefs').length === 0, posts('/host/game-prefs'));
   $(P, 'vpGsDone').click(); var outcome = await done;
   check('"Go to my console" closes it', outcome === 'done' && !$(P, 'vpGs'), outcome);
 
   section('5. ONE GAME AT A TIME, every setting with a "?"');
   P = page(); done = P.GS.run(P.ctx, P.deps); await settle();
-  $(P, 'vpGsGo').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click(); gameBtn(P, 'members').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); await settle();
+  $(P, 'vpGsGo').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click(); gameBtn(P, 'members').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) passWeek(P, 'vpGsWeekSkip'); await settle();
   $(P, 'vpGsAllYes').click(); await settle();
   check('trivia first, "Game 1 of 3"', T(P, 'vpGsTitle') === 'Set up trivia' && T(P, 'vpGsCount') === 'Trivia, game 1 of 3', [T(P, 'vpGsTitle'), T(P, 'vpGsCount')]);
   var qs = all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-q'; });
@@ -223,11 +225,11 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('trivia and members draws "done", musical bingo "later"', sa.setup.trivia === 'done' && sa.setup.members === 'done' && sa.setup.musical === 'later', sa.setup);
   var P4 = page({ membersRefuse: true }); P4.GS.run(P4.ctx, Object.assign(P4.deps, { start: 'pick' })); await settle();
-  gameBtn(P4, 'members').click(); $(P4, 'vpGsNext').click(); if ($(P4, 'vpGsWeekSkip')) $(P4, 'vpGsWeekSkip').click(); $(P4, 'vpGsAllYes').click(); await settle();
+  gameBtn(P4, 'members').click(); $(P4, 'vpGsNext').click(); if ($(P4, 'vpGsWeekSkip')) passWeek(P4, 'vpGsWeekSkip'); $(P4, 'vpGsAllYes').click(); await settle();
   $(P4, 'vpGsIn_name').value = 'Draw'; $(P4, 'vpGsSave').click(); await settle();
   check('the Worker\'s own refusal is shown, and it stays on the game', /Only a manager or owner/.test(T(P4, 'vpGsMsg')) && T(P4, 'vpGsTitle') === 'Set up members draws', T(P4, 'vpGsMsg'));
   var P5 = page(); P5.GS.run(P5.ctx, Object.assign(P5.deps, { start: 'pick' })); await settle();
-  gameBtn(P5, 'bingo').click(); $(P5, 'vpGsNext').click(); if ($(P5, 'vpGsWeekSkip')) $(P5, 'vpGsWeekSkip').click(); $(P5, 'vpGsAllYes').click(); await settle(); $(P5, 'vpGsSave').click(); await settle();
+  gameBtn(P5, 'bingo').click(); $(P5, 'vpGsNext').click(); if ($(P5, 'vpGsWeekSkip')) passWeek(P5, 'vpGsWeekSkip'); $(P5, 'vpGsAllYes').click(); await settle(); $(P5, 'vpGsSave').click(); await settle();
   check('the last game saved: "You\'re ready for your week." and no next-game question', T(P5, 'vpGsTitle') === "You're ready for your week.", T(P5, 'vpGsTitle'));
 
   section('6. THE FIRST TIME A SKIPPED GAME IS OPENED');
@@ -274,7 +276,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   (($(P, 'vpGsOther').handlers.input) || []).forEach(function (f) { f(); });
   check('a "Something else" answer on its own is enough to go on', $(P, 'vpGsNext').disabled === false);
   gameBtn(P, 'musical').click(); gameBtn(P, 'raffles').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
-  $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); await settle();
+  $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) passWeek(P, 'vpGsWeekSkip'); await settle();
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('kept as setup_answers.other: cleaned, no markup, at most 60 characters', sa.other && sa.other.length <= 60 && !/[<>]/.test(sa.other) && /^Karaoke b and \/b poker nights/.test(sa.other), sa.other);
   $(P, 'vpGsAllYes').click(); await settle();
@@ -337,15 +339,15 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a time box of the hour and half hour only, pm first, so typing 7 is 7:00 pm (Dean, round 9 point 5)', tsel && tsel.tagName === 'SELECT' && topts[0] === '' && topts[1] === '12:00' && topts[2] === '12:30' && topts.length === 49 && topts.every(function (t) { return t === '' || /:(00|30)$/.test(t); }) && tsel.children.filter(function (o) { return /^7/.test(o.textContent); })[0].textContent === '7:00 pm', topts.slice(0, 5));
   $(P, 'vpGsTime_members_fri').value = '20:00'; $(P, 'vpGsTime_members_fri').handlers.change.forEach(function (f) { f(); });
   check('all times in: Next is on', $(P, 'vpGsWeekNext').disabled === false && T(P, 'vpGsWeekMsg') === '');
-  $(P, 'vpGsWeekNext').click(); await settle();
+  passWeek(P, 'vpGsWeekNext'); await settle();
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('stored as setup_answers.week: Wednesday trivia 7pm; Friday musical bingo 7:30pm, members draw 8pm', JSON.stringify(sa.week) === '[{"day":"wed","games":[{"game":"trivia","start":"19:00"}]},{"day":"fri","games":[{"game":"musical","start":"19:30"},{"game":"members","start":"20:00"}]}]', sa.week);
   check('and the nights, the shape the Account page card already reads', JSON.stringify(sa.nights) === '["wed","fri"]', sa.nights);
   check('then "Would you like to set them all up today?"', T(P, 'vpGsTitle') === 'Now let\'s set up your games.');
-  $(P, 'vpGsBack').click(); await settle();
+  $(P, 'vpGsBack').click(); await settle(); $(P, 'vpGsBack').click(); await settle();   // the games step goes back to the collect step, then the nights
   check('Back shows what they picked, with the times', day('trivia', 'wed').getAttribute('aria-pressed') === 'true' && $(P, 'vpGsTime_trivia_wed').value === '19:00');
   var P10 = page(); P10.GS.run(P10.ctx, Object.assign(P10.deps, { start: 'pick' })); await settle();
-  gameBtn(P10, 'bingo').click(); SAVED = []; P10.doc.getElementById('vpGsNext').click(); await settle(); $(P10, 'vpGsWeekSkip').click(); await settle();
+  gameBtn(P10, 'bingo').click(); SAVED = []; P10.doc.getElementById('vpGsNext').click(); await settle(); passWeek(P10, 'vpGsWeekSkip'); await settle();
   check('skippable: "Skip for now" goes on with nothing stored for the week', T(P10, 'vpGsTitle') === 'Now let\'s set up your games.' && !SAVED.some(function (x) { return x.patch.setup_answers.week; }));
   check('the week is cleaned: unknown days, games and times dropped, each game once a day, week order', JSON.stringify(P.GS.cleanWeek([{ day: 'fri', games: [{ game: 'members', start: '25:00' }, { game: 'trivia', start: '20:15' }, { game: 'trivia' }, { game: 'jag' }] }, { day: 'funday', games: [{ game: 'trivia' }] }, { day: 'mon', games: [{ game: 'bingo', start: '7pm' }] }])) === '[{"day":"mon","games":[{"game":"bingo"}]},{"day":"fri","games":[{"game":"trivia","start":"20:15"},{"game":"members"}]}]', P.GS.cleanWeek([{ day: 'fri', games: [{ game: 'members', start: '25:00' }, { game: 'trivia', start: '20:15' }, { game: 'trivia' }, { game: 'jag' }] }, { day: 'funday', games: [{ game: 'trivia' }] }, { day: 'mon', games: [{ game: 'bingo', start: '7pm' }] }]));
   check('cleanExtra keeps the week for the guide\'s own saves', JSON.stringify(P.GS.cleanExtra({ week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }] }).week) === '[{"day":"wed","games":[{"game":"trivia","start":"19:00"}]}]');
@@ -359,7 +361,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   wo = P11.GS.run(P11.ctx, Object.assign(P11.deps, { start: 'week', weekOnly: true })); await settle();
   walk($(P11, 'vpGsWeek'), function (e) { return e.getAttribute && e.getAttribute('data-day') === 'sat' && e.parentNode.parentNode.getAttribute('data-game') === 'musical'; }).click();
   $(P11, 'vpGsTime_musical_sat').value = '18:30'; $(P11, 'vpGsTime_musical_sat').handlers.change.forEach(function (f) { f(); });
-  SAVED = []; $(P11, 'vpGsWeekNext').click();
+  SAVED = []; passWeek(P11, 'vpGsWeekNext');
   check('Save keeps the week for the venue and closes', (await wo) === 'done' && !$(P11, 'vpGs') && JSON.stringify(SAVED[0].patch.setup_answers.week) === '[{"day":"wed","games":[{"game":"trivia","start":"19:00"}]},{"day":"sat","games":[{"game":"musical","start":"18:30"}]}]', SAVED[0] && SAVED[0].patch.setup_answers.week);
   check('the week in words for the Account page: "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws"', P.GS.weekWords([{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }]) === 'Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws');
   var BIL = readFile('venueplay/app/billing.html'), about = BIL.slice(BIL.indexOf('function renderAbout'), BIL.indexOf('function renderOtherAccounts'));
@@ -373,7 +375,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a venue nobody has called a pub or a club is judged the stricter way, and its own answer counts', R.bingoRules({ au_state: 'SA' }).hidden && !R.bingoRules({ au_state: 'SA' }, { venue_kind: 'club' }).hidden);
   P = page({ venue: { au_state: 'VIC' } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   check('pub or club is left out when the venue\'s record says (Dean, round 9 point 3: ask only when unknown), kept as pub', !$(P, 'vpGsKind') && T(P, 'vpGsTitle') === 'What games do you play?');
-  gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   check('Victoria: phone tickets switched off and said straight away in one plain line, no phone choice', T(P, 'vpGsFixed_ticket_kind') === vic.why && !walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'phone'; }), T(P, 'vpGsFixed_ticket_kind'));
   check('Victoria: who draws the numbers is asked (venueplay can, or real balls)', $(P, 'vpGsQ_caller').parentNode.style.display === '');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
@@ -403,7 +405,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   P = page(); P.ctx.venue.entity_type = null; P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   check('three questions in order: pub or club (or Other), what games, any other nights (Dean, round 8b points 2 and 3)', T(P, 'vpGsTitle') === 'Are you a pub or a club?' && /What games do you play\?/.test(T(P, 'vpGsBody')) && /Do you run any other regular nights or meal deals\?/.test(T(P, 'vpGsBody')) && !!walk($(P, 'vpGsKind'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'other'; }));
   gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   check('no "Same prizes for other games?" any more (Dean, round 7b point 7); prizes typed one at a time, no "then Enter" (Dean, round 9 point 4: leaving the box keeps it)', !$(P, 'vpGsShared') && !/then Enter/.test($(P, 'vpGsIn_prizes_0').placeholder));
   $(P, 'vpGsIn_prizes_0').value = 'Meat tray'; $(P, 'vpGsIn_prizes_1').value = '$50 bar tab'; $(P, 'vpGsIn_prizes_2').value = 'meat TRAY';
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
@@ -433,7 +435,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('not named: called "{Day} Members Draw" (the day from the first draw date when the nights step was skipped)', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body.name === 'Friday Members Draw' && posts('/host/members/settings')[0].body.draw_day === 'Friday', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body);
 
   var P13 = page({ answers: { games: ['trivia'], setup: { trivia: 'done' } } }); P13.GS.run(P13.ctx, Object.assign(P13.deps, { start: 'pick' })); await settle();
-  $(P13, 'vpGsNext').click(); if ($(P13, 'vpGsWeekSkip')) $(P13, 'vpGsWeekSkip').click(); $(P13, 'vpGsAllYes').click(); await settle();
+  $(P13, 'vpGsNext').click(); if ($(P13, 'vpGsWeekSkip')) passWeek(P13, 'vpGsWeekSkip'); $(P13, 'vpGsAllYes').click(); await settle();
   check('every game already set up: "Yes" goes to "You\'re ready for your week", never a broken screen', T(P13, 'vpGsTitle') === "You're ready for your week.", T(P13, 'vpGsTitle'));
 
   section('6f. ROUND 4 (Dean, 6 Nov 2026): several "something else", more than one of a game, raffles keep their own prizes');
@@ -458,7 +460,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P, 'vpGsAddSess_bingo_fri').click();
   check('the new session asks its own start time (Dean, round 5), and Next waits for it', !!$(P, 'vpGsTime_bingo_fri_2') && $(P, 'vpGsWeekNext').disabled === true);
   wtime('vpGsTime_bingo_fri_2', '20:00');
-  SAVED = []; $(P, 'vpGsWeekNext').click(); await settle();
+  SAVED = []; passWeek(P, 'vpGsWeekNext'); await settle();
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('the week keeps the sessions and the Something else nights', JSON.stringify(sa.week) === '[{"day":"fri","games":[{"game":"bingo","start":"18:00","starts":["18:00","20:00"],"count":2},{"game":"members","start":"20:00"}]},{"day":"sat","games":[{"game":"other","name":"Karaoke","start":"21:00"}]},{"day":"sun","games":[{"game":"bingo","start":"14:00"},{"game":"members","start":"17:00"}]}]', sa.week);
   check('how many a week: bingo 3 sessions, 2 members draws', JSON.stringify(sa.counts) === '{"bingo":3,"members":2}', sa.counts);
@@ -473,12 +475,12 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('two draws made, one each night', posts('/host/members/settings').map(function (c) { return c.body.name; }).join('|') === 'Friday Members Draw|Sunday Members Draw', posts('/host/members/settings').map(function (c) { return c.body.name; }));
   check('a "Something else" night is cleaned like the rest (a name, at most 40 characters)', JSON.stringify(P.GS.cleanWeek([{ day: 'mon', games: [{ game: 'other', name: '<b>Poker</b>' + 'x'.repeat(60), start: '19:00' }, { game: 'other' }, { game: 'bingo', count: 9 }] }])) === '[{"day":"mon","games":[{"game":"bingo"},{"game":"other","name":"b Poker /b ' + 'x'.repeat(29) + '","start":"19:00"}]}]', P.GS.cleanWeek([{ day: 'mon', games: [{ game: 'other', name: '<b>Poker</b>' + 'x'.repeat(60), start: '19:00' }, { game: 'other' }, { game: 'bingo', count: 9 }] }]));
   P = page({ answers: { games: ['members'], week: [{ day: 'thu', games: [{ game: 'members', start: '19:30' }] }] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekNext').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); await settle(); passWeek(P, 'vpGsWeekNext'); await settle(); $(P, 'vpGsAllYes').click(); await settle();
   check('the members draw\'s night and time come from the nights step: "Thursday Members Draw", 7:30pm', $(P, 'vpGsIn_name').placeholder === 'Thursday Members Draw' && $(P, 'vpGsIn_draw_time').value === '19:30', [$(P, 'vpGsIn_name').placeholder, $(P, 'vpGsIn_draw_time').value]);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('saved with that day, name and the time in words for the TV (7:30pm)', posts('/host/members/settings')[0].body.draw_day === 'Thursday' && posts('/host/members/settings')[0].body.name === 'Thursday Members Draw' && posts('/host/members/settings')[0].body.draw_time === '7:30pm', posts('/host/members/settings')[0].body);
   P = page({ answers: { games: ['trivia', 'raffles'], prizes_shared: true, prize_bank: ['Meat tray', '$50 bar tab'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   check('trivia starts empty, the usual prizes one tap away, and no question about them', $(P, 'vpGsIn_prizes_0').value === '' && !!$(P, 'vpGsUsual_prizes') && !$(P, 'vpGsShared'));
   $(P, 'vpGsSave').click(); await settle(); walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   check('raffles start with nothing filled in (no Meat tray before they type, Dean round 9 point 20), never the usual-prizes question', $(P, 'vpGsRafP_0_0').value === '' && !$(P, 'vpGsShared'), $(P, 'vpGsRafP_0_0').value);
@@ -486,7 +488,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   walk($(P, 'vpGsUsual_raffle_plan'), function (e) { return e.getAttribute && e.getAttribute('data-item') === '$50 bar tab'; }).click();
   check('a usual prize is one tap: it goes into the raffle\'s prize box (Dean, round 9 point 20: "it didn\'t add any")', $(P, 'vpGsRafP_0_0').value === '$50 bar tab', $(P, 'vpGsRafP_0_0').value);
   var P14 = page({ answers: { games: ['raffles'] } }); P14.GS.run(P14.ctx, Object.assign(P14.deps, { start: 'pick' })); await settle();
-  $(P14, 'vpGsNext').click(); $(P14, 'vpGsWeekSkip').click(); $(P14, 'vpGsAllYes').click(); await settle();
+  $(P14, 'vpGsNext').click(); passWeek(P14, 'vpGsWeekSkip'); $(P14, 'vpGsAllYes').click(); await settle();
   check('raffles first: still not asked about prizes across games (they keep their own list)', T(P14, 'vpGsTitle') === 'Set up raffles' && !$(P14, 'vpGsShared'));
   check('skipped games get the usual prizes as their buttons too', JSON.stringify(P.H.defaults('trivia', { bank: ['Meat tray'] }).prize_list) === '["Meat tray"]' && !('prize_list' in P.H.defaults('trivia', {})));
   check('an SA pub\'s bingo note is one short line', R.bingoRules({ au_state: 'SA', entity_type: 'for_profit' }).why === "Bingo isn't open to a pub in South Australia.");
@@ -498,7 +500,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
 
   section('6g. THE DESIGN REVIEW (6 Nov): asked once, help underneath, units, the console header, the reviewer\'s layout');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   check('trivia does not ask "Same prizes for other games?" (Dean, round 7b point 7)', !$(P, 'vpGsShared'));
   var pr = $(P, 'vpGsHelp_prizes'); var crow = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'prizes'; });
   check('the "?" words sit under the whole setting (under the pair on a two-to-a-line setting), never over the question', pr && crow.children[crow.children.length - 1] === pr && pr.parentNode === crow, crow && crow.children.map(function (c) { return c.className; }));
@@ -506,7 +508,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P, 'vpGsSave').click(); await settle(); walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
   check('left unanswered on trivia, it is never asked again on bingo (asked once, design review)', !$(P, 'vpGsShared') && T(P, 'vpGsTitle') === 'Set up bingo');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click(); $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   $(P, 'vpGsSave').click(); await settle();
   check('each game left has its own Yes button under the question, the quiet one outlined', /vpgs-outline/.test($(P, 'vpGsNextNo').className) && !!walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'musical'; }));
   var P16 = page(); var hdr = new El('header'); hdr.style.visibility = ''; P16.body.appendChild(hdr);
@@ -516,7 +518,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P16, 'vpGsClose').click(); await fo16;
   check('and comes back when it closes', hdr.style.visibility === '');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  gameBtn(P, 'trivia').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  gameBtn(P, 'trivia').click(); $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   check('More settings folded on every screen, saying what KINDS of settings are in there (Dean, round 8b point 6)', /folded/.test($(P, 'vpGsAdvanced').className) && T(P, 'vpGsAdvSummary') === 'Time to answer, points, and the buzzer.', T(P, 'vpGsAdvSummary'));
   check('no "tap ? to see what a setting means" line (Dean, round 7b point 9)', !/tap \?/.test(T(P, 'vpGsLead')), T(P, 'vpGsLead'));
   var qrows = all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-q'; });
@@ -526,7 +528,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
 
   section('6h. THE DESIGN REVIEW, ROUND 7: Back keeps what they did, the second session box, members pairs, phone folding');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  gameBtn(P, 'musical').click(); gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  gameBtn(P, 'musical').click(); gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   var sh0 = !!$(P, 'vpGsShared');
   var nb0 = $(P, 'vpGsNone_0'); nb0.checked = true; nb0.handlers.change.forEach(function (f) { f(); });
   var p1 = $(P, 'vpGsIn_prizes_1'); if (p1) { p1.value = '$20 bar tab'; (p1.handlers.input || []).forEach(function (f) { f(); }); }
@@ -558,7 +560,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var ot = all($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other'); }).map(function (e) { return e.getAttribute('data-other'); });
   check('several, spelt properly: "Karaoke", "Darts", and their own words with a capital first letter', ot.join('|') === 'Karaoke|Darts|Trivia for kids', ot);
   P = page({ answers: { games: ['members', 'trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle(); $(P, 'vpGsSave').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle(); $(P, 'vpGsSave').click(); await settle();
   walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   $(P, 'vpGsIn_name').value = 'Club Draw'; $(P, 'vpGsIn_max_jackpot_cents').value = '5000'; $(P, 'vpGsIn_max_jackpot_cents').handlers.input.forEach(function (f) { f(); });
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'second'; }).click();
@@ -571,7 +573,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('"Add my members list" goes to the Account page\'s members list', went === '/app/billing.html#draws', went);
 
   P = page({ answers: { games: ['musical'], prize_bank: ['Meat tray', '$50 bar tab'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   var prow = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'prizes'; });
   check('musical bingo: one "Prizes" heading and one "?", the rounds straight under it (spacing review r8)', / under/.test(prow.className) && !!$(P, 'vpGsQ_prize_same'));
   var b3 = $(P, 'vpGsIn_prizes_2'); ($(P, 'vpGsIn_prizes').handlers.focusin || []).forEach(function (f) { f({ target: b3 }); });
@@ -583,7 +585,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
 
   section('6j. ROUND 9 (Dean, round 8b)');
   P = page({ answers: { games: ['musical', 'bingo'], prize_bank: ['Meat tray'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   var dch = walk($(P, 'vpGsUsual_prizes'), function (e) { return e.getAttribute && e.getAttribute('data-item') === 'Meat tray'; });
   var b2 = $(P, 'vpGsIn_prizes_1'), dt = { d: '', setData: function (k, v) { this.d = v; }, getData: function () { return this.d; } };
   check('on a computer a usual prize can be dragged', dch.getAttribute('draggable') === 'true');
@@ -596,7 +598,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('Yes goes straight to the game it names', T(P, 'vpGsTitle') === 'Set up bingo', T(P, 'vpGsTitle'));
 
   P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  $(P, 'vpGsNext').click(); passWeek(P, 'vpGsWeekSkip'); $(P, 'vpGsAllYes').click(); await settle();
   var mk9 = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
   check('members: "Starting jackpot" and "Maximum jackpot" side by side, then "Jackpot now" and the weekly rise (Dean, round 12 note 8), and the member numbers said once (design review r9)', mk9.indexOf('max_jackpot_cents') === mk9.indexOf('starting_amount_cents') + 1 && mk9.indexOf('current_jackpot_cents') === mk9.indexOf('max_jackpot_cents') + 1 && /Starting jackpot/.test(T(P, 'vpGsBody')) && /Maximum jackpot/.test(T(P, 'vpGsBody')) && !/member numbers/.test(T(P, 'vpGsLead')), mk9);
   check('every screen\'s buttons sit in one bar fixed to the bottom, the main one on the right', (function () { var st = walk($(P, 'vpGs'), function (e) { return e.tagName === 'STYLE'; }); var css = st ? st.textContent : ''; return /\.vpgs-foot\{position:fixed;left:0;right:0;bottom:0/.test(css) && /\.vpgs-foot \.vpgs-btn\.pink\{margin-left:auto\}/.test(css); })());
@@ -605,7 +607,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a compact Next under the progress bar on every screen, the same as the bottom bar\'s main button (Dean, round 9b)', !!$(P, 'vpGsTopNext') && T(P, 'vpGsTopNext') === 'Next' && $(P, 'vpGsTopNext').style.visibility === '' && $(P, 'vpGsTopNext').getAttribute('aria-label') === 'Next');
   $(P, 'vpGsTopNext').click(); await settle();
   check('the top Next does what the bottom one does (games, then the nights)', /Which nights/.test(T(P, 'vpGsTitle')), T(P, 'vpGsTitle'));
-  $(P, 'vpGsWeekSkip').click(); await settle();
+  passWeek(P, 'vpGsWeekSkip'); await settle();
   check('"Set them all up today?": Next at the bottom is "Yes, set them all up", the answers under the question', !!$(P, 'vpGsAllNext') && /vpgs-answers/.test($(P, 'vpGsAllYes').parentNode.className));
   $(P, 'vpGsTopNext').click(); await settle(); $(P, 'vpGsSave').click(); await settle();
   check('next game: Next (top and bottom) is "Yes, set up musical bingo"', T(P, 'vpGsTitle') === 'Would you like to set up another game?' && !!$(P, 'vpGsNextGo') && $(P, 'vpGsTopNext').getAttribute('aria-label') === 'Next');
