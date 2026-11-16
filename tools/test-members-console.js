@@ -52,6 +52,8 @@ var els = {};
 function $(id) { if (!els[id]) els[id] = new El(id); return els[id]; }
 var document = { createElement: function () { return new El(''); }, querySelector: function () { return null; }, querySelectorAll: function () { return []; } };
 var window = { scrollTo: function () {} };
+/* the page loads /app/vp-drawstyle.js; here the shipped file is loaded for real */
+(new Function('window', readFile('venueplay/app/vp-drawstyle.js')))(window); var VPDrawStyle = window.VPDrawStyle;
 var console = { error: function () {} };
 var intervals = [];
 function setTimeout(fn) { return 0; }
@@ -129,7 +131,7 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  // a claim adds the state's after-win reminder
  'noPresent', 'winReminder',
  // the new look (9 Nov 2026): the step card, the draws as chips, the list's age, the outcome box, the claim button's words
- 'curStep', 'syncStep', 'nextDrawText', 'advSumText', 'renderDrawChips', 'renderListAge', 'renderDone', 'minClaim', 'applyPresentRule'];
+ 'curStep', 'syncStep', 'nextDrawText', 'advSumText', 'renderDrawChips', 'renderListAge', 'nice', 'renderDone', 'minClaim', 'applyPresentRule'];
 /* ...and the SA note those read, lifted as the page writes it. */
 eval(liftVar(/var NO_PRESENT_NOTE=[^\n]*/) || (function () { throw new Error('NO_PRESENT_NOTE is not in the page any more'); })());
 /* The TV claim (/app/vp-tvclaim.js, 12 Nov 2026) is its own suite (tools/test-tv-takeover-12nov.js). Lifted
@@ -325,6 +327,20 @@ apiReply = { new_jackpot_cents: 55000, increment_cents: 5000 };
 onRollover(); drainMicrotasks();
 check('CONTROL: once open, Not here rolls the jackpot over as before', apiCalls.indexOf('/host/members/draw/resolve') >= 0, apiCalls);
 G.busy = false; G.round = null;
+
+/* ================= 9. a member's name reads First Last on the console (INBOX 426 item 2, 16 Nov 2026) ================= */
+section('9. The Pay step and the time-up bar say "Mia Wilson", not "Wilson,Mia"');
+G.lastResult = { won: true, name: 'Wilson,Mia', amountCents: 20000, nextCents: 5000 };
+renderDone();
+check('the outcome box says "Mia Wilson won $200."', $('doneHead').textContent === 'Mia Wilson won $200.', $('doneHead').textContent);
+G.lastResult = { won: true, name: 'Sam T', amountCents: 50000, nextCents: 5000 };
+renderDone();
+check('CONTROL: a name already First Last is left alone', $('doneHead').textContent === 'Sam T won $500.', $('doneHead').textContent);
+G.lastResult = { won: true, name: '', amountCents: 50000, nextCents: 5000 };
+renderDone();
+check('CONTROL: no name still says "The winner"', $('doneHead').textContent === 'The winner won $500.', $('doneHead').textContent);
+G.lastResult = null;
+check('the time-up bar prints the name through the same helper', /"\s*"\+nice\(G\.round\.name\)\+"\. Tap/.test(H) || /nice\(G\.round\.name\)/.test(H));
 
 drainMicrotasks();
 print('');

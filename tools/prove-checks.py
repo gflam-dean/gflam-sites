@@ -7449,6 +7449,17 @@ MUTATIONS = [
      '("They\\u2019re here, pay "+((G.round && G.round.prizeCents!=null) ? money(G.round.prizeCents) : "the jackpot"))',
      '"They\\u2019re here, pay the jackpot"',
      'the members claim button no longer names the jackpot it pays'),
+    # 16 Nov 2026 (INBOX 426 items 2, 3, 6): the three Chrome suites. Proved by breaking a scratch copy and running the suite on vp-tests-1.
+    ('members-name-console-in-chrome.test.py', 'venueplay/app/members/host.html',
+     '((nice(x.name)||"The winner")+" won "', '((x.name||"The winner")+" won "',
+     'the real members console Pay step says "Wilson,Mia won $200." as stored'),
+    # 16 Nov 2026 (INBOX 426 item 2): the Pay step and the time-up bar read First Last, never "Wilson,Mia".
+    ('test-members-console.js', 'venueplay/app/members/host.html',
+     '((nice(x.name)||"The winner")+" won "', '((x.name||"The winner")+" won "',
+     'the members Pay step says "Wilson,Mia won $200." as stored instead of "Mia Wilson won $200."'),
+    ('test-members-console.js', 'venueplay/app/members/host.html',
+     '" "+nice(G.round.name)+". Tap', '" "+(G.round.name||"")+". Tap',
+     'the members time-up bar prints the member name as stored, Last,First'),
     # 28 Oct 2026: last raffle's unsold tickets are never carried into this raffle's box.
     ('test-raffle-console.js', 'venueplay/app/raffle/host.html',
      '      // be drawn unless the host noticed and cleared it. The box starts empty every raffle.',

@@ -1020,7 +1020,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 47,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {
@@ -2349,6 +2349,10 @@
  },
  "tools/console-start-buttons-in-chrome.test.py": {
   "checks": 122,
+  "counted_by": "lines"
+ },
+ "tools/members-name-console-in-chrome.test.py": {
+  "checks": 16,
   "counted_by": "lines"
  }
 }
