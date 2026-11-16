@@ -1107,7 +1107,13 @@
   function drawSecsNow(){ return window.VPDrawStyle ? VPDrawStyle.secs(G.drawTime) : 9; }
   function drawMs(){ return styleKey() ? Math.round((drawSecsNow()+(window.VPDrawStyle ? VPDrawStyle.INTRO : 1.2))*1000) : Math.max(1200, G.drawLength*1000); }
   function sendPick(r){ if(styleKey() && r && r.tickets && r.tickets.length===1) send({ t:"pick", numbers:[r.tickets[0]], pad:padWidth(), min:G.min, max:G.max }); }
-  function sendDrawing(){ var m={ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:(styleKey() ? drawMs()/1000 : G.drawLength) }; if(styleKey()){ m.style=styleKey(); m.drawSecs=drawSecsNow(); var rt=raffleTitle(); if(rt) m.raffle=rt; if(!G.jackOn && G.prizes.length>1){ m.prizeNo=G.prizeIdx+1; m.prizeOf=G.prizes.length; } } send(m); }
+  /* The draw look's fields, added to the draw AND to every winner message (first send, the time-up resend and the replay to a TV that
+     reloaded or opened mid-claim): a screen that missed the "drawing" message could not know the venue's look and painted the plain winner screen. */
+  function addLookFields(m){ if(styleKey()){ m.style=styleKey(); m.drawSecs=drawSecsNow(); var rt=raffleTitle(); if(rt) m.raffle=rt; if(!G.jackOn && G.prizes.length>1){ m.prizeNo=G.prizeIdx+1; m.prizeOf=G.prizes.length; } } return m; }
+  function sendDrawing(){ var m={ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:(styleKey() ? drawMs()/1000 : G.drawLength) }; addLookFields(m); send(m); }
+  /* One winner message for every send. total is the claim window the draw started with, so a TV that joins late still draws its bar from the
+     right full length; time is what is left of it (0 = no limit, or time is up). */
+  function winnerMsg(time){ return addLookFields({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:(G.round.allowRedraw!==false), pad:padWidth(), min:G.min, max:G.max, time:time, total:(G.round.total||0) }); }
   /* HOW LONG THE WALL CELEBRATES A CLAIM, and how long it announces a redraw before the next spin.
      Both MUST match screen.html (renderClaimed celebrates for CLAIM_CELEBRATE_MS; the redraw card
      shows for REDRAW_NOTICE_MS). The console used to send idle 9 seconds after a claim while the
@@ -1334,11 +1340,11 @@
     if(!nums.length){ drawBtnIdle(); hostError("No tickets left to draw"); sendIdle(); return; }
     var allowRedraw=(r.allow_redraw!==false);   // the game's stored setting is authoritative
     var t=(r.time_to_present!=null)?r.time_to_present:G.time;
-    G.round={ seq:r.seq, numbers:nums, remaining:t, resolved:false, prize:(r.prize||prizeLabel()) };
+    G.round={ seq:r.seq, numbers:nums, remaining:t, total:(allowRedraw?t:0), allowRedraw:allowRedraw, resolved:false, prize:(r.prize||prizeLabel()) };
     var multi=nums.length>1;
 
     // broadcast the winner to the TV
-    send({ t:"winner", numbers:nums, prizeLabel:G.round.prize, allowRedraw:allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(allowRedraw?t:0) });
+    send(winnerMsg(allowRedraw?t:0));
 
     // local winner card
     var wc=$("winnerCard"); wc.classList.add("show"); $("wcPrize").textContent=G.round.prize;
@@ -1385,8 +1391,7 @@
              seconds, so a host who takes longer than that to find the ticket holder watched the
              wall drop to advertising mid-decision. Re-sending the winner with time:0 restarts
              that timer from now and keeps the number up while they decide. */
-          try{ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:true,
-                      pad:padWidth(), min:G.min, max:G.max, time:0 }); }catch(e){}
+          try{ var _tu=winnerMsg(0); _tu.allowRedraw=true; send(_tu); }catch(e){}
           hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.map(pad).join(", "):"")+". Tap \u201cNot here, draw again\u201d if nobody has come forward, or \u201cWe have a winner\u201d if they have.", "timeup");
         }
       },1000);
@@ -1582,7 +1587,7 @@
         send({ t:"host_here" });
         if(!TVC.onAir()) return;   // a TV saying hello is not a reason to take it (12 Nov 2026, FINDINGS R6)
         send({ t:"mode", mode:"raffle", claim:1 });   // so a /tv that just reloaded mid-raffle comes back to it
-        if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
+        if(G.round){ send(winnerMsg(G.allowRedraw?Math.max(0,G.round.remaining):0)); }
         else if(typeof CD!=="undefined" && CD && CD.running()){ CD.resend(); }
         else { sendState(); }
       }

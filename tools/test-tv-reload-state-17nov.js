@@ -34,5 +34,24 @@ print("\nMUSICAL: a reloaded console remembers the song was revealed");
   G.revealed = false; save();
   pass("and an empty note while the song is still a mystery", JSON.parse(store.k).rev === "", store.k);
 })();
+
+var RH = readFile("venueplay/app/raffle/host.html");
+print("\nRAFFLE: every winner message carries the draw look and the claim window");
+(function(){
+  var G = { round: { numbers: [42], prize: "Meat tray", remaining: 150, total: 180, allowRedraw: true }, min: 1, max: 150, jackOn: false, prizes: ["Meat tray", "Wine"], prizeIdx: 0, drawTime: "x", raffleId: "r1", raffles: [{ id: "r1", label: "Sunday meats" }] };
+  var look = "ticket";
+  var api = new Function("G", "styleKey", "raffleTitle", "drawSecsNow", "padWidth",
+    [grab("addLookFields", RH), grab("winnerMsg", RH)].join("\n") + "\nreturn winnerMsg;")(G, function(){ return look; }, function(){ return "Sunday meats"; }, function(){ return 9; }, function(){ return 3; });
+  var m = api(150);
+  pass("the replay says the ticket roll", m.style === "ticket" && m.raffle === "Sunday meats" && m.drawSecs === 9, JSON.stringify(m));
+  pass("it says which prize of how many (1 of 2)", m.prizeNo === 1 && m.prizeOf === 2, JSON.stringify(m));
+  pass("time is what is left, total is the window the draw started with", m.time === 150 && m.total === 180, JSON.stringify(m));
+  pass("the numbers and prize are the round's own", m.numbers[0] === 42 && m.prizeLabel === "Meat tray" && m.t === "winner");
+  look = "";
+  var m2 = api(0);
+  pass("a classic-look venue sends no look fields (the plain winner screen stays)", m2.style === undefined && m2.prizeNo === undefined, JSON.stringify(m2));
+  var src = RH.slice(RH.indexOf("function revealServer"));
+  pass("the first send, the time-up resend and the hello replay all use winnerMsg", (RH.match(/winnerMsg\(/g) || []).length >= 4 && !/send\(\{ t:"winner"/.test(RH) && !/send\(\{\s*t:"winner"/.test(RH));
+})();
 print("\n" + ran + " checks, " + bad + " failed");
 if (bad) throw new Error(bad + " failed");
