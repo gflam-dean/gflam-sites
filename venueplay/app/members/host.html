@@ -1169,7 +1169,9 @@
   function loadAllMembers(ids){
     var PAGE = 1000, out = [], from = 0;
     function nextPage(){
-      return client.from("vp_members").select("*").in("roster_id", ids)
+      /* NAMED COLUMNS, NEVER "*" (Jobs row 445, migration 200): a member's email and mobile are the venue's, for its account
+         and its download only, and this console sits beside the TV. It reads what the draw needs and nothing else. */
+      return client.from("vp_members").select("id,roster_id,member_number,first_name,last_name,status,updated_at").in("roster_id", ids)
         .order("member_number",{ascending:true}).order("id",{ascending:true})
         .range(from, from + PAGE - 1)
         .then(function(r){

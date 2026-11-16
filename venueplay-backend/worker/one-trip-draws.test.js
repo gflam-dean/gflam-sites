@@ -32,7 +32,7 @@ function find(rel) {
 var W = find('venueplay-backend/worker/venueplay-game.js');
 var SQL = find('venueplay-backend/supabase/venueplay-76-one-trip-host-draws.sql');
 
-var EXPECT = 81, ran = 0, bad = 0;
+var EXPECT = 83, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(n) {
   var i = W.indexOf('async function ' + n + '('); if (i < 0) i = W.indexOf('function ' + n + '(');
@@ -200,6 +200,11 @@ function vpBingoBall(a) {
 function vpMemberName(first, last, mode) {
   var f = String(first == null ? '' : first).trim();
   var l = String(last == null ? '' : last).trim();
+  // migration 200: a one-box "Last,First" (exactly one comma, a name either side)
+  if (l === '' && f.indexOf(',') !== -1) {
+    var cp = f.split(',');
+    if (cp.length === 2 && cp[0].trim() !== '' && cp[1].trim() !== '') { l = cp[0].trim(); f = cp[1].trim(); }
+  }
   if (l === '' && /\s/.test(f)) {
     var parts = f.split(/\s+/);
     l = parts[parts.length - 1];
@@ -544,7 +549,19 @@ async function both(name, opts, body, note) {
     ['Mary Jane Watson', null, 'abbrev_last'], ['  Ada  ', ' Lovelace ', 'abbrev_last'],
     ['Ada', '', 'abbrev_last'], ['', 'Lovelace', 'abbrev_first'], ['', '', 'full'],
     [null, null, 'abbrev_last'], ['Ada', 'Lovelace', 'something-else'],
+    // migration 200 (Jobs row 445): one-box "Last,First" names from a club system
+    ['Lee,Daniel', '', 'abbrev_last'], ['LEE, Daniel', null, 'abbrev_first'], ['Lee, Daniel James', '', 'full'],
+    ['a,b,c', '', 'abbrev_last'], [',Daniel', '', 'abbrev_last'], ['Lee,', '', 'full'], ['Lee,Daniel', 'Smith', 'abbrev_last'],
   ];
+  ok('a one-box "Lee,Daniel" is Daniel L, D Lee and Daniel Lee (Dean, 16 Nov 2026)',
+     formatMemberName('Lee,Daniel', '', 'abbrev_last') === 'Daniel L' && formatMemberName('LEE, Daniel', '', 'abbrev_first') === 'D LEE' &&
+     formatMemberName('Lee, Daniel', null, 'full') === 'Daniel Lee' && formatMemberName('Lee,Daniel', 'Smith', 'abbrev_last') === 'Lee,Daniel S',
+     [formatMemberName('Lee,Daniel', '', 'abbrev_last'), formatMemberName('LEE, Daniel', '', 'abbrev_first'), formatMemberName('Lee, Daniel', null, 'full')]);
+  /* the SQL itself, not only the port: migration 200 must carry the comma split before the space split */
+  var M200 = readFile('venueplay-backend/supabase/venueplay-200-members-upload-contacts.sql');
+  var body200 = (M200.split('create or replace function public.vp_member_name')[1] || '').split('$$;')[0];
+  ok('migration 200 redefines vp_member_name with the "Last,First" split first, then the space split',
+     /position\(',' in f\) > 0[\s\S]*array_length\(parts, 1\) = 2[\s\S]*l := btrim\(parts\[1\]\);\s*f := btrim\(parts\[2\]\);[\s\S]*f ~ '\\s'/.test(body200), body200.slice(0, 300));
   var drift = cases.filter(function (c) { return formatMemberName(c[0], c[1], c[2]) !== vpMemberName(c[0], c[1], c[2]); });
   ok('the SQL name rule and the Worker\'s agree on every case', drift.length === 0,
      JSON.stringify(drift.map(function (c) { return c.join('/') + ' -> ' + formatMemberName(c[0], c[1], c[2]) + ' vs ' + vpMemberName(c[0], c[1], c[2]); })));

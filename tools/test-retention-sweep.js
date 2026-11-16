@@ -39,15 +39,18 @@ function arm(opts) {
     if (table === 'vp_sessions') return Promise.resolve(page(opts.sessions || [], q));
     if (table === 'vp_member_rosters') return Promise.resolve(page(opts.rosters || [], q));
     if (table === 'vp_member_draws') return Promise.resolve(page(opts.draws || [], q));
+    if (table === 'vp_members' && opts.noContactColumns) return Promise.reject(new Error('42703 column vp_members.email does not exist'));
     return Promise.resolve([]);
   };
   /* The look-before-stamping count. opts.stillHeld says how many players the database
      reports as still holding a contact detail AFTER the update. */
   counts = [];
-  sbCount = function (env, table, q) { counts.push(table + '?' + q); return Promise.resolve(opts.stillHeld || 0); };
+  sbCount = function (env, table, q) { counts.push(table + '?' + q); return Promise.resolve(table === 'vp_members' ? (opts.membersHeld || 0) : (opts.stillHeld || 0)); };
   sbPatch = function (env, table, q, body) {
     patches.push({ table: table, q: q, body: body });
     if (opts.patchFails) return Promise.reject(new Error('boom'));
+    /* before migration 200 PostgREST refuses a PATCH naming a column it does not have */
+    if (table === 'vp_members' && (opts.noContactColumns || opts.membersRefused) && 'email' in body) return Promise.reject(new Error('502'));
     return Promise.resolve({});
   };
 }
@@ -132,6 +135,24 @@ check('members: names are blanked, by roster', !!mem && /roster_id=in\.\(r1\)/.t
 check('members: BLANKED not deleted, the number stays', !!mem && !('member_number' in mem.body), mem && mem.body);
 var res = patches.filter(function (p) { return p.table === 'vp_member_draw_results'; })[0];
 check('draw results: the winner name goes', !!res && res.body.winner_name === null && /draw_id=in\.\(d1\)/.test(res.q), res);
+
+/* 4b2. MIGRATION 200 (Dean, 16 Nov 2026, Jobs row 445): the member's email, mobile, postcode and offers consent go with the
+        names, the list's remembered column headings go, and the database is ASKED afterwards before the venue is stamped. */
+['email', 'mobile', 'postcode', 'marketing_optin', 'marketing_optin_at', 'marketing_optin_source', 'note'].forEach(function (f) {
+  check('members: ' + f + ' is blanked in the same update as the names', !!mem && f in mem.body && mem.body[f] === null, mem && mem.body);
+});
+var rmap = patches.filter(function (p) { return p.table === 'vp_member_rosters'; })[0];
+check('the remembered column headings (import_map) go, for this venue\'s lists only', !!rmap && rmap.body.import_map === null && /id=in\.\(r1\)/.test(rmap.q), rmap);
+var mcount = counts.filter(function (c) { return c.indexOf('vp_members?') === 0; })[0] || '';
+check('it LOOKS: the database is asked which members still hold an email, mobile, postcode or name', /roster_id=in\.\(r1\)/.test(mcount) && /email\.not\.is\.null/.test(mcount) && /mobile\.not\.is\.null/.test(mcount) && /postcode\.not\.is\.null/.test(mcount), counts);
+var rmh = run({ venues: [{ id: 'v1', name: 'Club', closed_at: '2026-01-01T00:00:00Z' }], sessions: [], rosters: [{ id: 'r1' }], membersHeld: 2 });
+check('members still holding a detail after the update: an error, and the venue is NOT stamped', !!(rmh && rmh.error) && !patches.some(function (p) { return p.table === 'vp_venues'; }), [rmh, patches.map(function (p) { return p.table; })]);
+var rpre = run({ venues: [{ id: 'v1', name: 'Club', closed_at: '2026-01-01T00:00:00Z' }], sessions: [], rosters: [{ id: 'r1' }], noContactColumns: true });
+var mp = patches.filter(function (p) { return p.table === 'vp_members'; });
+check('before migration 200 (no email column): the names are still blanked and the venue stamped', mp.length === 2 && !('email' in mp[1].body) && mp[1].body.first_name === null && rpre.venues === 1, [rpre, mp]);
+var rref = run({ venues: [{ id: 'v1', name: 'Club', closed_at: '2026-01-01T00:00:00Z' }], sessions: [], rosters: [{ id: 'r1' }], membersRefused: true });
+check('a refusal for any OTHER reason (the columns are there): an error, no names-only fallback, not stamped',
+      !!(rref && rref.error) && patches.filter(function (p) { return p.table === 'vp_members'; }).length === 1 && !patches.some(function (p) { return p.table === 'vp_venues'; }), [rref, patches.map(function (p) { return p.table; })]);
 
 /* 4c. MORE THAN A THOUSAND SESSIONS. The read was limit=1000 with no order, and the venue
        was stamped as done for ever with the rest untouched. */

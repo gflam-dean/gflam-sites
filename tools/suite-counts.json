@@ -972,7 +972,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {
-  "checks": 12,
+  "checks": 17,
   "counted_by": "lines"
  },
  "tools/test-members-csv.js": {
@@ -1256,7 +1256,7 @@
   "counted_by": "lines"
  },
  "tools/test-retention-sweep.js": {
-  "checks": 40,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
@@ -2044,7 +2044,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-trip-draws.test.js": {
-  "checks": 81,
+  "checks": 83,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/overage-charge.test.js": {
@@ -2237,6 +2237,14 @@
  },
  "tools/test-trivia-buzzer-on-zero.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-members-upload.js": {
+  "checks": 69,
+  "counted_by": "lines"
+ },
+ "tools/members-upload-in-chrome.test.py": {
+  "checks": 28,
   "counted_by": "lines"
  }
 }

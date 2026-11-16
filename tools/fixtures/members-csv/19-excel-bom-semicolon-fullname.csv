@@ -1,0 +1,9 @@
+﻿sep=;
+Member No;Full Name;E-mail Address;Mobile Phone;Street Address;DOB;State;Subscribed
+142;"Lee, Daniel";Daniel.Lee@Example.com;0412 345 678;"1 Main St, Southport";12/05/1980;QLD;Yes
+143;LEE,Daniel;dlee2@example.com;+61 412 000 111;"2 Beach Rd, Burleigh";01/01/1975;QLD;Unsubscribed
+144;Mary Anne Smith;mary@example;61498765432;;03/11/1975;NSW;Y
+145;Daniel Lee;;498765433;"Unit 4, 6 High St";;QLD;
+146;Cher;cher@example.com;(07) 5228 3667;;;QLD;No
+;Visitor Guest;;;;;;
+

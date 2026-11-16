@@ -68,6 +68,21 @@ fetch = async function (url, opts) {
     row.game_prefs[gp.p_game] = Object.assign({}, row.game_prefs[gp.p_game] || {}, gp.p_prefs);
     return resp(200, row.game_prefs);
   }
+  /* vp_members_fill (migration 200, Jobs row 445): an upload filling an existing member's EMPTY details, as the SQL does:
+     coalesce for email / mobile / postcode, a "no" always, a "yes" only over a "not said" with a way to contact them. */
+  if (m === 'POST' && /\/rest\/v1\/rpc\/vp_members_fill/.test(u)) {
+    var fa = JSON.parse(opts.body), fn = 0;
+    (fa.p_rows || []).forEach(function (r) {
+      (DB.vp_members || []).forEach(function (x) {
+        if (x.roster_id !== fa.p_roster_id || Number(x.member_number) !== Number(r.member_number)) return;
+        x.email = x.email || r.email || null; x.mobile = x.mobile || r.mobile || null; x.postcode = x.postcode || r.postcode || null;
+        if (r.set_offers && r.offers === false && x.marketing_optin !== false) { x.marketing_optin = false; x.marketing_optin_source = fa.p_source; }
+        else if (r.set_offers && r.offers === true && x.marketing_optin == null && (x.email || x.mobile)) { x.marketing_optin = true; x.marketing_optin_source = fa.p_source; }
+        fn++;
+      });
+    });
+    return resp(200, fn);
+  }
   if (m === 'POST' && /\/rest\/v1\/(\w+)/.test(u)) {
     var t = /\/rest\/v1\/(\w+)/.exec(u)[1], b = JSON.parse(opts.body);
     /* THE UNIQUE INDEX ON PLAYER ROWS, ENFORCED IN TEST MODE (migration 192, 13 Nov 2026): vp_players_session_device_uniq,

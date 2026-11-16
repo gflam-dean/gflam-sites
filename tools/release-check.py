@@ -4469,6 +4469,13 @@ def local_checks(which):
              'a host socket needs a ticket for this room: without one (or forged, expired, far-dated or another room\'s) it joins as a phone; POST /room/ticket answers only a login that is staff at the room\'s venue, by its code or a room its slug names; the console asks for one only for a host socket, keeps it until a minute before it ends, and opens without one', 21,
              'Anybody who reads the venue code off the TV floods every phone and TV with 240 messages of 16 KB a second '
              'and stalls a night'),
+            # D445 (Jobs row 445, the Thursday 19 Nov admin release; numbered by the job row so parallel branches cannot clash):
+            # the members list upload keeps what the venue's games ask for (Dean, 16 Nov 2026), migration 200 (NOT RUN).
+            ('D445. The members list upload splits a full name, keeps only the email, mobile, postcode and offers consent the venue\'s games collect, remembers the columns, and links a player by mobile',
+             'test-members-upload.js',
+             'the members upload run for real: vp-memberscsv.js on an Excel CSV with a BOM, sep=; and quoted commas and a club file: one Full Name column split (Daniel Lee, Lee, Daniel and LEE,Daniel are sure; Mary Anne Smith, one word and two commas flagged for the venue), emails, mobiles in every format read the purchase raffle\'s way (the page and the Worker agree), Subscribed and Do Not Contact, street address, DOB and State not imported, only fields the venue collects offered, the column choices remembered by heading only; runs the game Worker\'s /host/members/import (the venue\'s collect settings the gate, an existing member filled never overwritten, an unsubscribe never turned back to a yes, consent only with a way to contact them and its source kept, nothing added before migration 200), the member match by mobile at this venue only in /capture and /join/list, Postgres values cut from the log, and no HQ page, TV or phone screen reading the new columns', 69,
+             'A club\'s members imported with "Lee,Daniel" on the TV, a mobile or email kept that the venue never asked for, an unsubscribed member '
+             'marked as wanting offers, another venue\'s member matched, or a member\'s email in a log'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

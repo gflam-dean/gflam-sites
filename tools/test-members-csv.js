@@ -65,7 +65,7 @@ check('markup in a name never survives into the box (angle brackets and commas b
 
 section('3. THE BILLING PAGE USES IT');
 var BILL = readFile('venueplay/app/billing.html');
-check('billing.html loads vp-memberscsv.js before the page script and reads the chosen file through it', /<script src="vp-memberscsv\.js"><\/script>/.test(BILL) && /VPMembersCsv\.plan\(VPMembersCsv\.parse\(text\)\)/.test(BILL) && /VPMembersCsv\.decode\(buf\)/.test(BILL) && /VPMembersCsv\.build\(rows, ix, plan\.from\)/.test(BILL));
+check('billing.html loads vp-memberscsv.js before the page script and reads the chosen file through it', /<script src="vp-memberscsv\.js"><\/script>/.test(BILL) && /VPMembersCsv\.guess\(rows0, cx\.allow\)/.test(BILL) && /VPMembersCsv\.parse\(text\)/.test(BILL) && /VPMembersCsv\.decode\(buf\)/.test(BILL) && /VPMembersCsv\.members\(rows, ix, plan\.from\)/.test(BILL));
 check('the old in-page guess (CSV_GUESS, csvDelim, csvRows) is gone, so the page and the tests cannot read a file two ways', !/CSV_GUESS|function csvDelim|function csvRows|function csvLines|function csvGuess|function csvDecode/.test(BILL));
-check('the screen says how many rows were left out', /had no member number and/.test(BILL));
+check('the screen says how many rows were left out', /no member number and/.test(BILL) && /had no member number and/.test(BILL));
 print(''); if (bad) print('FAIL ' + bad + ' of ' + ran); else print('ALL ' + ran + ' CHECKS PASSED');
