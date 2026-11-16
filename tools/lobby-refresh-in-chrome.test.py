@@ -64,6 +64,16 @@ def table(name):
         return json.loads(W.p.stdout.readline())['body']
 def shot(sid, name):
     if SHOTS: time.sleep(0.5); R.shot(sid, os.path.join(SHOTS, name + '.jpg'))
+
+
+def frames(sid, name, w, h):
+    """Frames only, no checks: the same phone at 375x667 and 390x844 (VP_SHOTS), then back to w x h."""
+    if not SHOTS: return
+    for fw, fh in ((375, 667), (390, 844)):
+        R.B.call('Emulation.setDeviceMetricsOverride', {'width': fw, 'height': fh, 'deviceScaleFactor': 1, 'mobile': True}, session=sid)
+        time.sleep(0.8); shot(sid, '%s-%dx%d' % (name, fw, fh))
+    R.B.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 1, 'mobile': w < 600}, session=sid)
+    time.sleep(0.5)
 def text(sid): return js(sid, 'document.body.innerText.replace(/\\s+/g," ").slice(0,300)')
 def tap(sid, el_id): js(sid, 'setTimeout(function(){ document.getElementById(%s).click(); }, 0); true' % json.dumps(el_id))
 ERRT = '((document.getElementById("hostErrText")||{}).textContent||"")'
@@ -344,6 +354,7 @@ def run_gone(G, pw=320, ph_h=640, auto=False):
         ok('%s: the waiting phone says the game has ended (never "You\'re in" for ever)' % G.name, R.until(ph, '!!document.getElementById("vpGone") && /game has ended/i.test(document.getElementById("vpGone").innerText)', 90) is True, text(ph))
         ok('%s: and offers a way back (Join)' % G.name, js(ph, '!!document.getElementById("vpGoneBtn") && document.getElementById("vpGoneBtn").getBoundingClientRect().height>=44') is True, text(ph))
         shot(ph, '%s-7-gone-phone-%d' % (G.name, pw))
+        if auto: frames(ph, '%s-7-gone-phone' % G.name, pw, ph_h)
         ok('%s: the ended screen says the next one will show up here (it is watching the venue)' % G.name, js(ph, '/When the next one starts, it.ll show up here\\./.test(document.getElementById("vpGone").innerText)') is True, text(ph))
         ok('%s: nothing on the ended screen runs off the %d px phone' % (G.name, pw), js(ph, 'document.documentElement.scrollWidth<=window.innerWidth+1') is True, '')
         if auto:
@@ -353,6 +364,13 @@ def run_gone(G, pw=320, ph_h=640, auto=False):
             ok('%s: the ended screen opens the next game by itself (no tap)' % G.name, R.until(ph, '!document.getElementById("vpGone")', 150) is True, text(ph))
             ok('%s: and lands on the join form or the lobby of the new night' % G.name, R.until(ph, '(' + JOIN_FORM + ') || /You.re in/i.test(document.body.innerText)', 60) is True, text(ph))
             shot(ph, '%s-8-auto-opened-%d' % (G.name, pw))
+            frames(ph, '%s-8-auto-opened' % G.name, pw, ph_h)
+            if SHOTS:
+                # frames only (no checks): the TV beside the phone once the next lobby is open, both TV sizes
+                for tw, th in ((1280, 720), (1920, 1080)):
+                    t_tv, tv = R.open('/tv?venue=' + W.info['slug'], width=tw, height=th)
+                    R.until(tv, 'document.readyState==="complete"', 30); time.sleep(6)
+                    shot(tv, '%s-8-tv-next-lobby-%dx%d' % (G.name, tw, th))
             return
         js(ph, 'document.getElementById("vpGoneBtn").click(); true')
         time.sleep(1.5)

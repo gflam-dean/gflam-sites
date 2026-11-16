@@ -1434,6 +1434,8 @@
                     bingo_review: !!(askEl && askEl.checked && vpNoBingoAt(vpc, entityType)) });
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
+    /* One venue by itself: over 200 players is set up with us, not online (INBOX 418; the Worker says the same). */
+    if (venues.length === 1 && venues[0].seats > 200) { showErr('For more than 200 players, email sales@venueplay.com.au and we will set it up with you.'); return; }
 
     if (!name) { showErr('Please enter your name so we know who we are speaking to.'); return; }
     if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }

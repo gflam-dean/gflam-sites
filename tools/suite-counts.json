@@ -2306,5 +2306,13 @@
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
   "counted_by": "lines"
+ },
+ "tools/test-signup-player-limits.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/signup-player-limits-in-chrome.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
  }
 }
