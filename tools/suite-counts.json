@@ -324,7 +324,7 @@
   "counted_by": "lines"
  },
  "tools/hq-tabs-in-chrome.test.py": {
-  "checks": 82,
+  "checks": 85,
   "counted_by": "lines"
  },
  "tools/leave-behinds-in-chrome.test.py": {
@@ -928,7 +928,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 466,
+  "checks": 480,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {

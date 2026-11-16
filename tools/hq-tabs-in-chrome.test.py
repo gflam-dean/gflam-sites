@@ -430,6 +430,23 @@ try:
     shot(sid, 'quiet-desktop')
     pane(sid, 'team')
     ok('Team shows no raw login ids', '…' not in (js(sid, 'document.getElementById("teamRows").innerText') or '') and js(sid, 'document.querySelectorAll("#paneTeam th").length') == 3)
+    # Edit name (Dean, 2 Nov 2026: "a capital D everywhere"): on your own row, asked on the page (never prompt()), saved by the Worker.
+    ok('your own row has an Edit name button', js(sid, '!!document.querySelector("#teamRows button[data-nameadmin]")') is True)
+    # An earlier step's on-page notice may still be up: vp-ask shows one dialog at a time and queues the next.
+    js(sid, '(function(){var b=document.getElementById("vpAskGo"); if(b) b.click(); return true;})()')
+    S.until(sid, '!document.getElementById("vpAsk")', 5)
+    n0 = len(S.W.calls)
+    click(sid, '#teamRows button[data-nameadmin]')
+    S.until(sid, '!!document.getElementById("vpAskNameText")', 8)
+    ok('it asks on the page, with the name filled in, not with a browser prompt()', js(sid, '(document.getElementById("vpAskNameText")||{}).value') == 'Dean', js(sid, '(document.getElementById("vpAskNameText")||{}).value'))
+    shot(sid, 'team-edit-name')
+    js(sid, 'document.getElementById("vpAskNameText").value="Dean Tindale"; document.getElementById("vpAskNameGo").click(); true')
+    S.until(sid, '/Dean Tindale/.test(document.getElementById("teamRows").innerText)', 10)
+    named = [b for p, b in S.W.calls[n0:] if p == '/admin/staff-name']
+    ok('Save goes through the real Worker (/admin/staff-name) and the database and the Team list both show the new name',
+       len(named) == 1 and 'Dean Tindale' in [a.get('label') for a in S.W.table('vp_platform_admins')] and 'Dean' not in [a.get('label') for a in S.W.table('vp_platform_admins')] and 'Dean Tindale' in (js(sid, 'document.getElementById("teamRows").innerText') or ''),
+       [named, S.W.table('vp_platform_admins')])
+    shot(sid, 'team-renamed')
     pane(sid, 'flagged')
     ft = js(sid, 'document.getElementById("flaggedRows").innerText') or ''
     ok('Flagged names the venue, never "(venue)"', '(venue)' not in ft and 'Connies Country Club' in ft, ft)
@@ -504,7 +521,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 82
+EXPECTED = 85
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
