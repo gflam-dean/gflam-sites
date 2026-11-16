@@ -1,0 +1,1057 @@
+{
+  "batch": "2026-11-16-batch-monday.json",
+  "checked_on": "2026-11-16",
+  "method": "Each question checked against at least one reliable web source by web search on 16 Nov 2026; the URL below is the source used.",
+  "questions": [
+    {
+      "id": "how-many-hearts-does-an-octopus-have-f588b5",
+      "question": "How many hearts does an octopus have?",
+      "answer": "Three",
+      "category": "Nature & Animals",
+      "difficulty": "easy",
+      "source_url": "https://www.livescience.com/how-many-hearts-does-an-octopus-have",
+      "evidence": "Octopuses have three hearts",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-word-sauna-came-into-english-from-which-lang-54f4ed",
+      "question": "The word 'sauna' came into English from which language?",
+      "answer": "Finnish",
+      "category": "General Knowledge",
+      "difficulty": "easy",
+      "source_url": "https://www.etymonline.com/word/sauna",
+      "evidence": "Sauna: from Finnish, 1881",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-unit-is-used-to-measure-frequency-743af3",
+      "question": "Which unit is used to measure frequency?",
+      "answer": "Hertz",
+      "category": "Science",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Hertz",
+      "evidence": "Hertz: SI unit of frequency",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-is-a-female-fox-called-f40602",
+      "question": "What is a female fox called?",
+      "answer": "A vixen",
+      "category": "Nature & Animals",
+      "difficulty": "easy",
+      "source_url": "https://www.countryfile.com/wildlife/mammals/fox-guide-behaviour-mating-diet-identification",
+      "evidence": "Female fox = vixen",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-colour-are-aircraft-black-box-flight-record-9fd948",
+      "question": "What colour are aircraft 'black box' flight recorders actually painted?",
+      "answer": "Bright orange",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://generalaviationnews.com/2020/10/14/questions-from-the-cockpit-a-question-of-color/",
+      "evidence": "Recorders painted bright international orange",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-is-a-group-of-flamingos-often-called-9aaf2a",
+      "question": "What is a group of flamingos often called?",
+      "answer": "A flamboyance",
+      "category": "Nature & Animals",
+      "difficulty": "medium",
+      "source_url": "https://animals.howstuffworks.com/birds/what-is-a-group-of-flamingos-called.htm",
+      "evidence": "A flamboyance of flamingos",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "timpani-are-also-commonly-known-as-what-b45ba4",
+      "question": "Timpani are also commonly known as what?",
+      "answer": "Kettledrums",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://www.britannica.com/art/timpani",
+      "evidence": "Timpani, also called kettledrums",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-dupont-chemist-invented-kevlar-1f7355",
+      "question": "Which DuPont chemist invented Kevlar?",
+      "answer": "Stephanie Kwolek",
+      "category": "Science",
+      "difficulty": "hard",
+      "source_url": "https://britannica.com/biography/Stephanie-Kwolek",
+      "evidence": "DuPont chemist who invented Kevlar",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "how-many-strings-does-a-full-size-concert-pedal-f09c6c",
+      "question": "How many strings does a full-size concert pedal harp usually have?",
+      "answer": "47",
+      "category": "General Knowledge",
+      "difficulty": "hard",
+      "source_url": "https://philharmonia.co.uk/resources/instruments/harp/",
+      "evidence": "Concert pedal harp: 47 strings",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-city-is-nicknamed-the-garden-c-931015",
+      "question": "Which New Zealand city is nicknamed the Garden City?",
+      "answer": "Christchurch",
+      "category": "World Geography",
+      "difficulty": "easy",
+      "source_url": "https://newsline.ccc.govt.nz/news/story/garden-city-name-has-long-association",
+      "evidence": "Christchurch, the Garden City",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-city-is-home-to-the-sky-tower-e77be7",
+      "question": "Which New Zealand city is home to the Sky Tower?",
+      "answer": "Auckland",
+      "category": "World Geography",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Sky_Tower_(Auckland)",
+      "evidence": "Sky Tower is in Auckland CBD",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "lake-taup-new-zealand-s-largest-lake-is-on-which-259faa",
+      "question": "Lake Taupō, New Zealand's largest lake, is on which island?",
+      "answer": "North Island",
+      "category": "World Geography",
+      "difficulty": "easy",
+      "source_url": "https://www.britannica.com/place/Lake-Taupo",
+      "evidence": "NZ's largest lake, central North Island",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "hosier-lane-famous-for-its-street-art-is-in-whic-a117b1",
+      "question": "Hosier Lane, famous for its street art, is in which Australian city?",
+      "answer": "Melbourne",
+      "category": "Australian Geography",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Hosier_Lane",
+      "evidence": "Hosier Lane street art, Melbourne CBD",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "before-1959-kiwifruit-was-sold-in-new-zealand-un-725568",
+      "question": "Before 1959, kiwifruit was sold in New Zealand under what name?",
+      "answer": "Chinese gooseberry",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://www.teara.govt.nz/en/kiwifruit/2",
+      "evidence": "Chinese gooseberry renamed kiwifruit in 1959",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-hobbiton-movie-set-is-near-which-north-islan-781320",
+      "question": "The Hobbiton movie set is near which North Island town?",
+      "answer": "Matamata",
+      "category": "World Geography",
+      "difficulty": "medium",
+      "source_url": "https://www.hobbitontours.com/experiences/hobbiton-movie-set-tour/",
+      "evidence": "Hobbiton Movie Set, Buckland Road, Matamata",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "baldwin-street-famous-as-one-of-the-world-s-stee-95b9a7",
+      "question": "Baldwin Street, famous as one of the world's steepest streets, is in which New Zealand city?",
+      "answer": "Dunedin",
+      "category": "World Geography",
+      "difficulty": "medium",
+      "source_url": "https://www.guinnessworldrecords.com/news/2020/4/baldwin-street-in-new-zealand-reinstated-as-the-worlds-steepest-street-614287",
+      "evidence": "Baldwin Street, Dunedin, reinstated as steepest street",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-remarkables-mountain-range-forms-the-skyline-7149ec",
+      "question": "The Remarkables mountain range forms the skyline of which New Zealand resort town?",
+      "answer": "Queenstown",
+      "category": "World Geography",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/The_Remarkables",
+      "evidence": "Range forms the eastern skyline of Queenstown",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "rakiura-is-the-m-ori-name-for-which-new-zealand-c38a67",
+      "question": "Rakiura is the Māori name for which New Zealand island?",
+      "answer": "Stewart Island",
+      "category": "World Geography",
+      "difficulty": "hard",
+      "source_url": "https://teara.govt.nz/en/stewart-islandrakiura",
+      "evidence": "Rakiura is the Maori name for Stewart Island",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-is-new-zealand-s-southernmost-city-a29212",
+      "question": "Which is New Zealand's southernmost city?",
+      "answer": "Invercargill",
+      "category": "World Geography",
+      "difficulty": "hard",
+      "source_url": "https://www.teara.govt.nz/en/southland-places/1",
+      "evidence": "Invercargill, southernmost city in New Zealand",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-silver-ferns-are-new-zealand-s-national-team-a03fb2",
+      "question": "The Silver Ferns are New Zealand's national team in which sport?",
+      "answer": "Netball",
+      "category": "Sport",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/New_Zealand_national_netball_team",
+      "evidence": "Silver Ferns = NZ national netball team",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "eden-park-scene-of-the-1987-and-2011-rugby-world-7f9605",
+      "question": "Eden Park, scene of the 1987 and 2011 Rugby World Cup finals, is in which city?",
+      "answer": "Auckland",
+      "category": "Sport",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Eden_Park",
+      "evidence": "Eden Park, Auckland: 1987 and 2011 RWC finals",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-sport-would-you-hang-ten-af5642",
+      "question": "In which sport would you 'hang ten'?",
+      "answer": "Surfing",
+      "category": "Sport",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Hang_ten",
+      "evidence": "Hang ten: surfing move, ten toes over the nose",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-netball-what-does-the-position-wd-stand-for-1b49df",
+      "question": "In netball, what does the position WD stand for?",
+      "answer": "Wing Defence",
+      "category": "Sport",
+      "difficulty": "medium",
+      "source_url": "https://www.sportplan.net/drills/Netball/playing-positions.jsp",
+      "evidence": "WD = Wing Defence",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-cricket-a-googly-is-bowled-by-which-kind-of-b-41a722",
+      "question": "In cricket, a googly is bowled by which kind of bowler?",
+      "answer": "A leg-spinner",
+      "category": "Sport",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Googly",
+      "evidence": "Googly: leg-spinner's wrong'un",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "a-telemark-landing-is-judged-in-which-winter-oly-b8f5da",
+      "question": "A 'telemark' landing is judged in which Winter Olympic sport?",
+      "answer": "Ski jumping",
+      "category": "Sport",
+      "difficulty": "medium",
+      "source_url": "https://www.nbcolympics.com/news/ski-jumping-101-scoring",
+      "evidence": "Judges score the telemark landing in ski jumping",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "we-re-from-tigerland-is-the-club-song-of-which-a-b7bf2b",
+      "question": "'We're from Tigerland' is the club song of which AFL club?",
+      "answer": "Richmond",
+      "category": "Sport",
+      "difficulty": "medium",
+      "source_url": "https://www.richmondfc.com.au/club/club-song",
+      "evidence": "'We're from Tigerland', Richmond club song",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "rugby-union-s-calcutta-cup-is-contested-by-engla-477053",
+      "question": "Rugby union's Calcutta Cup is contested by England and which nation?",
+      "answer": "Scotland",
+      "category": "Sport",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Calcutta_Cup",
+      "evidence": "Calcutta Cup: England v Scotland",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-australia-v-new-zealand-cricket-trophy-is-1b4656",
+      "question": "Which Australia v New Zealand cricket trophy is named after two famous cricketing families?",
+      "answer": "Chappell-Hadlee Trophy",
+      "category": "Sport",
+      "difficulty": "hard",
+      "source_url": "https://en.wikipedia.org/wiki/Chappell%E2%80%93Hadlee_Trophy",
+      "evidence": "Named for the Chappell and Hadlee cricketing families",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-darts-what-is-the-highest-possible-checkout-i-a3788d",
+      "question": "In darts, what is the highest possible checkout in one visit of three darts?",
+      "answer": "170",
+      "category": "Sport",
+      "difficulty": "hard",
+      "source_url": "https://inkl.com/news/how-do-you-score-a-170-checkout-in-darts",
+      "evidence": "170 (T20, T20, bull) is the highest checkout",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-band-released-good-vibrations-in-1966-63d1d2",
+      "question": "Which band released 'Good Vibrations' in 1966?",
+      "answer": "The Beach Boys",
+      "category": "Music",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Good_Vibrations",
+      "evidence": "Beach Boys single, October 1966",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "who-released-dancing-in-the-dark-in-1984-996aa4",
+      "question": "Who released 'Dancing in the Dark' in 1984?",
+      "answer": "Bruce Springsteen",
+      "category": "Music",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Dancing_in_the_Dark_(Bruce_Springsteen_song)",
+      "evidence": "Springsteen single, May 1984",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-band-had-a-2006-hit-with-chasing-cars-d14e11",
+      "question": "Which band had a 2006 hit with 'Chasing Cars'?",
+      "answer": "Snow Patrol",
+      "category": "Music",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Chasing_Cars",
+      "evidence": "Snow Patrol single, 2006",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "kate-bush-s-1978-debut-single-shares-its-title-w-36a03b",
+      "question": "Kate Bush's 1978 debut single shares its title with which classic novel?",
+      "answer": "Wuthering Heights",
+      "category": "Music",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Wuthering_Heights_(song)",
+      "evidence": "Kate Bush debut single, January 1978, after Bronte novel",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "new-zealand-singer-lorde-s-real-first-name-is-wh-c1f913",
+      "question": "New Zealand singer Lorde's real first name is what?",
+      "answer": "Ella",
+      "category": "Music",
+      "difficulty": "medium",
+      "source_url": "https://www.biography.com/musicians/lorde",
+      "evidence": "Lorde = Ella Yelich-O'Connor",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-singer-teamed-up-with-herbs-on-the-1986-hi-336e41",
+      "question": "Which singer teamed up with Herbs on the 1986 hit 'Slice of Heaven'?",
+      "answer": "Dave Dobbyn",
+      "category": "Music",
+      "difficulty": "medium",
+      "source_url": "https://nzhistory.net.nz/slice-of-heaven-hits-number-1",
+      "evidence": "Dave Dobbyn with Herbs, NZ No. 1, 1986",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "six-months-in-a-leaky-boat-1982-was-a-hit-for-wh-11b885",
+      "question": "'Six Months in a Leaky Boat' (1982) was a hit for which band?",
+      "answer": "Split Enz",
+      "category": "Music",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Six_Months_in_a_Leaky_Boat",
+      "evidence": "Split Enz single, May 1982",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "linger-1993-was-an-early-hit-for-which-irish-ban-5e72a3",
+      "question": "'Linger' (1993) was an early hit for which Irish band?",
+      "answer": "The Cranberries",
+      "category": "Music",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Linger_(The_Cranberries_song)",
+      "evidence": "The Cranberries single, February 1993",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-group-took-poi-e-to-number-one-in-new-zeal-c583ca",
+      "question": "Which group took 'Poi E' to number one in New Zealand in 1984?",
+      "answer": "Pātea Māori Club",
+      "category": "Music",
+      "difficulty": "hard",
+      "source_url": "https://en.wikipedia.org/wiki/Poi_E",
+      "evidence": "Patea Maori Club, NZ No. 1 in 1984",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-band-reached-number-one-in-australia-and-n-959354",
+      "question": "Which band reached number one in Australia and New Zealand in 1981 with 'Counting the Beat'?",
+      "answer": "The Swingers",
+      "category": "Music",
+      "difficulty": "hard",
+      "source_url": "https://en.wikipedia.org/wiki/The_Swingers",
+      "evidence": "Counting the Beat, No. 1 in Australia and NZ, 1981",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "shortland-street-is-a-long-running-soap-from-whi-d5889e",
+      "question": "Shortland Street is a long-running soap from which country?",
+      "answer": "New Zealand",
+      "category": "Movies & TV",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Shortland_Street",
+      "evidence": "NZ's longest-running soap, on air since 1992",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-fictional-connecticut-town-is-gilmore-g-ebf798",
+      "question": "In which fictional Connecticut town is Gilmore Girls set?",
+      "answer": "Stars Hollow",
+      "category": "Movies & TV",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Stars_Hollow",
+      "evidence": "Fictional Connecticut town of Gilmore Girls",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-is-the-surname-of-the-family-at-the-centre-af4408",
+      "question": "What is the surname of the family at the centre of Schitt's Creek?",
+      "answer": "Rose",
+      "category": "Movies & TV",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Moira_Rose",
+      "evidence": "The Rose family of Schitt's Creek",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "who-directed-the-2016-new-zealand-film-hunt-for-384b08",
+      "question": "Who directed the 2016 New Zealand film Hunt for the Wilderpeople?",
+      "answer": "Taika Waititi",
+      "category": "Movies & TV",
+      "difficulty": "easy",
+      "source_url": "https://nzonscreen.com/title/hunt-for-the-wilderpeople-2016",
+      "evidence": "Directed by Taika Waititi, 2016",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "buffy-the-vampire-slayer-is-set-in-which-fiction-5babaa",
+      "question": "Buffy the Vampire Slayer is set in which fictional Californian town?",
+      "answer": "Sunnydale",
+      "category": "Movies & TV",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Sunnydale",
+      "evidence": "Fictional Californian town of Buffy",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "keisha-castle-hughes-earned-a-best-actress-oscar-84e0f5",
+      "question": "Keisha Castle-Hughes earned a Best Actress Oscar nomination for which 2002 New Zealand film?",
+      "answer": "Whale Rider",
+      "category": "Movies & TV",
+      "difficulty": "medium",
+      "source_url": "https://nzherald.co.nz/nz/castle-hughes-stunned-by-best-actress-nomination/ZRQNDGOGPS2O7LBGOBNHSXUGTI",
+      "evidence": "Best Actress nomination for Whale Rider",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-murray-ball-s-footrot-flats-what-is-the-name-453242",
+      "question": "In Murray Ball's Footrot Flats, what is the name of Wal's sheepdog?",
+      "answer": "Dog",
+      "category": "Movies & TV",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Footrot_Flats",
+      "evidence": "Wal Footrot's sheepdog is called Dog",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-actress-played-sue-charlton-opposite-paul-0a292b",
+      "question": "Which actress played Sue Charlton opposite Paul Hogan in Crocodile Dundee (1986)?",
+      "answer": "Linda Kozlowski",
+      "category": "Movies & TV",
+      "difficulty": "medium",
+      "source_url": "https://www.nfsa.gov.au/collection/curated/linda-kozlowski-and-paul-hogan-crocodile-dundee",
+      "evidence": "Kozlowski played Sue Charlton",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-actor-earned-an-oscar-nomination-for-playi-c414f5",
+      "question": "Which actor earned an Oscar nomination for playing Farmer Hoggett in Babe (1995)?",
+      "answer": "James Cromwell",
+      "category": "Movies & TV",
+      "difficulty": "hard",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_awards_and_nominations_received_by_James_Cromwell",
+      "evidence": "Best Supporting Actor nomination for Babe (Farmer Hoggett)",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-film-won-the-very-first-academy-award-for-6b36a1",
+      "question": "Which film won the very first Academy Award for Best Picture, then called Outstanding Picture?",
+      "answer": "Wings",
+      "category": "Movies & TV",
+      "difficulty": "hard",
+      "source_url": "https://www.filmsite.org/bestpicsmilestones2.html",
+      "evidence": "Wings won the first Outstanding Picture award",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "lygon-street-famous-for-its-italian-restaurants-900c22",
+      "question": "Lygon Street, famous for its Italian restaurants, is in which Australian city?",
+      "answer": "Melbourne",
+      "category": "Australian Geography",
+      "difficulty": "easy",
+      "source_url": "https://whatson.melbourne.vic.gov.au/article/iconic-lygon-street-restaurants",
+      "evidence": "Lygon Street, Carlton: Melbourne's Italian strip",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-algarve-is-a-holiday-region-in-which-country-0bcc14",
+      "question": "The Algarve is a holiday region in which country?",
+      "answer": "Portugal",
+      "category": "World Geography",
+      "difficulty": "easy",
+      "source_url": "https://en.wikivoyage.org/wiki/Algarve",
+      "evidence": "Algarve: southern region of Portugal",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "salamanca-market-held-on-saturdays-at-salamanca-2efa74",
+      "question": "Salamanca Market, held on Saturdays at Salamanca Place, is in which Australian city?",
+      "answer": "Hobart",
+      "category": "Australian Geography",
+      "difficulty": "easy",
+      "source_url": "https://www.discovertasmania.com.au/things-to-do/shopping-and-markets/salamanca-market/",
+      "evidence": "Salamanca Market, every Saturday, Hobart",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "pineapple-lumps-the-chocolate-coated-lollies-wer-e9a508",
+      "question": "Pineapple Lumps, the chocolate-coated lollies, were first made in which country?",
+      "answer": "New Zealand",
+      "category": "Food & Drink",
+      "difficulty": "easy",
+      "source_url": "https://en.wikipedia.org/wiki/Pineapple_lumps",
+      "evidence": "First made by Regina, Oamaru, New Zealand, early 1950s",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "pimm-s-no-1-is-a-liqueur-based-on-which-spirit-013a80",
+      "question": "Pimm's No. 1 is a liqueur based on which spirit?",
+      "answer": "Gin",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://mcgrocer.com/products/pimm-s-original-no-1-cup-gin-based-liqueur-70cl-2026498688",
+      "evidence": "Pimm's No. 1 is a gin-based liqueur",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "bircher-muesli-was-created-by-a-doctor-from-whic-a3a421",
+      "question": "Bircher muesli was created by a doctor from which country?",
+      "answer": "Switzerland",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Muesli",
+      "evidence": "Created by Swiss physician Bircher-Benner around 1900",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "speight-s-beer-has-been-brewed-since-1876-in-whi-4dab44",
+      "question": "Speight's beer has been brewed since 1876 in which New Zealand city?",
+      "answer": "Dunedin",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Speight%27s",
+      "evidence": "Speight's founded in Dunedin, 1876",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-new-zealand-soft-drink-l-p-is-named-partly-a-44d688",
+      "question": "The New Zealand soft drink L&P is named partly after which town?",
+      "answer": "Paeroa",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Lemon_%26_Paeroa",
+      "evidence": "Named after the town of Paeroa",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-atomium-built-for-the-1958-world-s-fair-stan-27dad8",
+      "question": "The Atomium, built for the 1958 World's Fair, stands in which city?",
+      "answer": "Brussels",
+      "category": "World Geography",
+      "difficulty": "hard",
+      "source_url": "https://atomium.be/discover",
+      "evidence": "Atomium built for Expo 58 in Brussels",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-bellini-cocktail-was-created-at-harry-s-bar-8529e2",
+      "question": "The Bellini cocktail was created at Harry's Bar in which Italian city?",
+      "answer": "Venice",
+      "category": "Food & Drink",
+      "difficulty": "hard",
+      "source_url": "https://cipriani.com/bellini",
+      "evidence": "Bellini created by Giuseppe Cipriani at Harry's Bar, Venice",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-kea-known-for-pulling-rubber-off-parked-cars-7b1ba9",
+      "question": "The kea, known for pulling rubber off parked cars, is a parrot native to which country?",
+      "answer": "New Zealand",
+      "category": "Nature & Animals",
+      "difficulty": "medium",
+      "source_url": "https://teara.govt.nz/en/photograph/11941/kea-on-a-car",
+      "evidence": "Te Ara: kea known for tearing wiper blades and rubber off cars; NZ alpine parrot",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-bird-is-the-world-s-only-fligh-c5bdbb",
+      "question": "Which New Zealand bird is the world's only flightless parrot?",
+      "answer": "Kākāpō",
+      "category": "Nature & Animals",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/K%C4%81k%C4%81p%C5%8D",
+      "evidence": "Kakapo: world's only flightless parrot, endemic to NZ",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-tuatara-found-only-in-new-zealand-is-what-ki-1ea041",
+      "question": "The tuatara, found only in New Zealand, is what kind of animal?",
+      "answer": "A reptile",
+      "category": "Nature & Animals",
+      "difficulty": "hard",
+      "source_url": "https://www.aucklandzoo.co.nz/animals/tuatara",
+      "evidence": "Tuatara: reptile in an order of its own, not a lizard, NZ only",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "horseshoe-crab-blood-turns-what-colour-when-it-m-c0b2d9",
+      "question": "Horseshoe crab blood turns what colour when it meets oxygen?",
+      "answer": "Blue",
+      "category": "Nature & Animals",
+      "difficulty": "hard",
+      "source_url": "https://www.discoverwildlife.com/animal-facts/marine-animals/horseshoe-crab-blue-blood",
+      "evidence": "Copper-based hemocyanin turns blue when oxygenated",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "on-a-standard-dartboard-which-number-sits-at-the-9bdf42",
+      "question": "On a standard dartboard, which number sits at the very top?",
+      "answer": "20",
+      "category": "General Knowledge",
+      "difficulty": "easy",
+      "source_url": "https://patrickchaplin.com/2019/05/22/numbers-on-the-dartboard/",
+      "evidence": "Standard (London) board has 20 at the top",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-roman-numeral-stands-for-500-5f2382",
+      "question": "Which Roman numeral stands for 500?",
+      "answer": "D",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://cuemath.com/numbers/d-roman-numerals",
+      "evidence": "D = 500",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-born-physicist-is-often-called-ca2865",
+      "question": "Which New Zealand-born physicist is often called the father of nuclear physics?",
+      "answer": "Ernest Rutherford",
+      "category": "Science",
+      "difficulty": "hard",
+      "source_url": "https://motat.nz/explore/stories/sir-ernest-rutherford-the-father-of-nuclear-physics/",
+      "evidence": "NZ-born Rutherford, father of nuclear physics",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "lake-eyre-in-south-australia-also-carries-which-1cefbd",
+      "question": "Lake Eyre in South Australia also carries which Aboriginal name?",
+      "answer": "Kati Thanda",
+      "category": "Australian Geography",
+      "difficulty": "hard",
+      "source_url": "https://www.sbs.com.au/news/lake-eyre-gets-back-its-aboriginal-name",
+      "evidence": "Dual name Kati Thanda-Lake Eyre adopted Dec 2012",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "hokey-pokey-ice-cream-is-plain-vanilla-with-smal-af3f91",
+      "question": "Hokey pokey ice cream is plain vanilla with small lumps of what?",
+      "answer": "Honeycomb toffee",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Hokey_pokey_(ice_cream)",
+      "evidence": "Plain vanilla ice cream with small lumps of honeycomb toffee",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-spread-did-food-chemist-cyril-callister-de-eb89ea",
+      "question": "Which spread did food chemist Cyril Callister develop in Melbourne in the early 1920s?",
+      "answer": "Vegemite",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Cyril_Callister",
+      "evidence": "Callister developed Vegemite in Melbourne for Fred Walker Co, 1922",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-year-was-the-treaty-of-waitangi-first-s-c54f1b",
+      "question": "In which year was the Treaty of Waitangi first signed?",
+      "answer": "1840",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://nzhistory.govt.nz/politics/treaty/location/waitangi/6-february-1840",
+      "evidence": "First signed at Waitangi, 6 February 1840",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-is-a-baby-echidna-called-e9f9ba",
+      "question": "What is a baby echidna called?",
+      "answer": "A puggle",
+      "category": "Nature & Animals",
+      "difficulty": "medium",
+      "source_url": "https://www.discoverwildlife.com/animal-facts/mammals/echidna-puggle",
+      "evidence": "A baby echidna is a puggle",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-weta-one-of-the-heaviest-insects-in-the-worl-ee0a94",
+      "question": "The weta, one of the heaviest insects in the world, is native to which country?",
+      "answer": "New Zealand",
+      "category": "Nature & Animals",
+      "difficulty": "easy",
+      "source_url": "https://guinnessworldrecords.com/world-records/heaviest-insect",
+      "evidence": "Heaviest insect: giant weta (wetapunga); giant weta endemic to NZ",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-bird-has-its-nostrils-at-the-v-1ae864",
+      "question": "Which New Zealand bird has its nostrils at the very tip of its long beak?",
+      "answer": "The kiwi",
+      "category": "Nature & Animals",
+      "difficulty": "hard",
+      "source_url": "https://www.pbs.org/wnet/nature/blog/featured-creature-kiwi",
+      "evidence": "Kiwi nostrils at the tip of the beak",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-board-game-includes-rooms-called-the-ballr-695ca4",
+      "question": "Which board game includes rooms called the Ballroom, the Conservatory and the Library?",
+      "answer": "Cluedo",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://gamerules.com/rules/clue-board-game/",
+      "evidence": "Nine rooms incl. Ballroom, Conservatory, Library",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "a-diamond-wedding-anniversary-marks-how-many-yea-541ff1",
+      "question": "A diamond wedding anniversary marks how many years of marriage?",
+      "answer": "60",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://thecourier.co.uk/fp/education/schools/2313022/diamond-60-years-for-bill-and-betty-but-what-are-the-other-wedding-anniversaries",
+      "evidence": "Diamond = 60 years",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-element-makes-up-most-of-the-sun-6da613",
+      "question": "Which element makes up most of the Sun?",
+      "answer": "Hydrogen",
+      "category": "Science",
+      "difficulty": "easy",
+      "source_url": "https://solarsystem.nasa.gov/genesismission/gm2/science/sunlight_solar-heat/fusion_chemistry.htm",
+      "evidence": "NASA Genesis: Sun about 71% hydrogen by mass, 91% by atoms",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-does-a-seismograph-record-7601b4",
+      "question": "What does a seismograph record?",
+      "answer": "Ground movement from earthquakes",
+      "category": "Science",
+      "difficulty": "medium",
+      "source_url": "https://www.usgs.gov/programs/earthquake-hazards/seismographs-keeping-track-earthquakes",
+      "evidence": "Seismographs record ground motion from earthquakes",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-unit-is-the-loudness-of-sound-usually-m-e26077",
+      "question": "In which unit is the loudness of sound usually measured?",
+      "answer": "Decibels",
+      "category": "Science",
+      "difficulty": "easy",
+      "source_url": "https://britannica.com/science/loudness",
+      "evidence": "Loudness / sound level measured in decibels",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "kunanyi-mount-wellington-rises-behind-which-aust-fa6ade",
+      "question": "kunanyi / Mount Wellington rises behind which Australian capital city?",
+      "answer": "Hobart",
+      "category": "Australian Geography",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Mount_Wellington_(Tasmania)",
+      "evidence": "kunanyi / Mount Wellington, behind Hobart",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "k-mara-is-the-new-zealand-name-for-which-vegetab-6e69ec",
+      "question": "Kūmara is the New Zealand name for which vegetable?",
+      "answer": "Sweet potato",
+      "category": "Food & Drink",
+      "difficulty": "easy",
+      "source_url": "https://teara.govt.nz/en/kumara/page-1",
+      "evidence": "Kumara is the sweet potato",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "saganaki-a-dish-of-pan-fried-cheese-comes-from-w-dc52de",
+      "question": "Saganaki, a dish of pan-fried cheese, comes from which country's cuisine?",
+      "answer": "Greece",
+      "category": "Food & Drink",
+      "difficulty": "medium",
+      "source_url": "https://www.themediterraneandish.com/saganaki-fried-greek-cheese/",
+      "evidence": "Saganaki is Greek fried cheese",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-greenpeace-ship-rainbow-warrior-was-sunk-in-bc3d05",
+      "question": "The Greenpeace ship Rainbow Warrior was sunk in 1985 in which New Zealand city's harbour?",
+      "answer": "Auckland",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://nzhistory.govt.nz/rainbow-warrior-sunk-in-auckland",
+      "evidence": "Sunk at Marsden Wharf, Waitemata Harbour, Auckland, 10 July 1985",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "who-was-new-zealand-s-first-female-prime-ministe-b7af2a",
+      "question": "Who was New Zealand's first female Prime Minister?",
+      "answer": "Jenny Shipley",
+      "category": "History",
+      "difficulty": "hard",
+      "source_url": "https://www.britannica.com/biography/Jennifer-Shipley",
+      "evidence": "NZ's first woman prime minister, Dec 1997",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-new-zealand-prime-minister-led-the-country-7eb7cf",
+      "question": "Which New Zealand Prime Minister led the country's nuclear-free stance in the 1980s?",
+      "answer": "David Lange",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://teara.govt.nz/en/biographies/6l1/lange-david-russell",
+      "evidence": "Lange came to personify NZ's nuclear-free policy (PM 1984-89)",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-year-was-mary-mackillop-declared-austra-dea95a",
+      "question": "In which year was Mary MacKillop declared Australia's first saint?",
+      "answer": "2010",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Mary_MacKillop",
+      "evidence": "Canonised 17 October 2010, first Australian saint",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-1981-springbok-rugby-tour-sparked-mass-prote-dafe16",
+      "question": "The 1981 Springbok rugby tour sparked mass protests in which country?",
+      "answer": "New Zealand",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://nzhistory.govt.nz/culture/1981-springbok-tour",
+      "evidence": "1981 Springbok tour: mass protests across New Zealand",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "suffrage-leader-kate-sheppard-appears-on-which-n-13f3fd",
+      "question": "Suffrage leader Kate Sheppard appears on which New Zealand banknote?",
+      "answer": "$10",
+      "category": "History",
+      "difficulty": "medium",
+      "source_url": "https://www.rbnz.govt.nz/money-and-cash/banknotes/banknotes-in-circulation/10-banknote",
+      "evidence": "Kate Sheppard on the front of the $10 note",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-australian-prime-minister-was-born-in-barr-fea98f",
+      "question": "Which Australian Prime Minister was born in Barry, Wales?",
+      "answer": "Julia Gillard",
+      "category": "History",
+      "difficulty": "hard",
+      "source_url": "https://naa.gov.au/explore-collection/australias-prime-ministers/julia-gillard/before-office",
+      "evidence": "Gillard born 1961 in Barry, Wales",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "known-as-king-dick-who-led-new-zealand-s-governm-962bf8",
+      "question": "Known as 'King Dick', who led New Zealand's government from 1893 until his death in 1906?",
+      "answer": "Richard Seddon",
+      "category": "History",
+      "difficulty": "hard",
+      "source_url": "https://en.wikipedia.org/wiki/Richard_Seddon",
+      "evidence": "Premier 27 Apr 1893 until death 10 Jun 1906; 'King Dick'",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-word-describes-animals-that-are-most-active-8289c5",
+      "question": "What word describes animals that are most active at dawn and dusk?",
+      "answer": "Crepuscular",
+      "category": "Science",
+      "difficulty": "hard",
+      "source_url": "https://www.trvst.world/glossary/crepuscular/",
+      "evidence": "Crepuscular = active at twilight, dawn and dusk",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "australia-antarctica-africa-and-south-america-we-d38ad2",
+      "question": "Australia, Antarctica, Africa and South America were once joined in which ancient supercontinent?",
+      "answer": "Gondwana",
+      "category": "Science",
+      "difficulty": "medium",
+      "source_url": "https://www.britannica.com/place/Gondwana-supercontinent",
+      "evidence": "Gondwana: S America, Africa, India, Australia, Antarctica",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "tasmania-s-overland-track-runs-from-cradle-mount-950bff",
+      "question": "Tasmania's Overland Track runs from Cradle Mountain to which lake?",
+      "answer": "Lake St Clair",
+      "category": "Australian Geography",
+      "difficulty": "medium",
+      "source_url": "https://www.aussiebushwalking.com/tas/cradle-mountain-lake-st-clair-np/overland-track",
+      "evidence": "Overland Track: Cradle Mountain to Lake St Clair",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "lord-howe-island-is-part-of-which-australian-sta-687bfc",
+      "question": "Lord Howe Island is part of which Australian state?",
+      "answer": "New South Wales",
+      "category": "Australian Geography",
+      "difficulty": "medium",
+      "source_url": "https://en.wikipedia.org/wiki/Lord_Howe_Island",
+      "evidence": "Lord Howe Island forms part of New South Wales",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-morse-code-which-letter-is-sent-as-a-single-d-93cfd5",
+      "question": "In Morse code, which letter is sent as a single dot?",
+      "answer": "E",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://www.electronics-notes.com/articles/ham_radio/morse_code/characters-table-chart.php",
+      "evidence": "E = single dot",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "the-victorian-city-of-geelong-sits-on-which-bay-0d4d26",
+      "question": "The Victorian city of Geelong sits on which bay?",
+      "answer": "Corio Bay",
+      "category": "Australian Geography",
+      "difficulty": "medium",
+      "source_url": "https://www.britannica.com/place/Geelong",
+      "evidence": "Geelong, a major port on Corio Bay",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "mount-gambier-famous-for-its-blue-lake-is-in-whi-514dd2",
+      "question": "Mount Gambier, famous for its Blue Lake, is in which state?",
+      "answer": "South Australia",
+      "category": "Australian Geography",
+      "difficulty": "medium",
+      "source_url": "https://www.environment.sa.gov.au/topics/heritage/state-heritage-areas/Mount_Gambier_Volcanic_Complex",
+      "evidence": "Blue Lake, Mount Gambier, South Australia",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "cataract-gorge-is-a-natural-landmark-in-which-ta-d48b1d",
+      "question": "Cataract Gorge is a natural landmark in which Tasmanian city?",
+      "answer": "Launceston",
+      "category": "Australian Geography",
+      "difficulty": "easy",
+      "source_url": "https://www.discovertasmania.com.au/about/articles/cataract-gorge",
+      "evidence": "Cataract Gorge, Launceston",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "in-which-card-game-do-players-move-pegs-along-a-29cab9",
+      "question": "In which card game do players move pegs along a board to keep score?",
+      "answer": "Cribbage",
+      "category": "General Knowledge",
+      "difficulty": "medium",
+      "source_url": "https://www.britannica.com/topic/cribbage/Introduction",
+      "evidence": "Cribbage scoring is called pegging, done with pegs on a board",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "which-australian-born-scientist-shared-the-1915-5052e7",
+      "question": "Which Australian-born scientist shared the 1915 Nobel Prize in Physics with his father, for X-ray crystallography?",
+      "answer": "Lawrence Bragg",
+      "category": "Science",
+      "difficulty": "hard",
+      "source_url": "https://www.iucr.org/people/nobel-prize/w.l.bragg",
+      "evidence": "Adelaide-born W. L. Bragg shared the 1915 physics Nobel with his father",
+      "checked_on": "2026-11-16"
+    },
+    {
+      "id": "what-does-the-c-stand-for-in-einstein-s-equation-288925",
+      "question": "What does the 'c' stand for in Einstein's equation E = mc²?",
+      "answer": "The speed of light",
+      "category": "Science",
+      "difficulty": "medium",
+      "source_url": "https://www.amnh.org/exhibitions/einstein/energy/e-mc2",
+      "evidence": "In E = mc2, c is the speed of light",
+      "checked_on": "2026-11-16"
+    }
+  ],
+  "spares_not_in_batch": [
+    {
+      "id": "which-spirit-goes-into-a-classic-moscow-mule-5d8834",
+      "question": "Which spirit goes into a classic Moscow Mule?",
+      "answer": "Vodka",
+      "category": "Food & Drink",
+      "difficulty": "easy",
+      "source_url": "https://punchdrink.com/recipes/moscow-mule/",
+      "evidence": "Vodka, lime, ginger beer",
+      "checked_on": "2026-11-16",
+      "why_not_in_batch": "verified, held as a spare to keep the batch at 100 and categories even"
+    }
+  ],
+  "dropped_late_duplicates": [
+    {
+      "question": "The platypus shares the monotreme group with which other living Australian animal?",
+      "answer": "The echidna",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "In the phonetic alphabet used by pilots, which word stands for the letter K?",
+      "answer": "Kilo",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "Hobart sits on the banks of which river?",
+      "answer": "The Derwent",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "The Bungle Bungle Range is in which Australian state?",
+      "answer": "Western Australia",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "The tiny Irukandji, found in northern Australian waters, is a highly venomous what?",
+      "answer": "Jellyfish",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "Professor Graeme Clark led the Melbourne team that developed which medical device?",
+      "answer": "The cochlear implant",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    },
+    {
+      "question": "Which Australian research body holds a famous patent behind fast Wi-Fi?",
+      "answer": "CSIRO",
+      "why": "near-duplicate of an existing bank question (found in the final answer-keyed sweep)"
+    }
+  ]
+}
