@@ -21,6 +21,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 TEXT_EXT = {'.html', '.js', '.css', '.json', '.txt', '.xml', '.svg', '.md', '.webmanifest', ''}
 TAG = '<script src="/app/vp-env.js"></script>'
 PLACEHOLDER = 'TEST_ANON_KEY_NOT_SET_YET'
+# Stripe's TEST-mode publishable key (Dean, 16 Nov 2026: staging sign-up must take a test card). Publishable keys are
+# public by design (they sit in the page); this one only works against Stripe test mode. Every live pk_live_ key in a
+# staging page is swapped for it, and the build refuses if a pk_live_ key is left.
+STRIPE_TEST_PK = 'pk_test_51TqKod4zQxMz9so2TVds8I3KU0l70Ljpy3kMAtJ58xTO3K5km0Z1kGDVYdEpX68eIJFm6qNV1Qf4ujiHIjZQ9nhw00viu0hkRR'
+PK_LIVE = re.compile(r'pk_live_[A-Za-z0-9]+')
 
 
 def read_block(src, begin_pat, end_pat, label):
@@ -124,6 +129,7 @@ def build(src_dir, out_dir, allow_placeholder=False):
             if rel != os.path.join('app', 'vp-env.js'):      # vp-env.js keeps BOTH sets: it is the config
                 for a, b in pairs:
                     t = t.replace(a, b)
+                t = PK_LIVE.sub(STRIPE_TEST_PK, t)
             if f.lower().endswith('.html'):
                 t, did = inject_tag(t)
                 tagged += 1 if did else 0
@@ -133,7 +139,7 @@ def build(src_dir, out_dir, allow_placeholder=False):
                 changed += 1
             open(d, 'w', encoding='utf-8').write(t)
     left = []
-    live_tokens = [a for a, _ in pairs]
+    live_tokens = [a for a, _ in pairs] + ['pk_live_']
     for dp, dn, fn in os.walk(out_dir):
         for f in fn:
             p = os.path.join(dp, f)
