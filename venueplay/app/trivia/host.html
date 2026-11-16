@@ -1063,14 +1063,11 @@
       if(nobodyLeft) main.id="nobodyAgain";
       main.addEventListener("click", nobodyLeft ? function(){ endRound(); } : (isLast ? finTap : nextQuestion)); brow.appendChild(main);
       if(nobodyLeft){ body.appendChild(brow); return; }
-      var endb=el("button","btn ghost big","End round");
       /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
          sits beside the control the host taps about nineteen times a night. endRound() clears the
          timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
          on the server, with no undo. */
-      endb.addEventListener("click", function(){
-        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
-      }); brow.appendChild(endb);
+      brow.appendChild(endRoundBtn());
       body.appendChild(brow);
       if(isLast && G.finale){ var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite"); body.appendChild(fl); paintFinLine(); }   // "Final scores come up in 0:30"
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
@@ -1616,6 +1613,32 @@
     sendFinale(); finTicker(); finTick(); renderConsole();
   }
   function finTap(){ G.finAuto=false; finish(); }
+  function endRoundBtn(){
+    var endb=el("button","btn ghost big","End round");
+    endb.addEventListener("click", function(){
+      vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
+    });
+    return endb;
+  }
+  /* A team joined after "nobody has joined" (INBOX 426 item 4): the calm line goes and Reveal leaderboard + End round come
+     back. Done IN PLACE on the one button row: a join must never rebuild the console (release-check "a join never rebuilds
+     a host console": it would replace the host's own controls mid-tap). */
+  function bringBackReveal(){
+    G.noPlayersNote=false;
+    var nn=document.getElementById("noPlayersNote"); if(nn && nn.parentNode) nn.parentNode.removeChild(nn);
+    var b=document.getElementById("nobodyAgain");
+    if(!b || !b.parentNode) return;
+    var row=b.parentNode;
+    var rv=el("button","btn pink big","Reveal leaderboard");
+    rv.addEventListener("click", finTap);
+    row.replaceChild(rv,b);
+    row.appendChild(endRoundBtn());
+    if(G.finale && !document.getElementById("finLine")){
+      var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite");
+      if(row.parentNode) row.parentNode.insertBefore(fl,row.nextSibling);
+      paintFinLine();
+    }
+  }
   function autoFinish(){ G.finAuto=true; finish(); }
   /* "Show the whole leaderboard now": the show jumps forward to the leaderboard, never back. */
   function finSkip(){
@@ -2008,7 +2031,7 @@
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
       /* Somebody arrived after "nobody has joined": the calm line goes and Reveal leaderboard comes back (INBOX 426 item 4). */
-      if(G.noPlayersNote && G.status==="reveal"){ G.noPlayersNote=false; renderConsole(); }
+      if(G.noPlayersNote && G.status==="reveal"){ bringBackReveal(); }   // in place: a join never rebuilds the console
       replayState(m.pid);     // they may have missed a live question; catch them up
     }
     else if(m.t==="pr_guess"){

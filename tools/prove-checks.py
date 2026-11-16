@@ -26351,7 +26351,7 @@ MUTATIONS = [
      '''<div class="card9" id="claimCard-'+ci+'"></div><div class="resolve" style="margin:0 0 12px"><button class="btn win" data-act="confirm"''',
      'the bingo claim card puts the ticket picture above Confirm winner again'),
     ('trivia-empty-room-in-chrome.test.py', 'venueplay/app/trivia/host.html',
-     'if(G.noPlayersNote && G.status==="reveal"){ G.noPlayersNote=false; renderConsole(); }', '',
+     'if(G.noPlayersNote && G.status==="reveal"){ bringBackReveal(); }   // in place: a join never rebuilds the console', '',
      'a team joining after "nobody has joined" leaves the host without Reveal leaderboard'),
     ('trivia-empty-room-in-chrome.test.py', 'venueplay/app/trivia/host.html',
      'var nobodyLeft = isLast && G.noPlayersNote && playerCount()===0;', 'var nobodyLeft = false;',
