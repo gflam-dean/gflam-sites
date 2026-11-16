@@ -70,10 +70,12 @@ ok("an unknown manifest version: missing", L.plan(man(sl(4, 4), { v: 2 }), CODE,
 // ---- the offer
 ok("December, December's row: $2.50 by 31 December, linked to /offer-dec",
    good.offer.show && good.offer.day === "31 December" && good.offer.href === "/offer-dec", JSON.stringify(good.offer));
-ok("...and the whole night returns to the same offer", good.night === "/see-a-night?from=offer-dec", good.night);
+ok("...and the game button goes straight to Play a quick game", good.night === "/quick?from=look", good.night);
 var jan = L.plan(man(sl(4, 4)), CODE, { offers: OFFERS, now: JAN3 });
 ok("in January the December offer has ended: no price, no roll-on to January", !jan.offer.show && jan.offer.ended && !jan.offer.href, JSON.stringify(jan.offer));
-ok("...and the night link carries no offer", jan.night === "/see-a-night", jan.night);
+ok("...and the game button is the same with no offer", jan.night === "/quick?from=look", jan.night);
+ok("no link on the page goes to the old see-a-night page (301 to /quick since 14 Nov)", PAGE.indexOf("href=\"/see-a-night") < 0 && PAGE.indexOf("'/see-a-night") < 0);
+ok("every game link on the page is Play a quick game", (PAGE.match(/href=\"\/quick\?from=look\"/g) || []).length === 3, (PAGE.match(/href=\"\/quick\?from=look\"/g) || []).length);
 ok("the Worker saying the code is closed hides the offer", !L.plan(man(sl(4, 4)), CODE, { offers: OFFERS, now: DEC15, workerOpen: false }).offer.show);
 ok("the Worker unreachable (null): the dates stand", L.plan(man(sl(4, 4)), CODE, { offers: OFFERS, now: DEC15, workerOpen: null }).offer.show);
 ok("a row marked ended (October) is never quoted", !L.offerFor("oct", OFFERS, Date.UTC(2026, 9, 5)).show);

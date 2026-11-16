@@ -73,7 +73,8 @@
   .btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;
     font:700 var(--fs-body) 'Manrope',sans-serif;text-decoration:none;background:var(--pink);color:var(--white);margin-top:6px}
   .btn.ghost{background:transparent;border:1px solid var(--pink)}
-  .more{margin:28px 0 0;font-size:var(--fs-body)}
+  .more{margin:28px 0 0;font-size:var(--fs-body);display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .more .small{font-size:var(--fs-min);color:var(--muted)}
   footer{margin:48px 0 0;padding:26px 0 34px;border-top:1px solid var(--line);font-size:var(--fs-min);color:var(--muted)}
   footer img{height:28px;width:auto;display:block;margin:0 0 12px}
   footer a{color:var(--muted)}
@@ -92,8 +93,8 @@
 
     <section id="lkMissing" hidden>
       <h1 style="margin-top:28px">This link isn't working</h1>
-      <p class="lead">It may have been swapped for a newer one. You can still see a whole night on venueplay.</p>
-      <a class="btn" href="/see-a-night">See a night</a>
+      <p class="lead">It may have been swapped for a newer one. You can still try venueplay now.</p>
+      <a class="btn" href="/quick?from=look">Play a quick game</a>
     </section>
 
     <section id="lkSlides" hidden>
@@ -126,7 +127,7 @@
         <p class="label">The offer</p>
         <p class="price">$2.50 <span>a player a month</span></p>
         <p>If you join by <b id="lkOfferDay"></b>, that rate is locked in for as long as you stay, and your first month is free. Our standard rate is $3.</p>
-        <a class="btn ghost" id="lkOfferLink" href="/see-a-night">See the offer</a>
+        <a class="btn ghost" id="lkOfferLink" href="/quick?from=look">See the offer</a>
       </div>
       <div class="card" id="lkStandard" hidden>
         <p class="label">Pricing</p>
@@ -135,7 +136,7 @@
       </div>
     </div></div>
 
-    <p class="more" id="lkMore" hidden><a id="lkNight" href="/see-a-night">Or see a whole night of trivia, musical bingo and bingo</a></p>
+    <p class="more" id="lkMore" hidden><a class="btn" id="lkNight" href="/quick?from=look">Play a quick game</a> <span class="small">Five questions of trivia on this screen, your phone is the player.</span></p>
   </main>
 
   <footer>
@@ -159,6 +160,9 @@
    slides; this is the second lock, for a manifest edited by hand. Fewer than 3 slides is a demo too. */
 (function (root) {
   var MIN_REAL_PHOTOS = 3, MIN_SLIDES = 3, MAX_SLIDES = 12;
+  /* PLAY A QUICK GAME (INBOX 412 item 8, 16 Nov 2026): /see-a-night is gone (301 to /quick), so the page's game
+     button goes straight to the real 5-question trivia. from=look tells the funnel where they came from. */
+  var QUICK = '/quick?from=look';
   var CODE_RX = /^[A-Za-z0-9_-]{22,64}$/;
   var FILE_RX = /^\d{2}\.jpg$/;
   var MON3 = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -209,10 +213,10 @@
     }
     var demo = m.mode !== 'slides' || slides.length < MIN_SLIDES || poorPhotos(slides);
     return { state: demo ? 'demo' : 'slides', venue: venue, slides: demo ? [] : slides, offer: offer,
-             night: offer.show ? '/see-a-night?from=offer-' + offer.key : '/see-a-night' };
+             night: QUICK };
   }
 
-  root.VPLook = { codeFrom: codeFrom, poorPhotos: poorPhotos, offerFor: offerFor, plan: plan,
+  root.VPLook = { codeFrom: codeFrom, poorPhotos: poorPhotos, offerFor: offerFor, plan: plan, QUICK: QUICK,
                   MIN_REAL_PHOTOS: MIN_REAL_PHOTOS, MIN_SLIDES: MIN_SLIDES };
 })(typeof window !== 'undefined' ? window : this);
 </script>

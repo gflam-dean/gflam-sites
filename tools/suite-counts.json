@@ -1916,7 +1916,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/look-page.test.js": {
-  "checks": 56,
+  "checks": 58,
   "counted_by": "lines"
  },
  "venueplay-backend/app/members/draw-again.test.js": {
