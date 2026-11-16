@@ -6646,6 +6646,8 @@ MUTATIONS = [
     # 25 Oct 2026 (Dean): are you sure, when New game is tapped on a game that has not reached a full house.
     ('test-caller-mode.js', 'venueplay/app/index.html', '    var warn=ngWarning(), wb=$("ngWarn");', '    var warn="", wb=$("ngWarn");', 'New game never warns that the game has not reached a full house'),
     ('test-caller-mode.js', 'venueplay/app/index.html', '    if(won.indexOf("full")>=0) return "";', '    if(false) return "";', 'New game warns even after a full house'),
+    # Job 113 (dim caller grid after Finish, 16 Nov 2026): the grid is dimmed and dead once the game is finished.
+    ('test-caller-mode.js', 'venueplay/app/index.html', '    if(blk) blk.classList.toggle("gamedone", !!G.won && !G.callerWin);\n', '', 'the caller grid stays bright and live after Finish game'),
     ('test-caller-mode.js', 'venueplay/app/index.html', '    if(warn){ try{ $("ngCancel").focus(); }catch(e){} }   // the safe answer is the one under the thumb', '', 'the are-you-sure box leaves the focus off Cancel'),
     # train of 27 Oct 2026: the console logo ran before connect() in pairToVenue and threw in the bingo rig, so the console never joined its channel.
     ('test-caller-mode.js', 'venueplay/app/index.html', '      connect(VP.venueCode(slug));\n      try{ venueLogoFor(slug); }catch(e){}', '      venueLogoFor(slug);\n      connect(VP.venueCode(slug));', 'the venue logo is asked for before the console connects, so a logo that throws stops the console pairing'),

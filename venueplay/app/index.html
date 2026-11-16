@@ -251,6 +251,8 @@
   .callerwinbar{display:none;margin:0 0 12px;padding:14px;border-radius:14px;background:rgba(53,208,127,.1);border:1px solid rgba(53,208,127,.45)}
   #callerBlock.winning .callerwinbar{display:block}
   #callerBlock.winning .callergrid{opacity:.45;pointer-events:none}
+  /* After Finish game (Dean, job 113): the game is done, so the grid is dimmed and dead like during a win. A tap would only say "That game is done". */
+  #callerBlock.gamedone .callergrid{opacity:.45;pointer-events:none}
   #callerBlock.winning #callerWinBtn,#callerBlock.winning .callernote{display:none}
   .callerwinbar .cwmain{display:block;width:100%;min-height:64px;font-size:20px}
   .callerwinbar .cwprize{margin:4px 0 0}
@@ -4109,6 +4111,7 @@
     var ub=$("callerUndoBtn"); if(ub){ ub.disabled=!cur || !!G.callerWin; ub.textContent = cur ? ("Undo "+cur) : "Undo last"; }
     // The win on the TV: what the room is reading, and Back to the game. WINNER waits for a game that is still on.
     var blk=$("callerBlock"); if(blk) blk.classList.toggle("winning", !!G.callerWin);
+    if(blk) blk.classList.toggle("gamedone", !!G.won && !G.callerWin);
     renderCallerWin();
     var wb=$("callerWinBtn"); if(wb) wb.disabled = !!G.won;
   }
@@ -4363,6 +4366,7 @@
     G.won=true;
     finishDrawRecord();
     saveGame(); renderConsole(); syncNextBtn();
+    if(G.caller) renderCallerGrid();   // dim the grid: the game is done
   }
 
   // ---- incoming ----
