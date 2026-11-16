@@ -22,7 +22,7 @@ var src = readFile('venueplay-backend/worker/venueplay-game.js')
 console = { log: function () {} };
 (0, eval)(src);
 
-var gets, patches, counts;
+var gets, patches, counts, deletes;
 function arm(opts) {
   gets = []; patches = [];
   /* OFFSET THEN LIMIT, WITH MAX-ROWS 1000, the way PostgREST does it. The sweep pages its
@@ -45,6 +45,15 @@ function arm(opts) {
      reports as still holding a contact detail AFTER the update. */
   counts = [];
   sbCount = function (env, table, q) { counts.push(table + '?' + q); return Promise.resolve(opts.stillHeld || 0); };
+  /* The known phones and their consent boxes (migration 201, INBOX 416) are DELETED, by venue. opts.knownMissing: a
+     database before 201 (the delete is refused and the table answers no read). */
+  deletes = [];
+  sbDelete = function (env, table, q) {
+    deletes.push({ table: table, q: q });
+    if (opts.knownMissing && /^vp_(known_players|player_consents)$/.test(table)) return Promise.reject(new Error('42P01'));
+    return Promise.resolve();
+  };
+  if (opts.knownMissing) { var _g = sbGet; sbGet = function (env, table, q) { if (/^vp_(known_players|player_consents)$/.test(table)) return Promise.reject(new Error('42P01')); return _g(env, table, q); }; }
   sbPatch = function (env, table, q, body) {
     patches.push({ table: table, q: q, body: body });
     if (opts.patchFails) return Promise.reject(new Error('boom'));
@@ -116,6 +125,13 @@ check('it LOOKS before stamping: the database is asked who still holds a contact
 check('broadcast bingo captures are cleared too, by venue',
   patches.some(function (p) { return p.table === 'vp_captures' && /venue_id=eq\.v1/.test(p.q); }), patches);
 
+check('a known phone\'s row is deleted with the venue (migration 201)',
+  deletes.some(function (d) { return d.table === 'vp_known_players' && /venue_id=eq\.v1/.test(d.q); }), deletes);
+check('and its consent boxes, by venue',
+  deletes.some(function (d) { return d.table === 'vp_player_consents' && /venue_id=eq\.v1/.test(d.q); }), deletes);
+check('and it LOOKS that none is left before stamping',
+  counts.some(function (c) { return /^vp_known_players\?venue_id=eq\.v1/.test(c); }) && counts.some(function (c) { return /^vp_player_consents\?venue_id=eq\.v1/.test(c); }), counts);
+
 /* 4. The record that we did it, in its own column, and closed_at left alone. */
 var stamp = patches.filter(function (p) { return p.table === 'vp_venues'; })[0];
 check('it is stamped so it does not run again every night', stamp && !!stamp.body.player_data_purged_at, stamp);
@@ -164,6 +180,10 @@ var r3 = run({ venues: [{ id: 'v1', name: 'Busy', closed_at: '2026-01-01T00:00:0
 var pcount = patches.filter(function (p) { return p.table === 'vp_players'; }).length;
 check('120 sessions are done in batches, not one giant request', pcount === 3, pcount);
 check('and every one of them is accounted for', r3.players === 120, r3.players);
+
+/* 6b. Before migration 201 the two tables do not exist: the sweep carries on and stamps. */
+var r5 = run({ venues: [{ id: 'v1', name: 'Old', closed_at: '2026-01-01T00:00:00Z' }], sessions: [{ id: 's1' }], knownMissing: true });
+check('before migration 201 the sweep still completes (no known tables to purge)', r5 && r5.venues === 1, r5);
 
 /* 7. It stops rather than carrying on half-done. */
 var r4 = run({ venues: [{ id: 'v1', name: 'X', closed_at: '2026-01-01T00:00:00Z' }], sessions: [{ id: 's1' }], patchFails: true });
