@@ -41,7 +41,12 @@ the steps and stops at the first one that is not true:
        TV answers (informational, capped, skipped with a note when dark). It writes the record and a LOOK page; the release
        is DONE only when (1) and (2) are green and tools/real-night-check.py passes that record. Red = LIVE but NOT DONE,
        exit 1. It never rolls back, never sends anything. VP_REAL_NIGHT_MODE=hand keeps the hand-played record instead.
-    7. one plain line
+    7. record the commit live on main in tools/live-releases.json (only when 6 is green), pushed alone; the rollback
+       lane goes back to these (tools/release-lanes.py, Jobs 442, 16 Nov 2026)
+    8. one plain line
+
+    python3 tools/release.py --rollback [--to <sha> --reason "why"] [--go]   the ROLLBACK lane (plan unless --go)
+    python3 tools/release.py --urgent "<reason>" [--go]                      the URGENT game-fix lane (plan unless --go)
 
 It calls the existing tools; it adds no judgement of its own. Secrets stay in
 ~/.gflam-migrate.env, read by the tools that need them, never printed here.
@@ -119,7 +124,14 @@ def push_exactly(sha, expected_remote, what):
     print('  %sorigin/main is %s, as planned%s' % (DIM, sha[:8], OFF))
 
 
+def lanes():
+    return _load('release_lanes', 'tools/release-lanes.py')
+
+
 def main():
+    # THE TWO FAST LANES (Jobs 442, 16 Nov 2026): tools/release-lanes.py. PLAN unless --go is given.
+    if '--rollback' in sys.argv or '--urgent' in sys.argv:
+        return lanes().main([a for a in sys.argv[1:] if a != '--plan'])
     plan = '--plan' in sys.argv
     head = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
     if not head:
@@ -149,6 +161,7 @@ def main():
                             if server_gate_on() else 'not use vp-tests-1 (VP_GATE_SERVER=0): the hook runs every Chrome suite on the Mac'))
         for l in real_night_plan(head):
             print('  would ' + l)
+        print('  would then record what is live on main in tools/live-releases.json (the rollback lane\'s list), if the real night is green')
         return 0
 
     step(0, 'the tree is clean and every Worker is stamped')
@@ -219,6 +232,7 @@ def main():
     else:
         print('  nothing served changed')
 
+    live_sha = head
     step(4, 'a real browser looks at the screens (before the gate: its stamp check is red until this runs)')
     if screens:
         r = subprocess.run([PY, 'tools/verify-live.py', '--stamp'], cwd=ROOT)
@@ -231,6 +245,7 @@ def main():
         if r.returncode == 0:
             stamp = sh(['git', 'rev-parse', 'HEAD']).stdout.strip()
             push_exactly(stamp, head, 'stamp push')
+            live_sha = stamp
     else:
         print('  no screen file in this push; nothing to look at')
 
@@ -246,6 +261,14 @@ def main():
         stop('LIVE, but NOT DONE: %s is not verified until a real night is green for it. Nothing was rolled back. Read the '
              'reasons and the LOOK page above, fix, release again; or (VP_REAL_NIGHT_MODE=hand) play the night, write the '
              'record (tools/real-night-template.md), then python3 tools/real-night-check.py %s says DONE.' % (head[:8], head))
+
+    # THE RECORD THE ROLLBACK LANE READS (Jobs 442, 16 Nov 2026): only a release that passed the full gate AND a real
+    # night is written down. A real night turned off by VP_REAL_NIGHT=0 was not played, so nothing is recorded.
+    step(7, 'record what is live on main as a release the rollback lane may go back to')
+    if on and good:
+        lanes().record_live(lanes().Ops(ROOT), print, live_sha, 'release', ROOT)
+    else:
+        print('  not recorded: no real night was played on it')
 
     print('\n%sLIVE and checked: %s%s' % (GRN, head[:8], OFF))
     return 0

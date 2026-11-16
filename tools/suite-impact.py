@@ -194,6 +194,51 @@ def trial_merge(base, branch):
     return wt, conflicts, rot, tail
 
 
+def removed_readers(base, branch, pages, suites):
+    """({suite: [(page, token, kind)]}, tokens gone): every suite or prove row that still names something the branch
+    removes from one of its pages."""
+    hits, total_gone = {}, 0
+    for p in pages:
+        gone = gone_tokens(base, branch, p)
+        total_gone += len(gone)
+        for t, kind in gone.items():
+            for s, src in suites.items():
+                if s == p:
+                    continue
+                if mentions(src, t, kind):
+                    hits.setdefault(s, []).append((p, t, kind))
+    return hits, total_gone
+
+
+def page_openers(pages, suites, changed, hits):
+    """[(suite, page)]: suites that open a changed page at all (by path), even without a gone token."""
+    openers = []
+    for s, src in suites.items():
+        if s == 'tools/prove-checks.py' or s in changed:
+            continue
+        for p in pages:
+            leaf = os.path.basename(p)
+            if leaf in ('index.html', 'play.html', 'screen.html', 'host.html'):
+                leaf = '/'.join(p.split('/')[-2:])
+            if leaf in src and s not in hits:
+                openers.append((s, p)); break
+    return openers
+
+
+def reached_chrome_suites(base, branch):
+    """THE URGENT LANE'S LIST (tools/release-lanes.py U3, 16 Nov 2026): every Chrome suite this change reaches, in
+    the same three ways main() reports them: suites the branch itself changed, suites that still name something it
+    removes, and suites that open a page it changes. Paths, sorted."""
+    sys.path.insert(0, os.path.join(ROOT, 'tools'))
+    import gatelib
+    pages = changed_pages(base, branch)
+    suites = suite_files(base, branch)
+    changed = set(diff_names(base, branch))
+    hits, _ = removed_readers(base, branch, pages, suites)
+    reach = set(hits) | set(s for s, _ in page_openers(pages, suites, changed, hits)) | (changed & set(suites))
+    return sorted(s for s in reach if s != 'tools/prove-checks.py' and gatelib.uses_chrome(os.path.join(ROOT, s)))
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if len(args) != 2:
@@ -207,17 +252,7 @@ def main():
         print('  ' + p)
     suites = suite_files(base, branch)
     changed = set(diff_names(base, branch))
-    hits = {}     # suite -> [(page, token, kind)]
-    total_gone = 0
-    for p in pages:
-        gone = gone_tokens(base, branch, p)
-        total_gone += len(gone)
-        for t, kind in gone.items():
-            for s, src in suites.items():
-                if s == p:
-                    continue
-                if mentions(src, t, kind):
-                    hits.setdefault(s, []).append((p, t, kind))
+    hits, total_gone = removed_readers(base, branch, pages, suites)
     print('\n## Suites and prove rows that still name something the branch removes (%d tokens gone, %d readers)' % (total_gone, len(hits)))
     if not hits:
         print('  none found by token. Layout-only checks are not visible here: run the suites that open these pages.')
@@ -228,17 +263,7 @@ def main():
             print('     %-9s %-40s (was in %s)' % (kind, t[:40], p))
         if len(set(hits[s])) > 12:
             print('     ... %d more' % (len(set(hits[s])) - 12))
-    # suites that open the changed pages at all (by path), even without a gone token
-    openers = []
-    for s, src in suites.items():
-        if s == 'tools/prove-checks.py' or s in changed:
-            continue
-        for p in pages:
-            leaf = os.path.basename(p)
-            if leaf in ('index.html', 'play.html', 'screen.html', 'host.html'):
-                leaf = '/'.join(p.split('/')[-2:])
-            if leaf in src and s not in hits:
-                openers.append((s, p)); break
+    openers = page_openers(pages, suites, changed, hits)
     sys.path.insert(0, os.path.join(ROOT, 'tools'))
     import gatelib
     chrome = [(s, p) for s, p in openers if gatelib.uses_chrome(os.path.join(ROOT, s))]

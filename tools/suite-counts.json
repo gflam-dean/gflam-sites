@@ -543,6 +543,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/release-lanes.test.py": {
+  "checks": 61,
+  "counted_by": "lines"
+ },
  "tools/release-push.test.py": {
   "checks": 20,
   "counted_by": "lines"
