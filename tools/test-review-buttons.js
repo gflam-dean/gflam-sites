@@ -115,6 +115,8 @@ var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: venueplay 
 var REVIEW = { folder: FOLDER, company: 'Test Charlie <Hotel>', class: 'interested', their_words: 'Yes please, send it through. <b>Mick</b>',
   reply: REPLY, mailbox: 'harry@venueplaylive.com.au', reply_to: 'manager@testcharlie.example' };
 function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NO_148 = false; NO_149 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
+/* The Mac's 5-minute run: a choice reaches it only after its 30-second Undo (16 Nov 2026), so the run comes 41 seconds on. */
+function macRun() { NOW += 41000; return call('/autopilot/decisions', undefined, AP, 'GET'); }
 function pathOf(link) { return link.replace(/^https:\/\/[^/]+/, ''); }
 function swap(link, k, v) { return link.replace(new RegExp('([?&]' + k + '=)[^&]*'), '$1' + v); }
 function form(o) { return Object.keys(o).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(o[k]).replace(/%20/g, '+'); }).join('&'); }
@@ -198,15 +200,15 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   FAILDB = true;
   var b7 = await call(pathOf(L.yes), undefined, {}, 'POST', '');
   FAILDB = false;
-  check('the database down: "did not load", nothing recorded, never "done"', b7.status === 503 && !ROWS[0].decision && !/Got it/.test(b7.html), b7.status);
+  check('the database down: "did not load", nothing recorded, never "done"', b7.status === 503 && !ROWS[0].decision && !/Done:/.test(b7.html), b7.status);
 
   section('5. A TAP RECORDS ONCE');
   var p1 = await call(pathOf(L.yes), undefined, { 'User-Agent': 'iPhone Safari' }, 'POST', '');
-  check('Yes: "Got it", recorded yes with the time and the phone', p1.status === 200 && /Got it: Yes, send the standard reply/.test(p1.html) && ROWS[0].decision === 'yes' && !!ROWS[0].decided_at && ROWS[0].decided_agent === 'iPhone Safari', p1.html.slice(-500));
+  check('Yes: "Done", recorded yes with the time and the phone', p1.status === 200 && /Done: Yes, send the standard reply/.test(p1.html) && ROWS[0].decision === 'yes' && !!ROWS[0].decided_at && ROWS[0].decided_agent === 'iPhone Safari', p1.html.slice(-500));
   check('the done page says the Mac picks it up within 5 minutes', /picks it up within 5 minutes/.test(p1.html));
   var at = ROWS[0].decided_at; NOW += 60000;
   var p2 = await call(pathOf(L.yes), undefined, {}, 'POST', '');
-  check('a second tap on Yes: same "Got it" page, nothing changed', p2.status === 200 && ROWS[0].decided_at === at && ROWS[0].decision === 'yes');
+  check('a second tap on Yes: same "Done" page, nothing changed', p2.status === 200 && ROWS[0].decided_at === at && ROWS[0].decision === 'yes');
   var p3 = await call(pathOf(L.no), undefined, {}, 'POST', form({ reason: 'changed my mind' }));
   check('No after Yes: "You already chose: Yes", still yes, no reason written', /You already chose: Yes, send the standard reply/.test(p3.html) && ROWS[0].decision === 'yes' && !ROWS[0].reason, p3.html.slice(-500));
   var p4 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY + 'extra' }));
@@ -215,7 +217,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('opening a link after deciding shows the decision, no buttons', /You already chose/.test(g2.html) && !/<form/.test(g2.html));
 
   section('6. THE MAC: sees it until done, done once');
-  var d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  var d = await macRun();
   check('the Mac sees the one decision: folder, round, yes', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].folder === FOLDER && d.body.decisions[0].round === 1 && d.body.decisions[0].decision === 'yes', d.body);
   var dn = await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'bogus' }, AP);
   check('a made-up result is refused', dn.status === 400 && !ROWS[0].applied_at, dn);
@@ -224,7 +226,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var first = ROWS[0].applied_at; NOW += 60000;
   dn = await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'queued' }, AP);
   check('marking it again changes nothing (already: true)', dn.status === 200 && dn.body.already === true && ROWS[0].applied_at === first && ROWS[0].applied_result === 'held', dn.body);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  d = await macRun();
   check('and the Mac no longer sees it', d.status === 200 && d.body.decisions.length === 0, d.body);
   var g3 = await call(pathOf(L.yes), undefined, {}, 'GET');
   check('the link now shows what the Mac did with it', /Your Mac has dealt with it: <b>held<\/b>\. someone already replied/.test(g3.html), g3.html.slice(-600));
@@ -247,8 +249,8 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var edited = REPLY.replace('Thanks for getting back to me.', 'Thanks Rowan. Yes, trivia teams can be up to six people.') + '\r\n';
   var e3 = await call(pathOf(L2.edit), undefined, {}, 'POST', form({ reply: edited }));
   check('Save and send: recorded edit, the edited text stored (line endings tidied, one newline at the end)', e3.status === 200 && ROWS[0].decision === 'edit' &&
-    ROWS[0].edited_reply === edited.replace(/\r\n/g, '\n').trim() + '\n' && /Got it: Edited and send/.test(e3.html), ROWS[0].edited_reply);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+    ROWS[0].edited_reply === edited.replace(/\r\n/g, '\n').trim() + '\n' && /Done: Edited and send/.test(e3.html), ROWS[0].edited_reply);
+  d = await macRun();
   check('the Mac gets the edited text with the decision', d.body.decisions.length === 1 && d.body.decisions[0].decision === 'edit' && /up to six people/.test(d.body.decisions[0].edited_reply), d.body);
 
   section('8b. TWO PHONES AT ONCE: the page read the row before the other tap landed');
@@ -294,7 +296,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var e6 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: ' 4217 ', entity: 'club', login_email: 'Sarah+Test10@GFLAM.com.au' }));
   check('Save and send: the edit is recorded with the postcode, Club (non_profit) and the email (lower case)', e6.status === 200 && ROWS[0].decision === 'edit' &&
     ROWS[0].edited_postcode === '4217' && ROWS[0].edited_entity_type === 'non_profit' && ROWS[0].edited_login_email === 'sarah+test10@gflam.com.au', ROWS[0]);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  d = await macRun();
   check('the Mac gets the boxes with the decision', d.status === 200 && d.body.decisions[0].edited_postcode === '4217' && d.body.decisions[0].edited_entity_type === 'non_profit' &&
     d.body.decisions[0].edited_login_email === 'sarah+test10@gflam.com.au', d.body);
   await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: SARAH }, AP);
@@ -314,7 +316,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('the Edit page has the reply and no boxes it could not save', ge.status === 200 && /<textarea name="reply"/.test(ge.html) && !/name="postcode"/.test(ge.html), ge.status);
   var e7 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: '4217' }));
   check('an edit is still recorded', e7.status === 200 && ROWS[0].decision === 'edit' && !('edited_postcode' in ROWS[0]), ROWS[0]);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  d = await macRun();
   check('and the Mac still sees it, as before', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'edit' && !('edited_postcode' in d.body.decisions[0]), d.body);
   await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: 'x' }, AP);
   re = await call('/autopilot/review/register', Object.assign({ reopen: true }, V2REV), AP);
@@ -325,7 +327,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   world();
   r = await call('/autopilot/review/register', REVIEW, AP); L = r.body.links;
   var n1 = await call(pathOf(L.no), undefined, {}, 'POST', form({ reason: 'They are a restaurant, not a pub' }));
-  check('No: recorded no with the reason', n1.status === 200 && ROWS[0].decision === 'no' && ROWS[0].reason === 'They are a restaurant, not a pub' && /Got it: No, do not send/.test(n1.html), ROWS[0]);
+  check('No: recorded no with the reason', n1.status === 200 && ROWS[0].decision === 'no' && ROWS[0].reason === 'They are a restaurant, not a pub' && /Done: No, do not send/.test(n1.html), ROWS[0]);
 
   section('12. THE PAGE: ONLY THE RECOMMENDED BUTTON AT THE TOP, ALL THREE AT THE BOTTOM (Dean, 31 Oct 2026)');
   /* "what you recommend up the top just the button so if you recommend the normal email that just that one if you
@@ -404,7 +406,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
     if (ci === 0) {
       var fy = /<form method="POST" action="([^"]*)"/.exec(pages.yes);   // no form: the check below fails, it does not throw
       var tp = fy ? await call(unesc(fy[1]), undefined, {}, 'POST', '') : { status: 0, html: '' };
-      check('recommend Yes: the top Yes confirm posts to the same signed link and records yes, once', tp.status === 200 && ROWS[0].decision === 'yes' && /Got it: Yes, send the standard reply/.test(tp.html), ROWS[0]);
+      check('recommend Yes: the top Yes confirm posts to the same signed link and records yes, once', tp.status === 200 && ROWS[0].decision === 'yes' && /Done: Yes, send the standard reply/.test(tp.html), ROWS[0]);
     }
     if (ci === 1) {
       var fe = /<form method="POST" action="([^"]*)"/.exec(pages.edit);
@@ -471,7 +473,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   world();
   r = await call('/autopilot/review/register', CA, AP); LC = r.body.links || {};
   var gs = await call(pathOf(LC.yes), undefined, {}, 'POST', '');
-  check('"Approved" records Yes, and the page says it goes at its time', gs.status === 200 && rowC().decision === 'yes' && /Got it: Approved, it goes at its time/.test(gs.html), rowC());
+  check('"Approved" records Yes, and the page says it goes at its time', gs.status === 200 && rowC().decision === 'yes' && /Done: Approved, it goes at its time/.test(gs.html), rowC());
   world();
   r = await call('/autopilot/review/register', REVIEW, AP); L = r.body.links || {};
   WRITES = [];
@@ -514,10 +516,10 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var gdr = await call(pathOf(L.draft), undefined, {}, 'GET');
   check('the Draft page says the usual review comes with Yes / Edit / No and nothing goes without a tap', gdr.status === 200 && /usual review email with Yes \/ Edit \/ No/.test(gdr.html) && /Nothing goes to them until you tap one/.test(gdr.html));
   var ps1 = await call(pathOf(L.stop), undefined, {}, 'POST', '');
-  check('POST records decision stop, once, and says Got it: Stop them (not a venue)', ps1.status === 200 && nyRow().decision === 'stop' && /Got it: Stop them \(not a venue\)/.test(ps1.html), nyRow());
+  check('POST records decision stop, once, and says Done: Stop them (not a venue)', ps1.status === 200 && nyRow().decision === 'stop' && /Done: Stop them \(not a venue\)/.test(ps1.html), nyRow());
   var pi = await call(pathOf(L.ignore), undefined, {}, 'POST', '');
   check('an Ignore after it changes nothing (first choice wins)', nyRow().decision === 'stop' && /You already chose: Stop them/.test(pi.html), nyRow().decision);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  d = await macRun();
   check('the Mac sees the stop decision, and the Worker says it has the needs-you buttons', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'stop' &&
     d.body.decisions[0].folder === NY && (d.body.features || []).indexOf('needs_you') !== -1, d.body);
   dn = await call('/autopilot/decisions/done', { folder: NY, round: 1, result: 'rejected', note: 'stopped, not a venue' }, AP);
@@ -525,7 +527,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   world();
   r = await call('/autopilot/review/register', NYR, AP); L = r.body.links || {};
   var pd = await call(pathOf(L.draft), undefined, {}, 'POST', '');
-  check('Draft records decision draft', pd.status === 200 && nyRow().decision === 'draft' && /Got it: Draft me a reply/.test(pd.html), nyRow());
+  check('Draft records decision draft', pd.status === 200 && nyRow().decision === 'draft' && /Done: Draft me a reply/.test(pd.html), nyRow());
   world(); NO_149 = true;
   r = await call('/autopilot/review/register', NYR, AP); L = r.body.links || {};
   var p149 = await call(pathOf(L.ignore), undefined, {}, 'POST', '');
@@ -560,10 +562,10 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var tyc = controls(part(gy.html, 'top'));
   check('and its top is still only the recommended one (Dean, 31 Oct 2026)', tyc.length === 1 && tyc[0].a === 'yes', tyc);
   var pp = await call(pathOf(L.photos), undefined, {}, 'POST', '');
-  check('POST records decision photos, once, and says Got it', pp.status === 200 && ROWS[0].decision === 'photos' && /Got it: Get photos from their socials/.test(pp.html), ROWS[0]);
+  check('POST records decision photos, once, and says Got it', pp.status === 200 && ROWS[0].decision === 'photos' && /Done: Get photos from their socials/.test(pp.html), ROWS[0]);
   var py = await call(pathOf(L.yes), undefined, {}, 'POST', '');
   check('a Yes after it changes nothing (first choice wins)', ROWS[0].decision === 'photos' && /You already chose: Get photos from their socials/.test(py.html), ROWS[0].decision);
-  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  d = await macRun();
   check('the Mac sees the photos decision', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'photos', d.body);
   dn = await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: 'held for photos from their socials' }, AP);
   check('and marks it done (held), once', dn.status === 200 && dn.body.marked === true && ROWS[0].applied_result === 'held', dn.body);
@@ -607,6 +609,120 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var sy = await call(pathOf(LS.yes), undefined, {}, 'GET');
   check('the text is its own review with its own links, worded as a text: the day after the email, 9am to 8pm, never Sunday, queued until the SMS provider is on',
     r.status === 200 && !!LS.yes && LS.yes !== L.yes && /The follow-up by text to 0432 071 622/.test(sy.html) && /never on a Sunday/.test(sy.html) && /stays queued and nothing is sent/.test(sy.html), sy.html.slice(0, 400));
+
+  /* ONE TAP (Dean, 16 Nov 2026: "I just want it to be green like that button doesn't work via email you have to push and
+     say yes and then you have to push it again"). The page records by itself with a script POST; a GET never does. */
+  section('17. ONE TAP: the page records by itself, a GET never does, scanners are refused, Undo for 30 seconds');
+  world();
+  var IPH = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1' };
+  function oneTap(extra) { return form(Object.assign({ one: '1', v: '1', shown: String(NOW - 1500) }, extra || {})); }
+  r = await call('/autopilot/review/register', REVIEW, AP); L = r.body.links;
+  ROWS[0].created_at = new Date(NOW - 5 * 60000).toISOString();          // the email went 5 minutes ago
+  WRITES = [];
+  g = await call(pathOf(L.yes), undefined, IPH, 'GET');
+  check('the Yes page carries the one-tap script: it posts one=1 back to the same signed link, only when on screen and not driven',
+    /data-vpa="one-tap"/.test(g.html) && /body:"one=1&v=1&shown=\d+"/.test(g.html) && /visibilityState!=="visible"\|\|navigator\.webdriver/.test(g.html) && /Recording your choice/.test(g.html), g.html.slice(0, 900));
+  check('...and if the script cannot record, the page still has the Yes button, the old way', />Yes, send the standard reply<\/button>/.test(g.html) && /Tap the button below to confirm/.test(g.html));
+  ge = await call(pathOf(L.edit), undefined, IPH, 'GET');
+  check('the Edit page is never one tap (it needs his words)', !/data-vpa="one-tap"/.test(ge.html) && /<textarea name="reply"/.test(ge.html));
+  gn = await call(pathOf(L.no), undefined, IPH, 'GET');
+  check('the No page is one tap too', /data-vpa="one-tap"/.test(gn.html));
+  check('a GET (the yes, edit and no pages, a scanner) recorded NOTHING', WRITES.length === 0 && !ROWS[0].decision, WRITES);
+  var SCAN = [
+    ['Mimecast', { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Mimecast-URL-Protect/1.0' }, oneTap()],
+    ['Microsoft Safe Links / Office preview', { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0) Microsoft Office/16.0 (Microsoft Outlook 16.0.17126; Pro)' }, oneTap()],
+    ['a headless browser', { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0.0.0 Safari/537.36' }, oneTap()],
+    ['a script library', { 'User-Agent': 'python-requests/2.31.0 (compatible; scan)' }, oneTap()],
+    ['no agent at all', {}, oneTap()],
+    ['no v=1 (the page was not on screen)', IPH, form({ one: '1', shown: String(NOW - 1500) })],
+    ['posted 0.1 seconds after the page was made (too fast for a person)', IPH, oneTap({ shown: String(NOW - 100) })],
+    ['posted from a page made 2 hours ago', IPH, oneTap({ shown: String(NOW - 7200000) })]];
+  for (var si = 0; si < SCAN.length; si++) {
+    var sc = await call(pathOf(L.yes), undefined, SCAN[si][1], 'POST', SCAN[si][2]);
+    check('scanner rule: ' + SCAN[si][0] + ': 409, nothing recorded, the page asks for the tap', sc.status === 409 && !ROWS[0].decision, { s: sc.status, d: ROWS[0].decision });
+  }
+  ROWS[0].created_at = new Date(NOW - 10000).toISOString();
+  var fr = await call(pathOf(L.yes), undefined, IPH, 'POST', oneTap());
+  check('scanner rule: within 30 seconds of the email being made (scanners open links as they land): 409, nothing recorded', fr.status === 409 && !ROWS[0].decision, fr.status);
+  ROWS[0].created_at = new Date(NOW - 5 * 60000).toISOString(); ROWS[0].updated_at = new Date(NOW - 5000).toISOString();
+  fr = await call(pathOf(L.yes), undefined, IPH, 'POST', oneTap());
+  check('...and within 30 seconds of the Mac refreshing it (a re-sent email): 409, nothing recorded', fr.status === 409 && !ROWS[0].decision, fr.status);
+  ROWS[0].updated_at = null;
+  var fe = await call(pathOf(L.edit), undefined, IPH, 'POST', oneTap());
+  check('one=1 on an Edit link records nothing (409)', fe.status === 409 && !ROWS[0].decision, fe.status);
+  var o1 = await call(pathOf(L.yes), undefined, IPH, 'POST', oneTap());
+  check('the page\'s own POST records once: 200, decision yes, a big green "Done: Yes, send the standard reply" and Undo (30s)',
+    o1.status === 200 && ROWS[0].decision === 'yes' && /class="donebox" data-vpa="done"/.test(o1.html) && /Done: Yes, send the standard reply/.test(o1.html) && /name="undo" value="1"/.test(o1.html) && />30<\/span>s\)/.test(o1.html), o1.html.slice(-900));
+  check('the green is the one with white text above 4.5:1 (#0E7A4F)', /\.donebox\{background:#0E7A4F;color:#fff/.test(o1.html));
+  var at1 = ROWS[0].decided_at; NOW += 5000;
+  var o2 = await call(pathOf(L.yes), undefined, IPH, 'POST', oneTap());
+  check('a second tap (the email opened again) says "Already recorded", nothing changed', o2.status === 200 && /Already recorded: Yes, send the standard reply/.test(o2.html) && ROWS[0].decided_at === at1, o2.html.slice(-700));
+  var o3 = await call(pathOf(L.no), undefined, IPH, 'POST', oneTap());
+  check('another button\'s page after it: "You already chose: Yes", still yes', /You already chose: Yes/.test(o3.html) && ROWS[0].decision === 'yes', ROWS[0].decision);
+  var dq = await call('/autopilot/decisions', undefined, AP, 'GET');
+  check('the Mac does not get it while Undo is open (held back 40 seconds)', dq.status === 200 && dq.body.decisions.length === 0, dq.body);
+  var gu = await call(pathOf(L.yes) + '&undo=1', undefined, IPH, 'GET');
+  check('a GET can never undo (a scanner re-opening the link)', ROWS[0].decision === 'yes' && !/Undone/.test(gu.html));
+  var un = await call(pathOf(L.yes), undefined, IPH, 'POST', form({ undo: '1' }));
+  check('Undo within 30 seconds: "Undone", nothing recorded, the buttons still work', un.status === 200 && /Undone\. Nothing is recorded/.test(un.html) && ROWS[0].decision === null && ROWS[0].decided_at === null, ROWS[0]);
+  dq = await macRun();
+  check('...and the Mac never sees the undone choice', dq.body.decisions.length === 0, dq.body);
+  var o4 = await call(pathOf(L.no), undefined, IPH, 'POST', oneTap({ shown: String(NOW - 1500) }));
+  check('after Undo the email\'s No records: "Done: No, do not send", with an optional Why not box', o4.status === 200 && ROWS[0].decision === 'no' && /Done: No, do not send/.test(o4.html) && /name="why" value="1"/.test(o4.html), o4.html.slice(-900));
+  var wy = await call(pathOf(L.no), undefined, IPH, 'POST', form({ why: '1', reason: 'A restaurant' }));
+  check('the reason is kept on the No', /Reason kept/.test(wy.html) && ROWS[0].reason === 'A restaurant' && ROWS[0].decision === 'no', ROWS[0]);
+  NOW += 36000;
+  var late = await call(pathOf(L.no), undefined, IPH, 'POST', form({ undo: '1' }));
+  check('Undo after 30 seconds: "Too late to undo", still no', /Too late to undo/.test(late.html) && ROWS[0].decision === 'no', ROWS[0].decision);
+  var gl = await call(pathOf(L.no), undefined, IPH, 'GET');
+  check('opening it again later: "Already recorded", no Undo button any more', /Already recorded: No, do not send/.test(gl.html) && !/name="undo"/.test(gl.html), gl.html.slice(-600));
+  dq = await macRun();
+  check('the Mac gets it once Undo has passed, with the reason', dq.body.decisions.length === 1 && dq.body.decisions[0].decision === 'no' && dq.body.decisions[0].reason === 'A restaurant', dq.body);
+  await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'rejected' }, AP);
+  var un2 = await call(pathOf(L.no), undefined, IPH, 'POST', form({ undo: '1' }));
+  check('Undo once the Mac has it: refused, still no', /Too late to undo/.test(un2.html) && ROWS[0].decision === 'no', ROWS[0].decision);
+  NOW += 7 * 86400000;
+  var ex = await call(pathOf(L.yes), undefined, IPH, 'POST', oneTap({ shown: String(NOW - 1500) }));
+  check('an expired link: 410 on the page\'s POST too, nothing changed', ex.status === 410 && ROWS[0].decision === 'no', ex.status);
+  NOW = Date.parse('2026-10-29T08:00:00Z');
+  var fg = await call(pathOf(swap(L.yes, 't', '0123456789abcdef0123456789abcdef')), undefined, IPH, 'POST', oneTap());
+  check('a forged link: 403 on the page\'s POST, nothing changed', fg.status === 403 && ROWS[0].decision === 'no', fg.status);
+  var fx = await call(pathOf(swap(L.yes, 'x', '1999999999')), undefined, IPH, 'POST', oneTap());
+  check('a link with a later expiry written in: 403', fx.status === 403, fx.status);
+
+  section('18. A SEED READING (class switch): Junk, Promotions and "the rest" are each one tap');
+  world();
+  r = await call('/autopilot/review/register', { folder: 'instantly-seed-20261116-gmail-hello-venueplaylive', company: 'Subject A', class: 'switch', reply: 'Seed test 16 Nov, gmail inbox. A tap only records the reading; nothing is sent.' }, AP);
+  var SL = r.body.links; ROWS[0].created_at = new Date(NOW - 3600000).toISOString();
+  var sg = await call(pathOf(SL.edit), undefined, IPH, 'GET');
+  check('the Promotions page is one tap and its fallback button says Promotions', /data-vpa="one-tap"/.test(sg.html) && />Promotions<\/button>/.test(sg.html), sg.html.slice(-800));
+  var sp = await call(pathOf(SL.edit), undefined, IPH, 'POST', oneTap());
+  check('Promotions records (edit, with the word the table needs) and says "Done: Promotions"', sp.status === 200 && ROWS[0].decision === 'edit' && ROWS[0].edited_reply === 'Promotions\n' && /Done: Promotions/.test(sp.html), { s: sp.status, row: ROWS[0], h: sp.html.slice(-500) });
+
+  section('19. THE DAILY CHASE: GET /autopilot/waiting lists every button not answered, with fresh links, read only');
+  world();
+  await call('/autopilot/review/register', REVIEW, AP);
+  await call('/autopilot/review/register', Object.assign({}, REVIEW, { folder: FOLDER + '-done', company: 'Answered Arms' }), AP);
+  await call('/autopilot/review/register', Object.assign({}, REVIEW, { folder: FOLDER + '-auto', company: 'Goes By Itself', checked_auto: true }), AP);
+  ROWS.forEach(function (x) { x.created_at = new Date(NOW - 3 * 86400000).toISOString(); });
+  ROWS[1].decision = 'yes'; ROWS[1].decided_at = new Date(NOW - 86400000).toISOString();
+  var wn = await call('/autopilot/waiting', undefined, {}, 'GET');
+  check('waiting with no key: 401, nothing read out', wn.status === 401 && !wn.body.waiting, wn);
+  WRITES = [];
+  NOW += 8 * 86400000;                                          // the first email's links ran out a day ago
+  var w = await call('/autopilot/waiting', undefined, AP, 'GET');
+  check('only the unanswered one (not the answered one, not one that goes by itself), with its words and when it was made',
+    w.status === 200 && w.body.waiting.length === 1 && w.body.waiting[0].company === 'Test Charlie <Hotel>' && !!w.body.waiting[0].created_at && /Yes please/.test(w.body.waiting[0].their_words), w.body);
+  check('reading the waiting list wrote nothing', WRITES.length === 0, WRITES);
+  var WL = w.body.waiting[0].links;
+  ROWS[0].created_at = new Date(NOW - 8 * 86400000).toISOString();
+  var wy2 = await call(pathOf(WL.yes), undefined, IPH, 'POST', oneTap({ shown: String(NOW - 1500) }));
+  check('its fresh Yes link records with one tap, 8 days after the first email', wy2.status === 200 && ROWS[0].decision === 'yes', { s: wy2.status, h: wy2.html.slice(0, 200) });
+  w = await call('/autopilot/waiting', undefined, AP, 'GET');
+  check('...and the next day it is no longer waiting', w.body.waiting.length === 0, w.body);
+  var fz = await macRun();
+  check('GET /autopilot/decisions says features one_tap and waiting, so the Mac says "one tap" only to a Worker that records on the tap', ['one_tap', 'waiting'].every(function (x) { return (fz.body.features || []).indexOf(x) !== -1; }), fz.body.features);
+  check('no one-tap page has an em or en dash', [g.html, gn.html, o1.html, o4.html, un.html, sg.html, sp.html].every(function (h) { return !/[\u2014\u2013]/.test(h); }));
 
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');

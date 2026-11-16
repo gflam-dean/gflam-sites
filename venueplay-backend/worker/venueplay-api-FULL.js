@@ -420,6 +420,7 @@ export default {
       if (request.method === 'POST' && path === '/autopilot/review/register' && typeof vpaAutopilotReviewRegister === 'function') return await vpaAutopilotReviewRegister(request, env, json);
       if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/review' && typeof vpaAutopilotReviewPage === 'function') return await vpaAutopilotReviewPage(request, env);
       if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
+      if (request.method === 'GET'  && path === '/autopilot/waiting'        && typeof vpaAutopilotWaiting === 'function')      return await vpaAutopilotWaiting(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/holds'          && typeof vpaAutopilotHolds === 'function')        return await vpaAutopilotHolds(request, env, json);
       // The follow-up to a prospect who never signed in (3 Nov 2026): who is quiet, and send on Dean's yes.
@@ -2854,7 +2855,10 @@ async function vpaAutopilotDecisions(request, env, json) {
   if (no) return no;
   let rows;
   const q = function (extra) {
+    /* ONE TAP HAS AN UNDO (16 Nov 2026): a choice is handed to the Mac only once its 30-second Undo has passed (plus
+       10 seconds), so an Undo can never race the Mac's 5-minute run. */
     return vpaReadPage(env, 'vp_autopilot_reviews', VPA_REVIEW_DECISIONS_IN + '&applied_at=is.null'
+      + '&decided_at=lt.' + encodeURIComponent(new Date(Date.now() - (VPA_UNDO_SECS + 10) * 1000).toISOString())
       + '&select=folder,round,company,decision,decided_at,reason,edited_reply' + extra + '&order=decided_at.asc&limit=50');
   };
   try {
@@ -2863,7 +2867,7 @@ async function vpaAutopilotDecisions(request, env, json) {
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
   /* signin_in_reply: /autopilot/prospect hands back the reply's sign-in link (return_signin_link); thread_link:
      POST /autopilot/prospect/signin-link; delivery: the prospects lists carry delivery (5 Nov 2026). */
-  return json({ ok: true, decisions: rows, features: ['needs_you', 'signin_in_reply', 'thread_link', 'delivery'] });
+  return json({ ok: true, decisions: rows, features: ['needs_you', 'signin_in_reply', 'thread_link', 'delivery', 'one_tap', 'waiting'] });   // one_tap, waiting: 16 Nov 2026
 }
 
 /* GET /autopilot/holds: the checked replies Dean has opened Edit on and not decided yet (2 Nov 2026). The Mac
@@ -2882,6 +2886,34 @@ async function vpaAutopilotHolds(request, env, json) {
     return json({ error: 'Could not read the holds: ' + String(e.message || e) }, 503);
   }
   return json({ ok: true, holds: rows.map(function (r) { return { folder: r.folder, round: r.round, hold_at: (r.details || {}).hold_at || null }; }) });
+}
+
+/* GET /autopilot/waiting: every button Dean has not answered (Dean, 16 Nov 2026: "if I don't follow up on a lead by
+   pushing yes no button I want that reminder daily"). READ ONLY. Each undecided row comes back with FRESH signed links
+   (7 days from now), so the daily chase email's buttons work even when the first email's have run out: the page checks
+   the link's own expiry and signature, never the row's expires_at, and a decision is still once per round. Checked
+   replies that go by themselves (details.checked_auto) are left out: tapping nothing is their normal path. */
+async function vpaAutopilotWaiting(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  let rows;
+  const q = function (cols) {
+    return vpaReadPage(env, 'vp_autopilot_reviews', 'decision=is.null&select=folder,round,company,class,their_words,created_at,updated_at' + cols + '&order=created_at.asc&limit=500');
+  };
+  try {
+    try { rows = await q(',details'); }
+    catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: no details column
+  } catch (e) { return json({ error: 'Could not read the waiting reviews: ' + String(e.message || e) }, 503); }
+  const exp = Math.floor(Date.now() / 1000) + VPA_REVIEW_DAYS * 86400;
+  const out = [];
+  for (const r of rows) {
+    if (r.details && r.details.checked_auto) continue;
+    out.push({ folder: r.folder, round: r.round, company: r.company, class: r.class,
+      their_words: vpaReviewText(r.their_words, 600), created_at: r.created_at, updated_at: r.updated_at || null,
+      needs_social_photos: vpaReviewWantsPhotos(r), recommend: vpaReviewRecommended(r),
+      links: await vpaReviewLinks(env, r.folder, exp, parseInt(r.round, 10) || 1, r.class) });
+  }
+  return json({ ok: true, waiting: out });
 }
 
 /* POST /autopilot/decisions/done { folder, round, result, note } */
@@ -3131,6 +3163,7 @@ function vpaReviewPage(title, inner, status) {
     + '.tag{display:block;font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 5px}'
     + '.top{margin:14px 0 4px}.top .btn{margin-top:0}.top p{margin:8px 0 0;font-size:14px}.choices{margin-top:4px}'
     + '.done{font-size:46px;line-height:1;margin:6px 0 10px}'
+    + '.donebox{background:#0E7A4F;color:#fff;border-radius:16px;padding:18px 18px 14px;margin:0 0 14px}.donebox h1{color:#fff;margin:0}.donebox .done{margin:0 0 8px}'
     + '.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
     + '</style></head><body><main>'
     + '<div class="brand"><svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true">'
@@ -3247,6 +3280,47 @@ function vpaReviewBottom(rec, action, links, photos) {
     + vpaReviewOrder(rec, photos).map(function (a, i) { return vpaReviewChoice(a, action, links, i === 0, i === 0 ? 'Recommended' : ''); }).join('')
     + '</div>';
 }
+/* ONE TAP (Dean, 16 Nov 2026: "hitting two buttons really ... that button doesn't work via email you have to push and say
+   yes and then you have to push it again"). The email's button opens this page and the PAGE records the choice by itself:
+   a script posts one=1 back to the same signed link as it opens, then shows a big green "Done: ..." with Undo for 30
+   seconds. A GET still NEVER records (Outlook Safe Links, Mimecast and the like fetch every link in an email; they read
+   the page, they do not run it). The scanner rules are the second guard, on the POST:
+     - an agent that names itself as a robot, a scanner, a previewer or a script library
+     - the script runs only in a page that is on screen (visibilityState visible) and not driven (navigator.webdriver),
+       and sends v=1 and the time the page was made; the POST must come 0.7 seconds to 30 minutes after that
+     - never in the first 30 seconds after the email was made (registered or refreshed): scanners open links as they land
+   Any refusal records NOTHING and the page says "Tap the button below to confirm", the old way, so no choice is ever lost.
+   Edit is never one tap: it needs his words. The signature, the 7-day expiry and once-per-round are exactly as before. */
+const VPA_UNDO_SECS = 30;
+const VPA_ONE_TAP_FRESH_SECS = 30;
+const VPA_SCANNER_UA = /bot\b|bot\/|crawl|spider|slurp|headless|phantom|selenium|puppeteer|playwright|webdriver|lighthouse|python|curl|wget|go-http|java\/|okhttp|axios|node-fetch|undici|libwww|httpclient|scanner|safelinks|safe links|mimecast|proofpoint|urldefense|barracuda|forcepoint|fireeye|trendmicro|sophos|symantec|zscaler|ironport|preview|facebookexternalhit|whatsapp|telegram|discord|skypeuripreview|microsoft office|ms-office|msoffice|google-?inspection|googleother|bingpreview/i;
+function vpaOneTapActions(row) {
+  if (row.class === 'switch') return ['yes', 'no', 'edit'];          // a setting, or a seed reading (Edit = Promotions): no words to write
+  if (row.class === VPA_NEEDS_YOU_CLASS) return VPA_NEEDS_YOU_ACTIONS;
+  if (row.details && row.details.checked_auto) return ['yes'];       // Approved; its Edit holds and waits for his words
+  return ['yes', 'no', 'photos'];
+}
+function vpaOneTapRefusal(request, row, f, nowMs) {
+  const ua = String(request.headers.get('User-Agent') || '');
+  if (ua.length < 20 || VPA_SCANNER_UA.test(ua)) return 'agent';
+  if (f.v !== '1') return 'hidden';
+  const shown = parseInt(f.shown, 10);
+  if (!(shown > 0) || nowMs - shown < 700 || nowMs - shown > 30 * 60000) return 'timing';
+  const made = Math.max(Date.parse(row.created_at || '') || 0, Date.parse(row.updated_at || '') || 0);
+  if (made && nowMs - made < VPA_ONE_TAP_FRESH_SECS * 1000) return 'fresh';
+  return '';
+}
+function vpaOneTapBlock() {
+  return '<div class="rec" id="vp1" data-vpa="one-tap" role="status"><b>Recording your choice...</b></div>'
+    + '<script>(function(){var b=document.getElementById("vp1");'
+    + 'function ask(){b.className="warn";b.innerHTML="<b>Tap the button below to confirm.</b>";}'
+    + 'if(document.visibilityState!=="visible"||navigator.webdriver){ask();return;}'
+    + 'setTimeout(function(){fetch(location.href,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},'
+    + 'body:"one=1&v=1&shown=' + Date.now() + '",credentials:"omit",cache:"no-store"})'
+    + '.then(function(r){if(r.status!==200)throw 0;return r.text();})'
+    + '.then(function(h){document.open();document.write(h);document.close();}).catch(ask);},800);})();</script>';
+}
+
 /* Every submit on the page goes quiet on the first tap (there are two when the page is the recommended one). */
 const VPA_REVIEW_ONSUBMIT = "var s=this.querySelectorAll('button[type=submit]');for(var i=0;i<s.length;i++){s[i].disabled=true;s[i].textContent='Saving...'}";
 
@@ -3277,14 +3351,14 @@ function vpaReviewNoNeedsYou(e) {
 }
 /* The page behind a needs-you button: who, why it came to Dean, their words, this choice's confirm and what it
    does, then all three. NOTHING is written here (a GET). */
-function vpaNeedsYouPage(row, action, self, links) {
+function vpaNeedsYouPage(row, action, self, links, oneTapBlock) {
   const choice = function (a, big) {
     const cls = 'btn ' + (a === 'draft' ? 'edit' : 'no') + (big ? '' : ' small');
     return a === action
       ? '<button class="' + cls + '" name="b" type="submit" data-a="' + a + '">' + VPA_NEEDS_YOU_CONFIRM[a] + '</button>'
       : '<a class="' + cls + '" data-a="' + a + '" href="' + vpaEsc(links[a]) + '">' + VPA_NEEDS_YOU_WORDS[a] + '</a>';
   };
-  const inner = '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+  const inner = (oneTapBlock || '') + '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
     + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>'
     + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
     + '<div class="top" data-vpa="top">' + choice(action, true) + '</div>'
@@ -3330,19 +3404,41 @@ function vpaReviewBoxes(row, form) {
     + '<label>Login email<input type="email" name="login_email" autocomplete="off" autocapitalize="off" value="' + vpaEsc(em) + '" aria-label="Login email"></label>'
     + '</div><p class="muted" style="margin-top:8px">Filled in from what we found. Change anything that is wrong.</p>';
 }
-function vpaReviewDecidedPage(row, sameAsAsked) {
+function vpaReviewDecidedWords(row) {
+  return row.class === 'switch' ? (row.decision === 'yes' ? (/^instantly-seed-/.test(row.folder || '') ? 'in the inbox' : 'turn it on') : row.decision === 'edit' ? 'Promotions' : (/^instantly-seed-/.test(row.folder || '') ? 'Junk' : 'leave it off'))
+    : row.class === VPA_NEEDS_YOU_CLASS ? (VPA_NEEDS_YOU_WORDS[row.decision] || row.decision)
+    : (row.details && row.details.checked_auto) ? (VPA_CHECKED_DECIDED_WORDS[row.decision] || row.decision)
+    : (VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision);
+}
+/* sameAsAsked: this link's own choice is the one recorded. self: this link, for Undo (only within 30 seconds of the
+   choice, only before the Mac has it). note: a line at the top (a late Undo). justNow: this request recorded it, so the
+   page says "Done"; opening the link again later says "Already recorded". */
+function vpaReviewDecidedPage(row, sameAsAsked, self, note, justNow) {
   const when = row.decided_at ? new Date(Date.parse(row.decided_at) + 36000000).toISOString().slice(0, 16).replace('T', ' ') + ' Brisbane' : '';
   const applied = row.applied_at
     ? '<p>Your Mac has dealt with it: <b>' + vpaEsc(row.applied_result || 'done') + '</b>' + (row.applied_note ? '. ' + vpaEsc(row.applied_note) : '') + '</p>'
     : '<p>Your Mac picks it up within 5 minutes and emails you what it did.</p>';
-  return vpaReviewPage(sameAsAsked ? 'Got it' : 'Already decided',
-    '<div class="done" aria-hidden="true">' + (row.decision === 'no' || row.decision === 'stop' ? '&#10005;' : '&#10003;') + '</div>'
-    + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(row.class === 'switch' ? (row.decision === 'yes' ? 'turn it on' : 'leave it off')
-                                                                                  : row.class === VPA_NEEDS_YOU_CLASS ? (VPA_NEEDS_YOU_WORDS[row.decision] || row.decision)
-                                                                                  : (row.details && row.details.checked_auto) ? (VPA_CHECKED_DECIDED_WORDS[row.decision] || row.decision)
-                                                                                  : (VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision)) + '</h1>'
+  const age = row.decided_at ? Date.now() - Date.parse(row.decided_at) : Infinity;
+  const left = Math.ceil(VPA_UNDO_SECS - age / 1000);
+  const canUndo = !!(sameAsAsked && self && !row.applied_at && left > 0 && !note);
+  const words = vpaReviewDecidedWords(row);
+  const undo = canUndo
+    ? '<form method="POST" action="' + vpaEsc(self) + '" id="vpundo" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+      + '<input type="hidden" name="undo" value="1"><button class="btn no small" type="submit" data-a="undo">Undo (<span id="vpundos">' + left + '</span>s)</button></form>'
+      + '<script>(function(){var n=' + left + ',s=document.getElementById("vpundos"),f=document.getElementById("vpundo");var t=setInterval(function(){n--;if(n<=0){clearInterval(t);if(f)f.parentNode.removeChild(f);}else if(s){s.textContent=n;}},1000);})();</script>'
+    : '';
+  const why = (canUndo && row.decision === 'no' && row.class !== 'switch')
+    ? '<form method="POST" action="' + vpaEsc(self) + '" style="margin-top:18px"><input type="hidden" name="why" value="1">'
+      + '<h2>Why not? (optional, just for the record)</h2><textarea class="short" name="reason" aria-label="Why not"></textarea>'
+      + '<button class="btn no small" type="submit">Keep the reason</button></form>'
+    : '';
+  const head = sameAsAsked
+    ? '<div class="donebox" data-vpa="done"><div class="done" aria-hidden="true">&#10003;</div><h1>' + (justNow ? 'Done: ' : 'Already recorded: ') + vpaEsc(words) + '</h1></div>'
+    : '<div class="done" aria-hidden="true">' + (row.decision === 'no' || row.decision === 'stop' ? '&#10005;' : '&#10003;') + '</div><h1>You already chose: ' + vpaEsc(words) + '</h1>';
+  return vpaReviewPage(sameAsAsked ? 'Done' : 'Already decided',
+    (note ? '<div class="warn">' + vpaEsc(note) + '</div>' : '') + head
     + '<p class="muted">' + vpaEsc(row.company || row.folder) + (when ? ', ' + vpaEsc(when) : '') + '.</p>'
-    + applied
+    + applied + undo + why
     + (sameAsAsked ? '' : '<p class="muted">Only the first choice counts, so nothing changed. To change your mind, tell Claude.</p>'), 200);
 }
 
@@ -3376,18 +3472,63 @@ async function vpaAutopilotReviewPage(request, env) {
   // A needs-you choice only on a needs-you row, a Yes / Edit / No only on any other (the link is signed, so this
   // only refuses a mix-up, never a forgery).
   if (vpaReviewActionsFor(row.class).indexOf(action) === -1) return BAD;
-  if (row.decision) return vpaReviewDecidedPage(row, isPost && row.decision === action);
-
   const self = '/autopilot/review?f=' + encodeURIComponent(folder) + '&a=' + action + '&r=' + round + '&x=' + exp + '&t=' + tok;
-  const links = await vpaReviewLinks(env, folder, exp, round, row.class);
-  const qWarn = vpaReviewAdvice(row);
-  const boxes = ('edited_postcode' in row);
-  let form = null, boxForm = null, err = '';
-
+  let f = {};
   if (isPost) {
     let body = '';
     try { body = await request.text(); } catch (e) { /* read as empty */ }
-    const f = vpaParseForm(body);
+    f = vpaParseForm(body);
+  }
+  /* UNDO (16 Nov 2026): within 30 seconds of a choice made by this same link, before the Mac has it (the decisions door
+     holds a choice back for 40 seconds), the choice is taken back with one conditional update: the decision, its time
+     and its words are cleared only if they are still exactly what was recorded. A GET can never undo. */
+  if (isPost && f.undo === '1') {
+    const age = row.decided_at ? Date.now() - Date.parse(row.decided_at) : Infinity;
+    if (row.decision !== action || row.applied_at || !(age <= (VPA_UNDO_SECS + 5) * 1000)) {
+      return row.decision ? vpaReviewDecidedPage(row, row.decision === action, self, 'Too late to undo: it is recorded. To change it now, tell Claude.')
+                          : vpaReviewPage('Nothing to undo', '<h1>Nothing to undo</h1><p>Nothing is recorded for this button. The buttons in the email still work.</p>', 200);
+    }
+    let back;
+    try {
+      back = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=eq.' + action
+        + '&applied_at=is.null&decided_at=eq.' + encodeURIComponent(row.decided_at),
+        { decision: null, decided_at: null, decided_agent: null, reason: null, edited_reply: null });
+    } catch (e) { return vpaReviewPage('Try again', '<h1>That did not undo</h1><p>It is still recorded. Tap Undo again, or tell Claude.</p>', 503); }
+    if (!back.length) {
+      let now = null;
+      try { now = await vpaReviewRow(env, folder); } catch (e) { /* fall through */ }
+      return now && now.decision ? vpaReviewDecidedPage(now, now.decision === action, self, 'Too late to undo: it is recorded. To change it now, tell Claude.') : BAD;
+    }
+    return vpaReviewPage('Undone', '<div class="done" aria-hidden="true">&#8634;</div><h1>Undone. Nothing is recorded.</h1><p class="muted">'
+      + vpaEsc(row.company || folder) + '. The buttons in the email still work, whenever you are ready.</p>', 200);
+  }
+  /* WHY NOT, after a one-tap No (16 Nov 2026): optional, kept only while the Mac has not dealt with it. */
+  if (isPost && f.why === '1' && row.decision === 'no' && action === 'no') {
+    const why = vpaReviewText(f.reason, 2000).trim();
+    let kept = [];
+    if (why && !row.applied_at) {
+      try { kept = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=eq.no&applied_at=is.null', { reason: why }); }
+      catch (e) { kept = []; }
+    }
+    return vpaReviewPage('Thanks', '<div class="done" aria-hidden="true">&#10003;</div><h1>' + (kept.length ? 'Reason kept' : (why ? 'Your Mac had already dealt with it' : 'Nothing to keep')) + '</h1>'
+      + '<p class="muted">' + vpaEsc(row.company || folder) + (kept.length ? ': it is not being sent.' : ': it is not being sent. The reason was not kept.') + '</p>', 200);
+  }
+  if (row.decision) return vpaReviewDecidedPage(row, row.decision === action, self);
+
+  const links = await vpaReviewLinks(env, folder, exp, round, row.class);
+  const qWarn = vpaReviewAdvice(row);
+  const boxes = ('edited_postcode' in row);
+  const oneTap = vpaOneTapActions(row).indexOf(action) !== -1;
+  let form = null, boxForm = null, err = '';
+
+  if (isPost) {
+    /* ONE TAP (16 Nov 2026): the page posts one=1 by itself as it opens (a script, which link scanners do not run). The
+       scanner rules are a second guard: a refusal records nothing and the page asks for the tap, as it always did. */
+    if (f.one === '1') {
+      if (!oneTap) return new Response('confirm', { status: 409, headers: { 'cache-control': 'no-store' } });
+      const why = vpaOneTapRefusal(request, row, f, Date.now());
+      if (why) return new Response('confirm: ' + why, { status: 409, headers: { 'cache-control': 'no-store' } });
+    }
     /* EDIT HOLDS IT (Dean, 2 Nov 2026: "tapping Edit stops the 30-minute auto-send even if he doesn't save").
        The Edit page of a checked reply posts hold=1 from the page itself as it opens. Not on the GET: mail
        scanners fetch every link in an email, and a hold from a scanner would stop every reply. Records
@@ -3404,7 +3545,8 @@ async function vpaAutopilotReviewPage(request, env) {
     const patch = { decision: action, decided_at: new Date().toISOString(),
                     decided_agent: String(request.headers.get('User-Agent') || '').slice(0, 200) };
     if (action === 'no') patch.reason = vpaReviewText(f.reason, 2000).trim() || null;
-    if (action === 'edit') {
+    if (action === 'edit' && row.class === 'switch') patch.edited_reply = 'Promotions\n';   // a reading, not a reply (migration 128: an edit always has text)
+    else if (action === 'edit') {
       const text = vpaReviewText(f.reply, VPA_REVIEW_MAX + 1);
       const pc = String(f.postcode || '').trim(), entity = String(f.entity || ''), em = String(f.login_email || '').trim().toLowerCase();
       if (boxes) {
@@ -3445,32 +3587,32 @@ async function vpaAutopilotReviewPage(request, env) {
       if (!got.length) {
         let now = null;
         try { now = await vpaReviewRow(env, folder); } catch (e) { /* fall through */ }
-        return now && now.decision ? vpaReviewDecidedPage(now, now.decision === action) : BAD;
+        return now && now.decision ? vpaReviewDecidedPage(now, now.decision === action, self) : BAD;
       }
-      return vpaReviewDecidedPage(got[0], true);
+      return vpaReviewDecidedPage(got[0], true, self, '', true);
     }
   }
 
   // GET (or an edit sent back to fix): the page. NOTHING is written here.
-  if (row.class === VPA_NEEDS_YOU_CLASS) return vpaNeedsYouPage(row, action, self, links);
+  if (row.class === VPA_NEEDS_YOU_CLASS) return vpaNeedsYouPage(row, action, self, links, oneTap ? vpaOneTapBlock() : '');
   if (row.class === 'switch') {
     /* A SETTING, NOT A REPLY (2 Nov 2026): the Mac asks Dean once, after 14 days of web form enquiries in
        shadow mode with no disagreement, whether to let the obvious ones go by themselves. One button. */
-    const sw = '<h1>' + vpaEsc(row.company || 'Turn this on?') + '</h1>'
+    const sw = (oneTap ? vpaOneTapBlock() : '') + '<h1>' + vpaEsc(row.company || 'Turn this on?') + '</h1>'
       + '<div class="card words">' + vpaEsc(row.reply || '') + '</div>'
       + (row.their_words ? '<h2>The last 14 days</h2><div class="card words">' + vpaEsc(row.their_words) + '</div>' : '')
       + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
       + (action === 'yes'
           ? '<button class="btn yes" name="b" type="submit" data-a="yes">Yes, turn it on</button>'
             + '<p class="muted" style="margin-top:8px">Within 5 minutes your Mac switches it on. Anything that could be wrong still comes to you first.</p>'
-          : '<button class="btn no" name="b" type="submit" data-a="no">Leave it off</button>')
+          : '<button class="btn no" name="b" type="submit" data-a="' + action + '">' + (action === 'edit' ? 'Promotions' : 'Leave it off') + '</button>')
       + '</form>';
-    return vpaReviewPage(action === 'yes' ? 'Turn this on?' : 'Leave it off?', sw, 200);
+    return vpaReviewPage(action === 'yes' ? 'Turn this on?' : (action === 'edit' ? 'Promotions?' : 'Leave it off?'), sw, 200);
   }
-  if (row.details && row.details.checked_auto && (action === 'yes' || action === 'edit')) return vpaCheckedAutoPage(row, action, self, links, form, boxForm, err);
+  if (row.details && row.details.checked_auto && (action === 'yes' || action === 'edit')) return vpaCheckedAutoPage(row, action, self, links, form, boxForm, err, oneTap && !err ? vpaOneTapBlock() : '');
   // ONE form, from the top button to the bottom ones: the page's own choice is a submit wherever it is shown.
   const rec = vpaReviewRecommended(row);
-  let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
+  let inner = (oneTap && !isPost ? vpaOneTapBlock() : '') + vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
     + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
     + vpaReviewTop(rec, action, links)
     + vpaReviewWords(row);
@@ -3514,11 +3656,11 @@ async function vpaAutopilotReviewPage(request, env) {
    No red Stop button (Dean): the Edit page has a plain "Don't send this" under Save. White text on a solid
    colour dark enough to read: green #0E7A4F and amber #B45309 (both above 4.5:1 with white). */
 const VPA_GOOD = '#0E7A4F', VPA_AMBER = '#B45309';
-function vpaCheckedAutoPage(row, action, self, links, form, boxForm, err) {
+function vpaCheckedAutoPage(row, action, self, links, form, boxForm, err, oneTapBlock) {
   const btn = function (bg, label, attrs) {
     return '<button type="submit" ' + (attrs || '') + ' class="btn" style="background:' + bg + ';color:#fff">' + label + '</button>';
   };
-  let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '');
+  let inner = (action === 'yes' ? (oneTapBlock || '') : '') + vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '');
   if (action === 'yes') {
     inner += '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
       + btn(VPA_GOOD, 'Approved', 'name="b" data-a="yes"')
