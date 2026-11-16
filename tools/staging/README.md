@@ -157,3 +157,31 @@ musical bingo clip, the trivia sounds and the time's-up buzzer on the 0. Nothing
 takes a picture, not sound, so a person listens (or a phone recording beside the TV). The staging site lets the office
 network (157.85.251.201) through its access lock, which is where the Kogan is. If /tv or vp-env.js change, rebuild with
 `make-tv-test-build.py` and sign again. To remove it later: `tizen uninstall -p VnPlyTest1.venueplayTVtest -s <tv>`.
+
+## Added 16 Nov 2026 (Jobs rows 440 + 441): the full circle, every night
+
+`lifecycle-run.py` lives a whole venue life on TEST and checks every step (players and their ticks, messages, the
+weekly cancel, the 90-day deletion). Plain HTTP from the Mac to the TEST project and the staging Workers; the 90-day
+sweep runs in node on vp-tests-1 (the TEST key goes over ssh on stdin, never written there). No browser, no
+/tmp/vp-heavy.lock. Refuses any address that is not TEST or staging, and Stripe without a `sk_test_` key.
+
+    python3 tools/staging/lifecycle-run.py                  nightly: players, messages, (Mondays) cancel, 90 days
+    python3 tools/staging/lifecycle-run.py --cancel-now     cancel this run whatever the day
+    python3 tools/staging/lifecycle-run.py --steps players,messages
+    python3 tools/staging/lifecycle-run.py --alerts on      send the alert for real (default: DRY RUN, says what it would send)
+
+Page: `~/venue-enrich/reports/staging-lifecycle-<date>/index.html` (+ `results-<run>.json`). Exit 1 when any FAULT.
+
+What it does to TEST, on purpose: switches player collection on at Stage Mini Bar, Stage Harbour Hotel and the new pub
+(and ticks `optin_release_approved` on their accounts, because migration 82's gate refuses an @example.invalid
+contact); makes a "Stage New Pub ddmm (stand-in)" free-month pub when no real sign-up is active (none has ever got past
+the card page); cancels the oldest Stage New Pub on Mondays; moves a cancelled one's `closed_at` back 91 days and runs
+live's `sweepRetention`, lifted word for word out of `venueplay-backend/worker/venueplay-game.js` of THIS checkout.
+
+The alert: one line, dry run unless `--alerts on`. Channel = what the Mac's own jobs use for Dean
+(`promises/check-promises.py` send_email: Resend with RESEND_VENUEPLAY_KEY to dean@gflam.com.au), macOS notification
+if that fails. The switch is `send_alert(line, on)` in the script.
+
+Nightly (main loads it, with Dean's yes; NOT loaded): `~/Library/LaunchAgents/com.gflam.staging-lifecycle.plist`,
+StartCalendarInterval Hour 2 Minute 30, ProgramArguments `/usr/bin/python3 <repo>/tools/staging/lifecycle-run.py
+--alerts on`, StandardOutPath `~/venue-enrich/reports/staging-lifecycle.log`, then `launchctl load` it.
