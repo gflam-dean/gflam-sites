@@ -2456,6 +2456,11 @@
          the ads, and only for a venue with no logo. */
       var nt=document.getElementById("venueNameTag");
       if(nt) nt.style.display=(!venueLogoUrl && nt.textContent && (tvMode!=="ads" || holdingUp()) && !venueLost()) ? "block" : "none";   // between games too (3 Nov 2026)
+      /* THE NAME SHOWS ONCE (Dean 16 Nov 2026). A venue with no logo already has its name top left, so the
+         "at <venue>" lines under the join code and the real-balls title come off; a venue with a logo keeps
+         them (the logo is a picture, the line says whose night it is). Trivia and musical have no such line. */
+      var atOn=!!(venueLogoUrl && nt && nt.textContent);
+      ["lobbyAt","tvRunAt"].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display=atOn ? "" : "none"; });
     }catch(e){}
     alignCorner();
   }
@@ -3667,9 +3672,10 @@
       holdVenueName=nm;   // the default loop for a venue with no slides yet (refreshAds follows in loadScreen)
       syncFloor();
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
-      if(la && lan){ lan.textContent=nm; la.style.display=""; }
+      if(la && lan){ lan.textContent=nm; }
       var ra=document.getElementById("tvRunAt"), ran=document.getElementById("tvRunAtName");   // the real-balls title
-      if(ra && ran){ ran.textContent=nm; ra.style.display=""; }
+      if(ra && ran){ ran.textContent=nm; }
+      applyVenueLogo();   // now the "at" lines have their name: they show only for a venue with a logo
     }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
        This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the

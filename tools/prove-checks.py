@@ -8375,6 +8375,13 @@ MUTATIONS = [
     ('tv-one-venue-logo-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '            try{ if(window.VPHostedBy && VPHostedBy.recheck) VPHostedBy.recheck(); }catch(_){} } })', '            } })',
      "in Chrome: a card in the venue's own name that arrives before the venue's name stays up all night"),
+    # The bingo TV lobby names a no-logo venue once (Dean via main INBOX 425, 16 Nov 2026).
+    ('bingo-tv-name-once-in-chrome.test.py', 'venueplay/tv.html',
+     'e.style.display=atOn ? "" : "none"', 'e.style.display=""',
+     'in Chrome: a venue with no logo shows its name top left AND "at <venue>" under the join code on the bingo TV lobby'),
+    ('bingo-tv-name-once-in-chrome.test.py', 'venueplay/tv.html',
+     'var atOn=!!(venueLogoUrl && nt && nt.textContent);', 'var atOn=false;',
+     'in Chrome: a venue with a logo loses its "at <venue>" line under the join code on the bingo TV lobby'),
     # The time's-up buzzer on the wall's 0 (Dean, 15 Nov 2026, The Mini Bar: "not timed right").
     ('test-trivia-buzzer-on-zero.js', 'venueplay/app/trivia/screen.html',
      '    if(remMs<=0){ stopRing(); try{ timesUp(); }catch(e){} }', '    if(remMs<=0){ stopRing(); }',

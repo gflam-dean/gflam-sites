@@ -2342,5 +2342,9 @@
  "tools/trivia-round-podium-in-chrome.test.py": {
   "checks": 165,
   "counted_by": "lines"
+ },
+ "tools/bingo-tv-name-once-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
  }
 }
