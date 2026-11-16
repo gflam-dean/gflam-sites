@@ -175,7 +175,8 @@ class Ops:
         return dw.fetch_health(worker)
 
     def stale_pages(self, root, files):
-        rc = _release_check(root)
+        cache = self.__dict__.setdefault('_rc', {})
+        rc = cache.get(root) or cache.setdefault(root, _release_check(root))
         return [f for f in files if rc.live_matches_local(f) is False]
 
     def server_suites(self, root, suites, say):
@@ -938,13 +939,20 @@ def main(argv=None):
     if argv and argv[0] == 'hook-accept':
         if len(argv) < 3:
             return 1
-        gs = load('gate_server_for_hook', 'tools/gate-server.py', ROOT)
-        key, _ = gs.read_key()
-        counts, rule = gs.ledger(ROOT), gs.suite_passed_rule(ROOT)
+        # The urgent half needs gate-server.py (the key, the suite judge). A rollback to a tree from before it must still
+        # be judged, so a missing or broken gate-server only switches the urgent half off.
+        key, acc = None, None
         try:
-            good, why = hook_accept(ops, ROOT, argv[1], argv[2], key, lambda s, e: gs.suite_accepted(s, e, counts.get('tools/' + s), rule))
-        except Stop as e:
-            good, why = False, str(e)
+            gs = load('gate_server_for_hook', 'tools/gate-server.py', ROOT)
+            key, _ = gs.read_key()
+            counts, rule = gs.ledger(ROOT), gs.suite_passed_rule(ROOT)
+            acc = lambda s, e: gs.suite_accepted(s, e, counts.get('tools/' + s), rule)
+        except Exception:
+            pass
+        try:
+            good, why = hook_accept(ops, ROOT, argv[1], argv[2], key, acc)
+        except Exception as e:
+            good, why = False, '%s: %s' % (type(e).__name__, str(e)[:200])
         print('  release lane: %s: %s' % ('ACCEPTED' if good else 'not used', why))
         return 0 if good else 1
     if argv and argv[0] == 'after-gate':
