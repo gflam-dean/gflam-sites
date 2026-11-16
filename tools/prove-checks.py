@@ -127,10 +127,13 @@ MUTATIONS = [
      'self.B = VL.Browser(extra_args=chrome_args) if chrome_args else VL.Browser(live=True)',
      'the rig quietly makes its Chrome a live one'),
     # ---- 16 Nov 2026: the same block, in a real Chrome
-    ('no-live-in-chrome.test.py', 'tools/verify-live.py',
-     '            guard = nolive.chrome_args()',
-     '            guard = []',
-     'a test Chrome is started without the block, so the page reaches production'),
+    # The mutation sends production to a CLOSED local port, not to the internet: a proof that took the block off
+    # would itself reach production (it did once, 16 Nov 2026 09:41, from vp-tests-1). nolive.test.py proves the
+    # block is on the Chrome command line; this proves a real Chrome's attempts are seen and named.
+    ('no-live-in-chrome.test.py', 'tools/nolive.py',
+     "        rules += ['MAP %s 127.0.0.1:%d' % (h, port), 'MAP *.%s 127.0.0.1:%d' % (h, port)]",
+     "        rules += ['MAP %s 127.0.0.1:9' % h, 'MAP *.%s 127.0.0.1:9' % h]",
+     'a real Chrome is still stopped, but its attempts never reach the trap, so nobody would hear of them'),
     # ---- 13 Nov 2026 (INBOX 357B / 326): the match check's own suite, wired into the gate
     ("on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging's own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched", 'venueplay/app/vp-env.js',
      'if (env.isLiveBackend(url)) return true;',
