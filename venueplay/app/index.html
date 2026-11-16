@@ -219,9 +219,13 @@
   #callerBlock{display:none}
   #bingoView.callermode #callerBlock{display:block}
   #bingoView.callermode #nextBtn,#bingoView.callermode .lastball,#bingoView.callermode #liveStats,
-  #bingoView.callermode #claimLbl,#bingoView.callermode #claimQueue,#bingoView.callermode #roundPin{display:none}
-  .roundpin{display:inline-block;margin:0 0 10px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
-    font:700 16px/1.3 'Hanken Grotesk',sans-serif;color:var(--text);letter-spacing:.04em}
+  #bingoView.callermode #claimLbl,#bingoView.callermode #claimQueue,#bingoView.callermode #roundPin,#bingoView.callermode .pinrow{display:none}
+  /* The PIN rides on its heading's own row, right-aligned, so it costs the console no line of its own (16 Nov 2026: the
+     consoles fit one phone screen, and a PIN on its own line pushed the first claim off a 375x667 phone). */
+  .pinrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .pinrow > .lbl{margin-bottom:0}
+  .roundpin{display:inline-block;margin:0;padding:1px 9px;border-radius:7px;border:0;background:var(--ink-3);white-space:nowrap;
+    font:700 16px/16px 'Hanken Grotesk',sans-serif;color:var(--text);letter-spacing:.04em}   /* no taller than its heading row */
   #bingoView.callermode #allowEarlyLiveRow{display:none!important}   /* it carries an inline display:flex */
   .callerhead{display:flex;align-items:center;gap:12px;margin:0 0 10px}
   .callerhead .cl{font-family:'Anton',sans-serif;font-size:44px;line-height:1;color:#fff;min-width:2.2ch;text-align:center}
@@ -692,10 +696,10 @@
             <button type="button" class="btn win callerwin" id="callerWinBtn">Winner!</button>
             <div class="callernote">Tap a number to call it. Hold the last one called, or tap Undo last, to take it back. Somebody shouts BINGO? Tap Winner.</div>
           </div>
-          <div class="lbl" id="claimLbl" style="margin-top:18px">Claim queue</div>
           <!-- THE WINNER CHECK (Dean, 4 Nov 2026): the winner's phone shows the same 4 digits beside their card
                number. This console and the winner's phone only; never on a TV. Filled by showRoundPin. -->
-          <div class="roundpin hidden" id="roundPin" aria-live="polite"></div>
+          <div class="pinrow" style="margin-top:18px"><div class="lbl" id="claimLbl">Claim queue</div>
+          <div class="roundpin hidden" id="roundPin" aria-live="polite"></div></div>
           <div id="claimQueue"></div>
           <!-- THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026: "my one rule is to make everything easier").
                During a game Next number, the last ball and the claim queue come first; the early-calls switch folds
