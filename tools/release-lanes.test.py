@@ -15,7 +15,7 @@ Pages, the test server, the gate tools and the signing key are fakes on tools/re
             and the real-night dry run; signs a record the hook accepts; falls back to the rollback lane when the
             after-gate is red, and never rolls back when a step could not run
   HOOK      lets through only bookkeeping, a true rollback and a signed urgent tree; anything else gets the gate
-Every git call goes to a local path.
+Every git call goes to a local path. GATELIB_NO_CHROME: it names verify-live.py only as a fake tool; it starts no browser.
 """
 import importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, time
 
