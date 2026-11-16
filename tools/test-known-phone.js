@@ -222,6 +222,31 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   j = await call(handleJoin, { code: dcode, name: 'Demo', pid: pid(), first_name: 'Demo', mobile: '0412000000' });
   show('a demo join makes no known row and hands out no key', DB.vp_known_players.length === 0 && !j.body.known_key, JSON.stringify(j.body.known_key));
 
+  print('9. THE BINGO PHONE (POST /capture) BY THE SAME RULES');
+  world();
+  var VC = fnvVenueCode('royal');
+  var sb = await open(VENUE, 'bingo');
+  DB.vp_players.push({ id: 'bbbbbbbb-0000-4000-8000-000000000001', session_id: sb.id, token_hash: await sha256Hex('tokB'), display_name: 'Bo', kicked: false });
+  async function cap(body, tok) {
+    BODY = body; var h = { 'x-player-token': tok || '' };
+    try { return await handleCapture({ headers: { get: function (k) { return h[String(k).toLowerCase()] || ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+    catch (e) { return { status: e.status || 500, body: { error: e.message } }; }
+  }
+  var cr = await cap({ code: VC, first_name: 'Bo', mobile: '0412 333 444' }, 'tokB');
+  var cc = DB.vp_captures[DB.vp_captures.length - 1];
+  show('a venue that collects nothing: the bingo capture keeps the first name and mobile (+614...)', cr.body.stored === true && cc && cc.first_name === 'Bo' && cc.mobile === '+61412333444', JSON.stringify(cc));
+  var BK = cr.body.known_key;
+  show('...and hands the phone a key, with one known row for this venue', /^[0-9a-f]{64}$/.test(BK || '') && DB.vp_known_players.length === 1 && DB.vp_known_players[0].venue_id === VENUE, JSON.stringify(cr.body));
+  cr = await cap({ code: VC, first_name: 'Bo', known_keys: [BK] }, 'tokB');
+  cc = DB.vp_captures[DB.vp_captures.length - 1];
+  show('next time the key alone fills the mobile, server side; no new row, no new key', cc.mobile === '+61412333444' && DB.vp_known_players.length === 1 && !cr.body.known_key, JSON.stringify(cr.body));
+  ENV.CONSENT_BLOCK = 'three';
+  await cap({ code: VC, first_name: 'Bo', known_keys: [BK], consent: { venueplay: true, venue: true } }, 'tokB');
+  await cap({ code: VC, first_name: 'Bo', known_keys: [BK], consent: { venueplay: true, venue: true } }, 'tokB');
+  var bc = DB.vp_player_consents;
+  show('three mode: one row per box, source bingo, the session from the token; sent twice the same night, kept once', bc.length === 2 && bc.every(function (r) { return r.source === 'bingo' && r.session_id === sb.id && r.known_id === DB.vp_known_players[0].id; }), JSON.stringify(bc));
+  delete ENV.CONSENT_BLOCK;
+
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('known phone: ' + bad + ' failed');

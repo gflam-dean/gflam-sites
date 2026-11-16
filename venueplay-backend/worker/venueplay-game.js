@@ -2517,7 +2517,16 @@ async function writeConsents(env, o) {
     rows.push(r);
   }
   if (!rows.length) return 0;
-  try { await sbInsert(env, 'vp_player_consents', rows, false); return rows.length; } catch (e) { return 0; }
+  /* The same night asking twice (the bingo phone re-sends its details when it is seated again): one answer per box. */
+  let keep = rows;
+  if (o.knownId && o.sessionId) {
+    try {
+      const had = await sbGet(env, 'vp_player_consents', 'known_id=eq.' + enc(o.knownId) + '&session_id=eq.' + enc(o.sessionId) + '&select=party&limit=10');
+      keep = rows.filter((r) => !had.some((h) => h.party === r.party));
+    } catch (e) { keep = rows; }
+  }
+  if (!keep.length) return 0;
+  try { await sbInsert(env, 'vp_player_consents', keep, false); return keep.length; } catch (e) { return 0; }
 }
 /* THE KNOWN ROW AT JOIN. Fills the capture's empty fields from this venue's row (only fields this venue asks), adds
    what the player just gave to the row (never overwriting), or makes the row for a first join that gave a first name
@@ -2684,7 +2693,14 @@ async function handleCapture(request, env, json) {
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false, stored: false });
   const cfg = await venueCollectCfg(env, venueId);
-  const row = Object.assign({ venue_id: venueId, source: 'bingo' }, gatedCapture(cfg, b));
+  /* THE BINGO PHONE'S DETAILS (INBOX 416): first name + mobile at every venue (joinCapture), the venue box of the three
+     as the venue's own tick, and the known row for this venue, exactly as /join does for trivia and musical bingo. */
+  const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
+  if (consentAns && (consentAns.venue === true || consentAns.venue === false)) b.marketing_optin = consentAns.venue === true;
+  const capIn = joinCapture(cfg, b);
+  if (consentAns && capIn.marketing_optin) capIn.consent_version = CONSENT_THREE_VERSION;
+  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys));
+  const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
      beyond a venue code derived from a public slug: anyone can post a forged capture, including a
@@ -2716,9 +2732,24 @@ async function handleCapture(request, env, json) {
      mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
      the only thing wrong, store the capture without it. Order of deploy and migration then does
      not matter, which is the lesson from the empty HQ venue list. */
+  /* EACH BOX ITS OWN ROW (UPDATE 4), the host box only for a host who opened THIS night (the token's session). */
+  const capReply = async function () {
+    if (consentAns) {
+      let sess = null;
+      if (player && player.session_id) {
+        try { const sr = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&venue_id=eq.' + enc(venueId) + '&select=id,venue_id,created_by&limit=1'); sess = sr[0] || null; } catch (e) { sess = null; }
+      }
+      let vName = '';
+      try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
+      const cp = await consentParties(env, sess, vName, null);
+      await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: 'bingo',
+        venueId: venueId, knownId: knownRes.knownId, playerId: player && player.id, sessionId: sess && sess.id });
+    }
+    return json(knownRes.key ? { ok: true, stored: true, known_key: knownRes.key } : { ok: true, stored: true });
+  };
   try {
     await sbInsert(env, 'vp_captures', row, false);
-    return json({ ok: true, stored: true });
+    return await capReply();
   } catch (e) {
     const msg = String((e && e.message) || e);
     if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 &&
@@ -2731,7 +2762,7 @@ async function handleCapture(request, env, json) {
   }
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);
-  return json({ ok: true, stored: true });
+  return await capReply();
 }
 
 /* Does this screen code map to a real venue? Lets the TV warn a venue that mistyped its
