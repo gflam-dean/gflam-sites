@@ -252,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
-  "checks": 158,
+  "checks": 178,
   "counted_by": "lines"
  },
  "tools/game-sounds-in-chrome.test.py": {
@@ -584,7 +584,7 @@
   "counted_by": "lines"
  },
  "tools/settings-and-logos-in-chrome.test.py": {
-  "checks": 23,
+  "checks": 31,
   "counted_by": "lines"
  },
  "tools/setup-use-in-chrome.test.py": {
@@ -1312,7 +1312,7 @@
   "counted_by": "lines"
  },
  "tools/test-retention-sweep.js": {
-  "checks": 40,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
@@ -1684,7 +1684,7 @@
   "counted_by": "lines"
  },
  "tools/test-wizard-r10.js": {
-  "checks": 199,
+  "checks": 216,
   "counted_by": "lines"
  },
  "tools/touring-cards.test.py": {
@@ -1864,7 +1864,7 @@
   "counted_by": "lines"
  },
  "tools/wizard-v2-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 38,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
@@ -2305,6 +2305,18 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-known-phone.js": {
+  "checks": 75,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-known.js": {
+  "checks": 68,
+  "counted_by": "lines"
+ },
+ "tools/known-phone-in-chrome.test.py": {
+  "checks": 363,
   "counted_by": "lines"
  }
 }

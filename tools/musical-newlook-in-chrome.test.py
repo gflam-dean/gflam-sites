@@ -525,7 +525,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.js('(function(){ var i=document.getElementById("nameIn"); i.value="Sam"; i.focus(); return 1; })()'); time.sleep(0.3)
         nm = pp(P) or {}
         P.shot(shots + '-phone-3-name')
-        ok('%s name: by the QR the phone goes straight to YOUR NAME (no code step)' % tag, nm.get('view') == 'vJoin' and nm.get('headWords') == 'Your name', [nm.get('view'), nm.get('headWords')])
+        ok('%s name: by the QR the phone goes straight to JOIN THE GAME (no code step; Dean 16 Nov: not "Your name")' % tag, nm.get('view') == 'vJoin' and nm.get('headWords') == 'Join the game', [nm.get('view'), nm.get('headWords')])
         phone_frame_checks(tag + ' name', nm, True)
         ok('%s name: row two: the pattern pill and the prize' % tag, (nm.get('row2') or {}).get('pat') == 'One line across' and (nm.get('row2') or {}).get('prize') == 'Meat tray', nm.get('row2'))
         ok('%s name: "Join the game", a pink pill' % tag, nm.get('join') == 'Join the game' and nm.get('joinBg') == 'rgb(255, 31, 142)', [nm.get('join'), nm.get('joinBg')])
@@ -664,11 +664,13 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         W['collect'] = {'first_name': True, 'last_name': True, 'postcode': True, 'email': True, 'marketing_optin': True}
         P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, 375, 812, True, pre)
         try:
-            P.until('document.getElementById("joinHead").textContent==="Your details"', 20); time.sleep(0.8)
+            P.until('document.getElementById("joinHead").textContent==="Join the game" && document.querySelectorAll("#joinExtra input").length>0', 20); time.sleep(0.8)
             P.js('(function(){ document.getElementById("nameIn").value="Sam"; return 1; })()')
             dt = pp(P) or {}
             P.shot(shots + '-phone-3b-details')
-            ok('details: YOUR DETAILS, naming the venue, with Privacy inline', dt.get('headWords') == 'Your details' and dt.get('notice', '').startswith('Tugun Bowls Club would like your details. They go to the venue') and dt.get('privacy'), [dt.get('headWords'), dt.get('notice')])
+            # INBOX 416 (Dean 16 Nov 2026): YOUR DETAILS, and no line saying the venue gets them (only a ticked box shares them;
+            # the first-game notice from vp-known.js says so, drawn when the Worker sends it)
+            ok('details: JOIN THE GAME (Dean 16 Nov), and no line saying the venue gets the details', dt.get('headWords') == 'Join the game' and 'go to' not in dt.get('notice', ''), [dt.get('headWords'), dt.get('notice')])
             # The ticks are vp-consent.js's own, whichever rule it carries: two ticks (3 Nov 2026) or, from
             # fix/consent-one-tick-6nov, ONE tick "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026).
             one_tick = 'Send me offers from' in io.open(os.path.join(SITE, 'app/vp-consent.js'), encoding='utf-8').read()

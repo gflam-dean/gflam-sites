@@ -1690,7 +1690,7 @@
         wmsg.textContent = missing ? "Add a start time for each night you ticked." : "";
       }
       var skip = F.el("button", "vpgs-link", "Skip for now, I'll add these later"); skip.id = "vpGsWeekSkip"; skip.setAttribute("type", "button");
-      skip.addEventListener("click", function () { if (deps.weekOnly) return end("closed"); allToday(); }); F.body.appendChild(skip);
+      skip.addEventListener("click", function () { if (deps.weekOnly) return end("closed"); afterWeek(); }); F.body.appendChild(skip);
       if (deps.weekOnly) { skip.textContent = "Cancel"; F.step("Your game nights", 0, 0); F.foot.appendChild(F.el("span")); }
       else F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", pick));
       F.foot.appendChild(nextB = F.btn(deps.weekOnly ? "Save" : "Next", "pink", "vpGsWeekNext", function () {
@@ -1716,9 +1716,37 @@
         var cn = {}; Object.keys(per).forEach(function (g) { if (per[g] >= 2) cn[g] = Math.min(per[g], 5); });
         if (Object.keys(cn).length) answers.counts = cn; else delete answers.counts;
         if (deps.weekOnly) return Promise.resolve(persist()).then(function () { end("done"); });
-        persist(); allToday();
+        persist(); afterWeek();
       }));
       gate();
+    }
+    /* WHAT DO YOU WANT TO COLLECT (Dean, 14 Nov 2026, job 416): first run only, between the nights and the games. First
+       name and mobile are asked of every player at every venue, so they show ticked and locked; email, last name and
+       postcode are optional and start unticked. An existing venue's review, and the Account page's nights, skip it. */
+    function afterWeek() { if (deps.review || deps.weekOnly) return allToday(); collectStep(); }
+    function collectStep() {
+      F.clear(); F.step("Your games", 3, 2); F.title.textContent = "What do you want to collect from your customers?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "Every game asks for first name and mobile, so winners can be contacted."));
+      var box = F.el("div", "vpgs-chips"); box.id = "vpGsCollect"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "What to collect");
+      var picks = { collect_first_name: true, collect_mobile: true, collect_email: false, collect_last_name: false, collect_postcode: false };
+      function cchip(key, words, locked) {
+        var b = F.el("button", "vpgs-chip"); b.setAttribute("type", "button"); b.setAttribute("role", "checkbox"); b.setAttribute("data-collect", key); b.id = "vpGsCol_" + key;
+        var on = picks[key];
+        b.appendChild(F.el("span", "bx", on ? "\u2713" : "")); b.appendChild(F.el("span", null, words)); b.setAttribute("aria-checked", on ? "true" : "false");
+        if (locked) { b.setAttribute("aria-disabled", "true"); b.style.cursor = "default"; }
+        else b.addEventListener("click", function () { picks[key] = !picks[key]; b.setAttribute("aria-checked", picks[key] ? "true" : "false"); b.firstChild.textContent = picks[key] ? "\u2713" : ""; });
+        var cell = F.el("div", "vpgs-cell"); cell.appendChild(b); box.appendChild(cell);
+      }
+      cchip("collect_first_name", "First name", true); cchip("collect_mobile", "Mobile", true);
+      cchip("collect_email", "Email", false); cchip("collect_last_name", "Last name", false); cchip("collect_postcode", "Postcode", false);
+      F.body.appendChild(box);
+      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
+      F.foot.appendChild(F.btn("Next", "pink", "vpGsCollectNext", function () {
+        var patch = { collect_first_name: true, collect_mobile: true, collect_email: !!picks.collect_email, collect_last_name: !!picks.collect_last_name, collect_postcode: !!picks.collect_postcode };
+        var VP = deps.VP || root.VP, f = deps.saveSettings || (VP && VP.saveSettings);
+        try { if (typeof f === "function") Promise.resolve(f(vid, patch)).then(function () {}, function () {}); } catch (e) {}   // never blocks the wizard; a refusal says nothing here (Settings explains approval)
+        allToday();
+      }));
     }
     function allToday() {
       F.clear(); F.step("Your games", 3, 3);
@@ -1738,7 +1766,7 @@
       });
       ans2.appendChild(F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }));
       F.body.insertBefore(ans2, nt);
-      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
+      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", (deps.review || deps.weekOnly) ? weekStep : collectStep));
       F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { if (allYes) allYes.click(); }));   // Next is Yes to the first game
     }
     /* ONE SHARED PRIZE LIST PER VENUE (Dean, round 12 note 4): the prizes typed in any game, and what an existing venue's games already hold */
