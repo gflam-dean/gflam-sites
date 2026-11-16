@@ -159,7 +159,7 @@ def existing_venue(RIG):
         r.ask(sid, JS_HELP)
         fits('1024 existing start', r.json(sid, FIT))
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'r10-existing-start-1024.jpg'))
-        res = [step(r, sid, '__w.c("vpGsGo")'), step(r, sid, '__w.c("vpGsNext")', 0.8), step(r, sid, '__w.c("vpGsWeekSkip"); __w.c("vpGsCollectNext")'), step(r, sid, '__w.c("vpGsAllYes")', 1.2)]
+        res = [step(r, sid, '__w.c("vpGsGo")'), step(r, sid, '__w.c("vpGsNext")', 0.8), step(r, sid, '__w.c("vpGsWeekSkip")'), step(r, sid, '__w.c("vpGsAllYes")', 1.2)]   # an existing venue's check: no collect screen (job 416)
         ok('through to the first game', all(x == 'ok' for x in res), res)
         ok('trivia shows THEIR 15 questions, 5 rounds and double points on 5', r.until(sid, '(document.getElementById("vpGsIn_count")||{}).value==="15" && document.getElementById("vpGsIn_rounds").value==="5" && document.getElementById("vpGsIn_double_last").value==="5"', 10) is True,
            r.ask(sid, 'JSON.stringify({c:(document.getElementById("vpGsIn_count")||{}).value,r:(document.getElementById("vpGsIn_rounds")||{}).value})'))
