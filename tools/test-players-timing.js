@@ -142,6 +142,7 @@ print('a yearly plan is its own rule and is untouched');
 var rA = run({ plan: 'annual', priceId: ANNUAL }, { venue_id: 'v1', players: 81 });
 check('yearly: adding is pro rata to the renewal, one amount, and the line says so', charges().length === 1 && typeof charges()[0].params.amount === 'number' && /pro rata to renewal/.test(charges()[0].params.description), charges()[0] && charges()[0].params);
 var rAd = run({ plan: 'annual', priceId: ANNUAL, current: 110 }, { venue_id: 'v1', players: 80 });
+/* INBOX 419 DECISION (Dean, 16 Nov 2026, Terms line 122): a YEARLY cut releases the players today and holds their value as credit for next year's bill. */
 check('yearly: lowering releases the players today and banks the unused value as credit', rAd && rAd.applied === 'now' && credits().length === 1 && credits()[0].params.amount < 0 && patched[0].body.max_players === 80, [rAd, credits(), patched]);
 
 print('rule 4: the one-hour undo, behind VPB_BILLING_RULES_3NOV');

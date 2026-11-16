@@ -708,7 +708,7 @@
   "counted_by": "lines"
  },
  "tools/test-billing-abuse-13nov.js": {
-  "checks": 70,
+  "checks": 99,
   "counted_by": "lines"
  },
  "tools/test-billing-panels.js": {
@@ -2317,6 +2317,10 @@
  },
  "tools/members-upload-in-chrome.test.py": {
   "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/test-yearly-credit-16nov.js": {
+  "checks": 45,
   "counted_by": "lines"
  }
 }

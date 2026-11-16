@@ -1414,8 +1414,23 @@
     var ct=$("s-credit-tile"), cn=$("s-credit"), cnote=$("s-credit-note");
     if (ct && (d.credit_cents || 0) > 0){
       ct.style.display=""; cn.textContent = d.credit;
-      if (cnote) cnote.innerHTML = "You are holding <b>" + d.credit + "</b> in credit from players you released. " +
-        "It comes off your next renewal automatically, so there is nothing to claim.";
+      if (cnote){
+        cnote.innerHTML = "You are holding <b>" + d.credit + "</b> in credit from players you released. " +
+          "It comes off your next renewal automatically, so there is nothing to claim.";
+        /* Where it came from: each cut still waiting for the renewal (the credit belongs to the account that pays, so a cut at any of its
+           pubs is here). The total above is the real balance; these lines are the record of each cut. */
+        var led = d.credit_ledger || [];
+        if (led.length){
+          var ul = document.createElement("ul"); ul.style.cssText = "margin:8px 0 0;padding-left:18px";
+          led.forEach(function(r){
+            var li = document.createElement("li");
+            li.textContent = (r.venue || "A venue") + ": " + r.players + " player" + (r.players === 1 ? "" : "s") + " released" +
+              (r.date ? " on " + r.date : "") + ", $" + (r.cents / 100).toFixed(2);
+            ul.appendChild(li);
+          });
+          cnote.appendChild(ul);
+        }
+      }
     } else if (ct){ ct.style.display="none"; if(cnote) cnote.textContent=""; }
     /* Plan tile. The page showed what you pay but never what you are ON, so an owner could not
        check their plan or their rate without emailing us. Founding venues in particular are
@@ -1456,7 +1471,7 @@
         : (d.plan === "annual"
             ? ("Extra players are charged for the rest of your year at " + money(rate) +
                " per player per month, so the amount depends on how long is left. "
-               + "We show you the exact figure first, and it goes on your next bill.")
+               + "We show you the exact figure first, and it goes on your next bill. Lowering the number takes effect from the day you make the change, nothing is refunded, and the value of the players you release for the rest of the year is held as credit on your next year\u2019s bill.")
             : ("Extra players cost a full month at " + money(rate) +
                " per player, whatever day you add them. They are ready to use tonight and the "
                + "amount goes on your next bill. Lowering the number takes effect from your next bill."));
