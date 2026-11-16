@@ -36,7 +36,7 @@
   var API = root.VP_PROSPECTS_API || "https://api.venueplay.com.au";
   /* expanded: the rows opened by their status chip (Dean, 4 Nov 2026: compact rows); editing: the row whose Edit details
      form is open; byId: every row the tab shows, for hq.html's one send button (it words the email and text from it). */
-  var S = { data: null, held: [], ids: {}, byId: {}, open: null, editing: null, expanded: {}, loading: false, filter: "all", sort: "call" };
+  var S = { data: null, held: [], ids: {}, byId: {}, open: null, editing: null, draftEdit: null, expanded: {}, loading: false, filter: "all", sort: "call" };
   /* HOW LONG A SIGN-IN LINK LASTS (Dean, 10 Nov 2026, INBOX 154: 90 days, the same as player-data deletion). The
      billing Worker's VPA_LINK_DAYS is the one number: /admin/prospects answers it as link_days and every HQ line
      ("Start a fresh 90 days", its question and its answer) is written from linkDays(). LINK_DAYS is only what HQ
@@ -176,6 +176,39 @@
       '<div class="practs"><button type="button" class="btn pink sp" data-pr-edit-save="' + prEsc(p.venue_id) + '">Save details</button>' +
       '<button type="button" class="mini" data-pr-edit-close="1">Cancel</button></div></div>';
   }
+  /* One chip per email we sent them (Dean, 16 Nov 2026): the Worker's words, never worked out here. Red = bounced / spam / did not send, green = signed in. */
+  function chipsHtml(p) {
+    var list = p.emails || [];
+    if (!list.length) return "";
+    return '<div class="prmails" data-pr-mails="1">' + list.map(function (m) {
+      var tone = /^(bounced|complained|failed|cancelled)$/.test(m.state || "") ? " bad" : (m.state === "signed_in" ? " good" : (m.state === "opened" ? " open" : ""));
+      return '<span class="prmail' + tone + '" data-pr-mail="' + prEsc(m.state || "") + '"><b>' + prEsc(m.label || "Email") + "</b> " + (m.at ? prEsc(when(m.at)) + ": " : "") + prEsc(m.words || "") + "</span>";
+    }).join("") + "</div>";
+  }
+  /* The resend DRAFT: never sent by itself. Yes sends it, Edit changes the words first, No hides it for a week. */
+  function draftHtml(p) {
+    var d = p.resend_draft;
+    if (!d) return "";
+    var id = prEsc(p.venue_id), editing = S.draftEdit === p.venue_id;
+    return '<div class="prdraft" data-pr-draft="' + prEsc(d.reason || "") + '"><div class="prdrafthead">' + prEsc(d.label || "DRAFT FOR DEAN") + "</div>" +
+      '<div class="prdraftwhy">' + prEsc(d.why || "") + " It goes to " + prEsc(d.to || "") + " with a fresh sign-in button, only if you press Yes.</div>" +
+      (editing ? '<textarea class="prdrafttext" id="prDraftText" rows="7">' + prEsc(d.text || "") + "</textarea>"
+        : '<div class="prdrafttext">' + prEsc(d.text || "").replace(/\n/g, "<br>") + "</div>") +
+      '<div class="practs"><button type="button" class="mini win" data-pr-draft-yes="' + id + '"' + (d.address_ok ? "" : " disabled") + ">Yes, send it</button>" +
+      (editing ? "" : '<button type="button" class="mini" data-pr-draft-edit="' + id + '">Edit</button>') +
+      '<button type="button" class="mini" data-pr-draft-no="' + id + '">No</button></div></div>';
+  }
+  function draftAct(t) {
+    var yes = t.hasAttribute("data-pr-draft-yes"), id = t.getAttribute("data-pr-draft-yes") || t.getAttribute("data-pr-draft-no");
+    var body = { venue_id: id, decision: yes ? "yes" : "no" };
+    if (yes && S.draftEdit === id && $("prDraftText")) body.text = $("prDraftText").value;
+    var was = t.textContent; t.disabled = true; t.textContent = yes ? "Sending..." : "Saving...";
+    post("/admin/prospect/resend-draft", body).then(function (j) {
+      if (j.error) { t.disabled = false; t.textContent = was; if (root.vpTell) root.vpTell(j.error); else t.title = j.error; return; }
+      S.draftEdit = null; S.loading = false;
+      load().then(function () { if (yes && root.vpTell) root.vpTell("Sent to " + (j.to || "them") + "."); });
+    });
+  }
   function cardHtml(p) {
     /* Card added is a customer, and Cancelled said no: neither gets a Called button unless they asked for a call. */
     var st = statusOf(p), done = st === "card_added" || (st === "cancelled" && p.flag !== "call_requested");
@@ -214,7 +247,7 @@
     var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
     return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + day21Html(p) + "</div>" +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + day21Html(p) + (p.resend_draft ? '<span class="badge roll prdraftbadge">Draft waiting</span>' : "") + "</div>" +
       '<div class="prmore"' + (open ? "" : " hidden") + ">" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +
@@ -223,6 +256,7 @@
         ". Nothing has been sent to them about it.") + "</div>" : "") +
       (last ? '<div class="prlast" data-pr-last="1">' + prEsc(p.days_left === 1 ? "Last day of their free month, and no card yet." :
         p.days_left + " days left in their free month, and no card yet.") + "</div>" : "") +
+      chipsHtml(p) + draftHtml(p) +
       '<div class="prgrid">' +
         '<div><span class="k">Contact</span>' + prEsc(p.contact_name || "No name given") + "</div>" +
         '<div><span class="k">Phone</span>' + phoneHtml(p) + "</div>" +
@@ -393,6 +427,8 @@
       ".prheldrow .prname{display:block}" +
       ".badge.prd21{background:rgba(229,72,77,.12);color:#FF8A8E;border:1px solid rgba(229,72,77,.45);text-transform:none;letter-spacing:0;white-space:normal;text-align:left}" +
       ".prd21line{margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(229,72,77,.10);color:#FF8A8E;font-weight:700;font-size:13px}" +
+      ".prmails{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.prmail{font-size:13px;line-height:1.4;padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--text)}.prmail.bad{background:rgba(229,72,77,.12);color:#FF8A8E}.prmail.good{background:rgba(46,160,67,.14);color:var(--win)}.prmail.open{background:rgba(245,165,36,.14);color:var(--roll)}" +
+      ".prdraft{margin:12px 0 0;padding:12px;border:1px dashed var(--roll);border-radius:10px}.prdrafthead{font-weight:800;font-size:12px;color:var(--roll);letter-spacing:.04em}.prdraftwhy{font-size:13px;color:var(--muted);margin:6px 0}.prdrafttext{font-size:14px;line-height:1.5;margin:6px 0 8px;width:100%;box-sizing:border-box;background:transparent;color:var(--text);border:0}textarea.prdrafttext{border:1px solid var(--line,#444);border-radius:8px;padding:8px;font-family:inherit}.prdraftbadge{margin-left:6px}" +
       ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
       "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}.practs > *{flex:1 1 auto}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
@@ -461,6 +497,8 @@
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button"); if (!t) return;
     if (t.hasAttribute("data-pr-toggle")) { var tid = t.getAttribute("data-pr-toggle"); if (S.expanded[tid]) delete S.expanded[tid]; else S.expanded[tid] = true; draw(); return; }
+    if (t.hasAttribute("data-pr-draft-yes") || t.hasAttribute("data-pr-draft-no")) { draftAct(t); return; }
+    if (t.hasAttribute("data-pr-draft-edit")) { S.draftEdit = t.getAttribute("data-pr-draft-edit"); draw(); if ($("prDraftText")) $("prDraftText").focus(); return; }
     if (t.hasAttribute("data-pr-edit")) { S.editing = t.getAttribute("data-pr-edit"); S.open = null; draw(); if ($("prEdName")) $("prEdName").focus(); return; }
     if (t.hasAttribute("data-pr-edit-close")) { S.editing = null; draw(); return; }
     if (t.hasAttribute("data-pr-edit-save")) { editSave(t); return; }

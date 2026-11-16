@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '16 Nov 2026, 18:50 · a2e21751';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 09:16 · f19bd064';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -441,6 +441,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
       // Edit details on a prospect (Dean, 4 Nov 2026): name, email, mobile, phone, with an audit row.
       if (request.method === 'POST' && path === '/admin/prospect/update'        && typeof vpaProspectUpdate === 'function')     return await vpaProspectUpdate(request, env, json);
+      // A resend draft for a prospect whose email bounced or was never opened (Dean, 16 Nov 2026): sends only on his tap.
+      if (request.method === 'POST' && path === '/admin/prospect/resend-draft'  && typeof vpaProspectResendDraft === 'function') return await vpaProspectResendDraft(request, env, json);
       // HQ > Prospects > Coaster venues (Dean, 4 Nov 2026; migration 153): coaster venues (no emails), coaster leads, the boards.
       if (request.method === 'POST' && path === '/admin/coaster/list'           && typeof vpaCoasterList === 'function')        return await vpaCoasterList(request, env, json);
       if (request.method === 'POST' && path === '/admin/coaster/add'            && typeof vpaCoasterAdd === 'function')         return await vpaCoasterAdd(request, env, json);
@@ -4880,6 +4882,7 @@ async function vpaProspectsData(env, dopts) {
     await Promise.all(out.map(async (p) => {
       try { p.delivery = await vpaProspectDelivery(env, p, welcomeOf[p.venue_id], now); }
       catch (_) { p.delivery = { welcome: 'unknown', words: 'Could not check just now' }; }
+      try { await vpaProspectEmailsAttach(env, p, now); } catch (_) { p.emails = []; p.resend_draft = null; }
     }));
   }
   /* WHY A CANCELLED ONE SAID NO (Dean, 10 Nov 2026): the newest prospect_cancelled audit row for the venue,
@@ -5699,6 +5702,7 @@ async function vpaProspectDelivery(env, p, w, nowMs) {
     }
   } catch (_) {}
   if (out.welcome === 'bounced' || out.welcome === 'complained') out.bounce_domain = addr.indexOf('@') > 0 ? addr.split('@')[1] : null;
+  out.welcome_address = addr || null;   // the address the welcome went to, so a resend draft can tell a bounced address from a fixed one
   try {
     const win = vpaProspectWindowFromMs({ link_from: p.link_from, created_at: p.created_at });
     const taps = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + p.venue_id) + '&action=eq.signin_link_used'
@@ -5707,6 +5711,109 @@ async function vpaProspectDelivery(env, p, w, nowMs) {
   } catch (_) {}
   out.words = vpaDeliveryWords(out);
   return out;
+}
+/* EVERY EMAIL WE SENT A PROSPECT, ONE CHIP EACH, AND A RESEND DRAFT (Dean, 16 Nov 2026, Jobs row 226).
+   Chips: the welcome (from the delivery answer above), each follow-up Dean approved (prospect_nudge_sent), each HQ resend
+   (signin_link_sent) and each approved resend draft (prospect_resend_draft_sent). A chip says, in plain words, the furthest
+   it is known to have got: Signed in / Link opened / Bounced / Sent, no bounce reported. Only the welcome has a Resend id,
+   so a follow-up is never called "Delivered": nothing can see a junk folder, and no bounce is not the same as arrived.
+   The DRAFT (p.resend_draft) appears for a prospect who has not signed in, has an email and days left on their link, when
+   the welcome bounced / was marked spam / did not send, or was delivered, 3 days ago, and the link was never opened, and no
+   email since has got through. It carries words ready for Dean; NOTHING is sent until he taps Yes in HQ (POST
+   /admin/prospect/resend-draft). A bounced address must be changed first (Edit details), or Yes is refused. No hides it 7 days. */
+const VPA_RESEND_DRAFT_AFTER_DAYS = 3, VPA_RESEND_DRAFT_HIDE_DAYS = 7;
+const VPA_RESEND_DRAFT_ACTIONS = 'prospect_nudge_sent,signin_link_sent,prospect_resend_draft_sent';
+function vpaResendDraftText(reason, first) {
+  const hey = 'Hey ' + (first || 'there') + ',\n\n';
+  return reason === 'bounced'
+    ? hey + 'Our first email to you did not get through, so here is your sign-in link again. This link expires in {days} days.\n\nCheers,\nDean'
+    : hey + "We noticed you haven't logged in yet. Here's your sign-in link again. This link expires in {days} days.\n\nCheers,\nDean";
+}
+async function vpaProspectEmailsAttach(env, p, nowMs) {
+  const d = p.delivery || {};
+  const addr = String(p.email || '').trim().toLowerCase();
+  const targets = ['venue:' + p.venue_id].concat(addr ? ['email:' + addr] : []).map((t) => '"' + t.replace(/"/g, '') + '"').join(',');
+  let rows = [];
+  try {
+    rows = await vpaSelect(env, 'vp_admin_audit', 'action=in.(' + VPA_RESEND_DRAFT_ACTIONS + ',prospect_resend_draft_dismissed,email_bounced,email_marked_spam,signin_link_used)&target=in.(' + encodeURIComponent(targets) + ')&select=action,detail,created_at&order=created_at.desc&limit=60') || [];
+  } catch (_) { rows = []; }
+  const at = (r) => Date.parse(r.created_at);
+  const bounces = rows.filter((r) => r.action === 'email_bounced' || r.action === 'email_marked_spam');
+  const taps = rows.filter((r) => r.action === 'signin_link_used');
+  const signedMs = Date.parse(d.signed_in_at || '');
+  const domain = addr.indexOf('@') > 0 ? addr.split('@')[1] : '';
+  const chip = (kind, label, whenIso, state, words) => ({ kind: kind, label: label, at: whenIso || null, state: state, words: words });
+  const emails = [];
+  if (d.welcome && d.welcome !== 'none') {
+    const st = d.signed_in_at ? 'signed_in' : d.link_opened_at ? 'opened' : d.welcome;
+    emails.push(chip('welcome', 'Welcome email', d.welcome_at, st, d.signed_in_at ? 'Signed in' : d.link_opened_at ? 'Link opened, not signed in yet'
+      : d.welcome === 'bounced' ? 'Bounced' + (d.bounce_domain ? ' at ' + d.bounce_domain : '') : d.welcome === 'complained' ? 'Marked as spam'
+      : d.welcome === 'delivered' ? 'Delivered, link not opened' : d.welcome === 'cancelled' ? 'Cancelled, never sent' : d.welcome === 'failed' ? 'Did not send'
+      : d.welcome === 'scheduled' ? 'Booked, not sent yet' : d.welcome === 'delayed' ? 'Delayed at their end' : d.welcome === 'sent' ? 'Sent, not confirmed delivered' : 'Sent, Resend could not say where it got to'));
+  }
+  const LABEL = { prospect_nudge_sent: 'Follow-up email', signin_link_sent: 'Sign-in link from HQ', prospect_resend_draft_sent: 'Resend Dean approved' };
+  rows.filter((r) => LABEL[r.action]).forEach((r) => {
+    const t = at(r);
+    const bounced = bounces.some((b) => at(b) >= t - 1000 && (!b.detail || !b.detail.address || !r.detail || !r.detail.to || String(b.detail.address).toLowerCase() === String(r.detail.to).toLowerCase()));
+    const state = isFinite(signedMs) && signedMs >= t ? 'signed_in' : taps.some((x) => at(x) >= t) ? 'opened' : bounced ? 'bounced' : 'sent';
+    emails.push(chip(r.action, LABEL[r.action], r.created_at, state,
+      state === 'signed_in' ? 'Signed in after this' : state === 'opened' ? 'Link opened, not signed in yet' : bounced ? 'Bounced' + (domain ? ' at ' + domain : '') : 'Sent, no bounce reported'));
+  });
+  emails.sort((a, b) => (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0));
+  p.emails = emails;
+  /* The draft. */
+  p.resend_draft = null;
+  if (p.status !== 'not_signed_in' || d.signed_in_at || !addr || (p.link_days_left != null && p.link_days_left <= 0)) return;
+  const welcomeBad = /^(bounced|complained|failed)$/.test(d.welcome || '');
+  const welcomeQuiet = /^(delivered|sent|delayed|unknown)$/.test(d.welcome || '') && d.welcome_at
+    && nowMs - Date.parse(d.welcome_at) >= VPA_RESEND_DRAFT_AFTER_DAYS * 86400000;
+  const latest = emails.filter((e) => e.kind !== 'welcome')[0];
+  const oldEnough = (e) => nowMs - Date.parse(e.at) >= VPA_RESEND_DRAFT_AFTER_DAYS * 86400000;
+  let reason = null;
+  if (latest && latest.state === 'bounced') reason = 'bounced';
+  else if (welcomeBad && !latest) reason = 'bounced';
+  else if (!d.link_opened_at && (latest ? (latest.state === 'sent' && oldEnough(latest)) : welcomeQuiet)) reason = 'never_opened';
+  if (!reason) return;
+  const dismissed = rows.find((r) => r.action === 'prospect_resend_draft_dismissed');
+  if (dismissed && nowMs - at(dismissed) < VPA_RESEND_DRAFT_HIDE_DAYS * 86400000) return;
+  const badAddr = bounces.some((b) => b.detail && b.detail.address && String(b.detail.address).toLowerCase() === addr) || (welcomeBad && d.welcome_address === addr);
+  const first = String(p.contact_name || '').trim().split(/\s+/)[0];
+  p.resend_draft = { reason: reason, label: 'DRAFT FOR DEAN', to: addr, address_ok: reason !== 'bounced' || !badAddr, text: vpaResendDraftText(reason, first),
+    why: reason === 'bounced' ? 'The email to ' + addr + ' bounced.' + (badAddr ? ' Change their email in Edit details first.' : '') : 'Their welcome went ' + vpaBneDateWords(Date.parse(d.welcome_at)) + ' and the link was never opened.' };
+}
+/* POST /admin/prospect/resend-draft (owner | accounts) { venue_id, decision: 'yes' | 'no', text? }: the Yes / No (and Edit, as
+   changed words with Yes) on a resend draft. It sends only on a tap, and checks again that the draft still stands. */
+async function vpaProspectResendDraft(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which prospect?' }, 400);
+  if (b.decision !== 'yes' && b.decision !== 'no') return json({ error: 'Yes or No?' }, 400);
+  if (b.decision === 'no') {
+    await vpaAudit(env, actor, 'prospect_resend_draft_dismissed', 'venue:' + venueId, {});
+    return json({ ok: true, dismissed: true });
+  }
+  const d = await vpaProspectsData(env, { delivery: true });
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p || !p.resend_draft) return json({ error: 'There is no resend waiting for them any more (they signed in, or one has gone since), so nothing was sent.', refused: true }, 409);
+  if (!p.resend_draft.address_ok) return json({ error: 'Their email address bounced. Change it in Edit details first, then press Yes.', refused: true }, 409);
+  const text = String(b.text == null ? p.resend_draft.text : b.text).replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim();
+  if (text.length < 20 || text.length > VPA_NUDGE_TEXT_MAX) return json({ error: 'The email needs some words (20 to ' + VPA_NUDGE_TEXT_MAX + ' characters).' }, 400);
+  if (/[\u2014\u2013]/.test(text) || /VenuePlay/.test(text)) return json({ error: 'The email must have no long dash, and venueplay in lowercase.' }, 400);
+  let authUserId = null;
+  try { const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1'); authUserId = pr && pr[0] && pr[0].auth_user_id; } catch (_) {}
+  const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: 'Your venueplay is ready when you are' });
+  await vpaAudit(env, actor, r.ok ? 'prospect_resend_draft_sent' : 'prospect_resend_draft_refused', 'venue:' + venueId,
+    { name: p.name, to: r.to || undefined, reason: r.ok ? p.resend_draft.reason : r.reason, edited: (b.text != null && String(b.text).trim() !== p.resend_draft.text) || undefined });
+  if (r.ok) return json({ ok: true, to: r.to, days_left: r.days_left });
+  if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended, so nothing was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days first.', refused: true }, 409);
+  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
+  if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
+  return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
 function vpaDeliveryWords(d) {
   if (d.signed_in_at) return 'Signed in ' + vpaBneDateWords(Date.parse(d.signed_in_at));
