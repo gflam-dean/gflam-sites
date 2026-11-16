@@ -9,7 +9,7 @@ REAL venueplay/index.html and venueplay/nsw.html (the /offer-<month> pages) in h
 
   live      the Worker answers { questions: 39412, songs: 6740 } (answered in the page's own fetch, so the
             numbers are fixed): the two counters read "39,412" and "6,740", on one line each, inside the
-            page at 375 and 1440, nothing scrolls sideways, no script error
+            page at 375, 390 (16 Nov) and 1440, nothing scrolls sideways, no script error
   real rig  the page talks to the REAL billing Worker on the rig (tools/browser-rig/billing-stdio.js), which
             has no library to count: the route answers nulls and both counters read "Thousands"
   offline   the Worker cannot be reached at all: both counters read "Thousands", never blank, 0 or NaN
@@ -48,8 +48,12 @@ def answer(js_body):
             'return real.apply(this,arguments);};})();' % js_body)
 
 
-LIVE = answer('function(){return Promise.resolve(new Response(JSON.stringify({questions:39412,songs:6740}),'
-              '{status:200,headers:{"content-type":"application/json"}}));}')
+# VP_COUNTS_ANSWER='{"questions":N,"songs":M}' (16 Nov 2026): the 'live' case answers with those numbers instead,
+# for proof frames made from a real /library-counts answer. Never set by the gate; the checks then want those numbers.
+_ANS = json.loads(os.environ.get('VP_COUNTS_ANSWER') or '{"questions":39412,"songs":6740}')
+WANT_Q, WANT_S = '{:,}'.format(_ANS['questions']), '{:,}'.format(_ANS['songs'])
+LIVE = answer('function(){return Promise.resolve(new Response(JSON.stringify(%s),'
+              '{status:200,headers:{"content-type":"application/json"}}));}' % json.dumps({'questions': _ANS['questions'], 'songs': _ANS['songs']}))
 OFFLINE = answer('function(){return Promise.reject(new TypeError("Failed to fetch"));}')
 JUNK = answer('function(){return Promise.resolve(new Response(\'{"questions":"39412","songs":-5}\','
               '{status:200,headers:{"content-type":"application/json"}}));}')
@@ -76,8 +80,8 @@ while True:
 S = admin_site.Site(fonts=True)
 try:
     for page in ('/index.html', '/offer-nov'):
-        for w, hgt, phone in ((375, 812, True), (1440, 900, False)):
-            for case, pre, want_q, want_s in (('live', LIVE, '39,412', '6,740'), ('real rig', None, 'Thousands', 'Thousands'),
+        for w, hgt, phone in ((375, 812, True), (390, 844, True), (1440, 900, False)):
+            for case, pre, want_q, want_s in (('live', LIVE, WANT_Q, WANT_S), ('real rig', None, 'Thousands', 'Thousands'),
                                               ('offline', OFFLINE, 'Thousands', 'Thousands'), ('junk', JUNK, 'Thousands', 'Thousands')):
                 if case in ('real rig', 'junk') and w != 375:
                     continue
@@ -85,10 +89,10 @@ try:
                 S.until(sid, 'document.readyState==="complete" && !!window.VPCounts', 20)
                 S.js(sid, 'document.fonts ? document.fonts.ready.then(function(){return 1;}) : 1', wait=True, secs=20)
                 if case == 'live':
-                    S.until(sid, 'document.getElementById("vp-trivia-count").textContent==="39,412"', 10)
+                    S.until(sid, 'document.getElementById("vp-trivia-count").textContent===%s' % json.dumps(WANT_Q), 10)
                 else:
                     time.sleep(1.5)   # long enough for a fetch to fail and anything wrong to be painted
-                S.js(sid, 'document.getElementById("banks").scrollIntoView({block:"center"});true')
+                S.js(sid, 'document.documentElement.style.scrollBehavior="auto";document.getElementById("banks").scrollIntoView({block:"center",behavior:"instant"});true')
                 time.sleep(0.4)
                 M = S.json(sid, SEEN, default={}) or {}
                 q, s = M.get('q') or {}, M.get('s') or {}
@@ -110,7 +114,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 34
+EXPECTED = 46
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
