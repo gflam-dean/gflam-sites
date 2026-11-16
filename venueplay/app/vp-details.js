@@ -52,7 +52,16 @@
   function html(collect, opts) {
     var h = "";
     if (collect && collect.first_name && opts && opts.firstBox) h += box(FIRST);
-    for (var i = 0; i < BOXES.length; i++) if (collect && collect[BOXES[i].key]) h += box(BOXES[i], BOXES[i].key === "mobile" && collect.mobile_required === true);
+    /* LAST NAME AND POSTCODE SHARE ONE ROW when a venue asks both (INBOX 416: with the first name and mobile now asked
+       everywhere, a venue asking everything must still fit one phone screen; the purchase raffle form does the same). */
+    var pair = !!(collect && collect.last_name && collect.postcode);
+    for (var i = 0; i < BOXES.length; i++) {
+      if (!(collect && collect[BOXES[i].key])) continue;
+      var one = box(BOXES[i], BOXES[i].key === "mobile" && collect.mobile_required === true);
+      if (pair && BOXES[i].key === "last_name") h += '<div class="vp-pair" style="display:flex;gap:10px">' + one.replace('<div class="field">', '<div class="field" style="flex:1 1 0;min-width:0">');
+      else if (pair && BOXES[i].key === "postcode") h += one.replace('<div class="field">', '<div class="field" style="flex:0 0 38%;min-width:0">') + '</div>';
+      else h += one;
+    }
     return h;
   }
 

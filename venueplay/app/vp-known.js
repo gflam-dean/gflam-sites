@@ -119,6 +119,9 @@
       o.box.innerHTML = h;
       if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known });
     }
+    /* a venue asking for (nearly) everything plus the three boxes: the tighter join step (vp-phone.css, .vp-long) */
+    var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length;
+    if (vj && vj.classList) vj.classList.toggle("vp-long", !!(VC && typeof VC.answers === "function" && VC.answers()) && nBoxes >= 3);
     if (typeof o.after === "function") { try { o.after(h, info); } catch (e) {} }
     return h;
   }

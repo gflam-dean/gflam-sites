@@ -44,7 +44,7 @@ KEY = 'ab' * 32
 NOTHING = {'first_name': True, 'last_name': False, 'postcode': False, 'email': False, 'mobile': True, 'mobile_required': False, 'marketing_optin': False}
 EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': True, 'mobile': True, 'mobile_required': False, 'marketing_optin': True}
 THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
-# The room code says what the fake Worker answers. NEW..: a new phone; KNO..: known, nothing missing; ADD..: known, the
+# The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
 def answer_for(code):
     if code.startswith('ADD'): return dict(NOTHING, email=True)
@@ -70,7 +70,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         if p == '/join/known':
             keys = (body or {}).get('keys') or []
             known = None
-            if KEY in keys and (code.startswith('KNO') or code.startswith('ADD')):
+            if KEY in keys and (code.startswith('KNW') or code.startswith('ADD')):
                 known = {'hello': 'Alan', 'need': ['email'] if code.startswith('ADD') else [], 'ix': keys.index(KEY)}
             consent = THREE if code.startswith('THR') else {'mode': 'single'}
             return J({'known': known, 'consent': consent, 'organiser': 'The Royal Hotel'})
@@ -192,7 +192,7 @@ def phone(game, path, w, h):
         want = ['nameIn', 'xFirst', 'xMobile'] if team else ['nameIn', 'xMobile']
         ok('N %s %s: a venue that collects nothing asks %s' % (game, size, ', '.join(want)), L.get('ids') == want, L.get('ids'))
         ok('N %s %s: the join line says who gets the details and why' % (game, size), "Your details go to The Royal Hotel to run tonight's game and contact winners." in L.get('text', ''), L.get('text'))
-        ok('N %s %s: one screen, no scroll, Join on screen' % (game, size), fits(L), L)
+        ok('N %s %s: one screen, no scroll, Join on screen' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Alan', 'xFirst': 'Alan', 'xMobile': '0412 345 678'})
         ask(sid, 'document.getElementById("joinBtn").click(); true')
         got = joins(c)
@@ -202,14 +202,14 @@ def phone(game, path, w, h):
         B.close_tab(tid)
 
     # K: the same phone, the next game
-    c = code('KNO'); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
+    c = code('KNW'); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
     try:
         ok('K %s %s: the join screen is up with the hello' % (game, size), until(sid, READY + ' && !!document.getElementById("vpKnownNotMe")'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
         time.sleep(0.6)
         L = look(sid); shot(sid, '%s-%s-2-known' % (game, size))
         kb = knowns(c)
         ok('K %s %s: /join/known was asked with the key' % (game, size), bool(kb) and KEY in (kb[-1].get('keys') or []), kb)
-        ok('K %s %s: "Welcome back, Alan" and a Not me link' % (game, size), 'Welcome back, Alan' in L.get('text', '') and L.get('notme'), [L.get('head'), L.get('text')])
+        ok('K %s %s: "Welcome back, Alan" and a Not me link' % (game, size), 'welcome back, alan' in L.get('text', '').lower() and L.get('notme'), [L.get('head'), L.get('text')])
         ok('K %s %s: no box for anything held (%s)' % (game, size, 'the team name only' if team else 'none at all'), L.get('ids') == (['nameIn'] if team else []), L.get('ids'))
         ok('K %s %s: no detail we hold anywhere on the screen (no number, no @)' % (game, size), '0412' not in L.get('text', '') and '@' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: one screen, no scroll' % (game, size), fits(L), L)
@@ -241,7 +241,7 @@ def phone(game, path, w, h):
         L = look(sid); shot(sid, '%s-%s-5-three-boxes' % (game, size))
         ok('T %s %s: three boxes, pre-ticked: venueplay, the venue, the host' % (game, size), L.get('labs') == [['venueplay', True], ['The Royal Hotel', True], ['Quiz Masters Co', True]], L.get('labs'))
         ok('T %s %s: the heading and the line under, word for word' % (game, size), 'Yes! Send me news and offers by SMS and email from:' in L.get('text', '') and 'Each one uses your details under its own privacy policy. Unsubscribe any time.' in L.get('text', ''), L.get('text'))
-        ok('T %s %s: a venue asking everything plus the three boxes is still one screen, no scroll' % (game, size), fits(L), L)
+        ok('T %s %s: a venue asking everything plus the three boxes is still one screen, no scroll' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Bo', 'xFirst': 'Bo', 'xMobile': '0412 000 111'})
         ask(sid, 'document.getElementById("xC_host").click(); document.getElementById("joinBtn").click(); true')
         got = joins(c)

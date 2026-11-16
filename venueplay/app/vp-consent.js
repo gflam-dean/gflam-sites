@@ -101,19 +101,23 @@
     var wrap = document.createElement("div");
     wrap.className = "vpc3"; wrap.id = "xConsent3";
     var h = document.createElement("p");
-    h.className = "vpc3-head"; h.setAttribute("style", "margin:14px 0 0;font-size:15px;line-height:1.35;color:#fff;font-weight:700;text-align:left");
+    h.className = "vpc3-head"; h.setAttribute("style", "margin:12px 0 0;font-size:15px;line-height:1.35;color:#fff;font-weight:700;text-align:left");
     h.textContent = THREE_HEAD;
     wrap.appendChild(h);
     _three = [];
+    /* the boxes side by side, wrapping (one screen, no scroll, with a venue that asks for everything) */
+    var row = document.createElement("div");
+    row.className = "vpc3-row"; row.setAttribute("style", "display:flex;flex-wrap:wrap;gap:0 18px");
+    wrap.appendChild(row);
     for (var i = 0; i < consent.parties.length && i < 3; i++) {
       var pt = consent.parties[i] || {}, party = String(pt.party || "");
       if (party !== "venueplay" && party !== "venue" && party !== "host") continue;
       var nm = String(pt.name == null ? "" : pt.name).replace(/\s+/g, " ").trim() || (party === "venue" ? NO_NAME : party);
       var l = tick("xC_" + party, nm);
-      l.setAttribute("style", "margin-top:8px");
+      l.setAttribute("style", "margin-top:8px;align-items:center");
       var inp = l.querySelector("input");
       inp.checked = true; inp.setAttribute("data-party", party);
-      wrap.appendChild(l);
+      row.appendChild(l);
       _three.push({ party: party, el: inp });
     }
     var n = document.createElement("p");
