@@ -609,6 +609,8 @@
   "whats-on-foolproof-in-chrome.test.py",
   "whats-on-in-chrome.test.py",
   "winback-unsubscribe.test.js",
+  "winner-pin-in-chrome.test.py",
+  "winner-pin.test.js",
   "wizard-r10-in-chrome.test.py",
   "wizard-v2-in-chrome.test.py"
  ]

@@ -58,6 +58,11 @@
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
   .psub{color:var(--muted);font-size:14px}
   .pnote{font-size:14px;color:var(--faint);margin-top:16px}
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): big enough for a host to read across a table. On the new-look
+     YOU WON it takes the place of "Show this screen to the host to claim", under the prize. */
+  .winpin{font-family:'Manrope',sans-serif;font-size:17px;line-height:1.45;color:var(--text);margin:14px auto 4px;max-width:22em}
+  .winpin b{font-size:22px;letter-spacing:.06em;color:var(--win);white-space:nowrap}
+  .stagewin .winpin{margin:8px auto 2px}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
@@ -540,7 +545,8 @@
       <div class="vp-h">You won</div>
       <div class="yrule"></div>
       <div class="wprize" id="wonPrize">the prize</div>
-      <p class="vp-wait">Show this screen to the host to claim</p>
+      <p class="vp-wait" id="wonSub">Show this screen to the host to claim</p>
+      <div class="winpin hidden" id="wonPin"></div>   <!-- winner check: "Show this to the host: PIN 4821, card 332" (vp-winpin.js); never on a TV -->
       <div class="sharenote hidden" id="wonShare"></div>
       <div class="sharenote hidden" id="wonAlso"></div>
       <div class="wcard">Card <b id="wonCard">#000</b></div>
@@ -614,6 +620,7 @@
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN on the winner's phone (5 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -998,7 +1005,7 @@
   // came back with no proof. Save it, restore it on reconnect, and clear it the moment a new round
   // starts. Two-hour expiry so last night's win never resurfaces.
   function winKey(room){ return "vp-win-"+(room||P.room||""); }
-  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
+  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, pattern:P.wonPattern||"", prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
   function loadWin(room){ try{ var raw=localStorage.getItem(winKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearWin(room); return null; } return w; }catch(e){ return null; } }
   function clearWin(room){ try{ localStorage.removeItem(winKey(room)); }catch(e){} }
   /* A stage win (a line while the game plays on to the house) is remembered the same way, so a
@@ -1155,6 +1162,8 @@
     if(P.won){
       $("wonPrize").textContent=P.prize;
       $("wonCard").textContent="#"+(P.wonCardNo||"");
+      paintPin($("wonPin"), P.wonCardNo);
+      var _ws=$("wonSub"); if(_ws) _ws.classList.toggle("hidden", !!P.pin);
       // A tie splits the prize. Say so on the phone, so nobody walks to the bar expecting the lot.
       var sw=$("wonShare");
       if(sw){
@@ -1555,6 +1564,22 @@
     return "Mark off your numbers as they are called. Hit BINGO when "+(many?"one of your tickets":"your ticket")+" completes <b>"+esc(pn)+"</b>."+one;
   }
   function nameList(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026). Asked of the Worker the moment this phone wins, for its
+     own session's newest bingo game, and written beside the card number. Never sent anywhere: the
+     channel reaches the TV, and the PIN must never be on a TV. No answer = the win screen as before. */
+  var _pinAsk=0;
+  /* EACH PRIZE HAS ITS OWN PIN (Dean, 5 Nov 2026): stage is the pattern this phone won (a line, then the
+     house on the same tickets, are two prizes and two PINs). */
+  function askPin(stage){
+    if(!P.token || !stage || !window.VPWinPin || /[?&]demo=1/.test(location.search)) return;
+    var mine=++_pinAsk; P.pin="";
+    VPWinPin.forPlayer(VP_GAME_API, P.token, { bingo:true, stage:String(stage) }).then(function(pin){
+      if(mine!==_pinAsk || !pin) return;
+      P.pin=pin;
+      if(P.won) route(); else if(P.stageWins.length){ if(P.cards.length) renderCards(); else renderStageWin(); }
+    });
+  }
+  function paintPin(el, cardNo){ if(el && window.VPWinPin) VPWinPin.paint(el, P.pin, cardNo ? "card "+cardNo : ""); }
   function renderStageWin(){
     var box=$("stageWin"); if(!box) return;
     if(P.stageWins.length){
@@ -1564,6 +1589,7 @@
       if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return patName(x.pattern, x.pattern); }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
       h+="<small>Keep playing for "+esc(patName(P.pattern, "the next prize"))+" on the same tickets.</small>";
       box.innerHTML=h; box.className="stagewin";
+      if(P.pin){ var _pl=document.createElement("div"); _pl.className="winpin"; paintPin(_pl, w.cardNo); box.insertBefore(_pl, box.children[1]||null); }
     } else if(P.stageNote){
       box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(patName(P.pattern, "the next prize"))+". Same tickets, keep marking.</span>";
       box.className="stagewin others";
@@ -2235,6 +2261,7 @@
         if(me){
           P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
           P.stageNote="";
+          askPin(m.pattern);   // winner check: this prize's own PIN (Dean, 5 Nov 2026)
           if(!_seen) celebrateStage();
         } else {
           P.stageNote=esc(list(names))+" won "+esc(pn)+".";
@@ -2243,7 +2270,7 @@
         if(P.cards.length){ renderCards(); show("vCard"); } else { renderStageWin(); }
       } else {
         P.doneAt=Date.now();   // the finished game's screen leaves by itself later (doneSweep)
-        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
+        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; P.wonPattern=m.pattern||""; saveWin(); askPin(P.wonPattern); route(); celebrate(); }
         else {
           var first=ws.filter(function(w){ return w.pid!==P.pid; })[0]||ws[0];
           P.lostBy=esc(list(names))+" won "+esc(pn)+(first && first.cardNo ? " on card #"+esc(String(first.cardNo)) : "")+".";
@@ -2316,9 +2343,9 @@
     // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
     // message (cards / started) clears it below, so it never lingers into the next game.
     var _w=loadWin(room);
-    if(_w && P.joined){ P.won=true; P.doneAt=_w.ts||Date.now(); P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
+    if(_w && P.joined){ P.won=true; P.doneAt=_w.ts||Date.now(); P.wonCardNo=_w.cardNo||0; P.wonPattern=_w.pattern||""; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; askPin(P.wonPattern); route(); }
     var _sw=loadStage(room);
-    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; }
+    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; if(P.stageWins.length && !P.won) askPin(P.stageWins[P.stageWins.length-1].pattern); }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }

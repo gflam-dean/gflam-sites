@@ -677,6 +677,8 @@ export default {
       if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
       if (method === 'GET'  && path === '/player/score')       return await handlePlayerScore(request, env, json);
       if (method === 'POST' && path === '/player/alive')       return await handlePlayerAlive(request, env, json);
+      if (method === 'POST' && path === '/player/winner-pin')  return await handlePlayerWinnerPin(request, env, json);   // winner check: the round PIN, never to a TV
+      if (method === 'POST' && path === '/host/winner-pin')    return await handleHostWinnerPin(request, env, json);
       if (method === 'POST' && path === '/host/claim/resolve') return await handleClaimResolve(request, env, json);
       if (method === 'POST' && path === '/host/paper/print')   return await handlePaperPrint(request, env, json);
       if (method === 'POST' && path === '/host/paper/check')   return await handlePaperCheck(request, env, json);
@@ -10581,6 +10583,167 @@ function triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, ans
     pts = mult * (base + bonus);
   }
   return pts;
+}
+
+/* =====================================================================
+ * WINNER CHECK PIN (Dean, 4 Nov 2026: "just don't overcomplicate it")
+ * ---------------------------------------------------------------------
+ * A 4-digit PIN for each round, the same for every player in it and new every round. The winner's
+ * phone shows it beside their card or ticket number and the host console shows "Round PIN 4821", so
+ * a host running two games at once, or handed a screenshot from last round, can tell in a glance.
+ *
+ * NOTHING IS STORED. The PIN is an HMAC of the round's own id under a secret only this Worker holds,
+ * so the same round always gives the same PIN, the next round gives another, and nobody without the
+ * secret can work one out from anything a screen can see. No table, no column, no migration.
+ *
+ * NEVER ON A TV (Dean, 4 Nov 2026 evening). The PIN leaves this Worker in exactly two answers: to a
+ * host who is staff at the round's venue (/host/winner-pin) and to a player whose token is in the
+ * round's session AND whom the Worker's own record shows won it (/player/winner-pin, winPinPlayerWon).
+ * It never goes into an event, a room message or a broadcast,
+ * because every one of those reaches the TV. winner-pin.test.js holds both of these to account.
+ *
+ * A round is a vp_games row (trivia, musical) or a vp_bingo_draws row (number bingo: one draw is one
+ * game, line to house), and EACH PRIZE IN IT HAS ITS OWN PIN (Dean, 5 Nov 2026): the stage is the pattern
+ * being played (one line, two lines, full house...), so a game that carries on to the next prize gets a
+ * new PIN. Trivia has one prize, the final board (stage 'final'), and only 1st place gets it (Dean, 5 Nov).
+ * Raffles and members draws have no phone winner screen, so no PIN (Dean confirmed, 5 Nov).
+ * ===================================================================== */
+function winPinDigits(bytes) {
+  const n = ((bytes[0] << 24) >>> 0) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3];   // unsigned 32 bit
+  return String(n % 10000).padStart(4, '0');   // 2^32 over 10,000: the bias is under one in 400,000
+}
+/* The prize within the round. A console's own custom pattern ('c:<id>') is recorded on a bingo claim as
+   'custom', so both sides say 'custom'. Anything else is refused, never folded into another prize. */
+// 'any' is musical bingo's "Any line" (across, down or diagonal), the default for new venues since 11 Nov 2026.
+const WIN_PIN_STAGES = ['one', 'two', 'three', 'full', 'top', 'middle', 'bottom', 'corners', 'any', 'custom', 'final'];
+function winPinStage(s) {
+  let st = String(s == null ? '' : s).trim();
+  if (/^c:/.test(st)) st = 'custom';
+  if (WIN_PIN_STAGES.indexOf(st) < 0) throw httpError(400, 'Bad prize');
+  return st;
+}
+async function winnerPin(env, kind, roundId, stage) {
+  if (kind !== 'game' && kind !== 'bingo') throw httpError(400, 'Bad round');
+  assertUuid(roundId, 'round');
+  const st = winPinStage(stage);
+  const secret = env.SUPABASE_JWT_SECRET;
+  if (!secret) throw httpError(503, 'The round PIN is not available');
+  const te = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', te.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, te.encode('vp-winner-pin|' + kind + '|' + roundId + '|' + st));
+  return winPinDigits(new Uint8Array(sig));
+}
+// Which round and prize the caller means: {game_id, stage} for trivia and musical, {draw_id, stage} for bingo.
+function winPinRoundOf(b) {
+  const g = String((b && b.game_id) || '').trim(), d = String((b && b.draw_id) || '').trim();
+  const stage = winPinStage(b && b.stage);
+  if (g) { assertUuid(g, 'game_id'); return { kind: 'game', id: g, stage: stage }; }
+  if (d) { assertUuid(d, 'draw_id'); return { kind: 'bingo', id: d, stage: stage }; }
+  throw httpError(400, 'Missing game_id or draw_id');
+}
+
+async function handleHostWinnerPin(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const round = winPinRoundOf(await readJson(request));
+  if (round.kind === 'bingo') {
+    await bingoDrawForStaff(env, authUserId, round.id);          // ENFORCED: staff at the draw's venue
+  } else {
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(round.id) + '&select=id,session_id&limit=1');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    const session = await getSession(env, games[0].session_id);
+    await requireStaff(env, authUserId, session.venue_id);        // ENFORCED: staff at the game's venue
+  }
+  return json({ pin: await winnerPin(env, round.kind, round.id, round.stage) });
+}
+
+/* ONLY A WINNER IS GIVEN THE PIN (security review, 5 Nov 2026). The PIN is the same for everybody in
+   the round (Dean's rule), so handing it to any phone in the room would let a non-winner dress up a
+   screen. The phone asks the moment it wins, and this answers only once the Worker's OWN record says
+   it did: number bingo, a claim the host confirmed on this draw, for this prize's pattern, from this
+   phone; musical, a valid claim on this game for this player whose verified cells are exactly that
+   prize's shape (winPinMusicCellsAre); trivia, 1st on this game's board
+   once the last question is revealed. Anything else is 403 and the phone shows its win screen as before. */
+// The cells checkMusicPattern returns for each prize: one row; two whole rows; the four corners; all 25.
+function winPinMusicCellsAre(stage, cells) {
+  if (!Array.isArray(cells)) return false;
+  const c = cells.map((x) => parseInt(x, 10)).filter((x) => x >= 0 && x < 25).sort((a, b) => a - b);
+  if (new Set(c).size !== cells.length) return false;
+  const isRow = (a) => a.length === 5 && a[0] % 5 === 0 && a.every((x, i) => x === a[0] + i);
+  if (stage === 'one') return isRow(c);
+  if (stage === 'any') return c.length === 5 && MUSIC_ANY_LINES.some((l) => l.slice().sort((x, y) => x - y).join(',') === c.join(','));   // a row, column or diagonal
+  if (stage === 'two') return c.length === 10 && isRow(c.slice(0, 5)) && isRow(c.slice(5));
+  if (stage === 'corners') return c.join(',') === '0,4,20,24';
+  if (stage === 'full') return c.length === 25;
+  return false;
+}
+
+async function winPinPlayerWon(env, player, kind, roundId, game, stage) {
+  if (kind === 'bingo') {
+    const me = await sbGet(env, 'vp_players', 'id=eq.' + enc(player.id) + '&select=device_id&limit=1');
+    const dev = me.length ? me[0].device_id : null;
+    if (!dev) return false;
+    // THIS prize: a confirmed claim on this pattern. A line won earlier does not open the house's PIN.
+    const won = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(roundId) + '&device_id=eq.' + enc(dev) +
+      '&pattern=eq.' + enc(stage) + '&status=eq.confirmed&select=id&limit=1');
+    return won.length > 0;
+  }
+  if (game.format === 'musical_bingo') {
+    if (stage === 'final') return false;   // trivia's stage, never a musical prize
+    /* THIS prize, from the server's own record (security review, 5 Nov 2026): a musical claim keeps the
+       cells this Worker verified (checkMusicPattern), and they are exactly the prize's shape. The phone
+       naming a prize is never enough on its own: a line winner cannot open the two-lines or house PIN. */
+    const won = await sbGet(env, 'vp_claims', 'game_id=eq.' + enc(roundId) + '&player_id=eq.' + enc(player.id) +
+      '&auto_verdict=eq.valid&status=in.(pending,confirmed)&select=winning_cells&limit=20');
+    return won.some((c) => winPinMusicCellsAre(stage, c.winning_cells));
+  }
+  if (game.format === 'trivia') {
+    if (stage !== 'final') return false;   // trivia has one prize, the final board
+    const cfg = game.config || {};
+    const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(roundId) + '&select=current_seq,phase&limit=1');
+    const cur = tg.length ? tg[0] : null;
+    const seqs = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : null;
+    const pos = cur ? (seqs ? seqs.indexOf(cur.current_seq) + 1 : Number(cur.current_seq) || 0) : 0;
+    const total = seqs ? seqs.length : Number(cfg.question_count) || 0;
+    const over = game.status !== 'running' || (!!cur && cur.phase === 'revealed' && total > 0 && pos >= total);
+    if (!over) return false;
+    const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+      'game_id=eq.' + enc(roundId) + '&select=player_id,points&order=points.desc&limit=1000');
+    for (let i = 0; i < board.length; i++) {
+      if (board[i].player_id !== player.id) continue;
+      let rank = i + 1;   // equal points share a place, as on the wall and in /player/score
+      for (let j = i - 1; j >= 0 && (board[j].points || 0) === (board[i].points || 0); j--) rank = j + 1;
+      // 1st place only, ties included (Dean, 5 Nov 2026), and never on 0 points: a night where nobody scored has
+      // no winner (live play, 15 Nov 2026), so no PIN either.
+      return rank === 1 && (Number(board[i].points) || 0) > 0;
+    }
+    return false;
+  }
+  return false;   // raffles and members draws have no phone winner
+}
+
+async function handlePlayerWinnerPin(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  const b = await readJson(request);
+  let round, game = null;
+  if (b && b.bingo === true) {
+    /* A bingo phone does not hold the draw id (its tickets come from the host over the channel), so it
+       asks for its own session's newest draw. Only a draw in the player's session can answer. */
+    const draws = await sbGet(env, 'vp_bingo_draws',
+      'session_id=eq.' + enc(player.session_id) + '&select=id&order=created_at.desc&limit=1');
+    if (!draws.length) return json({ error: 'No bingo game here yet' }, 404);
+    round = { kind: 'bingo', id: draws[0].id, stage: winPinStage(b.stage) };
+  } else {
+    round = winPinRoundOf(b);
+    if (round.kind !== 'game') return json({ error: 'Bad round' }, 400);
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(round.id) + '&select=id,session_id,status,format,config&limit=1');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    game = games[0];
+    if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);   // membership first
+  }
+  if (!(await winPinPlayerWon(env, player, round.kind, round.id, game, round.stage))) {
+    return json({ error: 'The PIN is for the winner of this round' }, 403);
+  }
+  return json({ pin: await winnerPin(env, round.kind, round.id, round.stage) });
 }
 
 async function handlePlayerScore(request, env, json) {

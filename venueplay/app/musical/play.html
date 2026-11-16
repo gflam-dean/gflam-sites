@@ -40,6 +40,9 @@
 
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
   .psub{color:var(--muted);font-size:16px}
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): big enough for a host to read across a table. */
+  .winpin{font-size:17px;line-height:1.45;color:var(--text);margin:8px auto 4px;max-width:22em}
+  .winpin b{font-size:22px;letter-spacing:.06em;color:var(--win);white-space:nowrap}
   .pnote{font-size:15px;color:var(--faint);margin-top:16px;line-height:1.45}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
@@ -383,6 +386,7 @@
       <div class="yrule"></div>
       <div class="wprize" id="wonPrize">the prize</div>
       <p class="vp-wait" id="wonSub">Show your card to the host to claim</p>
+      <div class="winpin hidden" id="wonPin"></div>   <!-- winner check: "Show this to the host: PIN 4821, card 17" (vp-winpin.js); never on a TV -->
       <div class="wcard">Card <b id="wonCard">#000</b></div>
     </div>
   </div>
@@ -456,6 +460,7 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN on the winner's phone (5 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>
@@ -712,6 +717,17 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
+  /* The winner check PIN, asked of the Worker when this phone wins. Never sent anywhere: the channel
+     reaches the TV, and the PIN must never be on a TV. No answer = the win screen as before. */
+  var _pinAsk=0;
+  function askPin(){
+    if(!P.token || !P.gameId || !window.VPWinPin || /[?&]demo=1/.test(location.search)) return;
+    var mine=++_pinAsk, gid=P.gameId, st=P.pattern||"one"; P.pin="";   // this prize's own PIN (Dean, 5 Nov 2026)
+    VPWinPin.forPlayer(VP_GAME_API, P.token, { game_id:gid, stage:st }).then(function(pin){
+      if(mine!==_pinAsk || !pin || gid!==P.gameId) return;
+      P.pin=pin; if(P.won) route();
+    });
+  }
   var END_LEAVE_MS=20000, _endLeaveT=null;   // after End game, the won/lost screen stays this long, then the lobby
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } frame(which); if(which==="vCard") sizeNowStart(); }
   /* ROW TWO OF THE HEADER: the pattern pill and the prize, on the lobby, the code-known join steps and the card;
@@ -739,6 +755,10 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;   // the card number, so the host can check it (two games at once)
       // Two people got there on the same song: say so, so nobody is surprised at the host.
       $("wonSub").textContent = P.split ? "You share this one. Show your card to the host to claim." : "Show your card to the host to claim";
+      /* THE WINNER CHECK PIN (Dean, 4 Nov 2026) beside the card number, from the Worker for THIS game.
+         The share line stays (it says something the PIN does not); a lone winner's line gives way to it. */
+      if(window.VPWinPin) VPWinPin.paint($("wonPin"), P.pin, P.cardNo ? "card "+P.cardNo : "");
+      if(P.pin && !P.split) $("wonSub").classList.add("hidden"); else $("wonSub").classList.remove("hidden");
       show("vWon"); askAfterClaim("vWon"); return;   // after the claim, not during it (287.5)
     }
     if(P.ended){
@@ -1481,7 +1501,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       // pids carries a split (two people on the same song); pid alone is an older host.
       var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);
       closePlayedSheet();
-      if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); route(); celebrate(); }
+      if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); askPin(); route(); celebrate(); }
       else { P.ended=true; P.noWinner=false; $("lostName").textContent=(m.name||"Someone"); route(); }   // the line under it reads "took this one.", so no " won"
     }
     else if(m.t==="carryon"){   // progressive round: same card, new pattern + prize, everyone plays on
