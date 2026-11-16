@@ -355,6 +355,10 @@
   "checks": 40,
   "counted_by": "lines"
  },
+ "tools/look-publish.test.py": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/migrations-parse.test.py": {
   "checks": 21,
   "counted_by": "lines"
@@ -1248,7 +1252,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 97,
+  "checks": 103,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1436,7 +1440,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 77,
+  "checks": 91,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {
@@ -1911,6 +1915,10 @@
   "checks": 34,
   "counted_by": "lines"
  },
+ "venueplay-backend/app/look-page.test.js": {
+  "checks": 58,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/members/draw-again.test.js": {
   "checks": 15,
   "counted_by": "lines"
@@ -2317,6 +2325,10 @@
  },
  "tools/staging/db-functions-on-test.test.py": {
   "checks": 130,
+  "counted_by": "lines"
+ },
+ "tools/look-page-in-chrome.test.py": {
+  "checks": 32,
   "counted_by": "lines"
  }
 }

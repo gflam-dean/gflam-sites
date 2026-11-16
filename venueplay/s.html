@@ -19,13 +19,14 @@
      open is recorded for HQ's history. The text code to their own mobile is what signs anyone in. -->
 <script>
 (function () {
-  var m = /^\/s\/([A-Za-z0-9]{12})\/?$/.exec(location.pathname || '');
-  var code = m ? m[1].toUpperCase() : '';
+  /* /s/<12 letters>/<tag>: the tag says which message the link was in (channel + step, 16 Nov 2026); only two letters. */
+  var m = /^\/s\/([A-Za-z0-9]{12})(?:\/([a-z0-9]{2}))?\/?$/.exec(location.pathname || '');
+  var code = m ? m[1].toUpperCase() : '', via = (m && m[2]) || '';
   if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/.test(code)) { location.replace('/app/'); return; }
   try { sessionStorage.removeItem('vpShortAttach'); sessionStorage.removeItem('vpShortExistingOnly'); } catch (e) {}
   var done = false, go = function (u) { if (done) return; done = true; location.replace(u || '/app/'); };
   setTimeout(function () { go('/app/'); }, 8000);   // the Worker not answering: the normal sign-in, never a dead page
-  fetch('https://api.venueplay.com.au/short/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }) })
+  fetch('https://api.venueplay.com.au/short/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(via ? { code: code, via: via } : { code: code }) })
     .then(function (r) { return r.json(); })
     .then(function (j) {
       var to = (j && typeof j.go === 'string' && /^\/app\/(\?signin=sms(#m=04\d{8})?)?$/.test(j.go)) ? j.go : '/app/';
