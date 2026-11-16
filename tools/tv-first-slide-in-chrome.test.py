@@ -215,7 +215,13 @@ def main():
         ok('once it answers, the venue\'s own slide is lit', got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show")&&document.querySelector("#tvAds .ad.show").innerText'))
         fname = r.ask(sid, '(function(){var n=document.querySelector("#tvFloor .fl-done");return n?n.textContent:"";})()')
         ok('and the floor under it now says "Waiting for the host" under the logo', fname == 'Waiting for the host', fname)
-        ok('and the floor goes on to its finished line', DONE in (wall(r, sid)[-1][2] or '').upper() and READY not in (wall(r, sid)[-1][2] or '').upper(), wall(r, sid)[-1:])
+        # The samples from AFTER the slide was seen lit, not the last one taken: on a loaded machine the 100 ms sampler can lag
+        # the page, and the last sample was still the loading card from before the answer (Mac after-push gate, 16 Nov 2026,
+        # [6314, 'TEXT Setting up this screen']). The page drops the loading line before it builds the slides (screenLoaded).
+        t_lit = r.ask(sid, 'Math.round(performance.now())')
+        r.until(sid, '(function(w){ return !!w && w.length>0 && w[w.length-1][0] >= %d; })(window.__wall)' % (t_lit or 0), 10)
+        after = [x for x in wall(r, sid) if isinstance(t_lit, int) and x[0] >= t_lit]
+        ok('and the floor goes on to its finished line', len(after) >= 1 and all(DONE in (x[2] or '').upper() and READY not in (x[2] or '').upper() for x in after), [t_lit, after[:2], wall(r, sid)[-1:]])
         r.close_tab(tid)
         r.close()
 
