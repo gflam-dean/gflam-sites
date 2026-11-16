@@ -15,7 +15,12 @@
    Worker at all, even one typed into the box. CONSENT below is the Worker's VPB_HOST_UPDATES_CONSENT word for
    word, because the words stored with the consent must be the words ticked
    (tools/test-host-updates-optin.js holds them equal). Everything a person reads is set with textContent.
-   No em dashes in anything a person reads. */
+   No em dashes in anything a person reads.
+
+   NEVER OVER A GAME (live play, 15 Nov 2026): the card came up over the bingo console mid-game. deps.busy, when the
+   console gives one, says a game is running here or on another console on this device. While it says so the card is
+   not asked for and not opened; it waits for a calm moment (the lobby, idle, after the game). A card already up when a
+   game starts steps out of the way, unanswered, and comes back once the game is over. */
 (function (root) {
   "use strict";
   var BILLING_API = "https://api.venueplay.com.au";
@@ -32,6 +37,15 @@
 
   function wants(ctx) {
     return !!(ctx && ctx.authed && !ctx.isAdmin && ctx.scope === "staff" && ctx.user && ctx.user.id && ctx.staff && ctx.staff.length);
+  }
+  function busyNow(deps) { try { return !!(deps && typeof deps.busy === "function" && deps.busy()); } catch (e) { return false; } }
+  /* Resolves once the console is calm (at once when it already is); checks every few seconds, for up to 12 hours. */
+  function whenCalm(deps) {
+    if (!busyNow(deps)) return Promise.resolve(true);
+    var every = deps.calmEvery || 3000, left = Math.ceil(12 * 60 * 60 * 1000 / every);
+    return new Promise(function (done) {
+      (function wait() { root.setTimeout(function () { if (!busyNow(deps)) done(true); else if (--left > 0) wait(); else done(false); }, every); })();
+    });
   }
   function validEmail(raw) { var e = String(raw || "").trim().toLowerCase(); return e.length <= 254 && EMAIL_RE.test(e) ? e : ""; }
 
@@ -52,9 +66,13 @@
     deps = deps || {};
     if (!wants(ctx) || (shownThisLoad && !deps.again)) return Promise.resolve(null);
     shownThisLoad = true;
-    return post(deps, "/account/updates-ask", {}).then(function (r) {
-      return (r && r.ask === true) ? open(ctx, deps) : null;
-    }, function () { return null; });
+    return whenCalm(deps).then(function (calm) {
+      if (!calm) return null;
+      return post(deps, "/account/updates-ask", {}).then(function (r) {
+        if (!(r && r.ask === true)) return null;
+        return whenCalm(deps).then(function (c2) { return c2 ? open(ctx, deps) : null; });   // a game may have started while we asked
+      }, function () { return null; });
+    });
   }
 
   function open(ctx, deps) {
@@ -92,6 +110,13 @@
     var msg = el("p", "margin:10px 0 0;font-size:14px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); msg.id = "vpUoMsg"; msg.setAttribute("role", "status");
     card.appendChild(msg);
     doc.body.appendChild(shell);
+    /* A game starting under the card: it steps out of the way, unanswered, and is back after the game. */
+    if (deps.busy && root.setInterval) {
+      var watch = root.setInterval(function () {
+        if (!shell.parentNode) { root.clearInterval(watch); return; }
+        shell.style.display = busyNow(deps) ? "none" : "";
+      }, deps.calmEvery || 1000);
+    }
 
     var busy = false;
     function close() { if (shell.parentNode) shell.parentNode.removeChild(shell); }

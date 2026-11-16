@@ -288,6 +288,7 @@
   "old-tv-in-chrome.test.py",
   "old-tv-syntax.test.py",
   "older TV engines get the walls in pixels they can read, and a modern one gets the page exactly as shipped",
+  "older-faults-tue17-in-chrome.test.py",
   "on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging's own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched",
   "on staging (VP_ENV) every send host, the SMS hook and any write to a live venueplay address is answered \"sent\" and kept in an outbox; a live Stripe key, the live database address or a real-looking send key makes the Worker answer 503; the test Stripe key and the test database work; on live only a message addressed purely to +61 491 57x xxx or @example.invalid is held back, everything else goes untouched; the block is identical in all three Workers and each handler calls it first",
   "one email, one bill, and the promised free month (46 checks)",

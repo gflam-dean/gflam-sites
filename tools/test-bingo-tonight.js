@@ -29,7 +29,15 @@ function boot(P, withModule) {
   route();
   return { $: $, shown: shown, drawn: drawn, timers: timers };
 }
-var base = { room: 'ACDE23', joined: true, name: 'Ann', cards: [], stageWins: [], active: false };
+var base = { room: 'ACDE23', joined: true, name: 'Ann', cards: [], stageWins: [], active: false, fmtKnown: true };   // fmtKnown: the first lookup has answered (bingo)
+/* NOT "BINGO" UNTIL IT IS BINGO (live play, 15 Nov 2026): a phone in, whose first lookup has not answered yet, waits behind
+   "Finding tonight's game here" and names no game; a trivia night moves it on before bingo is ever named. */
+var pend = JSON.parse(JSON.stringify(base)); pend.fmtKnown = false;
+var b0 = boot(pend, true);
+ok('before the first lookup answers: no lobby drawn, no bingo block, "Finding tonight\'s game here" up, on the lobby view',
+   b0.drawn.length === 0 && b0.$('waitIn').cls.hidden === true && b0.$('vpTonight').cls.hidden === true && b0.$('waitFind').cls.hidden === false && b0.shown[0] === 'vWait', JSON.stringify({ drawn: b0.drawn, shown: b0.shown }));
+ok('and it asks for nothing yet (the week and the ad wait for the lobby)', b0.timers.length === 0, b0.timers);
+ok('the holding block names no game', /<div class="vp-in hidden" id="waitFind" role="status">[^\n]*Finding tonight&#39;s game here&hellip;<\/p><\/div>/.test(PLAY) && !/id="waitFind"[^\n]*[Bb]ingo/.test(PLAY));
 var b = boot(JSON.parse(JSON.stringify(base)), true);
 ok('the plain lobby is drawn by the module with this phone\'s game ("bingo") and its name, the old block hidden', b.drawn.length === 1 && b.drawn[0].me === 'bingo' && b.drawn[0].name === 'Ann' && b.$('waitIn').cls.hidden === true && b.$('vpTonight').cls.hidden === false && b.shown[0] === 'vWait', JSON.stringify(b.drawn));
 ok('a phone already in asks once for the week and the ad, after the seat', b.timers.length === 1 && b.timers[0] === 1500);

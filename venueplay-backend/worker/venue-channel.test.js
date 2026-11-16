@@ -276,6 +276,7 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
       // the poll acts on the state's phone rules each time (16 Oct 2026); none apply here
       function showPaperBingo() {} function hidePaperBingo() {} function ageAnswer() {} function ageClear() {}
       function setInterval() {}
+      function fmtSoon() {} function fmtSettled() {}   // the lobby's "which game is on" wait (15 Nov 2026): nothing to paint here
       var fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(answer); } }); };
       eval(liftFrom(PLAY, 'venueCode', 'play.html'));
       var _shared = {};   // askOnce shares one /play/live ask between callers 250 ms apart (31 Oct 2026)
