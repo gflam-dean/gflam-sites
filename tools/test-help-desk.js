@@ -1347,7 +1347,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   t = lastT();
   check('a known prospect writing in (their address on HQ > Prospects) gets NO auto reply, even at support@', toSender('manager@sirloins.com.au').length === 0, sent.map(function (m) { return m.to; }));
   check('and it is a Sales ticket, new for HQ, on their prospect venue, noted "No auto reply: prospect"', t.category === 'sales' && t.status === 'new' && t.venue_id === VP_ && hasNote(t, 'No auto reply: prospect') && !hasNote(t, 'Acknowledgement sent'), [t, notesOf(t)]);
-  check('HQ still hears about it (the staff alert goes to sales@, our own address, never to them)', sent.length === 1 && sent[0].to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return m.to; }));
+  check('HQ still hears about it (the staff alert goes to sales@, our own address, never to them), and the alert names their venue', sent.length === 1 && sent[0].to.join() === 'sales@venueplay.com.au' && (sent[0].subject + sent[0].text).indexOf('The Sirloin Club') !== -1, sent.map(function (m) { return [m.to, m.subject]; }));
   var lst = await call(helpAdminList, ADMIN, {});
   var got = await call(helpAdminGet, ADMIN, { id: t.id });
   check('HQ\'s list and the ticket itself say lead (shown as Interested lead); other tickets do not', lst.body.tickets.filter(function (x) { return x.id === t.id; })[0].lead === true && got.body.ticket.lead === true && lst.body.tickets.filter(function (x) { return x.id !== t.id; }).every(function (x) { return x.lead === false; }), [lst.body.tickets.map(function (x) { return [x.ticket_no, x.lead]; }), got.body.ticket && got.body.ticket.lead]);
