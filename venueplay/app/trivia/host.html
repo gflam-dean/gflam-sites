@@ -160,8 +160,8 @@
   .btnrow{display:flex;gap:10px;margin-top:12px}
   .btnrow .btn{flex:1}
 
-  /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
-     and while the host is scrolled down mid-round. hostError() is the ONLY error surface:
+  /* Host-visible error bar. hostError() moves it under the sticky header, in the page flow (placeErrBar),
+     and scrolls to the top so it is on screen in every view. hostError() is the ONLY error surface:
      the small status pill is for connection state only. */
   .errbar{display:none;background:rgba(255,45,85,.16);border-top:1px solid rgba(255,77,109,.55)}
   .errbar.show{display:block}
@@ -170,6 +170,7 @@
   .errbar .ex{flex:none;font-family:inherit;background:none;border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#FFD0DA;font-size:11.5px;font-weight:700;padding:5px 10px;cursor:pointer}
   .errbar .ex:hover{border-color:rgba(255,255,255,.5)}
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
+  @media (max-width:480px){ .einner{padding:9px 14px;gap:10px} .errbar .etxt{font-size:13.5px;line-height:1.4} }
 
   .hidden{display:none!important}
 
@@ -674,23 +675,29 @@
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
-    /* Lift it out of the header. The header is position:sticky with z-index 20, which creates a
-       stacking context, so nothing inside it can ever paint above the carry-on or overage modal
-       at z-index 60: a failure raised while a modal was open was hidden under the scrim and the
-       host saw a button that simply did nothing. Moved to <body>, it is above everything. */
-    if(b.parentNode !== document.body){
-      document.body.appendChild(b);
-      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
-      /* Sit BELOW the header, not on top of it. This bar's only background is a 16% pink tint: it
-         looked solid purely because the header behind it is opaque. At top:0 over <body> it drew
-         over the "Games" link and the status pill, and being fixed it swallowed the clicks too. */
-      var _hd=document.querySelector("header");
-      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
-      b.style.background="#2A0B14";
-      b.style.backdropFilter="blur(8px)";
-    }
+    placeErrBar(b);
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  /* WHERE THE RED BAR SITS. Lifted out of the header: the header is position:sticky with z-index 20, which makes a
+     stacking context, so nothing inside it can paint above the carry-on or overage modal (z-index 60), and a failure
+     raised while a modal was open was hidden under the scrim. So:
+       - no modal open: IN THE PAGE FLOW, straight under the header, pushing the page down (job "Trivia console: error
+         bar at 375px", 9 Nov 2026: fixed over the page, at 375 px it covered two labels until Dismiss);
+       - a modal open: fixed above everything, under the header, as before, so the host still reads it. */
+  function placeErrBar(b){
+    var _hd=document.querySelector("header");
+    var modal=[].some.call(document.querySelectorAll(".vp-modal"), function(m){ return !m.classList.contains("hidden") && m.getBoundingClientRect().height>0; });
+    if(_hd && _hd.parentNode===document.body && b.previousElementSibling!==_hd) document.body.insertBefore(b, _hd.nextSibling);
+    else if(!_hd && b.parentNode!==document.body) document.body.insertBefore(b, document.body.firstChild);
+    b.style.background="#2A0B14";
+    if(modal){
+      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
+      b.style.backdropFilter="blur(8px)";
+    } else {
+      b.style.position="relative"; b.style.left=""; b.style.right=""; b.style.top=""; b.style.zIndex="19"; b.style.backdropFilter="";
+    }
   }
   function clearHostError(){ _errSticky=false; var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
   /* AN ERROR COMES DOWN WHEN THE HOST DOES SOMETHING, NOT WHEN A BACKGROUND CALL WORKS (live play

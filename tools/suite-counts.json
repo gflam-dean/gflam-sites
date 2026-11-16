@@ -2306,5 +2306,9 @@
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
   "counted_by": "lines"
+ },
+ "tools/trivia-errbar-flow-in-chrome.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
  }
 }
