@@ -839,6 +839,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-failed-card-left.js": {
+  "checks": 23,
+  "counted_by": "lines"
+ },
  "tools/test-fallback-switch.js": {
   "checks": 14,
   "counted_by": "lines"

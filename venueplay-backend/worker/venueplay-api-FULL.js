@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:10 · f6e9942b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 14:38 · b30ff9b1';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -12434,8 +12434,22 @@ async function vpaEndAfterLastNight(env, customerId) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
     if (!venues || !venues.length) return;
-    let marked = 0, off = 0;
+    let marked = 0, off = 0, unpaid = 0;
     for (const v of venues) {
+      /* A FAILED CARD THAT STRIPE HAS GIVEN UP ON HAS LEFT TOO (Dean, INBOX 54.4 + job "Account after leaving, pause
+         or failed card", Thu 19 Nov). A venue switched off for non-payment while Stripe was still retrying stays off
+         when the subscription ends, but it is no longer waiting on a card: there is nothing left to pay into, so
+         invoice.paid can never switch it back on and "update your card" leads nowhere. It becomes 'ended' with
+         closed_at now, the same as a venue still on whose subscription Stripe ended (below): the 90-day clock starts
+         (sweepRetention in venueplay-game.js), Your account shows the left view with its kept-until date, and the
+         restart rules for an ended subscription apply. Every other switched-off venue (by hand, a chargeback, a
+         cancellation already ended) keeps its reason and its clock exactly as they were. */
+      if (v.status === 'suspended' && v.suspended_reason === 'nonpayment') {
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+          { suspended_reason: 'ended', closed_at: new Date().toISOString() });
+        unpaid++;
+        continue;
+      }
       if (v.status === 'suspended') continue;
       if (v.cancel_at_period_end) {
         await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
@@ -12447,11 +12461,11 @@ async function vpaEndAfterLastNight(env, customerId) {
         off++;
       }
     }
-    if (marked || off) {
+    if (marked || off || unpaid) {
       await vpaInsert(env, 'vp_admin_audit', {
         action: 'venue_subscription_ended',
         target: 'account:' + (acct && acct.id),
-        detail: { keeping_last_night: marked, switched_off_now: off, customer: customerId },
+        detail: { keeping_last_night: marked, switched_off_now: off, ended_after_failed_card: unpaid, customer: customerId },
       }, false).catch(() => {});
     }
   } catch (_) { /* never throw out of a webhook */ }
