@@ -2326,5 +2326,9 @@
  "tools/winner-pin-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"
+ },
+ "tools/trivia-finale-in-chrome.test.py": {
+  "checks": 69,
+  "counted_by": "lines"
  }
 }
