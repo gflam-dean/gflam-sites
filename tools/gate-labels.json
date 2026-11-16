@@ -356,6 +356,7 @@
   "pp-worker-15-oct.test.js",
   "prefs-shapes.test.py",
   "prospects-day21-in-chrome.test.py",
+  "prospects-delivery-in-chrome.test.py",
   "prospects-edit-in-chrome.test.py",
   "prospects-status-in-chrome.test.py",
   "purchase-raffle-in-chrome.test.py",

@@ -463,6 +463,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/prospects-delivery-in-chrome.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
  "tools/prospects-status-in-chrome.test.py": {
   "checks": 41,
   "counted_by": "lines"
@@ -1376,7 +1380,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 77,
+  "checks": 103,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {

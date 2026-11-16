@@ -385,6 +385,85 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
      in the card, e.g. inside prEsc, is not enough: that stayed green with the line switched off, 6 Nov). */
   check('HQ > Prospects has a Delivery line from the Worker\'s words', /\(p\.delivery && p\.delivery\.words \? '<div><span class="k">Delivery<\/span>/.test(src) && /prEsc\(p\.delivery\.words\)/.test(src));
 
+  section('6. Every email gets a chip, and a resend DRAFT waits for Dean (Jobs row 226, 16 Nov 2026)');
+  world(); N = 60;
+  var DAYMS = 86400000, vn = [];
+  for (var k6 = 0; k6 < 5; k6++) { r = await call('/admin/prospect', body({ send_in_minutes: 0 }), HQ); vn.push(r.body.venue); }
+  function wRow(v) { return DB.vp_prospect_welcomes.filter(function (w) { return w.venue_id === v.id; })[0]; }
+  function agoIso(d) { return new Date(Date.now() - d * DAYMS).toISOString(); }
+  function pOf(L2, v) { return prospects(L2).filter(function (p) { return p.venue_id === v.id; })[0] || {}; }
+  var bounced = vn[0], quiet = vn[1], fresh = vn[2], tapped = vn[3], follow = vn[4];
+  RESEND_EVENTS[wRow(bounced).resend_id] = 'bounced';
+  [quiet, tapped, follow].forEach(function (v) { RESEND_EVENTS[wRow(v).resend_id] = 'delivered'; });
+  RESEND_EVENTS[wRow(fresh).resend_id] = 'delivered';
+  [bounced, quiet, tapped, follow].forEach(function (v) { wRow(v).send_at = agoIso(4); });
+  DB.vp_prospects.forEach(function (pr) { if (pr.venue_id === tapped.id) pr.created_at = agoIso(6); });   // set up 6 days ago, tapped 3 days ago
+  DB.vp_admin_audit.push({ id: newId(), action: 'signin_link_used', target: 'venue:' + tapped.id, created_at: agoIso(3), detail: {} });
+  var sentBefore = sent.length;
+  var L6 = await call('/admin/prospects', {}, HQ);
+  check('every prospect with a welcome has a welcome chip in plain words', pOf(L6, bounced).emails && pOf(L6, bounced).emails[0].kind === 'welcome' && /^Bounced at testcharlie\.example/.test(pOf(L6, bounced).emails[0].words) && pOf(L6, quiet).emails[0].words === 'Delivered, link not opened', [pOf(L6, bounced).emails, pOf(L6, quiet).emails]);
+  var db0 = pOf(L6, bounced).resend_draft || {};
+  check('a bounced welcome has a resend DRAFT FOR DEAN, with words ready, and its address marked not usable', db0.reason === 'bounced' && db0.label === 'DRAFT FOR DEAN' && db0.address_ok === false && /Cheers,\nDean$/.test(db0.text || ''), db0);
+  var dq = pOf(L6, quiet).resend_draft || {};
+  check('a welcome delivered 4 days ago and never opened has a "never_opened" draft, address fine', dq.reason === 'never_opened' && dq.address_ok === true && /haven't logged in yet/.test(dq.text), dq);
+  check('NO draft when it was delivered today, or the link was opened', !pOf(L6, fresh).resend_draft && !pOf(L6, tapped).resend_draft, [pOf(L6, fresh).resend_draft, pOf(L6, tapped).resend_draft]);
+  check('drafts have no long dash and venueplay is lowercase', !/[\u2014\u2013]/.test(dq.text + db0.text) && !/VenuePlay/.test(dq.text + db0.text));
+  check('listing the drafts sent NOTHING (a draft never sends by itself)', sent.length === sentBefore, sent.slice(sentBefore));
+  var rd = function (v, o, h) { return call('/admin/prospect/resend-draft', Object.assign({ venue_id: v.id }, o), h === undefined ? HQ : h); };
+  var x6 = await rd(quiet, { decision: 'yes' }, {});
+  check('no HQ login: refused, nothing sent', x6.status === 401 && sent.length === sentBefore, x6);
+  x6 = await rd(quiet, { decision: 'yes' }, AP);
+  check('the autopilot key is not an HQ login: refused, nothing sent', (x6.status === 401 || x6.status === 403) && sent.length === sentBefore, x6);
+  x6 = await rd(bounced, { decision: 'yes' });
+  check('Yes on a bounced address is refused (change the address first), nothing sent', x6.status === 409 && /Edit details/.test(x6.body.error || '') && sent.length === sentBefore, x6);
+  x6 = await rd(fresh, { decision: 'yes' });
+  check('Yes where there is no draft is refused, nothing sent', x6.status === 409 && sent.length === sentBefore, x6);
+  x6 = await rd(quiet, { decision: 'yes', text: 'Hey there, this has a long dash \u2014 in it, so it must not go out.' });
+  check('words with a long dash are refused, nothing sent', x6.status === 400 && sent.length === sentBefore, x6);
+  x6 = await rd(quiet, { decision: 'yes', text: 'Hey Sam, edited by Dean. Your link is below and expires in {days} days.\n\nCheers,\nDean' });
+  var em = sent[sent.length - 1] || {};
+  check('Yes with Edit: the edited words go to their login address with a sign-in button', x6.status === 200 && sent.length === sentBefore + 1 && /^sam\d+@testcharlie\.example$/.test(String(em.to)) && /edited by Dean/.test(String(em.html || '')) && /app\/go#t=/.test(String(em.html || '')), [x6, em.to]);
+  check('...with the days filled in, not {days}', !/\{days\}/.test(String(em.html || '')) && /expires in 9\d days/.test(String(em.html || '')));
+  check('...and audited as prospect_resend_draft_sent, flagged edited', DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_resend_draft_sent' && a.target === 'venue:' + quiet.id && a.detail && a.detail.edited === true; }));
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('afterwards: the draft is gone and a chip says it went, "Sent, no bounce reported" (never "Delivered")', !pOf(L6, quiet).resend_draft && pOf(L6, quiet).emails[0].kind === 'prospect_resend_draft_sent' && pOf(L6, quiet).emails[0].words === 'Sent, no bounce reported', pOf(L6, quiet).emails);
+  DB.vp_admin_audit.push({ id: newId(), action: 'email_bounced', target: 'venue:' + quiet.id, created_at: new Date(Date.now() + 2000).toISOString(), detail: { address: pOf(L6, quiet).email, reason: '550 gone' } });
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('a bounce after the resend turns its chip red (bounced) and a new draft asks for a new address', pOf(L6, quiet).emails[0].state === 'bounced' && (pOf(L6, quiet).resend_draft || {}).reason === 'bounced' && pOf(L6, quiet).resend_draft.address_ok === false, [pOf(L6, quiet).emails[0], pOf(L6, quiet).resend_draft]);
+  x6 = await rd(follow, { decision: 'no' });
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('No hides the draft and is audited; nothing sent', x6.status === 200 && !pOf(L6, follow).resend_draft && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_resend_draft_dismissed' && a.target === 'venue:' + follow.id; }) && sent.length === sentBefore + 1, x6);
+  /* a follow-up Dean approved earlier: its chip follows the bounce record and the tap */
+  DB.vp_admin_audit.push({ id: newId(), action: 'prospect_nudge_sent', target: 'venue:' + tapped.id, created_at: agoIso(1), detail: { to: pOf(L6, tapped).email } });
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('a prospect with only a welcome has exactly one chip (the follow-up chips come from what was actually sent)', pOf(L6, follow).emails.length === 1 && pOf(L6, follow).emails[0].kind === 'welcome', pOf(L6, follow).emails);
+  var tp = pOf(L6, tapped).emails.filter(function (e) { return e.kind === 'prospect_nudge_sent'; })[0] || {};
+  check('a follow-up sent after the only tap is "Sent, no bounce reported", not opened', tp.state === 'sent' && tp.words === 'Sent, no bounce reported' && tp.label === 'Follow-up email', tp);
+  DB.vp_admin_audit.push({ id: newId(), action: 'signin_link_used', target: 'venue:' + tapped.id, created_at: new Date().toISOString(), detail: {} });
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('...and "Link opened, not signed in yet" once they tap after it', (pOf(L6, tapped).emails.filter(function (e) { return e.kind === 'prospect_nudge_sent'; })[0] || {}).state === 'opened');
+  var stq = DB.vp_venue_staff.filter(function (s) { return s.venue_id === quiet.id; })[0];
+  AUTH.filter(function (u) { return u.id === stq.auth_user_id; })[0].last_sign_in_at = new Date(Date.now() + 5000).toISOString();
+  L6 = await call('/admin/prospects', {}, HQ);
+  check('signed in: no draft, and every chip says Signed in', !pOf(L6, quiet).resend_draft && pOf(L6, quiet).emails.every(function (e) { return e.state === 'signed_in'; }), pOf(L6, quiet).emails);
+  x6 = await rd(quiet, { decision: 'yes' });
+  check('Yes after they signed in is refused, nothing sent', x6.status === 409 && sent.length === sentBefore + 1, x6);
+
+  section('7. The HQ pane draws the chips and the draft with Yes / Edit / No');
+  var PANE7 = readFile('venueplay/app/vp-prospects-hq.js');
+  var W7 = { VP: null, fetch: function () { return Promise.resolve({ status: 200, ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };
+  W7.document = { readyState: 'complete', getElementById: function () { return null; }, addEventListener: function () {} };
+  (new Function('window', PANE7))(W7);
+  var T7 = W7.VPProspects._t;
+  var card = T7.cardHtml({ venue_id: U(70), name: 'Chip <i>Hotel</i>', email: 'a@b.example', status: 'not_signed_in', created_at: '2026-11-10T00:00:00Z', days_since_setup: 6, sign_in_known: true,
+    emails: [{ kind: 'prospect_nudge_sent', label: 'Follow-up email', at: '2026-11-14T01:00:00Z', state: 'bounced', words: 'Bounced at b.example' }, { kind: 'welcome', label: 'Welcome email', at: '2026-11-10T01:00:00Z', state: 'delivered', words: 'Delivered, link not opened' }],
+    resend_draft: { reason: 'bounced', label: 'DRAFT FOR DEAN', to: 'a@b.example', address_ok: false, text: 'Hey there,\n\nline <b>two</b>', why: 'The email to a@b.example bounced.' } });
+  check('a chip per email, red for a bounce, the label and the Worker\'s words', /data-pr-mail="bounced"[^>]*><b>Follow-up email<\/b>[^<]*Bounced at b\.example/.test(card) && /data-pr-mail="delivered"[^>]*><b>Welcome email<\/b>[^<]*Delivered, link not opened/.test(card) && /prmail bad/.test(card), card);
+  check('the draft is labelled DRAFT FOR DEAN, escaped, with Yes / Edit / No and a "Draft waiting" badge', /DRAFT FOR DEAN/.test(card) && /data-pr-draft-yes=/.test(card) && /data-pr-draft-edit=/.test(card) && /data-pr-draft-no=/.test(card) && /Draft waiting/.test(card) && card.indexOf('<b>two</b>') === -1 && card.indexOf('Chip &lt;i&gt;Hotel') !== -1, card);
+  check('a bounced address cannot be sent to: Yes is disabled in the pane', /data-pr-draft-yes="[^"]*" disabled/.test(card), card);
+  var card2 = T7.cardHtml({ venue_id: U(71), name: 'Plain Pub', email: 'p@p.example', status: 'not_signed_in', created_at: '2026-11-10T00:00:00Z', days_since_setup: 6, sign_in_known: true });
+  check('no emails and no draft: no chips, no draft, no badge (old Worker or nothing sent)', !/prmails|prdraft|Draft waiting/.test(card2), card2);
+
   if (bad) throw new Error('signin in thread: ' + bad + ' of ' + ran + ' failed');
   print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
