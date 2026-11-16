@@ -360,10 +360,12 @@
        that joins later: that hears "state"), and its first real content (a question, a song, a board) makes
        the show give way at once. A draw has no "started": the first word from the host plays it, once per
        page and only before anything is drawn, and the first "drawing" makes it give way. */
-    forGame:function(m, words, first, layout){
+    /* starts: the message types that play the show (default "started"). Trivia passes {intro:1}: its show plays at
+       First question, not at Start round (Dean, 16 Nov 2026), and the console holds that first question for the show. */
+    forGame:function(m, words, first, layout, starts){
       if(!ON || !m) return;
       if(first[m.t]){ seenContent=true; if(playing) finish("content"); return; }
-      if(m.t==="started"){ seenContent=false; play({ words:words, layout:layout }); }
+      if(starts ? starts[m.t] : m.t==="started"){ seenContent=false; play({ words:words, layout:layout }); }
     },
     forDraw:function(m, words, layout){
       if(!ON || !m) return;

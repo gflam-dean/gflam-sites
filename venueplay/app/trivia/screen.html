@@ -1099,7 +1099,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={sounds:1,host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1,nobody:1};
+  var HOST_TYPES={sounds:1,host_here:1,session:1,mode:1,started:1,intro:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1,nobody:1};
   HOST_TYPES.finale=1;   // the end-of-night show (INBOX 77-79)
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
@@ -1159,7 +1159,7 @@
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
-    if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA" }, { question:1, ta_board:1 }); }catch(e){} }
+    if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA" }, { question:1, ta_board:1 }, undefined, { intro:1 }); }catch(e){} }   // at First question ("intro"), not Start round (Dean, 16 Nov 2026)
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it,
        and it plays only for a game this screen saw being played (a podium replayed to a TV that reloaded
        after the night is not a second goodbye). */
@@ -1359,6 +1359,7 @@
         m({ t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE, title:"Trivia Night" });
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
+        m({ t:"intro", title:"Trivia Night" });   // the show, as the console's First question sends it (16 Nov 2026)
         m({ t:"players", count:43 });   // sent as a real host does; the wall must show no count (tools/tv-no-counts-in-chrome.test.py)
       }, true, true);
       /* The first question waits for the start-of-game show (2 Nov 2026): C.first() is 4.2 s with the show, 0.9 s with ?sting=0. */

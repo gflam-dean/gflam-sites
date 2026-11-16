@@ -7,6 +7,8 @@ wrong: the connection was fine and there were simply no players. This opens a RE
 (a signed-in trivia host and tv.html on the venue's link, the real game Worker in jsc), plays a two-question
 quiz with no phones, and checks what the host reads and what the wall paints:
 
+  - First question, with nobody joined, plays the LET'S PLAY TRIVIA show on the wall (Start round does not), and
+    the question follows the whole show (Dean, 16 Nov 2026)
   - the between-question auto leaderboard, with nobody joined: the TV shows the join screen with "Next
     question coming up" (Dean, 15 Nov 2026), never "Thanks for playing" and never an empty Leaderboard
   - Reveal leaderboard with nobody joined: the console says, plainly, "Nobody has joined this game yet, so
@@ -93,8 +95,13 @@ def play():
             if r.ask(host, '!!document.getElementById("vpAskGo") || !!document.querySelector(".vp-ask button")') is True:
                 r.ask(host, '(function(){ var b=document.getElementById("vpAskGo")||document.querySelector(".vp-ask button"); b.click(); return true; })()'); time.sleep(1)
         ok('the round starts: the console offers the first question', wait_btn(r, host, 'First question', 30) is True, r.ask(host, ERRT))
+        FS = '(function(){var f=document.getElementById("gameFrame"); try{ return f.contentWindow.VPSting ? f.contentWindow.VPSting.stats() : null; }catch(x){ return null; }})()'
+        ok('  Start round played no show on the wall: it waits for First question (Dean, 16 Nov 2026)', (r.ask(tv, FS) or {}).get('plays') == 0, r.ask(tv, FS))
         click_btn(r, host, 'First question')
+        ok('First question, nobody joined: the wall plays LET\'S PLAY TRIVIA', r.until(tv, FS + '.plays>=1', 8) is True, r.ask(tv, FS))
         ok('the first question is up', wait_btn(r, host, 'Reveal answer', 30) is True, r.ask(host, ERRT))
+        st = r.ask(tv, FS) or {}
+        ok('  after the whole show (played once, never cut short)', st.get('plays') == 1 and st.get('cutShort') == 0, st)
         click_btn(r, host, 'Reveal answer')
         ok('and revealed', wait_btn(r, host, 'Next question', 20) is True, r.ask(host, ERRT))
 

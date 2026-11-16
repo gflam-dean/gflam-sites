@@ -1232,10 +1232,10 @@
     if(typeof m.sounds==="boolean"){ try{ if(window.VPCelebrate && VPCelebrate.setGameSounds) VPCelebrate.setGameSounds("trivia", m.sounds); }catch(e){} }
     if(m.t==="sounds") return;
     /* A host is on the channel: the console's heartbeat every 30 s, or anything it sends. Heard, the "no game" timer is moot. */
-    var HOST_WORDS={ host_here:1, session:1, mode:1, started:1, state:1, question:1, lock:1, time:1, reveal:1, leaderboard:1, podium:1, idle:1, closed:1, handin:1, roundanswers:1 };
+    var HOST_WORDS={ host_here:1, session:1, mode:1, started:1, intro:1, state:1, question:1, lock:1, time:1, reveal:1, leaderboard:1, podium:1, idle:1, closed:1, handin:1, roundanswers:1 };
     if(HOST_WORDS[m.t]){ P.hostAt=Date.now(); if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; } }
     /* The start-of-game show on the phone (/app/vp-sting.js, on unless ?sting=0), with the name it joined with. */
-    if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords(/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA", P.name), { question:1, ta_board:1 }, "phone"); }catch(e){} }
+    if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords(/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA", P.name), { question:1, ta_board:1 }, "phone", { intro:1 }); }catch(e){} }   // at First question, not Start round (16 Nov 2026)
     if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
       if(!P.joined) return;
       if(!prForMe(m)) return;   // a catch-up aimed at another phone must not reset this one's board
@@ -1759,7 +1759,7 @@
       };
       var soloStart=function(){
         var go=$("demoGo"); if(go) go.classList.add("hidden");
-        fire({ t:"started" });     // the start-of-game show, as in a real room, then "The quiz is starting"
+        fire({ t:"started" }); fire({ t:"intro" });     // the start-of-game show, as in a real room at First question, then the first question
         sd((window.VPSting && VPSting.on) ? 4200 : 900, function(){ soloAsk(0); });
       };
       var soloIntro=function(){
@@ -1843,7 +1843,7 @@
     var TAP=[1,2,0], TAP_AT=[3400,3600,3400], PTS=[130,0,145], BEFORE=[[515,0],[645,3],[645,4]], AFTER=[[645,3],[645,4],[790,2]];
     at(0, function(){
       P.total=515; P.rank=0; P.ended=false; P.celebrated=false;
-      fire({ t:"started" });
+      fire({ t:"started" }); fire({ t:"intro" });
     }, true, true);
     Q.forEach(function(q, i){
       var t=C.qAt(i);
