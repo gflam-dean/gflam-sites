@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '16 Nov 2026, 11:12 · c7927885';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 21:36 · 2b0a3cf7';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -6531,11 +6531,34 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
-    .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
+    /* SIGNED BY THE PERSON THEY WERE TALKING TO (Dean, 9 Nov 2026, Lunatic Hotel: "sign from the person in contact"):
+       o.senderName is the first name the setup was signed with (vpaReminderSender), "Cheers, Dean, the venueplay team".
+       Still FROM and replying to hello@ (Dean, 29 Oct 2026). No sender on record: the team, as before. */
+    .replace(/{{signoff}}/g, vpaProspectSignoff(o.senderName || ''));
   const subject = o.kind === 'final' ? 'Last day of your first month at ' + (o.venueName || 'your venue')
     : o.kind === 'last' ? 'Your first month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
     : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
   return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
+}
+/* WHO SIGNS A PROSPECT'S CARD REMINDER (Dean, 9 Nov 2026): the person whose mailbox the venue wrote to, the same name
+   that signed their welcome. Read from the setup's prospect_set_up audit row (written on every setup, kept for ever,
+   writable by no venue), else the last welcome's record, exactly as the welcome resend does (vpaResendWhich), and
+   checked by vpaProspectSender (a plain name from one of our own mailboxes) so nothing odd reaches a venue.
+   Nothing on record, or a read that fails: '' (the venueplay team). Never stops a reminder. */
+async function vpaReminderSender(env, venueId) {
+  try {
+    const au = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) +
+      '&action=eq.prospect_set_up&select=detail,created_at&order=created_at.desc&limit=1');
+    const d = au && au[0] && au[0].detail && typeof au[0].detail === 'object' ? au[0].detail : null;
+    let s = d ? vpaProspectSender(d.sender_name, d.sender_email) : {};
+    if (s.error || !s.name) {
+      let w = null;
+      try { w = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=detail,send_at&order=send_at.desc&limit=1'); } catch (_) { w = null; }
+      const l = w && w[0] && w[0].detail && typeof w[0].detail === 'object' ? w[0].detail : null;
+      s = l ? vpaProspectSender(l.senderName, l.senderEmail) : {};
+    }
+    return (s && !s.error && s.name) ? s.name : '';
+  } catch (e) { return ''; }
 }
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
 async function vpaProspectReminderSweep(env, nowMs) {
@@ -6602,7 +6625,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
     /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
     const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
-    const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
+    const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name, senderName: await vpaReminderSender(env, v.id),
       endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
       cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id),
