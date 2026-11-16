@@ -456,7 +456,7 @@
   "counted_by": "lines"
  },
  "tools/paper-cards-v2-in-chrome.test.py": {
-  "checks": 240,
+  "checks": 244,
   "counted_by": "lines"
  },
  "tools/paper-lock-in-chrome.test.py": {
@@ -1153,6 +1153,10 @@
  },
  "tools/test-overage-ack-covers-room.js": {
   "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-rename.js": {
+  "checks": 34,
   "counted_by": "lines"
  },
  "tools/test-paper-cards-v2.js": {
