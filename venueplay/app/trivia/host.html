@@ -145,6 +145,9 @@
   .tvprev-h{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin:0 0 6px}
   .tvprev-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0A0A0B}
   .tvprev-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+  /* On a phone the main button comes first and the TV preview follows it (Dean, 15 Nov 2026: "you have to scroll down to do
+     anything"): at 375x667 the preview above the last answer pushed Reveal leaderboard below the fold. */
+  @media (max-width:600px){ #liveBlock{display:flex;flex-direction:column} #liveBlock .tvprev{order:2;margin:14px 0 0} }
   .finline{font-size:13.5px;color:var(--muted);text-align:center;margin:8px 0 0}
   .btn.finskip{display:block;margin:12px auto 0;padding:8px 14px;min-height:0;font-size:13.5px}
   .btn.finpulse{animation:finpulse 1.6s ease-in-out infinite}
@@ -1352,7 +1355,7 @@
       G.gameId=r.game_id; (typeof showRoundPin==="function" && showRoundPin()); G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
-      G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
+      G.defer = (r.paper===true); G.rs = r.round_size || (G.defer ? G.roundSize : 10); G.round = 1; G.roundItems = []; savePaperRound();   // a phone night: a round every 10 questions (Dean, 7 Nov 2026), as a reloaded console already counts; paper: its printed round
       G.paperRound = null;   // the next round decides again
       if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
       G.status="ready"; G.board=[]; G.current=null;
@@ -1397,7 +1400,7 @@
     }, 250);
   }
   function nextQuestion(){
-    if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
+    if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick(); clearTimeout(G.roundT); G.roundT=null;   // a round's board never lands on the next question
     apiPost("/host/question",{ game_id:G.gameId }).then(function(r){
       if(r && r.done){ finish(); return; }
       G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
@@ -1462,17 +1465,25 @@
       }
       // Safe to send correct_index now, the reveal has happened.
       if(G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal) armFinale();   // the last answer: the end of the night starts its clock
-      bcast(withFin({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
-        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board }));
+      /* THE SCORES AT THE END OF A ROUND, NOT AFTER EVERY ANSWER (Dean, 7 Nov 2026: "The leaderboard should show every
+         round only" and "They should do a podium every round"). A phone night has a round every 10 questions. After any
+         other answer the answer stays up until the next question (board:false tells the TV not to roll to the board by
+         itself, ever); at the end of a round that is not the last, the top three on the podium, then the whole leaderboard.
+         The last answer is the end of the night, as before. "Show the leaderboard after each round" off: neither. */
+      var qnow = (G.current && (G.current.qi||G.current.qseq)) || 0;
+      var isLast = G.qtotal && G.current && qnow >= G.qtotal;
+      var rEnd = !isLast && roundEnds(qnow) && G.roundBoard!==false, rn = roundOf(qnow);
+      var rv = withFin({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
+        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
+      rv.board=false;   // the console puts the round's podium and board up itself, so the TV never rolls to a board on its own
+      bcast(rv);
       renderConsole();
-      // Between-question leaderboard, but NOT after the last question - there the host reveals
-      // the leaderboard/podium manually with the button.
-      var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
-      if(!isLast && G.roundBoard!==false){ setTimeout(function(){ if(G.status==="reveal"){
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal" && G.current && (G.current.qi||G.current.qseq)===qnow){
         /* No players: never an empty board, and never "Thanks for playing" between questions (Dean, 15 Nov 2026):
-           between:true puts the join screen up with "Next question coming up". The real end sends it without. */
+           between:true puts the join screen up with "Next question coming up". The real end sends it without.
+           Unchanged by the round rule: an empty room still gets the join screen after every answer. */
         if(!G.board.length && playerCount()===0){ bcast({ t:"nobody", between:true }); }
-        else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
+        else if(rEnd && G.board.length){ roundShow(rn, "reveal"); }
       } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
@@ -1482,6 +1493,16 @@
      are kept in one small function so a suite can run it: a board with rows is the podium; an empty
      board that the server itself just answered, with nobody joined, is "nobody"; anything else
      (the fetch failed, or phones are in but no scores came back) is the real "could not be loaded". */
+  /* THE END OF A ROUND THAT IS NOT THE LAST (Dean, 7 Nov 2026: "They should do a podium every round"): the top three
+     on the TV, headed "Top three after round N", then the whole leaderboard ROUND_BOARD_MS later, which stays until the
+     host goes on. The TV only: a phone hearing a podium shows its end-of-night screen, and the night is not over. */
+  var ROUND_BOARD_MS=10000;
+  function roundShow(rn, st){
+    clearTimeout(G.roundT); G.roundT=null;
+    G.roundShown={ rn:rn, board:false };
+    send({ t:"podium", top:G.board.slice(0,3), rows:G.board, round:rn });
+    G.roundT=setTimeout(function(){ G.roundT=null; if(G.status===st){ G.roundShown={ rn:rn, board:true }; send({ t:"leaderboard", title:"Leaderboard after round "+rn, rows:G.board }); } }, ROUND_BOARD_MS);
+  }
   function finishOutcome(boardLen, players, fetchOk){
     if(boardLen>0) return "podium";
     if(players===0 && fetchOk===true) return "nobody";
@@ -1899,9 +1920,17 @@
       to({ t:"roundanswers", round:G.round, items:G.roundItems });
       if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     } else if(G.status==="reveal" && G.current){
-      to(withFin({ t:"reveal", qseq:G.current.qseq, qi:(G.current.qi||G.current.qseq), correctIndex:G.current.correctIndex,   // qi: a late phone says "You've joined at question 4" (293)
-           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") }));
-      if(G.board.length && !G.finale && G.roundBoard!==false) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });   // never over the last answer
+      var _rv=withFin({ t:"reveal", qseq:G.current.qseq, qi:(G.current.qi||G.current.qseq), correctIndex:G.current.correctIndex,   // qi: a late phone says "You've joined at question 4" (293)
+           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
+      _rv.board=false;   // as reveal(): the TV never rolls to a board by itself; a round's board is replayed below
+      to(_rv);
+      /* A reloaded TV gets the board only where the room saw one: at the end of a round that is not the last (7 Nov 2026).
+         Mid-round it is the answer; after the last question it is the answer until the end of the night. */
+      var rq=G.current.qi||G.current.qseq, rLast=G.qtotal && rq>=G.qtotal;
+      if(!pid && G.board.length && !G.finale && G.roundBoard!==false && !rLast && roundEnds(rq) && G.roundShown && G.roundShown.rn===roundOf(rq)){   // the TV only: a phone hearing a podium ends its night
+        if(G.roundShown.board) to({ t:"leaderboard", title:"Leaderboard after round "+roundOf(rq), rows:G.board });
+        else to({ t:"podium", top:G.board.slice(0,3), rows:G.board, round:roundOf(rq) });
+      }
     } else if(G.status==="ended" && G.board.length){
       if(!G.finale) to({ t:"podium", top:G.board.slice(0,3), rows:G.board });
       else if(!pid){ if(!finPastAds()) to(finMsg()); }   // the TV lands where the show is; after it went back to the slides, nothing
@@ -2199,7 +2228,11 @@
   }
   function paperRoundDone(){
     G.status="roundboard"; savePaperRound();
-    bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
+    var last=G.qtotal && G.current && (G.current.qi||G.current.qseq)>=G.qtotal;
+    /* Every round but the last: the podium, then the board (7 Nov 2026). The last: its board, then "Reveal the
+       winners" puts up the podium and the final scores, as before. */
+    if(!last && G.board.length && G.roundBoard!==false) roundShow(G.round, "roundboard");
+    else bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     renderConsole();
   }
   /* What is wrong with the typed paper scores, in words for the host, or "" when nothing is. */

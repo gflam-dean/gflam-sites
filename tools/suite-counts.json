@@ -1500,7 +1500,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-endnight.js": {
-  "checks": 140,
+  "checks": 143,
   "counted_by": "lines"
  },
  "tools/test-trivia-live-fixes-6nov.js": {
@@ -1512,7 +1512,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 41,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -2333,6 +2333,10 @@
  },
  "tools/trivia-finale-in-chrome.test.py": {
   "checks": 69,
+  "counted_by": "lines"
+ },
+ "tools/trivia-round-podium-in-chrome.test.py": {
+  "checks": 165,
   "counted_by": "lines"
  }
 }

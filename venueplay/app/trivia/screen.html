@@ -65,6 +65,9 @@
   .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
+  /* Between questions with nobody joined (Dean, 15 Nov 2026) the line says the game goes on: shown even on the ready join
+     screen, whose sub line is otherwise hidden (vp-tvgame.js .layer.join.ready .jsub). Bigger and brighter than the setup line. */
+  #tvLobby.between .jsub{display:block!important;color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:max(16px,2.2cqw);letter-spacing:0}
   .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
   .hostline b{color:var(--pink)}
 
@@ -615,6 +618,7 @@
     try{ var _or=document.querySelector("#tvLobby .jor"); if(_or) _or.style.display = (joinCode || VENUE_SLUG) ? "" : "none"; }catch(e){}
   }
   function renderLobby(){
+    $("tvLobby").classList.remove("between");
     $("lobbyCode").textContent = shownCode();
     /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
        linked to a venue never needs pairing, and once a join code exists the host is plainly
@@ -787,6 +791,7 @@
     show("tvLobby");
     renderLobby();
     $("lobbySub").textContent="Next question coming up. Scan to join in";
+    $("tvLobby").classList.add("between");   // the ready join screen hides its sub line (vp-tvgame.js); between questions it is the point
   }
   function renderRows(container, rows, limit){
     container.innerHTML="";
@@ -857,6 +862,8 @@
     }
     return out;
   }
+  /* The podium's heading: a round's top three, or the night's winners. rnd is a whole number or NaN, never markup. */
+  function podiumTitle(rnd){ return rnd>0 ? 'Top three after <span>round '+(rnd|0)+'</span>' : 'Winners <span>tonight</span>'; }
   function renderPodium(top, rows, quiet){
     show("tvPodium");
     var tt=$("tvPodTitle"); if(tt) tt.innerHTML='Winners <span>tonight</span>';
@@ -1291,7 +1298,11 @@
     else if(m.t==="podium"){
       state.phase="podium";
       renderPodium(m.top||[], m.rows);   // a paper night, or a console without the finale module: the whole podium at once
-      triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
+      /* EVERY ROUND ENDS ON THE PODIUM, THEN THE LEADERBOARD (Dean, 7 Nov 2026). A round's podium carries its round
+         number and says so; only the end of the night says "Winners tonight" and plays the end-of-game show. */
+      var rnd=parseInt(m.round,10), pt=$("tvPodTitle");
+      if(pt) pt.innerHTML=podiumTitle(rnd);
+      if(!(rnd>0)) triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the night's podium (off unless ?endshow=1)
     }
   }
   /* THE END-OF-GAME SHOW (2 Nov 2026): the top three teams and their scores, a tie sharing its place, then

@@ -15,14 +15,15 @@ TIMELINE on the TV and on each phone: every change of what is on screen (the TV'
 ads / the hold card when the frame is not up; the phone's view), with the time it happened, plus every message each
 window hears. A blink shorter than the eye can name is still a line in the timeline.
 
-  THE NIGHT  a 3 question quiz: question 1, both phones answer, the answer, the leaderboard, question 2, both answer,
+  THE NIGHT  a 3 question quiz: question 1, both phones answer, the answer (which stays up: since 7 Nov 2026 the
+             leaderboard comes at the end of a round only, a round being 10 questions), question 2, both answer,
              the answer. On the TV from question 1 on: never the lobby (the logo and join screen) again, never the ads
              or the hold card, and no screen up for less than 0.7 s (a blink). On each phone: question, result,
              question, result, with no waiting screen and nothing in between.
   RECONNECT  the TV says hello mid-question and again on the answer (what a TV that reconnects does: the Kogan app on
              pub wifi), and the console replays what is on. The wall must keep what it shows: the question's cards
-             are not drawn again (its ring not reset), the answer's reveal is not played again, and the leaderboard
-             still comes up about 5 s after the answer, not pulled forward by the replay. Before 12 Nov each of these
+             are not drawn again (its ring not reset), the answer's reveal is not played again, and the replay brings no
+             leaderboard up over the answer mid-round. Before 12 Nov each of these
              redrew the wall: the flicker Dean saw (T6).
   END EARLY  End round at question 2 of 3 -> OK: the TV runs the winners' reveal (the podium, the winner), never the
              lobby or the ads first; each phone gets its final screen WITH its place (1st place / You finished 2nd),
@@ -266,9 +267,11 @@ def night():
     play_question(host, phones, 'question 1', mid=hello_q, pre=lambda: seed_board(gid, sess))
     seed_board(gid, sess)
     shot(phones[0][1], 'q1-result-A'); shot(phones[1][1], 'q1-result-B')
-    ok('question 1: the TV puts the leaderboard up after the answer, with the teams on it', R.until(tv, '(function(){ try{ var d=%s.document; return !d.getElementById("tvBoard").classList.contains("hidden") && d.querySelectorAll("#tvBoardRows .brow").length>=2; }catch(e){ return false; } })()' % FRAME, 15) is True,
+    time.sleep(7)   # past the 5.2 s the board used to follow every answer
+    ok('question 1 (mid-round): the answer is still up 7 s later, no leaderboard over it (Dean, 7 Nov 2026: the board at the end of a round only)',
+       js(tv, '(function(){ try{ var d=%s.document; return d.getElementById("tvBoard").classList.contains("hidden") && !d.getElementById("tvReveal").classList.contains("hidden"); }catch(e){ return false; } })()' % FRAME) is True,
        tv_tl(tv)[1][-6:])
-    time.sleep(1.5)
+    time.sleep(0.5)
     play_question(host, phones, 'question 2')
     time.sleep(1.0)
     js(tv, '(function(){ try{ var d=%s.document; var r=d.querySelector("#tvRevAnswers .ans"); if(r) r.__vpMark=1; return true; }catch(e){ return false; } })()' % FRAME)
@@ -280,8 +283,8 @@ def night():
     fr = tv_tl(tv)[1]
     t_rev = max([t for t, st in fr if st == 'tvReveal'] or [0])
     nxt = [x for x in fr if x[0] > t_rev]
-    ok('question 2: and the leaderboard still comes up when it should (about 5 s after the answer), not pulled forward by the replay',
-       bool(nxt) and nxt[0][1] == 'tvBoard' and nxt[0][0] - t_rev >= 4500, [t_rev, nxt[:3]])
+    ok('question 2: and the replay brings no leaderboard up over the answer (mid-round, 6 s on)',
+       t_rev > 0 and not any(st == 'tvBoard' for _, st in nxt), [t_rev, nxt[:3]])
     seed_board(gid, sess)
     for tag, ph in phones:
         tags = R.json(ph, TAGS, {}) or {}

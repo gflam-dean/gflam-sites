@@ -159,7 +159,7 @@ function tvRig(opts) {
     'function renderLobby(){} function renderPaper(){} function drawLobbyQR(){} function paintLobbyName(){} function paintAnsOf(){} function countKeys(){ return 0; }\n' +
     'function renderQuestion(m){ curQ={ qseq:m.qseq, options:m.options||[], text:m.text||"" }; show("tvQ"); }\n' +
     liftAll(SCREEN, ['show', 'stopBoardPaging', 'qClass', 'ansLenClass', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries',
-                     'renderPodium', 'finaleClear', 'finaleFrom', 'finaleTick', 'finalePaint', 'endShowThen', 'onMsg'], 'trivia/screen.html') +
+                     'podiumTitle', 'renderPodium', 'finaleClear', 'finaleFrom', 'finaleTick', 'finalePaint', 'endShowThen', 'onMsg'], 'trivia/screen.html') +
     lift(SCREEN, 'playFanfare', 'trivia/screen.html').replace('VPCelebrate.fanfare(', 'soundHook(') +
     '; return { msg: onMsg, fin: function(){ return FIN; }, fanfare: playFanfare, roll: function(){ return boardRollTimer; } };';
   var names = Object.keys(env);
@@ -312,6 +312,15 @@ function lastReveal(s, e, rows) { return { t: 'reveal', qseq: 10, correctIndex: 
   var a = tvRig(); a.msg({ t: 'podium', top: BOARD.slice(0, 3), rows: BOARD });
   show('an older console\'s podium message still paints the full podium, uncovered, "Winners tonight"', a.layer() === 'tvPodium' && a.covered() === '' && a.title() === 'Winners tonight' && a.celebrated() === 1,
        a.covered() + ' ' + a.title());
+})();
+(function () {
+  /* EVERY ROUND ENDS ON THE PODIUM (Dean, 7 Nov 2026): a round's podium says which round, the night's says Winners tonight. */
+  var a = tvRig(); a.msg({ t: 'podium', top: BOARD.slice(0, 3), rows: BOARD, round: 2 });
+  show('a round\'s podium (round 2): the steps, uncovered, "Top three after round 2"', a.layer() === 'tvPodium' && a.covered() === '' && a.title() === 'Top three after round 2', a.title());
+  a.msg({ t: 'leaderboard', title: 'Leaderboard after round 2', rows: BOARD });
+  show('then the round\'s whole leaderboard', a.layer() === 'tvBoard' && a.dom.$('tvBoardTitle').textContent === 'Leaderboard after round 2', a.layer());
+  var b = tvRig(); b.msg({ t: 'podium', top: BOARD.slice(0, 3), rows: BOARD, round: '<b>x</b>' });
+  show('a round number that is not a number is never written as markup: "Winners tonight"', b.title() === 'Winners tonight', b.dom.$('tvPodTitle').innerHTML);
 })();
 var VP_DEMO_SCRIPT = SCREEN.slice(SCREEN.indexOf('function demoQuiz('), SCREEN.indexOf('function demoQuiz(') + 6000);
 show('the sales-page demo (?demo=1) still plays its podium and final scores', /m\(\{ t:"podium"/.test(VP_DEMO_SCRIPT) && /title:"Final scores"/.test(VP_DEMO_SCRIPT));
@@ -492,8 +501,9 @@ function hostRig(opts) {
   o = h.withFin({ t: 'reveal' });
   show('leaderboard ON: a reveal mid-night is as before (the board follows)', !('board' in o) && !o.fin, JSON.stringify(o));
   var rs = HOST.slice(HOST.indexOf('function reveal('), HOST.indexOf('function finish('));
-  show('reveal(): the automatic leaderboard after a question is sent only with the switch on', /if\(!isLast && G\.roundBoard!==false\)\{ setTimeout\(/.test(rs));
-  show('reveal(): the last answer arms the end of the night and every reveal goes out through withFin', /armFinale\(\)/.test(rs) && /bcast\(withFin\(\{ t:"reveal"/.test(rs));
+  /* (run for real, switch on and off, in tools/test-trivia-no-players.js: since 7 Nov 2026 the board comes at a round's end only) */
+  show('reveal(): the round\'s podium and leaderboard are sent only with the switch on', /var rEnd = !isLast && roundEnds\(qnow\) && G\.roundBoard!==false/.test(rs));
+  show('reveal(): the last answer arms the end of the night and every reveal goes out through withFin', /armFinale\(\)/.test(rs) && /var rv = withFin\(\{ t:"reveal"/.test(rs) && /bcast\(rv\)/.test(rs));
 })();
 show('the console loads the shared timeline', /<script src="\/app\/vp-trivia-finale\.js"><\/script>/.test(HOST));
 show('the TV loads the shared timeline', /<script src="\/app\/vp-trivia-finale\.js"><\/script>/.test(SCREEN));
