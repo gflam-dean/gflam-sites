@@ -988,7 +988,7 @@
         if(G.round.remaining<=0){
           stopClaimTimer();
           G.round.locked=false; $("rollBtn").disabled=false; updateClaimCd();   // the clock is done: Not here opens
-          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap \u201cThey\u2019re here\u201d if they are, or \u201cNot here\u201d if not.", "timeup");
+          hostError("Time is up on #"+G.round.number+" "+nice(G.round.name)+". Tap \u201cThey\u2019re here\u201d if they are, or \u201cNot here\u201d if not.", "timeup");
         }
       }, 1000);
     }
@@ -1040,10 +1040,12 @@
   var CLAIM_HOLD_MS=60000, ROLLOVER_HOLD_MS=30000;
   /* "Jan Hollis won $1,450. Next week's jackpot is $200." or "Not claimed. Next week's jackpot is $1,500."
      (Dean, 6 Nov 2026), centred, in place of the winner card. */
+  /* a member's name as stored ("Wilson,Mia") always reads First Last on this console, as it does on the TV (INBOX 426 item 2) */
+  function nice(n){ return (window.VPDrawStyle&&VPDrawStyle.niceName)?VPDrawStyle.niceName(n):(n||""); }
   function renderDone(){
     var x=G.lastResult; if(!x) return;
     $("doneBox").classList.toggle("roll", !x.won); $("doneTick").innerHTML = x.won ? "&#10003;" : "&#8635;";
-    $("doneHead").textContent = x.won ? ((x.name||"The winner")+" won "+money(x.amountCents||0)+".") : "Not claimed.";
+    $("doneHead").textContent = x.won ? ((nice(x.name)||"The winner")+" won "+money(x.amountCents||0)+".") : "Not claimed.";
     $("doneSub").textContent = (x.capped ? "Next week\u2019s jackpot stays at its maximum, " : "Next week\u2019s jackpot is ")+money(x.nextCents||0)+".";
     syncStep();
   }

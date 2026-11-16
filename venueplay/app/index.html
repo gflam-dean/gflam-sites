@@ -407,6 +407,7 @@
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
+<link rel="stylesheet" href="/app/vp-actionbar.css">
 </head>
 <body>
 <header>
@@ -641,7 +642,7 @@
               <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
             </div>
           </details>
-          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <div class="vp-actionbar" id="startBar"><button class="btn pink big" id="startBtn">Open lobby</button></div>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" id="startNote" style="margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
           <!-- Every ball of every bingo game here, as a file the venue keeps (the same record the
@@ -3553,12 +3554,14 @@
               'ask them to check the number in the corner matches before you confirm. '+sub;
       }
       html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
-        '<div class="card9" id="claimCard-'+ci+'"></div>'+
-        '<div class="claimsub">'+sub+'</div>'+
-        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||((checking || !valid || c.by==="refused")?" disabled":""))+'>'+((!_hold && !checking && (!valid || c.by==="refused"))?"Not a win yet":"Confirm winner")+'</button>'+
+        /* THE ANSWER BUTTONS COME FIRST (INBOX 426 item 5): on a 375x667 phone Confirm winner sat under the ticket
+           picture, off the bottom of the screen. The ticket and the reading of it follow the buttons. */
+        '<div class="resolve" style="margin:0 0 12px"><button class="btn win" data-act="confirm" data-i="'+ci+'"'+(_hold||((checking || !valid || c.by==="refused")?" disabled":""))+'>'+((!_hold && !checking && (!valid || c.by==="refused"))?"Not a win yet":"Confirm winner")+'</button>'+
         // "Play on" only when waving this one off actually resumes the ROOM. If anyone else is
         // still queued or already confirmed, it only releases this player.
-        '<button class="btn roll" data-act="reject" data-i="'+ci+'"'+_hold+'>'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';
+        '<button class="btn roll" data-act="reject" data-i="'+ci+'"'+_hold+'>'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div>'+
+        '<div class="card9" id="claimCard-'+ci+'"></div>'+
+        '<div class="claimsub">'+sub+'</div></div>';
     });
     q.innerHTML=html;
     G.claims.forEach(function(c,ci){ renderClaimCard($("claimCard-"+ci), c.card); });

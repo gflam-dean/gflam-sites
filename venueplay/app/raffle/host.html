@@ -190,6 +190,7 @@
 </style>
 <!-- The raffle and members draw consoles' new look, one copy (9 Nov 2026). Linked last so it is the answer. -->
 <link rel="stylesheet" href="/app/vp-drawhost.css">
+<link rel="stylesheet" href="/app/vp-actionbar.css">
 </head>
 <body>
 <header>
@@ -405,7 +406,7 @@
         <button type="button" class="btn ghost hidden" id="cdCancel">Cancel countdown</button>
       </div>
       <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
-      <button class="btn pink xl" id="drawBtn">Draw the winner</button>
+      <div class="vp-actionbar" id="drawBar"><button class="btn pink xl" id="drawBtn">Draw the winner</button></div>
       <p class="hint" id="drawHint"></p>
       <p class="note hidden" id="freeEntryNote" style="margin-top:10px">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
     </div>

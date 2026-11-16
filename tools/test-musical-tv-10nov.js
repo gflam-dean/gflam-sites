@@ -65,6 +65,12 @@ var cq = parseFloat((lf.match(/font-size:max\(\d+px,([\d.]+)cqw\)/) || [0, 0])[1
 show('the lobby footer is at least 22px at 1920 (' + (cq * 19.2).toFixed(1) + 'px)', cq * 19.2 >= 22, lf);
 show('and in the body font with no letter-spacing', /Hanken Grotesk/.test(lf) && /letter-spacing:0/.test(lf) && !/JetBrains/.test(lf));
 
+print('\n== 5. the lobby says ready once (Dean 16 Nov, job 448) ==');
+var SR = (SCREEN.match(/function showReady\(\)\{[\s\S]*?renderRun\(\);\s*\}/) || [''])[0];
+show('the ready state heading reads "Get ready to play" and the line under it "First song coming up"', /tvNowTitle"\)\.textContent="Get ready to play"; \$\("tvNowArtist"\)\.textContent="First song coming up"/.test(SR) && /id="tvNowTitle">Get ready to play</.test(SCREEN) && /id="tvNowArtist">First song coming up</.test(SCREEN));
+show('the pink eyebrow is hidden in the ready state, so it never says ready twice', /\$\("tvNowEye"\)\.classList\.add\("hidden"\)/.test(SR) && /class="eyebrow hidden" id="tvNowEye"/.test(SCREEN) && !/"Get ready"|>Ready to play</.test(SCREEN));
+show('every Now playing path shows the eyebrow again', (SCREEN.match(/textContent="Now playing"; \$\("tvNowEye"\)\.classList\.remove\("hidden"\)/g) || []).length >= 4);
+
 print('');
 print(bad ? (bad + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');

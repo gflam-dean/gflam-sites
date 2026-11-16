@@ -1020,7 +1020,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 47,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {
@@ -1096,7 +1096,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-tv-10nov.js": {
-  "checks": 23,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
@@ -1388,7 +1388,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-seat-takeover.js": {
@@ -1720,7 +1720,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/trivia-errbar-flow-in-chrome.test.py": {
@@ -2353,6 +2353,26 @@
  },
  "tools/test-venue-rename.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/members-name-console-in-chrome.test.py": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/bingo-tv-name-once-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/trivia-reopen-tv-in-chrome.test.py": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/console-start-buttons-in-chrome.test.py": {
+  "checks": 122,
+  "counted_by": "lines"
+ },
+ "tools/tv-flip-name-in-chrome.test.py": {
+  "checks": 56,
   "counted_by": "lines"
  }
 }
