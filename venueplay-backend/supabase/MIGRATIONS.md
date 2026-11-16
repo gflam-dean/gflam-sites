@@ -823,6 +823,19 @@ carries the VP-STAGING-GUARD block, which REFUSES on the live project: the live 
 marker and the end of the file. Run it on LIVE BEFORE the game Worker of this release ships (that Worker writes the columns).
 Rollback: in the file.
 
+`venueplay-200-members-upload-contacts.sql` (Dean, 16 Nov 2026, Jobs row 445, branch `fix/members-upload-thu19`, the Thursday 19 Nov
+admin release): the members list upload keeps every field venueplay can collect, whatever the venue has switched on (DOB, suburb
+and state are not collectable today, so not added). vp_members gets email, mobile (+614xxxxxxxx), postcode,
+marketing_optin, marketing_optin_at, marketing_optin_source (the venue's own consent for that member, with "members list import, <date>"),
+with length/shape checks and a (roster_id, mobile) index for the member match; vp_member_rosters.import_map (the venue's column choices by
+heading only); vp_players.member_id and vp_captures.member_id (a player or sign-up whose mobile matches that venue's member, on delete set
+null). New function vp_members_fill (SECURITY INVOKER, service_role only) fills an existing member's EMPTY details in one call. vp_member_name
+(migration 76's SQL copy of formatMemberName) re-created with the one-box "Lee,Daniel" split, same grants. No policy or grant on any table
+changes, no new definer function, so RLS-BASELINE.json does not change; COLUMNS-BASELINE.json is dumped from live after it runs. Either order
+with the game Worker. NOT RUN anywhere (TEST first, then Dean on live EARLY, before the Thursday push). NUMBER: 199 is the highest on any branch
+or worktree (fix/thu19-billing-credit), nothing at 200 in INBOX.md or NEEDS-DEAN.md, checked 16 Nov 2026 14:00, so 200. Read-back and rollback
+in the file.
+
 `venueplay-198-coaster-contacts.sql` (Dean, 15 Nov 2026, Coaster Trivia name + mobile always, branch `fix/sun15-coaster-mobile`): one new table
 vp_coaster_contacts (board, coaster_venue_id, play_id, first_name, mobile +614..., unique board+mobile), RLS on, no policies, revoked from
 public/anon/authenticated: the first name and mobile from a round at a board with NO venueplay account (a player-added venue, a coaster venue,

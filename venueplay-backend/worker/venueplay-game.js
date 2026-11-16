@@ -851,7 +851,7 @@ async function sweepRetention(env) {
       const rosterIds = (rosters || []).map(function (x) { return x.id; });
       for (let i = 0; i < rosterIds.length; i += 50) {
         const batch = rosterIds.slice(i, i + 50).map(enc).join(',');
-        await sbPatch(env, 'vp_members', 'roster_id=in.(' + batch + ')', { first_name: null, last_name: null, note: null });
+        await purgeMembers(env, batch);
       }
       // And the winners' names, which are copied onto each result at draw time.
       const draws = await sbGetAll(env, 'vp_member_draws', 'venue_id=eq.' + enc(v.id) + '&select=id&order=id.asc');
@@ -2422,6 +2422,8 @@ async function handleJoinList(request, env, json) {
   const cap = gatedCapture(cfg, { email: email || null, mobile: mobile || null, marketing_optin: b.marketing_optin === true });
   if (!cap.email && !cap.mobile) return json({ ok: true, stored: false });   // the venue collects neither: nothing is kept
   if (cap.marketing_optin && consentVersion) cap.consent_version = consentVersion;
+  /* a member of this venue's members list, by the mobile they gave (migration 200); only ever set, never shown back */
+  if (cap.mobile) { const memberId = await memberIdByMobile(env, venueId, cap.mobile); if (memberId) cap.member_id = memberId; }
 
   /* A phone that played here: its own player row, when the token is real and its session is this venue's. */
   let player = null;
@@ -2498,6 +2500,7 @@ async function handleCapture(request, env, json) {
   } else {
     row.during_game = false;
   }
+  if (row.mobile) { const memberId = await memberIdByMobile(env, venueId, row.mobile); if (memberId) row.member_id = memberId; }
   /* The column may not be migrated yet, and a player's details must NEVER be lost to a schema
      mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
      the only thing wrong, store the capture without it. Order of deploy and migration then does
@@ -3634,6 +3637,8 @@ async function handleCoasterOptin(request, env, json) {
     const ipHash = await abuseIpHash(request, env);
     const ins = Object.assign({ venue_id: where.venue_id, source: 'coaster', during_game: false }, cap);
     if (ipHash) ins.source_ip_hash = ipHash;
+    const memberId = await memberIdByMobile(env, where.venue_id, cap.mobile);   // a member of this venue's list (migration 200)
+    if (memberId) ins.member_id = memberId;
     try { await sbInsert(env, 'vp_captures', ins, false); }
     catch (e) {
       if (!('consent_version' in ins) || (e && e.status && e.status !== 502)) throw e;
@@ -4790,6 +4795,10 @@ async function handleJoin(request, env, json) {
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
   if (devIdValid && !unproven) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39); never on an unproven seat (A1)
   Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
+  /* A MEMBER OF THIS VENUE'S LIST? (Dean, 16 Nov 2026, migration 200) Linked by the mobile they gave, never shown to them:
+     the response below carries the token and the room, not this row. Only when a match is found is the column named at all,
+     so a database before migration 200 never sees it. */
+  if (cap.mobile && !isDemoSession(session)) { const memberId = await memberIdByMobile(env, session.venue_id, cap.mobile); if (memberId) playerRow.member_id = memberId; }
   let inserted;
   try {
     inserted = await sbInsert(env, 'vp_players', playerRow, true);
@@ -6910,16 +6919,92 @@ async function handleMembersRoster(request, env, json) {
   return json({ member_id: memberId, status });
 }
 
+/* THE MEMBERS LIST'S PERSONAL DETAILS, 90 DAYS AFTER A VENUE LEAVES (the purge above). Names and note as always, and since
+   migration 200 (Dean, 16 Nov 2026, Jobs row 445) the member's email, mobile, postcode and consent, and the list's remembered
+   column headings. Before migration 200 the database has none of those columns and PostgREST refuses a PATCH naming them
+   (PGRST204 / 42703), so that one answer, and only that one, falls back to the names. Then it LOOKS: a row that still
+   holds an email or a mobile after the update fails the purge, so the venue is not stamped done. */
+const MEMBERS_BLANK = { first_name: null, last_name: null, note: null, email: null, mobile: null, postcode: null,
+                        marketing_optin: null, marketing_optin_at: null, marketing_optin_source: null };
+async function purgeMembers(env, rosterBatch) {
+  const where = 'roster_id=in.(' + rosterBatch + ')';
+  try {
+    await sbPatch(env, 'vp_members', where, MEMBERS_BLANK);
+  } catch (e) {
+    /* Refused. Only a database without migration 200's columns may fall back to the names: ask it whether it has them.
+       If it does, the refusal was something else and the purge stops here, unstamped. */
+    let has = true;
+    try { await sbGet(env, 'vp_members', 'select=email&limit=1'); } catch (e2) { has = false; }
+    if (has) throw e;
+    await sbPatch(env, 'vp_members', where, { first_name: null, last_name: null, note: null });
+    return;
+  }
+  try { await sbPatch(env, 'vp_member_rosters', 'id=in.(' + rosterBatch + ')', { import_map: null }); } catch (e) { /* headings only, never a value */ }
+  const left = await sbCount(env, 'vp_members', where + '&or=(email.not.is.null,mobile.not.is.null,postcode.not.is.null,first_name.not.is.null,last_name.not.is.null)&select=id');
+  if (left > 0) throw new Error('purge: ' + left + ' member(s) still hold a name or contact detail after the update');
+}
+
 /* POST /host/members/import  (MANAGER/OWNER) : bulk-add to the venue's members list.
-   body: { draw_id?|venue_id, members:[{number, name}] }  -> { added }
-   Members with a number already in the list are skipped (idempotent re-paste). A venue draw
+   body: { draw_id?|venue_id, members:[{number, name} | {number, first_name, last_name, email?, mobile?, postcode?, offers?}],
+           map? }  -> { added, skipped_existing, filled }
+   Members with a number already in the list are not added twice (idempotent re-paste). A venue draw
    with no roster of its own draws from every member at the venue, so we add to (or create) one
-   members list for the venue. */
+   members list for the venue.
+
+   THE UPLOAD'S OTHER COLUMNS (Dean, 16 Nov 2026, Jobs row 445; migration 200, NOT RUN): a member's email, mobile, postcode
+   and the venue's own "Send me offers from {venue}" consent: every field venueplay can collect (the six collect_* of Game
+   settings), whatever the venue has switched on today (Dean, 16 Nov 2026). Date of birth, suburb and state are not fields
+   venueplay collects, so nothing here keeps them. Same rules as a player's own
+   details (gatedCapture): an email that is an email, a mobile normalised the purchase raffle's way (+614xxxxxxxx, or not
+   kept), a 4-digit postcode, and consent only with a way to contact them. A member ALREADY on the list keeps every detail
+   it has: an import only fills what is empty, never overwrites. An "unsubscribed" in the file always wins and an import
+   never turns an unsubscribe back into a yes. Each consent records where it came from: "members list import, <date>".
+   These details are the venue's alone: never in a response, never on a screen, never logged. */
+const MEMBER_EMAIL_RE = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
+/* The purchase raffle's own rule, ONE answer in one place (praffleNormPhone), plus the "(0)" a club system writes in
+   "+61 (0)412 345 678". venueplay/app/vp-memberscsv.js mobile() is the page's copy; tools/test-members-upload.js runs both. */
+function memberMobile(raw) { return praffleNormPhone(String(raw == null ? '' : raw).replace(/\(0\)/g, '')); }
+function memberClean(v, n) { return String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n); }
+/* one member's row as kept: {number, first, last, email?, mobile?, postcode?, offers?} or null */
+function memberImportRow(m) {
+  const num = parseInt(m && m.number, 10);
+  if (isNaN(num) || num < 0) return null;
+  let first, last;
+  if (m.first_name != null || m.last_name != null) {
+    first = memberClean(m.first_name, 80); last = memberClean(m.last_name, 80);
+  } else {
+    // a pasted line: split the name on the first space, as it always has been ("Fix a name" corrects the rest)
+    const nm = memberClean(m.name, 160);
+    const sp = nm.indexOf(' ');
+    first = (sp === -1 ? nm : nm.slice(0, sp)).slice(0, 80);
+    last = (sp === -1 ? '' : nm.slice(sp + 1).trim()).slice(0, 80);
+  }
+  const out = { number: num, first: first, last: last };
+  /* every field venueplay can collect comes in whenever the venue's file has it (Dean, 16 Nov 2026), whatever the venue's
+     game join has switched on today */
+  if (m.email != null) { const e = String(m.email).trim().toLowerCase(); if (e.length <= 200 && MEMBER_EMAIL_RE.test(e)) out.email = e; }
+  if (m.mobile != null) { const mo = memberMobile(m.mobile); if (mo) out.mobile = mo; }
+  if (m.postcode != null) { const pc = String(m.postcode).replace(/\s+/g, ''); if (/^\d{4}$/.test(pc)) out.postcode = pc; }
+  if (m.offers === true || m.offers === false) out.offers = m.offers;
+  return out;
+}
+/* the venue's column choices, by heading only (never a value from the file): { v:1, cols:{ "<heading>": field } } */
+function memberImportMap(map) {
+  if (!map || typeof map !== 'object' || !map.cols || typeof map.cols !== 'object') return null;
+  const FIELDS = ['number', 'first', 'last', 'full', 'email', 'mobile', 'postcode', 'offers'];
+  const cols = {}; let n = 0;
+  Object.keys(map.cols).slice(0, 40).forEach(function (h) {
+    const k = String(h).toLowerCase().replace(/[^a-z0-9# ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (k && FIELDS.indexOf(map.cols[h]) >= 0) { cols[k] = map.cols[h]; n++; }
+  });
+  return n ? { v: 1, cols: cols } : null;
+}
 async function handleMembersImport(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const members = Array.isArray(b.members) ? b.members : [];
   if (!members.length) return json({ error: 'No members to add' }, 400);
+  if (members.length > 20000) return json({ error: 'That is more than 20,000 members. Split the file in two and add each half.' }, 400);
 
   let venueId, rosterId = null;
   const drawId = b.draw_id != null ? String(b.draw_id).trim() : '';
@@ -6952,6 +7037,11 @@ async function handleMembersImport(request, env, json) {
     }
   }
 
+  /* A pasted list ({number, name}) carries none of the new fields, reads none of the new columns and works exactly as
+     before, before or after migration 200. */
+  const wanted = members.map(function (m) { return memberImportRow(m || {}); }).filter(Boolean);
+  const contact = wanted.some(function (w) { return w.email || w.mobile || w.postcode || w.offers != null; });
+
   // Skip numbers already present; insert the rest as valid (pickable) members.
   /* PAGED, BECAUSE POSTGREST STOPS AT 1000 ROWS.
      This read was unpaged, so a club with more than a thousand members only ever saw the
@@ -6964,27 +7054,87 @@ async function handleMembersImport(request, env, json) {
      Nobody has hit it yet: the largest list today is 136. A big RSL is exactly the
      customer this is for. Found 18 Sep 2026 by asking the database what it caps at
      (vp_questions has 37,665 rows and returns 1,000). */
-  const existing = await sbGetAll(env, 'vp_members',
-    'roster_id=eq.' + enc(rosterId) + '&select=member_number&order=member_number.asc');
-  const have = {}; existing.forEach((m) => { have[String(m.member_number)] = true; });
-  const rows = [];
-  members.forEach((m) => {
-    const num = parseInt(m.number, 10);
-    if (isNaN(num) || have[String(num)]) return;
-    have[String(num)] = true;
-    // vp_members stores first_name/last_name; split the pasted name on the first space.
-    const nm = String(m.name || '').trim();
-    const sp = nm.indexOf(' ');
-    const first = (sp === -1 ? nm : nm.slice(0, sp)).slice(0, 80);
-    const last = (sp === -1 ? '' : nm.slice(sp + 1).trim()).slice(0, 80);
-    rows.push({ roster_id: rosterId, member_number: num, first_name: first, last_name: last, status: 'valid' });
+  let existing;
+  try {
+    existing = await sbGetAll(env, 'vp_members',
+      'roster_id=eq.' + enc(rosterId) + '&select=member_number' + (contact ? ',email,mobile,postcode,marketing_optin' : '') + '&order=member_number.asc');
+  } catch (e) {
+    /* Before migration 200 the database has no email or mobile column. Nothing is added rather than a half import that
+       quietly drops what the venue chose to bring. */
+    if (contact) return json({ error: 'Your members list cannot take emails and mobiles just yet. Nothing was added. Please try again later or call us on 07 5228 3667.' }, 503);
+    throw e;
+  }
+  const have = {}; existing.forEach((m) => { have[String(m.member_number)] = m; });
+  const rows = [], fills = [], seen = {};
+  const today = new Date().toISOString();
+  const source = 'members list import, ' + today.slice(0, 10);
+  wanted.forEach((w) => {
+    const key = String(w.number);
+    if (seen[key]) return;   // the same number twice in one file: the first one counts
+    seen[key] = true;
+    const old = have[key];
+    if (!old) {
+      const row = { roster_id: rosterId, member_number: w.number, first_name: w.first, last_name: w.last, status: 'valid' };
+      if (w.email) row.email = w.email;
+      if (w.mobile) row.mobile = w.mobile;
+      if (w.postcode) row.postcode = w.postcode;
+      /* consent to be contacted with no way to contact them is not kept (the same rule as gatedCapture) */
+      if (w.offers === false || (w.offers === true && (w.email || w.mobile))) {
+        row.marketing_optin = w.offers; row.marketing_optin_at = today; row.marketing_optin_source = source;
+      }
+      if (contact) ['email', 'mobile', 'postcode', 'marketing_optin', 'marketing_optin_at', 'marketing_optin_source'].forEach(function (k) { if (!(k in row)) row[k] = null; });   // one shape for one bulk insert
+      rows.push(row);
+      return;
+    }
+    if (!contact) return;
+    // ALREADY ON THE LIST: fill what is empty, never overwrite; an unsubscribe always wins; never a yes over a no.
+    const f = { member_number: w.number, email: null, mobile: null, postcode: null, set_offers: false, offers: null };
+    let any = false;
+    if (w.email && !old.email) { f.email = w.email; any = true; }
+    if (w.mobile && !old.mobile) { f.mobile = w.mobile; any = true; }
+    if (w.postcode && !old.postcode) { f.postcode = w.postcode; any = true; }
+    const reach = old.email || old.mobile || w.email || w.mobile;
+    if (w.offers === false && old.marketing_optin !== false) { f.set_offers = true; f.offers = false; any = true; }
+    else if (w.offers === true && old.marketing_optin == null && reach) { f.set_offers = true; f.offers = true; any = true; }
+    if (any) fills.push(f);
   });
-  if (rows.length) await sbInsert(env, 'vp_members', rows, false);
+  if (rows.length) {
+    for (let i = 0; i < rows.length; i += 500) await sbInsert(env, 'vp_members', rows.slice(i, i + 500), false);
+  }
+  /* ONE CALL PER 500 FILLED MEMBERS, not one per member: vp_members_fill (migration 200) applies them in the database with
+     the same never-overwrite and never-a-yes-over-a-no guards, so a member changed between the read above and here keeps
+     what they have. */
+  let filled = 0;
+  for (let i = 0; i < fills.length; i += 500) {
+    const n = await sbRpc(env, 'vp_members_fill', { p_roster_id: rosterId, p_rows: fills.slice(i, i + 500), p_source: source });
+    filled += (typeof n === 'number' ? n : 0);
+  }
+  /* REMEMBER THE COLUMNS (Dean, 16 Nov 2026): the headings the venue matched, kept with its list and put back next time.
+     Best effort: a list is never refused because its column choices could not be saved. */
+  const map = memberImportMap(b.map);
+  if (map) { try { await sbPatch(env, 'vp_member_rosters', 'id=eq.' + enc(rosterId) + '&venue_id=eq.' + enc(venueId), { import_map: map }); } catch (e) { /* before migration 200: nothing remembered */ } }
   /* "Added 0" on a re-paste reads like a failure when it is the list already being right.
      skipped_existing is the difference between "nothing happened" and "they were all
      already there", and the account page shows it the moment it arrives. */
   const skipped = members.length - rows.length;
-  return json({ ok: true, added: rows.length, skipped_existing: skipped > 0 ? skipped : 0, roster_id: rosterId });
+  return json({ ok: true, added: rows.length, skipped_existing: skipped > 0 ? skipped : 0, filled: filled, roster_id: rosterId });
+}
+
+/* IS THIS PLAYER A MEMBER? (Dean, 16 Nov 2026: "if John signs up and his phone number matches what he's put into the game,
+   we know John's a member.") The mobile a player gives at THIS venue against THIS venue's members list, normalised the
+   purchase raffle's way on both sides. Returns the member row's id, or null; never another venue's list, never the
+   member's details. Any failure (before migration 200 there is no mobile column) is "not a member": a join is never held
+   up or refused by it. */
+async function memberIdByMobile(env, venueId, raw) {
+  const mob = memberMobile(raw);
+  if (!mob || !venueId) return null;
+  try {
+    const rosters = await sbGet(env, 'vp_member_rosters', 'venue_id=eq.' + enc(venueId) + '&select=id&order=id.asc&limit=50');
+    if (!rosters.length) return null;
+    const inList = rosters.map(function (r) { return enc(r.id); }).join(',');
+    const hit = await sbGet(env, 'vp_members', 'roster_id=in.(' + inList + ')&mobile=eq.' + enc(mob) + '&select=id&order=member_number.asc&limit=1');
+    return hit.length ? hit[0].id : null;
+  } catch (e) { return null; }
 }
 
 /* POST /host/members/update  (MANAGER/OWNER) : fix a name on the members list.
@@ -7288,6 +7438,14 @@ async function venueNameDisplay(env, venueId) {
 function formatMemberName(first, last, mode) {
   let f = (first || '').trim();
   let l = (last || '').trim();
+  /* ONE BOX IN "Last,First" ORDER (Dean, 16 Nov 2026, Jobs row 445): a club system's export pasted as one name ("Lee,Daniel",
+     "LEE, Daniel") was shown whole, so "first name + last initial" put "Lee,Daniel" on the TV. Exactly one comma with a name
+     either side is surname, first name. The SQL copy, vp_member_name (migration 200), does the same, checked case by case by
+     worker/one-trip-draws.test.js. */
+  if (!l && f.indexOf(',') !== -1) {
+    const cp = f.split(',');
+    if (cp.length === 2 && cp[0].trim() && cp[1].trim()) { l = cp[0].trim(); f = cp[1].trim(); }
+  }
   // Robustness: if a member was imported as a single field ("John Smith" all in first_name,
   // last_name empty), split the last word off so the abbreviation options still work. Without
   // this, "first initial + last name" shows only "J" and "first name + last initial" shows the
@@ -14204,9 +14362,16 @@ function errRef() {
 
 // M5: log the real Supabase/PostgREST detail server-side, return a generic error
 // carrying only the opaque ref. No constraint, column or SQL text reaches the client.
+/* NEVER A PERSON'S DETAILS IN A LOG (Dean, 16 Nov 2026, Jobs row 445: player and member data is tier one). Postgres writes
+   the whole row into a refusal ("Failing row contains (..., jane@example.com, +61412345678, ...)") and the clashing value
+   into a duplicate ("Key (mobile)=(+61412345678) already exists"). The log keeps the error, never the values. */
+function dbRedact(detail) {
+  return String(detail).replace(/Failing row contains \(.*\)/g, 'Failing row contains (...)')
+    .replace(/(Key \([^)]*\)=)\((.*?)\)/g, '$1(...)');
+}
 function dbError(op, target, detail) {
   const code = errRef();
-  console.log('[' + code + '] db ' + op + ' ' + target + ' failed: ' + String(detail));
+  console.log('[' + code + '] db ' + op + ' ' + target + ' failed: ' + dbRedact(detail));
   const e = httpError(502, 'A database error occurred (' + code + ')');
   return e;
 }

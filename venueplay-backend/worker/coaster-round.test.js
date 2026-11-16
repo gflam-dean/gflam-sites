@@ -188,7 +188,7 @@ function FixedDate(x) { if (!(this instanceof FixedDate)) return new RealDate(NO
 FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; FixedDate.parse = RealDate.parse; FixedDate.prototype = RealDate.prototype;
 
 function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
-  lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + (uu ? uu[0] : "") + "\n" + block +
+  lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + lift("praffleNormPhone") + lift("memberMobile") + lift("memberIdByMobile") + (uu ? uu[0] : "") + "\n" + block +
   "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, mobile: coasterMobile, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",

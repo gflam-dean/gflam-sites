@@ -572,6 +572,16 @@
     .dlgacts .dlgbtn{width:100%} }
 /* NO CSV UPLOAD ON A PHONE (Dean, round 12 note 9): nobody picks a CSV on a phone; the weekly reminder stands in its place */
 @media (max-width:700px){#md-upload.md-nophone{display:none}}
+/* the upload's name check (Jobs row 445): a fixed-height list that scrolls inside itself, never the page sideways */
+.md-all{max-height:320px;overflow:auto;border:1px solid var(--line-2);border-radius:10px}
+.md-all table{width:100%;border-collapse:collapse;font-size:13px}
+.md-all th,.md-all td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line-2);vertical-align:top;white-space:nowrap}
+.md-all th{position:sticky;top:0;background:var(--ink-2,#1a1a1f);color:var(--muted);font-weight:600}
+.md-all tr.unsure td{color:#FFD27A}
+.md-fix{display:grid;grid-template-columns:minmax(0,0.5fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-2)}
+.md-fix input{width:100%;min-height:44px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 10px;font:inherit}
+.md-fix .why{grid-column:1/-1;color:#FFD27A;font-size:12.5px;margin:0}
+@media (max-width:420px){.md-fix{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.md-fix .num{grid-column:1/-1}}
   /* THE CANCEL SCREEN (Dean, 10 Nov 2026, INBOX 136 and 137): their numbers, what they'd lose, and a main
      button beside Cancel, the same size, Cancel never hidden. */
   .cxstats{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px}
@@ -991,21 +1001,31 @@
     <div class="scard">
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
       <div class="snote" id="mdCount">Loading your members list…</div>
-      <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
+      <p class="snote">This is personal information your venue holds about your members. We keep only the member number, names, email, mobile, postcode and whether they want your offers, and you can take someone off when they ask. Emails and mobiles stay in your account and your download: they never go on a TV or a phone.</p>
       <!-- UPLOAD FIRST (Dean, setup wizard round 11 note 7): choose the file, THEN say which column is which -->
       <div id="md-upload" class="md-nophone" style="margin-top:4px">
         <div class="scardhead" style="font-size:13px">Upload your members list</div>
-        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). Next you pick which column is the member number, the first name and the last name.</p>
+        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). We mark which column is the member number, the names, email, mobile, postcode and whether they want offers, for you to check. You check every name before anything is saved.</p>
         <button class="go" id="md-csvbtn" type="button">Choose a CSV file</button>
         <input type="file" id="md-csv" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel" style="display:none">
         <p class="snote" id="md-csvmsg" role="status" style="margin-top:8px"></p>
         <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
         <div id="md-match" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:12px">
           <div class="scardhead" style="font-size:13px">Which column is which?</div>
-          <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box below for you to check.</p>
+          <p class="snote" id="md-matchnote">We have marked each column we could tell from its heading and what is in it. Check them, and pick any left at None.</p>
           <p class="snote mono" id="md-matchex" style="margin-top:0"></p>
           <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
+          <p class="snote" id="md-matchskip" style="margin-top:10px"></p>
           <div class="btnrow" style="margin-top:10px"><button class="go" id="md-matchgo" type="button">Use these columns</button><button class="offtv" id="md-matchno" type="button">Cancel</button></div>
+        </div>
+        <!-- CHECK EVERY NAME BEFORE SAVING (Dean, 16 Nov 2026, Jobs row 445): the names the rule could not be sure of come first, to fix here -->
+        <div id="md-review" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:12px">
+          <div class="scardhead" style="font-size:13px">Check the names</div>
+          <p class="snote" id="md-reviewnote"></p>
+          <div id="md-unsure"></div>
+          <div class="scardhead" style="font-size:13px;margin-top:12px" id="md-allhead">Everyone in the file</div>
+          <div id="md-all" class="md-all" role="region" aria-label="Everyone in the file" tabindex="0"></div>
+          <div class="btnrow" style="margin-top:10px"><button class="go" id="md-reviewgo" type="button">Add to members list</button><button class="offtv" id="md-reviewback" type="button">Back to the columns</button></div>
         </div>
       </div>
       <!-- A WEEKLY REMINDER (Dean, setup wizard round 12 note 9): on a phone nobody picks a CSV, so this stands where the upload is; on a computer it sits beside it -->
@@ -2111,11 +2131,14 @@
     if (c && src) c.textContent = src.textContent;
     if (dl) dl.hidden = !(src && / in your list\./.test(src.textContent));
   }
-  /* The members list as a CSV (number, first name, surname): the venue's own list, read with its own login and paged,
-     ordered, until a page comes back EMPTY (CLAUDE.md: never stop on a short page). */
+  /* The members list as a CSV (number, first name, surname, and since migration 200 the email, mobile, postcode and offers
+     consent the venue imported): the venue's own list, read with its own login and paged, ordered, until a page comes back
+     EMPTY (CLAUDE.md: never stop on a short page). Before migration 200 the database has no such columns and refuses the
+     read (42703), so the download asks again for number and names only (Jobs row 445, 16 Nov 2026). */
+  var MEMBER_CONTACT_COLS = "number:member_number,first_name,last_name,email,mobile,postcode,marketing_optin,marketing_optin_source";
   function downloadMembers(){
     var vid = mdCurrent || pageVenueId; if (!vid){ showMsg("Pick a venue first."); return; }
-    var client = VP.getClient(), btn = $("leftMembersCsv"), rows = [], PAGE = 1000;
+    var client = VP.getClient(), btn = $("leftMembersCsv"), rows = [], PAGE = 1000, withContact = true;
     btn.disabled = true;
     client.from("vp_member_rosters").select("id").eq("venue_id", vid).then(function(rr){
       var ids = ((rr && rr.data) || []).map(function(x){ return x.id; });
@@ -2123,9 +2146,13 @@
       function page(from){
         /* The column is member_number (12 Nov 2026, INBOX 278: "number" shipped and the download errored for every
            left venue). Aliased so each row still reads m.number. */
-        return client.from("vp_members").select("number:member_number,first_name,last_name").in("roster_id", ids)
+        var q = withContact ? client.from("vp_members").select(MEMBER_CONTACT_COLS) : client.from("vp_members").select("number:member_number,first_name,last_name");
+        return q.in("roster_id", ids)
           .order("member_number", { ascending: true }).order("id", { ascending: true }).range(from, from + PAGE - 1).then(function(r){
-            if (r && r.error) throw r.error;
+            if (r && r.error){
+              if (withContact && from === 0 && /42703|PGRST204|does not exist|column/i.test(String(r.error.code || "") + " " + String(r.error.message || ""))){ withContact = false; return page(0); }
+              throw r.error;
+            }
             var got = (r && r.data) || [];
             if (!got.length) return rows;
             rows = rows.concat(got);
@@ -2137,7 +2164,10 @@
       btn.disabled = false;
       if (!all.length){ showMsg("There is nobody on your members list."); return; }
       var q = function(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var mob = function(p){ return p ? VPMembersCsv.showMobile(p) : ""; };
       var csv = "Member number,First name,Surname\n" + all.map(function(m){ return [m.number, m.first_name, m.last_name].map(q).join(","); }).join("\n") + "\n";
+      if (withContact) csv = "Member number,First name,Surname,Email,Mobile,Postcode,Offers from your venue,Offers recorded from\n" + all.map(function(m){
+        return [m.number, m.first_name, m.last_name, m.email, mob(m.mobile), m.postcode, m.marketing_optin === true ? "Yes" : (m.marketing_optin === false ? "No" : ""), m.marketing_optin_source].map(q).join(","); }).join("\n") + "\n";
       var a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
       a.download = "members-list.csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -3797,35 +3827,149 @@
     reader.onload = function(){ var buf = reader.result; csvMatch(typeof buf === "string" ? buf : VPMembersCsv.decode(buf)); };
     if (reader.readAsArrayBuffer) reader.readAsArrayBuffer(f); else reader.readAsText(f);
   }
+  /* THE COLUMNS IT MATCHED LAST TIME (vp_member_rosters.import_map, migration 200). A read that fails is "no columns remembered":
+     the upload still works. Every field venueplay can collect is offered, whatever the venue has switched on today (Dean,
+     16 Nov 2026, Jobs row 445): first name, surname, email, mobile, postcode and the offers consent. */
+  function mdUploadContext(venueId){
+    var client = VP.getClient(), out = { allow: { email: true, mobile: true, postcode: true, offers: true }, map: null, rosterId: null };
+    return client.from("vp_member_rosters").select("id,import_map").eq("venue_id", venueId).order("created_at", { ascending: true }).then(function(r){
+      var row = (r && !r.error && r.data && r.data[0]) || null;
+      if (row){ out.rosterId = row.id; out.map = row.import_map || null; }
+      return out;
+    }, function(){ return out; });
+  }
+  var MD_FIELDS = [["number", "Member number"], ["names", "Names"], ["first", "First name"], ["last", "Surname"], ["full", "Full name (one column)"],
+                   ["email", "Email"], ["mobile", "Mobile"], ["postcode", "Postcode"], ["offers", "Send me offers (subscribed)"]];
   function csvMatch(text){
-    var plan = VPMembersCsv.plan(VPMembersCsv.parse(text)), rows = plan.rows, box = $("md-match"), list = $("md-matchrows");
-    if (!rows.length){ csvSay("That file looks empty. Check it has your members in it and choose it again."); return; }
-    csvSay("");
+    var rows0 = VPMembersCsv.parse(text);
+    if (!rows0.length){ csvSay("That file looks empty. Check it has your members in it and choose it again."); return; }
+    csvSay("Reading your file...", true);
+    var venueId = mdCurrent;
+    return mdUploadContext(venueId).then(function(cx){ if (venueId !== mdCurrent) return; csvPick(rows0, cx); });
+  }
+  function csvPick(rows0, cx){
+    var plan = VPMembersCsv.guess(rows0, cx.allow), rows = plan.rows, box = $("md-match"), list = $("md-matchrows");
+    var again = VPMembersCsv.applyMap(plan, cx.map, cx.allow); plan = again.plan;
+    csvSay(again.used ? "We used the columns you picked last time. Change any that are wrong." : "");
+    $("md-review").style.display = "none";
     var heads = plan.heads;
     while (list.firstChild) list.removeChild(list.firstChild);
-    var picks = {};
-    [["number", "Member number"], ["first", "First name"], ["last", "Last name"]].forEach(function(k){
-      var lab = document.createElement("label"); lab.textContent = k[1]; lab.setAttribute("for", "md-col-" + k[0]); lab.className = "snote"; lab.style.margin = "0";
-      var sel = document.createElement("select"); sel.id = "md-col-" + k[0];
+    var picks = {}, labs = {};
+    MD_FIELDS.forEach(function(k){
+      var f = k[0];
+      var lab = document.createElement("label"); lab.textContent = k[1]; lab.setAttribute("for", "md-col-" + f); lab.className = "snote"; lab.style.margin = "0";
+      var sel = document.createElement("select"); sel.id = "md-col-" + f;
       sel.setAttribute("style", "width:100%;min-height:44px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 10px;font:inherit");
-      if (k[0] !== "number"){ var o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = k[0] === "last" ? "None (the name is in one column)" : "None"; sel.appendChild(o0); }
-      heads.forEach(function(h, i){ var o = document.createElement("option"); o.value = String(i); o.textContent = String(h || ("Column " + (i + 1))).slice(0, 60); sel.appendChild(o); });
-      sel.value = String(plan.ix[k[0]]);
-      picks[k[0]] = sel; list.appendChild(lab); list.appendChild(sel);
+      if (f === "names"){
+        [["two", "First name and surname in two columns"], ["one", "Full name in one column"]].forEach(function(o){ var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op); });
+        sel.value = plan.ix.full >= 0 ? "one" : "two";
+      } else {
+        if (f !== "number"){ var o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = f === "last" ? "None (no surname)" : "None"; sel.appendChild(o0); }
+        heads.forEach(function(h, i){ var o = document.createElement("option"); o.value = String(i); o.textContent = String(h || ("Column " + (i + 1))).slice(0, 60); sel.appendChild(o); });
+        sel.value = String(plan.ix[f] != null && plan.ix[f] >= 0 ? plan.ix[f] : (f === "number" ? 0 : -1));
+        if (f === "first" && plan.ix.full >= 0 && plan.ix.first < 0) sel.value = "-1";
+      }
+      picks[f] = sel; labs[f] = lab; list.appendChild(lab); list.appendChild(sel);
     });
+    function layout(){
+      var one = picks.names.value === "one";
+      ["first", "last"].forEach(function(f){ labs[f].hidden = one; picks[f].hidden = one; });
+      labs.full.hidden = !one; picks.full.hidden = !one;
+      if (one && +picks.full.value < 0){ var g = plan.ix.full >= 0 ? plan.ix.full : plan.ix.first; if (g >= 0) picks.full.value = String(g); }
+      skipLine();
+    }
+    function ixNow(){
+      var one = picks.names.value === "one", ix = { number: +picks.number.value, first: one ? -1 : +picks.first.value, last: one ? -1 : +picks.last.value,
+        full: one ? +picks.full.value : -1, email: -1, mobile: -1, postcode: -1, offers: -1, offersInverted: false };
+      ["email", "mobile", "postcode", "offers"].forEach(function(f){ if (picks[f]) ix[f] = +picks[f].value; });
+      if (ix.offers >= 0) ix.offersInverted = /do not contact|unsubscri|opt ?out|optout/i.test(String(heads[ix.offers] || ""));
+      return ix;
+    }
+    /* every column that is not going in is named, so a venue can see its street addresses and birthdays stay on its own computer */
+    function skipLine(){
+      var left = VPMembersCsv.notImported(plan, ixNow()), el = $("md-matchskip");
+      el.textContent = left.length ? "Not imported: " + left.map(function(h){ return String(h).slice(0, 30); }).join(", ") + ". We keep only the member number, names, email, mobile, postcode and offers." : "";
+    }
+    picks.names.onchange = layout;
+    Object.keys(picks).forEach(function(f){ if (f !== "names") picks[f].addEventListener("change", skipLine); });
+    layout();
     box.style.display = "";
     var ex = $("md-matchex"); if (ex) ex.textContent = "First row: " + (rows[plan.from] || rows[0]).map(function(x){ return String(x).slice(0, 18); }).join("  |  ");
     $("md-matchgo").onclick = function(){
-      var ix = { number: +picks.number.value, first: +picks.first.value, last: +picks.last.value };
-      var made = VPMembersCsv.build(rows, ix, plan.from), lines = made.lines;
-      if (!lines.length){ csvSay("No member numbers in that column. Pick the column that holds the numbers."); return; }
-      var cur = $("md-import").value.trim();
-      $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n");
-      box.style.display = "none";
-      csvSay(lines.length + " members ready in the box below." + (made.skipped ? " " + made.skipped + (made.skipped === 1 ? " row" : " rows") + " had no member number and " + (made.skipped === 1 ? "was" : "were") + " left out." : "") + " Check they look right, then tap Add to members list.", true);
-      try { $("md-import").scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e){}
+      var ix = ixNow();
+      if (ix.full < 0 && ix.first < 0 && ix.last < 0){ csvSay("Pick the column that holds the names."); return; }
+      var made = VPMembersCsv.members(rows, ix, plan.from);
+      if (!made.members.length){ csvSay("No member numbers in that column. Pick the column that holds the numbers."); return; }
+      csvSay("");
+      csvReview(made, ix, VPMembersCsv.mapOf(plan, ix), cx.allow);
     };
-    $("md-matchno").onclick = function(){ box.style.display = "none"; };
+    $("md-matchno").onclick = function(){ box.style.display = "none"; csvSay(""); };
+  }
+  /* THE CHECK: every member in the file, as they will be saved, and the names the rule could not be sure of ("Mary Anne Smith",
+     a single name, two commas) first, each with its own First name and Surname box to put right before anything is saved. */
+  function csvReview(made, ix, map, allow){
+    var box = $("md-review"), list = made.members, unsure = list.filter(function(m){ return !m.sure || m.problems.length; });
+    $("md-match").style.display = "none";
+    var note = list.length + (list.length === 1 ? " member" : " members") + " in your file.";
+    if (made.skipped) note += " " + made.skipped + (made.skipped === 1 ? " row has" : " rows have") + " no member number and " + (made.skipped === 1 ? "is" : "are") + " left out.";
+    note += unsure.length ? " Check the " + unsure.length + " below: we could not be sure how to split " + (unsure.length === 1 ? "this name" : "these names") + ", or something in the row was left out. Fix any that are wrong, then add them." : " Every name split cleanly. Have a look, then add them.";
+    $("md-reviewnote").textContent = note;
+    var un = $("md-unsure"); un.innerHTML = "";
+    unsure.slice(0, 200).forEach(function(m){
+      var i = list.indexOf(m), row = document.createElement("div"); row.className = "md-fix"; row.setAttribute("data-i", String(i));
+      row.innerHTML = '<div class="num mono">' + esc(String(m.number)) + '</div>' +
+        '<input type="text" class="md-fixf" placeholder="First name" aria-label="First name for member ' + esc(String(m.number)) + '" value="' + esc(m.first_name) + '" maxlength="80">' +
+        '<input type="text" class="md-fixl" placeholder="Surname" aria-label="Surname for member ' + esc(String(m.number)) + '" value="' + esc(m.last_name) + '" maxlength="80">' +
+        '<p class="why">' + esc(m.problems.join(". ")) + '</p>';
+      un.appendChild(row);
+    });
+    if (unsure.length > 200){ var more = document.createElement("p"); more.className = "snote"; more.textContent = (unsure.length - 200) + " more to check in the list below. Fix them in your file and upload it again, or fix a name after adding it."; un.appendChild(more); }
+    var cols = [["number", "No."], ["first_name", "First name"], ["last_name", "Surname"]];
+    if (ix.email >= 0) cols.push(["email", "Email"]);
+    if (ix.mobile >= 0) cols.push(["mobile", "Mobile"]);
+    if (ix.postcode >= 0) cols.push(["postcode", "Postcode"]);
+    if (ix.offers >= 0) cols.push(["offers", "Offers"]);
+    function cellOf(m, k){
+      var v = m[k];
+      if (k === "mobile") return v ? VPMembersCsv.showMobile(v) : "";
+      if (k === "offers") return v === true ? "Yes" : (v === false ? "No" : "");
+      return v == null ? "" : String(v);
+    }
+    $("md-all").innerHTML = '<table><thead><tr>' + cols.map(function(c){ return '<th scope="col">' + esc(c[1]) + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      list.map(function(m){ return '<tr' + (m.sure && !m.problems.length ? '' : ' class="unsure"') + '>' + cols.map(function(c){ return '<td>' + esc(cellOf(m, c[0])) + '</td>'; }).join("") + '</tr>'; }).join("") + '</tbody></table>';
+    box.style.display = "";
+    try { box.scrollIntoView({ block: "start", behavior: "smooth" }); } catch(e){}
+    $("md-reviewback").onclick = function(){ box.style.display = "none"; $("md-match").style.display = ""; };
+    $("md-reviewgo").onclick = function(){
+      if (mdNotReady()) return;
+      /* what the venue typed over a guess is what is saved */
+      Array.prototype.forEach.call(un.querySelectorAll(".md-fix"), function(r){
+        var m = list[+r.getAttribute("data-i")]; if (!m) return;
+        m.first_name = r.querySelector(".md-fixf").value.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+        m.last_name = r.querySelector(".md-fixl").value.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+      });
+      var members = list.map(function(m){
+        var o = { number: m.number, first_name: m.first_name, last_name: m.last_name };
+        if (m.email && allow.email) o.email = m.email;
+        if (m.mobile && allow.mobile) o.mobile = m.mobile;
+        if (m.postcode && allow.postcode) o.postcode = m.postcode;
+        if ((m.offers === true || m.offers === false) && allow.offers) o.offers = m.offers;
+        return o;
+      });
+      var payload = mdDraw ? { draw_id: mdDraw.id, members: members } : { venue_id: mdCurrent, members: members };
+      if (map) payload.map = map;
+      var btn = $("md-reviewgo"); btn.disabled = true; btn.textContent = "Adding…";
+      gameApi("/host/members/import", payload).then(function(r){
+        btn.disabled = false; btn.textContent = "Add to members list";
+        if (r.error){ csvSay(r.error); return; }
+        box.style.display = "none";
+        var added = r.added != null ? r.added : members.length, words = added + " added to your members list.";
+        if (r.skipped_existing > 0) words += " " + r.skipped_existing + " " + (r.skipped_existing === 1 ? "was" : "were") + " already on it" + (r.filled > 0 ? " (" + r.filled + " had details filled in that were missing)" : "") + ".";
+        if (made.skipped) words += " " + made.skipped + (made.skipped === 1 ? " row" : " rows") + " had no member number and " + (made.skipped === 1 ? "was" : "were") + " left out.";
+        csvSay(words, true);
+        loadMembersDrawFor(mdCurrent);
+      });
+    };
   }
   function unquoteCols(line, delim){
     var cols = [], cur = "", inQ = false;

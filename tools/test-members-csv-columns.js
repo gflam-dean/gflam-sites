@@ -43,6 +43,7 @@ Q.prototype.run = function () {
     p = p.trim(); var i = p.indexOf(':'); return i >= 0 ? { as: p.slice(0, i), col: p.slice(i + 1) } : { as: p, col: p };
   });
   var named = picks.map(function (p) { return p.col; }).concat(this.f.map(function (f) { return f[0]; }), this.ord.map(function (o) { return o.k; }));
+  NAMED.push('|' + t);   // where each read starts, so a check can look at one read on its own
   for (var i = 0; i < named.length; i++) {
     NAMED.push(t + '.' + named[i]);
     if (named[i] !== '*' && known.indexOf(named[i]) < 0) return { data: null, error: colErr(t, named[i]) };
@@ -76,8 +77,12 @@ var PAGE_ENV = {
   document: { createElement: function () { return { click: function () { this.clicked = true; FILES[FILES.length - 1].name = this.download; } }; },
               body: { appendChild: function () {}, removeChild: function () {} } }
 };
-var downloadMembers = new Function('VP', '$', 'showMsg', 'Blob', 'URL', 'document', 'mdCurrent', 'pageVenueId',
-  SRC + '\nreturn downloadMembers;')(PAGE_ENV.VP, PAGE_ENV.$, PAGE_ENV.showMsg, PAGE_ENV.Blob, PAGE_ENV.URL, PAGE_ENV.document, 'v1', 'v1');
+var window = this; load('venueplay/app/vp-memberscsv.js');
+/* MEMBER_CONTACT_COLS is a page-level var beside the function (Jobs row 445): lifted from the page too, never typed in here */
+var CONTACT_COLS = (SCRIPT.match(/\n  var MEMBER_CONTACT_COLS = ("[^"]*");/) || [])[1];
+check('billing.html names the download\'s contact columns in one place (MEMBER_CONTACT_COLS)', !!CONTACT_COLS, CONTACT_COLS);
+var downloadMembers = new Function('VP', '$', 'showMsg', 'Blob', 'URL', 'document', 'mdCurrent', 'pageVenueId', 'VPMembersCsv',
+  'var MEMBER_CONTACT_COLS = ' + (CONTACT_COLS || '""') + ';\n' + SRC + '\nreturn downloadMembers;')(PAGE_ENV.VP, PAGE_ENV.$, PAGE_ENV.showMsg, PAGE_ENV.Blob, PAGE_ENV.URL, PAGE_ENV.document, 'v1', 'v1', this.VPMembersCsv);
 
 function press() {
   MSGS = []; FILES = []; NAMED = []; ERRORS = [];
@@ -96,11 +101,14 @@ DB.vp_members = [
 ];
 
 print('');
-print('2 and 3. one press of Download members list');
+print('2 and 3. one press of Download members list, on the database as it is today (before migration 200)');
 var f = press();
-var unknown = NAMED.filter(function (n) { var p = n.split('.'); return (COLS[p[0]] || []).indexOf(p[1]) < 0; });
-check('every column the download names is a real column of its table (' + NAMED.filter(function (n, i) { return NAMED.indexOf(n) === i; }).join(', ') + ')',
-      NAMED.length > 0 && unknown.length === 0 && ERRORS.length === 0, { unknown: unknown, errors: ERRORS });
+/* Before migration 200 the first read names email and mobile, the stand-in refuses it exactly as PostgREST does (42703), and
+   the download asks again for number and names. Only the columns of that second, successful read count. */
+var lastRead = NAMED.slice(NAMED.lastIndexOf('|vp_members') + 1);
+var unknown = lastRead.filter(function (n) { var p = n.split('.'); return (COLS[p[0]] || []).indexOf(p[1]) < 0; });
+check('every column the download reads is a real column of its table (' + lastRead.filter(function (n, i) { return lastRead.indexOf(n) === i; }).join(', ') + ')',
+      lastRead.length > 0 && unknown.length === 0 && ERRORS.every(function (e) { return /vp_members\.(email|mobile|postcode|marketing_optin)/.test(e); }) && ERRORS.length <= 1, { unknown: unknown, errors: ERRORS });
 check('no "could not download" message', MSGS.length === 0, MSGS);
 check('a file is made, members-list.csv, text/csv', !!f && f.name === 'members-list.csv' && f.type === 'text/csv', f);
 var lines = f ? f.text.split('\n') : [];
@@ -122,6 +130,27 @@ print('5. nobody on the list');
 DB.vp_members = [];
 var none = press();
 check('no file is made and the venue is told "There is nobody on your members list."', !none && MSGS[0] === 'There is nobody on your members list.', [none, MSGS]);
+
+print('');
+print('6. after migration 200: the email, mobile, postcode and offers columns go into the venue\'s own download (Jobs row 445)');
+/* the columns migration 200 adds, read from the file itself, laid over the live baseline */
+var M200 = readFile('venueplay-backend/supabase/venueplay-200-members-upload-contacts.sql');
+var added = []; (M200.split('alter table public.vp_members')[1] || '').split(';')[0].replace(/add column if not exists\s+(\w+)/g, function (m, c) { added.push(c); });
+check('migration 200 adds email, mobile, postcode, marketing_optin, marketing_optin_at, marketing_optin_source to vp_members',
+      ['email', 'mobile', 'postcode', 'marketing_optin', 'marketing_optin_at', 'marketing_optin_source'].every(function (c) { return added.indexOf(c) >= 0; }), added);
+COLS.vp_members = COLS.vp_members.concat(added);
+DB.vp_members = [
+  { id: 'm3', roster_id: 'r1', member_number: '1010', first_name: 'Ann', last_name: 'Lee', email: 'ann@example.com', mobile: '+61412345678', postcode: '4220', marketing_optin: true, marketing_optin_source: 'members list import, 2026-11-19' },
+  { id: 'm1', roster_id: 'r2', member_number: '1001', first_name: 'Bob, Jr', last_name: 'O"Neil', email: null, mobile: null, postcode: null, marketing_optin: false, marketing_optin_source: 'members list import, 2026-11-19' },
+  { id: 'm2', roster_id: 'r1', member_number: '1002', first_name: 'Cat', last_name: 'Ng', email: null, mobile: '+61498765432', postcode: null, marketing_optin: null, marketing_optin_source: null },
+  { id: 'm9', roster_id: 'r9', member_number: '1000', first_name: 'Not', last_name: 'Ours', email: 'not@ours.com', mobile: '+61400000000', postcode: '2000', marketing_optin: true }
+];
+var g = press();
+check('one read, no refusal, every column named is real once migration 200 has run', ERRORS.length === 0 && NAMED.every(function (n) { var p = n.split('.'); return n.charAt(0) === '|' || n.indexOf('*') >= 0 || (COLS[p[0]] || []).indexOf(p[1]) >= 0; }), { errors: ERRORS });
+check('the file: number, names, email, the mobile written 04xx xxx xxx, postcode, Yes / No / blank for offers and where each came from; another venue\'s member left out',
+      g && g.text === 'Member number,First name,Surname,Email,Mobile,Postcode,Offers from your venue,Offers recorded from\n' +
+        '1001,"Bob, Jr","O""Neil",,,,No,"members list import, 2026-11-19"\n1002,Cat,Ng,,0498 765 432,,,\n1010,Ann,Lee,ann@example.com,0412 345 678,4220,Yes,"members list import, 2026-11-19"\n', g && g.text);
+check('nothing from the other venue (not@ours.com, 0400 000 000) is anywhere in the file', g && g.text.indexOf('ours') < 0 && g.text.indexOf('0400') < 0);
 
 if (bad) throw new Error('members csv columns: ' + bad + ' of ' + ran + ' failed');
 print('');
