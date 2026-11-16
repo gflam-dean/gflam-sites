@@ -100,6 +100,18 @@ try:
                [h1.get('l'), lt.get('l'), cta.get('l'), (M.get('price') or {}).get('l')])
             ok('%s: and its first line starts there too, in line with the wordmark in the corner' % tag,
                lines and abs(lines[0]['l'] - h1['l']) <= 3 and logo and abs(h1['l'] - logo['l']) <= 3, [lines[:1], h1.get('l'), logo.get('l')])
+        # Job 447 (Dean, 16 Nov 2026): the demo telly is centred, stands on a neck and foot, and the phone never covers its screen.
+        T = S.js(sid, '(function(){function R(e){if(!e)return null;var r=e.getBoundingClientRect();return {l:r.left,r:r.right,t:r.top,b:r.bottom,w:r.width};}'
+                      'return JSON.stringify({stage:R(document.getElementById("h2Stage")),tv:R(document.querySelector(".h2-tv")),scr:R(document.querySelector(".h2-tvscreen")),'
+                      'stand:R(document.querySelector(".h2-tvstand")),ph:R(document.querySelector(".h2-phonebox")),'
+                      'neck:getComputedStyle(document.querySelector(".h2-tvstand"),"::before").content+" "+getComputedStyle(document.querySelector(".h2-tvstand"),"::before").width,foot:getComputedStyle(document.querySelector(".h2-tvstand"),"::after").content+" "+getComputedStyle(document.querySelector(".h2-tvstand"),"::after").width});})()')
+        T = json.loads(T) if isinstance(T, str) else {}
+        st, tv, sc, sd, ph = [T.get(k) or {} for k in ('stage', 'tv', 'scr', 'stand', 'ph')]
+        ok('%s: the demo TV is centred in its stage (within 2px) and stands on a neck and a foot below it' % tag,
+           st and tv and sd and abs((tv['l'] + tv['r']) / 2 - (st['l'] + st['r']) / 2) <= 2 and sd['t'] >= tv['b'] - 1 and sd['b'] - sd['t'] >= 16
+           and str(T.get('neck', '')).startswith('"" ') and str(T.get('foot', '')).startswith('"" ') and not str(T.get('neck')).endswith(' 0px'), T)
+        ok('%s: the phone sits beside the TV and does not cover any of its screen' % tag,
+           ph and sc and (ph['l'] >= sc['r'] - 1 or ph['t'] >= sc['b'] - 1) and ph['r'] <= st['r'] + 1, T)
         if A.shots:
             os.makedirs(A.shots, exist_ok=True)
             S.shot(sid, os.path.join(A.shots, 'home-hero-%d.png' % w))
@@ -109,7 +121,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 26
+EXPECTED = 38
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
