@@ -226,7 +226,7 @@ def browser_via(proxy_port):
         return orig(args, **kw)
     VL.subprocess.Popen = P
     try:
-        return VL.Browser()
+        return VL.Browser(live=True)   # a deliberate live measurement, through its own proxy (tools/nolive.py)
     finally:
         VL.subprocess.Popen = orig
 SITE_PORT = [0]

@@ -92,6 +92,7 @@ def local_file(path):
 
 
 class Chrome(VL.Browser):
+    LIVE = True     # a deliberate live check: it joins a test venue through game.venueplay.com.au (tools/nolive.py)
     served = 0
 
     def handle(self, m):

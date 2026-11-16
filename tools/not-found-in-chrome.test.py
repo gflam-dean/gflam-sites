@@ -64,6 +64,17 @@ def fetch(base, path):
     return r.status, body
 
 
+NO_SOCKETS_OUT = r'''(function () {
+  var W = window.WebSocket; if (!W) return;
+  function S(u, p) {
+    if (!/^wss?:\/\/(127\.0\.0\.1|localhost)[:\/]/.test(String(u))) u = 'ws://127.0.0.1:9/off-this-machine';
+    return p === undefined ? new W(u) : new W(u, p);
+  }
+  S.prototype = W.prototype; S.CONNECTING = 0; S.OPEN = 1; S.CLOSING = 2; S.CLOSED = 3;
+  window.WebSocket = S;
+})();'''
+
+
 class Tab(object):
     def __init__(self, b, w, h, mobile=True):
         self.b = b
@@ -74,7 +85,12 @@ class Tab(object):
         b.call('Emulation.setTouchEmulationEnabled', {'enabled': mobile}, session=self.sid)
         b.call('Network.enable', session=self.sid)
         b.call('Network.setBlockedURLs', {'urls': ['*fonts.googleapis.com*', '*fonts.gstatic.com*', '*googletagmanager*',
-                                                   '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*']}, session=self.sid)
+                                                   '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*',
+                                                   '*supabase.co*']}, session=self.sid)
+        # A blocked URL list does not stop a WebSocket: play.html (where Join lands) opened the LIVE database's realtime
+        # socket (tools/nolive.py, 16 Nov 2026). Any socket to an address off this machine goes to a closed local port
+        # instead, so the page sees what an offline phone sees and nothing leaves.
+        b.call('Page.addScriptToEvaluateOnNewDocument', {'source': NO_SOCKETS_OUT}, session=self.sid)
 
     def go(self, url):
         self.b.call('Page.navigate', {'url': url}, session=self.sid)

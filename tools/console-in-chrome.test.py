@@ -72,6 +72,9 @@ EXTERNAL = [
     ('/app/vendor/supabase-js-2.118.0.min.js', None),            # replaced per page below
     ('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js'),
     ('https://game.venueplay.com.au', '/__worker'),
+    # The billing Worker: none here, and the console's vp-updates-optin.js asked the LIVE /account/updates-ask
+    # (tools/nolive.py caught it, 16 Nov 2026). /__api answers "not reachable", as in tools/browser-rig/rig.py.
+    ('https://api.venueplay.com.au', '/__api'),
 ]
 ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__errs.push(String(e.message)+" @"+(e.filename||"").split("/").pop()+":"+e.lineno)});'
         'window.addEventListener("unhandledrejection",function(e){__errs.push("rejected: "+String(e.reason&&e.reason.message||e.reason))});</script>')
@@ -97,10 +100,13 @@ class Site(http.server.BaseHTTPRequestHandler):
         self.send(r.get('status', 500), json.dumps(r.get('body')), 'application/json')
     def do_POST(self):
         if self.path.startswith('/__worker'): return self.worker('POST')
-        self.send(404, '{}', 'application/json')
+        self.send(404, '{"error":"not reachable in this test"}' if self.path.startswith('/__api') else '{}', 'application/json')
+    def do_OPTIONS(self):
+        self.send(204, b'', 'text/plain')
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         if u.path.startswith('/__worker'): return self.worker('GET')
+        if u.path.startswith('/__api'): return self.send(404, '{"error":"not reachable in this test"}', 'application/json')
         if u.path == '/__fake/supabase.js':
             host = urllib.parse.parse_qs(u.query).get('host', ['0'])[0] == '1'
             pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=%s;window.__FAKE_UID=%s;\n' % (json.dumps(FAKE_DB), 'true' if host else 'false', json.dumps(UID))
