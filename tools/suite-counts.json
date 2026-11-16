@@ -1483,6 +1483,10 @@
   "checks": 80,
   "counted_by": "lines"
  },
+ "tools/test-tv-reload-state-17nov.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-trial-cancel-alert.js": {
   "checks": 22,
   "counted_by": "lines"
