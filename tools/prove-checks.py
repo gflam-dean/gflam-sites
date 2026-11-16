@@ -19001,6 +19001,17 @@ MUTATIONS = [
     ('trivia-newlook-in-chrome.test.py', 'venueplay/app/vp-tvgame.js',
      ".layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);", ".layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--gold);",
      'in Chrome, the join code\'s box is yellow again, the colour kept for winning moments'),
+    # 16 Nov 2026: the end of a trivia night PLAYED in Chrome (tools/trivia-finale-in-chrome.test.py). Each of these three
+    # was broken on the test server vp-tests-1 and the named check went red (the suite: 5 FAILED of 69), then restored.
+    ('trivia-finale-in-chrome.test.py', 'venueplay/app/vp-trivia-finale.js',
+     '    lastAnswer: 30000,  ', '    lastAnswer: 3000,   ',
+     'in Chrome, the last answer is covered by the final scores after 3 s, not held 30 s'),
+    ('trivia-finale-in-chrome.test.py', 'venueplay/app/vp-trivia-finale.js',
+     '  var DEFAULTS = { end_suspense: true, round_board: true };', '  var DEFAULTS = { end_suspense: true, round_board: false };',
+     'in Chrome, a venue that never touched Game settings gets no leaderboard between questions'),
+    ('trivia-finale-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     'var sk=el("button","btn ghost finskip"', 'var sk=el("button","btn pink finskip"',
+     'in Chrome, "Show the whole leaderboard now" is a loud pink button, not the small quiet one Dean asked for'),
     ('test-trivia-endnight.js', 'venueplay/app/vp-trivia-finale.js',
      'boardAfterWinner: 60000,', 'boardAfterWinner: 30000,',
      'end of the night: the whole leaderboard comes up 30 seconds after the winner, not the 60 Dean asked for'),

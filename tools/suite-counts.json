@@ -2306,5 +2306,9 @@
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
   "counted_by": "lines"
+ },
+ "tools/trivia-finale-in-chrome.test.py": {
+  "checks": 69,
+  "counted_by": "lines"
  }
 }
