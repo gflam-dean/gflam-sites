@@ -365,7 +365,8 @@ try:
     welcome = [m for m in mails if m.get('to') == ['sam@harbour.example']]
     ok('HQ / the autopilot sets up a prospect with sender Harry: one welcome', r.get('status') == 200 and len(welcome) == 1, r)
     w = welcome[-1] if welcome else {}
-    ok('from venueplay hello@, replies to hello@venueplay.com.au', w.get('from') == 'venueplay <hello@send.venueplay.com.au>' and w.get('reply_to') == 'hello@venueplay.com.au', [w.get('from'), w.get('reply_to')])
+    # INBOX 414 (fix/welcome-inbox-wed18): the welcome is from hello@ under the name they met in the cold thread.
+    ok('from hello@ as "Harry at venueplay", replies to hello@venueplay.com.au', w.get('from') == 'Harry at venueplay <hello@send.venueplay.com.au>' and w.get('reply_to') == 'hello@venueplay.com.au', [w.get('from'), w.get('reply_to')])
     import tempfile
     tmp = tempfile.mkdtemp(prefix='vp-phone-signin-mail-')
     try:
