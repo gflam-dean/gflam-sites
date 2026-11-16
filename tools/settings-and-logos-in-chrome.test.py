@@ -149,6 +149,40 @@ try:
         S.close_tab(tid)
     ok('no script error on any settings page', all(not seen[k]['errs'] for k in seen), {k: seen[k]['errs'] for k in seen})
 
+    print('\nPlayers card (job 416, Dean 14 Nov 2026): First name and Mobile are asked of every player, so they show Always, not a switch')
+    PLAYERS = """JSON.stringify((function(){
+      function row(n){ return [].filter.call(document.querySelectorAll("#secPlayers .card .row"), function(r){ return (r.querySelector(".n")||{}).textContent===n; })[0]; }
+      function info(n){ var r=row(n); if(!r) return null; var a=r.querySelector(".always"); return {always:!!a, alwaysText:a?a.textContent:"", sw:!!r.querySelector(".sw"), d:(r.querySelector(".d")||{}).textContent||""}; }
+      var note=document.getElementById("mktNote");
+      return {first:info("First name"), mobile:info("Mobile"), last:info("Last name"), post:info("Postcode"), email:info("Email"),
+              note:note?note.textContent:"", noteShown:!!note && note.offsetParent!==null,
+              sws:[].map.call(document.querySelectorAll("#secPlayers .sw[data-k]"),function(e){return e.getAttribute("data-k");}), errs:window.__errs||[]};})())"""
+    tid, sid = settings('qld_club')   # its stored collect_mobile is False: the page must still show and save it as always on
+    pl = S.json(sid, PLAYERS)
+    ok('First name and Mobile rows show "Always" and have no switch', all(pl[k] and pl[k]['always'] and pl[k]['alwaysText'] == 'Always' and not pl[k]['sw'] for k in ('first', 'mobile')), pl)
+    ok('Last name, Postcode and Email keep their switches, and only those three are switches',
+       all(pl[k] and pl[k]['sw'] and not pl[k]['always'] for k in ('last', 'post', 'email')) and sorted(pl['sws']) == ['collect_email', 'collect_last_name', 'collect_marketing_optin', 'collect_postcode'] and 'collect_mobile' not in pl['sws'] and 'collect_first_name' not in pl['sws'], pl['sws'])
+    ok('First name words: shown on the TV and leaderboards, asked of every player', pl['first']['d'] == 'Shown on the TV and leaderboards. Asked of every player.', pl['first']['d'])
+    ok('Mobile words: asked of every player so winners can be contacted, seen once approved', pl['mobile']['d'] == 'Asked of every player, so winners can be contacted. You see mobiles once your account is approved.', pl['mobile']['d'])
+    ok('the approval note reads right for the new rules (mobiles seen once approved), no em dash, lowercase venueplay',
+       pl['noteShown'] and 'Seeing player mobiles, emails and postcodes, and the marketing opt-in, unlock once your account is approved' in pl['note'] and '—' not in pl['note'] and 'VenuePlay' not in pl['note'], pl['note'])
+    S.js(sid, '(function(){ window.__sentPatches=[]; var o=VP.saveSettings; VP.saveSettings=function(id,p){ window.__sentPatches.push(JSON.parse(JSON.stringify(p))); return o.apply(this,arguments); }; document.getElementById("saveBtn").click(); return true; })()')
+    S.until(sid, '/Saved|saved|could not/.test(document.getElementById("msg").textContent)', 15)
+    sent = S.json(sid, 'JSON.stringify(window.__sentPatches)', [])
+    ok('Save sends collect_first_name and collect_mobile as true even though the stored mobile was false',
+       len(sent) >= 1 and sent[0].get('collect_first_name') is True and sent[0].get('collect_mobile') is True, sent)
+    ok('and the page still shows Mobile as Always after the save, with no refused-mobile warning', S.json(sid, PLAYERS)['mobile']['always'] and 'Mobile' not in (S.js(sid, 'document.getElementById("msg").textContent') or ''), S.js(sid, 'document.getElementById("msg").textContent'))
+    ok('no script error on the Players card', not S.json(sid, PLAYERS)['errs'])
+    if A.shots:
+        os.makedirs(A.shots, exist_ok=True)
+        for w, h in ((375, 812), (390, 844)):
+            S.B.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': True}, session=sid)
+            time.sleep(0.5)
+            S.js(sid, 'document.getElementById("secPlayers").scrollIntoView(true); window.scrollBy(0,-8); true')
+            time.sleep(0.5)
+            S.shot(sid, os.path.join(A.shots, 'settings-players-%dx%d.png' % (w, h)))
+    S.close_tab(tid)
+
     print('\nYour account > Screen no longer lets a venue put itself on our website')
     tid, sid = S.open('/app/billing.html')
     S.until(sid, 'document.getElementById("content").style.display!=="none" && !!document.querySelector(\'[data-tab="screen"]\')', 20)
@@ -201,7 +235,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 23
+EXPECTED = 31
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

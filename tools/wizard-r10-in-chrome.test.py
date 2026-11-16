@@ -92,7 +92,7 @@ def new_venue(RIG):
         res = [step(r, sid, '__w.c("vpGsGo")'),
                step(r, sid, '__w.q("#vpGsGames [data-game=trivia]"); __w.q("#vpGsGames [data-game=musical]"); __w.c("vpGsNext")'),
                step(r, sid, '__w.q("#vpGsWeek [data-game=trivia] [data-day=wed]"); __w.q("#vpGsWeek [data-game=musical] [data-day=fri]")'),
-               step(r, sid, '__w.v("vpGsTime_trivia_wed","19:00"); __w.v("vpGsTime_musical_fri","19:30"); __w.c("vpGsWeekNext")'),
+               step(r, sid, '__w.v("vpGsTime_trivia_wed","19:00"); __w.v("vpGsTime_musical_fri","19:30"); __w.c("vpGsWeekNext"); __w.c("vpGsCollectNext")'),
                step(r, sid, '__w.c("vpGsAllYes")', 1.0)]
         ok('the real console home: games, nights (from the half-hour list) and "set up your first game now"', all(x == 'ok' for x in res), res)
         res = [step(r, sid, '__w.v("vpGsIn_count","12"); __w.v("vpGsIn_rounds","4"); __w.seg("double_points","true")'),
@@ -159,7 +159,7 @@ def existing_venue(RIG):
         r.ask(sid, JS_HELP)
         fits('1024 existing start', r.json(sid, FIT))
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'r10-existing-start-1024.jpg'))
-        res = [step(r, sid, '__w.c("vpGsGo")'), step(r, sid, '__w.c("vpGsNext")', 0.8), step(r, sid, '__w.c("vpGsWeekSkip")'), step(r, sid, '__w.c("vpGsAllYes")', 1.2)]
+        res = [step(r, sid, '__w.c("vpGsGo")'), step(r, sid, '__w.c("vpGsNext")', 0.8), step(r, sid, '__w.c("vpGsWeekSkip"); __w.c("vpGsCollectNext")'), step(r, sid, '__w.c("vpGsAllYes")', 1.2)]
         ok('through to the first game', all(x == 'ok' for x in res), res)
         ok('trivia shows THEIR 15 questions, 5 rounds and double points on 5', r.until(sid, '(document.getElementById("vpGsIn_count")||{}).value==="15" && document.getElementById("vpGsIn_rounds").value==="5" && document.getElementById("vpGsIn_double_last").value==="5"', 10) is True,
            r.ask(sid, 'JSON.stringify({c:(document.getElementById("vpGsIn_count")||{}).value,r:(document.getElementById("vpGsIn_rounds")||{}).value})'))
@@ -220,7 +220,7 @@ def screens(RIG):
             step(r, sid, '__w.q("#vpGsGames [data-game=raffles]"); __w.c("vpGsNext")'); step(r, sid, '__w.q("#vpGsWeek [data-game=raffles] [data-day=sat]")')
             fits(tag + ' nights', r.json(sid, FIT))
             ok(tag + ' the night\'s time is a half-hour list', r.ask(sid, 'document.getElementById("vpGsTime_raffles_sat").tagName') == 'SELECT')
-            step(r, sid, '__w.v("vpGsTime_raffles_sat","19:00"); __w.c("vpGsWeekNext")'); step(r, sid, '__w.c("vpGsAllYes")', 0.8)
+            step(r, sid, '__w.v("vpGsTime_raffles_sat","19:00"); __w.c("vpGsWeekNext"); __w.c("vpGsCollectNext")'); step(r, sid, '__w.c("vpGsAllYes")', 0.8)
             step(r, sid, '__w.v("vpGsIn_raffles","2")'); step(r, sid, '__w.v("vpGsRafN_0","3")'); step(r, sid, '__w.q("#vpGsRafSame_0 [data-value=false]")')
             fits(tag + ' raffles, each raffle asked', r.json(sid, FIT))
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'r10-raffles-%s.jpg' % tag))

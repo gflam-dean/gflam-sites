@@ -83,6 +83,7 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
   .row .t .n{font-weight:600;font-size:14px;color:var(--text)}
   .row .t .d{font-size:12px;color:var(--faint);margin-top:2px;line-height:1.45}
   .codeval{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;letter-spacing:.16em;font-size:19px;color:#fff;font-weight:700}
+  .always{flex:none;font-size:12px;font-weight:700;color:var(--pink);padding:3px 10px;border-radius:20px;border:1px solid var(--pink);background:rgba(255,31,142,.12)}
   .sw{width:46px;height:27px;border-radius:20px;background:var(--ink-3);border:1px solid var(--line);position:relative;cursor:pointer;transition:.15s;flex:none}
   .sw::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--faint);transition:.15s}
   .sw.on{background:rgba(255,31,142,.25);border-color:var(--pink)}
@@ -184,12 +185,12 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
       <div class="card owneronly">
         <div class="lbl">What players are asked for when they join</div>
         <div class="sublbl" style="margin-bottom:4px">Only ask for what you will use. Less is friendlier and joins faster.</div>
-        <div class="row"><div class="t"><div class="n">First name</div><div class="d">Shown on the TV and leaderboards.</div></div><div class="sw" data-k="collect_first_name"></div></div>
+        <div class="row" id="rowFirstName"><div class="t"><div class="n">First name</div><div class="d">Shown on the TV and leaderboards. Asked of every player.</div></div><div class="always" data-always="collect_first_name">Always</div></div>
         <div class="row"><div class="t"><div class="n">Last name</div><div class="d">Only if you display or export full names.</div></div><div class="sw" data-k="collect_last_name"></div></div>
         <div class="row mktrow"><div class="t"><div class="n">Postcode</div><div class="d">Handy for local marketing insight.</div></div><div class="sw" data-k="collect_postcode"></div></div>
         <div class="row mktrow"><div class="t"><div class="n">Email</div><div class="d">For your marketing list (with the opt-in below).</div></div><div class="sw" data-k="collect_email"></div></div>
-        <div class="row mktrow"><div class="t"><div class="n">Mobile</div><div class="d">For your marketing list (with the opt-in below).</div></div><div class="sw" data-k="collect_mobile"></div></div>
-        <div class="note" id="mktNote" style="display:none;margin-top:8px">Email, mobile and the marketing opt-in unlock once your account is approved to hold customer data. Venues are approved automatically; if you run games at venues you don't own, email support@venueplay.com.au.</div>
+        <div class="row" id="rowMobile"><div class="t"><div class="n">Mobile</div><div class="d">Asked of every player, so winners can be contacted. You see mobiles once your account is approved.</div></div><div class="always" data-always="collect_mobile">Always</div></div>
+        <div class="note" id="mktNote" style="display:none;margin-top:8px">Seeing player mobiles, emails and postcodes, and the marketing opt-in, unlock once your account is approved to hold customer data. Venues are approved automatically; if you run games at venues you don't own, email support@venueplay.com.au.</div>
       </div>
 
       <div class="card mktrow owneronly">
@@ -271,6 +272,8 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
   }
 
   var TOGGLES=["collect_first_name","collect_last_name","collect_postcode","collect_email","collect_mobile","collect_marketing_optin"];
+  /* FIRST NAME AND MOBILE ARE ASKED OF EVERY PLAYER (Dean, 14 Nov 2026, job 416): no switch, always saved as true, whatever the row holds */
+  var ALWAYS=["collect_first_name","collect_mobile"];
   var DEFAULTS={ collect_first_name:true, collect_last_name:false, collect_postcode:false, collect_email:false, collect_mobile:false, collect_marketing_optin:false };
   var state={ name_display:"abbrev_last" };
   var venueId=null, hasNewCols=true;
@@ -514,6 +517,7 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
     TOGGLES.forEach(function(k){
       state[k] = hasNewCols ? !!s[k] : DEFAULTS[k];
     });
+    ALWAYS.forEach(function(k){ state[k]=true; });
     // paint name_display segment
     Array.prototype.forEach.call($("nameSeg").children, function(o){ o.classList.toggle("on", o.getAttribute("data-nd")===state.name_display); });
     // paint switches
@@ -551,6 +555,7 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
     var btn=this; btn.disabled=true; btn.textContent="Saving...";
     var patch={ name_display:state.name_display };
     TOGGLES.forEach(function(k){ patch[k]=state[k]; });
+    ALWAYS.forEach(function(k){ patch[k]=true; });
 
     VP.saveSettings(venueId, patch).then(function(){ return saveToGroup(patch); }).then(function(grp){
       btn.disabled=false; btn.textContent="Save settings";
@@ -563,7 +568,7 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
          never on. Read back what actually landed and say so. */
       VP.loadSettings(venueId).then(function(saved){
         var refused=[];
-        [["collect_email","Email"],["collect_mobile","Mobile"],["collect_postcode","Postcode"],
+        [["collect_email","Email"],["collect_postcode","Postcode"],
          ["collect_marketing_optin","Marketing opt-in"]].forEach(function(p){
           if(patch[p[0]] === true && saved && saved[p[0]] !== true) refused.push(p[1]);
         });
@@ -577,6 +582,7 @@ if(/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.className 
            something that was never true. */
         if(saved){
           TOGGLES.forEach(function(k){ if(typeof saved[k] === "boolean") state[k]=saved[k]; });
+          ALWAYS.forEach(function(k){ state[k]=true; });   // asked of every player: a refused mobile at an unapproved account is not shown as off
           if(typeof saved.name_display === "string") state.name_display=saved.name_display;
           document.querySelectorAll(".sw[data-k]").forEach(function(sw){
             sw.classList.toggle("on", !!state[sw.getAttribute("data-k")]);
