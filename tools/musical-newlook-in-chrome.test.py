@@ -668,8 +668,9 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             P.js('(function(){ document.getElementById("nameIn").value="Sam"; return 1; })()')
             dt = pp(P) or {}
             P.shot(shots + '-phone-3b-details')
-            # INBOX 416 UPDATE 7 (Sunday 22 Nov): the join line says who gets the details and why (first name + mobile at every venue)
-            ok('details: YOUR DETAILS, naming the venue, with Privacy inline', dt.get('headWords') == 'Your details' and dt.get('notice', '').startswith("Your details go to Tugun Bowls Club to run tonight's game and contact winners.") and dt.get('privacy'), [dt.get('headWords'), dt.get('notice')])
+            # INBOX 416 (Dean 16 Nov 2026): YOUR DETAILS, and no line saying the venue gets them (only a ticked box shares them;
+            # the first-game notice from vp-known.js says so, drawn when the Worker sends it)
+            ok('details: YOUR DETAILS, and no line saying the venue gets the details', dt.get('headWords') == 'Your details' and 'go to' not in dt.get('notice', ''), [dt.get('headWords'), dt.get('notice')])
             # The ticks are vp-consent.js's own, whichever rule it carries: two ticks (3 Nov 2026) or, from
             # fix/consent-one-tick-6nov, ONE tick "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026).
             one_tick = 'Send me offers from' in io.open(os.path.join(SITE, 'app/vp-consent.js'), encoding='utf-8').read()

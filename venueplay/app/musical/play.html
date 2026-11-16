@@ -1275,17 +1275,19 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them.
          A KNOWN PHONE (/app/vp-known.js, INBOX 416): "Welcome back, Alan", the name box filled and out of the way, and only the
          boxes still missing. The consent is the one tick, or the three boxes when the Worker says so. */
-      /* Collection notice, AT THE POINT they are asked (Australian privacy law): "YOUR DETAILS", then who gets them and
-         why (INBOX 416 UPDATE 7: "Your details go to {account owner} to run tonight's game and contact winners."), the
-         Privacy link inline. The demo keeps its own words (its boxes stay optional). */
+      /* "YOUR DETAILS". On a real night nothing more here (Dean 16 Nov 2026): the first-game notice from /app/vp-known.js says
+         what venueplay keeps and that a ticked box shares details with that sender. The demo keeps its own words. */
       var details=function(h, info){
         var jn=$("joinNotice"), kn=info && info.known;
-        if(h || kn){
+        /* REAL NIGHTS: no line saying the venue gets the details (Dean 16 Nov 2026); the first-game notice says it all */
+        if((h || kn) && !(r && r.demo)){
+          $("joinHead").textContent="Your details";
+          if(jn) jn.classList.add("hidden");
+        } else if(h){
           var vn=((info && info.organiser) || P.venueName || "").trim();
           if(!kn) $("joinHead").textContent="Your details";
           if(jn){
-            jn.textContent=(r && r.demo) ? ((vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ")
-                                         : ((typeof VPKnown==="object") ? VPKnown.line(vn) : ("Your details go to "+(vn||"the venue you are playing at")+" to run tonight's game and contact winners. "));
+            jn.textContent=(vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ";   // the demo only
             var a=document.createElement("a");
             a.href="/privacy"; a.target="_blank"; a.rel="noopener";
             a.textContent="Privacy";

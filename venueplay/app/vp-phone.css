@@ -139,3 +139,7 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
 #vJoin.vp-long .pbig{font-size:28px;margin-bottom:4px}
 #vJoin.vp-long .field,#vJoin.vp-long .vp-field{margin-top:9px}
 #vJoin.vp-long input[type=text],#vJoin.vp-long input[type=email],#vJoin.vp-long input[type=tel]{padding-top:11px;padding-bottom:11px}
+#vJoin.vp-long .collectnote,#vJoin.vp-long .vpc3-note,#vJoin.vp-long #joinNotice{font-size:12.5px!important;line-height:1.35!important;margin-top:6px!important}
+#vJoin.vp-long .vpc3-head{font-size:14px!important;margin-top:8px!important}
+#vJoin.vp-long .vpc3 .optin{font-size:15px!important;margin-top:6px!important}
+#vJoin.vp-long .vpc3 .optin input{width:22px!important;height:22px!important}

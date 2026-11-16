@@ -15,9 +15,10 @@
               no masked mobile; a first-name hello at most.
      consent  { mode:"single" } (today's one tick) or { mode:"three", parties } (/app/vp-consent.js renderThree).
      organiser  the name in the join line: "Your details go to {organiser} to run tonight's game and contact winners."
-   VPKnown.paint(o) then draws the screen: for a known phone, one line "Playing as Grace. Not you?" (Dean 16 Nov 2026: not
-   creepy, the first name only), the name box filled and hidden on the bingo and musical phones (the name IS the first
-   name), and only the missing boxes. "Not you?" forgets that key on this phone and draws the normal empty form again.
+   VPKnown.paint(o) then draws the screen: for a known phone, the venue's normal join screen with only the missing boxes,
+   the ticks and Join, and a small "Not my details" link (Dean 16 Nov 2026: no name, nothing we hold); the name box is
+   filled and hidden on the bingo and musical phones. "Not my details" forgets that key on this phone and draws the normal
+   empty form again.
    The first-game notice (info.notice) is drawn once per player, as the Worker says.
 
    Asked for at most ASK_MS: a slow answer never holds the join screen, it is simply the full form.
@@ -26,7 +27,6 @@
   "use strict";
   var LS = "vpKnownKeys", MAX = 8, ASK_MS = 1500;
   var FIELDS = ["first_name", "last_name", "email", "mobile", "postcode"];
-  var LINE_HEAD = "Your details go to ", LINE_TAIL = " to run tonight's game and contact winners. ";
   function okKey(k) { return typeof k === "string" && /^[0-9a-f]{64}$/.test(k); }
   function store() { try { return root.localStorage || null; } catch (e) { return null; } }
   function keys() {
@@ -69,10 +69,6 @@
     if (known && Array.isArray(known.need)) FIELDS.forEach(function (f) { c[f] = !!(collect && collect[f]) && known.need.indexOf(f) >= 0; });
     return c;
   }
-  function line(name) {
-    var n = String(name == null ? "" : name).replace(/\s+/g, " ").trim();
-    return LINE_HEAD + (n || "the venue you are playing at") + LINE_TAIL;
-  }
 
   /* o = { box, collect, info (known_info), kind:"person"|"team", venueName, nameIn, head, after(h) }
      Draws the boxes and the consent into o.box and calls o.after(h) (h: the boxes' html, "" when none), so the page adds
@@ -89,18 +85,18 @@
     var greet = d && d.getElementById("vpKnownHi");
     if (greet && greet.parentNode) greet.parentNode.removeChild(greet);
     if (fld) fld.style.display = "";
-    if (known && hello) {
-      /* NOT CREEPY (Dean 16 Nov 2026): the first name and nothing else, "Playing as Grace. Not you?". No "welcome back",
-         no venue they played at, never a number or an address. */
-      if (!team && nameIn && known.need.indexOf("first_name") < 0) { nameIn.value = hello.slice(0, 20); fld.style.display = "none"; }
+    if (known) {
+      /* NOT CREEPY (Dean 16 Nov 2026, final): NO name, no hello, nothing we hold. The venue's normal join screen with only a
+         field still to ask, the ticks and Join, and one small "Not my details" link that clears it. The name box is filled
+         (the TV shows the name) and out of the way on the bingo and musical phones. */
+      if (!team && nameIn && known.need.indexOf("first_name") < 0 && hello) { nameIn.value = hello.slice(0, 20); fld.style.display = "none"; }
       var g = d.createElement("p");
       g.id = "vpKnownHi"; g.className = "vp-notice";
-      g.setAttribute("style", "margin:10px 0 0;font-size:16px;line-height:1.45;color:#E7E7EC");
-      g.appendChild(d.createTextNode("Playing as " + hello + ". "));
+      g.setAttribute("style", "margin:10px 0 0;font-size:14px;line-height:1.45;color:#9A9AA4");
       var nm = d.createElement("button");
       nm.type = "button"; nm.id = "vpKnownNotMe";
-      nm.setAttribute("style", "background:none;border:0;padding:0;font:inherit;color:#fff;text-decoration:underline;cursor:pointer");
-      nm.textContent = "Not you?";
+      nm.setAttribute("style", "background:none;border:0;padding:0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer");
+      nm.textContent = "Not my details";
       nm.addEventListener("click", function () {
         forget(known.ix);
         if (nameIn) { nameIn.value = ""; }
@@ -159,5 +155,5 @@
   function isKnown() { return !!_known; }
 
   root.VPKnown = { keys: keys, keep: keep, forget: forget, addTo: addTo, ask: ask, withInfo: withInfo, paint: paint, capture: capture,
-                   boxesFor: boxesFor, line: line, isKnown: isKnown, LS: LS, ASK_MS: ASK_MS };
+                   boxesFor: boxesFor, isKnown: isKnown, LS: LS, ASK_MS: ASK_MS };
 })(typeof window !== "undefined" ? window : this);

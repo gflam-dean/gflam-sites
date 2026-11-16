@@ -46,7 +46,19 @@ EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': 
 THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
 # The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
+NOTICE = {'version': 'vpn-2-16nov', 'text': "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay. A ticked box shares your details with that sender (venue / host) for news and offers.", 'link': 'Privacy policy', 'href': '/privacy'}
+PRIV = os.path.expanduser('~/venue-enrich/reports/privacy-update-16nov/returning')
+try: os.makedirs(PRIV, exist_ok=True)
+except Exception: PRIV = ''
+# RETURNING (Dean 16 Nov 2026): RSM.. a NEW venue asking the same fields; RMR.. a new venue asking one MORE (postcode);
+# RNT.. the same venue, a second night. All known, no notice, the boxes as each sender's current answer.
+RET = {
+  'RSM': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, []),
+  'RMR': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, ['postcode']),
+  'RNT': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel', 'current': False}]}, []),
+}
 def answer_for(code):
+    if code.startswith('RMR'): return dict(NOTHING, postcode=True)
     if code.startswith('ADD'): return dict(NOTHING, email=True)
     if code.startswith('THR'): return dict(EVERYTHING)
     return dict(NOTHING)
@@ -73,7 +85,10 @@ class Site(http.server.BaseHTTPRequestHandler):
             if KEY in keys and (code.startswith('KNW') or code.startswith('ADD')):
                 known = {'hello': 'Alan', 'need': ['email'] if code.startswith('ADD') else [], 'ix': keys.index(KEY)}
             consent = THREE if code.startswith('THR') else {'mode': 'single'}
-            return J({'known': known, 'consent': consent, 'organiser': 'The Royal Hotel'})
+            if KEY in keys and code[:3] in RET:
+                consent, need = RET[code[:3]]
+                known = {'hello': 'Grace', 'need': need, 'ix': keys.index(KEY)}
+            return J({'known': known, 'consent': consent, 'organiser': 'The Royal Hotel', 'notice': None if known else NOTICE})
         if p == '/play/live':
             return J({'live': True, 'exists': True, 'age_gate': False, 'paper_bingo': False})
         if p in ('/join', '/capture'):
@@ -191,12 +206,14 @@ def phone(game, path, w, h):
         L = look(sid); shot(sid, '%s-%s-1-new' % (game, size))
         want = ['nameIn', 'xFirst', 'xMobile'] if team else ['nameIn', 'xMobile']
         ok('N %s %s: a venue that collects nothing asks %s' % (game, size, ', '.join(want)), L.get('ids') == want, L.get('ids'))
-        ok('N %s %s: the join line says who gets the details and why' % (game, size), "Your details go to The Royal Hotel to run tonight's game and contact winners." in L.get('text', ''), L.get('text'))
+        ok('N %s %s: no line saying the venue gets the details (only a ticked box shares them, Dean 16 Nov)' % (game, size), 'Your details go to' not in L.get('text', '') and 'go to the venue' not in L.get('text', ''), L.get('text'))
         ok('N %s %s: one screen, no scroll, Join on screen' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+        ok('N %s %s: the first-game notice, once, with the Privacy policy link' % (game, size), NOTICE['text'] + ' Privacy policy' in L.get('text', '') and ask(sid, '!!document.querySelector("#vpJoinNotice a[href=\\"/privacy\\"]")'), L.get('text'))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Alan', 'xFirst': 'Alan', 'xMobile': '0412 345 678'})
         ask(sid, 'document.getElementById("joinBtn").click(); true')
         got = joins(c)
         ok('J %s %s: the join sends the first name and mobile' % (game, size), bool(got) and got[0].get('first_name') == 'Alan' and got[0].get('mobile') == '0412 345 678', got)
+        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-2-16nov', got)
         ok('J %s %s: the key the Worker hands back is kept on the phone' % (game, size), until(sid, 'localStorage.getItem("vpKnownKeys")===%s' % json.dumps(json.dumps([KEY])), 6), ask(sid, 'localStorage.getItem("vpKnownKeys")'))
     finally:
         B.close_tab(tid)
@@ -204,12 +221,13 @@ def phone(game, path, w, h):
     # K: the same phone, the next game
     c = code('KNW'); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
     try:
-        ok('K %s %s: the join screen is up with the hello' % (game, size), until(sid, READY + ' && !!document.getElementById("vpKnownNotMe")'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
+        ok('K %s %s: the join screen is up with the first name' % (game, size), until(sid, READY + ' && !!document.getElementById("vpKnownNotMe")'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
         time.sleep(0.6)
         L = look(sid); shot(sid, '%s-%s-2-known' % (game, size))
         kb = knowns(c)
         ok('K %s %s: /join/known was asked with the key' % (game, size), bool(kb) and KEY in (kb[-1].get('keys') or []), kb)
-        ok('K %s %s: "Welcome back, Alan" and a Not me link' % (game, size), 'welcome back, alan' in L.get('text', '').lower() and L.get('notme'), [L.get('head'), L.get('text')])
+        ok('K %s %s: no name, no hello, only a small "Not my details" link' % (game, size), 'Not my details' in L.get('text', '') and L.get('notme') and 'alan' not in L.get('text', '').lower() and 'welcome' not in L.get('text', '').lower(), [L.get('head'), L.get('text')])
+        ok('K %s %s: the notice does not show again' % (game, size), 'We keep a record' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: no box for anything held (%s)' % (game, size, 'the team name only' if team else 'none at all'), L.get('ids') == (['nameIn'] if team else []), L.get('ids'))
         ok('K %s %s: no detail we hold anywhere on the screen (no number, no @)' % (game, size), '0412' not in L.get('text', '') and '@' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: one screen, no scroll' % (game, size), fits(L), L)
@@ -230,7 +248,7 @@ def phone(game, path, w, h):
         # M: Not me
         ask(sid, 'document.getElementById("vpKnownNotMe").click(); true'); time.sleep(0.5)
         L = look(sid); shot(sid, '%s-%s-4-not-me' % (game, size))
-        ok('M %s %s: Not me takes the key off the phone and the full form is back' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'nameIn' in L.get('ids', []) and not L.get('notme'), L)
+        ok('M %s %s: Not my details takes the key off the phone and the full form is back' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'nameIn' in L.get('ids', []) and not L.get('notme'), L)
     finally:
         B.close_tab(tid)
 
@@ -250,6 +268,44 @@ def phone(game, path, w, h):
         B.close_tab(tid)
 
 
+def returning(game, path, w, h):
+    """Dean 16 Nov 2026: what a RETURNING player sees, not creepy. Frames to reports/privacy-update-16nov/returning/."""
+    sep = '&' if '?' in path else '?'
+    team = game == 'trivia'
+    size = '%dx%d' % (w, h)
+    print('\n%s returning player at %s' % (game, size))
+    for pre, tag, want_box, ticks in (('RSM', '1-new-venue-same-fields', [], [['venueplay', True], ['The Royal Hotel', True]]),
+                                      ('RMR', '2-new-venue-one-more-field', ['xPost'], [['venueplay', True], ['The Royal Hotel', True]]),
+                                      ('RNT', '3-same-venue-second-night', [], [['venueplay', True], ['The Royal Hotel', False]])):
+        c = code(pre); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
+        try:
+            ok('R %s %s %s: up with the first name' % (game, size, tag), until(sid, READY + ' && !!document.getElementById("vpKnownNotMe") && !!document.getElementById("xConsent3")'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
+            time.sleep(0.6)
+            L = look(sid)
+            if PRIV:
+                try:
+                    r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
+                    f = os.path.join(PRIV, '%s-%s-%s.png' % (game, size, tag)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                except Exception as e: print('  (no screenshot: %s)' % e)
+            t = L.get('text', '')
+            ok('R %s %s %s: no name, never a number, an address or a venue played at; only "Not my details"' % (game, size, tag), 'Not my details' in t and 'grace' not in t.lower() and '04' not in t and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
+            ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
+            ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
+            ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'We keep a record' not in t, t)
+            ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            if pre == 'RNT':
+                ask(sid, 'document.getElementById("vpKnownNotMe").click(); true'); time.sleep(0.5)
+                L = look(sid)
+                if PRIV:
+                    try:
+                        r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
+                        f = os.path.join(PRIV, '%s-%s-4-not-my-details.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                    except Exception as e: print('  (no screenshot: %s)' % e)
+                ok('R %s %s: Not my details clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Not my details' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
+        finally:
+            B.close_tab(tid)
+
+
 if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('known-phone-in-chrome', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
@@ -262,6 +318,9 @@ if __name__ == '__main__':
         for w, h in ((375, 812), (390, 844)):
             for g, p in PAGES:
                 phone(g, p, w, h)
+        for w, h in ((375, 667), (390, 844)):
+            for g, p in PAGES:
+                returning(g, p, w, h)
     finally:
         try: B.close()
         except Exception: pass

@@ -1550,12 +1550,13 @@
         /* Collection notice, AT THE POINT they are asked (Australian privacy law). Since INBOX 416 the first name and mobile
            are asked of everyone, so the line says who gets them and why: "Your details go to {account owner} to run
            tonight's game and contact winners." The demo keeps its own words (its boxes stay optional). */
-        if(h && !(r && r.demo && !c.marketing_optin)){   // a demo with no tick keeps nothing: no notice about where details go
+        /* REAL NIGHTS SAY NOTHING HERE (Dean 16 Nov 2026): the first-game notice (/app/vp-known.js, the Worker's one constant)
+           says what venueplay keeps and that a TICKED box shares details with that sender; never that the venue gets them. */
+        if(h && r && r.demo && c.marketing_optin){   // the demo keeps its own words (its boxes stay optional)
           var vn=((info && info.organiser) || P.venueName || "").trim();
           var n=document.createElement("p"); n.className="collectnote";
           n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
-          n.textContent=(r && r.demo) ? ("These details are optional and go to "+(vn||"the venue you are playing at")+", not to anyone else. You can play with just your name. ")
-                                      : ((typeof VPKnown==="object") ? VPKnown.line(vn) : ("Your details go to "+(vn||"the venue you are playing at")+" to run tonight's game and contact winners. "));
+          n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+", not to anyone else. You can play with just your name. ";   // the demo only
           var a=document.createElement("a");
           a.href="/privacy"; a.target="_blank"; a.rel="noopener";
           a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
