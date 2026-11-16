@@ -81,9 +81,10 @@ URL = 'http://127.0.0.1:%d/' % srv.server_address[1]
 if CHILD:
     # No allow: this run must end with the FAIL lines and exit 1, after its own last line.
     B = VL.Browser()
-    tid, sid = B.open_tab(URL)
+    tid, sid = B.open_tab('about:blank')   # attach + Network.enable first, then load (see the note in the main run)
+    B.call('Page.navigate', {'url': URL}, session=sid)
     end = time.time() + 60
-    while time.time() < end and (B.eval(sid, 'Object.keys(R).length') or 0) < len(TRIES) + 1:
+    while time.time() < end and (B.eval(sid, 'Object.keys(window.R || {}).length') or 0) < len(TRIES) + 1:
         time.sleep(0.25)
     time.sleep(1)
     print('ALL 1 CHECKS PASSED')
@@ -104,7 +105,11 @@ def ok(name, cond, saw=''):
 
 B = VL.Browser()
 try:
-    tid, sid = B.open_tab(URL)
+    # OPEN BLANK, THEN LOAD: Target.createTarget with the page's address starts loading before Browser's
+    # Network.enable lands, and on a busy server (vp-tests-1, 16 Nov 2026, -j 3) every request went out before it:
+    # the trap saw all 9 hosts, the URL log saw none. A blank tab is attached and listening before the page loads.
+    tid, sid = B.open_tab('about:blank')
+    B.call('Page.navigate', {'url': URL}, session=sid)
     end = time.time() + 90
     R = {}
     while time.time() < end:
