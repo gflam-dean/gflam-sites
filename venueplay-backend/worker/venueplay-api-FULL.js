@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '16 Nov 2026, 11:12 · c7927885';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 19:14 · 36f4830a';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -693,6 +693,12 @@ async function handleCheckout(request, env, json) {
   // by hand. This is effectively unlimited for any real group.
   if (totalSeats > 999000) {
     return json({ error: 'That is a huge group. Email us at hello@venueplay.com.au and we will set it up for you.' }, 400);
+  }
+  /* ONE VENUE SIGNING UP BY ITSELF has the same limit as Add a venue (Dean, 14 Nov 2026, INBOX 418): over PLAYER_CALL
+     players it is not self-serve, nothing is saved and Stripe is never asked. A group (two or more venues) has no limit.
+     This is a public page, so the words name sales@, not the phone (the phone lives behind sign-in). */
+  if (venueCount === 1 && venues[0].seats > VPB_PLAYER_CALL) {
+    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, email sales@venueplay.com.au and we will set it up with you.' }, 400);
   }
 
   // Founding is INVITE-ONLY via a state founding link (e.g. /qld), which sends a founding_code,
@@ -10479,6 +10485,10 @@ async function vpaProvisionFromCheckout(env, session) {
           stripe_subscription_id: session.subscription || null,
         },
       }, false);
+      /* OVER PLAYER_FLAG, SIGNED UP ON ITS OWN: one email to sales@ (INBOX 418, as Add a venue). Once per venue (the
+         audit row is the memory), best effort, never stops the sign-up. */
+      const signupSeats = parseInt(f.max_seats, 10) || 0;
+      if (signupSeats > VPB_PLAYER_FLAG) await vpbPlayerFlagAlert(env, { account: { contact_email: f.contact_email || null, id: foundingId } }, venue, venueName, signupSeats, 'signup').catch(() => false);
     } else if (stepsDone.length) {
       // A retry that finished a previously half-built venue.
       await vpaInsert(env, 'vp_admin_audit', {
@@ -14312,18 +14322,18 @@ function vpbNewVenueTag(venueId, players, periodEnd) {
 
 /* The sales@ email for a venue added over PLAYER_FLAG players (INBOX 418): venue, players, account, link to HQ. The same
    mail path every HQ alert uses (vpaSendEmail + vpaAlertSubject), once per venue (the audit row is the memory). */
-async function vpbPlayerFlagAlert(env, o, venue, name, players) {
+async function vpbPlayerFlagAlert(env, o, venue, name, players, how) {
   const vid = (venue && venue.id) || '';
   if (!vid) return false;
   const have = await vpaSelect(env, 'vp_admin_audit', 'action=eq.venue_player_flag&target=eq.' + encodeURIComponent('venue:' + vid) + '&select=id&limit=1');
   if (have && have.length) return false;
   const site = 'https://www.venueplay.com.au';
-  const html = '<p>' + vpaEsc(name) + ' was added by itself with ' + vpaEsc(String(players)) + ' players, more than ' + VPB_PLAYER_FLAG + '.</p>'
+  const html = '<p>' + vpaEsc(name) + (how === 'signup' ? ' signed up by itself with ' : ' was added by itself with ') + vpaEsc(String(players)) + ' players, more than ' + VPB_PLAYER_FLAG + '.</p>'
     + '<p>Account: ' + vpaEsc((o.account && (o.account.contact_email || o.account.id)) || '') + '</p>'
     + vpaEmailButton(site + '/app/hq.html', 'Open HQ');
   await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'venue_player_flag',
     target: 'venue:' + vid, detail: { name: name, players: players } }, false).catch(() => {});
-  return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', name + ' added with ' + players + ' players'), html);
+  return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', name + (how === 'signup' ? ' signed up with ' : ' added with ') + players + ' players'), html);
 }
 
 /* --- POST /account/add-venue : add a whole new venue to the account. --- */
@@ -14343,7 +14353,7 @@ async function vpbAddVenue(request, env, json) {
      An existing group (is_group, or already two or more venues) adds any size, no flag: the group total is what counts. */
   const addByItself = !o.account.is_group && (o.venues || []).length < 2;
   if (addByItself && players > VPB_PLAYER_CALL) {
-    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, call us on ' + VP_SUPPORT_PHONE }, 400);
+    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, call us on ' + VP_SUPPORT_PHONE.replace(/ /g, '\u00a0') }, 400);   // the number never breaks over two lines
   }
   // In-app venues are effectively unlimited for any real operator (larger than the biggest
   // Australian pub group). A high ceiling still guards against runaway/abuse.

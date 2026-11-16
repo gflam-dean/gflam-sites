@@ -35,7 +35,7 @@
     o.id = "vpGone"; o.setAttribute("role", "alert");
     o.style.cssText = "position:fixed;left:0;right:0;top:0;bottom:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 16px;text-align:center;background:var(--bg,#0b0b12);color:var(--text,#fff);font-family:inherit";
     var h = d.createElement("div"); h.style.cssText = "font-size:26px;font-weight:700;line-height:1.2"; h.textContent = "This game has ended";
-    var p = d.createElement("div"); p.style.cssText = "font-size:16px;line-height:1.4;opacity:.85;max-width:320px";
+    var p = d.createElement("div"); p.style.cssText = "font-size:16px;line-height:1.4;opacity:.85;max-width:320px;text-wrap:balance";
     p.textContent = canWatch ? "When the next one starts, it'll show up here." : "When the next one starts, tap below to join.";
     var b = d.createElement("button"); b.type = "button"; b.id = "vpGoneBtn"; b.textContent = "Join";
     b.style.cssText = "min-height:48px;padding:0 28px;border:0;border-radius:12px;font-size:17px;font-weight:700;background:var(--accent,#ff2d87);color:#fff;font-family:inherit;cursor:pointer";

@@ -304,7 +304,7 @@ check('a) on its own, 200 players: added, one alert', r.status === 200 && !!bigP
 soloWorld();
 r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 201, postcode: '4999' }, ON);
 check('a) on its own, 201 players: refused, nothing made, charged or mailed', r.status === 400 && !bigPub() && S.balance === 0 && quantityPosts().length === 0 && flagMails().length === 0, r);
-check('a) and the message is "For more than 200 players, call us on 07 5228 3667"', r.body.error === 'For more than 200 players, call us on 07 5228 3667', r.body.error);
+check('a) and the message is "For more than 200 players, call us on 07 5228 3667"', String(r.body.error || '').replace(/\u00a0/g, ' ') === 'For more than 200 players, call us on 07 5228 3667', r.body.error);
 worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
 stripeReset({ quantity: 40 }); sent.length = 0;
 r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 500, postcode: '4999' }, ON);
