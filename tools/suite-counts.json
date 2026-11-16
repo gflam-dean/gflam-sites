@@ -223,6 +223,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/game-prefs-snapshot.test.py": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/draw-moments-console-in-chrome.test.py": {
   "checks": 32,
   "counted_by": "lines"
@@ -872,7 +876,7 @@
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
-  "checks": 91,
+  "checks": 127,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {

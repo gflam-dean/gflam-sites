@@ -324,5 +324,98 @@ function row(html, name) {
   var ps = hqPage(STAFF_ADMIN); ps.VP.open(); await ps.settle();
   check('a staff login sees the refusal, not numbers', /Only an owner login can see what venues play/.test(ps.els.rpGames.innerHTML) && !/active venues/.test(ps.els.rpGames.innerHTML), ps.els.rpGames.innerHTML);
 
+  print('settings against our defaults (INBOX 128)');
+  /* the Worker's tables are consts inside its own script: read the same text out of the file to test them */
+  var wsrc = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  (0, eval)(wsrc.slice(wsrc.indexOf('const VPR_SET_MIN'), wsrc.indexOf('/* the value a venue effectively has')).replace(/^const /mg, 'var ') + '\n' + /^const VPR_GAMES = .*$/m.exec(wsrc)[0].replace('const ', 'var '));
+  var V7 = 'b0000000-0000-4000-8000-000000000007';
+  var svenues = venues.concat([{ id: V7, name: 'The Seventh Hotel', status: 'active', au_state: 'QLD' }]);
+  var week1 = [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }, { game: 'musical', start: '19:30' }] }, { day: 'fri', games: [{ game: 'trivia', start: '19:00' }] }];
+  var srows = [
+    { venue_id: V1, setup_answers: { games: ['trivia'], week: week1 }, game_prefs: { trivia: { rounds: 4, count: 10, double_points: true, double_last: 1, speed_bonus: true }, musical: { reveal: 'instant', hits_only: false, rounds: 3 }, bingo: { ticket_kind: 'paper', caller: true, rounds: 2 } } },
+    { venue_id: V2, setup_answers: { games: ['trivia'], week: [{ day: 'sat', games: [{ game: 'trivia', start: '18:30' }] }] }, game_prefs: { trivia: { rounds: 4, count: 10, double_points: true, double_last: 2, speed_bonus: false }, musical: { reveal: 'never' }, bingo: { ticket_kind: 'phone', cards: 4 } } },
+    { venue_id: V3, setup_answers: { games: ['trivia'], week: [{ day: 'sat', games: [{ game: 'trivia', start: '19:00' }] }] }, game_prefs: { trivia: { rounds: 3, count: 10, speed_bonus: true, buzzer: true, buzzer_where: 'device' }, musical: { reveal: 'bogus' } } },
+    { venue_id: V4, setup_answers: { week: [{ day: 'sat', games: [{ game: 'trivia', start: '20:00' }] }] }, game_prefs: { trivia: { rounds: 9 } } },
+    { venue_id: V5, game_prefs: { trivia: { rounds: 8 } } },
+    { venue_id: V6, setup_answers: { week: [{ day: 'sun', games: [{ game: 'trivia', start: 'late' }] }] }, game_prefs: { trivia: { rounds: 3, count: 10, speed_bonus: true } } },
+    { venue_id: V7, game_prefs: { trivia: { rounds: 5 }, raffle: {}, members: null } }];
+  var st = vprGamesTally(srows, svenues, tests, '2026-10').settings;
+  function item(g, k) { return st[g].items.filter(function (i) { return i.key === k; })[0]; }
+  function brief(i) { return i && [i.counted, i.kept, i.changed, i.saved, i.kept_pct, i.flag, i.choices.map(function (c) { return c.say + '=' + c.n; }).join('|')].join(','); }
+  check('trivia counts 5 venues: the test venue and the cancelled one are out, an empty raffle object counts for nothing', st.trivia.venues === 5 && st.musical.venues === 3 && st.bingo.venues === 2 && st.raffles.venues === 0 && st.members.venues === 0, [st.trivia.venues, st.musical.venues, st.bingo.venues, st.raffles.venues]);
+  check('rounds a night: 2 of 5 kept 3, the other 3 chose 4 rounds twice and 5 once, flagged (more than half changed it)', brief(item('trivia', 'rounds')) === '5,2,3,5,40,true,4 rounds=2|5 rounds=1', brief(item('trivia', 'rounds')));
+  check('questions a round: a venue that never saved it keeps our 10; 4 of 5 saved it', brief(item('trivia', 'count')) === '5,5,0,4,100,false,', brief(item('trivia', 'count')));
+  check('double points: 2 changed it on (2 of 5, not more than half, no flag)', brief(item('trivia', 'double_points')) === '5,3,2,2,60,false,double points=2', brief(item('trivia', 'double_points')));
+  check('double points per round is counted only among the 2 venues that switched double points on', brief(item('trivia', 'double_last')) === '2,1,1,2,50,false,last 1 of each round double=1', brief(item('trivia', 'double_last')));
+  check('speed bonus: 1 of 5 turned it off', brief(item('trivia', 'speed_bonus')) === '5,4,1,4,80,false,speed bonus off=1', brief(item('trivia', 'speed_bonus')));
+  check('where the buzz plays is counted only where the buzzer is on (1 venue, so never flagged)', brief(item('trivia', 'buzzer_where')) === '1,0,1,1,0,false,on the host device=1', brief(item('trivia', 'buzzer_where')));
+  check('a setting nobody saved is all kept and has no choices', brief(item('trivia', 'base_points')) === '5,5,0,0,100,false,', brief(item('trivia', 'base_points')));
+  check('musical bingo song-name reveal: an answer that is not one of ours ("bogus") counts as the default, 2 of 3 changed it, flagged', brief(item('musical', 'reveal')) === '3,1,2,2,33,true,song name only in the played list=1|song name straight away=1', brief(item('musical', 'reveal')));
+  check('musical bingo well-known songs only: 1 of 3 turned it off', brief(item('musical', 'hits_only')) === '3,2,1,1,67,false,all songs=1', brief(item('musical', 'hits_only')));
+  check('bingo: who draws the numbers is counted only for paper tickets, tickets per player only for phone tickets', brief(item('bingo', 'caller')) === '1,0,1,1,0,false,the venue draws real balls=1' && brief(item('bingo', 'cards')) === '1,0,1,1,0,false,4 tickets each=1', [brief(item('bingo', 'caller')), brief(item('bingo', 'cards'))]);
+  check('a flag needs at least 3 venues: bingo ticket kind has 1 of 2 changed and rounds 1 of 2, neither flagged', !item('bingo', 'ticket_kind').flag && !item('bingo', 'rounds').flag);
+  check('exactly two settings are flagged in this month (trivia rounds, musical reveal)', ['trivia', 'musical', 'bingo'].reduce(function (n, g) { return n + st[g].items.filter(function (i) { return i.flag; }).length; }, 0) === 2);
+  check('the default is said in words beside each setting', item('trivia', 'rounds').default_say === '3 rounds' && item('musical', 'reveal').default_say === 'song name when the clip ends' && item('trivia', 'speed_bonus').default_say === 'speed bonus on');
+  check('trivia top 3 combinations: the two identical venues first (2), then the two single ones in a fixed order, the fifth cut',
+    st.trivia.combos.map(function (c) { return c.n + ':' + c.say; }).join(' / ') === '2:3 rounds, 10 questions, 30 seconds each, speed bonus on, no double points / 1:4 rounds, 10 questions, 30 seconds each, speed bonus off, double points, last 2 of each round double / 1:4 rounds, 10 questions, 30 seconds each, speed bonus on, double points, last 1 of each round double', st.trivia.combos);
+  check('a combination leaves out a setting that does not apply (no "last 2 double" without double points)', st.trivia.combos[0].say.indexOf('last') === -1);
+  check('trivia start times: 7:00 pm for 2 venues (the same time twice in one venue counts once), 6:30 pm for 1; a bad time and the test venue are ignored', st.trivia.starts.map(function (s) { return s.say + '=' + s.n; }).join('|') === '7:00 pm=2|6:30 pm=1', st.trivia.starts);
+  check('musical start time 7:30 pm for 1 venue', st.musical.starts.map(function (s) { return s.say + '=' + s.n; }).join('|') === '7:30 pm=1', st.musical.starts);
+  var blob = JSON.stringify(st);
+  check('aggregate only: no venue id, name or anything typed is in the settings', blob.indexOf('b0000000') === -1 && !/Royal|Anchor|Seventh|Big Club|Quiet|Test Alpha/.test(blob));
+  var none = vprGamesTally(DB.vp_venue_settings, venues, tests, '2026-10').settings;
+  check('with no saved game settings every game has 0 venues and no items', VPR_GAMES.every(function (g) { return none[g[0]].venues === 0 && none[g[0]].items.length === 0 && none[g[0]].combos.length === 0; }));
+
+  var dryFn = wsrc.slice(wsrc.indexOf('async function vprGamesDryRun'), wsrc.indexOf('async function vprGamesSend'));
+  check('the dry run (and so the monthly send and the HQ preview) reads game_prefs along with setup_answers, in the one paged read', /vpaSelectAll\(env, 'vp_venue_settings', 'select=venue_id,setup_answers,game_prefs&order=venue_id\.asc'\)/.test(dryFn));
+  world();
+  DB.vp_venue_settings[0].game_prefs = { trivia: { rounds: 4 } };
+  var dryS = await vprGamesDryRun(ENV, '2026-10');
+  check('through the real dry run: the venue that saved rounds 4 shows as 1 of 1 changed in the tally and in the email, and sends nothing', dryS.tally.settings.trivia.venues === 1 && dryS.tally.settings.trivia.items[0].changed === 1 && /4 rounds \(1\)/.test(dryS.html) && sent.length === 0, dryS.tally.settings.trivia);
+  world();
+
+  print('the settings in the email and the spreadsheet');
+  var tS = vprGamesTally(srows, svenues, tests, '2026-10');
+  var mS = vprGamesEmail(ENV, '2026-10', tS), hS = mS.html;
+  check('the email has a Settings against our defaults section that says counts only', /Settings against our defaults/.test(hS) && /Counts only, no venue names/.test(hS));
+  check('trivia shows its venue count, the rounds row with the default under it, 2 of 5 kept, and the choices', /Trivia <span[^>]*>5 venues have saved settings/.test(hS) && /Rounds a night<br><span[^>]*>default: 3 rounds<\/span>/.test(hS) && /2 of 5<br><span[^>]*>40%/.test(hS) && /4 rounds \(2\)<br>5 rounds \(1\)/.test(hS));
+  check('the flag reads "Most venues change this: consider a new default", twice (trivia rounds, musical reveal) and nowhere else', (hS.match(/Most venues change this: consider a new default/g) || []).length === 2);
+  check('the combinations and start times are listed with venue counts', /Most common combinations/.test(hS) && /3 rounds, 10 questions, 30 seconds each, speed bonus on, no double points <span[^>]*>\(2 venues\)/.test(hS) && /Start times:<\/b> 7:00 pm \(2\), 6:30 pm \(1\)/.test(hS));
+  check('games with no saved settings (raffles, members) are left out of the settings part', !/Raffles <span[^>]*>\d+ venues? ha/.test(hS) && !/Members draws <span[^>]*>\d+ venues? ha/.test(hS));
+  check('no venue name or id in the email, no long dash, venueplay in lower case', !/Royal Hotel|Anchor Pub|Seventh Hotel|b0000000/.test(hS) && !/[—–]|&mdash;|&ndash;/.test(hS) && !/VenuePlay|Venueplay|VENUEPLAY/.test(hS.replace(/alt="[^"]*"/g, '')));
+  check('the email without saved settings says so and the rest of it is unchanged', /Settings against our defaults/.test(mail.html) && /No venue has saved game settings yet\./.test(mail.html));
+  var cS = vprGamesCsv('2026-10', tS);
+  check('the spreadsheet gains the settings table with a header, a flag column and the choices', cS.indexOf('Game,Setting,Our default,Venues counted,Kept our default,Changed it,Saved a value,Kept %,Flag,Changed to') !== -1
+    && cS.indexOf('Trivia,Rounds a night,3 rounds,5,2,3,5,40,Most venues change this: consider a new default,4 rounds (2); 5 rounds (1)') !== -1 && cS.indexOf('Musical bingo,When the TV shows the song name,song name when the clip ends,3,1,2,2,33,Most venues change this: consider a new default,') !== -1, cS.split('\r\n').filter(function (l) { return /^Trivia,Rounds/.test(l); }));
+  check('and the combinations and start times', cS.indexOf('"Trivia: 3 rounds, 10 questions, 30 seconds each, speed bonus on, no double points",2') !== -1 && cS.indexOf('Trivia,7:00 pm (2); 6:30 pm (1)') !== -1, cS.split('\r\n').slice(-14));
+
+  print('the table of settings matches the game Worker and the setup list');
+  var gameSrc = readFile('venueplay-backend/worker/venueplay-game.js');
+  var block = gameSrc.slice(gameSrc.indexOf('const GAME_PREFS_KEYS = {'));
+  function workerKeys(pk) { var a = block.indexOf('\n  ' + pk + ': {'), b = block.indexOf('\n  },', a), keys = {}, re = /^    (\w+):/gm, m, body = block.slice(a, b); while ((m = re.exec(body))) keys[m[1]] = 1; return keys; }
+  var offList = [];
+  VPR_GAMES.forEach(function (g) { var wk = workerKeys(VPR_SET_PREFS[g[0]]); VPR_SETTINGS[g[0]].forEach(function (e) { if (!wk[e.k]) offList.push(g[0] + '.' + e.k); }); });
+  check('every setting we count is a key the game Worker keeps for that game', offList.length === 0, offList);
+  var window = this; load('venueplay/app/vp-setup-help.js');
+  var drift = [], unlisted = [];
+  var SKIP = { trivia: 'set_mode set_ids prizes prize_swaps picture_round', musical: 'playlists prizes prize_swaps sound', bingo: 'paper_note round_prizes', raffles: 'raffle_plan prize_swaps jackpot_amount_cents' };
+  var NOT_IN_SETUP = { trivia: 'end_suspense round_board', musical: '', bingo: '', raffles: 'draw_time draw_countdown pick_order announce_prize', members: 'draw_style draw_time draw_winner_big draw_countdown' };
+  ['trivia', 'musical', 'bingo', 'raffles'].forEach(function (gk) {
+    var help = VPSetupHelp.byKey(gk), hk = {};
+    help.settings.forEach(function (s) { if (s.key) hk[s.key] = s; });
+    VPR_SETTINGS[gk].forEach(function (e) {
+      var s = hk[e.k];
+      if (!s) { if ((' ' + NOT_IN_SETUP[gk] + ' ').indexOf(' ' + e.k + ' ') === -1) unlisted.push(gk + '.' + e.k + ' is not in the setup list'); return; }
+      if (JSON.stringify(s.def) !== JSON.stringify(e.d)) drift.push(gk + '.' + e.k + ' default ' + JSON.stringify(e.d) + ' vs setup ' + JSON.stringify(s.def));
+      if (s.options && typeof e.d !== 'boolean') { var a = s.options.map(function (o) { return String(o[0]); }).sort().join(), b = typeof e.w === 'object' && !Array.isArray(e.w) ? Object.keys(e.w).sort().join() : null; if (b !== null && a !== b) drift.push(gk + '.' + e.k + ' choices ' + b + ' vs setup ' + a); }
+    });
+    Object.keys(hk).forEach(function (k) { var s = hk[k]; if (VPR_SETTINGS[gk].some(function (e) { return e.k === k; })) return; if ((' ' + SKIP[gk] + ' ').indexOf(' ' + k + ' ') === -1) unlisted.push(gk + '.' + k + ' is in the setup list but not counted'); });
+  });
+  check('every default and every choice we count is the setup list\'s own (the consoles use those defaults)', drift.length === 0, drift);
+  check('every setting in the setup list is either counted or on the written list of ones left out (words, prizes, music)', unlisted.length === 0, unlisted);
+  check('trivia end-of-night settings default ON as vp-trivia-finale.js has them', /var DEFAULTS = \{ end_suspense: true, round_board: true \}/.test(readFile('venueplay/app/vp-trivia-finale.js')) && VPR_SETTINGS.trivia.filter(function (e) { return e.k === 'end_suspense' || e.k === 'round_board'; }).every(function (e) { return e.d === true; }));
+  check('raffle and members draw look and time defaults are the draw style file\'s (ticket, flip, normal)', /var DEFAULT_LOOK = \{ raffle: "ticket", members: "flip" \}/.test(readFile('venueplay/app/vp-drawstyle.js')) && /return LEN\[key\] \|\| LEN\.normal/.test(readFile('venueplay/app/vp-drawstyle.js'))
+    && VPR_SETTINGS.raffles.filter(function (e) { return e.k === 'draw_style'; })[0].d === 'ticket' && VPR_SETTINGS.members[0].d === 'flip' && VPR_SETTINGS.members[1].d === 'normal' && VPR_SETTINGS.raffles.filter(function (e) { return e.k === 'draw_time'; })[0].d === 'normal');
+
   print(fails ? fails + ' OF ' + ran + ' CHECKS FAILED' : 'ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL threw: ' + e + '\n' + (e && e.stack)); });
