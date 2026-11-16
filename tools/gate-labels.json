@@ -530,6 +530,7 @@
   "trivia-console-fits-phone-in-chrome.test.py",
   "trivia-demo-phone-in-chrome.test.py",
   "trivia-empty-room-in-chrome.test.py",
+  "trivia-errbar-flow-in-chrome.test.py",
   "trivia-finale-in-chrome.test.py",
   "trivia-join-in-chrome.test.py",
   "trivia-library-swap-in-chrome.test.py",

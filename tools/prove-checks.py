@@ -437,6 +437,17 @@ MUTATIONS = [
      'the winner\'s phone sends them to the bar instead of the host'),
     # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
     # plays a 3 question quiz on the browser rig (tv.html with the wall in its frame, two phones) and keeps a timeline.
+    # THE RED ERROR BAR IN THE PAGE FLOW, NOT OVER IT (job "Trivia console: error bar at 375px", Sun 22 Nov 2026)
+    ('trivia-errbar-flow-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     'b.style.position="relative"; b.style.left=""; b.style.right=""; b.style.top=""; b.style.zIndex="19";',
+     'b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.top=((_hd&&_hd.offsetHeight)||52)+"px"; b.style.zIndex="90";',
+     'in Chrome: the red bar is fixed over the page again and covers "Question 1 of 2" and the question card at 375 px'),
+    ('trivia-errbar-flow-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '    if(modal){\n      b.style.position="fixed";', '    if(false){\n      b.style.position="fixed";',
+     'in Chrome: with a modal open the red bar sits under the scrim, where the host cannot read it'),
+    ('trivia-errbar-flow-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     'b.previousElementSibling!==_hd) document.body.insertBefore(b, _hd.nextSibling);', 'b.previousElementSibling!==_hd) document.body.appendChild(b);',
+     'in Chrome: the red bar lands at the bottom of the page, not under the header'),
     ('trivia-ux-in-chrome.test.py', 'venueplay/app/trivia/host.html',
      '      if(!G.board.length){ endRound(); return; }',
      '      { endRound(); return; }',

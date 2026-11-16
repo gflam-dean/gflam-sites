@@ -1723,6 +1723,10 @@
   "checks": 27,
   "counted_by": "lines"
  },
+ "tools/trivia-errbar-flow-in-chrome.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/trivia-join-in-chrome.test.py": {
   "checks": 36,
   "counted_by": "lines"
