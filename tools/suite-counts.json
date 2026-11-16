@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 60,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
@@ -268,7 +268,7 @@
   "counted_by": "lines"
  },
  "tools/gate-server.test.py": {
-  "checks": 144,
+  "checks": 161,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {
@@ -541,6 +541,10 @@
  },
  "tools/regulated.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/release-lanes.test.py": {
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/release-push.test.py": {
@@ -2305,6 +2309,14 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/canary-night.test.py": {
+  "checks": 102,
+  "counted_by": "lines"
+ },
+ "tools/staging/db-functions-on-test.test.py": {
+  "checks": 130,
   "counted_by": "lines"
  }
 }

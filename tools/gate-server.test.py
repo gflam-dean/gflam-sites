@@ -29,6 +29,10 @@ vp-tests-1. Two throwaway keys are made in the temp folder; the real ~/.gflam-ga
                     move the key, the records or the runner; the real hook runs --chrome-record and still refuses red
   5. the runner     remote_runner reads the server's result file and judges the RAW output on the Mac (the server's
                     own count and verdict are never used); no output, or a cut one, is red; the run facts come back
+  4c. billing suites (16 Nov 2026, tools/fast-release-16nov) billing code in the range: the record covers every Chrome suite
+                    but the billing suites (named money suites, money names, a suite that drives billing.html / Stripe /
+                    invoices, a suite that opens a changed billing page), which run on the Mac; the hook's exact range can
+                    only take suites out; an unreadable range uses no record; the rule on this real tree
   5b. release.py    step 0b runs gate-server.py run unless VP_GATE_SERVER=0, and never stops the release
   6. the fence      the real repository has not moved
 """
@@ -146,15 +150,72 @@ try:
     ok('accepted: covers the two server suites', covered == set(CHROME[:2]), why)
     ok('... and never signin-logo, which the Mac runs', 'signin-logo-in-chrome.test.py' not in covered and 'on the Mac: signin-logo' in why, why)
     signed_good = io.open(path, encoding='utf-8').read()
-    # release-check's acceptance (gate-server.accepted) refuses a record when HEAD changes billing code from origin/main
+    # release-check's acceptance (gate-server.accepted): HEAD changes billing code from origin/main, so the record covers
+    # every Chrome suite EXCEPT the billing suites (16 Nov 2026). alpha drives billing.html (rule 3): it runs on the Mac.
     put(os.path.join(repo, 'venueplay', 'app', 'billing.html'), '<p>bill</p>\n')
+    put(os.path.join(repo, 'tools', CHROME[0]), '# drives tools/browser-rig\n# opens /app/billing.html\nprint("ALL 5 CHECKS PASSED")\n')
     git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'billing change')
     good, text, rec_b = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
     gs.write_record(rec_b, rec_dir)
     c_b, w_b = acc()
-    ok('release-check --chrome-record: a validly signed record for a tree that changes billing.html is NOT used',
-       c_b == set() and 'changes billing code' in w_b and 'billing.html' in w_b, w_b)
+    ok('billing code changed (billing.html): the record covers the suite that does not drive billing, and not the one that does',
+       good and c_b == {CHROME[1]} and 'BILLING CODE CHANGED' in w_b and 'billing.html' in w_b and CHROME[0] in w_b, (c_b, w_b))
+    ok('... and it still never covers signin-logo (MAC_ONLY)', 'signin-logo-in-chrome.test.py' not in c_b)
+    # A record must still be green for the billing suites too: no partial record.
+    good_r, text_r, _ = gs.make_record(repo, runner_from({CHROME[0]: [dict(GREEN, rc=1, last='1 of 5 checks passed', verdict=[False, 'x'])]}),
+                                       KEY, say=lambda s: None)
+    ok('... and a server red on a billing suite still signs nothing (the record must be green for every suite)', not good_r, text_r)
+    # rule 4: a billing page this range changes, named by a suite (play-quick.html), keeps that suite on the Mac.
+    put(os.path.join(repo, 'venueplay', 'app', 'play-quick.html'), '<script>// Stripe card page\n</script>\n')
+    put(os.path.join(repo, 'tools', CHROME[1]), '# drives tools/browser-rig\n# opens /app/play-quick.html\nprint("ALL 5 CHECKS PASSED")\n')
+    git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'quick page stripe')
+    good, text, rec_q = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
+    gs.write_record(rec_q, rec_dir)
+    c_q, w_q = acc()
+    ok('a suite that opens a billing page this range changes (play-quick.html) runs on the Mac: the record covers neither',
+       good and c_q == set() and 'BILLING CODE CHANGED' in w_q, (c_q, w_q))
     git(repo, 'reset', '-q', '--hard', 'HEAD~1')
+    # rule 4 never reads index.html as a name: every folder's front page has it.
+    put(os.path.join(repo, 'venueplay', 'app', 'index.html'), '<script>// Stripe sends them back here\n</script>\n')
+    put(os.path.join(repo, 'tools', CHROME[1]), '# drives tools/browser-rig\n# opens /app/index.html\nprint("ALL 5 CHECKS PASSED")\n')
+    git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'console stripe line')
+    good, text, rec_i = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
+    gs.write_record(rec_i, rec_dir)
+    c_i, w_i = acc()
+    ok('... but a suite that only opens index.html (a changed billing line in app/index.html) is still covered', good and c_i == {CHROME[1]}, (c_i, w_i))
+    git(repo, 'reset', '-q', '--hard', 'HEAD~2')
+    # The hook's exact range (--billing-range) on top of HEAD against origin/main: it can only take suites out.
+    _h0, _om0 = git(repo, 'rev-parse', 'HEAD').stdout.strip(), git(repo, 'rev-parse', 'refs/remotes/origin/main').stdout.strip()
+    # HEAD changes no billing code from origin/main here; an extra range (the hook's) that does takes suites out.
+    git(repo, 'update-ref', 'refs/remotes/origin/main', 'HEAD')
+    put(os.path.join(repo, 'tools', CHROME[0]), '# drives tools/browser-rig\n# opens /app/billing.html\nprint("ALL 5 CHECKS PASSED")\n')
+    git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'alpha drives billing')
+    git(repo, 'update-ref', 'refs/remotes/origin/main', 'HEAD')
+    good, text, rec_e = gs.make_record(repo, runner_from({}), KEY, say=lambda s: None)
+    gs.write_record(rec_e, rec_dir)
+    c_e, w_e = acc()
+    ok('no billing code against origin/main: the record covers both server suites', good and c_e == set(CHROME[:2]), (c_e, w_e))
+    git(repo, 'checkout', '-q', '-b', 'side')
+    put(os.path.join(repo, 'venueplay', 'app', 'billing.html'), '<p>side bill</p>\n')
+    git(repo, 'add', '-A'); git(repo, 'commit', '-qm', 'side billing')
+    side = git(repo, 'rev-parse', 'HEAD').stdout.strip()
+    git(repo, 'checkout', '-q', '-')
+    base_e = git(repo, 'rev-parse', 'HEAD').stdout.strip()
+    c_x, w_x = gs.accepted(repo, key_file=key_file, record_dir=rec_dir, extra_ranges=[(base_e, side)])
+    ok('an extra range (the hook\'s exact push) that changes billing code takes the billing suite out of the record',
+       c_x == {CHROME[1]} and 'BILLING CODE CHANGED' in w_x, (c_x, w_x))
+    c_x, w_x = gs.accepted(repo, key_file=key_file, record_dir=rec_dir, extra_ranges=[(base_e, base_e)])
+    ok('... an extra range with no billing code takes nothing out (a range never puts a suite in)', c_x == set(CHROME[:2]), (c_x, w_x))
+    c_x, w_x = gs.accepted(repo, key_file=key_file, record_dir=rec_dir, extra_ranges=[('ab' * 20, side)])
+    ok('... and an extra range that cannot be read: no record at all', c_x == set() and 'could not be read' in w_x, (c_x, w_x))
+    ok('billing_ranges reads --billing-range=BASE..HEAD and nothing else',
+       gs.billing_ranges(['--local', '--billing-range=abc..def', '--chrome-record']) == [('abc', 'def')] and gs.billing_ranges(['--local']) == [])
+    rc_src2 = io.open(os.path.join(TOOLS, 'release-check.py'), encoding='utf-8').read()
+    ok('release-check --chrome-record hands the hook\'s range to accepted()',
+       '_gs.accepted(ROOT, extra_ranges=_gs.billing_ranges(sys.argv[1:]))' in rc_src2)
+    git(repo, 'reset', '-q', '--hard', _h0)
+    git(repo, 'update-ref', 'refs/remotes/origin/main', _om0)
+    git(repo, 'branch', '-q', '-D', 'side')
     _om = git(repo, 'rev-parse', 'refs/remotes/origin/main').stdout.strip()
     git(repo, 'update-ref', '-d', 'refs/remotes/origin/main')
     c_b, w_b = acc()
@@ -407,7 +468,7 @@ try:
     ok('release-check: --chrome-record never applies with --skip-chrome',
        "CHROME_RECORD = '--chrome-record' in sys.argv and not SKIP_CHROME" in rc_src)
     ok('release-check: the covered set comes from gate-server.accepted(ROOT) and nowhere else',
-       rc_src.count('_CHROME_COVERED, _CHROME_RECORD_WHY = _gs.accepted(ROOT)') == 1
+       rc_src.count('_CHROME_COVERED, _CHROME_RECORD_WHY = _gs.accepted(ROOT') == 1
        and len(re.findall(r'_CHROME_COVERED\s*(?:=|\.add|\.update|\|=)', rc_src)) == 0
        and rc_src.count('_CHROME_COVERED, _CHROME_RECORD_WHY = set()') == 2)
     ok('release-check: a Chrome suite is left out only if it is IN the covered set, and is still listed as skipped',
@@ -442,7 +503,7 @@ try:
                                            'trial-cancel-page-in-chrome.test.py', 'purchase-raffle-in-chrome.test.py',
                                            'phone-signin-in-chrome.test.py', 'consent-split-in-chrome.test.py')))
     ok('NEVER_RERUN is read in exactly the two places that decide a re-run (collect and suite_accepted)',
-       gs_src.count('never_rerun(s)') == 1 and gs_src.count('if never_rerun(name):') == 1 and gs_src.count('NEVER_RERUN = (') == 1)
+       gs_src.count('never_rerun(s)') == 1 and gs_src.count('if never_rerun(name):') == 1 and gs_src.count('NEVER_RERUN = MONEY_SUITES + (') == 1)
 
     # The REAL hook, run the way git runs it, in the throwaway, with a fake gate that writes down its arguments.
     hrepo = os.path.join(TMP, 'hookrepo')
@@ -506,20 +567,26 @@ try:
         a = io.open(os.path.join(hrepo, 'tools', 'ARGS')).read()
         git(hrepo, 'reset', '-q', '--hard', 'HEAD~1')
         return rr, a
+    def billing_args(a, base):
+        m = re.fullmatch(r'--local --chrome-record --billing-range=(\w+)\.\.(\w+)', a.strip())
+        return bool(m) and m.group(1) == base
     r, a = push_of('venueplay/app/billing.html', '<p>your bill</p>\n')
-    ok('a push that changes venueplay/app/billing.html: no record, every Chrome suite on the Mac',
-       r.returncode == 0 and a.strip() == '--local' and 'changes billing code' in r.stdout, (a, r.stdout[-300:]))
+    ok('a push that changes venueplay/app/billing.html: the record may cover the rest, the billing suites run here (the exact range is handed on)',
+       r.returncode == 0 and billing_args(a, hhead) and 'the billing suites run here' in r.stdout, (a, r.stdout[-300:]))
     r, a = push_of('venueplay-backend/worker/venueplay-api-FULL.js', 'function x(){ return stripe.invoices.create(); }\n')
-    ok('a push that changes Stripe code in the billing Worker: no record', a.strip() == '--local', (a, r.stdout[-300:]))
+    ok('a push that changes Stripe code in the billing Worker: the billing range is handed on', billing_args(a, hhead), (a, r.stdout[-300:]))
     r, a = push_of('venueplay/app/index.html', '<script>var k = "pk_test"; Stripe(k);</script>\n')
-    ok('a push that adds Stripe code to any other page: no record', a.strip() == '--local', (a, r.stdout[-300:]))
+    ok('a push that adds Stripe code to any other page: the billing range is handed on', billing_args(a, hhead), (a, r.stdout[-300:]))
     r, a = push_of('venueplay-backend/worker/venueplay-api-FULL.js', 'function lobbyTitle(){ return "Trivia"; }\n')
     ok('a push that changes the billing Worker away from billing (a lobby title): the record may be used',
        a == '--local --chrome-record', (a, r.stdout[-300:]))
     r, a = push_of('tools/test-stripe-thing.js', 'print("stripe invoice");\n')
     ok('a push that changes only a TEST that mentions Stripe: the record may be used', a == '--local --chrome-record', (a, r.stdout[-300:]))
     r, a = push_of('venueplay/app/billing.html', '<p>your bill</p>\n', rsha=hhead)
-    ok('... and with the remote\'s own sha as the start of the range, billing.html still runs the Mac', a.strip() == '--local', (a, r.stdout[-300:]))
+    ok('... and with the remote\'s own sha as the start of the range, that sha is the range handed on', billing_args(a, hhead), (a, r.stdout[-300:]))
+    r, a = push_of('venueplay/app/billing.html', '<p>your bill</p>\n', rsha='ab' * 20)
+    ok('a range that cannot be read (the remote sha is not here): no record, every Chrome suite on the Mac',
+       a.strip() == '--local' and 'could not be judged for billing' in r.stdout, (a, r.stdout[-300:]))
     os.remove(os.path.join(hrepo, 'tools', 'gate-server.py'))
     r = subprocess.run(['bash', os.path.join(hrepo, 'tools', 'hooks', 'pre-push')], cwd=hrepo, env=henv, capture_output=True, text=True,
                        input='refs/heads/x %s refs/heads/main %s\n' % (hhead, '0' * 40))
@@ -532,12 +599,35 @@ try:
        io.open(os.path.join(hrepo, 'tools', 'ARGS')).read().strip() == '--local', r.stdout[-300:])
     git(hrepo, 'update-ref', 'refs/remotes/origin/main', hhead)
 
+    ok('the hook asks the release lanes whatever the billing verdict (a rollback of a billing release must stay fast)',
+       'if [ -n "$CHROME_FLAG" ] && [ "$PUSH_REFS" = "1" ]' in hook_src and 'BILLING' not in hook_src[hook_src.index('# THE RELEASE LANES'):hook_src.index('hook-accept')])
     ok('the hook asks gate-server.py billing for the EXACT pushed range, and accepted() measures from origin/main',
        'python3 "$ROOT/tools/gate-server.py" billing "$PBASE" "$LSHA"' in hook_src
        and "['git', 'merge-base', 'HEAD', BILLING_BASE_REF]" in gs_src and "BILLING_FILES = ('venueplay/app/billing.html',)" in gs_src)
 
     ok('the hook runs the server only when asked (VP_GATE_SERVER=1) and never fails the push on it',
        '[ "${VP_GATE_SERVER:-}" = "1" ]' in hook_src and 'gate-server.py" run || echo' in hook_src)
+
+    print('\n4c. the billing suites: the rule on this real tree')
+    # The rule on the REAL tree.
+    real_bs = load('gate_server_real_bs', os.path.join(TOOLS, 'gate-server.py'))
+    bs = real_bs.billing_suites(ROOT, [])
+    real_chrome = real_bs.chrome_suites(ROOT)
+    money_chrome = [m for m in real_bs.MONEY_SUITES if m in real_chrome]
+    ok('every money suite that drives Chrome is a billing suite (%d)' % len(money_chrome), money_chrome and all(m in bs for m in money_chrome),
+       [m for m in money_chrome if m not in bs])
+    ok('suites that drive billing.html, Stripe or invoices are billing suites (signup-tick, console-hq-5nov, hq-tabs, email-footer)',
+       all(n in bs for n in ('signup-tick-in-chrome.test.py', 'console-hq-5nov-in-chrome.test.py', 'hq-tabs-in-chrome.test.py',
+                             'email-footer-in-chrome.test.py', 'whats-on-in-chrome.test.py')), sorted(bs)[:6])
+    ok('a CSS "vpds-stripe" class is not Stripe, and a game suite is not a billing suite',
+       'tv-drawstyle-in-chrome.test.py' not in bs and 'trivia-reveal-in-chrome.test.py' not in bs and 'console-in-chrome.test.py' not in bs)
+    bq = real_bs.billing_suites(ROOT, [('venueplay/app/play-quick.html', 'x'), ('venueplay/app/index.html', 'x'),
+                                       (real_bs.BILLING_WORKER, 'x')])
+    ok('a changed play-quick.html adds the suite that opens it (quick-demo); a changed app/index.html or Worker adds no game suite',
+       'quick-demo-in-chrome.test.py' in bq and 'quick-demo-in-chrome.test.py' not in bs and 'console-in-chrome.test.py' not in bq
+       and 'real-night-dryrun-in-chrome.test.py' not in bq, sorted(set(bq) - set(bs)))
+    ok('the billing suites are fewer than a third of the Chrome suites (%d of %d), so a billing release is not the whole Mac run'
+       % (len(bs), len(real_chrome)), 0 < len(bs) < len(real_chrome) / 3.0)
 
     print('\n5. the runner: the Mac judges the server\'s RAW output itself')
     shutil.copy(os.path.join(TOOLS, 'check-suite-ledger.py'), os.path.join(repo, 'tools', 'check-suite-ledger.py'))

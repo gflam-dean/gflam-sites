@@ -1,0 +1,4 @@
+{
+ "about": "Releases that passed the full gate AND a real night, newest last. Written by tools/release.py (and the urgent lane's after-gate) through tools/release-lanes.py; read by the rollback lane from origin's main. Never edit by hand.",
+ "releases": []
+}
