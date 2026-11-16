@@ -272,6 +272,9 @@ def dialogs(sid, rounds=3):
     for _ in range(rounds):
         time.sleep(0.8)
         js(sid, CONFIRM)
+        # the state rules popup (vp-gaming.js) is position:fixed, so offsetParent is null: press its own button
+        if js(sid, '(function(){var b=document.querySelector(".vpg-go"); if(!b) return false; b.click(); return true;})()') is True:
+            continue
         if not (js(sid, TERMS) or js(sid, TAKEOVER) or js(sid, ASKGO) or js(sid, ACCEPT)):
             break
 
