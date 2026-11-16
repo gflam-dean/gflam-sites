@@ -83,7 +83,9 @@ TICKETS = [
 S.W.seed('vp_platform_admins', [{'auth_user_id': UID, 'role': 'owner', 'label': 'Dean'}])
 S.W.seed('vp_help_tickets', TICKETS)
 S.W.seed('vp_help_ticket_notes', [
-    {'id': 'n1', 'ticket_id': TICKETS[3]['id'], 'kind': 'reply', 'body': 'Your invoice is on the Account page.', 'author': 'Dean (from accounts@venueplay.com.au to sam@deepwater.example)', 'created_at': '2026-10-21T10:00:00Z'}])
+    {'id': 'n1', 'ticket_id': TICKETS[3]['id'], 'kind': 'reply', 'body': 'Your invoice is on the Account page.', 'author': 'Dean (from accounts@venueplay.com.au to sam@deepwater.example)', 'created_at': '2026-10-21T10:00:00Z'},
+    # Thu 19 Nov (Dean, 2 Nov 2026): a known prospect's email is not auto-replied, and the Worker writes this note; HQ shows "Interested lead" from it.
+    {'id': 'n2', 'ticket_id': TICKETS[5]['id'], 'kind': 'change', 'body': 'No auto reply: prospect', 'author': 'Help desk', 'created_at': '2026-10-28T11:00:01Z'}])
 S.W.missing('vp_help_saved_replies', True)   # migration 126 not run, as on the live database today
 
 
@@ -178,6 +180,10 @@ try:
     ok('each row says who, where, the brand and the kind, in words', 'Sam Smith' in (js(sid, 'document.querySelector("#hdRows [data-id$=\'001001\']").innerText') or '')
        and 'Deepwater Hotel' in (js(sid, 'document.querySelector("#hdRows [data-id$=\'001001\']").innerText') or '')
        and 'Host support' in (js(sid, 'document.querySelector("#hdRows [data-id$=\'001003\']").innerText') or ''))
+    lead_txt = [js(sid, 'document.querySelector("#hdRows [data-id$=\'%06d\']").innerText' % n) for n in (1006, 1001)]
+    # innerText follows the badge's text-transform, so compare without case.
+    ok('a prospect\'s ticket (its "No auto reply: prospect" note) is badged "Interested lead" in the list; the others are not',
+       'interested lead' in (lead_txt[0] or '').lower() and 'interested lead' not in (lead_txt[1] or '').lower(), lead_txt)
     ok('the Report and Help words sit in their own sections, out of the way', js(sid, 'document.getElementById("hdSecReport").classList.contains("hidden") && document.getElementById("hdSecWords").classList.contains("hidden") && !document.getElementById("hdSecTickets").classList.contains("hidden")') is True)
     ok('the rarer filters are folded under More filters', js(sid, 'document.getElementById("hdfMoreBox").classList.contains("hidden")') is True)
     light = js(sid, LIGHT + '("#paneHelpdesk input, #paneHelpdesk select, #paneHelpdesk textarea")')

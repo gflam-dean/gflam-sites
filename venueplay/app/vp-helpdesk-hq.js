@@ -187,6 +187,8 @@
       '.hdbadge{display:inline-block;min-width:19px;padding:1px 7px;margin-left:7px;border-radius:999px;background:#E5484D;color:#fff;font-size:11px;font-weight:800;line-height:17px;text-align:center;vertical-align:1px}' +
       '.navpills button.on .hdbadge{background:#fff;color:#C70F69}' +
       '.badge.pp{background:rgba(23,196,180,.14);color:#3FE0D0}.badge.urgent{background:rgba(229,72,77,.16);color:#FF6B6B}' +
+      /* "Interested lead" (Dean, 2 Nov 2026): a known prospect's email, not auto-replied; the Worker sets t.lead from the ticket's note. */
+      '.badge.lead{background:rgba(255,31,142,.14);color:#FF6FB5}' +
       '#paneHelpdesk input[type=date]{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-family:Manrope,sans-serif;font-size:13.5px;outline:none;color-scheme:dark}' +
       '#paneHelpdesk input[type=date]:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}' +
       /* nor search boxes: the same look for the ticket search */
@@ -402,6 +404,7 @@
         '<div class="t2">' + bits.join(" &middot; ") + (bits.length ? " " : "") +
           '<span class="badge hdbrand ' + (t.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[t.brand] || t.brand) + "</span>" +
           '<span class="vn">' + hdEsc(catLabel(t.category, t.brand)) + "</span>" +
+          (t.lead ? '<span class="badge lead">Interested lead</span>' : "") +
           (t.priority === "urgent" ? '<span class="badge urgent">Urgent</span>' : "") + "</div></div>" +
         '<div class="side"><span class="badge ' + st + '">' + hdEsc(t.status === "new" ? "New" : ST[t.status] || t.status) + '</span><span title="' + hdEsc(when(t.created_at)) + '">' + hdEsc(ago(t.created_at)) + "</span></div></div>";
     }).join("") : '<div class="hdempty">' + hdEsc(S.q ? "No tickets match that search." : none) + "</div>";
@@ -449,6 +452,7 @@
         '<div class="cxhead"><span class="badge hdbrand ' + (t.brand === "partyplay" ? "pp" : "grouped") + '">' + hdEsc(BR[t.brand]) + "</span>" +
           '<span class="cxname">#' + t.ticket_no + " " + hdEsc(t.subject) + "</span>" +
           '<span class="badge ' + st + '">' + hdEsc(ST[t.status] || t.status) + "</span>" +
+          (t.lead ? '<span class="badge lead">Interested lead</span>' : "") +
           (t.priority === "urgent" ? '<span class="badge urgent">Urgent</span>' : "") + "</div>" +
         '<div class="hdtk"><div>' +
           (t.contact_email_pending ? '<div class="restrict" id="hdPending" style="margin:0 0 12px">They asked for replies to go to <b>' + hdEsc(t.contact_email_pending) + "</b>. Nothing has been sent there. " +

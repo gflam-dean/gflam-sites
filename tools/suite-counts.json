@@ -292,7 +292,7 @@
   "counted_by": "lines"
  },
  "tools/helpdesk-hq-in-chrome.test.py": {
-  "checks": 78,
+  "checks": 79,
   "counted_by": "lines"
  },
  "tools/home-counts-in-chrome.test.py": {
@@ -928,7 +928,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 448,
+  "checks": 466,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
