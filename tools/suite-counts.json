@@ -2310,5 +2310,9 @@
  "venueplay-backend/worker/winner-pin.test.js": {
   "checks": 99,
   "counted_by": "lines"
+ },
+ "tools/winner-pin-in-chrome.test.py": {
+  "checks": 62,
+  "counted_by": "lines"
  }
 }

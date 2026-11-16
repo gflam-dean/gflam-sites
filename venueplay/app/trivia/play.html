@@ -1179,7 +1179,7 @@
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
       $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
-    paintPin(r);   // winner check: 1st place only, and never on 0 points (r is 0 then)
+    (typeof paintPin==="function" && paintPin(r));   // guarded: suites lift this function and run it alone. winner check: 1st place only, and never on 0 points (r is 0 then)
     /* The winner is asked after the claim, not during it (Dean, 12 Nov 2026, INBOX 287.5): when the host ends the game,
        or after a minute; everyone else at once. */
     if(r===1){ if(!P.claimAskT) P.claimAskT=setTimeout(function(){ P.claimAskT=null; try{ if(!$("vFinal").classList.contains("hidden")) askHowItWent(); }catch(e){} }, 60000); }
@@ -1242,7 +1242,7 @@
   }
   function quietFinal(note){
     var wrap=$("vFinal"); if(wrap) wrap.classList.remove("winner");
-    paintPin(0);   // no winner PIN while the podium is still to be announced, or when the host ended the game
+    (typeof paintPin==="function" && paintPin(0));   // guarded, as above: no winner PIN while the podium is still to be announced, or when the host ended the game
     $("finalScore").textContent=P.total+" points";
     $("finalEmoji").innerHTML="&#127881;";
     $("finalBig").textContent="That's a wrap";

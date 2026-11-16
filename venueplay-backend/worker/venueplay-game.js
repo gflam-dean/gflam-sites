@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 13:57 · d3990fc4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 14:46 · 9fdcf7a4';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -10276,7 +10276,8 @@ function winPinDigits(bytes) {
 }
 /* The prize within the round. A console's own custom pattern ('c:<id>') is recorded on a bingo claim as
    'custom', so both sides say 'custom'. Anything else is refused, never folded into another prize. */
-const WIN_PIN_STAGES = ['one', 'two', 'three', 'full', 'top', 'middle', 'bottom', 'corners', 'custom', 'final'];
+// 'any' is musical bingo's "Any line" (across, down or diagonal), the default for new venues since 11 Nov 2026.
+const WIN_PIN_STAGES = ['one', 'two', 'three', 'full', 'top', 'middle', 'bottom', 'corners', 'any', 'custom', 'final'];
 function winPinStage(s) {
   let st = String(s == null ? '' : s).trim();
   if (/^c:/.test(st)) st = 'custom';
@@ -10331,6 +10332,7 @@ function winPinMusicCellsAre(stage, cells) {
   if (new Set(c).size !== cells.length) return false;
   const isRow = (a) => a.length === 5 && a[0] % 5 === 0 && a.every((x, i) => x === a[0] + i);
   if (stage === 'one') return isRow(c);
+  if (stage === 'any') return c.length === 5 && MUSIC_ANY_LINES.some((l) => l.slice().sort((x, y) => x - y).join(',') === c.join(','));   // a row, column or diagonal
   if (stage === 'two') return c.length === 10 && isRow(c.slice(0, 5)) && isRow(c.slice(5));
   if (stage === 'corners') return c.join(',') === '0,4,20,24';
   if (stage === 'full') return c.length === 25;

@@ -25812,6 +25812,12 @@ MUTATIONS = [
     ('winner-pin.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "      return rank === 1 && (Number(board[i].points) || 0) > 0;", "      return rank === 1;",
      'a trivia night where nobody scored hands every team the winner PIN'),
+    ('winner-pin.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (stage === 'any') return c.length === 5 && MUSIC_ANY_LINES.some(", "  if (stage === 'any') return c.length === 5 && [MUSIC_ANY_LINES[0]].some(",
+     'a musical "Any line" winner down a column or a diagonal is refused the PIN (only the top row counts)'),
+    ('winner-pin-in-chrome.test.py', 'venueplay/app/musical/host.html',
+     '      if(G.gameId!==gid || (G.pattern||"")!==st) return;', '      if(G.gameId!==gid || G.pattern||""!==st) return;',
+     'in Chrome, the musical console never shows "Round PIN" once a pattern is set (the 5 Nov precedence fault)'),
 ]
 
 

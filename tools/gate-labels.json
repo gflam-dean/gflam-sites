@@ -128,7 +128,7 @@
   "console-paid-and-draw-max-in-chrome.test.py",
   "console-round3-6nov-in-chrome.test.py",
   "cryptoInt() is the same in all 12 file(s)",
-  "definition check across 192 file(s)",
+  "definition check across 193 file(s)",
   "demo-ads-in-chrome.test.py",
   "demo-hermetic.test.js",
   "demo-pairs-in-chrome.test.py",
@@ -177,7 +177,7 @@
   "every playlist points at songs that exist",
   "every prove-checks mutation still finds the line it breaks",
   "every run-by-hand excuse still names a real suite",
-  "every script in 193 file(s) parses",
+  "every script in 194 file(s) parses",
   "every shared script loads before it is used",
   "every song has audio",
   "every suite ends on ALL N CHECKS PASSED (or another line tools/passwording.py reads)",
@@ -609,9 +609,10 @@
   "whats-on-foolproof-in-chrome.test.py",
   "whats-on-in-chrome.test.py",
   "winback-unsubscribe.test.js",
-  "wizard-r10-in-chrome.test.py",
-  "wizard-v2-in-chrome.test.py",
   "winback-unsubscribe.test.js",
-  "winner-pin.test.js"
+  "winner-pin-in-chrome.test.py",
+  "winner-pin.test.js",
+  "wizard-r10-in-chrome.test.py",
+  "wizard-v2-in-chrome.test.py"
  ]
 }

@@ -1660,7 +1660,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     if(!gid || !st || !window.VPWinPin){ el.classList.add("hidden"); el.textContent=""; el.removeAttribute("data-for"); return; }
     if(el.getAttribute("data-for")===key && el.textContent) return;
     VPWinPin.forHost({ game_id:gid, stage:st }).then(function(pin){
-      if(G.gameId!==gid || G.pattern||""!==st) return;
+      if(G.gameId!==gid || (G.pattern||"")!==st) return;
       el.textContent=VPWinPin.hostLine(pin); el.setAttribute("data-for", key);
       el.classList.toggle("hidden", !pin);
     });

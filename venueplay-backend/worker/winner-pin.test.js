@@ -66,7 +66,9 @@ eval(lift('assertUuid'));
 eval(lift('enc'));
 eval(lift('winPinDigits'));
 eval(lift('winPinStage'));
-var WIN_PIN_STAGES = ['one', 'two', 'three', 'full', 'top', 'middle', 'bottom', 'corners', 'custom', 'final'];
+// The prize list and musical bingo's Any line shapes, lifted from the Worker as they ship (16 Nov 2026), never restated.
+eval((/\nconst WIN_PIN_STAGES = \[[^\]]*\];/.exec(src) || ['throw new Error("no WIN_PIN_STAGES")'])[0].replace('const ', 'var '));
+eval((/\nconst MUSIC_ANY_LINES = \(\(\) => \{[\s\S]*?\n\}\)\(\);/.exec(src) || ['throw new Error("no MUSIC_ANY_LINES")'])[0].replace('const ', 'var '));
 eval(lift('winnerPin'));
 eval(lift('winPinRoundOf'));
 eval(lift('winPinMusicCellsAre'));
@@ -240,9 +242,12 @@ step(function () {   // musical
     ok('musical: winning two lines as well opens the two-lines PIN (3126)', r.status === 200 && r.body.pin === '3126', JSON.stringify(r));
     var shapes = [['one', [5, 6, 7, 8, 9], true], ['one', [4, 5, 6, 7, 8], false], ['one', [0, 4, 20, 24], false], ['two', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], true],
                   ['two', [0, 1, 2, 3, 4, 5, 6, 7, 8, 10], false], ['corners', [24, 0, 20, 4], true], ['corners', [0, 4, 20], false],
-                  ['full', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], true], ['full', [10, 11, 12, 13, 14], false], ['one', null, false], ['one', [5, 5, 6, 7, 8], false]];
+                  ['full', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], true], ['full', [10, 11, 12, 13, 14], false], ['one', null, false], ['one', [5, 5, 6, 7, 8], false],
+                  // Any line (musical bingo's default for new venues, 11 Nov 2026): a row, a column or a diagonal, nothing else
+                  ['any', [5, 6, 7, 8, 9], true], ['any', [2, 7, 12, 17, 22], true], ['any', [24, 18, 12, 6, 0], true], ['any', [4, 8, 12, 16, 20], true],
+                  ['any', [0, 1, 2, 3, 5], false], ['any', [0, 4, 20, 24, 12], false], ['any', [0, 1, 2, 3, 4, 5], false]];
     var wrong = shapes.filter(function (t) { return winPinMusicCellsAre(t[0], t[1]) !== t[2]; });
-    ok('musical: each prize is exactly its own shape of verified cells (11 cases)', wrong.length === 0, JSON.stringify(wrong));
+    ok('musical: each prize is exactly its own shape of verified cells (18 cases)', wrong.length === 0, JSON.stringify(wrong));
     return call(handlePlayerWinnerPin, { game_id: GAME, stage: 'final' });
   }).then(function (r) {
     ok('musical: trivia\'s "final" prize is never a musical PIN', r.status === 403 && !r.body.pin, JSON.stringify(r));
