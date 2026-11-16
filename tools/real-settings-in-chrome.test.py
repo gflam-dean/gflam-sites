@@ -157,11 +157,15 @@ def trivia(shape, n):
 LIB = json.load(io.open(os.path.join(ROOT, 'venueplay', 'data', 'musical-library.json'), encoding='utf-8'))
 LIB_IDS = [p['id'] for p in LIB['playlists']]
 SONG = {s['id']: s for s in LIB['songs']}
+# The title a pub SEES (Dean, 16 Nov 2026: a rude title is shown under its displayTitle; a hidden song is never dealt), so a
+# real rude title reaching a card is a stray here too.
+def shown_title(s):
+    return (s.get('displayTitle') or '').strip() or s['title']
 def theme_titles(pid):
     if pid in ('all', 'surprise'):
-        return set(s['title'] for s in LIB['songs'])
+        return set(shown_title(s) for s in LIB['songs'] if s.get('hidden') is not True)
     p = [x for x in LIB['playlists'] if x['id'] == pid]
-    return set(SONG[i]['title'] for i in (p[0]['songIds'] if p else []) if i in SONG)
+    return set(shown_title(SONG[i]) for i in (p[0]['songIds'] if p else []) if i in SONG and SONG[i].get('hidden') is not True)
 def theme_name(pid):
     return {'all': 'All songs', 'surprise': 'Surprise Mix'}.get(pid) or ([p['name'] for p in LIB['playlists'] if p['id'] == pid] or ['Playlist'])[0]
 

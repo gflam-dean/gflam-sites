@@ -13,6 +13,8 @@ headless Chrome). Both settings are OFF for every venue until a host switches th
      Cancel takes it away again and the TV goes back
   5. RAFFLE CONSOLE: the same switch (countdown only), Off by default, saved as draw_countdown, hidden control until On
   6. no page threw anything
+  7. RACE PLATE: Winner takes the screen is greyed out with a one-line reason (a flip board moment, INBOX 285 option 2), the
+     saved choice is kept, the flip board brings it back; a race plate for one draw says so (17 Nov 2026)
 
     python3 tools/draw-moments-console-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -118,6 +120,29 @@ def part_members():
     ok('no page threw anything', errs(host) in ('[]', None) and errs(tv) in ('[]', None), (errs(host), errs(tv)))
     members('SAVED ON', {'members': {'draw_winner_big': True, 'draw_countdown': True}}, True, True)
 
+DISABLED = '(function(){return [].map.call(document.querySelectorAll("#winBigChips button"),function(b){return b.disabled;});})()'
+def part_race():
+    print('\nMEMBERS CONSOLE, RACE PLATE + WINNER TAKES THE SCREEN SAVED ON (17 Nov 2026: the winner screen is a flip board moment)')
+    W, tv, host = members('RACE LOOK, SAVED ON', {'members': {'draw_winner_big': True, 'draw_style': 'race'}}, False, False)
+    if SHOTS:
+        js(host, '[].forEach.call(document.querySelectorAll("details"),function(d){d.open=true;}); document.getElementById("momentsField").scrollIntoView({block:"center"}); true'); time.sleep(0.6)
+        R.shot(host, os.path.join(SHOTS, 'console-members-race-greyed.jpg'))
+    ok('race plate: the Winner takes the screen chips are greyed out (cannot be pressed)', js(host, DISABLED) == [True, True], js(host, DISABLED))
+    note = js(host, '(function(){var n=document.getElementById("winBigNote");return n.classList.contains("hidden")?"":n.textContent;})()')
+    ok('and say why in one short line', note == 'Works with the flip board look. Your usual look is the race plate.', note)
+    time.sleep(3)
+    ok('opening the console keeps the saved choice (nothing is lost)', prefs_of(W, 'members').get('draw_winner_big') is True, prefs_of(W, 'members'))
+    js(host, 'document.querySelector("#styleChips button[data-style=flip]").click(); true')
+    ok('picking the flip board brings the switch back On, pressable, no note', R.until(host, CHIPS + '("#winBigChips")==="Off|*On"', 5) is True and js(host, DISABLED) == [False, False] and hidden(host, 'winBigNote') is True,
+       [chips(host, '#winBigChips'), js(host, DISABLED)])
+    js(host, 'document.querySelector("#onceChips button[data-once=race]").click(); true')
+    ok('a race plate for one draw says the winner does not take the screen for that draw', hidden(host, 'onceNote') is False, hidden(host, 'onceNote'))
+    js(host, 'document.querySelector("#onceChips button[data-once=\\"\\"]").click(); true')
+    ok('back to Usual takes that line away', hidden(host, 'onceNote') is True)
+    js(host, 'document.querySelector("#styleChips button[data-style=race]").click(); true')
+    ok('back to the race plate greys it out again', R.until(host, CHIPS + '("#winBigChips")==="*Off|On"', 5) is True and js(host, DISABLED) == [True, True], [chips(host, '#winBigChips'), js(host, DISABLED)])
+    ok('no page threw anything', errs(host) in ('[]', None), errs(host))
+
 def tv_on_quick(tv):
     return js(tv, F('!!d.querySelector(".vpdc")')) is True
 
@@ -143,7 +168,7 @@ if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('draw-moments-console-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
     try:
-        part_members(); part_raffle()
+        part_members(); part_race(); part_raffle()
     finally:
         if R: R.close()
     print('\n' + ('FAILED %d of %d' % (bad, ran) if bad else 'ALL %d CHECKS PASSED' % ran))

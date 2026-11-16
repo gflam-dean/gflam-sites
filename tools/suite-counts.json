@@ -224,7 +224,7 @@
   "counted_by": "lines"
  },
  "tools/draw-moments-console-in-chrome.test.py": {
-  "checks": 32,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {
@@ -480,7 +480,7 @@
   "counted_by": "lines"
  },
  "tools/raffle-ticket-stub-in-chrome.test.py": {
-  "checks": 50,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/real-night-check.test.py": {
@@ -1708,7 +1708,7 @@
   "counted_by": "lines"
  },
  "tools/tv-draw-moments-in-chrome.test.py": {
-  "checks": 56,
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/tv-drawstyle-in-chrome.test.py": {
@@ -2237,6 +2237,14 @@
  },
  "tools/test-trivia-buzzer-on-zero.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-song-safe.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
+ "tools/staging-findings-in-chrome.test.py": {
+  "checks": 24,
   "counted_by": "lines"
  }
 }

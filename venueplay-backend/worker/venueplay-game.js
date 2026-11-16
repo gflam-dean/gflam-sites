@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Nov 2026, 06:30 · 952374b2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 11:39 · 6632e06e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -5530,6 +5530,7 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
     songs = await sbGet(env, 'vp_playlist_songs',
       'playlist_id=eq.' + enc(playlistId) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
   }
+  if (!paperSet) songs = songs.filter((r) => !songIsRude(r.title, r.artist));   // a stored playlist (library or the venue's own) deals no rude song either
   if (songs.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
 
   const autoDaub = b.auto_daub !== false;   // default on; maps to reveal_mode
@@ -13494,12 +13495,18 @@ async function handlePaperScore(request, env, json) {
 
 // An inline playlist from a console, cleaned the one way: title and artist required, 200 chars
 // each, 500 songs at most. Used by a game start and by printing paper cards, which must agree.
+/* NO RUDE SONG ON A PUB CARD (Dean, 16 Nov 2026). The SAME word list as /app/vp-songsafe.js (tools/test-song-safe.js is red when they
+   differ): a song whose title or artist has one of these words is never materialised for a new card set or dealt, by any path. A set of
+   cards already printed keeps its songs (the cards on the tables cannot change); the console stopped offering these songs the same day. */
+const SONG_RUDE_WORDS = "f+u+c+k[a-z]*|f[*@]+k[a-z]*|sh[i1*]t[a-z]*|bitch[a-z]*|biatch|cunts?|motherf[a-z]*|thots?|n[i1]gg[a-z]*|fags?|faggot[a-z]*|twats?|wank[a-z]*|slut[a-z]*|whore[a-z]*|pussy|pussies|cocks?|cocksuck[a-z]*|dicks?|dickhead[a-z]*|bastards?|bollocks|arsehole[a-z]*|assholes?|tits|titties|porn[a-z]*|cum|dildo[a-z]*|blowjob[a-z]*|piss|pissed|pissing";
+const SONG_RUDE_RX = new RegExp('(^|[^a-z])(' + SONG_RUDE_WORDS + ')([^a-z]|$)', 'i');
+function songIsRude(title, artist) { return SONG_RUDE_RX.test(String(title == null ? '' : title)) || SONG_RUDE_RX.test(String(artist == null ? '' : artist)); }
 function cleanInlineSongs(raw) {
   const clean = [];
   for (let i = 0; i < Math.min(raw.length, 500); i++) {   // cap materialised songs at 500
     const t = raw[i] && raw[i].title != null ? String(raw[i].title).trim().slice(0, 200) : '';
     const a = raw[i] && raw[i].artist != null ? String(raw[i].artist).trim().slice(0, 200) : '';
-    if (t && a) clean.push({ title: t, artist: a, hint: raw[i].hint ? String(raw[i].hint).slice(0, 200) : null });
+    if (t && a && !songIsRude(t, a)) clean.push({ title: t, artist: a, hint: raw[i].hint ? String(raw[i].hint).slice(0, 200) : null });
   }
   return clean;
 }

@@ -94,6 +94,10 @@
   /* labels: the mono label over each moment, 1.4cqw (18px at 1280), a brighter grey for a pub */
   .lab{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:1.4cqw;line-height:1;color:#A6A6B0}
   .lab:empty{display:none}
+  /* THE BOARD'S TITLE IN THE NEW LOOK (17 Nov 2026, staging play): it was a spaced pink mono caps eyebrow, the look the AI-look rule bans. Now the
+     new-look title: Anton, white, no letter spacing, the size of a heading under the top bar. */
+  .boardhd{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:0;font-size:3.3cqw;line-height:1.05;color:#fff}
+  .boardhd:empty{display:none}
   .lab.pk{color:var(--pink)} .lab.yl{color:var(--yl)}
   /* the number tiles: one a digit, sized in px by sizeTiles() from the wall's width AND height */
   .tiles{display:flex;justify-content:center;gap:2.08cqw;margin-top:2cqw}
@@ -205,13 +209,13 @@
       <div class="toplbl"><span class="tl-night">Members draw</span></div>
       <!-- single-draw fallback (used until the host sends the draws list) -->
       <div id="idleSingle" class="body">
-        <div class="lab pk" id="idleDrawName">Members Draw</div>
+        <div class="boardhd" id="idleDrawName">Members Draw</div>
         <div class="jack" id="idleJack">$0</div>
         <div class="jsub">Be here when your number is drawn</div>
       </div>
       <!-- multi-draw board -->
       <div id="idleBoardWrap" class="body hidden">
-        <div class="lab pk">This week&rsquo;s members draws</div>
+        <div class="boardhd">This week&rsquo;s members draws</div>
         <div class="board" id="idleBoard"></div>
         <div class="jsub">Be here when your number is drawn</div>
       </div>
@@ -670,7 +674,7 @@
     if(typeof nextResetCents==="number") state.jackpotCents=nextResetCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
     $("resEye").textContent="We have a winner"; $("resEye").className="lab yl"; $("resEye").classList.remove("hidden"); $("resStep").classList.remove("roll","hidden"); $("resRollHead").classList.add("hidden"); $("resMax").classList.add("hidden");
-    var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=(state.winBig && window.VPDrawStyle) ? (VPDrawStyle.niceName(name)||"·") : (name||"·");
+    var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=name||"·";   /* already First Last: turned round as it arrived (onMsg, 17 Nov 2026) */
     $("resWinsLabel").classList.remove("hidden");
     var won=$("resWon");
     if(state.winBig){ $("resWinsLabel").classList.add("hidden"); won.classList.add("hidden"); }   // THE WINNER TAKES THE SCREEN: the name is the headline, the amount is not (INBOX 285b)
@@ -835,6 +839,14 @@
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
+    /* A MEMBER'S NAME IS ALWAYS FIRST LAST ON THIS WALL (17 Nov 2026, staging play: the members draw TV said "Lee,Daniel").
+       A club export writes "Last,First" in one box; every look, winner takes the screen on or off, the classic wall,
+       the missed-name line and the end show all read the name from here, so it is turned round once, as it arrives,
+       by the one name rule (VPDrawStyle.niceName). A purchase raffle winner ("Kate H") has no comma and is left alone. */
+    if(window.VPDrawStyle && VPDrawStyle.niceName){
+      if((m.t==="pick"||m.t==="winner"||m.t==="claimed") && typeof m.name==="string") m.name=VPDrawStyle.niceName(m.name);
+      if(m.t==="rollover" && typeof m.missedName==="string") m.missedName=VPDrawStyle.niceName(m.missedName);
+    }
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on && m.t!=="tv_here"){ try{ VPSting.forDraw(m, { line:"MEMBERS DRAW <i>TIME</i>" }); }catch(e){} }
     /* THE END-OF-GAME SHOW ON THE MEMBERS WALL TOO (/app/vp-endshow.js, off unless ?endshow=1; 9 Nov 2026, Dean:

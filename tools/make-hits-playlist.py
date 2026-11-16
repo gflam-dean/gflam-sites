@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P = os.path.join(ROOT, "venueplay", "data", "musical-library.json")
 HITS, ID, NAME, SKIP = 1000, "all-the-hits", "All the hits", {"pride"}
 d = json.load(open(P), object_pairs_hook=collections.OrderedDict)
-known = {s["id"] for s in d["songs"]}
+known = {s["id"] for s in d["songs"] if s.get("hidden") is not True}   # a hidden song (Dean 16 Nov 2026: rude titles) is never a hit
 lists = [p for p in d["playlists"] if p["id"] != ID and p["id"] not in SKIP]
 out, seen, rank = [], set(), 0
 while len(out) < HITS and any(rank < len(p["songIds"]) for p in lists):

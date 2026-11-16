@@ -481,14 +481,28 @@
   /* THE NEW DRAW LOOKS. S.styleKey is what the host said with t:"drawing" ("ticket" or "race"; nothing, or a draw of
      several tickets, is the old look). The stage holds on its last near miss until the host's t:"pick" gives the server's
      winner, so the room never sees a number the server did not draw. */
+  /* A LONG RAFFLE NAME SHRINKS, NEVER CUT (17 Nov 2026, staging play: "TURDAY CHARITY RAFFLE FOR THE HARBOUR SURF CLUB JUNIO" lost a letter at each
+     end of the top bar). Measured once the layer is on screen; down to about half size, the size a long name still reads at from the bar. */
+  function fitStyleTitle(){
+    var t=$("tvStyleTitle"); if(!t) return; t.style.fontSize="";
+    (window.requestAnimationFrame||setTimeout)(function(){
+      var box=t.parentNode; if(!box || !box.clientWidth || t.scrollWidth<=box.clientWidth) return;
+      var px=parseFloat(getComputedStyle(t).fontSize)||0; if(!px) return;
+      t.style.fontSize=(px*Math.max(0.5, (box.clientWidth-2)/t.scrollWidth)).toFixed(1)+"px";   // px, so an older TV (no cqw, /app/vp-oldtv.js) takes it too
+    });
+  }
   function destroyStyle(){ if(S.stage){ try{ S.stage.destroy(); }catch(e){} S.stage=null; } }
   function makeStage(){
     destroyStyle();
     var nt=$("venueNameTag");
     var drawn=[]; for(var di=0; di<S.endDrawn.length; di++){ var dn=S.endDrawn[di].nums||[]; for(var dj=0; dj<dn.length; dj++) drawn.push(pad(dn[dj])); }
     $("tvStyleTitle").textContent=S.styleName || "Raffle";   // the raffle's own name ("Sunday meats"); the word Raffle only when it has none
+    fitStyleTitle();
     S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", noClock:!!S.cdOn, digits:S.padW, min:S.min, max:S.max, name:S.styleName, prizeNo:S.prizeNo, prizeOf:S.prizeOf, drawn:drawn,
-      drawSecs:S.styleSecs||9, prize:S.prizeLabel, venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
+      drawSecs:S.styleSecs||9, prize:S.prizeLabel, venueName:"" });
+    /* THE VENUE ONCE A FRAME (17 Nov 2026, staging play: a venue with no logo read its name three times on one frame, top left and twice on the
+       ticket). The wall's top left already says who the venue is (its logo, or its name in words), so the ticket and its stub carry the raffle,
+       not the venue again. nt is kept for the line above: a page without the top left tag would pass its text here. */
     return S.stage;
   }
   function styleOn(){ return !!(S.styleKey && window.VPDrawStyle && VPDrawStyle.STYLES[S.styleKey]); }

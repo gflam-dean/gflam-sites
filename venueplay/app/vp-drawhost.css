@@ -78,6 +78,7 @@
 .chips button.on,.chip.on{border-color:var(--pink);background:rgba(255,31,142,.12);color:#fff}
 .chips button.add,.chip.add{color:var(--muted);border-style:dashed}
 .chips button:hover{border-color:var(--pink);color:#fff}
+.chips button:disabled,.chips button:disabled:hover{opacity:.45;cursor:not-allowed;border-color:var(--line);color:var(--text)}
 .chips .empty,.chips .presets .empty{font-size:14px;color:var(--muted);padding:6px 0}
 
 /* the winning number on the console */
