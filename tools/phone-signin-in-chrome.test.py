@@ -372,7 +372,8 @@ try:
         for name, m in (('11-email-welcome-from-harry', w), ('12-email-new-sign-in-link', mails[-2] if len(mails) > 1 else {})):
             path = os.path.join(tmp, name + '.html')
             with open(path, 'w', encoding='utf-8') as fh:
-                fh.write(m.get('html', ''))
+                # The email's pictures from THIS checkout, never the live site (tools/nolive.py, 16 Nov 2026).
+                fh.write(m.get('html', '').replace('https://venueplay.com.au/', 'file://' + os.path.join(ROOT, 'venueplay') + '/'))
             tid, sid = S.B.open_tab('about:blank')
             S.B.call('Page.enable', {}, session=sid)
             S.B.call('Emulation.setDeviceMetricsOverride', {'width': 390, 'height': 1400, 'deviceScaleFactor': 2, 'mobile': True}, session=sid)

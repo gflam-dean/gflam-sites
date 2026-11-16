@@ -74,7 +74,9 @@ class Tab(object):
         b.call('Emulation.setTouchEmulationEnabled', {'enabled': mobile}, session=self.sid)
         b.call('Network.enable', session=self.sid)
         b.call('Network.setBlockedURLs', {'urls': ['*fonts.googleapis.com*', '*fonts.gstatic.com*', '*googletagmanager*',
-                                                   '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*']}, session=self.sid)
+                                                   '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*',
+                                                   # the live database's realtime socket, from the pages a /qr/ address lands on (tools/nolive.py, 16 Nov 2026)
+                                                   '*supabase.co*']}, session=self.sid)
 
     def go(self, url):
         self.b.call('Page.navigate', {'url': url}, session=self.sid)
