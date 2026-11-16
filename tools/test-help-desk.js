@@ -1307,6 +1307,80 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('if the help desk cannot be read it says so (503, so the Mac tries again), never "nothing to solve"', asDown.status === 503 && T(asOther.ticket_no).status === 'new', asDown);
   check('a time with no zone is read as Brisbane time', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')) === '3 Nov 2026, 2:15pm', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')));
 
+  print('THE AUTO REPLY WORDS (Dean, 2 Nov 2026): THE GAME-ON LINE FOR VENUES ONLY, A KNOWN PROSPECT GETS NONE');
+  world();
+  function ackText(cat, pp) { return helpPlainFromHtml(helpAckHtml({ brand: pp ? 'partyplay' : 'venueplay', category: cat, contact_name: 'Sam Smith', ticket_no: 1042, reply_token: 'abcdEFGH1234ijkl' })); }
+  var GAME = 'If a game is on right now and something has gone wrong, call 07 5228 3667 and press 2.';
+  var aSales = ackText('sales'), aAcc = ackText('accounts'), aVen = ackText('venue_support'), aPat = ackText('patron_support'), aGen = ackText('general'), aPp = ackText('sales', true);
+  check('the acknowledgement is signed "The venueplay team" for every category, never a person', [aSales, aAcc, aVen, aPat, aGen].every(function (x) { return /\nKind regards,\n\nThe venueplay team\nvenueplay\n/.test(x) && !/\bDean\b/.test(x); }), aSales);
+  check('a sales enquiry (a prospect, a website form) is NOT told "if a game is on right now", and keeps the P line in the signature', aSales.indexOf('If a game is on') === -1 && /\nP 07 5228 3667\n/.test(aSales), aSales);
+  check('an accounts ticket is NOT told "if a game is on right now", and keeps the P line', aAcc.indexOf('If a game is on') === -1 && /\nP 07 5228 3667\n/.test(aAcc), aAcc);
+  check('venue support (an existing venue) still gets the game-on line and the P line', aVen.indexOf(GAME) !== -1 && /\nP 07 5228 3667\n/.test(aVen), aVen);
+  check('a player, a general hello@ email and PartyPlay get no game-on line', [aPat, aGen, aPp].every(function (x) { return x.indexOf('If a game is on') === -1; }), [aPat, aGen]);
+
+  print('THE FORM, AND A KNOWN PROSPECT BY EMAIL');
+  world();
+  r = await call(handleContact, null, { name: 'Sam', email: 'sam@newpub.com.au', phone: '0400000000', message: 'How much is it?' });
+  var formAck = sent.filter(function (m) { return m.to.join() === 'sam@newpub.com.au'; });
+  check('a website FORM sales enquiry IS acknowledged, signed "The venueplay team", with no game-on line', r.status === 200 && formAck.length === 1 && formAck[0].text.indexOf('If a game is on') === -1 && /\nThe venueplay team\n/.test(formAck[0].text), formAck.map(function (m) { return m.text; }));
+  sent.length = 0;
+  r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { device: 'v-ack', email: 'sam2@royalhotel.com.au' }));
+  var venAck = sent.filter(function (m) { return m.to.join() === 'sam2@royalhotel.com.au'; });
+  check('a venue_support ticket is acknowledged WITH the game-on line', venAck.length === 1 && venAck[0].text.indexOf(GAME) !== -1, venAck.map(function (m) { return m.text; }));
+
+  var VP_ = U(150), VS_ = U(151);
+  function coldWorld() {
+    world();
+    DB.vp_venues.push({ id: VP_, name: 'The Sirloin Club', founding_id: 'fP', slug: 'sirloin', status: 'active', created_at: '2026-10-30T00:00:00Z' },
+                      { id: VS_, name: 'The Signed Inn', founding_id: 'fS', slug: 'signed', status: 'active', created_at: '2026-10-30T00:00:00Z' });
+    DB.venueplay_founding.push({ id: 'fP', contact_email: 'owner@sirloinclub.com.au', status: 'pending' }, { id: 'fS', contact_email: 'owner@signedinn.com.au', status: 'card_on_file' });
+    DB.vp_prospects = [{ venue_id: VP_, founding_id: 'fP', email: 'manager@sirloins.com.au', created_at: '2026-10-30T00:00:00Z' },
+                       { venue_id: VS_, founding_id: 'fS', email: 'boss@signedinn.com.au', created_at: '2026-10-30T00:00:00Z' },
+                       { venue_id: U(152), founding_id: null, email: 'pubguy@gmail.com', created_at: '2026-10-30T00:00:00Z' }];
+  }
+  function toSender(addr) { return sent.filter(function (m) { return m.to.join().toLowerCase().indexOf(addr) !== -1; }); }
+  function lastT() { return DB.vp_help_tickets[DB.vp_help_tickets.length - 1]; }
+  function hasNote(tk, body) { return notesOf(tk).some(function (n) { return n.kind === 'change' && n.body.indexOf(body) === 0; }); }
+
+  coldWorld();
+  await inbound('support@help.venueplay.com.au', mail({ from: '"Manager" <Manager@Sirloins.com.au>', subject: 'Question', body: 'How do the slides work?', mid: '<c3@x>' }));
+  t = lastT();
+  check('a known prospect writing in (their address on HQ > Prospects) gets NO auto reply, even at support@', toSender('manager@sirloins.com.au').length === 0, sent.map(function (m) { return m.to; }));
+  check('and it is a Sales ticket, new for HQ, on their prospect venue, noted "No auto reply: prospect"', t.category === 'sales' && t.status === 'new' && t.venue_id === VP_ && hasNote(t, 'No auto reply: prospect') && !hasNote(t, 'Acknowledgement sent'), [t, notesOf(t)]);
+  check('HQ still hears about it (the staff alert goes to sales@, our own address, never to them)', sent.length === 1 && sent[0].to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return m.to; }));
+  var lst = await call(helpAdminList, ADMIN, {});
+  var got = await call(helpAdminGet, ADMIN, { id: t.id });
+  check('HQ\'s list and the ticket itself say lead (shown as Interested lead); other tickets do not', lst.body.tickets.filter(function (x) { return x.id === t.id; })[0].lead === true && got.body.ticket.lead === true && lst.body.tickets.filter(function (x) { return x.id !== t.id; }).every(function (x) { return x.lead === false; }), [lst.body.tickets.map(function (x) { return [x.ticket_no, x.lead]; }), got.body.ticket && got.body.ticket.lead]);
+  sent.length = 0;
+  check('asked again, the prospect is still sent nothing and the note is not written twice', (await helpAcknowledge(ENV, Object.assign({}, t, { lead: { venue_id: VP_ } }))) === false && sent.length === 0 && notesOf(t).filter(function (n) { return n.body === 'No auto reply: prospect'; }).length === 1);
+
+  coldWorld();
+  await inbound('hello@help.venueplay.com.au', mail({ from: 'Bob <bob@sirloins.com.au>', to: 'hello@venueplay.com.au', subject: 'Re: quiet nights', body: 'Tell me more', mid: '<c4@x>' }));
+  t = lastT();
+  check('a colleague at a prospect\'s company domain is a known prospect too: nothing sent, a Sales lead, on the prospect venue', toSender('bob@sirloins.com.au').length === 0 && t.category === 'sales' && t.venue_id === VP_ && hasNote(t, 'No auto reply: prospect'), [sent.map(function (m) { return m.to; }), t]);
+
+  coldWorld();
+  await inbound('sales@help.venueplay.com.au', mail({ from: 'Kim <kim@freshpub.com.au>', subject: 'Pricing', body: 'What does it cost?', mid: '<c6@x>' }));
+  t = lastT();
+  var kimAck = toSender('kim@freshpub.com.au');
+  check('a sales@ email from somebody who is NOT a known prospect is acknowledged, without the game-on line', kimAck.length === 1 && kimAck[0].text.indexOf('If a game is on') === -1 && !hasNote(t, 'No auto reply'), kimAck.map(function (m) { return m.text; }));
+
+  coldWorld();
+  await inbound('support@help.venueplay.com.au', mail({ from: 'Boss <boss@signedinn.com.au>', subject: 'TV blank', body: 'The TV is blank tonight', mid: '<c7@x>' }));
+  t = lastT();
+  check('a prospect who has SIGNED UP is a customer: support@ is acknowledged as before, with the game-on line', toSender('boss@signedinn.com.au').length === 1 && toSender('boss@signedinn.com.au')[0].text.indexOf(GAME) !== -1 && t.category === 'venue_support' && !hasNote(t, 'No auto reply'), [sent.map(function (m) { return m.to; }), t.category]);
+
+  coldWorld();
+  await inbound('support@help.venueplay.com.au', mail({ from: 'Other <someoneelse@gmail.com>', subject: 'Help', body: 'Cannot see my tickets', mid: '<c8@x>' }));
+  check('a free-mail domain is never matched as a company (a prospect on gmail does not make every gmail sender one)', toSender('someoneelse@gmail.com').length === 1 && !hasNote(lastT(), 'No auto reply'), sent.map(function (m) { return m.to; }));
+  coldWorld();
+  await inbound('support@help.venueplay.com.au', mail({ from: 'Pub Guy <PubGuy@gmail.com>', subject: 'Hi', body: 'Interested', mid: '<c9@x>' }));
+  check('but the prospect\'s own free-mail address is matched whole: no auto reply, a Sales lead', toSender('pubguy@gmail.com').length === 0 && lastT().category === 'sales' && hasNote(lastT(), 'No auto reply: prospect'), sent.map(function (m) { return m.to; }));
+
+  coldWorld();
+  r = await call(handleContact, null, { name: 'Manager', email: 'manager@sirloins.com.au', message: 'Can I see a demo?' });
+  check('the website FORM is not email-in: even a known prospect who fills it in gets the acknowledgement, without the game-on line', toSender('manager@sirloins.com.au').length === 1 && toSender('manager@sirloins.com.au')[0].text.indexOf('If a game is on') === -1, sent.map(function (m) { return m.to; }));
+
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};
   ALLMAIL.forEach(function (m2) { var k = (m2.headers && m2.headers['X-VP-Help']) || (/^Re: /.test(m2.subject) ? 'reply' : 'other'); kinds[k] = (kinds[k] || 0) + 1; });

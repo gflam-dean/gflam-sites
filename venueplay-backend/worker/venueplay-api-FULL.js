@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:10 · f6e9942b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 14:28 · 1a191e0f';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -22089,6 +22089,15 @@ async function helpAdminList(request, env, json) {
   if (range.length === 2) rest.push('and=(' + range.map((x) => x.replace('=', '.')).join(',') + ')');
   else rest.push.apply(rest, range);
   const rows = await vpaSelectAll(env, 'vp_help_tickets', rest.join('&') + '&order=created_at.desc,id.desc');
+  /* "Interested lead" (Dean, 2 Nov 2026): a ticket whose note says no auto reply went because it is a prospect. */
+  const leadIds = {};
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100).map((r) => r.id).filter((x) => HELP_UUID.test(String(x))).map(encodeURIComponent).join(',');
+    if (!chunk) continue;
+    (await vpaSelectAll(env, 'vp_help_ticket_notes', 'ticket_id=in.(' + chunk + ')&kind=eq.change&body=eq.' + encodeURIComponent(HELP_LEAD_NOTE) + '&select=ticket_id&order=ticket_id.asc'))
+      .forEach((n) => { leadIds[n.ticket_id] = true; });
+  }
+  rows.forEach((r) => { r.lead = !!leadIds[r.id]; });
   const venues = await helpVenueNames(env, rows.map((r) => r.venue_id));
   const admins = await vpaSelect(env, 'vp_platform_admins', 'select=label&order=label.asc');
   // The venue picker for "Log a call". HQ only, like everything else here; paged and ordered.
@@ -22123,6 +22132,7 @@ async function helpAdminGet(request, env, json) {
   const notes = await vpaSelectAll(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) + '&select=*&order=created_at.asc,id.asc');
   // The venue's slug as well as its name (29 Oct 2026): a saved reply's {tv_link} is that venue's TV address.
   const v = t.venue_id && HELP_UUID.test(String(t.venue_id)) ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(t.venue_id) + '&select=name,slug&limit=1') : [];
+  t = Object.assign({}, t, { lead: notes.some((n) => n.kind === 'change' && n.body === HELP_LEAD_NOTE) });
   return json({ ticket: t, notes: notes, venue_name: (v && v[0] && v[0].name) || '', venue_slug: (v && v[0] && v[0].slug) || '' });
 }
 
@@ -22257,9 +22267,12 @@ function helpAckHtml(t) {
   const inner =
       P + 'Hi ' + (first ? helpHtml(first) : 'there') + ',</p>'
     + P + 'Thanks, we\'ve got your message' + (t.ticket_no ? ' (ticket ' + t.ticket_no + ')' : '') + '. Someone from our team will read it and reply by email, usually the same business day.</p>'
-    /* The phone line goes to a venue or a prospective venue only, never a player and never
-       PartyPlay: the same rule as helpSignatureHtml. */
-    + (!pp && ['venue_support', 'accounts', 'sales'].indexOf(t.category) !== -1
+    /* "If a game is on right now" goes to an EXISTING venue only, category venue_support (Dean, 2 Nov
+       2026: "as a prospect, it seems very not good that they're being told if you're in the middle of
+       a game call us"). Never sales (a prospect or a website enquiry has no game on), accounts, a player
+       or PartyPlay. The signature's P line still goes to venue_support, accounts and sales
+       (helpSignatureHtml). */
+    + (!pp && t.category === 'venue_support'
         ? P + 'If a game is on right now and something has gone wrong, call <a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a> and press 2.</p>' : '')
     + P + 'To add anything, just reply to this email.</p>'
     + helpSignatureHtml(t, '', support, false);
@@ -22281,9 +22294,58 @@ function helpRobotAddress(addr) {
   if (/(^|\.)instantly\.ai$/.test(dom)) return true;
   return false;
 }
+/* NO AUTO REPLY TO A KNOWN PROSPECT BY EMAIL (Dean, 2 Nov 2026: "Prospects ... should definitely not
+   get an auto reply, and anyone we do get should only be like a lead that is interested, in the help
+   desk"). EMAIL-IN only: somebody who fills in the website FORM is acknowledged as before (handleContact,
+   without the "game on" line, helpAckHtml). Instantly's own alerts come from instantly.ai and are never
+   thanked anyway (helpRobotAddress).
+   A KNOWN PROSPECT is a sender whose address, or whose company's domain, is on HQ > Prospects
+   (vp_prospects.email, migration 125), at a prospect venue that has not signed up (vpaProspectSignedUp:
+   one that has is a customer and is acknowledged as one). A free-mail domain (HELP_FREE_MAIL) and our
+   own (HELP_OWN_DOMAINS) are matched by the whole address only: two people on gmail are not one company.
+   A failed read is "no match" (vpaSelect fails open), so a database blip can at worst send the plain
+   acknowledgement, never lose the ticket. Their email becomes a Sales ticket on the prospect venue with
+   the note HELP_LEAD_NOTE, which HQ shows as "Interested lead". Returns { venue_id, why } or null. */
+const HELP_LEAD_NOTE = 'No auto reply: prospect';
+async function helpProspectFor(env, email) {
+  const addr = String(email || '').trim().toLowerCase();
+  if (!HELP_EMAIL_RE.test(addr)) return null;
+  const domain = addr.split('@').pop();
+  const byDomain = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(domain) && !helpOnDomain(domain, HELP_FREE_MAIL) && !helpOnDomain(domain, HELP_OWN_DOMAINS);
+  const low = (r) => String(r.email || '').trim().toLowerCase();
+  const rows = (await vpaSelect(env, 'vp_prospects', 'email=' + (byDomain ? 'ilike.' + encodeURIComponent('*@' + domain) : vpaEmailIs(addr))
+    + '&select=venue_id,email,founding_id&order=created_at.desc&limit=20') || [])
+    .filter((r) => low(r) === addr || (byDomain && low(r).slice(-(domain.length + 1)) === '@' + domain))
+    .sort((a, b) => (low(b) === addr) - (low(a) === addr));
+  for (const p of rows) {
+    const v = p.venue_id ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,group_id,founding_id,suspended_reason&limit=1') : [];
+    const fid = (v && v[0] && v[0].founding_id) || p.founding_id;
+    const f = fid ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
+    if (vpaProspectSignedUp(v && v[0], f && f[0])) continue;
+    return { venue_id: p.venue_id || null, why: low(p) === addr ? 'their address' : 'their domain' };
+  }
+  return null;
+}
+/* The prospect's ticket says why nobody was auto-replied (HQ shows "Interested lead" from the note),
+   and is linked to the prospect venue when it has none. */
+async function helpMarkLead(env, t, m) {
+  if (!t || !t.id) return;
+  if (m && m.venue_id && !t.venue_id && HELP_UUID.test(String(m.venue_id))) {
+    await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), { venue_id: m.venue_id }).catch(() => null);
+  }
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: HELP_LEAD_NOTE, author: 'Help desk' }, false).catch(() => null);
+}
 async function helpAcknowledge(env, t) {
   try {
-    if (!t || !env.RESEND_API_KEY) return false;
+    if (!t) return false;
+    /* A known prospect by email (helpTicketFromEmail sets t.lead): no auto reply, the note instead, once. */
+    if (t.lead && t.channel === 'email') {
+      const had = t.id ? await vpaSelect(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) +
+        '&kind=eq.change&body=eq.' + encodeURIComponent(HELP_LEAD_NOTE) + '&select=id&limit=1') : [];
+      if (!(had && had.length)) await helpMarkLead(env, t, t.lead);
+      return false;
+    }
+    if (!env.RESEND_API_KEY) return false;
     const to = String(t.contact_email || '').trim().toLowerCase();
     if (!to || !HELP_EMAIL_RE.test(to)) return false;
     if (t.channel === 'phone' || t.channel === 'manual' || t.contact_typed) return false;
@@ -23201,10 +23263,14 @@ async function helpTicketFromEmail(env, to, mail) {
     }
   }
   const remit = !instantlyLead && helpIsRemittance(mail);
+  /* A KNOWN PROSPECT (Dean, 2 Nov 2026; see helpProspectFor): a Sales ticket on the prospect venue,
+     never auto-replied. A venue we already matched by its account email is a customer, not a prospect. */
+  const prospect = (brand === 'venueplay' && !venueId && !instantlyLead && !remit) ? await helpProspectFor(env, contact.email) : null;
+  if (prospect && prospect.venue_id && HELP_UUID.test(String(prospect.venue_id))) venueId = prospect.venue_id;
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: instantlyLead ? 'sales' : remit ? 'accounts' : helpCategoryForAddress(to), status: remit ? 'closed' : undefined,
+      brand: brand, category: (instantlyLead || prospect) ? 'sales' : remit ? 'accounts' : helpCategoryForAddress(to), status: remit ? 'closed' : undefined,
       channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
       contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + inboxBrand + '.com.au' : null, email_message_id: mid,
@@ -23218,7 +23284,8 @@ async function helpTicketFromEmail(env, to, mail) {
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
   // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked:
   // helpAcknowledge refuses every instantly.ai address itself (helpRobotAddress, 9 Nov 2026), one place for it.
-  await helpAcknowledge(env, t);
+  // A known prospect (t.lead) is not thanked at all: the ticket gets the "No auto reply: prospect" note instead.
+  await helpAcknowledge(env, prospect ? Object.assign({}, t, { lead: prospect }) : t);
   return { action: 'ticket', ticket_no: t.ticket_no };
 }
 async function helpInboundEmail(message, env) {
