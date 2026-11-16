@@ -249,7 +249,12 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var mails = sent.slice(1).map(function (m) { return String(m.html || ''); });
   check('the yes text, the follow-up email and HQ\'s Resend (email and text): every one the same short link, the texts without https://www. (one SMS part)',
     oText.status === 200 && oNudge.status === 200 && oHq.status === 200 && texts.length >= 1 && mails.length >= 2 &&
-    texts.concat(mails).every(function (t) { return CODE_IN(t) === cWelcome; }) && texts.every(function (t) { return /(^|\s)venueplay\.com\.au\/s\/[A-Z0-9]{12} /.test(t); }), [oText.status, oNudge.status, oHq.status, texts, mails.map(CODE_IN)]);
+    texts.concat(mails).every(function (t) { return CODE_IN(t) === cWelcome; }) && texts.every(function (t) { return /(^|\s)venueplay\.com\.au\/s\/[A-Z0-9]{12}(\/[a-z0-9]{2})? /.test(t); }), [oText.status, oNudge.status, oHq.status, texts, mails.map(CODE_IN)]);
+  /* WHICH MESSAGE (Dean, 16 Nov 2026: "can we track which link they clicked?"): two letters after the same link. */
+  var TAG_IN = function (t) { var m = /\/s\/[A-Z0-9]{12}\/([a-z0-9]{2})(?![A-Za-z0-9])/.exec(String(t || '')); return m ? m[1] : ''; };
+  check('TAGS: the welcome email\'s link ends /es (account email, sign-up), the sign-up text /ts, the hello@ follow-up /e3 (day 3 unless the Mac says otherwise), HQ\'s own Resend has none',
+    TAG_IN(welcome1) === 'es' && TAG_IN(texts[0]) === 'ts' && TAG_IN(mails[0]) === 'e3' && mails.slice(1).every(function (t) { return TAG_IN(t) === ''; }), [TAG_IN(welcome1), texts.map(TAG_IN), mails.map(TAG_IN)]);
+
   var pr2 = DB.vp_prospects.filter(function (x) { return x.venue_id === ov; })[0] || {};
   check('...and not one of them renewed the 90 days: the same end, link_from never set, HQ told not restarted',
     Math.abs(Date.parse(oHq.body.expires_at) - winEnd) < 120000 && !pr2.link_from && oHq.body.restarted === false, [oHq.body, pr2.link_from]);
@@ -276,6 +281,49 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var atC = await call('/short/attach', { code: cWelcome, mobile: '0499 000 111' }, NET7());
   check('CLAIMED (somebody has signed in): the link just opens the normal sign-in, nothing filled in; no number can be added through it',
     opC.body.go === '/app/' && opC.body.state === 'claimed' && atC.status === 409 && String(login1.phone).replace(/\D/g, '') === '61400555666', [opC.body, atC.body]);
+
+  /* THE TAG WHEN THE LINK IS OPENED, AND THE SIGN-IN AFTER IT (16 Nov 2026). The journey store, migration 196; no personal data. */
+  world(); SMS = [];
+  ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; ENV.PROSPECT_SMS_ON = 'on';
+  DB.vp_journey_events = [];
+  var t1 = await call('/autopilot/prospect', body({ name: 'Tagged Link Hotel', return_signin_link: true }), AP);
+  var tv = t1.body.venue.id, tpr = DB.vp_prospects.filter(function (x) { return x.venue_id === tv; })[0];
+  var tCode = CODE_IN(t1.body.signin.url);
+  DB.venueplay_founding.forEach(function (f) { if (f.id === tpr.founding_id) f.mobile = '0400 555 777'; });   // their own mobile, for the text
+  check('the link in the setup\'s reply (their thread) ends /rs: thread, sign-up', TAG_IN(t1.body.signin.url) === 'rs', t1.body.signin.url);
+  var tx = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'expiry', text: 'venueplay: Hi Sam, your sign-in link expires in {days} days: {link} Reply STOP to opt out' }, AP);
+  var th = await call('/autopilot/prospect/signin-link', { venue_id: tv, step: 'day3' }, AP);
+  check('the expiry text\'s link ends /tx; the thread link the Mac asks for on day 3 ends /r3', tx.status === 200 && TAG_IN(SMS[SMS.length - 1].message) === 'tx' && TAG_IN(th.body.url) === 'r3',
+    [tx.status, SMS.map(function (m) { return m.message; }), th.body]);
+  var openScan = await call('/short/open', { code: tCode, via: 'tx' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (compatible; Microsoft Office/16.0; SafeLinks)' }));
+  var evs = function (ev) { return DB.vp_journey_events.filter(function (e) { return e.venue_id === tv && (!ev || e.event === ev); }); };
+  check('a mail scanner opening /s/<letters>/tx is kept as a scanner, never as a person', evs('scanner_hit').length === 1 && evs('scanner_hit')[0].scanner === true && evs('signin_link_opened').length === 0, DB.vp_journey_events);
+  var openTx = await call('/short/open', { code: tCode, via: 'tx' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)' }));
+  var ev1 = evs('signin_link_opened');
+  check('a person opening it: "signin_link_opened" with channel text and step expiry, the venue, a 24-letter session id, and the open goes where it always did',
+    openTx.status === 200 && /^\/app\//.test(openTx.body.go) && ev1.length === 1 && ev1[0].props.channel === 'text' && ev1[0].props.step === 'expiry' && /^[a-f0-9]{24}$/.test(ev1[0].sid) && ev1[0].scanner === false, [openTx.body, ev1]);
+  check('...no personal data in the event: no code, no mobile, no email, no name, no address', !/@|04\d{8}|614\d{8}|Tagged Link|198\.18/.test(JSON.stringify(ev1[0])) && JSON.stringify(ev1[0]).indexOf(tCode) === -1, ev1[0]);
+  check('...and HQ\'s history keeps the tag on the open', DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_used' && a.target === 'venue:' + tv && a.detail && a.detail.tag === 'tx'; }));
+  var nBad = DB.vp_journey_events.length;
+  var openBad = await call('/short/open', { code: tCode, via: 'zz' }, NET7());
+  var openJunk = await call('/short/open', { code: tCode, via: '<b>x</b>' }, NET7());
+  check('a tag not in the table, or junk: the link opens exactly as before and nothing is kept', /^\/app\//.test(openBad.body.go) && /^\/app\//.test(openJunk.body.go) && DB.vp_journey_events.length === nBad, DB.vp_journey_events.slice(nBad));
+  await vpaProspectStartMonth(ENV, tpr, Date.now());
+  var ev2 = evs('signin_link_signed_in');
+  check('their first sign-in after it: "signin_link_signed_in", text / expiry, the same session', ev2.length === 1 && ev2[0].props.channel === 'text' && ev2[0].props.step === 'expiry' && ev2[0].sid === ev1[0].sid, ev2);
+  await vpaProspectStartMonth(ENV, tpr, Date.now());
+  check('...once (a second sign-in starts nothing and keeps nothing)', evs('signin_link_signed_in').length === 1);
+  var jv = await call('/admin/journey-venue', { venue_id: tv }, HQ);
+  var said = ((jv.body && jv.body.journey) || []).map(function (i) { return i.what; });
+  check('HQ > Journey for the venue says it in words: "Opened the sign-in link from the text sent before their link expired", then "Signed in from the text sent before their link expired"',
+    said.indexOf('Opened the sign-in link from the text sent before their link expired') >= 0 && said.indexOf('Signed in from the text sent before their link expired') > said.indexOf('Opened the sign-in link from the text sent before their link expired'), [jv.status, said]);
+  check('every tag reads in words', [['es', 'account_email', 'signup'], ['e3', 'account_email', 'day3'], ['ex', 'account_email', 'expiry'], ['rs', 'thread', 'signup'], ['r3', 'thread', 'day3'], ['rx', 'thread', 'expiry'], ['ts', 'text', 'signup'], ['tx', 'text', 'expiry']].every(function (t) { return vpaLinkTag(t[1], t[2]) === t[0] && !/undefined|a message/.test(vpjSayLink({ event: 'signin_link_opened', props: { channel: t[1], step: t[2] } })); }) && vpaLinkTag('text', 'day3') === '');
+  check('only a /s/<12 letters> address takes a tag; a long link or the text-code sign-in stays as it was', vpaTagUrl('venueplay.com.au/s/ABCDEFGHJKMN', 'tx') === 'venueplay.com.au/s/ABCDEFGHJKMN/tx' &&
+    vpaTagUrl('https://venueplay.com.au/app/go#t=abc', 'tx') === 'https://venueplay.com.au/app/go#t=abc' && vpaTagUrl('https://venueplay.com.au/app/?signin=sms#m=0400555666', 'es') === 'https://venueplay.com.au/app/?signin=sms#m=0400555666'
+    && vpaTagUrl('venueplay.com.au/s/ABCDEFGHJKMN', 'zz') === 'venueplay.com.au/s/ABCDEFGHJKMN');
+  var SH = readFile('venueplay/s.html');
+  check('the /s/ page reads the two letters after the link and sends them as via (and only two letters)', /\(\?:\\\/\(\[a-z0-9\]\{2\}\)\)\?/.test(SH) && /via \? \{ code: code, via: via \} : \{ code: code \}/.test(SH), SH.slice(0, 200));
+  ENV.PROSPECT_SMS_ON = ''; ENV.MOBILEMESSAGE_USERNAME = ''; ENV.MOBILEMESSAGE_PASSWORD = '';
 
   /* NO MOBILE: the same screen, empty. The number they type is NEVER put on the login (security review 13 Nov 2026, A5):
      the login's own saved email gets a one-tap sign-in link, and they add their mobile after signing in. */
