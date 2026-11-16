@@ -918,3 +918,14 @@ revoked from public / anon / authenticated, select/insert/update to service_role
 dump it then). Safe to run any time: until it runs, POST /track, GET /track/lookup and the HQ Journey routes answer "nothing recorded" and the pages
 carry on. Needs vp_venues. Any order with the billing Worker. After loading the codes (tools/make-journey-codes.py output) set sent_at per send.
 Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
+
+`venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
+release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
+per phone per VENUE: first name, mobile in +614 form, and what that venue asks; found ONLY by the SHA-256 of a random 256-bit key the
+phone holds, never the key) and `vp_player_consents` (one row per consent box answer: party venueplay / venue / host, granted, wording
+version, source game, session, the host login for a host box). Both: RLS on, no policies, everything revoked from public / anon /
+authenticated (service role only), so RLS-BASELINE.json gains two tables after it is run: dump it then; COLUMNS-BASELINE.json too.
+The game Worker's 90-day sweep deletes both for a venue that has gone (purgeKnownPlayers). Safe in either order with the game Worker:
+before it runs every lookup answers "not known" and nothing is written (tools/test-known-phone.js section 6). Run on TEST first
+(tools/staging/run-on-test.py), then Dean pastes on live EARLY. Branch `feature/known-phone-416-sun22`. NOT RUN.
+Rollback: `drop table public.vp_player_consents; drop table public.vp_known_players;`.

@@ -197,7 +197,8 @@ def page(game, path):
         ok('%s: the details step is drawn' % game, until(sid, READY), ask(sid, 'document.getElementById("joinExtra").innerHTML.slice(0,200)'))
         time.sleep(0.4)
         d = dump(sid); I = by_id(d); f = d.get('form')
-        want_ids = ['nameIn', 'xLast', 'xPost', 'xEmail', 'xMobile', 'xOptin', 'joinBtn']
+        # INBOX 416 (22 Nov 2026): trivia asks the player's OWN first name too (xFirst), its #nameIn being a team name
+        want_ids = ['nameIn'] + (['xFirst'] if team else []) + ['xLast', 'xPost', 'xEmail', 'xMobile', 'xOptin', 'joinBtn']
         ok('A %s: the name box, the details boxes, the ticks and Join are inside ONE form' % game,
            bool(f) and f['tag'] == 'FORM' and f['inView'] and f['ids'] == want_ids, f)
         ok('A %s: the form is autocomplete="on" and every box belongs to it' % game,
@@ -217,7 +218,10 @@ def page(game, path):
         if team:
             ok('B trivia: the TEAM name box is name="team" and autocomplete="off" (not a person\'s name)', n.get('name') == 'team' and n.get('ac') == 'off', n)
             ok('B trivia: its label is "Team name" and its placeholder is still "Team name"', n.get('label') == 'Team name' and n.get('ph') == 'Team name', n)
-            ok('B trivia: no first-name box was added (nothing new is asked)', not [x for x in d['inputs'] if x.get('ac') == 'given-name' or x.get('name') == 'given-name'], d['inputs'])
+            # INBOX 416 UPDATE 2 (Dean 14 Nov 2026): first name + mobile are asked at every venue, so trivia now has ONE
+            # first-name box of its own, xFirst, name/autocomplete given-name (the team box stays the team's)
+            fx = I.get('xFirst', {})
+            ok('B trivia: one first-name box of its own (xFirst, given-name), the team box is not it', fx.get('name') == 'given-name' and fx.get('ac') == 'given-name' and len([x for x in d['inputs'] if x.get('ac') == 'given-name']) == 1, d['inputs'])
         else:
             ok('B %s: the name box is name="given-name" autocomplete="given-name"' % game, n.get('name') == 'given-name' and n.get('ac') == 'given-name', n)
             ok('B %s: its label is "First name" and its placeholder is still "Your name"' % game, n.get('label') == 'First name' and n.get('ph') == 'Your name', n)
@@ -236,7 +240,7 @@ def page(game, path):
         try:
             until(sid, READY_NAME); time.sleep(0.8)
             d = dump(sid)
-            extra = [x['id'] for x in d['inputs'] if x['id'].startswith('x') and x['id'] not in ('x18', 'xOptin')]
+            extra = [x['id'] for x in d['inputs'] if x['id'].startswith('x') and x['id'] not in ('x18', 'xOptin', 'xFirst')]   # trivia's own first-name box (INBOX 416) is not a venue field
             ok('C %s: a venue asking %s shows %s and nothing else' % (game, 'for an email only' if want_extra else 'for just a name', want_extra or 'no extra box'), extra == want_extra, extra)
         finally:
             B.close_tab(tid)
