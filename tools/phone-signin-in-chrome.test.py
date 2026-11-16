@@ -365,8 +365,13 @@ try:
     welcome = [m for m in mails if m.get('to') == ['sam@harbour.example']]
     ok('HQ / the autopilot sets up a prospect with sender Harry: one welcome', r.get('status') == 200 and len(welcome) == 1, r)
     w = welcome[-1] if welcome else {}
-    # INBOX 414 (fix/welcome-inbox-wed18): the welcome is from hello@ under the name they met in the cold thread.
-    ok('from hello@ as "Harry at venueplay", replies to hello@venueplay.com.au', w.get('from') == 'Harry at venueplay <hello@send.venueplay.com.au>' and w.get('reply_to') == 'hello@venueplay.com.au', [w.get('from'), w.get('reply_to')])
+    # INBOX 414 (cd2083c9) and Dean, 17 Nov 2026: "the emails to onboard them they should get from the same people".
+    # A prospect set up with a sender name gets "<First> at venueplay" on hello@send; with none, plain "venueplay".
+    # Never Dean's name, and replies always go to hello@venueplay.com.au.
+    _sender_first = 'Harry'
+    _want_from = ('%s at venueplay <hello@send.venueplay.com.au>' % _sender_first) if _sender_first else 'venueplay <hello@send.venueplay.com.au>'
+    ok('from hello@ under the sender they met ("Harry at venueplay"), never Dean, replies to hello@venueplay.com.au',
+       w.get('from') == _want_from and 'Dean' not in str(w.get('from')) and w.get('reply_to') == 'hello@venueplay.com.au', [w.get('from'), w.get('reply_to')])
     import tempfile
     tmp = tempfile.mkdtemp(prefix='vp-phone-signin-mail-')
     try:
