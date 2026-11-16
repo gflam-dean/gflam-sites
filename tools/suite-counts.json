@@ -1096,7 +1096,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-tv-10nov.js": {
-  "checks": 23,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
