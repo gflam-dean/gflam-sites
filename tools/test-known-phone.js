@@ -220,8 +220,8 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var dcode = DB.vp_sessions.filter(function (x) { return x.id === dm.body.session_id; })[0].join_code;
   jk = await call(handleJoinKnown, { code: dcode, keys: [] });
   show('/join/known on a demo: not known, single', jk.body.known === null && jk.body.consent.mode === 'single', JSON.stringify(jk.body));
-  j = await call(handleJoin, { code: dcode, name: 'Demo', pid: pid(), first_name: 'Demo', mobile: '0412000000' });
-  show('a demo join makes no known row and hands out no key', DB.vp_known_players.length === 0 && !j.body.known_key, JSON.stringify(j.body.known_key));
+  j = await call(handleJoin, { code: dcode, name: 'Demo', pid: pid(), first_name: 'Demo', mobile: '0412000000', email: 'demo@example.com', marketing_optin: true });
+  show('a demo join (ticked, with a mobile) makes no known row and hands out no key', lastPlayer().mobile && DB.vp_known_players.length === 0 && !j.body.known_key, JSON.stringify([lastPlayer(), j.body.known_key]));
 
   print('9. THE BINGO PHONE (POST /capture) BY THE SAME RULES');
   world();

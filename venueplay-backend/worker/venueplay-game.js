@@ -2473,7 +2473,7 @@ async function knownFor(env, venueId, keys) {
     const rows = await sbGet(env, 'vp_known_players', 'venue_id=eq.' + enc(venueId) + '&key_hash=in.(' + hashes.join(',') +
       ')&select=id,venue_id,key_hash,first_name,last_name,email,mobile,postcode&order=last_seen_at.desc&limit=1');
     const row = rows && rows[0];
-    if (!row || row.venue_id !== venueId) return null;
+    if (!row) return null;   // venue_id=eq above is the one guard (a key never opens another venue's row)
     return { row: row, ix: hashes.indexOf(row.key_hash) };
   } catch (e) { return null; }
 }

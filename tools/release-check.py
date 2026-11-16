@@ -2612,7 +2612,11 @@ def local_checks(which):
             wrong.append(rel + ' is missing'); continue
         li = _fn(src, 'function loadJoinInfo(){')
         if '<script src="/app/vp-details.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-details.js')
-        if 'VPDetails.html(c)' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        # INBOX 416 (22 Nov 2026): the boxes are drawn through /app/vp-known.js (a known phone sees only what is missing),
+        # which draws them with VPDetails.html; the page keeps VPDetails.html as the fallback when that file did not load.
+        if 'VPDetails.html(c' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        if '<script src="/app/vp-known.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-known.js')
+        if 'VPKnown.paint({ box:box, collect:c,' not in li: wrong.append(rel + ' loadJoinInfo does not draw the join screen with VPKnown.paint')
         if 'placeholder=' in li: wrong.append(rel + ' loadJoinInfo draws a box of its own')
         if 'VPDetails.wire({ join:join, kind:"%s" })' % kind not in src: wrong.append(rel + ' does not wire Join with VPDetails.wire kind ' + kind)
     ok('every player phone draws its details boxes as a form from vp-details.js', not wrong, why='; '.join(wrong[:3]))
