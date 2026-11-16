@@ -1049,7 +1049,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   var WORKER_TO_PAT={ any_line:"any", one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
   function musicKey(){ return "vpMusicGame-"+(G.venueId||""); }
   function saveMusic(){
-    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId })); clearLobby(); } }catch(e){}
+    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId, cid:G.consoleId, rev:(G.nowSong && G.revealed) ? songKey(G.nowSong) : "" })); clearLobby(); } }catch(e){}
   }
   function clearMusic(){ try{ localStorage.removeItem(musicKey()); }catch(e){} }
   function readMusicSave(){
@@ -1097,6 +1097,13 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       stop:function(){ return G.status!=="setup" || !!G.gameId; },
       onFound:function(run){ pickUpMusic(run); } });
   }
+  /* Was the restored game's current song already revealed? The save written by this device says (rev holds the revealed
+     song's key, or "" while it is still a mystery); a game picked up from another device has no note, and counts as revealed. */
+  function revealedAfterRestore(p, song){
+    if(!song) return true;
+    if(!p || typeof p.rev!=="string") return true;
+    return p.rev===songKey(song);
+  }
   function restoreMusicFrom(p){
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
@@ -1132,6 +1139,13 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
         var _last=G.playedOrder.length ? G.playedOrder[G.playedOrder.length-1] : null;
         G.nowSong=_last ? (G.byId[_last.song_id]||G.byTitle[normTitle(_last.title)]||findSong(_last.title)) : null;
         G.hostNow=G.nowSong;
+        /* WHAT THE TV HAS ALREADY REVEALED. A reload used to forget it, so the replay below went out with the
+           reveal mode and the wall (even one that was not reloaded) fell back to the question mark for up to
+           32 seconds, and a second TV opened after that was told the same. This device's own save says which
+           song was revealed; a game picked up from another device has no such note, and a song that old is
+           treated as revealed (a mystery panel for a song the room has heard is worse than an early title). */
+        if(G.nowSong && !revealedAfterRestore(p, G.nowSong)){ armRevealMirror(G.nowSong); if(!G.revealed && !_revealTimer) _revealTimer=setTimeout(function(){ G.revealed=true; saveMusic(); syncRevealBtn(); }, 32000); }   // genuinely not revealed yet: wait as before (the replay carries no clip, so the TV waits its own fallback)
+        else G.revealed=!!G.nowSong;
         G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
         G.won=false; clearClaims(); G.status="running"; G._nextPat=""; G._nextPats=[]; endBtnHold(false);
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel
@@ -1247,7 +1261,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   audio.addEventListener("pause", function(){ if(!audio.ended) setPlayPause(false); });
   audio.addEventListener("ended", function(){
     setPlayPause(false); $("clipFill").style.width="100%";
-    if(G.revealMode==="end"){ G.revealed=true; syncRevealBtn(); }   // the TV reveals itself on its own clip's end
+    if(G.revealMode==="end"){ G.revealed=true; saveMusic(); syncRevealBtn(); }   // the TV reveals itself on its own clip's end
   });
 
   /* AUTO PLAY IS GONE (Dean, 28 Oct 2026): "the host isn't gonna be like oh I've only got eight
@@ -1276,7 +1290,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
   }
   function revealNow(){
     if(!G.nowSong || G.status!=="running" || G.revealed) return;
-    G.revealed=true;
+    G.revealed=true; saveMusic();
     bcast({ t:"reveal", title:G.nowSong.title, artist:G.nowSong.artist||"" });
     syncRevealBtn();
   }
@@ -1286,8 +1300,8 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
     if(_revealTimer){ clearTimeout(_revealTimer); _revealTimer=null; }
     G.revealed=false;
     if(G.revealMode==="instant") G.revealed=true;
-    else if(G.revealMode==="15") _revealTimer=setTimeout(function(){ G.revealed=true; syncRevealBtn(); }, 15000);
-    else if(G.revealMode==="end" && !(song && song.previewUrl)) _revealTimer=setTimeout(function(){ G.revealed=true; syncRevealBtn(); }, 32000);
+    else if(G.revealMode==="15") _revealTimer=setTimeout(function(){ G.revealed=true; saveMusic(); syncRevealBtn(); }, 15000);
+    else if(G.revealMode==="end" && !(song && song.previewUrl)) _revealTimer=setTimeout(function(){ G.revealed=true; saveMusic(); syncRevealBtn(); }, 32000);
     syncRevealBtn();
   }
   function playedMsg(song, replay){
@@ -1321,6 +1335,7 @@ var PATTERN_NAMES={any:"Any line (across, down or diagonal)",one:"One line acros
       apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
     }
     armRevealMirror(song);
+    saveMusic();   // the new song, and whether it is revealed yet, so a reload here keeps what the TV shows
     bcast(playedMsg(song, false));
     var warn=$("clipWarn");
     if(song.previewUrl){
