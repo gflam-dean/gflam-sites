@@ -10,7 +10,7 @@
         name and mobile from the row, server side; no second row; no new key
      4. /join/known tells the phone a first name and the NAMES of missing fields, never a value (no mobile, no email)
      5. a field the venue adds later is the only one asked; what is given is added to the row; nothing is overwritten
-     6. never across venues: the same key at another venue is not known and fills nothing
+     6. another venue: straight in, and only the fields IT asks (Dean 16 Nov 2026); the first-game notice once per player
      7. before migration 202 (the tables missing) every join works exactly as today
      8. consent: 'single' unless env.CONSENT_BLOCK is 'three'; then venueplay + the venue, plus the host only when a
         HOST login with a brand card opened the game (never the owner); each box its own row with its answer, version,
@@ -99,7 +99,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var KEY = j.body.known_key;
   show('the phone is handed a 64-character key once', typeof KEY === 'string' && /^[0-9a-f]{64}$/.test(KEY), JSON.stringify(j.body.known_key));
   var kr = DB.vp_known_players;
-  show('ONE row, for THIS venue, with the first name and mobile', kr.length === 1 && kr[0].venue_id === VENUE && kr[0].first_name === 'Alan' && kr[0].mobile === '+61412345678', JSON.stringify(kr));
+  show('ONE row (venueplay\'s, begun at this venue), with the first name and mobile', kr.length === 1 && kr[0].first_venue_id === VENUE && kr[0].venue_id === undefined && kr[0].first_name === 'Alan' && kr[0].mobile === '+61412345678', JSON.stringify(kr));
   show('the key itself is never stored, only its hash', JSON.stringify(DB).indexOf(KEY) === -1 && kr[0].key_hash === (await sha256Hex('vpk:' + KEY)));
   await call(handleJoin, { code: s1.join_code, name: 'Nomob', pid: pid(), first_name: 'Nomob' });
   show('no mobile, no row (nothing to remember them by)', DB.vp_known_players.length === 1);
@@ -135,14 +135,44 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   jk = await call(handleJoinKnown, { code: s2.join_code, keys: [KEY] });
   show('asked once: nothing needed after', jk.body.known && jk.body.known.need.length === 0, JSON.stringify(jk.body.known));
 
-  print('5. NEVER ACROSS VENUES');
+  print('5. ANOTHER VENUE: STRAIGHT IN, AND ONLY WHAT IT ASKS (Dean 16 Nov 2026)');
   var so = await open(OTHER);
   jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
-  show('the same key at another venue is not known', jk.body.known === null, JSON.stringify(jk.body));
-  j = await call(handleJoin, { code: so.join_code, name: 'X', pid: pid(), known_keys: [KEY] });
+  show('the same phone at another venue asking first name + mobile: known, nothing to ask', jk.body.known && jk.body.known.hello === 'Alan' && jk.body.known.need.length === 0, JSON.stringify(jk.body));
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY] });
   p = lastPlayer();
-  show('...and its join fills nothing from the first venue', p.session_id === so.id && p.mobile === undefined && p.first_name === undefined, JSON.stringify(p));
-  show('...and the first venue\'s row is untouched by it', DB.vp_known_players.filter(function (r) { return r.venue_id === OTHER; }).length === 0 && DB.vp_known_players[0].venue_id === VENUE);
+  show('...its player row gets the first name and mobile, server side', p.session_id === so.id && p.first_name === 'Alan' && p.mobile === '+61412345678', JSON.stringify(p));
+  show('...and NOT the email the first venue collected (this venue does not ask it)', p.email === undefined, JSON.stringify(p));
+  show('...one row still, not a copy per venue', DB.vp_known_players.length === 1);
+  DB.vp_venue_settings[1].collect_postcode = true;
+  jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
+  show('this venue asks for MORE (postcode): only the postcode is asked', jk.body.known && JSON.stringify(jk.body.known.need) === '["postcode"]', JSON.stringify(jk.body.known));
+  DB.vp_venue_settings[1].collect_postcode = false;
+
+  print('5b. THE FIRST-GAME NOTICE, ONCE PER PLAYER');
+  world();
+  s1 = await open();
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('a new phone: the notice, one constant with its version and the privacy link', jk.body.notice && jk.body.notice.version === 'vpn-1-16nov' && /venueplay's terms/.test(jk.body.notice.text) && /at any venue/.test(jk.body.notice.text) && jk.body.notice.href === '/privacy' && jk.body.notice.link === 'Privacy policy', JSON.stringify(jk.body.notice));
+  show('...no em dash in it', jk.body.notice.text.indexOf('\u2014') < 0);
+  j = await call(handleJoin, { code: s1.join_code, name: 'Alan', pid: pid(), first_name: 'Alan', mobile: '0412345678', notice_version: 'vpn-1-16nov' });
+  var NK = j.body.known_key;
+  show('the join that showed it records the version seen on the row', DB.vp_known_players[0].notice_version === 'vpn-1-16nov' && !!DB.vp_known_players[0].notice_at, JSON.stringify(DB.vp_known_players[0]));
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [NK] });
+  show('the next game: no notice', jk.body.notice === null, JSON.stringify(jk.body.notice));
+  var so2 = await open(OTHER);
+  jk = await call(handleJoinKnown, { code: so2.join_code, keys: [NK] });
+  show('...and not at another venue either', jk.body.notice === null, JSON.stringify(jk.body.notice));
+  DB.vp_known_players[0].notice_version = 'vpn-0-old';
+  jk = await call(handleJoinKnown, { code: so2.join_code, keys: [NK] });
+  show('a NEW notice version: shown again, once', jk.body.notice && jk.body.notice.version === 'vpn-1-16nov');
+  await call(handleJoin, { code: so2.join_code, name: 'Alan', pid: pid(), known_keys: [NK], notice_version: 'vpn-1-16nov' });
+  show('...and recorded again when seen', DB.vp_known_players[0].notice_version === 'vpn-1-16nov');
+  world(); s1 = await open();
+  j = await call(handleJoin, { code: s1.join_code, name: 'Zed', pid: pid(), first_name: 'Zed', mobile: '0412000222' });
+  show('a join that never showed the notice records no version (it is shown next time)', DB.vp_known_players[0] && !DB.vp_known_players[0].notice_version, JSON.stringify(DB.vp_known_players[0]));
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [j.body.known_key] });
+  show('...so the next game shows it', !!jk.body.notice);
 
   print('6. BEFORE MIGRATION 202');
   world();
@@ -189,8 +219,9 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   show('...tied to the known row', rows.every(function (r) { return r.known_id === DB.vp_known_players[0].id; }));
   show('the venue box unticked: the venue\'s own marketing tick is NOT on the player row', lastPlayer().marketing_optin !== true, JSON.stringify(lastPlayer()));
   jk = await call(handleJoinKnown, { code: sh.join_code, keys: [KEY] });
-  show('a known phone that answered every box is not asked again', jk.body.consent.parties.length === 0, JSON.stringify(jk.body.consent));
-  show('...but every box is there for Not me (consent.all), names only', jk.body.consent.all && jk.body.consent.all.length === 3 && jk.body.consent.all[2].name === 'Quiz Masters Co' && JSON.stringify(jk.body.consent.all).indexOf('u-host') === -1, JSON.stringify(jk.body.consent.all));
+  var cps = jk.body.consent.parties;
+  show('a known phone sees every box with THAT sender\'s current answer (venueplay yes, the venue no, the host yes)', cps.length === 3 && cps[0].current === true && cps[1].current === false && cps[2].current === true && cps[2].name === 'Quiz Masters Co', JSON.stringify(jk.body.consent));
+  show('...names and answers only, never the host login', JSON.stringify(jk.body.consent).indexOf('u-host') === -1);
   close(sh);
   STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' };
   DB.vp_venue_staff.push({ id: '5a5a5a5a-0000-4000-8000-000000000022', venue_id: VENUE, role: 'host', auth_user_id: 'u-host2', hosted_by: { musical: true } });
@@ -198,7 +229,22 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000022', role: 'host' };
   var sh2 = await open(VENUE, 'musical_bingo');
   jk = await call(handleJoinKnown, { code: sh2.join_code, keys: [KEY] });
-  show('a NEW host at the same venue: only that host\'s box is asked', jk.body.consent.parties.length === 1 && jk.body.consent.parties[0].party === 'host' && jk.body.consent.parties[0].name === 'Bingo Belles', JSON.stringify(jk.body.consent));
+  cps = jk.body.consent.parties;
+  show('a NEW host at the same venue: its box is fresh (no answer yet, so pre-ticked), the others keep their answers', cps.length === 3 && cps[2].party === 'host' && cps[2].name === 'Bingo Belles' && !('current' in cps[2]) && cps[0].current === true && cps[1].current === false, JSON.stringify(jk.body.consent));
+  var nOther = await open(OTHER);
+  jk = await call(handleJoinKnown, { code: nOther.join_code, keys: [KEY] });
+  cps = jk.body.consent.parties;
+  show('a NEW venue: its box is fresh (a new sender), venueplay keeps its yes; venue A\'s no is never venue B\'s', cps[0].current === true && cps[1].name === 'The Other Pub' && !('current' in cps[1]), JSON.stringify(cps));
+  close(nOther);
+  var nBefore = DB.vp_player_consents.length;
+  STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' };
+  var sSame = await open();
+  await call(handleJoin, { code: sSame.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], consent: { venueplay: true, venue: false } });
+  show('the same answers again write nothing (one row per sender until it changes)', DB.vp_player_consents.length === nBefore, DB.vp_player_consents.length - nBefore);
+  await call(handleJoin, { code: sSame.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], consent: { venueplay: true, venue: true } });
+  show('a changed answer is a new row, the latest wins', DB.vp_player_consents.length === nBefore + 1 && DB.vp_player_consents[DB.vp_player_consents.length - 1].party === 'venue' && DB.vp_player_consents[DB.vp_player_consents.length - 1].granted === true);
+  close(sSame);
+  STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000022', role: 'host' };
   close(sh2);
   STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' };
   s1 = await open();
@@ -237,7 +283,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var cc = DB.vp_captures[DB.vp_captures.length - 1];
   show('a venue that collects nothing: the bingo capture keeps the first name and mobile (+614...)', cr.body.stored === true && cc && cc.first_name === 'Bo' && cc.mobile === '+61412333444', JSON.stringify(cc));
   var BK = cr.body.known_key;
-  show('...and hands the phone a key, with one known row for this venue', /^[0-9a-f]{64}$/.test(BK || '') && DB.vp_known_players.length === 1 && DB.vp_known_players[0].venue_id === VENUE, JSON.stringify(cr.body));
+  show('...and hands the phone a key, with one known row begun at this venue', /^[0-9a-f]{64}$/.test(BK || '') && DB.vp_known_players.length === 1 && DB.vp_known_players[0].first_venue_id === VENUE, JSON.stringify(cr.body));
   cr = await cap({ code: VC, first_name: 'Bo', known_keys: [BK] }, 'tokB');
   cc = DB.vp_captures[DB.vp_captures.length - 1];
   show('next time the key alone fills the mobile, server side; no new row, no new key', cc.mobile === '+61412333444' && DB.vp_known_players.length === 1 && !cr.body.known_key, JSON.stringify(cr.body));
@@ -247,6 +293,23 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var bc = DB.vp_player_consents;
   show('three mode: one row per box, source bingo, the session from the token; sent twice the same night, kept once', bc.length === 2 && bc.every(function (r) { return r.source === 'bingo' && r.session_id === sb.id && r.known_id === DB.vp_known_players[0].id; }), JSON.stringify(bc));
   delete ENV.CONSENT_BLOCK;
+
+  print('10. NOBODY ELSE READS IT: no host route, no venue page (Dean 16 Nov 2026: hosts see counts only, from their own nights)');
+  /* every place the shipped Worker names the two tables, by the function it sits in */
+  function where(table) {
+    var out = [], re = new RegExp("'" + table + "'", 'g'), m;
+    while ((m = re.exec(SRC))) {
+      var head = SRC.lastIndexOf('\nasync function ', m.index), h2 = SRC.lastIndexOf('\nfunction ', m.index), at = Math.max(head, h2);
+      var nm = /function\s+([A-Za-z0-9_]+)/.exec(SRC.slice(at, at + 80));
+      out.push(nm ? nm[1] : '?');
+    }
+    return out.filter(function (x, i, a) { return a.indexOf(x) === i; }).sort();
+  }
+  var kw = where('vp_known_players'), cw = where('vp_player_consents');
+  show('vp_known_players is read and written ONLY by knownFor and knownAtJoin (no host route, no export, no report)', kw.join() === 'knownAtJoin,knownFor', kw);
+  show('vp_player_consents ONLY by consentParties, writeConsents and the purge', cw.join() === 'consentParties,purgeKnownPlayers,writeConsents', cw);
+  var sites = readFile('venueplay/app/vp-known.js') + readFile('venueplay/app/hq.html') + readFile('venueplay/app/billing.html') + readFile('venueplay/app/index.html');
+  show('no page reads either table (the phone module, HQ, the account page, the bingo console)', sites.indexOf('vp_known_players') < 0 && sites.indexOf('vp_player_consents') < 0);
 
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));

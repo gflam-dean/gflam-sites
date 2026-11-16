@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 14:48 · 0c17b707';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 15:40 · 9d7d6e57';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -842,8 +842,9 @@ async function sweepRetention(env) {
       // Broadcast bingo keeps its captures against the venue directly, with no session.
       await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK_CAPTURE);
       captures++;
-      /* A KNOWN PHONE'S ROW AND ITS CONSENT BOXES (migration 202, INBOX 416) go with the rest: DELETED, nothing points
-         at them. Before 202 the tables do not exist: a refusal is only forgiven when the table really is not there. */
+      /* THIS VENUE'S CONSENT BOXES (migration 202, INBOX 416) go with the rest: DELETED, nothing points at them. The known
+         phone's row is venueplay's (every venue's games), not this venue's, so it stays (its own keeping rule: Dean). Before
+         202 the table does not exist: a refusal is only forgiven when the table really is not there. */
       await purgeKnownPlayers(env, v.id);
       /* THE MEMBERS LIST IS PERSONAL DATA TOO, and it was never touched: every club member's
          first and last name, kept for ever after the club had gone. BLANKED, NOT DELETED, on
@@ -880,10 +881,10 @@ async function sweepRetention(env) {
   }
 }
 
-/* The 90-day purge of one venue's known phones and consent boxes (migration 202). Then it LOOKS: a row left is a
-   failed purge, and the venue is not stamped. A database without the tables (before 202) is skipped. */
+/* The 90-day purge of one venue's consent boxes (migration 202). Then it LOOKS: a row left is a failed purge, and the
+   venue is not stamped. A database without the table (before 202) is skipped. */
 async function purgeKnownPlayers(env, venueId) {
-  for (const t of ['vp_player_consents', 'vp_known_players']) {
+  for (const t of ['vp_player_consents']) {
     try { await sbDelete(env, t, 'venue_id=eq.' + enc(venueId)); }
     catch (e) {
       let has = true;
@@ -2408,12 +2409,17 @@ function gatedCapture(cfg, b) {
  *     (joinCapture). The collect gate (migration 82, the account approval) now controls ACCESS, not collection: the
  *     export gate (billing Worker vpbOptinGate) still refuses an unapproved account, and no venue page reads
  *     vp_players' contact columns (v_vp_host_players has none).
- *   - A PHONE THAT GAVE ITS DETAILS AT A VENUE IS REMEMBERED THERE, for every game and night: the phone holds a random
- *     256-bit key (localStorage, /app/vp-known.js); the database keeps only its SHA-256 (vp_known_players), per VENUE,
- *     never shared across venues. The next join sends the keys it holds; the Worker finds this venue's row and fills
- *     the player's details from it SERVER SIDE. The phone is told only a first name for the hello and WHICH fields are
+ *   - A PHONE THAT GAVE ITS DETAILS IS REMEMBERED BY VENUEPLAY, for every game, night and venue (Dean 16 Nov 2026,
+ *     through main: "after that they are never asked for name, phone or any detail again"): the phone holds a random
+ *     256-bit key (localStorage, /app/vp-known.js); the database keeps only its SHA-256 (vp_known_players, venueplay's
+ *     own row, first_venue_id says where it began). The next join sends the keys it holds; the Worker finds the row and
+ *     fills the player's details from it SERVER SIDE, ONLY THE FIELDS THIS VENUE ASKS: venue B asking first name + mobile
+ *     never receives the email venue A collected (each venue's copy is its own vp_players / vp_captures row). The phone is told only a first name for the hello and WHICH fields are
  *     still missing (field names, never a value): "never sound creepy", no "is this still alan@...", no masked mobile.
- *   - A FIELD THE VENUE ADDS LATER (email, postcode) is asked once, alone; what it gets is added to the row.
+ *   - A FIELD A VENUE ASKS THAT THE ROW DOES NOT HOLD (email, postcode) is asked once, alone; what it gets is added to the row.
+ *   - THE FIRST GAME A PLAYER EVER JOINS shows a one-line notice (JOIN_NOTICE: venueplay's terms, the record of games
+ *     played at any venue, the privacy policy), once per player: the version seen is kept on the row (notice_version), and
+ *     it shows again only when JOIN_NOTICE.version changes.
  *   - THE DETAILS BELONG TO THE ACCOUNT OWNER of the venue (the Game Organiser). A host running a game on someone
  *     else's account gets none of them: the row is the venue's, and no host route reads it.
  *   - CONSENT LIKE MOSHTIX (UPDATE 4 and 7): "Yes! Send me news and offers by SMS and email from:" venueplay / the
@@ -2428,6 +2434,9 @@ function gatedCapture(cfg, b) {
  * ===================================================================== */
 /* Dean's call (INBOX 416 decision): true makes the games' mobile box required, as Coaster Trivia's is. */
 const JOIN_MOBILE_REQUIRED = false;
+/* THE FIRST-GAME NOTICE (Dean 16 Nov 2026, through main). ONE constant: the words are being drafted for the lawyer; swap the
+   text and bump the version and every player sees the new one once. The phone draws exactly this text, with the link. */
+const JOIN_NOTICE = { version: 'vpn-1-16nov', text: "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay, at any venue.", link: 'Privacy policy', href: '/privacy' };
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
 const CONSENT_THREE_VERSION = 'vpc-4-22nov';
@@ -2463,17 +2472,18 @@ function knownNeeds(cfg, row) {
   const asks = joinAsks(cfg);
   return KNOWN_FIELDS.filter((f) => asks[f] && !(row && row[f]));
 }
-/* This venue's row for one of the phone's keys, or null. Never throws: a database without migration 202, or any read
-   fault, is "not known", and the phone shows the full form as it does today. */
+/* The phone's row for one of its keys, or null. Never throws: a database without migration 202, or any read fault, is
+   "not known", and the phone shows the full form as it does today. venueplay's row, not a venue's: what a venue may
+   have of it is decided by the caller (only the fields that venue asks). */
 async function knownFor(env, venueId, keys) {
-  if (!venueId || !keys || !keys.length) return null;
+  if (!keys || !keys.length) return null;
   try {
     const hashes = [];
     for (const k of keys) hashes.push(await sha256Hex('vpk:' + k));
-    const rows = await sbGet(env, 'vp_known_players', 'venue_id=eq.' + enc(venueId) + '&key_hash=in.(' + hashes.join(',') +
-      ')&select=id,venue_id,key_hash,first_name,last_name,email,mobile,postcode&order=last_seen_at.desc&limit=1');
+    const rows = await sbGet(env, 'vp_known_players', 'key_hash=in.(' + hashes.join(',') +
+      ')&select=id,key_hash,first_name,last_name,email,mobile,postcode,notice_version&order=last_seen_at.desc&limit=1');
     const row = rows && rows[0];
-    if (!row) return null;   // venue_id=eq above is the one guard (a key never opens another venue's row)
+    if (!row) return null;
     return { row: row, ix: hashes.indexOf(row.key_hash) };
   } catch (e) { return null; }
 }
@@ -2494,18 +2504,21 @@ async function sessionHostParty(env, session) {
     return name ? { name: name, auth_user_id: s.auth_user_id } : null;
   } catch (e) { return null; }
 }
-/* The boxes a phone shows in 'three' mode: venueplay, the venue, and the host when there is one. A known phone that has
-   already answered a box (any answer) is not asked it again; a new host's box is still asked. */
-async function consentParties(env, session, venueName, knownId) {
+/* The boxes a phone shows in 'three' mode: venueplay, the venue, and the host when there is one. EVERY box shows (Dean
+   16 Nov 2026, through main): a sender this phone already answered shows its CURRENT answer (current: true/false, the
+   latest row for THAT sender: venueplay; THIS venue; THIS host login); a sender it never answered (a new venue, a new
+   host) is a fresh box, pre-ticked. The venue box of venue A is never venue B's answer. */
+async function consentParties(env, session, venueName, knownId, venueId) {
   const host = session ? await sessionHostParty(env, session) : null;
   const parties = [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: venueName || 'this venue' }];
   if (host) parties.push({ party: 'host', name: host.name, auth_user_id: host.auth_user_id });
   if (!knownId) return { parties: parties, host: host };
   let had = [];
-  try { had = await sbGet(env, 'vp_player_consents', 'known_id=eq.' + enc(knownId) + '&select=party,host_auth_user_id&order=created_at.desc&limit=50'); }
+  try { had = await sbGet(env, 'vp_player_consents', 'known_id=eq.' + enc(knownId) + '&select=party,venue_id,host_auth_user_id,granted,created_at&order=created_at.desc&limit=200'); }
   catch (e) { had = []; }
-  const answered = (p) => had.some((h) => h.party === p.party && (p.party !== 'host' || h.host_auth_user_id === p.auth_user_id));
-  return { parties: parties.filter((p) => !answered(p)), host: host };
+  const same = (p, h) => h.party === p.party && (p.party !== 'venue' || h.venue_id === venueId) && (p.party !== 'host' || h.host_auth_user_id === p.auth_user_id);
+  parties.forEach((p) => { const last = had.filter((h) => same(p, h))[0]; if (last) p.current = last.granted === true; });
+  return { parties: parties, host: host };
 }
 /* One row per box answered (true or false), never an edit. Fails open: a consent row that cannot be written never
    costs a player their seat (the venue's own tick is on vp_players regardless). */
@@ -2520,23 +2533,20 @@ async function writeConsents(env, o) {
     rows.push(r);
   }
   if (!rows.length) return 0;
-  /* The same night asking twice (the bingo phone re-sends its details when it is seated again): one answer per box. */
-  let keep = rows;
-  if (o.knownId && o.sessionId) {
-    try {
-      const had = await sbGet(env, 'vp_player_consents', 'known_id=eq.' + enc(o.knownId) + '&session_id=eq.' + enc(o.sessionId) + '&select=party&limit=10');
-      keep = rows.filter((r) => !had.some((h) => h.party === r.party));
-    } catch (e) { keep = rows; }
-  }
+  /* An answer that is the sender's current one already is not a new answer: nothing written (a regular's boxes stay one
+     row each until they change one). */
+  let keep = rows.filter((r) => { const p = o.parties.filter((q) => q.party === r.party)[0]; return !(p && typeof p.current === 'boolean' && p.current === r.granted); });
+  /* (the bingo phone re-sending its details the same night is the same answer again: nothing written, above) */
   if (!keep.length) return 0;
   try { await sbInsert(env, 'vp_player_consents', keep, false); return keep.length; } catch (e) { return 0; }
 }
 /* THE KNOWN ROW AT JOIN. Fills the capture's empty fields from this venue's row (only fields this venue asks), adds
    what the player just gave to the row (never overwriting), or makes the row for a first join that gave a first name
    and a mobile. Returns { knownId, key } (key only when a NEW row was made: the phone keeps it). Never throws. */
-async function knownAtJoin(env, venueId, cfg, cap, keys) {
+async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen) {
   const asks = joinAsks(cfg);
   const k = await knownFor(env, venueId, keys);
+  const sawNotice = noticeSeen === JOIN_NOTICE.version;   // the phone drew the current notice on this join
   if (k) {
     const add = {};
     for (const f of KNOWN_FIELDS) {
@@ -2545,13 +2555,15 @@ async function knownAtJoin(env, venueId, cfg, cap, keys) {
       else if (cap[f] != null && k.row[f] == null) add[f] = cap[f];
     }
     add.last_seen_at = new Date().toISOString();
-    try { await sbPatch(env, 'vp_known_players', 'id=eq.' + enc(k.row.id) + '&venue_id=eq.' + enc(venueId), add); } catch (e) { /* the join goes on */ }
+    if (sawNotice && k.row.notice_version !== JOIN_NOTICE.version) { add.notice_version = JOIN_NOTICE.version; add.notice_at = add.last_seen_at; }
+    try { await sbPatch(env, 'vp_known_players', 'id=eq.' + enc(k.row.id), add); } catch (e) { /* the join goes on */ }
     return { knownId: k.row.id, key: null };
   }
   if (!cap.first_name || !cap.mobile) return { knownId: null, key: null };
   const key = randomTokenHex(32);
-  const row = { venue_id: venueId, key_hash: await sha256Hex('vpk:' + key) };
+  const row = { first_venue_id: venueId, key_hash: await sha256Hex('vpk:' + key) };
   for (const f of KNOWN_FIELDS) if (cap[f] != null && asks[f]) row[f] = cap[f];
+  if (sawNotice) { row.notice_version = JOIN_NOTICE.version; row.notice_at = new Date().toISOString(); }
   try {
     const ins = await sbInsert(env, 'vp_known_players', row, true);
     const made = Array.isArray(ins) ? ins[0] : ins;
@@ -2592,18 +2604,14 @@ async function handleJoinKnown(request, env, json) {
   const venueName = (vrows && vrows[0] && String(vrows[0].name || '')) || '';
   const k = await knownFor(env, venueId, knownKeysFrom(b.keys));
   const known = k ? { hello: String(k.row.first_name || '').trim().split(/\s+/)[0].slice(0, 20), need: knownNeeds(cfg, k.row), ix: k.ix } : null;
+  /* the first-game notice: until this phone's row says it saw the current version */
+  const notice = (k && k.row.notice_version === JOIN_NOTICE.version) ? null : JOIN_NOTICE;
   let consent = { mode: 'single' };
   if (consentMode(env) === 'three') {
-    const cp = await consentParties(env, session, venueName, k && k.row.id);
-    consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => ({ party: p.party, name: p.name })) };
-    /* every box this game has, for "Not me" (someone else on this phone answers them all) */
-    if (k) {
-      const all = [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: venueName || 'this venue' }];
-      if (cp.host) all.push({ party: 'host', name: cp.host.name });
-      consent.all = all;
-    }
+    const cp = await consentParties(env, session, venueName, k && k.row.id, venueId);
+    consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => (typeof p.current === 'boolean' ? { party: p.party, name: p.name, current: p.current } : { party: p.party, name: p.name })) };
   }
-  return json({ known: known, consent: consent, organiser: venueName });
+  return json({ known: known, consent: consent, organiser: venueName, notice: notice });
 }
 
 /* ------------------------------ POST /join/list ------------------------------
@@ -2708,7 +2716,7 @@ async function handleCapture(request, env, json) {
   if (consentAns && (consentAns.venue === true || consentAns.venue === false)) b.marketing_optin = consentAns.venue === true;
   const capIn = joinCapture(cfg, b);
   if (consentAns && capIn.marketing_optin) capIn.consent_version = CONSENT_THREE_VERSION;
-  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys));
+  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version);
   const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
@@ -2750,7 +2758,7 @@ async function handleCapture(request, env, json) {
       }
       let vName = '';
       try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
-      const cp = await consentParties(env, sess, vName, null);
+      const cp = await consentParties(env, sess, vName, knownRes.knownId, venueId);
       await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: 'bingo',
         venueId: venueId, knownId: knownRes.knownId, playerId: player && player.id, sessionId: sess && sess.id });
     }
@@ -5039,7 +5047,7 @@ async function handleJoin(request, env, json) {
   /* A KNOWN PHONE AT THIS VENUE (INBOX 416): its details filled in from this venue's row, server side, or a row made
      for it now. Never for the demo. Never stops a join (knownAtJoin cannot throw). */
   let knownRes = { knownId: null, key: null };
-  if (!isDemoSession(session)) knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys));
+  if (!isDemoSession(session)) knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys), b.notice_version);
 
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
   const tokenHash = await sha256Hex(token);    // only the hash is stored
@@ -5107,7 +5115,7 @@ async function handleJoin(request, env, json) {
   if (consentAns && !isDemoSession(session)) {
     let vName = '';
     try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(session.venue_id) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
-    const cp = await consentParties(env, session, vName, null);
+    const cp = await consentParties(env, session, vName, knownRes.knownId, session.venue_id);
     const src = { trivia: 'trivia', musical_bingo: 'musical' }[String(session.lobby_format || '')] || String(b.fmt || '').slice(0, 20) || 'game';
     await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: src,
       venueId: session.venue_id, knownId: knownRes.knownId, playerId: newPlayer && newPlayer.id, sessionId: session.id });

@@ -125,12 +125,12 @@ check('it LOOKS before stamping: the database is asked who still holds a contact
 check('broadcast bingo captures are cleared too, by venue',
   patches.some(function (p) { return p.table === 'vp_captures' && /venue_id=eq\.v1/.test(p.q); }), patches);
 
-check('a known phone\'s row is deleted with the venue (migration 202)',
-  deletes.some(function (d) { return d.table === 'vp_known_players' && /venue_id=eq\.v1/.test(d.q); }), deletes);
-check('and its consent boxes, by venue',
+check('this venue\'s consent boxes are deleted with it, by venue (migration 202)',
   deletes.some(function (d) { return d.table === 'vp_player_consents' && /venue_id=eq\.v1/.test(d.q); }), deletes);
-check('and it LOOKS that none is left before stamping',
-  counts.some(function (c) { return /^vp_known_players\?venue_id=eq\.v1/.test(c); }) && counts.some(function (c) { return /^vp_player_consents\?venue_id=eq\.v1/.test(c); }), counts);
+check('the known phone\'s row is venueplay\'s, not the venue\'s: never deleted by a venue leaving (Dean 16 Nov 2026)',
+  !deletes.some(function (d) { return d.table === 'vp_known_players'; }), deletes);
+check('and it LOOKS that no consent box is left before stamping',
+  counts.some(function (c) { return /^vp_player_consents\?venue_id=eq\.v1/.test(c); }), counts);
 
 /* 4. The record that we did it, in its own column, and closed_at left alone. */
 var stamp = patches.filter(function (p) { return p.table === 'vp_venues'; })[0];

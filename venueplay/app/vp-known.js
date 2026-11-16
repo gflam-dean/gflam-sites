@@ -6,7 +6,7 @@
    THE KEY. The first time a phone gives a first name and a mobile at a venue, the game Worker answers /join (or the
    bingo phone's /capture) with known_key, a random 256-bit key. This file keeps it in localStorage ("vpKnownKeys", eight
    at most, newest first) and sends the keys with every later join. The Worker keeps only a hash of each key, against
-   ONE venue, so a key never opens another venue's details. Nothing else about the person is kept on the phone.
+   venueplay's row: each venue it is used at receives ONLY the fields that venue asks (the Worker decides, server side). Nothing else about the person is kept on the phone.
 
    THE JOIN SCREEN. Beside /join/info (cached per code, so it cannot know this phone) the page asks POST /join/known
    with the keys, through VPKnown.withInfo(p, api, code). The answer:
@@ -15,9 +15,10 @@
               no masked mobile; a first-name hello at most.
      consent  { mode:"single" } (today's one tick) or { mode:"three", parties } (/app/vp-consent.js renderThree).
      organiser  the name in the join line: "Your details go to {organiser} to run tonight's game and contact winners."
-   VPKnown.paint(o) then draws the screen: for a known phone, the heading says "Welcome back, Alan" with a "Not me" link,
-   the name box is filled and hidden on the bingo and musical phones (the name IS the first name), and only the missing
-   boxes are drawn. "Not me" forgets that key on this phone and draws the full form again.
+   VPKnown.paint(o) then draws the screen: for a known phone, one line "Playing as Grace. Not you?" (Dean 16 Nov 2026: not
+   creepy, the first name only), the name box filled and hidden on the bingo and musical phones (the name IS the first
+   name), and only the missing boxes. "Not you?" forgets that key on this phone and draws the normal empty form again.
+   The first-game notice (info.notice) is drawn once per player, as the Worker says.
 
    Asked for at most ASK_MS: a slow answer never holds the join screen, it is simply the full form.
    Everything a person reads is set with textContent. No em dashes. */
@@ -76,7 +77,7 @@
   /* o = { box, collect, info (known_info), kind:"person"|"team", venueName, nameIn, head, after(h) }
      Draws the boxes and the consent into o.box and calls o.after(h) (h: the boxes' html, "" when none), so the page adds
      its own notice under them. Answers h. */
-  var _last = null, _known = null;
+  var _last = null, _known = null, _notice = null;
   function paint(o) {
     _last = o; o = o || {};
     var d = root.document, info = o.info || null, known = info && info.known && typeof info.known === "object" ? info.known : null;
@@ -89,23 +90,26 @@
     if (greet && greet.parentNode) greet.parentNode.removeChild(greet);
     if (fld) fld.style.display = "";
     if (known && hello) {
+      /* NOT CREEPY (Dean 16 Nov 2026): the first name and nothing else, "Playing as Grace. Not you?". No "welcome back",
+         no venue they played at, never a number or an address. */
       if (!team && nameIn && known.need.indexOf("first_name") < 0) { nameIn.value = hello.slice(0, 20); fld.style.display = "none"; }
-      if (o.head) o.head.textContent = "Welcome back, " + hello;
       var g = d.createElement("p");
       g.id = "vpKnownHi"; g.className = "vp-notice";
-      g.setAttribute("style", "margin:6px 0 0;font-size:15px;line-height:1.45;color:#9A9AA4");
-      if (!o.head) { g.appendChild(d.createTextNode("Welcome back, " + hello + ". ")); }
+      g.setAttribute("style", "margin:10px 0 0;font-size:16px;line-height:1.45;color:#E7E7EC");
+      g.appendChild(d.createTextNode("Playing as " + hello + ". "));
       var nm = d.createElement("button");
       nm.type = "button"; nm.id = "vpKnownNotMe";
       nm.setAttribute("style", "background:none;border:0;padding:0;font:inherit;color:#fff;text-decoration:underline;cursor:pointer");
-      nm.textContent = "Not me";
+      nm.textContent = "Not you?";
       nm.addEventListener("click", function () {
         forget(known.ix);
         if (nameIn) { nameIn.value = ""; }
         var o2 = {}; for (var k in _last) o2[k] = _last[k];
-        o2.info = info ? { known: null, consent: info.consent, organiser: info.organiser } : null;
-        if (o2.info && info.consent && info.consent.mode === "three") o2.info.consent = { mode: "three", version: info.consent.version, parties: info.consent.all || info.consent.parties };
-        if (o.head && o.headWords) o.head.textContent = o.headWords;
+        /* the normal empty form: every box, every consent box fresh (pre-ticked), as a new player sees it; the notice
+           too when the Worker sent one */
+        o2.info = info ? { known: null, consent: info.consent, organiser: info.organiser, notice: info.notice } : null;
+        if (o2.info && info.consent && info.consent.mode === "three") o2.info.consent = { mode: "three", version: info.consent.version,
+          parties: (info.consent.parties || []).map(function (p) { return { party: p.party, name: p.name }; }) };
         paint(o2);
         try { if (nameIn && !team) nameIn.focus(); } catch (e) {}
       });
@@ -122,6 +126,23 @@
     /* a venue asking for (nearly) everything plus the three boxes: the tighter join step (vp-phone.css, .vp-long) */
     var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length;
     if (vj && vj.classList) vj.classList.toggle("vp-long", !!(VC && typeof VC.answers === "function" && VC.answers()) && nBoxes >= 3);
+    /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026): one line, once per player; the Worker sends it until the phone's row says
+       this version was seen, and the join records it (notice_version). Words and link from the Worker's one constant. */
+    _notice = null;
+    var nt = info && info.notice && typeof info.notice === "object" && info.notice.text ? info.notice : null;
+    if (o.box && nt) {
+      var np = d.createElement("p");
+      np.id = "vpJoinNotice"; np.className = "collectnote";
+      np.setAttribute("style", "margin:10px 0 0;font-size:13px;line-height:1.4;color:#9A9AA4;text-align:left");
+      np.appendChild(d.createTextNode(String(nt.text) + " "));
+      var na = d.createElement("a");
+      na.href = /^\/[a-z0-9\/-]*$/.test(String(nt.href || "")) ? String(nt.href) : "/privacy"; na.target = "_blank"; na.rel = "noopener";
+      na.setAttribute("style", "color:#fff;text-decoration:underline");
+      na.textContent = String(nt.link || "Privacy policy");
+      np.appendChild(na);
+      o.box.appendChild(np);
+      _notice = String(nt.version || "");
+    }
     if (typeof o.after === "function") { try { o.after(h, info); } catch (e) {} }
     return h;
   }
@@ -131,6 +152,7 @@
     cap = cap || {}; kind = kind || (_last && _last.kind);
     var VC = root.VPConsent, a = (VC && typeof VC.answers === "function") ? VC.answers() : null;
     if (a) cap.consent = a;
+    if (_notice) cap.notice_version = _notice;   // the notice this join showed (the Worker records it once)
     if (_known && kind === "team" && _known.need && _known.need.indexOf("first_name") < 0 && !(root.document && root.document.getElementById("xFirst"))) delete cap.first_name;
     return cap;
   }

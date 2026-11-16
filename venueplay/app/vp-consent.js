@@ -90,7 +90,8 @@
      PRE-TICKED, as the Moshtix checkout is (checked live 14 Nov). The parties and their names come from the Worker,
      never from the page. answers() hands back { venueplay:bool, venue:bool, host:bool } for the boxes drawn; the Worker
      keeps each as its own row (wording version THREE_VERSION) and the venue's box as the venue's own tick. A box the
-     player already answered is not drawn again (the Worker leaves it out). */
+     sender this player already answered shows its CURRENT answer (the Worker's current:false is unticked); a sender it
+     never answered (a new venue, a new host) is a fresh box, pre-ticked (Dean 16 Nov 2026). */
   var THREE_VERSION = "vpc-4-22nov";
   var THREE_HEAD = "Yes! Send me news and offers by SMS and email from:";
   var THREE_NOTE = "Each one uses your details under its own privacy policy. Unsubscribe any time.";
@@ -116,7 +117,7 @@
       var l = tick("xC_" + party, nm);
       l.setAttribute("style", "margin-top:8px;align-items:center");
       var inp = l.querySelector("input");
-      inp.checked = true; inp.setAttribute("data-party", party);
+      inp.checked = pt.current !== false; inp.setAttribute("data-party", party);   // a sender already answered: its current answer; a new sender: pre-ticked
       row.appendChild(l);
       _three.push({ party: party, el: inp });
     }

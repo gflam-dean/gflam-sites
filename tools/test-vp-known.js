@@ -123,10 +123,12 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   var INFO = { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, organiser: 'The Royal' };
   var after = null;
   h = VPKnown.paint({ box: P.box, collect: ALL, info: INFO, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Your name', venueName: 'The Royal', after: function (hh, info) { after = [hh, info]; } });
-  show('the heading says "Welcome back, Alan"', P.head.textContent === 'Welcome back, Alan', P.head.textContent);
+  var hi = document.getElementById('vpKnownHi');
+  show('one line, the first name only: "Playing as Alan. Not you?" (no welcome back, no venue, Dean 16 Nov)', hi && hi.textContent === 'Playing as Alan. Not you?' && !/welcome/i.test(BODY.textContent), hi && hi.textContent);
+  show('the page heading is left as it is', P.head.textContent === 'Your name', P.head.textContent);
   show('the name box is filled with the first name and out of the way', P.nameIn.value === 'Alan' && P.nameIn.style.display === 'none');
   show('nothing is missing: no boxes at all, and no tick again', ids(P.box).length === 0 && h === '', ids(P.box));
-  show('a "Not me" link', !!document.getElementById('vpKnownNotMe') && document.getElementById('vpKnownNotMe').textContent === 'Not me');
+  show('a "Not you?" link', !!document.getElementById('vpKnownNotMe') && document.getElementById('vpKnownNotMe').textContent === 'Not you?');
   show('the page\'s after() is called with the boxes and the answer', after && after[0] === '' && after[1] === INFO);
   var shown = ''; BODY.walk(function (e) { if (e._text) shown += e._text + ' '; });
   show('the screen shows no detail but the first name (no number, no @)', !/\d{3}|@/.test(shown), shown);
@@ -137,20 +139,22 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   VPKnown.paint({ box: P.box, collect: ALL, info: INFO, kind: 'team', nameIn: P.nameIn, venueName: 'The Royal' });
   show('trivia: the team name box stays, no first-name or mobile box', P.nameIn.style.display === '' && ids(P.box).length === 0, ids(P.box));
   var greet = document.getElementById('vpKnownHi');
-  show('...and the hello is a line of its own: "Welcome back, Alan. Not me"', greet && greet.textContent === 'Welcome back, Alan. Not me', greet && greet.textContent);
+  show('...and trivia says the same line: "Playing as Alan. Not you?"', greet && greet.textContent === 'Playing as Alan. Not you?', greet && greet.textContent);
   var cap = VPKnown.capture({ first_name: 'Quiz Kids' });
   show('a known trivia phone sends no team name as a first name (the Worker fills the real one)', !('first_name' in cap), cap);
 
   print('4. "NOT ME"');
   LSD = {}; VPKnown.keep({ known_key: k('b') }); VPKnown.keep({ known_key: k('a') });
   P = page();
-  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'three', version: 'vpc-4-22nov', parties: [], all: THREE.parties }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Your name', venueName: 'The Royal' });
-  show('known, every box answered: no consent boxes drawn', labels(P.box).length === 0);
+  var CUR = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay', current: true }, { party: 'venue', name: 'The Royal', current: false }, { party: 'host', name: 'Quiz Masters Co' }] };
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: CUR, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Your name', venueName: 'The Royal' });
+  var cur = labels(P.box).map(function (l) { return l.querySelector('input').checked; });
+  show('known: every box shows THAT sender\'s current answer; a new sender (the host) is a fresh, ticked box', cur.join() === 'true,false,true', cur);
   document.getElementById('vpKnownNotMe').click();
   show('the key at that place is forgotten, the other kept', VPKnown.keys().join() === k('b'), VPKnown.keys());
   show('the name box is back, empty; the heading is the page\'s own', P.nameIn.style.display === '' && P.nameIn.value === '' && P.head.textContent === 'Your name', [P.nameIn.style.display, P.nameIn.value, P.head.textContent]);
   show('the full form: email and mobile', ids(P.box).indexOf('xEmail') >= 0 && ids(P.box).indexOf('xMobile') >= 0, ids(P.box));
-  show('every consent box this game has, ticked', labels(P.box).length === 3 && labels(P.box).every(function (l) { return l.querySelector('input').checked === true; }));
+  show('every consent box fresh and ticked (the normal empty form)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return l.querySelector('input').checked === true; }));
   show('no hello left', !document.getElementById('vpKnownHi'));
 
   print('5. THE THREE BOXES (MOSHTIX STYLE)');
@@ -178,6 +182,21 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' } }, kind: 'person', nameIn: P.nameIn });
   show('single mode: no answers object (the one tick, as today)', VPConsent.answers() === null && !('consent' in VPKnown.capture({})));
+
+  print('5b. THE FIRST-GAME NOTICE');
+  var NOTE = { version: 'vpn-1-16nov', text: "By playing you agree to venueplay's terms. We keep a record of the games you play on venueplay, at any venue.", link: 'Privacy policy', href: '/privacy' };
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
+  var np = document.getElementById('vpJoinNotice');
+  show('the notice is drawn: the Worker\'s words then the Privacy policy link', np && np.textContent === NOTE.text + ' Privacy policy' && np.querySelector('a').href === '/privacy', np && np.textContent);
+  cap = VPKnown.capture({ first_name: 'Sam' });
+  show('the join says which notice it showed', cap.notice_version === 'vpn-1-16nov', cap);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, notice: null }, kind: 'person', nameIn: P.nameIn });
+  show('no notice from the Worker (seen already): none drawn, none claimed', !document.getElementById('vpJoinNotice') && !('notice_version' in VPKnown.capture({})));
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, notice: { version: 'x', text: 'T', link: 'L', href: 'javascript:alert(1)' } }, kind: 'person', nameIn: P.nameIn });
+  show('a link that is not a page on this site is never used (privacy page instead)', document.getElementById('vpJoinNotice').querySelector('a').href === '/privacy');
 
   print('6. THE JOIN LINE, THE ASK, THE BOXES');
   show('the join line: "Your details go to The Royal to run tonight\'s game and contact winners."', VPKnown.line('The Royal') === "Your details go to The Royal to run tonight's game and contact winners. ", VPKnown.line('The Royal'));

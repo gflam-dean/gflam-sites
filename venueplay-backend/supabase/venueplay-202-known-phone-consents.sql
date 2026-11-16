@@ -14,11 +14,14 @@
 -- venueplay-200-members-upload-contacts.sql in that worktree), so 202 (main, 16 Nov: 201 is the retention sweep, sites-wt-retention-16nov).
 --
 -- WHAT IT ADDS
---   vp_known_players     one row per phone per VENUE: the first name, mobile, and whatever else that venue asked, so
---                        the next game at the same venue (any game, any night) does not ask again. Found ONLY by the
---                        SHA-256 of a random 256-bit key the phone holds (localStorage); the key itself is never kept.
---                        Never shared across venues: a phone holding keys for two venues has two rows, and a lookup is
---                        always venue_id = <the venue of the code> AND key_hash = <hash>.
+--   vp_known_players     one row per PHONE, held by venueplay (Dean 16 Nov 2026, through main: "after that they are never
+--                        asked for name, phone or any detail again"): the first name, mobile, and whatever else a venue
+--                        asked, so the next game at ANY venue does not ask again. Found ONLY by the SHA-256 of a random
+--                        256-bit key the phone holds (localStorage); the key itself is never kept. EACH VENUE RECEIVES
+--                        ONLY THE FIELDS IT ASKS (the game Worker copies just those onto that venue's own vp_players /
+--                        vp_captures row): venue B asking first name + mobile never gets the email venue A collected.
+--                        first_venue_id says where it began; notice_version / notice_at the first-game notice the player
+--                        saw (shown once per player, again only when its version changes).
 --   vp_player_consents   one row per box per answer: party 'venueplay' | 'venue' | 'host', granted true/false, the
 --                        wording version the person saw, the game it came from, the session, and for a host box the host's
 --                        login and the brand name shown. Each sender reads only its own rows. An unsubscribe is a NEW row
@@ -26,7 +29,8 @@
 --
 -- PRIVACY (player data is tier one). Both tables: RLS on, no policies, everything revoked from public, anon and
 -- authenticated; the game Worker (service role) is the only reader and writer. No view, no grant, no HQ page reads them.
--- The 90-day sweep after a venue leaves deletes both tables' rows for that venue (game Worker sweepRetention).
+-- The 90-day sweep after a venue leaves deletes that venue's consent rows (game Worker sweepRetention). The known row is
+-- venueplay's, not the venue's, so a venue leaving does not delete it: its own keeping rule is Dean's to set.
 -- RLS-BASELINE.json: two new tables with RLS on and no grants; dump the baseline after it runs on live.
 --
 -- ORDER: either order is safe. Before this runs the Worker's lookups answer "not known" (the phone shows the full form,
@@ -35,19 +39,19 @@
 
 create table if not exists public.vp_known_players (
   id            uuid primary key default gen_random_uuid(),
-  venue_id      uuid not null references public.vp_venues(id) on delete cascade,
+  first_venue_id uuid references public.vp_venues(id) on delete set null,
   key_hash      text not null check (key_hash ~ '^[0-9a-f]{64}$'),
   first_name    text check (first_name is null or char_length(first_name) <= 80),
   last_name     text check (last_name is null or char_length(last_name) <= 80),
   email         text check (email is null or char_length(email) <= 200),
   mobile        text check (mobile is null or mobile ~ '^\+614[0-9]{8}$'),
   postcode      text check (postcode is null or char_length(postcode) <= 10),
+  notice_version text check (notice_version is null or char_length(notice_version) <= 20),
+  notice_at     timestamptz,
   created_at    timestamptz not null default now(),
   last_seen_at  timestamptz not null default now()
 );
 create unique index if not exists vp_known_players_key_uq on public.vp_known_players (key_hash);
-create index if not exists vp_known_players_venue_idx on public.vp_known_players (venue_id);
-create index if not exists vp_known_players_venue_mobile_idx on public.vp_known_players (venue_id, mobile) where mobile is not null;
 
 alter table public.vp_known_players enable row level security;
 revoke all on public.vp_known_players from public, anon, authenticated;
