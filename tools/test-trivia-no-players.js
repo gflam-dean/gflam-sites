@@ -8,8 +8,10 @@
      - nobody joined, server answered with an empty board: the plain "Nobody has joined" line, a
        "nobody" message for the TV, no error bar, no podium;
      - phones present but the fetch failed: the real "could not be loaded" error, and no "nobody";
-     - the between-question auto leaderboard with nobody joined: the same calm message, not an
-       empty board; with players it is still the ordinary leaderboard.
+     - the between-question auto follow-up with nobody joined: the same calm message, not an
+       empty board; with players, mid-round, nothing follows the answer (Dean, 7 Nov 2026: "The
+       leaderboard should show every round only"); at the end of a round that is not the last (a
+       phone night has a round every 10 questions) the podium, then "Leaderboard after round N".
 
    Run from the repo root:  jsc tools/test-trivia-no-players.js
 */
@@ -22,14 +24,15 @@ function lift(name) {
   return HOST.slice(i, k) + '\n';
 }
 var NOBODY_LINE = (HOST.match(/var NOBODY_MSG="([^"]+)"/) || [])[1];
-var SRC = ['finishOutcome', 'finish', 'finishNow', 'startFinale', 'reveal'].map(lift).join('\n');
+var SRC = ['finishOutcome', 'finish', 'finishNow', 'startFinale', 'reveal', 'roundOf', 'roundEnds', 'roundShow'].map(lift).join('\n') +
+  '\nvar ROUND_BOARD_MS=' + (HOST.match(/var ROUND_BOARD_MS=(\d+);/) || [0, 'NaN'])[1] + ';';
 
 var ran = 0, bad = 0;
 function show(n, c, extra) { ran++; print((c ? '  ok   ' : '  FAIL ') + n + (extra ? '   -> ' + extra : '')); if (!c) bad++; }
 
 /* One console: the page's own functions over a fake game state, server and channel. */
 function makeConsole(o) {
-  var G = { board: o.board || [], gameId: 'g1', status: 'reveal', noPlayersNote: false, qtotal: 10, split: [], defer: false,
+  var G = { board: o.board || [], gameId: 'g1', status: 'reveal', noPlayersNote: false, qtotal: o.qtotal || 10, split: [], defer: false, rs: o.rs || 10, roundBoard: o.roundBoard,
             current: { qseq: o.qseq || 10, qi: o.qseq || 10, options: ['a', 'b', 'c', 'd'] } };
   var sent = [], errors = [], timers = [], renders = 0;
   var players = o.players | 0;
@@ -43,7 +46,9 @@ function makeConsole(o) {
   function renderConsole() { renders++; }
   function hostError(m) { errors.push(m); }
   function bcast(m) { sent.push(m); }
+  function send(m) { m = Object.assign({ tvOnly: true }, m); sent.push(m); }   // the TV's channel alone
   function setTimeout(f, ms) { timers.push(f); return timers.length; }
+  function clearTimeout(id) { if (id) timers[id - 1] = function () {}; }
   function apiPost(path) {
     if (o.fetchFails) return Promise.reject(new Error('Failed to fetch'));
     return Promise.resolve({ leaderboard: o.fetchBoard || [], correct_index: 1, qseq: G.current.qseq, split: [] });
@@ -105,22 +110,46 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('the next tap clears the line, and with phones in but no scores it is the real error, not "nobody"',
        C.G.noPlayersNote === false && C.errors.length === 1 && /could not be loaded/.test(C.errors[0]), C.errors.join('|'));
 
-  print('the between-question auto leaderboard');
+  print('the between-question auto follow-up');
   C = makeConsole({ players: 0, qseq: 3, fetchBoard: [] });
   C.G.status = 'question'; C.reveal(); await flush();
-  show('reveal went to the TV first', C.types() === 'reveal', C.types());
-  C.timers.forEach(function (f) { f(); });
+  show('reveal went to the TV first, and tells the TV not to roll to a board by itself', C.types() === 'reveal' && C.sent[0].board === false, C.types() + ' ' + JSON.stringify(C.sent[0]));
+  C.timers.slice().forEach(function (f) { f(); });
   show('with nobody joined the 5 second follow-up is the calm state, not an empty board', C.types() === 'reveal,nobody', C.types());
   show('and it says between:true, so the TV keeps the game going, never "Thanks for playing" (Dean, 15 Nov 2026)', C.sent[1] && C.sent[1].between === true, JSON.stringify(C.sent[1]));
 
+  print('the scores only at the end of a round (Dean, 7 Nov 2026)');
   C = makeConsole({ players: 3, qseq: 3, fetchBoard: [{ name: 'A', points: 100 }] });
   C.G.status = 'question'; C.reveal(); await flush();
-  C.timers.forEach(function (f) { f(); });
-  show('with players it is the ordinary leaderboard, unchanged', C.types() === 'reveal,leaderboard' && C.sent[1].title === 'Leaderboard' && C.sent[1].rows.length === 1, C.types());
-  C = makeConsole({ players: 3, qseq: 3, fetchBoard: [] });
+  C.timers.slice().forEach(function (f) { f(); });
+  show('mid-round with players: the answer stays up, no leaderboard after it', C.types() === 'reveal' && C.sent[0].board === false, C.types());
+  C = makeConsole({ players: 3, qseq: 9, qtotal: 20, fetchBoard: [{ name: 'A', points: 100 }] });
   C.G.status = 'question'; C.reveal(); await flush();
-  C.timers.forEach(function (f) { f(); });
-  show('players present but nobody has scored yet: still the ordinary leaderboard path', C.types() === 'reveal,leaderboard', C.types());
+  C.timers.slice().forEach(function (f) { f(); });
+  show('question 9 of 20: still mid-round, nothing follows', C.types() === 'reveal', C.types());
+  var B4 = [{ name: 'A', points: 100 }, { name: 'B', points: 90 }, { name: 'C', points: 80 }, { name: 'D', points: 70 }];
+  C = makeConsole({ players: 3, qseq: 10, qtotal: 20, fetchBoard: B4 });
+  C.G.status = 'question'; C.reveal(); await flush();
+  C.timers.slice(0, 1).forEach(function (f) { f(); });
+  show('a 20-question night, question 10 (the end of round 1): the podium, the top three, round 1, on the TV only',
+       C.types() === 'reveal,podium' && C.sent[1].tvOnly === true && C.sent[1].round === 1 && C.sent[1].top.length === 3, C.types() + ' ' + JSON.stringify(C.sent[1]));
+  C.timers.slice(1).forEach(function (f) { f(); });
+  show('then the whole leaderboard, "Leaderboard after round 1", every team, on the TV only',
+       C.types() === 'reveal,podium,leaderboard' && C.sent[2].title === 'Leaderboard after round 1' && C.sent[2].rows.length === 4 && C.sent[2].tvOnly === true, C.types() + ' ' + (C.sent[2] && C.sent[2].title));
+  show('ten seconds after the podium', /var ROUND_BOARD_MS=10000;/.test(HOST));
+  C = makeConsole({ players: 3, qseq: 10, qtotal: 20, fetchBoard: B4 });
+  C.G.status = 'question'; C.reveal(); await flush();
+  C.timers.slice(0, 1).forEach(function (f) { f(); }); C.G.status = 'question';
+  C.timers.slice(1).forEach(function (f) { f(); });
+  show('the host went on before the board: it never lands on the next question', C.types() === 'reveal,podium', C.types());
+  C = makeConsole({ players: 3, qseq: 10, qtotal: 20, fetchBoard: B4, roundBoard: false });
+  C.G.status = 'question'; C.reveal(); await flush();
+  C.timers.slice().forEach(function (f) { f(); });
+  show('"Show the leaderboard after each round" switched off: no podium and no board at the round end', C.types() === 'reveal', C.types());
+  C = makeConsole({ players: 0, qseq: 10, qtotal: 20, fetchBoard: [] });
+  C.G.status = 'question'; C.reveal(); await flush();
+  C.timers.slice().forEach(function (f) { f(); });
+  show('the end of round 1 with nobody joined: the calm join screen, never an empty podium', C.types() === 'reveal,nobody' && C.sent[1].between === true, C.types());
   C = makeConsole({ players: 0, qseq: 10, fetchBoard: [] });
   C.G.status = 'question'; C.reveal(); await flush();
   show('after the last question nothing is scheduled: the host reveals by hand', C.timers.length === 0, C.timers.length + ' timers');

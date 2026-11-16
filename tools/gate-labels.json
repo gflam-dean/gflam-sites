@@ -538,6 +538,7 @@
   "trivia-question-space-in-chrome.test.py",
   "trivia-reveal-in-chrome.test.py",
   "trivia-reveal.test.js",
+  "trivia-round-podium-in-chrome.test.py",
   "trivia-score.test.js",
   "trivia-set-delete.test.js",
   "try-demo-in-chrome.test.py",
