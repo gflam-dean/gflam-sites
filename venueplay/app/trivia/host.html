@@ -148,6 +148,13 @@
   /* On a phone the main button comes first and the TV preview follows it (Dean, 15 Nov 2026: "you have to scroll down to do
      anything"): at 375x667 the preview above the last answer pushed Reveal leaderboard below the fold. */
   @media (max-width:600px){ #liveBlock{display:flex;flex-direction:column} #liveBlock .tvprev{order:2;margin:14px 0 0} }
+  /* THE PREVIEW MUST NOT PUSH THE BUTTONS OFF THE SCREEN (INBOX 426 item 5, 17 Nov 2026): after the last question,
+     "On the TV now" sat above Reveal leaderboard and took it below a 375x667 phone and a 1366x768 laptop. The picture
+     is only a glance at the wall, so it is a smaller picture, centred: a little over half the width on a phone, and
+     no taller than 20% of the window on a laptop. */
+  .tvprev-frame{margin-left:auto;margin-right:auto}
+  @media (max-width:640px){ .tvprev-frame{width:56%} }
+  @media (min-width:641px){ .tvprev-frame{width:min(100%,calc(20vh*16/9))} }
   .finline{font-size:13.5px;color:var(--muted);text-align:center;margin:8px 0 0}
   .btn.finskip{display:block;margin:12px auto 0;padding:8px 14px;min-height:0;font-size:13.5px}
   .btn.finpulse{animation:finpulse 1.6s ease-in-out infinite}
@@ -241,6 +248,7 @@
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
+<link rel="stylesheet" href="/app/vp-actionbar.css">
 </head>
 <body>
 <header>
@@ -396,7 +404,7 @@
             </div>
           </details>
           <div class="vp-week" id="weekBanner" style="display:none"></div>
-          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <div class="vp-actionbar" id="startBar"><button class="btn pink big" id="startBtn">Open lobby</button></div>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" style="margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
         </div>
@@ -1047,8 +1055,14 @@
       // the podium never appears mid-round now.
       var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
       var brow=el("div","btnrow");
-      var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
-      main.addEventListener("click", isLast ? finTap : nextQuestion); brow.appendChild(main);
+      /* Nobody joined (INBOX 426 item 4, 17 Nov 2026): the leaderboard has nothing to show, so a pink Reveal leaderboard
+         that does nothing is the wrong button. The host is given the one thing that is left: Start a new round
+         (endRound), on screen, and no second End round beside it. A phone that joins puts Reveal leaderboard back. */
+      var nobodyLeft = isLast && G.noPlayersNote && playerCount()===0;
+      var main=el("button","btn pink big", nobodyLeft ? "Start a new round" : (isLast ? "Reveal leaderboard" : "Next question"));
+      if(nobodyLeft) main.id="nobodyAgain";
+      main.addEventListener("click", nobodyLeft ? function(){ endRound(); } : (isLast ? finTap : nextQuestion)); brow.appendChild(main);
+      if(nobodyLeft){ body.appendChild(brow); return; }
       var endb=el("button","btn ghost big","End round");
       /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
          sits beside the control the host taps about nineteen times a night. endRound() clears the
@@ -1993,6 +2007,8 @@
       if(typeof m.prk==="string" && /^k1_[A-Za-z0-9_-]{8,64}$/.test(m.prk)){ (G.prAlias||(G.prAlias={}))[m.pid]=m.prk; }
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
+      /* Somebody arrived after "nobody has joined": the calm line goes and Reveal leaderboard comes back (INBOX 426 item 4). */
+      if(G.noPlayersNote && G.status==="reveal"){ G.noPlayersNote=false; renderConsole(); }
       replayState(m.pid);     // they may have missed a live question; catch them up
     }
     else if(m.t==="pr_guess"){

@@ -1720,7 +1720,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/trivia-errbar-flow-in-chrome.test.py": {
@@ -2345,6 +2345,10 @@
  },
  "tools/bingo-tv-name-once-in-chrome.test.py": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/console-start-buttons-in-chrome.test.py": {
+  "checks": 122,
   "counted_by": "lines"
  }
 }

@@ -1,0 +1,13 @@
+/* THE START BUTTON STAYS ON THE SCREEN (Dean, 12 and 15 Nov 2026: "you have to scroll down to do anything").
+   One shared rule for the set-up / lobby screen of the trivia, musical bingo, bingo and raffle consoles. The primary
+   button (Open lobby, Start round, Start game, Start calling numbers, Draw the winner) sits in this bar. The settings
+   above it keep their order and all stay reachable by scrolling; the bar rides the bottom edge of the window until the
+   page's own end brings the button home. Linked last on each console, so it is the answer. */
+.vp-actionbar{position:sticky;bottom:0;z-index:20;margin:14px -6px 0;padding:14px 6px calc(10px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to bottom,rgba(18,18,20,0),var(--ink-2,#121214) 26%)}
+.vp-actionbar>.btn{margin-top:0}
+@media (max-height:700px){ .vp-actionbar{padding-top:10px} }
+/* position:sticky needs the PAGE to be the thing that scrolls. These consoles set overflow-x:hidden on <body>, which makes
+   the body a scroll box of its own and the bar would never stick. html already clips sideways overflow, so the body clips
+   without becoming a scroll box. */
+body{overflow-x:clip}
