@@ -417,6 +417,23 @@ MUTATIONS = [
      '"gap_until": "2026-11-20"',
      '"gap_until": "2026-01-01"',
      'a never-again gap left open past its date'),
+    # ---- 22 Nov 2026 (job list row 167): a phone night for the venue's own pattern, "Any 5 numbers", on the rig.
+    ('any5-phone-claim-in-chrome.test.py', 'venueplay/play.html',
+     '    return nm && nm!=="Bingo" ? "I\\u2019ve got "+nm : "I\\u2019ve got bingo";',
+     '    return "I\\u2019ve got bingo";',
+     'a custom pattern\'s claim button says plain "I\'ve got bingo" instead of naming Any 5 numbers'),
+    ('any5-phone-claim-in-chrome.test.py', 'venueplay/play.html',
+     '    if(!win && !P.allowEarly){ setMsg("Not yet, keep playing.',
+     '    if(false){ setMsg("Not yet, keep playing.',
+     'a phone claims before the pattern is complete on its ticket: an early tap is sent to the host'),
+    ('any5-phone-claim-in-chrome.test.py', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (custom) { row.custom_pattern_id = custom.id; row.custom_pattern = { name: custom.name, rule: custom.rule }; }",
+     "  if (false) { row.custom_pattern_id = custom.id; row.custom_pattern = { name: custom.name, rule: custom.rule }; }",
+     'a custom-pattern claim is written without its rule and name, so the record cannot say what was won'),
+    ('any5-phone-claim-in-chrome.test.py', 'venueplay/play.html',
+     '<p class="vp-wait">Show this screen to the host to claim</p>',
+     '<p class="vp-wait">Show this screen to the bar to claim</p>',
+     'the winner\'s phone sends them to the bar instead of the host'),
     # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
     # plays a 3 question quiz on the browser rig (tv.html with the wall in its frame, two phones) and keeps a timeline.
     ('trivia-ux-in-chrome.test.py', 'venueplay/app/trivia/host.html',

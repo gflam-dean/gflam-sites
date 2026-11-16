@@ -139,6 +139,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/any5-phone-claim-in-chrome.test.py": {
+  "checks": 86,
+  "counted_by": "lines"
+ },
  "tools/billing-words-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"
