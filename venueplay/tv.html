@@ -3437,6 +3437,10 @@
     var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
                        tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1,
                        join:1, claim:1, leave:1,
+                       /* The trivia console says its saved sound and buzzer switches the moment it opens (and to every TV hello),
+                          BEFORE any lobby. Counted as a game on air, they put TRIVIA, SCAN TO PLAY on the wall while the console still
+                          said Open lobby (16 Nov 2026, INBOX 426 item 3). A lobby and a question carry both anyway. */
+                       sounds:1, buzzer:1,
                        volume:1 };   // a setting, not a game: musical sends it to every TV hello, and after End game it pulled a dead lobby back up (14 Oct 2026)
     /* t:"state" is the awkward one: every format sends it, and it means "here is where things
        stand", which is just as often "nothing is on" as "a game is running". Musical ends a game

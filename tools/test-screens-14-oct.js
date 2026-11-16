@@ -38,6 +38,11 @@ print('\n== 1. a volume setting is not a game on air ==');
   var NOT_ON_AIR = m ? (new Function(m[0] + ' return NOT_ON_AIR;'))() : {};
   ok('"volume" is on it', NOT_ON_AIR.volume === 1);
   ok('a real game message is not', !NOT_ON_AIR.ball && !NOT_ON_AIR.played && !NOT_ON_AIR.question);
+  /* INBOX 426 item 3 (16 Nov 2026): a trivia console opened on a TV that is on the ads sent its saved sound and buzzer switches, which counted as
+     a game on air and put SCAN TO PLAY on the wall before the host opened the lobby. A setting is not a game. */
+  ok('"sounds" (the trivia console opening) is on it', NOT_ON_AIR.sounds === 1);
+  ok('"buzzer" (the trivia console opening, or answering a TV hello) is on it', NOT_ON_AIR.buzzer === 1);
+  ok('CONTROL: "started" and "question" still put a game on air', !NOT_ON_AIR.started && !NOT_ON_AIR.question);
 })();
 
 print('\n== 2. another game\'s traffic on the shared channel is not bingo ==');

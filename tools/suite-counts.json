@@ -1388,7 +1388,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-seat-takeover.js": {
@@ -1745,6 +1745,10 @@
  },
  "tools/trivia-question-space-in-chrome.test.py": {
   "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/trivia-reopen-tv-in-chrome.test.py": {
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/trivia-reveal-in-chrome.test.py": {

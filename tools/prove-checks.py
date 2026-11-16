@@ -7449,10 +7449,20 @@ MUTATIONS = [
      '("They\\u2019re here, pay "+((G.round && G.round.prizeCents!=null) ? money(G.round.prizeCents) : "the jackpot"))',
      '"They\\u2019re here, pay the jackpot"',
      'the members claim button no longer names the jackpot it pays'),
+    # 16 Nov 2026 (INBOX 426 item 3): a trivia console opening does not put SCAN TO PLAY on a TV that is on the ads.
+    ('test-screens-14-oct.js', 'venueplay/tv.html',
+     "                       sounds:1, buzzer:1,", "                       sounds:0, buzzer:1,",
+     'the trivia console saving its sound switch on open puts the join screen on the TV before the lobby is opened'),
+    ('test-screens-14-oct.js', 'venueplay/tv.html',
+     "                       sounds:1, buzzer:1,", "                       sounds:1, buzzer:0,",
+     'the trivia console saying its buzzer switch on open puts the join screen on the TV before the lobby is opened'),
     # 16 Nov 2026 (INBOX 426 items 2, 3, 6): the three Chrome suites. Proved by breaking a scratch copy and running the suite on vp-tests-1.
     ('members-name-console-in-chrome.test.py', 'venueplay/app/members/host.html',
      '((nice(x.name)||"The winner")+" won "', '((x.name||"The winner")+" won "',
      'the real members console Pay step says "Wilson,Mia won $200." as stored'),
+    ('trivia-reopen-tv-in-chrome.test.py', 'venueplay/tv.html',
+     "                       sounds:1, buzzer:1,\n", "",
+     'opening the trivia console again puts TRIVIA, SCAN TO PLAY on the TV that was on the ads'),
     # 16 Nov 2026 (INBOX 426 item 2): the Pay step and the time-up bar read First Last, never "Wilson,Mia".
     ('test-members-console.js', 'venueplay/app/members/host.html',
      '((nice(x.name)||"The winner")+" won "', '((x.name||"The winner")+" won "',
