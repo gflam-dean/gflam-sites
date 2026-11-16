@@ -31,7 +31,7 @@
 var CONSOLE_SRC = readFile('venueplay/app/index.html');
 load('tools/rig-game-worker.js');
 load('tools/rig-bingo-room.js');
-var PASS = 0, FAILN = 0, EXPECT = 119;
+var PASS = 0, FAILN = 0, EXPECT = 121;
 function check(name, cond, saw) {
   if (cond) { PASS++; print('  ok   ' + name); }
   else { FAILN++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + JSON.stringify(saw) : '')); }
@@ -493,9 +493,11 @@ shuffle1to90 = function () { SHUFFLES++; return _shuffle(); };
   var hw2 = bootHostC(saved2, 'host-win'); await advance(3000);
   var nb2 = hw2.$('cwNextBtns').children.map(function (b) { return b.getAttribute('data-next'); }).join();
   check('comes back to the confirmed win and the same choice', !!hw2.G.callerWin && hw2.G.callerWin.step === 'won' && hw2.G.callerWin.pattern === 'one' && hw2.$('callerBlock').classList.contains('winning') && nb2 === 'two,full,', [hw2.G.callerWin, nb2]);
+  check('Before Finish game: the caller grid is live (not dimmed)', !hw2.$('callerBlock').classList.contains('gamedone'));
   var rs0 = hostSent('resume').length, st0 = hostSent('state').length;
   var fin = pickNext(hw2, ''); await advance(500);
   check('Finish this game: the game is done, still One line, and the winner stays on the TV', fin && hw2.G.won === true && !hw2.G.callerWin && hw2.G.pattern === 'one' && hostSent('resume').length === rs0 && hostSent('state').length === st0, { won: hw2.G.won, pattern: hw2.G.pattern });
+  check('After Finish game: the caller grid is dimmed and dead, and a tap on a number calls nothing', hw2.$('callerBlock').classList.contains('gamedone') && (function () { var n0 = hw2.G.draw.length; tap(hw2, 77); return hw2.G.draw.length === n0; })());
   (hw2.$('newGameBtn')._on.click || []).forEach(function (f) { f.call(hw2.$('newGameBtn'), {}); });
   check('New game after finishing on One line: "It finished on One line.", and the button asks "Yes, start a new game"',
         hw2.$('ngWarn').style.display === '' && hw2.$('ngWarn').textContent === 'This game has not reached a full house yet. It finished on One line.' && hw2.$('ngGo').textContent === 'Yes, start a new game',
