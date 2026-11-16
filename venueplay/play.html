@@ -488,7 +488,7 @@
   <!-- JOIN: your name, or your details when the venue collects more -->
   <div class="view hidden" id="vJoin">
     <div class="vp-step">
-      <div class="vp-h" id="joinHead">Your name</div>
+      <div class="vp-h" id="joinHead">Join the game</div>
       <p class="vp-sub hidden" id="joinVenue"></p>
       <p class="vp-sub">You are joining room <b class="mono" id="joinCode">------</b></p>
       <input type="text" class="vp-field" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name">
@@ -1758,7 +1758,7 @@
       /* REAL NIGHTS: no line saying the venue gets the details (Dean 16 Nov 2026); the first-game notice from /app/vp-known.js
          says what venueplay keeps and that a ticked box shares details with that sender. */
       var details=function(){};
-      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:r.known_info, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Your name", after:details }); }
+      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:r.known_info, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Join the game", after:details }); }
       else {
         var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
         box.innerHTML=h;

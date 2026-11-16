@@ -74,7 +74,7 @@ window.fetch = fetch;
 function k(c) { var s = ''; for (var i = 0; i < 64; i++) s += c; return s; }
 function page() {
   BODY.children = [];
-  var head = new El('div'); head.id = 'joinHead'; head.textContent = 'Your name'; BODY.appendChild(head);
+  var head = new El('div'); head.id = 'joinHead'; head.textContent = 'Join the game'; BODY.appendChild(head);
   var nameIn = new El('input'); nameIn.id = 'nameIn'; BODY.appendChild(nameIn);
   var box = new El('div'); box.id = 'joinExtra'; BODY.appendChild(box);
   return { head: head, nameIn: nameIn, box: box };
@@ -112,7 +112,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   var P = page();
   var h = VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
   show('bingo/musical: email and mobile boxes, no first-name box (the name box is the first name)', ids(P.box).join() === 'xEmail,xMobile,xOptin', ids(P.box));
-  show('the name box is on screen and the heading is the page\'s own', P.nameIn.style.display === '' && P.head.textContent === 'Your name');
+  show('the name box is on screen and the heading is the page\'s own', P.nameIn.style.display === '' && P.head.textContent === 'Join the game');
   show('the one tick, unticked, as today', labels(P.box).length === 1 && document.getElementById('xOptin').checked === false);
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: null, kind: 'team', nameIn: P.nameIn, venueName: 'The Royal' });
@@ -123,10 +123,10 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   P = page();
   var INFO = { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, organiser: 'The Royal' };
   var after = null;
-  h = VPKnown.paint({ box: P.box, collect: ALL, info: INFO, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Your name', venueName: 'The Royal', after: function (hh, info) { after = [hh, info]; } });
+  h = VPKnown.paint({ box: P.box, collect: ALL, info: INFO, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Join the game', venueName: 'The Royal', after: function (hh, info) { after = [hh, info]; } });
   var hi = document.getElementById('vpKnownHi');
   show('no name anywhere on the screen, only a small "Not my details" link (Dean 16 Nov, final)', hi && hi.textContent === 'Not my details' && !/alan|welcome|playing as/i.test(shownText()), shownText());
-  show('the page heading is left as it is', P.head.textContent === 'Your name', P.head.textContent);
+  show('the page heading is left as it is', P.head.textContent === 'Join the game', P.head.textContent);
   show('the name box is filled with the first name and out of the way', P.nameIn.value === 'Alan' && P.nameIn.style.display === 'none');
   show('nothing is missing: no boxes at all, and no tick again', ids(P.box).length === 0 && h === '', ids(P.box));
   show('the link is a button that says "Not my details"', !!document.getElementById('vpKnownNotMe') && document.getElementById('vpKnownNotMe').textContent === 'Not my details');
@@ -148,12 +148,12 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   LSD = {}; VPKnown.keep({ known_key: k('b') }); VPKnown.keep({ known_key: k('a') });
   P = page();
   var CUR = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay', current: true }, { party: 'venue', name: 'The Royal', current: false }, { party: 'host', name: 'Quiz Masters Co' }] };
-  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: CUR, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Your name', venueName: 'The Royal' });
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: CUR, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Join the game', venueName: 'The Royal' });
   var cur = labels(P.box).map(function (l) { return l.querySelector('input').checked; });
   show('known: every box shows THAT sender\'s current answer; a new sender (the host) is a fresh, ticked box', cur.join() === 'true,false,true', cur);
   document.getElementById('vpKnownNotMe').click();
   show('the key at that place is forgotten, the other kept', VPKnown.keys().join() === k('b'), VPKnown.keys());
-  show('the name box is back, empty; the heading is the page\'s own', P.nameIn.style.display === '' && P.nameIn.value === '' && P.head.textContent === 'Your name', [P.nameIn.style.display, P.nameIn.value, P.head.textContent]);
+  show('the name box is back, empty; the heading is the page\'s own', P.nameIn.style.display === '' && P.nameIn.value === '' && P.head.textContent === 'Join the game', [P.nameIn.style.display, P.nameIn.value, P.head.textContent]);
   show('the full form: email and mobile', ids(P.box).indexOf('xEmail') >= 0 && ids(P.box).indexOf('xMobile') >= 0, ids(P.box));
   show('every consent box fresh and ticked (the normal empty form)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return l.querySelector('input').checked === true; }));
   show('no hello left', !document.getElementById('vpKnownHi'));
@@ -191,6 +191,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   var np = document.getElementById('vpJoinNotice');
   show('the notice reads, word for word: "By playing you agree to venueplay\'s terms and privacy policy. A ticked box shares your details with that sender for news and offers."', np && np.textContent === "By playing you agree to venueplay's terms and privacy policy. A ticked box shares your details with that sender for news and offers.", np && np.textContent);
   show('...with "venueplay\'s terms and privacy policy" as the link, to the privacy page', np && np.querySelector('a').textContent === "venueplay's terms and privacy policy" && np.querySelector('a').href === '/privacy');
+  show('...a quiet link: the line\'s own colour and weight, no underline (Dean 16 Nov)', np && /color:inherit/.test(np.querySelector('a').getAttribute('style')) && /font-weight:inherit/.test(np.querySelector('a').getAttribute('style')) && /text-decoration:none/.test(np.querySelector('a').getAttribute('style')));
   cap = VPKnown.capture({ first_name: 'Sam' });
   show('the join says which notice it showed', cap.notice_version === 'vpn-3-16nov', cap);
   P = page();

@@ -208,6 +208,8 @@ def phone(game, path, w, h):
         want = ['nameIn', 'xFirst', 'xMobile'] if team else ['nameIn', 'xMobile']
         ok('N %s %s: a venue that collects nothing asks %s' % (game, size, ', '.join(want)), L.get('ids') == want, L.get('ids'))
         ok('N %s %s: no line saying the venue gets the details (only a ticked box shares them, Dean 16 Nov)' % (game, size), 'Your details go to' not in L.get('text', '') and 'go to the venue' not in L.get('text', ''), L.get('text'))
+        ok('N %s %s: the heading is "Join the game" (Dean 16 Nov: never "Your name")' % (game, size), team or L.get('head') == 'Join the game', L.get('head'))
+        ok('N %s %s: the notice link is quiet: the line\'s own colour, no underline' % (game, size), ask(sid, '(function(){ var a=document.querySelector("#vpJoinNotice a"), p=a&&a.parentNode; if(!a) return false; var A=getComputedStyle(a), B=getComputedStyle(p); return A.color===B.color && A.fontWeight===B.fontWeight && A.textDecorationLine==="none"; })()'), '')
         ok('N %s %s: one screen, no scroll, Join on screen' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
         ok('N %s %s: the first-game notice, once, its link on "venueplay\'s terms and privacy policy"' % (game, size), NOTICE['text'] in L.get('text', '') and ask(sid, '!!document.querySelector("#vpJoinNotice a[href=\\"/privacy\\"]")'), L.get('text'))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Alan', 'xFirst': 'Alan', 'xMobile': '0412 345 678'})

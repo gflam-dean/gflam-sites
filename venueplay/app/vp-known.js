@@ -135,7 +135,7 @@
       np.appendChild(d.createTextNode(split ? nt.before : String(nt.text) + " "));
       var na = d.createElement("a");
       na.href = /^\/[a-z0-9\/-]*$/.test(String(nt.href || "")) ? String(nt.href) : "/privacy"; na.target = "_blank"; na.rel = "noopener";
-      na.setAttribute("style", "color:#fff;text-decoration:underline");
+      na.setAttribute("style", "color:inherit;font-weight:inherit;text-decoration:none;padding:6px 0;margin:-6px 0");   // Dean 16 Nov: quiet, exactly like the line around it; still a real link
       na.textContent = String(nt.link || "Privacy policy");
       np.appendChild(na);
       if (split) np.appendChild(d.createTextNode(nt.after));

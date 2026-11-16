@@ -340,7 +340,7 @@
   <!-- JOIN: your name, or your details when the venue collects more -->
   <div class="view hidden" id="vJoin">
     <div class="vp-step">
-      <div class="vp-h" id="joinHead">Your name</div>
+      <div class="vp-h" id="joinHead">Join the game</div>
       <p class="vp-notice hidden" id="joinNotice"></p>
       <input type="text" class="vp-field" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name">
       <div id="joinExtra"></div>
@@ -1281,11 +1281,11 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
         var jn=$("joinNotice"), kn=info && info.known;
         /* REAL NIGHTS: no line saying the venue gets the details (Dean 16 Nov 2026); the first-game notice says it all */
         if((h || kn) && !(r && r.demo)){
-          $("joinHead").textContent="Your details";
+          $("joinHead").textContent="Join the game";
           if(jn) jn.classList.add("hidden");
         } else if(h){
           var vn=((info && info.organiser) || P.venueName || "").trim();
-          if(!kn) $("joinHead").textContent="Your details";
+          if(!kn) $("joinHead").textContent="Join the game";
           if(jn){
             jn.textContent=(vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ";   // the demo only
             var a=document.createElement("a");
@@ -1295,11 +1295,11 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
             jn.classList.remove("hidden");
           }
         } else {
-          $("joinHead").textContent="Your name";
+          $("joinHead").textContent="Join the game";
           if(jn) jn.classList.add("hidden");
         }
       };
-      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:(r && !r.demo) ? r.known_info : null, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Your details", after:details }); }
+      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:(r && !r.demo) ? r.known_info : null, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Join the game", after:details }); }
       else {
         var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
         box.innerHTML=h;

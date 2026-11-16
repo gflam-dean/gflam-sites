@@ -20866,6 +20866,12 @@ MUTATIONS = [
      "  if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right' }, 400);", '',
      "a bad email is stored on the venue's list"),
     # INBOX 416 (Sunday 22 Nov 2026): known phone, first name + mobile at every venue, one consent box per sender
+    ('test-vp-known.js', 'venueplay/app/vp-known.js',
+     'na.setAttribute("style", "color:inherit;font-weight:inherit;text-decoration:none;', 'na.setAttribute("style", "color:#fff;text-decoration:underline;',
+     'the notice link is loud again (white, underlined)'),
+    ('musical-newlook-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '<div class="vp-h" id="joinHead">Join the game</div>', '<div class="vp-h" id="joinHead">Your name</div>',
+     'the musical join screen says Your name again (Dean 16 Nov: Join the game)'),
     ('known-phone-in-chrome.test.py', 'venueplay/app/vp-known.js',
      '        forget(known.ix);\n', '',
      "Not me leaves this venue's key on the phone"),
