@@ -219,7 +219,9 @@
   #callerBlock{display:none}
   #bingoView.callermode #callerBlock{display:block}
   #bingoView.callermode #nextBtn,#bingoView.callermode .lastball,#bingoView.callermode #liveStats,
-  #bingoView.callermode #claimLbl,#bingoView.callermode #claimQueue{display:none}
+  #bingoView.callermode #claimLbl,#bingoView.callermode #claimQueue,#bingoView.callermode #roundPin{display:none}
+  .roundpin{display:inline-block;margin:0 0 10px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
+    font:700 16px/1.3 'Hanken Grotesk',sans-serif;color:var(--text);letter-spacing:.04em}
   #bingoView.callermode #allowEarlyLiveRow{display:none!important}   /* it carries an inline display:flex */
   .callerhead{display:flex;align-items:center;gap:12px;margin:0 0 10px}
   .callerhead .cl{font-family:'Anton',sans-serif;font-size:44px;line-height:1;color:#fff;min-width:2.2ch;text-align:center}
@@ -691,6 +693,9 @@
             <div class="callernote">Tap a number to call it. Hold the last one called, or tap Undo last, to take it back. Somebody shouts BINGO? Tap Winner.</div>
           </div>
           <div class="lbl" id="claimLbl" style="margin-top:18px">Claim queue</div>
+          <!-- THE WINNER CHECK (Dean, 4 Nov 2026): the winner's phone shows the same 4 digits beside their card
+               number. This console and the winner's phone only; never on a TV. Filled by showRoundPin. -->
+          <div class="roundpin hidden" id="roundPin" aria-live="polite"></div>
           <div id="claimQueue"></div>
           <!-- THE CONSOLE ON ONE PHONE SCREEN (Dean, live, 15 Nov 2026: "my one rule is to make everything easier").
                During a game Next number, the last ball and the claim queue come first; the early-calls switch folds
@@ -833,6 +838,7 @@
 <script src="/app/vp-drawrecord.js"></script>
 <!-- VP-DRAW: the regulated bingo code that runs on this tablet (draw, tickets, claim rule, fallback switch). -->
 <script src="/app/vp-draw.js"></script>
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN, this console and the winner's phone only (5 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -2317,7 +2323,7 @@
     // caller:true opens the record as a physical draw (the Worker refuses to hand out a ball on it).
     G.drawOpening=VP.gameApiCall("/host/bingo/draw", G.caller ? { venue_id:v.id, session_id:G.sessionId||null, caller:true } : { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
       .then(function(r){
-        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); }
+        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); (typeof showRoundPin==="function" && showRoundPin()); }
         else if(isRefusal(r)){ G.drawRefused=true; serverRefused(r, "draw"); }
         else goLocalDraw("draw open answered "+(r&&r.status));
       }, function(err){ goLocalDraw("draw open failed: "+(err&&err.message||err)); })
@@ -2446,7 +2452,7 @@
         /* Balls already called on this tablet are NOT posted to this new record: the server never
            failed to call them (it was never asked), so it rightly refuses them (audit, 19 Oct 2026).
            Its record starts here, and a claim that needs those balls is judged on the tablet. */
-        G.drawId=r.json.draw_id;
+        G.drawId=r.json.draw_id; (typeof showRoundPin==="function" && showRoundPin());
         saveGame();
         return { id:G.drawId };
       }
@@ -3459,7 +3465,21 @@
     if(n.length<=1) return n[0]||"";
     return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
   }
+  /* "Round PIN 4821" for this game's draw, from the Worker (vp-winpin.js). Shown on THIS console only:
+     it is never put in a message, because every message reaches the TV. */
+  function showRoundPin(){
+    var el=$("roundPin"); if(!el) return;
+    var did=G.drawId, st=G.pattern||"", key=did+"|"+st;   // each prize has its own PIN (Dean, 5 Nov 2026)
+    if(!did || !st || !window.VPWinPin){ el.classList.add("hidden"); el.textContent=""; el.removeAttribute("data-for"); return; }
+    if(el.getAttribute("data-for")===key && el.textContent) return;
+    VPWinPin.forHost({ draw_id:did, stage:st }).then(function(pin){
+      if(G.drawId!==did || (G.pattern||"")!==st) return;
+      el.textContent=VPWinPin.hostLine(pin); el.setAttribute("data-for", key);
+      el.classList.toggle("hidden", !pin);
+    });
+  }
   function renderClaimQueue(){
+    (typeof showRoundPin==="function" && showRoundPin());   // guarded: suites lift this function and run it alone
     /* ONE TAP, ONE CLAIM. Confirm and "Not this one" redraw this queue at once, so in a tie the next
        claimant's buttons land exactly under the finger, and the second half of a double-tap confirmed
        (or waved off) the OTHER player (audit, 30 Sep 2026). For 700ms after a resolve the new buttons

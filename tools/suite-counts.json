@@ -2306,5 +2306,9 @@
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
   "counted_by": "lines"
+ },
+ "venueplay-backend/worker/winner-pin.test.js": {
+  "checks": 99,
+  "counted_by": "lines"
  }
 }

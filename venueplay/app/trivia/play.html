@@ -150,6 +150,9 @@
      bold right under them, never the small grey line it was. */
   .finalwrap .rankline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:6px}
   .finalwrap .rankline:empty{display:none}
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): big enough for a host to read across a table. */
+  .finalwrap .winpin{font-size:17px;line-height:1.45;color:#fff;margin:12px 0 0;max-width:22em}
+  .finalwrap .winpin b{font-size:22px;letter-spacing:.06em;color:#FFD93D;white-space:nowrap}
   /* win celebration (shared with bingo/musical) */
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
@@ -399,6 +402,7 @@
     <div class="psub" id="finalSub">Thanks for playing tonight</div>
     <div class="scorebox" id="finalScore">0 points</div>
     <div class="rankline" id="finalRank"></div>
+    <div class="winpin hidden" id="finalPin"></div>   <!-- winner check: "Show this to the host: PIN 4821, Quiz Wizards, 1st" (vp-winpin.js); never on a TV -->
     <div class="pnote">The winners are up on the big screen.</div>
   </div>
   <!-- THE VENUE'S AD: one place on every screen that shows one, just above our logo (/app/vp-phonead.js) -->
@@ -434,6 +438,7 @@
 <script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN on the 1st place phone (5 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonekey.js"></script>
@@ -1174,6 +1179,7 @@
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
       $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
+    paintPin(r);   // winner check: 1st place only, and never on 0 points (r is 0 then)
     /* The winner is asked after the claim, not during it (Dean, 12 Nov 2026, INBOX 287.5): when the host ends the game,
        or after a minute; everyone else at once. */
     if(r===1){ if(!P.claimAskT) P.claimAskT=setTimeout(function(){ P.claimAskT=null; try{ if(!$("vFinal").classList.contains("hidden")) askHowItWent(); }catch(e){} }, 60000); }
@@ -1189,6 +1195,22 @@
       VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:"vFinal",
                        gameId:P.gameId, format:"trivia" });
     }catch(e){}
+  }
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): 1ST PLACE ONLY (Dean, 5 Nov 2026: 2nd and 3rd get no PIN
+     and nothing that says they won) shows this game's PIN with the team name and place, asked of the Worker. Never sent anywhere: the channel
+     reaches the TV, and the PIN must never be on a TV. No answer = the final screen as before. */
+  var _pinFor="";
+  function paintPin(rr){
+    var el=$("finalPin"), r=(typeof rr==="number") ? rr : (P.rank||0);
+    if(!el || !window.VPWinPin) return;
+    if(r!==1 || !P.token || !P.gameId || /[?&]demo=1/.test(location.search)){ VPWinPin.paint(el, "", ""); return; }
+    var gid=P.gameId, what=(P.name ? P.name+", " : "")+ordinal(r);
+    if(P.pin && _pinFor===gid){ VPWinPin.paint(el, P.pin, what); return; }
+    VPWinPin.paint(el, "", "");
+    VPWinPin.forPlayer(VP_GAME_API, P.token, { game_id:gid, stage:"final" }).then(function(pin){
+      if(!pin || gid!==P.gameId) return;
+      P.pin=pin; _pinFor=gid; VPWinPin.paint(el, pin, what);
+    });
   }
   /* showFinal(quiet): quiet puts the final-score screen up WITHOUT the celebration, the fanfare, the buzz or the
      rating prompt, and without saying where the player came. Used while the host has the podium up but has not yet
@@ -1220,6 +1242,7 @@
   }
   function quietFinal(note){
     var wrap=$("vFinal"); if(wrap) wrap.classList.remove("winner");
+    paintPin(0);   // no winner PIN while the podium is still to be announced, or when the host ended the game
     $("finalScore").textContent=P.total+" points";
     $("finalEmoji").innerHTML="&#127881;";
     $("finalBig").textContent="That's a wrap";

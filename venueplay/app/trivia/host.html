@@ -54,6 +54,9 @@
 
   .wrap{max-width:1100px;margin:0 auto;padding:22px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  /* THE WINNER CHECK (Dean, 4 Nov 2026): "Round PIN 4821", this console and the winner's phone only. */
+  .roundpin{display:inline-block;margin:0 0 10px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
+    font:700 16px/1.3 'Hanken Grotesk',sans-serif;color:var(--text);letter-spacing:.04em}
   .note{font-size:12px;color:var(--faint);line-height:1.5}
 
   .connect{max-width:420px;margin:6vh auto 0;text-align:center}
@@ -407,6 +410,7 @@
         </div>
         <div class="panel">
           <div class="lbl">Leaderboard</div>
+          <div class="roundpin hidden" id="roundPin" aria-live="polite"></div>   <!-- winner check: never on a TV -->
           <div class="board-h" id="hostBoard"><div class="pempty">Scores appear once the round is under way.</div></div>
         </div>
       </div>
@@ -454,6 +458,7 @@
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-paper-style.js"></script>   <!-- the printed look shared with the musical paper card (INBOX 384/385) -->
 <script src="/app/vp-print.js"></script>
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN, this console and the winner's phone only (5 Nov 2026) -->
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
 <script src="/app/vp-lobby.js"></script>
@@ -775,7 +780,7 @@
       .then(function(snap){
         if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="trivia"){ clearTrivia(); return false; }
         var g=snap.game, q=g.question||null, phase=g.phase||"idle";
-        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id; (typeof showRoundPin==="function" && showRoundPin());
         if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
         if(typeof g.colour==="boolean") G.colour=g.colour;
         G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
@@ -903,7 +908,21 @@
     for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) html+='<span class="pchip">'+esc(p.name)+'</span>'; }
     elx.innerHTML=html;
   }
+  /* "Round PIN 4821" for this game, from the Worker (vp-winpin.js). Shown on THIS console only: it is
+     never put in a message, because every message reaches the TV. */
+  function showRoundPin(){
+    var el=$("roundPin"); if(!el) return;
+    var gid=G.gameId, st="final", key=gid+"|"+st;   // each prize has its own PIN (Dean, 5 Nov 2026)
+    if(!gid || !st || !window.VPWinPin){ el.classList.add("hidden"); el.textContent=""; el.removeAttribute("data-for"); return; }
+    if(el.getAttribute("data-for")===key && el.textContent) return;
+    VPWinPin.forHost({ game_id:gid, stage:st }).then(function(pin){
+      if(G.gameId!==gid || "final"!==st) return;
+      el.textContent=VPWinPin.hostLine(pin); el.setAttribute("data-for", key);
+      el.classList.toggle("hidden", !pin);
+    });
+  }
   function renderBoard(){
+    (typeof showRoundPin==="function" && showRoundPin());   // guarded: suites lift this function and run it alone
     var box=$("hostBoard");
     var B=(G.roundType==="pr" && G.pr) ? G.pr.rows() : G.board;   // a Punters Reckon night scores in its own referee
     if(!B.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
@@ -1326,7 +1345,7 @@
         paper:paperThisRound()   // said for THIS round: printing once no longer makes every later round paper
       });
     }).then(function(r){
-      G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.gameId=r.game_id; (typeof showRoundPin==="function" && showRoundPin()); G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
       G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();

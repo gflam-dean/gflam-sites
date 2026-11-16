@@ -39,6 +39,16 @@ verifyPlayerToken = async function (req) {
   if (!p) { var e = new Error('Invalid player token'); e.status = 401; throw e; }
   return p;
 };
+/* THE WINNER CHECK PIN IS AN HMAC (5 Nov 2026, fix/winner-check-8nov). rig-game-worker.js has no HMAC and
+   its TextEncoder gives empty bytes, which every other scene relies on staying exactly as it is. So the
+   encoder keeps its empty answer and only carries the text beside it (_s), and HMAC-SHA256 signs that text
+   with the harness's SHA (checked against Python in winner-pin.test.js). The secret is the rig's own;
+   winner-pin-in-chrome.test.py works out the expected PIN from it in Python. */
+load('partyplay-backend/worker/_test-sha256.js');
+ENV.SUPABASE_JWT_SECRET = 'rig-winner-pin-secret';
+TextEncoder.prototype.encode = function (s) { var u = new Uint8Array(0); u._s = String(s); return u; };
+globalThis.crypto.subtle.importKey = async function (fmt, k, alg) { return { _k: k._s, alg: alg }; };
+globalThis.crypto.subtle.sign = async function (alg, key, msg) { return new Uint8Array(SHA.hmac(key._k, msg._s)).buffer; };
 var SLUG = 'test-alpha', CODE = fnvVenueCode(SLUG);
 DB = { vp_venues: [{ id: VENUE, name: 'Test Alpha', slug: SLUG, status: 'active', join_code: CODE, au_state: 'QLD', max_players: 100, created_at: '2026-01-01T00:00:00Z' }],
        vp_venue_groups: [], vp_venue_settings: [], vp_sessions: [], vp_players: [], vp_games: [], vp_cards: [], vp_claims: [],
