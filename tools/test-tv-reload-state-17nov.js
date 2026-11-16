@@ -73,3 +73,4 @@ print("\nMEMBERS DRAW: every winner message carries the look, the draw and the j
 })();
 print("\n" + ran + " checks, " + bad + " failed");
 if (bad) throw new Error(bad + " failed");
+print("ALL " + ran + " CHECKS PASSED");   // the line the gate reads (tools/passwording.py)
