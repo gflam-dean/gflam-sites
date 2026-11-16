@@ -3947,6 +3947,7 @@
   }
   function renderGroups(){
     var wrap=$("groupList"); wrap.innerHTML="";
+    loadGroupCredits();
     var clusters=foundingClusters();
     S.openGroups=S.openGroups||{};
     if(!S.groups.length && !clusters.length){ wrap.innerHTML='<div class="empty">No groups or multi-venue accounts yet. Use Create group, or add a second venue to an account from the account page.</div>'; return; }
@@ -3965,6 +3966,8 @@
       var paused=members.filter(function(v){ return v.status==="suspended"; }).length;
       var badges='<span class="badge '+(active?"grouped":"suspend")+'">'+(active?"Active":"Inactive")+'</span>'+
                  '<span class="badge indep">Invoiced by hand &middot; '+esc(neg)+'/player</span>'+
+                 ((g.billing_term==="yearly")?'<span class="badge indep">Yearly</span>':'')+
+                 (gcCents(g.id)>0?'<span class="badge gold">Credit held '+esc(aud(gcCents(g.id)/100))+'</span>':'')+
                  (paused?'<span class="badge suspend">'+paused+' paused</span>':'')+
                  (ds.length?'<span class="badge gold">Discount</span>':'');
       var h='<div class="panel gpanel'+(open?' open':'')+'" data-gid="'+esc(g.id)+'">'+
@@ -3974,6 +3977,7 @@
         h+='<div class="gbody">';
         h+= members.length ? grpVenueTable(members, m.venues, true, "Included") : '<div class="note" style="margin:0">No venues assigned yet.</div>';
         if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
+        h+=groupCreditPanel(g, members);
         h+='<div style="margin-top:14px"><div class="lblk" style="margin:0 0 8px">Assign grouped venues to '+esc(gname)+'</div><div class="checklist">'+venueCheckboxes(g)+'</div>'+
            (canBilling()?'<div class="dform" data-target="group" data-id="'+esc(g.id)+'" style="margin-top:12px"><div class="lblk" style="margin:0 0 8px">Whole-group discount</div>'+discountFormHtml()+'</div>':'')+'</div>';
         h+='</div>';
@@ -4000,6 +4004,50 @@
     wrap.innerHTML = html.length ? html.join("") : '<div class="empty">No group, account or venue matches "'+esc(S.gSearch||"")+'".</div>';
     var gc=$("gCount"); if(gc) gc.textContent=shown+" group"+(shown===1?"":"s")+" and account"+(shown===1?"":"s")+(S.gFilter!=="all"?" ("+S.gFilter+")":"");
   }
+  /* YEARLY CREDIT FOR A GROUP (Dean, 16 Nov 2026, INBOX 419 add-on, migration 199). A group is invoiced by hand, so the credit a cut
+     or a removed pub earns is held here, on the GROUP, for its next yearly invoice. It never sits on the pub and never follows a
+     sold pub to a new owner. The Worker (/admin/group-release) works the value out; this is the form and the total. */
+  function gcCents(gid){ var c=S.groupCredits&&S.groupCredits[gid]; return c?c.cents:0; }
+  function loadGroupCredits(){
+    if(S.gcLoaded) return; S.gcLoaded=true;
+    workerPost("/admin/group-credits",{}).then(function(r){ if(r && r.groups){ S.groupCredits=r.groups; renderGroups(); } });
+  }
+  function groupCreditPanel(g, members){
+    var yearly=g.billing_term==="yearly";
+    var h='<div class="gcform" style="margin-top:14px" data-gcred="'+esc(g.id)+'"><div class="lblk" style="margin:0 0 8px">Yearly term and credit</div>'+
+      '<div class="note" style="margin:0 0 8px">A yearly group that cuts players, or sells or removes a pub, holds the value of the released players as credit on its next yearly invoice. It stays with the group, never with the pub or a new owner. Never a refund.</div>'+
+      '<label class="checkitem">Billing <select data-gterm>'+
+        '<option value="monthly"'+(yearly?"":" selected")+'>Monthly</option><option value="yearly"'+(yearly?" selected":"")+'>Yearly</option></select></label> '+
+      '<label class="checkitem">Year ends <input type="date" data-grenew value="'+esc(g.term_renewal||"")+'"></label> '+
+      '<button class="mini" data-gtermsave="'+esc(g.id)+'">Save term</button>';
+    var c=(S.groupCredits&&S.groupCredits[g.id])||null;
+    if(c && c.rows.length){
+      h+='<div style="margin-top:10px"><b>Credit held for the next yearly invoice: '+esc(aud(c.cents/100))+'</b> <button class="mini" data-gcapply="'+esc(g.id)+'">Taken off the invoice</button><ul style="margin:6px 0 0;padding-left:18px">'+
+        c.rows.map(function(r){ return '<li>'+esc(r.venue_name||"A pub")+': '+esc(r.players_released)+' player'+(r.players_released===1?"":"s")+(r.reason==="yearly_removed"?" (pub sold or removed)":" cut")+', '+esc(aud(r.cents/100))+'</li>'; }).join("")+'</ul></div>';
+    }
+    if(yearly && members.length){
+      h+='<div style="margin-top:10px"><select data-grelvenue>'+members.map(function(v){ return '<option value="'+esc(v.id)+'">'+esc(v.name)+' ('+esc(v.max_players)+')</option>'; }).join("")+'</select> '+
+        '<input type="number" min="1" data-grelto placeholder="new maximum" style="width:120px"> '+
+        '<button class="mini" data-grelcut="'+esc(g.id)+'">Cut players</button> '+
+        '<button class="mini" data-grelrem="'+esc(g.id)+'">Pub sold or removed</button></div>';
+    }
+    return h+'<div class="note" data-gcmsg style="margin-top:6px"></div></div>';
+  }
+  function groupCreditAct(btn, action){
+    var box=btn.closest("[data-gcred]"); if(!box) return;
+    var vid=box.querySelector("[data-grelvenue]").value, to=parseInt(box.querySelector("[data-grelto]").value,10), msg=box.querySelector("[data-gcmsg]");
+    if(action==="cut" && !(to>=1)){ msg.textContent="Enter the new maximum for that pub."; return; }
+    var ask=(action==="removed") ? "Release ALL this pub's players? The credit goes to the group." : "Cut this pub to "+to+" players today? The credit goes to the group.";
+    vpAsk(ask,{ yes:"Record it", no:"Cancel" }).then(function(ok){
+      if(!ok) return; btn.disabled=true;
+      workerPost("/admin/group-release",{ venue_id:vid, action:action, players:to }).then(function(r){
+        btn.disabled=false;
+        if(!r || r.error){ msg.textContent=(r&&r.error)||"Could not record it."; return; }
+        msg.textContent = r.credit_cents ? ("Done. "+aud(r.credit_cents/100)+" held for the group's next yearly invoice.") : "Done. Monthly group: it applies from the next bill, no credit.";
+        S.gcLoaded=false; loadGroupCredits();
+      });
+    });
+  }
   function venueCheckboxes(g){
     // Only grouped venues are safe to reassign (independent venues carry a founding_id and the
     // DB requires exactly one billing parent).
@@ -4017,6 +4065,27 @@
     var gd=e.target.closest("button[data-gdetails]");
     if(gd){ var did=gd.getAttribute("data-gdetails"); S.openVenue=did; S.vSearch=""; if($("venueSearch")) $("venueSearch").value=""; goPane("venues"); renderVenues();
             setTimeout(function(){ var r=document.querySelector('button[data-details="'+did+'"]'); if(r) r.scrollIntoView({block:"center"}); }, 30); return; }
+    var ts=e.target.closest("button[data-gtermsave]");
+    if(ts){
+      var tb=ts.closest("[data-gcred]"), tid=ts.getAttribute("data-gtermsave"), term=tb.querySelector("[data-gterm]").value, ren=tb.querySelector("[data-grenew]").value||null;
+      if(term==="yearly" && !ren){ tb.querySelector("[data-gcmsg]").textContent="Set the date the paid year ends first."; return; }
+      VP.getClient().from("vp_venue_groups").update({ billing_term:term, term_renewal:ren }).eq("id",tid).then(function(r){
+        if(r.error){ tb.querySelector("[data-gcmsg]").textContent="Could not save: "+(r.error.message||r.error); return; }
+        var gg=S.groupById[tid]; if(gg){ gg.billing_term=term; gg.term_renewal=ren; } renderGroups();
+      });
+      return;
+    }
+    var ga=e.target.closest("button[data-gcapply]");
+    if(ga){
+      var gid2=ga.getAttribute("data-gcapply");
+      vpAskText("Mark this group's held credit as taken off its yearly invoice?\n\nType the Xero invoice number (or leave blank).","",{ yes:"Mark as taken", no:"Cancel" }).then(function(inv){
+        if(inv==null) return; ga.disabled=true;
+        workerPost("/admin/group-credits",{ apply_group:gid2, invoice:inv.trim() }).then(function(r){ if(r && r.groups){ S.groupCredits=r.groups; } renderGroups(); });
+      });
+      return;
+    }
+    var gc1=e.target.closest("button[data-grelcut]"); if(gc1){ groupCreditAct(gc1,"cut"); return; }
+    var gc2=e.target.closest("button[data-grelrem]"); if(gc2){ groupCreditAct(gc2,"removed"); return; }
     var va=e.target.closest("button[data-viewas]");
     if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
     if(e.target.closest("button, input, select, textarea, label, a")) return;   // controls inside an open group

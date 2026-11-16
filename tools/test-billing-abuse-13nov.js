@@ -227,9 +227,16 @@ var a1 = call('/account/players', OWNER, { venue_id: V1, players: 100 });
 var firstCharge = liveItemCents();
 var a2 = call('/account/players', OWNER, { venue_id: V1, players: 20 });
 var a3 = call('/account/players', OWNER, { venue_id: V1, players: 100 });
+/* INBOX 419 DECISION (Dean, 16 Nov 2026, Terms line 122): a YEARLY cut releases the players today and HOLDS their value as credit for next
+   year's bill (the Stripe balance, and one row in the credit ledger for the payer). Add 80, release 80, add 80 again: the second add is its own
+   charge, and the release kept its credit. */
 check('b) yearly: add, release, add again: the second add makes its OWN charge', a1.status === 200 && a3.status === 200 && firstCharge > 0 && liveItemCents() === 2 * firstCharge, [firstCharge, S.items]);
-check('b) yearly: the release still banked its credit (unchanged rule)', a2.status === 200 && S.balance < 0, [a2.body, S.balance]);
+check('b) yearly: the release banked its credit and the players went today', a2.status === 200 && S.balance < 0 && a2.body.applied === 'now' && a2.body.credit_cents === -S.balance && a2.body.players === 20, [a2.body, S.balance]);
 check('b) yearly: and the page was told what was really charged', a3.body.charge_cents === firstCharge, a3.body);
+check('b) yearly: ONE ledger row, on the payer (the account), the venue named, held, for exactly the credit posted',
+  (DB.vp_billing_credits || []).length === 1 && DB.vp_billing_credits[0].payer_type === 'founding' && DB.vp_billing_credits[0].payer_id === 'f1'
+  && DB.vp_billing_credits[0].venue_id === V1 && DB.vp_billing_credits[0].status === 'held' && DB.vp_billing_credits[0].cents === a2.body.credit_cents
+  && DB.vp_billing_credits[0].players_released === 80, DB.vp_billing_credits);
 
 /* c) The same REQUEST twice (two tabs, a double click, a resent POST, both read the account before either
       wrote): the second must reuse the first's key so Stripe charges once. Modelled by putting the venue and
@@ -269,7 +276,8 @@ var c1 = S.balance;
 call('/account/players', OWNER, { venue_id: V1, players: 100 });
 call('/account/players', OWNER, { venue_id: V1, players: 20 });
 var credits = S.posts.filter(function (p) { return /balance_transactions$/.test(p.url); });
-check('d) yearly: two releases of the same 80 in one day bank two credits, with two keys', credits.length === 2 && credits[0].key !== credits[1].key && S.balance === 2 * c1, [credits.map(function (p) { return p.key; }), S.balance, c1]);
+check('d) yearly: two releases of the same 80 in one day bank two credits, with two keys, and two ledger rows', credits.length === 2 && credits[0].key !== credits[1].key && S.balance === 2 * c1
+  && (DB.vp_billing_credits || []).length === 2 && DB.vp_billing_credits[0].idem_key !== DB.vp_billing_credits[1].idem_key, [credits.map(function (p) { return p.key; }), S.balance, c1]);
 
 /* ================================================================================================
    B3. The new-pub free month cannot be farmed: a ceiling on one add, the yearly credit never more than was
@@ -378,9 +386,12 @@ worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', ma
 stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 362 * DAY, periodEnd: NOW + 3 * DAY });
 r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 2000, postcode: '4999' });
 var charged = liveItemCents();
-check('e) yearly: the free month credit is never more than was charged for the pub', r.status === 200 && charged > 0 && r.body.free_month_cents === charged && S.balance === -charged, [r.body.free_month_cents, charged, S.balance]);
+/* INBOX 419 (2), 14 Nov 2026: the yearly credit cap is REVERSED. A pub added 3 days before renewal is charged 3 days and still gets its FULL
+   free month (2,000 x $2.85 = $5,700.00 at the standard yearly rate). */
+check('e) yearly: a pub added days before renewal gets a FULL free month, no cap (players x yearly rate)', r.status === 200 && charged > 0 && r.body.free_month_cents === 570000 && r.body.free_month_cents > charged && S.balance === -570000, [r.body.free_month_cents, charged, S.balance]);
 d = call('/account/players', OWNER, { venue_id: bigPub().id, players: 1 });
-check('e) yearly: dropping to 1 inside the free month leaves the account no better off than a cent of rounding', d.status === 200 && given() <= 1, [given(), charged, S.balance]);
+check('e) yearly: dropping to 1 inside the free month takes the unearned share back and leaves the account at most the ONE kept player\'s free month better off (no cap, 419 rule 2)', d.status === 200 && given() <= Math.round(570000 / 2000) && given() > 0 && -S.balance === Math.round(570000 / 2000) + d.body.credit_cents, [given(), charged, S.balance, d.body]);
+check('e) yearly: the 1,999 released players went today (Terms line 122)', d.body.applied === 'now' && bigPub().max_players === 1 && bigPub().pending_players === null, [d.body, bigPub()]);
 /* Control: a yearly pub whose free month is OVER releases players the ordinary way (the release credit only). */
 worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
 stripeReset({ quantity: 40, price: 'price_S_A', periodStart: NOW - 100 * DAY, periodEnd: NOW + 265 * DAY });
@@ -483,6 +494,91 @@ DB.vp_admin_audit.push({ id: 'p2', action: 'permit_register_checked', target: 'v
   detail: { kind: 'raffle', number: 'R1', holder: 'venue', npo_name: '' }, created_at: '2026-11-09T00:00:00Z' });
 var rc2 = null; vpaRegisterChecks(ENV, V1, permits).then(function (x) { rc2 = x; }); for (i = 0; i < 200 && !rc2; i++) drainMicrotasks();
 check('c) control: the one an owner admin recorded is', rc2 && rc2.raffle && rc2.raffle.by === 'Dean' && rc2.raffle.current === true, rc2);
+
+/* ================================================================================================
+   419 (Dean, 14 Nov 2026): the billing calls answered. Rules 2 and 3 are pinned above (yearly free month with no cap, no money
+   back on any player cut). Rule 4 (past_due cannot add a venue) and B8 (a venue that looks like one we have) are here.
+   ================================================================================================ */
+section('419 (4) an unpaid account cannot add a venue, on either plan, in any unpaid state');
+['past_due', 'unpaid', 'incomplete'].forEach(function (st) {
+  ['price_S_M', 'price_S_A'].forEach(function (pr) {
+    worldReset({ plan: pr === 'price_S_A' ? 'annual' : 'monthly' }, [{ id: V1, name: 'Home Pub', postcode: '4000' }]);
+    stripeReset({ sub: { id: 'sub_1', status: st, customer: 'cus_1', price: pr, quantity: 20, periodEnd: 1790000000 } });
+    var ru = call('/account/add-venue', OWNER, { name: 'Brand New Pub', players: 30, postcode: '4003' });
+    check('(4) ' + st + ' on ' + (pr === 'price_S_A' ? 'yearly' : 'monthly') + ': refused, nothing made, nothing charged, pointed at the card',
+      ru.status === 409 && ru.body.update_card === true && !venueNamed('Brand New Pub') && quantityPosts().length === 0 && liveItemCents() === 0 && S.balance === 0, ru);
+  });
+});
+
+section('419 monthly: a cut after the period is paid takes effect next bill and gives nothing back');
+worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 100 }]);
+stripeReset({ quantity: 100 });
+var m1 = call('/account/players', OWNER, { venue_id: V1, players: 40 }, ON);
+check('monthly: the cut is scheduled, the 100 stay until the bill, no credit, no refund, no invoice line',
+  m1.body.applied === 'next_renewal' && m1.body.credit_cents === 0 && venueNamed('Home Pub').max_players === 100 && venueNamed('Home Pub').pending_players === 40 && S.balance === 0 && liveItemCents() === 0, [m1.body, venueNamed('Home Pub'), S.balance]);
+check('monthly: the next bill is for the lower number (quantity lowered now, no proration)', S.sub.quantity === 40 && quantityPosts().every(function (p) { return /proration_behavior=none/.test(p.body); }), [S.sub.quantity, quantityPosts().map(function (p) { return p.body; })]);
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 100 }]);
+stripeReset({ quantity: 100, price: 'price_S_A', periodStart: NOW - 60 * DAY, periodEnd: NOW + 305 * DAY });
+var y1 = call('/account/players', OWNER, { venue_id: V1, players: 40 });
+check('yearly (419 DECISION): NOT the same: the 60 go today, nothing is refunded, their value is held as credit for next year', y1.body.applied === 'now' && y1.body.credit_cents > 0 && venueNamed('Home Pub').max_players === 40 && venueNamed('Home Pub').pending_players === null && S.balance === -y1.body.credit_cents && liveItemCents() === 0, [y1.body, venueNamed('Home Pub'), S.balance]);
+var y2 = call('/account/players', OWNER, { venue_id: V1, players: 70 });
+check('yearly: putting 30 back (40 to 70) charges them from today to the renewal and keeps the credit for the time in between', y2.body.applied === 'now' && y2.body.charge_cents > 0 && venueNamed('Home Pub').max_players === 70 && S.balance === -y1.body.credit_cents, [y2.body, venueNamed('Home Pub'), S.balance]);
+var y3 = call('/account/players', OWNER, { venue_id: V1, players: 120 });
+var y3unit = y3.body.charge_cents / 20;
+worldReset({ plan: 'annual' }, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 100 }]);
+stripeReset({ quantity: 100, price: 'price_S_A', periodStart: NOW - 60 * DAY, periodEnd: NOW + 305 * DAY });
+var y4 = call('/account/players', OWNER, { venue_id: V1, players: 120 });
+check('yearly: after a release the increase is measured from what is billed: 70 to 120 charges 50 players, 100 to 120 charges 20 (same unit price)', y3.status === 200 && y4.status === 200 && y4.body.charge_cents > 0 && Math.abs(y3.body.charge_cents - 2.5 * y4.body.charge_cents) <= 2 && venueNamed('Home Pub').max_players === 120, [y3.body, y4.body]);
+var renewal = S.sub.quantity;
+check('yearly: the Stripe quantity for the next bill is the new total', renewal === 120, renewal);
+
+section('419 B8 a venue that looks like one we already have goes to sales@, never to the customer');
+function simMails() { return sent.filter(function (m) { return (m.to || []).indexOf('sales@venueplay.com.au') !== -1 && /Similar venue/.test(m.subject || ''); }); }
+function twinWorld(other) {
+  worldReset({}, [{ id: V1, name: 'Home Pub', postcode: '4000', max_players: 40 }]);
+  DB.venueplay_founding.push({ id: 'f2', contact_email: 'other@test.local', plan: 'monthly', status: 'card_on_file', stripe_subscription_id: 'sub_2' });
+  DB.vp_venues.push(Object.assign({ id: 'v-other', founding_id: 'f2', group_id: null, name: 'The Big Barn', postcode: '4999', status: 'active', suspended_reason: null,
+    max_players: 30, pending_players: null, cancel_at_period_end: false, slug: 'the-big-barn', created_at: '2025-01-01T00:00:00Z' }, other || {}));
+  stripeReset({ quantity: 40 }); sent.length = 0;
+}
+twinWorld();
+r = call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
+check('B8: the same name and postcode as an active venue on another account: added, one email to sales@', r.status === 200 && simMails().length === 1, [r.status, simMails().length]);
+var sm = simMails()[0] || {};
+check('B8: the email names the venue, the postcode, the account, the other account\'s venue, and says paid', /Big Barn/.test(sm.html || '') && /4999/.test(sm.html || '') && /o@test\.local/.test(sm.html || '') && /The Big Barn/.test(sm.html || '') && /account is paid/.test(sm.html || ''), sm.html);
+check('B8: an add says it was added to an account', /added to an account/.test(sm.html || ''), sm.html);
+check('B8: nothing about it is shown to the customer', !/similar|already have|looks like/i.test(JSON.stringify(r.body)), r.body);
+twinWorld({ status: 'suspended', suspended_reason: 'cancelled', closed_at: new Date(Date.now() - 100 * 86400000).toISOString(), created_at: '2024-01-01T00:00:00Z' });
+call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
+check('B8: a venue cancelled 100 days ago still counts (inside 12 months)', simMails().length === 1, simMails().length);
+twinWorld({ status: 'suspended', suspended_reason: 'cancelled', closed_at: new Date(Date.now() - 500 * 86400000).toISOString(), created_at: '2024-01-01T00:00:00Z' });
+call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
+check('B8: a venue cancelled 500 days ago does not', simMails().length === 0, simMails().length);
+twinWorld({ postcode: '4888' });
+call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
+check('B8: the same name at a different postcode does not', simMails().length === 0, simMails().length);
+twinWorld({ name: 'Barn Owl Hotel' });
+call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '4999' }, ON);
+check('B8: a different name at the same postcode does not', simMails().length === 0, simMails().length);
+twinWorld();
+call('/account/add-venue', OWNER, { name: 'Big Barn', players: 30, postcode: '' }, ON);
+check('B8: no postcode cannot tell two apart, so nothing is raised', simMails().length === 0, simMails().length);
+/* Signing up goes through the same provisioning: an UNPAID account (no card, no subscription) is flagged as unpaid, and once only. */
+twinWorld();
+DB.venueplay_founding.push({ id: 'f3', contact_email: 'prospect@test.local', plan: 'monthly', status: 'pending', stripe_subscription_id: null });
+function provision(f) { var out = null; vpaProvisionOneVenue(ENV, { foundingId: f, groupId: null, name: 'Big Barn', seats: 20, postcode: '4999', authUserId: null }).then(function (x) { out = x; }, function (e) { out = { err: String(e) }; });
+  for (var i = 0; i < 2000 && !out; i++) drainMicrotasks(); return out; }
+var pv = provision('f3');
+check('B8: a sign-up of a venue like an existing one: one email, and it says the account is UNPAID', pv && pv.created === true && simMails().length === 1 && /UNPAID/.test(simMails()[0].html || '') && /unpaid/.test(simMails()[0].subject || ''), [pv, simMails().map(function (m) { return m.subject; })]);
+var pv2 = provision('f3');
+check('B8: the email for a sign-up says it was signed up', /just signed up/.test((simMails()[0] || {}).html || ''), (simMails()[0] || {}).html);
+var twice = null; vpaSimilarVenueAlert(ENV, 'f3', { id: pv.venue.id, name: 'Big Barn', postcode: '4999' }, 'signup').then(function (x) { twice = x; }); for (var ti = 0; ti < 500 && twice === null; ti++) drainMicrotasks();
+check('B8: asked about the same venue a second time, it sends nothing more (once per venue, the audit row is the memory)', twice === false && simMails().length === 1, [twice, simMails().length]);
+check('B8: the same venue sends no second email (the audit row is the memory)', pv2 && pv2.created === false && simMails().length === 1, simMails().length);
+check('B8: and the audit row is written once', DB.vp_admin_audit.filter(function (a) { return a.action === 'similar_venue_alert'; }).length === 1, DB.vp_admin_audit.length);
+twinWorld();
+r = call('/account/add-venue', OWNER, { name: 'Quite Different Pub', players: 30, postcode: '4999' }, ON);
+check('B8: control: an ordinary new venue raises nothing', r.status === 200 && simMails().length === 0, simMails().length);
 
 print('');
 if (bad) throw new Error('billing abuse: ' + bad + ' of ' + ran + ' failed');

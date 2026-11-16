@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '14 Nov 2026, 23:10 · f6e9942b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 11:25 · 1747f962';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -457,6 +457,9 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
+      // A yearly group's player cut or removed pub holds its value as credit on the GROUP (Dean, 16 Nov 2026, INBOX 419 add-on; migration 199).
+      if (request.method === 'POST' && path === '/admin/group-release'   && typeof vpaHandleGroupRelease === 'function')   return await vpaHandleGroupRelease(request, env, json);
+      if (request.method === 'POST' && path === '/admin/group-credits'   && typeof vpaHandleGroupCredits === 'function')   return await vpaHandleGroupCredits(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/permit-register-check' && typeof vpaHandlePermitRegisterCheck === 'function') return await vpaHandlePermitRegisterCheck(request, env, json);
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
@@ -1142,6 +1145,10 @@ async function vpaHandleStripeEvent(env, event) {
   // On each renewal, apply any scheduled player reductions (see the billing screen).
   if (event.type === 'invoice.paid' && typeof vpbApplyPendingOnInvoice === 'function') {
     await vpbApplyPendingOnInvoice(env, event.data.object);
+  }
+  // The renewal takes the yearly credit a cut held: mark those ledger rows applied (INBOX 419 DECISION, migration 199).
+  if (event.type === 'invoice.paid' && typeof vpbMarkCreditsApplied === 'function') {
+    await vpbMarkCreditsApplied(env, event.data.object);
   }
   // On every real payment, email the venue a branded invoice.
   if (event.type === 'invoice.paid' && typeof vpaFireInvoiceEmail === 'function') {
@@ -10164,6 +10171,7 @@ async function vpaProvisionFromCheckout(env, session) {
         timezone: vpaTimezoneFromPostcode(f.postcode),
       });
       stepsDone.push('venue');
+      await vpaSimilarVenueAlert(env, foundingId, { id: venue.id, name: venueName, postcode: f.postcode }, 'signup');
     }
 
     // ---- Default settings (create only if missing). ----
@@ -10466,6 +10474,51 @@ function vpaGuessEntity(name) {
   return null;
 }
 
+/* A VENUE THAT LOOKS LIKE ONE WE ALREADY HAVE (Dean, 14 Nov 2026, INBOX 419 B8 b extended): whenever ANY account signs up or
+   adds a venue that looks like an existing or recent venue (the same name at the same postcode, any account, active
+   now or cancelled/switched off inside the last 12 months), one email goes to sales@ saying so, and whether the
+   account doing it is unpaid. NOTHING is shown to the customer and nothing is blocked: a person decides. The same mail
+   path every HQ alert uses (vpaSendEmail + vpaAlertSubject), once per venue (the audit row is the memory). Best effort,
+   it can never stop a sign-up or an add. Venues store no street address today, so name + postcode is what can be
+   compared; a missing postcode cannot tell two Royals apart and raises nothing. */
+const VPA_SIMILAR_VENUE_MONTHS = 12;
+async function vpaSimilarVenueAlert(env, foundingId, venue, source) {
+  try {
+    const vid = venue && venue.id;
+    if (!vid || !foundingId) return false;
+    const pc = vpVenuePostcode(venue.postcode);
+    if (!pc || !vpVenueKey(venue.name)) return false;
+    const have = await vpaSelect(env, 'vp_admin_audit', 'action=eq.similar_venue_alert&target=eq.' + encodeURIComponent('venue:' + vid) + '&select=id&limit=1');
+    if (have && have.length) return false;
+    const rows = await vpaSelect(env, 'vp_venues', 'postcode=eq.' + encodeURIComponent(pc)
+      + '&select=id,name,postcode,founding_id,status,suspended_reason,created_at,closed_at&limit=1000');
+    const cutoff = Date.now() - VPA_SIMILAR_VENUE_MONTHS * 31 * 86400000;
+    const hits = (rows || []).filter((r) => {
+      if (!r || r.id === vid || vpVenueMatch(venue.name, pc, r.name, r.postcode) !== 'same') return false;
+      if (r.status === 'active') return true;
+      const t = Math.max(Date.parse(r.closed_at || '') || 0, Date.parse(r.created_at || '') || 0);
+      return t >= cutoff;
+    });
+    if (!hits.length) return false;
+    const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email,status,stripe_subscription_id,bill_by_invoice&limit=1');
+    const acct = (fr && fr[0]) || {};
+    const unpaid = acct.status !== 'comp' && !acct.stripe_subscription_id && acct.bill_by_invoice !== true && acct.status !== 'card_on_file';
+    const site = 'https://www.venueplay.com.au';
+    const name = String(venue.name || 'A venue');
+    const list = hits.slice(0, 5).map((h) => '<li>' + vpaEsc(h.name || '') + ' (' + vpaEsc(h.postcode || '') + '), '
+      + (h.status === 'active' ? 'active' : 'off' + (h.suspended_reason ? ' (' + vpaEsc(h.suspended_reason) + ')' : '')) + ', account ' + vpaEsc(h.founding_id || 'none') + '</li>').join('');
+    const html = '<p>' + vpaEsc(name) + ' (' + vpaEsc(pc) + ') was just ' + (source === 'add_venue' ? 'added to an account' : 'signed up')
+      + ' and looks like a venue we already have or had in the last ' + VPA_SIMILAR_VENUE_MONTHS + ' months.</p>'
+      + '<p><b>' + (unpaid ? 'This account is UNPAID (no card or subscription behind it).' : 'This account is paid.') + '</b></p>'
+      + '<p>Account: ' + vpaEsc(acct.contact_email || foundingId) + '</p>'
+      + '<p>Looks like:</p><ul>' + list + '</ul>'
+      + vpaEmailButton(site + '/app/hq.html', 'Open HQ');
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'similar_venue_alert',
+      target: 'venue:' + vid, detail: { name: name, postcode: pc, source: source, unpaid: unpaid, matches: hits.slice(0, 5).map((h) => h.id) } }, false).catch(() => {});
+    return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', 'Similar venue ' + name + (unpaid ? ' (account unpaid)' : '')), html);
+  } catch (_) { return false; }
+}
+
 async function vpaProvisionOneVenue(env, opts) {
   const foundingId = opts.foundingId, groupId = opts.groupId,
         name = opts.name, seats = opts.seats, authUserId = opts.authUserId;
@@ -10517,6 +10570,7 @@ async function vpaProvisionOneVenue(env, opts) {
       compliance_accepted_by: opts.complianceBy || null,
     });
     created = true;
+    await vpaSimilarVenueAlert(env, foundingId, { id: venue.id, name: name, postcode: opts.postcode }, opts.alertSource || 'signup');
   }
 
   const haveSettings = await vpaSelect(env, 'vp_venue_settings',
@@ -13465,6 +13519,11 @@ async function vpbAccountSummary(request, env, json) {
     card_brand: (info && info.brand) || null,
     credit_cents: creditCents,
     credit: '$' + (creditCents / 100).toFixed(2),
+    /* WHERE THE CREDIT CAME FROM (migration 199): each yearly cut that is still held for the next renewal, newest first. The tile's
+       total stays Stripe's own balance, because that is what the renewal really takes off. */
+    credit_ledger: (await vpbHeldCredits(env, 'founding', o.account.id)).map((r) => ({
+      venue: r.venue_name || null, players: r.players_released, cents: r.cents, months_left: r.months_left,
+      date: r.created_at ? vpaFmtDate(Math.floor(Date.parse(r.created_at) / 1000)) : null, reason: r.reason })),
     payment_reminders: o.account.payment_reminders !== false,
     /* A comp account has no subscription and never will, and an HQ-onboarded venue has not added
        a card yet. Both were being shown a monthly total and a next payment date as if they were
@@ -13714,6 +13773,160 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }
 
+/* THE YEARLY CREDIT LEDGER (INBOX 419 DECISION + add-on, Dean 16 Nov 2026; Terms line 122; migration 199, vp_billing_credits).
+   A YEARLY venue or group that cuts players mid-year (or a pub it removes or sells) keeps the value of the released players as
+   CREDIT for the NEXT YEAR's bill, never a refund. THE CREDIT BELONGS TO THE PAYER:
+     - payer_type 'founding': the account whose card pays (its Stripe customer balance is what Stripe takes off the renewal; this row is
+       the record of where each dollar came from). A cut at ANY pub of the account lands here, one pub or five.
+     - payer_type 'group': a vp_venue_groups group (invoiced by hand), written by HQ (vpaHandleGroupRelease). A cut at one of its
+       pubs, or a pub the group sells or removes, lands on the GROUP, never on the pub and never on whoever buys the pub.
+   Only a pub that pays for itself (its own founding account) holds its own credit, and that account is the payer.
+   The value is released players x the yearly rate x 12 x the fraction of the paid year still to run:
+       cents = round(players x rate x 12 x fraction x 100)          (vpbAdjustPlayerBilling is the one place that sizes it)
+   A row is 'held' until the renewal invoice takes it (vpbMarkCreditsApplied, on invoice.paid) and then 'applied'. Writing the ledger
+   can never stop a cut: a database without migration 199 logs and carries on (the Stripe balance still holds the money). */
+async function vpbHoldCredit(env, d) {
+  try {
+    if (!d || !d.payerId || !(d.cents > 0)) return null;
+    const key = d.idemKey || null;
+    if (key) {
+      const have = await vpaSelect(env, 'vp_billing_credits', 'idem_key=eq.' + encodeURIComponent(key) + '&select=id&limit=1');
+      if (have && have.length) return have[0].id;
+    }
+    const row = await vpaInsert(env, 'vp_billing_credits', {
+      payer_type: d.payerType, payer_id: String(d.payerId), venue_id: d.venueId || null, venue_name: d.venueName || null,
+      reason: d.reason || 'yearly_cut', players_released: d.players, rate_cents: d.rateCents || null,
+      months_left: d.monthsLeft == null ? null : d.monthsLeft, cents: d.cents, status: 'held', idem_key: key,
+      term_end: d.termEnd ? new Date(Number(d.termEnd) * 1000).toISOString() : (d.termEndIso || null),
+    });
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: d.actorAdmin || null, actor_label: d.actorLabel || 'system', action: 'credit_held',
+      target: d.payerType + ':' + d.payerId, detail: { venue_id: d.venueId || null, venue: d.venueName || null, reason: d.reason || 'yearly_cut',
+        players: d.players, cents: d.cents, months_left: d.monthsLeft == null ? null : d.monthsLeft, ledger_id: row && row.id } }, false).catch(() => {});
+    return (row && row.id) || null;
+  } catch (e) { console.log('[billing] credit ledger NOT written: ' + (e && e.message)); return null; }
+}
+
+/* The credit a payer is holding, newest first, for the billing page and HQ. Never throws (an unrun migration reads as none). */
+async function vpbHeldCredits(env, payerType, payerId) {
+  try {
+    const rows = await vpaSelect(env, 'vp_billing_credits', 'payer_type=eq.' + encodeURIComponent(payerType)
+      + '&payer_id=eq.' + encodeURIComponent(String(payerId)) + '&status=eq.held&order=created_at.desc&limit=200'
+      + '&select=id,venue_id,venue_name,reason,players_released,cents,months_left,created_at,term_end');
+    return Array.isArray(rows) ? rows : [];
+  } catch (_) { return []; }
+}
+
+/* The renewal invoice takes the credit. Stripe carries it as a negative customer balance and uses it on the next invoice by itself:
+   starting_balance - ending_balance is what THIS invoice used. Only a renewal ('subscription_cycle') takes the yearly credit; the oldest
+   held rows are marked applied first, a row only when the invoice used all of it (a partly used credit stays held for the next bill).
+   Best effort, never throws out of a webhook, and keyed on the invoice so a replayed event marks nothing twice. */
+async function vpbMarkCreditsApplied(env, invoice) {
+  try {
+    if (!invoice || invoice.billing_reason !== 'subscription_cycle' || !invoice.customer) return 0;
+    const used = Number(invoice.ending_balance || 0) - Number(invoice.starting_balance || 0);   // starting -5000, ending -2000: 3000 used
+    if (!(used > 0)) return 0;
+    const fr = await vpaSelect(env, 'venueplay_founding', 'stripe_customer_id=eq.' + encodeURIComponent(String(invoice.customer)) + '&select=id&limit=1');
+    if (!fr || !fr[0]) return 0;
+    const rows = await vpaSelect(env, 'vp_billing_credits', 'payer_type=eq.founding&payer_id=eq.' + encodeURIComponent(String(fr[0].id))
+      + '&status=eq.held&order=created_at.asc&limit=500&select=id,cents');
+    let left = used, n = 0;
+    for (const r of (rows || [])) {
+      if (!(r.cents > 0) || r.cents > left) break;
+      await vpaPatch(env, 'vp_billing_credits', 'id=eq.' + encodeURIComponent(r.id) + '&status=eq.held',
+        { status: 'applied', applied_at: new Date().toISOString(), applied_invoice: String(invoice.id || '') });
+      left -= r.cents; n++;
+    }
+    if (n) await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'credit_applied',
+      target: 'founding:' + fr[0].id, detail: { invoice: invoice.id || null, rows: n, used_cents: used - left } }, false).catch(() => {});
+    return n;
+  } catch (e) { console.log('[billing] credit applied-mark failed: ' + (e && e.message)); return 0; }
+}
+
+/* HQ > Groups: players cut at a pub of a vp_venue_groups group, or a pub the group sells or removes (INBOX 419 add-on).
+   POST /admin/group-release { venue_id, action: 'cut' | 'removed', players? (the new maximum, for a cut) }, owner or accounts only.
+   The group is invoiced by hand (Xero), so there is no Stripe balance: the ledger row IS the credit, and HQ takes it off the group's
+   next YEARLY invoice (the HQ group view shows the total). MONTHLY group: the cut is held for the next bill (pending_players), no
+   credit; a removed pub earns nothing. YEARLY group (billing_term 'yearly', term_renewal set): the lower maximum applies today and
+   the released value, players x the group's negotiated per-player monthly rate x 12 x the fraction of the term left, is written to the
+   GROUP's ledger. The pub's own row is never credited, and a new owner who signs up for the pub starts with no credit. */
+async function vpaHandleGroupRelease(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const venueId = String(b.venue_id || '').trim();
+  const action = b.action === 'removed' ? 'removed' : (b.action === 'cut' ? 'cut' : null);
+  if (!venueId || !action) return json({ error: 'venue_id and action (cut or removed) are required.' }, 400);
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,group_id,founding_id,max_players,pending_players&limit=1');
+  const v = vs && vs[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  if (!v.group_id) return json({ error: 'This venue is not billed through a group. Its own account holds any credit, and it is handled from its billing page.' }, 409);
+  const gs = await vpaSelect(env, 'vp_venue_groups', 'id=eq.' + encodeURIComponent(v.group_id) + '&select=id,name,negotiated_rate_cents,billing_term,term_renewal&limit=1');
+  const g = gs && gs[0];
+  if (!g) return json({ error: 'That group no longer exists.' }, 404);
+  const have = parseInt(v.max_players, 10) || 0;
+  const to = action === 'removed' ? 0 : parseInt(b.players, 10);
+  if (action === 'cut' && !(to >= 1 && to < have)) return json({ error: 'Enter a new maximum between 1 and ' + (have - 1) + '.' }, 400);
+  if (action === 'removed' && !(have > 0)) return json({ error: 'This pub has no players left to release.' }, 409);
+  const released = have - to;
+  const yearly = g.billing_term === 'yearly';
+  if (!yearly) {
+    if (action === 'cut') await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { pending_players: to });
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: actor.actorId, actor_label: actor.label, action: 'group_release_no_credit',
+      target: 'venue:' + venueId, detail: { group: g.id, what: action, from: have, to: to, term: g.billing_term || 'monthly' } }, false).catch(() => {});
+    return json({ ok: true, applied: action === 'cut' ? 'next_bill' : 'none', credit_cents: 0, group: g.name });
+  }
+  /* term_renewal is the DATE the next year's invoice falls on; the paid year ends at the start of that day in Brisbane (UTC+10, no daylight saving). */
+  const end = /^\d{4}-\d{2}-\d{2}/.test(String(g.term_renewal || '')) ? Date.parse(String(g.term_renewal).slice(0, 10) + 'T00:00:00+10:00') : NaN;
+  const rate = Number(g.negotiated_rate_cents);
+  if (!Number.isFinite(end) || !(rate > 0)) return json({ error: 'Set this group\'s yearly renewal date and its rate first, so the credit can be worked out.' }, 409);
+  const frac = Math.max(0, Math.min(1, (end - Date.now()) / (365 * 86400000)));
+  const cents = Math.round(released * rate * 12 * frac);
+  const months = Math.round(frac * 12 * 10) / 10;
+  const gen = await vpbPlayersGeneration(env, venueId);
+  const key = 'grel:' + venueId + ':' + action + released + ':' + to + ':' + String(g.term_renewal) + ':g' + gen;
+  if (action === 'cut') await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { max_players: to, pending_players: null });
+  const id = await vpbHoldCredit(env, { payerType: 'group', payerId: g.id, venueId: venueId, venueName: v.name,
+    reason: action === 'removed' ? 'yearly_removed' : 'yearly_cut', players: released, rateCents: rate, monthsLeft: months, cents: cents,
+    idemKey: key, termEndIso: new Date(end).toISOString(), actorAdmin: actor.actorId, actorLabel: actor.label });
+  await vpaInsert(env, 'vp_admin_audit', { actor_admin: actor.actorId, actor_label: actor.label, action: 'players_reduction_scheduled',
+    target: 'venue:' + venueId, detail: { from: have, to: to, what: action, group: g.id, credit_cents: cents, credit_ledger_id: id, payer: 'group:' + g.id } }, false).catch(() => {});
+  const held = await vpbHeldCredits(env, 'group', g.id);
+  return json({ ok: true, applied: 'now', credit_cents: cents, months_left: months, ledger_id: id, group: g.name,
+                group_credit_cents: held.reduce((n, r) => n + (r.cents || 0), 0) });
+}
+
+/* HQ > Groups: the credit each group is holding for its next yearly invoice. POST /admin/group-credits {} -> { groups: { <group id>: { cents, rows: [...] } } }.
+   Read through the Worker because vp_billing_credits is service-role only. Never throws: an unrun migration reads as none. */
+async function vpaHandleGroupCredits(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  /* { apply_group, invoice }: HQ has taken this group's held credit off its yearly invoice (raised by hand in Xero). Every held row of THAT
+     group is marked applied with the invoice reference, and an audit row says who and how much. Nothing else is touched. */
+  const _b = await vpaBody(request, json);
+  const gb = (_b && _b.ok && _b.body) || {};
+  if (gb.apply_group) {
+    const held = await vpbHeldCredits(env, 'group', String(gb.apply_group));
+    const total = held.reduce((n, r) => n + (r.cents || 0), 0);
+    for (const r of held) {
+      await vpaPatch(env, 'vp_billing_credits', 'id=eq.' + encodeURIComponent(r.id) + '&status=eq.held',
+        { status: 'applied', applied_at: new Date().toISOString(), applied_invoice: String(gb.invoice || 'taken off the group invoice').slice(0, 80) });
+    }
+    if (held.length) await vpaInsert(env, 'vp_admin_audit', { actor_admin: actor.actorId, actor_label: actor.label, action: 'credit_applied',
+      target: 'group:' + gb.apply_group, detail: { rows: held.length, used_cents: total, invoice: gb.invoice || null } }, false).catch(() => {});
+  }
+  let rows = [];
+  try { rows = await vpaSelect(env, 'vp_billing_credits', 'payer_type=eq.group&status=eq.held&order=created_at.desc&limit=1000'
+    + '&select=id,payer_id,venue_id,venue_name,reason,players_released,cents,months_left,created_at'); } catch (_) { rows = []; }
+  const groups = {};
+  (rows || []).forEach((r) => {
+    const g = groups[r.payer_id] || (groups[r.payer_id] = { cents: 0, rows: [] });
+    g.cents += r.cents || 0; g.rows.push(r);
+  });
+  return json({ ok: true, groups: groups });
+}
+
 /* THE FREE MONTH IS FOR THE PLAYERS KEPT THROUGH IT (security review 13 Nov 2026, B3).
    A new pub's first month free is a credit on the customer balance, sized at the add: players x rate (x the
    free days of the next cycle on the monthly pro rata rule; never more than was charged on a yearly plan).
@@ -13725,8 +13938,8 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
        reduction lowers the NEXT bill, which the credit is set against, so the unearned part comes back off.
        (On the old monthly rule the month charged and the month credited sit on the same next bill and
        cancel each other whatever happens, so there is nothing to square and this does nothing.)
-     - yearly: inside the pub's free month, because a yearly release pays the unused players out as credit
-       straight away, which on top of the free month paid out the same players twice.
+     - yearly: inside the pub's free month. (A yearly cut no longer pays anything out, INBOX 419 (3), so this is the one
+       way a cut inside the free month moves money, and it stays: the free month is for the players kept through it.)
    The credit is kept for every player up to the number it was given for (P, worked back from the credit
    and the same rate and days that sized it). Below P the unearned share, credit x (P - players) / P, is
    taken back; raising the players again gives it back. Each adjustment is the difference from the last one
@@ -13753,8 +13966,7 @@ async function vpbFreeMonthTrueUp(env, o, venueId, info, players, opts) {
     if (rate == null) return null;
     let per;
     if (annual) {
-      const frac = Math.max(0, Math.min(1, (Number(info.periodEnd) - atS) / (365 * 86400)));
-      per = Math.min(Math.round(rate * 100), rate * 100 * 12 * frac);
+      per = Math.round(rate * 100);                                 // a whole month a player, uncapped (INBOX 419 (2))
     } else {
       const cycleStart = Number(info.periodEnd);
       const cycleDays = vpbCycleDays(cycleStart, vpbMonthOnS(cycleStart, info.anchor));
@@ -13860,6 +14072,9 @@ async function vpbSetPlayers(request, env, json) {
   const previewOnly = b.preview === true;
 
   const annualPlan = o.account.plan === 'annual';
+  /* THE BASIS (INBOX 419, 16 Nov 2026 decision): MONTHLY measures from what the venue has PAID FOR this month (max_players),
+     because a monthly cut banks nothing. YEARLY measures from what it is billed (a yearly cut releases the players at once and
+     banks their value as credit, Terms line 122), so putting the same players back charges back what was credited. */
   const basis = annualPlan ? billedNow : current;
 
   if (players === current) {
@@ -14009,36 +14224,38 @@ async function vpbSetPlayers(request, env, json) {
     } catch (e) { console.log('[billing] undo check failed, reducing normally: ' + (e && e.message)); }
   }
 
-  /* DECREASE. The two plans genuinely differ here, and conflating them was minting credit.
-     MONTHLY: keep capacity (max_players) until renewal so they are never left short, and no
-     mid-term refund. Lower the Stripe quantity NOW with proration_behavior 'none' so the
-     reduction lands on the NEXT invoice. (Stripe bills in advance, so applying it only at
-     invoice.paid would be one full cycle too late and overcharge them.)
-
-     ANNUAL: the capacity has to go NOW, because the credit is paid out now. Keeping capacity
-     until renewal while banking a pro-rata credit for "unused" players handed back money for
-     players the venue carried on using all year. Worse, the payout shrank as the year ran down
-     while the capacity never moved, so dropping 50 players in January and restoring them in
-     November banked ten months of credit and gave up nothing: the restore only charged the two
-     months left. That was free money on a timer, and it did not even need a loop.
-     Releasing the capacity for real makes the credit honest. Give up 50 players in January, buy
-     them back in November, and you keep the value of the ten months you actually did without. */
+  /* DECREASE. The two plans differ, as Terms line 122 says (Dean, 16 Nov 2026, INBOX 419 DECISION):
+     MONTHLY: the month is paid, so the capacity (max_players) stays until the renewal, the cut is held as pending_players, and the
+     Stripe quantity is lowered now with proration_behavior 'none' so it lands on the NEXT invoice. No credit, no refund.
+     YEARLY: the lower maximum applies FROM THE DAY OF THE CHANGE, nothing is refunded, and the value of the players released for
+     the rest of the year (players x yearly rate x 12 x the fraction of the paid year left) is HELD AS CREDIT for the NEXT YEAR's
+     bill. The credit belongs to the PAYER: this account's Stripe customer (it pays the bill, whichever of its pubs was cut), and it
+     is written to the credit ledger (vp_billing_credits) with the payer and the pub it came from. Releasing the capacity for
+     real is what makes the credit honest: the players come off now, so the credit only ever covers capacity the venue goes
+     without, and putting them back later charges the remainder of the year while the credit for the time in between stays. */
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
     annualPlan ? { max_players: players, pending_players: null } : { pending_players: players });
-  const reducedTotal = await vpbAccountTotal(env, foundingId); // effective total (already reflects this pending)
+  const reducedTotal = await vpbAccountTotal(env, foundingId); // effective total (already reflects this change)
   const dinfo = await vpbSubItem(env, o.account.stripe_subscription_id);
   if (dinfo && dinfo.itemId) {
     await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(dinfo.itemId),
       { quantity: Math.max(reducedTotal, 1), proration_behavior: 'none' });
   }
-  // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
-  // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
-  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0') + ':g' + gen) : null;
+  const dTag = venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo ? (dinfo.periodEnd || '0') : '0') + ':g' + gen;
+  const dAdj = (annualPlan && dinfo) ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name, dTag) : null;
+  let ledgerId = null;
+  if (dAdj && dAdj.kind === 'credit') {
+    ledgerId = await vpbHoldCredit(env, {
+      payerType: 'founding', payerId: foundingId, venueId: venueId, venueName: venue.name, reason: 'yearly_cut',
+      players: basis - players, rateCents: Math.round(vpbRateStrict(env, dinfo.priceId, o.account.plan) * 100),
+      monthsLeft: dAdj.months, cents: dAdj.cents, idemKey: 'prel:' + dTag, termEnd: dinfo.periodEnd,
+    });
+  }
   if (dinfo) await vpbFreeMonthTrueUp(env, o, venueId, dinfo, players, { why: 'reduction' });
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
-    target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
+    target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, credit_ledger_id: ledgerId,
+      payer: annualPlan ? 'founding:' + foundingId : null, actor_user: o.authUserId },
   }, false).catch(() => {});
   return json({ ok: true,
                 credit_failed: (dAdj && dAdj.kind === 'failed') ? true : false,
@@ -14231,7 +14448,7 @@ async function vpbAddVenue(request, env, json) {
     // same-named venue exists at a DIFFERENT postcode, which the block above has just established.
     r = await vpaProvisionOneVenue(env, {
       foundingId: foundingId, groupId: null, name: name, seats: players, postcode: postcode,
-      authUserId: o.authUserId, forceNew: !!(sameName && sameName.length),
+      authUserId: o.authUserId, forceNew: !!(sameName && sameName.length), alertSource: 'add_venue',
     });
     if (!r || !r.created) {
       if (preBefore != null) {
@@ -14382,10 +14599,10 @@ async function vpbAddVenue(request, env, json) {
      a returning venue is now the SAME ROW rather than a new one. */
   if (!newVenueProrata && !reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
-    /* NEVER MORE THAN WAS CHARGED (B3, 13 Nov 2026). On a yearly plan the charge is pro rata to the renewal,
-       so a pub added in the last weeks of the year was charged a few days and credited a whole month: the
-       difference paid the account's other bills. Monthly the charge IS one month, so this changes nothing. */
-    const freeCents = (fRate == null) ? 0 : Math.min(Math.round(fRate * 100) * players, aAdj.cents);
+    /* A FULL FREE MONTH ON A YEARLY PLAN, NO CAP (Dean, 14 Nov 2026, INBOX 419 (2)): the 13 Nov limit of "never more than
+       was charged" is reversed. A pub added a few days before renewal still gets its whole month (players x rate),
+       the way a monthly pub does. The free-month take-back (vpbFreeMonthTrueUp) still squares it if the players go. */
+    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
     if (freeCents > 0) {
       /* KEYED ON THE VENUE ID, which is unique and permanent, so a double click or a client
          retry banks the credit once. vpaProvisionOneVenue is idempotent by name and answers 409

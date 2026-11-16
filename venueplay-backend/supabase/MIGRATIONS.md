@@ -887,3 +887,10 @@ list of ticks (`venueplay:sales,partyplay:venue_support,...`) as well as the thr
 then add). Run AFTER 137. Any order with the billing Worker: until it is run, a device that picks teams is kept on every
 ticket and HQ says why; the named sets keep working. Branch `feature/help-alerts-by-team-2nov`, merged into release/tuesday-17nov 14 Nov 2026. RUN on LIVE by Dean 14 Nov 2026 ~22:50
 (Sydney project) and on the TEST database by main 14 Nov ~23:00 (tools/staging/run-on-test.py). Rollback: in the file.
+
+`venueplay-199-billing-credits.sql` (Dean, 16 Nov 2026, INBOX 419 DECISION + add-on, Terms line 122, branch `fix/thu19-billing-credit`): one new table
+`vp_billing_credits` (the yearly credit ledger, one row per cut, held for the PAYER: a card account or a vp_venue_groups group, never the pub),
+plus `vp_venue_groups.billing_term` ('monthly' default or 'yearly') and `term_renewal` (date) so a hand-invoiced group can be yearly. Service role only
+(RLS on, no policies, no grants). Additive, safe to run twice, existing groups stay monthly. Any order with the billing Worker: until it has run the
+Worker logs and carries on (the Stripe balance still holds the money; only the record and the HQ group credit are missing). Thursday 19 Nov admin/billing
+release. NOT RUN. Rollback: in the file.
