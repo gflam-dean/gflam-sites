@@ -418,6 +418,7 @@ MUTATIONS = [
      '"gap_until": "2026-01-01"',
      'a never-again gap left open past its date'),
     # ---- 22 Nov 2026 (job list row 167): a phone night for the venue's own pattern, "Any 5 numbers", on the rig.
+    # Proven 16 Nov 2026 on the test server vp-tests-1: all four broken together, each named check went red (76 of 86), restored.
     ('any5-phone-claim-in-chrome.test.py', 'venueplay/play.html',
      '    return nm && nm!=="Bingo" ? "I\\u2019ve got "+nm : "I\\u2019ve got bingo";',
      '    return "I\\u2019ve got bingo";',
