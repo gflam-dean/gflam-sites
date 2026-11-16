@@ -2368,7 +2368,7 @@
   "counted_by": "lines"
  },
  "tools/console-start-buttons-in-chrome.test.py": {
-  "checks": 122,
+  "checks": 177,
   "counted_by": "lines"
  },
  "tools/tv-flip-name-in-chrome.test.py": {

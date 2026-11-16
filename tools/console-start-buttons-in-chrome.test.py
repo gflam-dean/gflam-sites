@@ -23,7 +23,7 @@ PNG screenshots of each state at each size go to $VP_SHOTS when it is set.
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
-    VP_SHOTS=/some/dir python3 tools/console-start-buttons-in-chrome.test.py [trivia|musical|bingo|raffle ...]
+    VP_SHOTS=/some/dir python3 tools/console-start-buttons-in-chrome.test.py [trivia|musical|bingo|raffle|members ...]
 """
 import base64, json, os, sys, time
 
@@ -91,14 +91,14 @@ def png(sid, name):
 
 # The last visible piece of content on the page (not the bar, not a fixed header), and whether anything is painted over it.
 LASTLEAF = r'''(function(){ var best=null, bb=-1; var all=document.querySelectorAll("body *");
-  for(var i=0;i<all.length;i++){ var x=all[i]; if(x.closest(".vp-actionbar") || x.children.length) continue; var s=getComputedStyle(x), r=x.getBoundingClientRect();
+  for(var i=0;i<all.length;i++){ var x=all[i]; if(x.closest(".vp-actionbar,.songscroll") || x.children.length) continue; var s=getComputedStyle(x), r=x.getBoundingClientRect();
     if(s.display==="none" || s.visibility==="hidden" || !(r.width>0 && r.height>0) || s.position==="fixed" || x.closest("header,.hidden,script,style")) continue;
     if(x.closest("details:not([open])") && !x.closest("summary")) continue;
     if(r.bottom>bb){ bb=r.bottom; best=x; } }
   if(!best) return JSON.stringify({none:1});
   var r=best.getBoundingClientRect();
   var top=document.elementFromPoint(Math.min(innerWidth-2, r.left+Math.min(10, r.width/2)), Math.min(innerHeight-1, Math.max(0, r.top+r.height/2)));
-  return JSON.stringify({el:best.tagName+(best.id?"#"+best.id:""), h:innerHeight, top:Math.round(r.top), bottom:Math.round(r.bottom), covered: !(top && (top===best || best.contains(top))), sy:Math.round(scrollY)}); })()'''
+  return JSON.stringify({el:best.tagName+(best.id?"#"+best.id:""), h:innerHeight, top:Math.round(r.top), bottom:Math.round(r.bottom), covered: !(top && (top===best || best.contains(top))), barOver: !!(top && top.closest(".vp-actionbar")), by: top ? top.tagName+(top.id?"#"+top.id:"")+"."+String(top.className).slice(0,40)+" in "+(top.closest("[id]")||{}).id : null, txt: best.textContent.slice(0,40), sy:Math.round(scrollY)}); })()'''
 
 
 def fits(sid, game, state, btn_id, want_re, cancel_id=None, want_cancel=False):
@@ -123,6 +123,28 @@ def fits(sid, game, state, btn_id, want_re, cancel_id=None, want_cancel=False):
         ok(tag + ': scrolled to the end, the last line of the console is on screen and the bar does not sit over it',
            'none' not in e and e['top'] >= 0 and e['bottom'] <= e['h'] and not e['covered'], e)
         js(sid, 'window.scrollTo(0,0); true')
+
+
+def on_screen(sid, game, state, ids):
+    """Each id in ids is wholly on screen, page not scrolled, at all three sizes (the End game / Draw fix: the primary action of
+    the running console rides the action bar, and the button the host presses most still shows above it)."""
+    for (w, h, mobile) in SIZES:
+        size(sid, w, h, mobile)
+        for (bid, want_re) in ids:
+            import re
+            m = R.json(sid, MEASURE + '(%s,%s)' % (json.dumps(bid), json.dumps(None)))
+            b = m.get('btn')
+            tag = '%s %s at %dx%d' % (game, state, w, h)
+            if bid == ids[0][0]: png(sid, '%s-%s-%dx%d.png' % (game, state, w, h))
+            ok(tag + ': %s reads "%s"' % (bid, m.get('text') or ''), bool(re.search(want_re, m.get('text') or '')), m)
+            ok(tag + ': %s is wholly on screen with the page not scrolled (bottom %s of %d)' % (bid, b and b['bottom'], m['h']),
+               bool(b) and b['top'] >= 0 and b['bottom'] <= m['h'] and m['sy'] == 0 and b['left'] >= 0 and b['right'] <= m['w'], m)
+        ok(tag + ': nothing runs off the side', m['sw'] <= m['w'], m)
+        js(sid, 'window.scrollTo(0, 99999); true'); time.sleep(0.3)
+        e = R.json(sid, LASTLEAF)
+        ok(tag + ': scrolled to the end, the last line is on screen and the bar does not sit over it', 'none' not in e and e['top'] >= 0 and e['bottom'] <= e['h'] and not e['barOver'], e)
+        js(sid, 'window.scrollTo(0,0); true')
+    size(sid, 390, 844, True)
 
 
 # The last piece of content on each console's set-up, used to prove the page still reaches the end.
@@ -232,6 +254,14 @@ def run_musical():
         tap(host, 'startBtn'); answer_dialogs(host)
         ok('musical: the lobby opens', lobby_open(host), js(host, ERRT))
         fits(host, 'musical', 'lobby', 'startBtn', r'^Start game$', 'cancelLobbyBtn', True)
+        size(host, 390, 844, True)
+        tap(host, 'startBtn'); answer_dialogs(host)
+        ok('musical: a game is running', R.until(host, '!document.getElementById("liveBlock").classList.contains("hidden")', 25) is True, js(host, ERRT))
+        R.until(host, '(function(b){ return !!b && !b.disabled; })(document.getElementById("playNextBtn"))', 20)
+        tap(host, 'playNextBtn'); time.sleep(1.5)
+        ok('musical: a song is played', R.until(host, 'document.querySelectorAll("#playedStrip .pn").length>=1', 20) is True, js(host, ERRT))
+        js(host, 'document.getElementById("hostErrX") && document.getElementById("hostErrX").click(); true')
+        on_screen(host, 'musical', 'running', [('endGameBtn', r'^End game$'), ('playNextBtn', r'song|Play')])
         ok('musical: no script errors on the console', js(host, 'window.__errs.length') == 0, js(host, 'JSON.stringify(window.__errs)'))
     finally:
         R.close()
@@ -255,6 +285,12 @@ def run_bingo():
         tap(host, 'startBtn'); answer_dialogs(host)
         ok('bingo: the lobby opens', lobby_open(host), js(host, ERRT))
         fits(host, 'bingo', 'lobby', 'startBtn', r'^Start calling numbers$', 'cancelLobbyBtn', True)
+        size(host, 390, 844, True)
+        tap(host, 'startBtn'); answer_dialogs(host)
+        ok('bingo: Next number is offered', R.until(host, '(function(b){ return !!b && !b.disabled && b.offsetParent!==null; })(document.getElementById("nextBtn"))', 30) is True, js(host, ERRT))
+        time.sleep(1.2); tap(host, 'nextBtn')
+        ok('bingo: a ball is called', R.until(host, '/1 of 90/.test(document.getElementById("liveCount").textContent)', 15) is True, js(host, ERRT))
+        on_screen(host, 'bingo', 'calling', [('endGameBtn', r'^End game'), ('nextBtn', r'^Next number')])
         ok('bingo: no script errors on the console', js(host, 'window.__errs.length') == 0, js(host, 'JSON.stringify(window.__errs)'))
     finally:
         R.close()
@@ -280,7 +316,32 @@ def run_raffle():
         R.close()
 
 
-RUNS = {'trivia': run_trivia, 'musical': run_musical, 'bingo': run_bingo, 'raffle': run_raffle}
+def run_members():
+    global R
+    print('\nMEMBERS DRAW')
+    R = new_rig(('/app/members/host.html',))
+    try:
+        W = R.W; seed(W)
+        t1, tv = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
+        made = W.ask('POST', '/host/members/settings', {'venue_id': W.info['venue'], 'name': 'Thursday draw', 'current_jackpot_cents': 20000}, {})['body']
+        did = (made.get('draw') or {}).get('id')
+        names = ['Smith, Ann', 'Jones, Bob', 'Brown, Cath', 'Nguyen, Dan', 'Lee, Eve', 'Taylor, Finn']
+        W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'number': 101 + i, 'name': nm} for i, nm in enumerate(names)]}, {})
+        def table(name):
+            with W.lock:
+                W.p.stdin.write(json.dumps({'table': name}) + '\n'); W.p.stdin.flush()
+                return json.loads(W.p.stdout.readline())['body']
+        for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members'): R.db[t] = table(t)
+        t2, host = R.open('/app/members/host.html', width=390, height=844)
+        ok('members: the console loads', R.until(host, '!!document.getElementById("drawBtn") && document.getElementById("drawBtn").offsetParent!==null', 60) is True, js(host, ERRT))
+        time.sleep(2)
+        on_screen(host, 'members', 'setup', [('drawBtn', r'^Draw$')])
+        ok('members: no script errors on the console', js(host, 'window.__errs.length') == 0, js(host, 'JSON.stringify(window.__errs)'))
+    finally:
+        R.close()
+
+
+RUNS = {'trivia': run_trivia, 'musical': run_musical, 'bingo': run_bingo, 'raffle': run_raffle, 'members': run_members}
 
 
 def source_checks():
@@ -295,7 +356,7 @@ def source_checks():
     ok('bingo claim card: Confirm winner comes before the ticket picture in the card', 0 <= i < j, [i, j])
     k = blk.find('data-act="reject"')
     ok('bingo claim card: and so does Play on / Not this one', 0 <= k < j, [k, j])
-    for page in ('trivia/host.html', 'musical/host.html', 'raffle/host.html', 'index.html'):
+    for page in ('trivia/host.html', 'musical/host.html', 'raffle/host.html', 'index.html', 'members/host.html'):
         h = open(os.path.join(ROOT, 'venueplay', 'app', page), encoding='utf-8').read()
         ok('%s links the shared action bar stylesheet' % page, '/app/vp-actionbar.css' in h and 'class="vp-actionbar"' in h, page)
 

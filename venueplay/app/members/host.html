@@ -183,6 +183,7 @@
 <link rel="stylesheet" href="/app/vp-select.css">
 <!-- The raffle and members draw consoles' new look, one copy (9 Nov 2026). Linked last so it is the answer. -->
 <link rel="stylesheet" href="/app/vp-drawhost.css">
+<link rel="stylesheet" href="/app/vp-actionbar.css">
 </head>
 <body>
 <header>
@@ -393,8 +394,8 @@
         <button type="button" class="btn ghost hidden" id="cdCancel">Cancel countdown</button>
       </div>
       <p class="tvline hidden" id="tvLine" role="status" aria-live="polite"></p>
-      <button class="btn pink xl" id="drawBtn">Draw</button>
-      <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button>
+      <div class="vp-actionbar" id="drawBar"><button class="btn pink xl" id="drawBtn">Draw</button>
+      <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button></div>
         <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
              on a kiosk tablet behind its lock screen blocks the whole console (live audit, 16 Oct 2026). -->
         <div class="ask hidden" id="drawAgainAsk" role="dialog" aria-modal="true" aria-labelledby="drawAgainTitle">
