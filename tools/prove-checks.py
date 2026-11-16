@@ -432,8 +432,8 @@ MUTATIONS = [
      "  if (false) { row.custom_pattern_id = custom.id; row.custom_pattern = { name: custom.name, rule: custom.rule }; }",
      'a custom-pattern claim is written without its rule and name, so the record cannot say what was won'),
     ('any5-phone-claim-in-chrome.test.py', 'venueplay/play.html',
-     '<p class="vp-wait">Show this screen to the host to claim</p>',
-     '<p class="vp-wait">Show this screen to the bar to claim</p>',
+     '<p class="vp-wait" id="wonSub">Show this screen to the host to claim</p>',   # id from the winner PIN (fix/winner-pin-22nov), merged 16 Nov
+     '<p class="vp-wait" id="wonSub">Show this screen to the bar to claim</p>',
      'the winner\'s phone sends them to the bar instead of the host'),
     # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
     # plays a 3 question quiz on the browser rig (tv.html with the wall in its frame, two phones) and keeps a timeline.
