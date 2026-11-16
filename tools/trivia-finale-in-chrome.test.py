@@ -5,16 +5,20 @@ The logic is held by tools/test-trivia-endnight.js (jsc). This suite PLAYS it: t
 /tv (the trivia screen in its frame) and real phones, on the browser rig (tools/browser-rig/rig.py: the real game Worker in
 jsc, a stand-in database, realtime between windows). What Dean asked for, each as a question about a screen:
 
-  SCENE 1, the Game settings as a venue that never touched them has them (both ON, INBOX 78), three teams:
-    - between questions the WHOLE leaderboard comes up on the TV ("Show the leaderboard after each round", default ON)
+  SCENE 1, the Game settings as a venue that never touched them has them (both ON, INBOX 78), three teams, a 12 question
+  night (a phone night has a round every 10 questions):
+    - THE ROUND RULE (Dean, 7 Nov 2026, settled: "The leaderboard should show every round only", "They should do a podium
+      every round"): after an ordinary answer mid-round nothing rolls to the board (8 s after question 1's answer the TV is
+      still on the answer); at question 10, the end of round 1, "Top three after round 1" (the podium), then
+      "Leaderboard after round 1" with all three teams, and no phone is sent to its end-of-night screen
     - the LAST answer stays up: no leaderboard over it, and the console says "Final scores come up in 0:2x"
     - nobody taps: about 30 s after the last answer the TV covers the podium by itself ("And the winners are"), the
       console's Reveal leaderboard pulses and says "TV reveals by itself in 1:2x if you don't tap"
     - ONE tap and the TV runs it by itself: "In third place", "In second place", "And the winner is", then the winner
     - the phones are told their place only when the TV gets to the winner (no spoiler), then 1st/2nd/3rd
     - "Show the whole leaderboard now" (small, secondary) brings the whole leaderboard up, every team on it
-  SCENE 2, both switched OFF in Game settings, two teams:
-    - no leaderboard between questions
+  SCENE 2, both switched OFF in Game settings, two teams, 12 questions:
+    - no leaderboard after an ordinary answer, and none (no podium either) at the end of round 1
     - nobody taps: the last answer holds about 30 s, then the WHOLE leaderboard comes up by itself, no 3-2-1 suspense
   SCENE 3, HOST ONLY (no phones joined): the last answer, then Reveal leaderboard is calm (no podium of nobody, no
     "Scores could not be loaded"), and nothing throws.
@@ -126,9 +130,11 @@ def setup(prefs_trivia, n_questions=2):
         W.p.stdin.write(json.dumps({'now': int(time.time() * 1000)}) + '\n'); W.p.stdin.flush(); W.p.stdout.readline()
     R.db['vp_question_sets'] = [{'id': SET, 'title': 'Pub Classics', 'question_count': n_questions, 'visibility': 'public', 'owner_venue_id': W.info['venue'], 'status': 'active'}]
     W.seed('vp_question_sets', R.db['vp_question_sets'])
-    W.seed('vp_questions', [
-        {'id': 'q-1', 'set_id': SET, 'seq': 1, 'question': 'Which colour?', 'text': 'Which colour?', 'options': ['Red', 'Green', 'Blue', 'Gold'], 'correct_index': 2},
-        {'id': 'q-2', 'set_id': SET, 'seq': 2, 'question': 'Which animal?', 'text': 'Which animal?', 'options': ['Cat', 'Dog', 'Emu', 'Roo'], 'correct_index': 3}][:n_questions])
+    qs = [{'id': 'q-1', 'set_id': SET, 'seq': 1, 'question': 'Which colour?', 'text': 'Which colour?', 'options': ['Red', 'Green', 'Blue', 'Gold'], 'correct_index': 2}]
+    qs += [{'id': 'q-%d' % i, 'set_id': SET, 'seq': i, 'question': 'Question %d: which number?' % i, 'text': 'Question %d: which number?' % i,
+            'options': ['One', 'Two', 'Three', 'Four'], 'correct_index': i % 4} for i in range(2, n_questions)]
+    qs += [{'id': 'q-%d' % n_questions, 'set_id': SET, 'seq': n_questions, 'question': 'Which animal?', 'text': 'Which animal?', 'options': ['Cat', 'Dog', 'Emu', 'Roo'], 'correct_index': 3}]
+    W.seed('vp_questions', qs[:n_questions])
     W.ask('POST', '/host/gaming/declare', {'venue_id': W.info['venue'], 'format': 'trivia', 'state': 'QLD', 'category_claimed': 'test rig'}, {})
     W.seed('vp_venue_screen', [{'venue_id': W.info['venue'], 'slug': W.info['slug'], 'slides': [], 'logo_url': None}], replace=True)
     t = {'buzzer': False, 'count': n_questions, 'time_s': 20, 'speed_bonus': True}
@@ -201,22 +207,59 @@ def phone_final(ph):
     return js(ph, '(function(){var v=document.getElementById("vFinal"); return (v && !v.classList.contains("hidden")) ? v.innerText.replace(/\\s+/g," ") : "";})()') or ''
 
 
+NQ = 12          # a phone night has a round every 10 questions (Dean, 7 Nov 2026): 12 crosses the end of round 1
+ROUND_END = 10
+BOARD_ANY = 'Leaderboard|Top three after round|In third place|And the winners are|Winners'
+
+
+def play_round_one(host, tv, phones, points, round_board):
+    """Questions 1 to ROUND_END, the way a host plays them, with the round rule checked on the TV as it goes: question 1's
+    answer stays up (nothing rolls to the board mid-round, whatever the switch); at ROUND_END the podium then the
+    whole board when the switch is ON, nothing when it is OFF."""
+    tag = 'ON' if round_board else 'OFF'
+    names = [n for n, _ in phones]
+    ask_question(host, phones, 1, NQ, points)
+    time.sleep(8)
+    ok('round board %s, mid-round: 8 s after question 1\'s answer the TV is still on the answer, no podium or leaderboard rolled up' % tag,
+       js(tv, F_HAS(BOARD_ANY)) is False and js(tv, F_HAS('Question 1 of %d' % NQ)) is True, js(tv, F_TEXT))
+    tv_shots(tv, 's%d-r1-01-mid-round' % (1 if round_board else 2))
+    for n in range(2, ROUND_END):
+        ask_question(host, phones, n, NQ)
+    time.sleep(6)
+    ok('round board %s: still nothing rolled to the board by question %d\'s answer (one before the round ends)' % (tag, ROUND_END - 1),
+       js(tv, F_HAS(BOARD_ANY)) is False, js(tv, F_TEXT))
+    ask_question(host, phones, ROUND_END, NQ)
+    t_end = time.time()
+    if round_board:
+        pod = R.until(tv, F_HAS('Top three after round 1'), 15)
+        ok('question %d, the end of round 1: the podium comes up on the TV, "Top three after round 1"' % ROUND_END, pod is True, js(tv, F_TEXT))
+        tv_shots(tv, 's1-r1-02-podium')
+        brd = R.until(tv, F_HAS('Leaderboard after round 1') + ''.join(' && ' + F_HAS(n) for n in names), 22)
+        took = time.time() - t_end
+        ok('then "Leaderboard after round 1" with every team on it (%s), %.0f s after the answer' % (', '.join(names), took), brd is True, js(tv, F_TEXT))
+        tv_shots(tv, 's1-r1-03-board')
+        ok('and no phone is sent to its end-of-night screen at the end of a round (the night is not over)',
+           all(not phone_final(p) for _, p in phones), [phone_final(p) for _, p in phones])
+    else:
+        time.sleep(18)   # past the 5.2 s hand-off and the 10 s podium-to-board step the ON switch would take
+        ok('round board OFF: at question %d, the end of round 1, no podium and no leaderboard on the TV (%.0f s after the answer)' % (ROUND_END, time.time() - t_end),
+           js(tv, F_HAS(BOARD_ANY)) is False, js(tv, F_TEXT))
+    for n in range(ROUND_END + 1, NQ + 1):
+        ask_question(host, phones, n, NQ)
+
+
 def scene_defaults():
-    print('\nSCENE 1: Game settings untouched (suspense reveal ON, leaderboard after each round ON), three teams')
-    W, tv, host = setup({})
+    print('\nSCENE 1: Game settings untouched (suspense reveal ON, leaderboard after each round ON), three teams, %d questions' % NQ)
+    W, tv, host = setup({}, NQ)
     phones = join((('A', 'Quiz Wizards'), ('B', 'Slow Coaches'), ('C', 'Late Starters')))
-    ask_question(host, phones, 1, 2, {'Quiz Wizards': 900, 'Slow Coaches': 600, 'Late Starters': 300})
-    ok('between questions the WHOLE leaderboard comes up on the TV, all three teams (round board ON by default)',
-       R.until(tv, F_HAS('Leaderboard') + ' && ' + F_HAS('Quiz Wizards') + ' && ' + F_HAS('Late Starters'), 15) is True, js(tv, F_TEXT))
-    tv_shots(tv, 's1-01-round-board')
-    ask_question(host, phones, 2, 2)
+    play_round_one(host, tv, phones, {'Quiz Wizards': 900, 'Slow Coaches': 600, 'Late Starters': 300}, True)
     t_last = time.time()
     line = R.until(host, '(function(t){ return /^Final scores come up in 0:[0-3][0-9]$/.test(t) ? t : ""; })(%s)' % FIN_LINE, 8)
     ok('the console says "Final scores come up in 0:2x" under Reveal leaderboard', bool(line) and line is not True and str(line).startswith('Final scores come up in 0:'), [line, text(host)])
     time.sleep(max(0, t_last + 9 - time.time()))
     ok('9 s after the last answer it is STILL the last answer on the TV: no leaderboard, no podium over it',
-       js(tv, F_HAS('Leaderboard|In third place|And the winners are|Winners')) is False and js(tv, F_HAS('Question 2 of 2')) is True and js(tv, F_HAS('Correct answer')) is True, js(tv, F_TEXT))
-    tv_shots(tv, 's1-02-last-answer-holds'); c = console_shots(host, 's1-02-last-answer')
+       js(tv, F_HAS('Leaderboard|In third place|And the winners are|Winners')) is False and js(tv, F_HAS('Question %d of %d' % (NQ, NQ))) is True and js(tv, F_HAS('Correct answer')) is True, js(tv, F_TEXT))
+    tv_shots(tv, 's1-04-last-answer-holds'); c = console_shots(host, 's1-04-last-answer')
     for w, f in c.items():
         ok('console at %d wide: no sideways drift (page %s, window %s)' % (w, f.get('sw'), f.get('cw')), f.get('sw', 0) <= f.get('cw', 0) and f.get('x', 0) == 0, f)
     # nobody taps: the suspense screen comes up by itself at 30 s
@@ -264,13 +307,10 @@ def scene_defaults():
 
 
 def scene_off():
-    print('\nSCENE 2: both switched OFF in Game settings, two teams, nobody taps at the end')
-    W, tv, host = setup({'end_suspense': False, 'round_board': False})
+    print('\nSCENE 2: both switched OFF in Game settings, two teams, %d questions, nobody taps at the end' % NQ)
+    W, tv, host = setup({'end_suspense': False, 'round_board': False}, NQ)
     phones = join((('A', 'Quiz Wizards'), ('B', 'Slow Coaches')))
-    ask_question(host, phones, 1, 2, {'Quiz Wizards': 800, 'Slow Coaches': 500})
-    time.sleep(8)
-    ok('round board OFF: no leaderboard on the TV between questions (8 s after the answer)', js(tv, F_HAS('Leaderboard')) is False, js(tv, F_TEXT))
-    ask_question(host, phones, 2, 2)
+    play_round_one(host, tv, phones, {'Quiz Wizards': 800, 'Slow Coaches': 500}, False)
     t_last = time.time()
     tv_shots(tv, 's2-01-last-answer'); console_shots(host, 's2-01-last-answer')
     time.sleep(10)

@@ -1788,7 +1788,7 @@
   "counted_by": "lines"
  },
  "tools/tv-first-slide-in-chrome.test.py": {
-  "checks": 33,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/tv-fullbleed-in-chrome.test.py": {
@@ -2336,7 +2336,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-finale-in-chrome.test.py": {
-  "checks": 69,
+  "checks": 145,
   "counted_by": "lines"
  },
  "tools/trivia-round-podium-in-chrome.test.py": {

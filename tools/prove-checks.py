@@ -18402,6 +18402,11 @@ MUTATIONS = [
     ('tv-first-slide-in-chrome.test.py', 'venueplay/tv.html',
      '      } else if(!on && arriving && s.classList.contains("show")) under.push(s);\n', '      }\n',
      'a rebuild inside a hand-over takes the old slide away under the new one, and the floor shows through'),
+    # ---- 16 Nov 2026, release gate (release/sun-22nov): ONE saw the broken picture LIT at 118 ms. The clock's slide was lit
+    # before its picture's check had answered. Broken on vp-tests-1: SLOW PICTURE went red (lit for the whole 3 s wait).
+    ('tv-first-slide-in-chrome.test.py', 'venueplay/tv.html',
+     '  function adReady(s){ try{', '  function adReady(s){ return true; try{',
+     'in Chrome, a picture slide is lit before its picture has loaded, so a broken one is on the wall while its error is on the way'),
     # ---- 2 Nov 2026 (Dean): a square or tall venue logo, the venueplay mark drops so the two are centred on
     # each other, on every TV screen: one helper, VPVenueLogo.alignMark in /app/vp-venuelogo.js.
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-venuelogo.js',
@@ -19093,10 +19098,18 @@ MUTATIONS = [
      'in Chrome, the last answer is covered by the final scores after 3 s, not held 30 s'),
     ('trivia-finale-in-chrome.test.py', 'venueplay/app/vp-trivia-finale.js',
      '  var DEFAULTS = { end_suspense: true, round_board: true };', '  var DEFAULTS = { end_suspense: true, round_board: false };',
-     'in Chrome, a venue that never touched Game settings gets no leaderboard between questions'),
+     'in Chrome, a venue that never touched Game settings gets no podium and no leaderboard at the end of round 1 (question 10)'),
     ('trivia-finale-in-chrome.test.py', 'venueplay/app/trivia/host.html',
      'var sk=el("button","btn ghost finskip"', 'var sk=el("button","btn pink finskip"',
      'in Chrome, "Show the whole leaderboard now" is a loud pink button, not the small quiet one Dean asked for'),
+    # 16 Nov 2026: scene 1 rewritten to the round rule (Dean, 7 Nov 2026: the leaderboard at the end of a round only, a round
+    # every 10 questions), 12 questions. Each broken on vp-tests-1 and the named check went red, then restored.
+    ('trivia-finale-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '      var rEnd = !isLast && roundEnds(qnow) && G.roundBoard!==false, rn = roundOf(qnow);', '      var rEnd = !isLast && G.roundBoard!==false, rn = roundOf(qnow);',
+     "in Chrome, mid-round the podium rolls up after question 1's answer (a board after every answer, not every round)"),
+    ('trivia-finale-in-chrome.test.py', 'venueplay/app/trivia/host.html',
+     '      var rEnd = !isLast && roundEnds(qnow) && G.roundBoard!==false, rn = roundOf(qnow);', '      var rEnd = !isLast && roundEnds(qnow) && true, rn = roundOf(qnow);',
+     'in Chrome, a venue that switched the round board OFF still gets the podium at the end of round 1'),
     ('test-trivia-endnight.js', 'venueplay/app/vp-trivia-finale.js',
      'boardAfterWinner: 60000,', 'boardAfterWinner: 30000,',
      'end of the night: the whole leaderboard comes up 30 seconds after the winner, not the 60 Dean asked for'),
