@@ -113,3 +113,47 @@ offline test (`jsc tools/test-outbox-guard.js`, `jsc tools/test-vp-env.js`, and 
 5. **TV test app.** `python3 tools/staging/make-tv-test-build.py --tv-apps ~/venueplay-tv-apps --out ~/venue-enrich/reports/tv-test-build`, sign with Dean's "venueplay" certificate profile, sideload to the Kogan (commands are printed).
 6. **Turn the gate line on.** When the match check first says MATCH: `touch tools/staging/STAGING-ON`, commit it. From then every release needs a fresh `test-snapshot.json` (README, "before EVERY release").
 7. **Test phone numbers** in Supabase (Auth, Phone, Test phone numbers) are `61491570001` and `61491570002` (the seed's host and manager).
+
+## Added 16 Nov 2026: venues that look like real pubs, played like a real night
+
+Dean, 16 Nov: "on the test server you do maybe 2-3 different venues with logos etc", then "maybe two venues and then
+sign up a new one". On 15 Nov live faults (a doubled logo, the buzzer) could not be seen on staging because the one
+staging venue had no logo, no slides and no sound. Everything here writes to the TEST project only (each script refuses
+any other) and plays in a headless Chrome on the test server vp-tests-1, never on Dean's Mac.
+
+| File | What |
+|---|---|
+| `seed-real-venues.py` | Makes / refreshes two TEST venues, mostly through the staging Workers' own routes as the test host. **Stage Mini Bar** (QLD, `5eed00b2-0000-4000-8000-0000000000a1`, slug `stage-mini-bar`): dark wordmark logo on transparent (`--logo box` = the same in a white box), 4 slides incl. a scan-to-join slide, What's on with 3 nights, sounds and the buzzer ON, raffle race look, members flip look, 20 members, a host login (0491 570 002) with a Hosted by card. **Stage Harbour Hotel** (NSW, `5eed00b2-0000-4000-8000-0000000000b1`, slug `stage-harbour-hotel`): no logo, raffle authority (charity) + trade promotion number recorded, 30 members written `Last,First`, draw moments and winner takes the screen ON, a purchase raffle set up to start in 2 days. `--check` reads back. Idempotent (fixed ids `5eed00b*`). |
+| `real-venues/` | The made-up logos and slides it uploads (never a real venue's). |
+| `real-venues-play.py` | Plays trivia, musical bingo, bingo, raffle, members draw at one venue, host only with 0 phones and with 2 phones. Saves every TV frame at 1920x1080 and 1280x720 (two TVs), the console at 390x844 and 375x667, the phones. Counts on every TV frame how often the venue shows (logo, name in words, Hosted by) and flags more than once; says when the console's main button is below the screen. |
+| `real-venues-sheet.py` | The contact sheet (index.html) per run and a day index. |
+| `real-venues-signup.py` | A fresh public sign-up from the staging home page ("Stage New Pub <ddmm>", VIC, fiction mobile, @example.invalid), taps counted, then the card (Stripe TEST mode only, test card 4242), sign-in by the staging test path, the setup wizard, its first trivia game. Older sign-ups get " (old sign-up)" on their name. |
+| `real-venues-run.py` | The run sheet as one command (below). |
+
+Run it (from the Mac, any worktree with these files):
+
+    python3 tools/staging/real-venues-run.py --seed                 refresh the venues, play both, build the sheets
+    python3 tools/staging/real-venues-run.py stage-harbour-hotel    one venue
+    python3 tools/staging/real-venues-run.py --games trivia --modes nophone stage-mini-bar
+    python3 tools/staging/real-venues-signup.py                     the fresh sign-up on its own
+
+Sheets: `~/venue-enrich/reports/staging-real-venues-<date>/index.html`. A person LOOKS at every frame: a check that
+reads words is not the test (15 Nov).
+
+### The Kogan TV on staging, for a sound check (the installed store app is not touched)
+
+The Kogan is a Tizen 7 TV (not Android). Its store app `VenuePlyTV.venueplayTV` has the live site written in and no
+way to change it. A second app, "venueplay TV (test)" (`VnPlyTest1.venueplayTVtest`, own package, points only at
+https://staging.venueplay.com.au), was built and signed on 13 Nov: `~/venue-enrich/reports/tv-test-build/venueplayTVtest.wgt`.
+It installs BESIDE the store app. From the Mac on the office network (Tizen Studio, Dean's "venueplay" certificate):
+
+    ~/tizen-studio/tools/sdb connect 192.168.68.58:26101          the TV's address may have moved (DHCP): check the TV's network screen
+    ~/tizen-studio/tools/ide/bin/tizen install -n ~/venue-enrich/reports/tv-test-build/venueplayTVtest.wgt -s 192.168.68.58:26101
+    ~/tizen-studio/tools/ide/bin/tizen run -p VnPlyTest1.venueplayTVtest -s 192.168.68.58:26101
+
+On the TV the test app asks for the venue: type `stage-mini-bar` (sounds ON there). Press OK once on the remote (a TV
+browser plays no sound before a press), then run a game from a phone or the test server on staging and listen for the
+musical bingo clip, the trivia sounds and the time's-up buzzer on the 0. Nothing can hear the TV for us: kogan-shot.py
+takes a picture, not sound, so a person listens (or a phone recording beside the TV). The staging site lets the office
+network (157.85.251.201) through its access lock, which is where the Kogan is. If /tv or vp-env.js change, rebuild with
+`make-tv-test-build.py` and sign again. To remove it later: `tizen uninstall -p VnPlyTest1.venueplayTVtest -s <tv>`.
