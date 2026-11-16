@@ -78,6 +78,10 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # that check was actually written for.
 MUTATIONS = [
     # Thu 19 Nov 2026 (job "Account after leaving, pause or failed card"): a failed card Stripe gave up on has left.
+    ('cancelled-account-in-chrome.test.py', 'venueplay/app/billing.html',
+     '    if (st.state === "cancelled") return { title: "Your subscription has ended",',
+     '    if (st.state === "cancelled") return { title: "Your games are off until the card is updated",',
+     'an account whose subscription ended after a failed card is told to update a card it has nothing to pay into'),
     ('test-failed-card-left.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "      if (v.status === 'suspended' && v.suspended_reason === 'nonpayment') {\n        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),\n          { suspended_reason: 'ended', closed_at: new Date().toISOString() });",
      "      if (false) {\n        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),\n          { suspended_reason: 'ended', closed_at: new Date().toISOString() });",

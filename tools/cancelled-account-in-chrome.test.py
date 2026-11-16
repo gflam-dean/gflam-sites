@@ -173,6 +173,29 @@ try:
         S.shot(sid, os.path.join(SHOTS, 'paid-off-billing-1440.png'), True)
     S.close_tab(tid)
 
+    print('\n4b. A paid venue whose card failed and Stripe gave up (Thu 19 Nov): it has left, the 90-day date is shown')
+    # The webhook (tools/test-failed-card-left.js) turns 'nonpayment' into 'ended' with closed_at when Stripe ends the
+    # subscription. The restart switch is OFF, as it is live today.
+    world(venue={'status': 'suspended', 'suspended_reason': 'ended', 'closed_at': '2099-12-11T00:00:00Z', 'max_players': 40},
+          prospect=False, founding={'status': 'card_on_file', 'stripe_subscription_id': 'sub_rig', 'stripe_customer_id': 'cus_rig'}, restart=False)
+    for (w, h, mob) in ((375, 812, True), (390, 844, True), (1440, 900, False)):
+        where = '%d wide' % w
+        tid, sid = S.open('/app/billing.html', w, h, mob)
+        S.until(sid, 'document.getElementById("leftCard").hidden===false', 25)
+        S.settled(sid, 'document.getElementById("leftCard").innerText', 10)
+        d = S.json(sid, READ, {})
+        ok('%s: the left card says the subscription has ended and when the player details go (11 March 2100), never "update your card"' % where,
+           d.get('left', '').startswith('Your subscription has ended') and 'kept until 11 March 2100' in d.get('left', '') and 'update your card' not in d.get('left', '').lower(),
+           d.get('left', '')[:400])
+        ok('%s: Billing, Draws and Marketing only; no plan rows, no Cancel this venue, nothing wider than the screen' % where,
+           not d.get('summary') and not d.get('canx') and not d.get('wide') and d.get('errs') == 0
+           and S.js(sid, '[].filter.call(document.querySelectorAll(".tabs button"), function(b){return b.style.display!=="none";}).map(function(b){return b.getAttribute("data-tab");}).join(",")') == 'billing,draws,marketing',
+           [d.get('summary'), d.get('canx'), d.get('wide'), d.get('errs')])
+        if SHOTS:
+            S.js(sid, 'window.scrollTo(0,0)')
+            S.shot(sid, os.path.join(SHOTS, 'failed-card-ended-billing-%d.png' % w), True)
+        S.close_tab(tid)
+
     print('\n5. The sticky tab strip stops below the header (every venue, every tab)')
     world(prospect=False, founding={'status': 'card_on_file', 'stripe_subscription_id': 'sub_rig', 'stripe_customer_id': 'cus_rig'})
     for (w, h, mob) in ((375, 812, True), (1440, 900, False)):
