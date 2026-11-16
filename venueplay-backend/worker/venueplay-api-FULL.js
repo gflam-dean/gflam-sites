@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 09:18 · 1b372281';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 09:20 · 35644674';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -5594,6 +5594,8 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so nothing was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', refused: true, ended: true }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
+  if (r.reason === 'unsubscribed') return json({ error: r.to + ' has unsubscribed, so nothing was sent.', refused: true }, 409);
+  if (r.reason === 'unsub_unread') return json({ error: 'The unsubscribe list could not be read, so nothing was sent. Try again later.' }, 503);
   return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
 /* ===========================================================================
@@ -6869,7 +6871,8 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!msg) continue;
     const res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+      body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
+        headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
     if (!res || !res.ok) continue;
     due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
     await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
@@ -7434,6 +7437,15 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
   const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
   if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
+  /* AN AUTOMATIC FOLLOW-UP KEEPS AN UNSUBSCRIBE (INBOX 414, 16 Nov 2026). The nudge is the one email of the prospect
+     flow nobody asked for, so it carries the one-click header and a footer link like the card reminders, and an
+     address on the unsubscribe list (or a list we cannot read) gets nothing: checked BEFORE any link is made or
+     retired, so a refused nudge leaves their working link exactly as it was. */
+  if (opts.nudge) {
+    let stopped = null;
+    try { stopped = await vpUnsubBlocks(env, email); } catch (_) { stopped = null; }
+    if (stopped !== false) return { ok: false, reason: stopped ? 'unsubscribed' : 'unsub_unread', to: email };
+  }
   /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
      prospect inside its 90 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
   const retireOthers = async (keepHash) => {
@@ -7513,10 +7525,11 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
       + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
-      + vpaReplyEmailFoot('');
+      + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(String(email).trim().toLowerCase()))
+        + '" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a> from reminders like this one.');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
-    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
+    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge')); } catch (_) { sentN = false; }
     if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
@@ -8235,9 +8248,9 @@ function vpaProspectRateInfo(env, r, code, lastSignInMs, nowMs) {
 }
 
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
-   personal, from Dean: as promised, here is your account, ONE button, about 5 minutes, the price in one
-   line, the Spam Act footer. Everything else lives in the app's first-run setup. Sent from "Dean at
-   VenuePlay" on the transactional domain with a text part, and, when o.sendAtMs is given, held by
+   personal: as promised, here is your account, ONE button, about 5 minutes, the price in one
+   line, the Spam Act footer. Everything else lives in the app's first-run setup. Sent from hello@ on the
+   transactional domain under the NAME they already met (vpaProspectFrom, 16 Nov 2026), with a text part, and, when o.sendAtMs is given, held by
    Resend until then (scheduled_at). Returns { ok, id }: id is Resend's, for cancelling it. */
 /* FROM hello@, REPLIES TO hello@ (Dean, 29 Oct 2026: "it all should come from hello, not Dean"). The address is
    hello@ on send.venueplay.com.au, the only domain Resend is verified to send from (every VenuePlay email
@@ -8262,6 +8275,20 @@ function vpaProspectSignoff(senderName) {
   /* Dean, 5 Nov 2026: the sender's FIRST name (never the surname), then "the venueplay team", lowercase t. */
   const first = String(senderName || '').trim().split(/\s+/)[0];
   return 'Cheers,<br>' + (first ? vpaEsc(first) + '<br>' : '') + 'the venueplay team<br><a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
+}
+/* THE NAME ON THE WELCOME (INBOX 414, 16 Nov 2026: "between emails not being delivered and our delayed replies").
+   The prospect replied to a person's cold email (Harry, Kayla, Sarah), and the welcome is already signed with that
+   first name (vpaProspectSignoff). A From line of plain "venueplay" is a stranger in their inbox list, and a person
+   searching for "Harry" does not find it. So the display name is "<first name> at venueplay", on the SAME address
+   (hello@send.venueplay.com.au, replies to hello@: Dean 29 Oct, "it all should come from hello"). Never Dean's own
+   name (memory never-send-as-dean): a prospect from one of Dean's boxes gets the plain "venueplay" sender, as does
+   a welcome with no sender, or one whose name is not a plain word. Gmail: "Sender display names should be used
+   exclusively to identify the sender" (support.google.com/a/answer/81126); a name plus the brand does that. */
+function vpaProspectFrom(senderName, senderEmail) {
+  const s = vpaProspectSender(senderName, senderEmail);
+  const first = String((s && s.name) || '').trim().split(/\s+/)[0];
+  if (!first || !/^[A-Za-z][A-Za-z'-]{0,19}$/.test(first) || first.toLowerCase() === 'dean') return VPA_PROSPECT_FROM;
+  return first.charAt(0).toUpperCase() + first.slice(1) + ' at venueplay <hello@send.venueplay.com.au>';
 }
 function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
@@ -8318,9 +8345,16 @@ async function vpaFireProspectWelcome(env, o) {
     if (!email) return { ok: false };
     const html = await vpaRenderProspectWelcome(env, o);
     if (!html) return { ok: false };
-    const msg = { from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email],
+    /* LIST-UNSUBSCRIBE ON THE WELCOME (INBOX 414, 16 Nov 2026). The prospect asked for the account, but it is the
+       first mail they ever get from this sender, it offers a price and the body already carries an Unsubscribe link,
+       so it is treated as the promotional kind: Gmail and Yahoo show their own Unsubscribe button for it and POST to
+       /unsubscribe (RFC 8058), which beats the Report spam button that hurts send.venueplay.com.au for every venue.
+       Google: "One-click unsubscribe is required only for marketing and promotional messages. Transactional messages
+       are excluded" (support.google.com/a/answer/14229414), so the plain sign-in link, receipts, billing and help desk
+       replies stay without it. An unsubscribe stops the card reminders and the nudge, never the account. */
+    const msg = { from: vpaProspectFrom(o.senderName, o.senderEmail), reply_to: VPA_PROSPECT_REPLY_TO, to: [email],
       subject: vpaProspectSubject(o.venueName),
-      html: html, text: helpPlainFromHtml(html) };
+      html: html, text: helpPlainFromHtml(html), headers: await vpUnsubHeaders(env, email, 'prospect-welcome') };
     if (o.sendAtMs && o.sendAtMs > Date.now()) msg.scheduled_at = new Date(o.sendAtMs).toISOString();
     const res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(msg) });

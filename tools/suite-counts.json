@@ -1256,7 +1256,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 97,
+  "checks": 98,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -2317,6 +2317,10 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-welcome-inbox.js": {
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-members-upload.js": {

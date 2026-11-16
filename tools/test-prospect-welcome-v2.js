@@ -517,7 +517,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var rw = await resend({ venue_id: v.id });
   var again = sent[1] || {}, newTok2 = tokenOf(again), newL = await linkFor(newTok2), oldL = await linkFor(oldTok), txt2 = vis(again.html);
   check('it sends the PROSPECT welcome, not the card email: "Your venueplay account for <venue>", from hello@', rw.status === 200 && rw.body.template === 'prospect' && rw.body.sent === true && sent.length === 2 &&
-    again.subject === "Your venueplay account for Caz Reitop's Dirty Secrets" && again.from === 'venueplay <hello@send.venueplay.com.au>' && again.reply_to === 'hello@venueplay.com.au' &&
+    again.subject === "Your venueplay account for Caz Reitop's Dirty Secrets" && /^(venueplay|[A-Z][a-z]+ at venueplay) <hello@send\.venueplay\.com\.au>$/.test(again.from) && !/^Dean /.test(again.from) && again.reply_to === 'hello@venueplay.com.au' &&
     !/One thing left|add-card|Add my card/i.test(again.html), [rw.body, again.subject]);
   check('to the account\'s own contact email and nobody else (one address, no cc, no bcc)', onlyTo(again, 'cazreitop@gmail.com'), again.to);
   check('a FRESH one-click sign-in for their own login: a new token, unused, 90 days from now, and the old link is retired',

@@ -4515,6 +4515,12 @@ def local_checks(which):
              'the members upload run for real: vp-memberscsv.js on an Excel CSV with a BOM, sep=; and quoted commas and a club file: one Full Name column split (Daniel Lee, Lee, Daniel and LEE,Daniel are sure; Mary Anne Smith, one word and two commas flagged for the venue), emails, mobiles in every format read the purchase raffle\'s way (the page and the Worker agree), Subscribed and Do Not Contact, every field venueplay can collect offered whatever the venue has switched on, every column pre-marked from its heading and its contents (Ph, Mob, E-mail, Member #, SUBSCRIBED, and headings that say nothing), street address, DOB, suburb and State not imported, the column choices remembered by heading only and winning over the guess; runs the game Worker\'s /host/members/import (an existing member filled never overwritten, an unsubscribe never turned back to a yes, consent only with a way to contact them and its source kept, nothing added before migration 200), the member match by mobile at this venue only in /capture and /join/list, Postgres values cut from the log, and no HQ page, TV or phone screen reading the new columns', 77,
              'A club\'s members imported with "Lee,Daniel" on the TV, a mobile or email in the file left behind, an unsubscribed member '
              'marked as wanting offers, another venue\'s member matched, or a member\'s email in a log'),
+            # D414W: the welcome lands in the inbox (Dean, 16 Nov 2026; INBOX 414), branch fix/welcome-inbox-wed18.
+            ('D414W. The prospect welcome lands in the inbox: a sender name they know, one-click unsubscribe where it belongs, a text part, only our own links',
+             'test-welcome-inbox.js',
+             'runs the billing Worker: the prospect welcome comes from the name they met (never Dean) on hello@, with List-Unsubscribe one-click and a text part, no .dev host or link shortener and two logos against real words; the nudge carries the header and a footer link and is refused for an unsubscribed address; the sign-in link and the HQ welcome stay without it', 38,
+             'A welcome from a stranger\'s name junked by Gmail or Outlook, a Report spam where an Unsubscribe button should be, a nudge to someone '
+             'who asked us to stop, or an Unsubscribe header on a sign-in link'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)
