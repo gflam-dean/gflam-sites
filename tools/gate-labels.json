@@ -188,6 +188,7 @@
   "feedback-followup-in-chrome.test.py",
   "founding-gate.test.js",
   "founding-month-expiry.test.js",
+  "game-prefs-snapshot.test.py",
   "game-screens-fit-in-chrome.test.py",
   "game-setup-in-chrome.test.py",
   "game-sounds-in-chrome.test.py",

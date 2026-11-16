@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 09:16 · f19bd064';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 09:18 · 1b372281';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -20523,7 +20523,147 @@ function vprGamesTally(rows, venues, tests, month) {
   t.states = VPR_GAMES_STATES.concat(['']).map((k) => byState[k]).filter((x) => x.venues > 0);
   t.other = Object.keys(other).map((k) => other[k]).sort((x, y) => y.count - x.count || (x.text.toLowerCase() < y.text.toLowerCase() ? -1 : 1));
   t.not_ours = t.other.filter((o) => !o.ours);
+  t.settings = vprGamesSettings(rows, live);
   return t;
+}
+/* SETTINGS VS OUR DEFAULTS (Dean, 7 Nov 2026, INBOX 128): in the same internal email, for every game setting, how many
+   venues kept our default, what the others changed it to, and a flag when more than half changed it. Then the three
+   most common full combinations per game, and the start times venues chose. AGGREGATE ONLY: counts of venues and the
+   words of a choice, never a venue name, id or anything a player or venue typed (prize words, names and playlists are
+   not counted at all). Read from vp_venue_settings.game_prefs (migration 121).
+   WHO IS COUNTED: active venues that are not test venues and have saved at least one setting for that game. A key a
+   venue never saved is counted as kept: the console uses our default for it (it is NOT stored for that venue, which is
+   why "saved" is reported beside "kept"). A setting that only applies after another answer (double points per round
+   after double points On) is counted only among the venues it applies to.
+   KEEP IN STEP: the keys and defaults below are the game Worker's GAME_PREFS_KEYS and the consoles' own defaults
+   (venueplay/app/vp-setup-help.js); tools/test-games-answers.js reads all three and goes red if they drift.
+   An entry: k key, l label, d default, w words (bool: [on, off]; number: 'text with #'; choice: { value: words }),
+   if { k, v } applies only while that key has that value, c in the combination line. */
+const VPR_SET_MIN = 3;           // fewer venues than this and nobody is told to change a default on a handful
+const VPR_SET_PREFS = { trivia: 'trivia', musical: 'musical', bingo: 'bingo', raffles: 'raffle', members: 'members' };
+const VPR_SETTINGS = {
+  trivia: [
+    { k: 'rounds', l: 'Rounds a night', d: 3, w: '# rounds', c: 1 },
+    { k: 'count', l: 'Questions a round', d: 10, w: '# questions', c: 1 },
+    { k: 'time_s', l: 'Seconds to answer', d: 30, w: '# seconds each', c: 1 },
+    { k: 'base_points', l: 'Points for a right answer', d: 100, w: '# points' },
+    { k: 'speed_bonus', l: 'Faster answers score more', d: true, w: ['speed bonus on', 'speed bonus off'], c: 1 },
+    { k: 'double_points', l: 'Double points', d: false, w: ['double points', 'no double points'], c: 1 },
+    { k: 'double_last', l: 'Questions worth double (last in each round)', d: 2, w: 'last # of each round double', if: { k: 'double_points', v: true }, c: 1 },
+    { k: 'prize_same', l: 'Same prize for every round', d: false, w: ['same prize every round', 'a different prize each round'] },
+    { k: 'prize_weekly', l: 'Same prizes every week', d: true, w: ['same prizes every week', 'prizes change'] },
+    { k: 'buzzer', l: 'A buzz when time is up', d: false, w: ['buzzer on', 'buzzer off'] },
+    { k: 'buzzer_where', l: 'Where the buzz plays', d: 'tv', w: { tv: 'on the TV', device: 'on the host device' }, if: { k: 'buzzer', v: true } },
+    { k: 'sounds', l: 'Game sounds', d: false, w: ['game sounds on', 'game sounds off'] },
+    { k: 'end_suspense', l: 'Suspense reveal at the end of the night', d: true, w: ['suspense reveal on', 'suspense reveal off'] },
+    { k: 'round_board', l: 'Leaderboard after each round', d: true, w: ['round leaderboard on', 'round leaderboard off'] },
+  ],
+  musical: [
+    { k: 'rounds', l: 'Rounds a night', d: 3, w: '# rounds', c: 1 },
+    { k: 'reveal', l: 'When the TV shows the song name', d: 'end', w: { instant: 'song name straight away', '15': 'song name after 15 seconds', end: 'song name when the clip ends', never: 'song name only in the played list' }, c: 1 },
+    { k: 'hits_only', l: 'Well-known songs only', d: true, w: ['well-known songs only', 'all songs'], c: 1 },
+    { k: 'prize_same', l: 'Same prize for every round', d: false, w: ['same prize every round', 'a different prize each round'] },
+    { k: 'prize_weekly', l: 'Same prizes every week', d: true, w: ['same prizes every week', 'prizes change'] },
+    { k: 'sounds', l: 'Game sounds', d: false, w: ['game sounds on', 'game sounds off'] },
+  ],
+  bingo: [
+    { k: 'ticket_kind', l: 'Phone tickets or paper tickets', d: 'phone', w: { phone: 'phone tickets', paper: 'paper tickets' }, c: 1 },
+    { k: 'caller', l: 'Who draws the numbers (paper tickets)', d: false, w: ['the venue draws real balls', 'venueplay draws the numbers'], if: { k: 'ticket_kind', v: 'paper' }, c: 1 },
+    { k: 'rounds', l: 'Games a night', d: 3, w: '# games', c: 1 },
+    { k: 'cards', l: 'Tickets per player', d: 6, w: '# tickets each', if: { k: 'ticket_kind', v: 'phone' }, c: 1 },
+    { k: 'allow_early', l: 'Players can call BINGO early', d: false, w: ['early calls on', 'early calls off'], if: { k: 'ticket_kind', v: 'phone' } },
+    { k: 'sounds', l: 'Game sounds', d: false, w: ['game sounds on', 'game sounds off'] },
+  ],
+  raffles: [
+    { k: 'raffles', l: 'Raffles a night', d: 1, w: '# raffles', c: 1 },
+    { k: 'prizes_weekly', l: 'Same prizes every week', d: true, w: ['same prizes every week', 'prizes change'] },
+    { k: 'time_to_present', l: 'Seconds a winner has to claim', d: 180, w: '# seconds to claim' },
+    { k: 'draw_style', l: 'How the draw looks', d: 'ticket', w: { ticket: 'ticket roll', race: 'race plate' }, c: 1 },
+    { k: 'draw_time', l: 'How long the draw takes', d: 'normal', w: { fast: 'fast draw', short: 'short draw', normal: 'normal draw', long: 'long draw' }, c: 1 },
+    { k: 'jackpot_on', l: 'Cash prize', d: false, w: ['cash prize on', 'cash prize off'], c: 1 },
+    { k: 'allow_redraw', l: 'Draw again if the winner is not here', d: true, w: ['draw again on', 'draw again off'] },
+    { k: 'spin_seconds', l: 'Seconds the numbers spin', d: 4, w: '# seconds spin' },
+    { k: 'draw_countdown', l: 'Countdown before the draw', d: false, w: ['countdown on', 'countdown off'] },
+    { k: 'pick_order', l: 'Host chooses the next prize', d: false, w: ['host picks the prize', 'prizes in order'] },
+    { k: 'announce_prize', l: 'TV shows each prize before its draw', d: false, w: ['prize shown first', 'prize not shown first'] },
+  ],
+  members: [
+    { k: 'draw_style', l: 'How the draw looks', d: 'flip', w: { flip: 'flip board', race: 'race plate' }, c: 1 },
+    { k: 'draw_time', l: 'How long the draw takes', d: 'normal', w: { fast: 'fast draw', short: 'short draw', normal: 'normal draw', long: 'long draw' }, c: 1 },
+    { k: 'draw_winner_big', l: 'Winner takes the whole screen', d: false, w: ['winner full screen', 'winner shown small'], c: 1 },
+    { k: 'draw_countdown', l: 'Countdown before the draw', d: false, w: ['countdown on', 'countdown off'], c: 1 },
+  ],
+};
+/* the value a venue effectively has: what it saved if that is a valid answer for the setting, else our default */
+function vprSetValid(e, v) {
+  if (typeof e.d === 'boolean') return typeof v === 'boolean';
+  if (typeof e.d === 'number') return typeof v === 'number' && isFinite(v) && v >= 0;
+  return typeof v === 'string' && Object.prototype.hasOwnProperty.call(e.w, v);
+}
+function vprSetSay(e, v) {
+  if (typeof e.d === 'boolean') return e.w[v ? 0 : 1];
+  if (typeof e.d === 'number') return String(e.w).replace('#', String(v));
+  return e.w[v];
+}
+function vprSetEff(e, saved) { const has = !!saved && Object.prototype.hasOwnProperty.call(saved, e.k) && vprSetValid(e, saved[e.k]); return { v: has ? saved[e.k] : e.d, saved: has }; }
+function vprSetApplies(list, e, saved) {
+  if (!e.if) return true;
+  const o = list.filter((x) => x.k === e.if.k)[0];
+  return !!o && vprSetEff(o, saved).v === e.if.v;
+}
+function vprClock(hhmm) {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(hhmm || ''));
+  if (!m) return '';
+  const h = parseInt(m[1], 10);
+  return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' am' : ' pm');
+}
+function vprGamesSettings(rows, live) {
+  const out = {}, seen = {};
+  const mine = [];
+  (rows || []).forEach((r) => { if (r && live[r.venue_id] && !seen[r.venue_id]) { seen[r.venue_id] = true; mine.push(r); } });
+  VPR_GAMES.forEach((g) => {
+    const list = VPR_SETTINGS[g[0]], pk = VPR_SET_PREFS[g[0]];
+    const have = [];
+    mine.forEach((r) => {
+      const gp = (r.game_prefs && typeof r.game_prefs === 'object') ? r.game_prefs[pk] : null;
+      if (gp && typeof gp === 'object' && !Array.isArray(gp) && Object.keys(gp).length) have.push(gp);
+    });
+    const items = list.map((e) => {
+      let counted = 0, kept = 0, saved = 0;
+      const ch = {};
+      have.forEach((gp) => {
+        if (!vprSetApplies(list, e, gp)) return;
+        counted++;
+        const x = vprSetEff(e, gp);
+        if (x.saved) saved++;
+        if (x.v === e.d) kept++;
+        else { const s = vprSetSay(e, x.v); ch[s] = (ch[s] || 0) + 1; }
+      });
+      const changed = counted - kept;
+      const choices = Object.keys(ch).map((s) => ({ say: s, n: ch[s] })).sort((a, b) => b.n - a.n || (a.say < b.say ? -1 : 1));
+      return { key: e.k, label: e.l, default_say: vprSetSay(e, e.d), counted: counted, kept: kept, changed: changed, saved: saved,
+        kept_pct: counted ? Math.round(kept * 100 / counted) : 0, choices: choices, flag: counted >= VPR_SET_MIN && changed * 2 > counted };
+    }).filter((it) => it.counted > 0);
+    const combos = {};
+    have.forEach((gp) => {
+      const parts = list.filter((e) => e.c && vprSetApplies(list, e, gp)).map((e) => vprSetSay(e, vprSetEff(e, gp).v));
+      const key = parts.join(', ');
+      if (key) combos[key] = (combos[key] || 0) + 1;
+    });
+    const top = Object.keys(combos).map((s) => ({ say: s, n: combos[s] })).sort((a, b) => b.n - a.n || (a.say < b.say ? -1 : 1)).slice(0, 3);
+    const starts = {};
+    mine.forEach((r) => {
+      const a = (r.setup_answers && typeof r.setup_answers === 'object') ? r.setup_answers : {};
+      const here = {};
+      (Array.isArray(a.week) ? a.week : []).forEach((d) => {
+        (d && Array.isArray(d.games) ? d.games : []).forEach((x) => { if (x && x.game === g[0] && vprClock(x.start)) here[x.start] = true; });
+      });
+      Object.keys(here).forEach((s) => { starts[s] = (starts[s] || 0) + 1; });
+    });
+    const st = Object.keys(starts).sort((a, b) => starts[b] - starts[a] || (a < b ? -1 : 1)).slice(0, 5).map((s) => ({ time: s, say: vprClock(s), n: starts[s] }));
+    out[g[0]] = { name: g[1], venues: have.length, items: items, combos: top, starts: st };
+  });
+  return out;
 }
 function vprGamesEmail(env, month, tally) {
   const words = vprMonthWords(month);
@@ -20548,9 +20688,49 @@ function vprGamesEmail(env, month, tally) {
     + rows + '</table>'
     + vprGamesStatesHtml(tally, cell, head, month)
     + vprGamesOtherHtml(tally, month)
+    + vprGamesSettingsHtml(tally, cell, head)
     + '<p style="margin:0;font-size:13px;color:#6a6a75">Counted from the answers in the setup wizard. Test venues and venues that are not active are left out. '
     + 'Set up means the venue finished that game\'s setup step in the wizard.</p>';
   return { to: VPR_GAMES_TO, subject: subject, html: vpaStaffCard(inner, subject, 'fyi') };
+}
+/* The settings section of the email (INBOX 128). Three columns so it fits a phone: the setting with our default under it,
+   how many kept the default, and what the others changed it to. A flagged setting says so in plain words under its name. */
+function vprGamesSettingsHtml(tally, cell, head) {
+  const set = tally.settings || {};
+  const any = VPR_GAMES.some((g) => set[g[0]] && set[g[0]].venues > 0);
+  const small = 'font-size:12px;color:#6a6a75';
+  let h = '<p style="margin:8px 0 4px;font-size:16px;font-weight:700">Settings against our defaults</p>'
+    + '<p style="margin:0 0 12px;font-size:13px;color:#6a6a75">For each game: how many venues kept our default for a setting, and what the others changed it to. '
+    + 'Only venues that have saved settings for that game are counted. A setting a venue never saved counts as kept. '
+    + 'A setting is flagged when more than half of the venues changed it (at least ' + VPR_SET_MIN + ' venues). Counts only, no venue names.</p>';
+  if (!any) return h + '<p style="margin:0 0 16px">No venue has saved game settings yet.</p>';
+  const hc = head + ';font-size:11px;padding-left:4px;padding-right:4px';
+  const cc = cell + ';padding-left:4px;padding-right:4px;vertical-align:top';
+  VPR_GAMES.forEach((g) => {
+    const s = set[g[0]];
+    if (!s || !s.venues) return;
+    h += '<p style="margin:14px 0 4px;font-weight:700">' + vpaEsc(g[1]) + ' <span style="font-weight:400;' + small + '">' + s.venues + (s.venues === 1 ? ' venue has' : ' venues have') + ' saved settings</span></p>'
+      + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 8px">'
+      + '<tr><th style="' + hc + '">Setting and our default</th><th style="' + hc + ';text-align:right;white-space:nowrap">Kept it</th><th style="' + hc + '">Changed to</th></tr>';
+    s.items.forEach((it) => {
+      const flag = it.flag ? '<br><b style="color:#B0105F">Most venues change this: consider a new default</b>' : '';
+      const to = it.choices.length
+        ? it.choices.slice(0, 3).map((c) => vpaEsc(c.say) + ' (' + c.n + ')').join('<br>') + (it.choices.length > 3 ? '<br><span style="' + small + '">and ' + (it.choices.length - 3) + ' more</span>' : '')
+        : '<span style="' + small + '">nobody</span>';
+      h += '<tr><td style="' + cc + '">' + vpaEsc(it.label) + '<br><span style="' + small + '">default: ' + vpaEsc(it.default_say) + '</span>' + flag + '</td>'
+        + '<td style="' + cc + ';text-align:right;white-space:nowrap">' + it.kept + ' of ' + it.counted + '<br><span style="' + small + '">' + it.kept_pct + '%</span></td>'
+        + '<td style="' + cc + ';font-size:13px">' + to + '</td></tr>';
+    });
+    h += '</table>';
+    if (s.combos.length) {
+      h += '<p style="margin:8px 0 4px;font-weight:700;font-size:14px">Most common combinations</p><ol style="margin:0 0 8px;padding:0 0 0 20px;font-size:14px">'
+        + s.combos.map((c) => '<li style="margin:0 0 4px">' + vpaEsc(c.say) + ' <span style="' + small + '">(' + c.n + (c.n === 1 ? ' venue' : ' venues') + ')</span></li>').join('') + '</ol>';
+    }
+    if (s.starts.length) {
+      h += '<p style="margin:0 0 8px;font-size:14px"><b>Start times:</b> ' + s.starts.map((x) => vpaEsc(x.say) + ' (' + x.n + ')').join(', ') + '</p>';
+    }
+  });
+  return h + '<p style="margin:0 0 16px;font-size:13px;color:#6a6a75">The brackets are venues. Start times come from the game week in the setup wizard.</p>';
 }
 /* Each state cell is the running total, with the month's new ones small underneath ("2" over "1 new"),
    so seven columns still fit a phone. */
@@ -20615,6 +20795,20 @@ function vprGamesCsv(month, tally) {
   row([]);
   row(["Games we don't run yet", 'Running total', 'New in ' + mname]);
   (tally.not_ours || []).forEach((o) => row([o.text, o.count, o.count_month || 0]));
+  const set = tally.settings || {};
+  if (VPR_GAMES.some((g) => set[g[0]] && set[g[0]].venues > 0)) {
+    row([]);
+    row(['Settings against our defaults (venues that have saved settings for the game; a setting never saved counts as kept)']);
+    row(['Game', 'Setting', 'Our default', 'Venues counted', 'Kept our default', 'Changed it', 'Saved a value', 'Kept %', 'Flag', 'Changed to']);
+    VPR_GAMES.forEach((g) => { ((set[g[0]] || {}).items || []).forEach((it) => row([g[1], it.label, it.default_say, it.counted, it.kept, it.changed, it.saved, it.kept_pct,
+      it.flag ? 'Most venues change this: consider a new default' : '', it.choices.map((c) => c.say + ' (' + c.n + ')').join('; ')])); });
+    row([]);
+    row(['Most common combinations', 'Venues']);
+    VPR_GAMES.forEach((g) => { ((set[g[0]] || {}).combos || []).forEach((c) => row([g[1] + ': ' + c.say, c.n])); });
+    row([]);
+    row(['Start times (venues)']);
+    VPR_GAMES.forEach((g) => { const st = (set[g[0]] || {}).starts || []; if (st.length) row([g[1], st.map((x) => x.say + ' (' + x.n + ')').join('; ')]); });
+  }
   return L.join('\r\n') + '\r\n';
 }
 /* Reads and builds, sends nothing. { month, to, subject, html, tally } or { month, skipped: why }.
@@ -20623,7 +20817,7 @@ async function vprGamesDryRun(env, month, venues, tests) {
   const vs = venues || await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
   const ts = tests || await vprTestVenueIds(env, vs);
   let rows;
-  try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
+  try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers,game_prefs&order=venue_id.asc'); }
   catch (e) {
     /* No setup_answers column yet (migration 163 not run) is a 400 from PostgREST; anything else is a failed read. */
     const missing = /: 40[04] /.test(String(e && e.message));
