@@ -343,10 +343,10 @@
     function rowsHtml(rows) {
       var h = "";
       rows.forEach(function (r) {
-        var tn = r.tonight || r.label === "Tonight", items = r.items || [r.ev], wd = SHORT[dayKey(r.date)] || "";
+        var tn = r.tonight || r.label === "Tonight", items = r.items || [r.ev];
         if (items.length > 1) {
           /* ONE CARD FOR THE NIGHT: its day, then each thing in time order, the times down one column. */
-          h += '<div class="wo-row multi' + (tn ? " tonight" : "") + '" data-wd="' + esc(wd.toUpperCase()) + '">' +
+          h += '<div class="wo-row multi' + (tn ? " tonight" : "") + '">' +
             '<span class="wo-when2"><span class="wo-day">' + esc(r.label) + '</span></span><span class="wo-its">';
           items.forEach(function (it) {
             var wp = whenParts(it);
@@ -359,7 +359,7 @@
         var ev = items[0], wp1 = whenParts(ev);
         /* Day over time, then the title and its line; the list draws these as tiles across the wall (9 Nov 2026),
            the feature view as rows beside the picture. The time says the hours once ("2pm to 6pm"). */
-        h += '<div class="wo-row ' + lenClass(ev.title) + (tn ? " tonight" : "") + (ev.game ? " game" : "") + '" data-wd="' + esc(wd.toUpperCase()) + '">' +
+        h += '<div class="wo-row ' + lenClass(ev.title) + (tn ? " tonight" : "") + (ev.game ? " game" : "") + '">' +
           '<span class="wo-when2"><span class="wo-day">' + esc(r.label) + '</span><span class="wo-time">' + esc(wp1.time) + '</span></span>' +
           '<span class="wo-what"><b>' + esc(ev.title) + '</b>' + (wp1.line ? '<i>' + esc(wp1.line) + '</i>' : '') + '</span></div>';
       });
@@ -400,7 +400,7 @@
     els = wall.querySelectorAll(WORDS);
     for (i = 0; i < els.length; i++) if (els[i].scrollWidth > els[i].clientWidth + 1) return true;   // a word wider than its space
     els = wall.querySelectorAll(WORDS);
-    for (i = 0; i < els.length; i++) {   // a word that runs out of the bottom or side of its card (the ghosted day behind the words is not a word)
+    for (i = 0; i < els.length; i++) {   // a word that runs out of the bottom or side of its card
       var row = els[i].closest ? els[i].closest(".wo-row") : null;
       if (!row) continue;
       var rb = row.getBoundingClientRect(), wb = els[i].getBoundingClientRect();

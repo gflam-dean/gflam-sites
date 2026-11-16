@@ -216,8 +216,8 @@ def check_tv():
     ok('a poster: the feature view with the poster, and the Tuesday three things as one row beside it', po[0].get('feat') is True and any(x['items'] == 3 for s in po for x in s['rows']), [x['t'] for s in po for x in s['rows']])
     # 5: a card with no poster is finished
     one0 = (seen.get(('one', 1920)) or [{}])[0].get('rows', [{}])[0]
-    ok('NO POSTER IS STILL FINISHED: the tile has a lifted gradient, a pink to gold line along its top, and its day ghosted behind the words (not a flat grey box)',
-       'gradient' in one0.get('bg', '') and 'gradient' in one0.get('accent', '') and one0.get('ghost') not in (None, 'none', 'normal', '""') and one0.get('wd') == dk(day(2)).upper(), one0)
+    ok('NO POSTER IS STILL FINISHED: the tile has a lifted gradient and a pink to gold line along its top, and NO day ghosted behind the words (not a flat grey box)',
+       'gradient' in one0.get('bg', '') and 'gradient' in one0.get('accent', '') and one0.get('ghost') in (None, 'none', 'normal') and one0.get('wd') is None, one0)
     # limits table
     if SHOTS:
         with open(os.path.join(SHOTS, 'measured-%s.json' % TAG), 'w') as f: json.dump(measured, f)

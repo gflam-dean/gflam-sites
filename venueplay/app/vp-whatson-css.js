@@ -8,8 +8,8 @@
    THE RULES OF THE LOOK. Nothing is ever cut: no line clamp, no ellipsis; VPWhatsOn.fit (vp-whatson.js) sets the words
    smaller together until the whole wall fits, down to a floor for each kind of word, and a title takes as many lines as it
    needs. One card for each night: a night with several things lists them in time order with the times down one column.
-   A tile is never an empty grey box: a soft lift in the colour, a thin pink to gold line along its top, and the night's
-   day ghosted behind the words, so a night with no poster still looks finished. Sizes are plain cqw (a share of the
+   A tile is never an empty grey box: a soft lift in the colour and a thin pink to gold line along its top, so a night with
+   no poster still looks finished. No day is ghosted behind the words (Dean disliked it, 14 Nov 2026, INBOX 420 and 431). Sizes are plain cqw (a share of the
    wall's width) so an older TV can work them out.
    The first rule is the editor's preview stage: the TV's safe box at its real size, scaled to fit the page.
    ES5. tools/test-whats-on.js and tools/whats-on-in-chrome.test.py check it. */
@@ -55,7 +55,6 @@
     '.wo-tiles .wo-row{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:2.4cqw;min-height:0;padding:3cqw 2.8cqw 3.2cqw;border-radius:1.2cqw;background:linear-gradient(155deg,#23232C 0%,#1A1A20 55%,#15151A 100%)}',
     '.wo-tiles .wo-row::before{content:"";position:absolute;left:0;right:0;top:0;bottom:auto;width:auto;height:.3cqw;background:linear-gradient(90deg,#FF1F8E,#FFC24B);opacity:.5}',
     '.wo-tiles .wo-row.tonight::before{height:6px;opacity:1;background:#FF1F8E}',
-    '.wo-tiles .wo-row::after{content:attr(data-wd);position:absolute;right:1.2cqw;bottom:-1.6cqw;font-family:"Anton",sans-serif;line-height:1;color:rgba(255,255,255,.05);pointer-events:none;z-index:0}',
     '.wo-tiles .wo-when2{gap:1cqw}',
     '.wo-tiles .wo-what{display:flex;flex-direction:column;justify-content:flex-start}',
     '.wo-tiles .wo-what b{line-height:1.1}',
@@ -64,25 +63,21 @@
     '.wo-tiles.wo-n3 .wo-time{font-size:8.6cqw}',
     '.wo-tiles.wo-n3 .wo-what b{font-size:5.2cqw}',
     '.wo-tiles.wo-n3 .wo-what i{font-size:2.7cqw}',
-    '.wo-tiles.wo-n3 .wo-row::after{font-size:12cqw}',
     '.wo-tiles.wo-n2 .wo-day{font-size:3cqw}',
     '.wo-tiles.wo-n2 .wo-time{font-size:10cqw}',
     '.wo-tiles.wo-n2 .wo-what b{font-size:6cqw}',
     '.wo-tiles.wo-n2 .wo-what i{font-size:3cqw}',
-    '.wo-tiles.wo-n2 .wo-row::after{font-size:15cqw}',
     '.wo-tiles.wo-n1 .wo-row{align-items:center;text-align:center}',
     '.wo-tiles.wo-n1 .wo-when2,.wo-tiles.wo-n1 .wo-what{align-items:center}',
     '.wo-tiles.wo-n1 .wo-day{font-size:3.2cqw}',
     '.wo-tiles.wo-n1 .wo-time{font-size:10cqw}',
     '.wo-tiles.wo-n1 .wo-what b{font-size:6.4cqw}',
     '.wo-tiles.wo-n1 .wo-what i{font-size:3.2cqw}',
-    '.wo-tiles.wo-n1 .wo-row::after{font-size:20cqw;right:2cqw}',
     '.wo-tiles.wo-n4 .wo-row,.wo-tiles.wo-n5 .wo-row{padding:1.6cqw 2.2cqw 1.8cqw;gap:1cqw}',
     '.wo-tiles.wo-n4 .wo-day,.wo-tiles.wo-n5 .wo-day{font-size:1.9cqw}',
     '.wo-tiles.wo-n4 .wo-time,.wo-tiles.wo-n5 .wo-time{font-size:4.6cqw}',
     '.wo-tiles.wo-n4 .wo-what b,.wo-tiles.wo-n5 .wo-what b{font-size:3.2cqw}',
     '.wo-tiles.wo-n4 .wo-what i,.wo-tiles.wo-n5 .wo-what i{font-size:1.9cqw}',
-    '.wo-tiles.wo-n4 .wo-row::after,.wo-tiles.wo-n5 .wo-row::after{font-size:8cqw;bottom:-1cqw}',
     '.wo-tiles .wo-row.multi{justify-content:flex-start}',
     '.wo-tiles.wo-n1 .wo-row.multi{align-items:stretch;text-align:left}',
     '.wo-tiles.wo-n1 .wo-row.multi .wo-when2{align-items:flex-start}',
