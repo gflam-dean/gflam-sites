@@ -21,8 +21,8 @@ through the staging Workers' own routes as the test host, so the same checks and
 The third venue is a fresh public sign-up every run (tools/staging/real-venues-play.py --signup), not this script.
 
 SAFE BY CONSTRUCTION. Reads TEST_SUPABASE_URL / TEST_SERVICE_KEY / TEST_ANON_KEY from ~/.gflam-migrate.env and refuses
-to run unless the URL is exactly the TEST project (rkfaftxgzpsmmrzudlqy) and nothing it will call names live
-(ijkzgmdtwtgfkedqspxm, api.venueplay.com.au, game.venueplay.com.au). The Workers it calls are the staging ones only.
+to run unless the URL is exactly the TEST project (rkfaftxgzpsmmrzudlqy) and nothing it will call names live: it
+refuses the LIVE project (ijkzgmdtwtgfkedqspxm, api.venueplay.com.au, game.venueplay.com.au). The Workers it calls are the staging ones only.
 Every row has a fixed id (5eed00b*), so a re-run updates in place: idempotent. Prints no key.
 
     python3 tools/staging/seed-real-venues.py              seed / refresh both

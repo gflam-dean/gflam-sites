@@ -108,8 +108,11 @@ try:
             back = read(os.path.join(out, rel)).replace(M.TAG + '\n', '', 1)
             for a, b in reversed(pairs):
                 back = back.replace(b, a)
+            # the Stripe key swap (16 Nov 2026, ec12f3e5): every pk_live_ key became Stripe's TEST key, so both sides are
+            # compared with the key written as one placeholder; the build's own refusal keeps pk_live_ out of staging
+            back = back.replace(M.STRIPE_TEST_PK, 'pk_live_KEY')
             try:
-                if back != read(s):
+                if back != M.PK_LIVE.sub('pk_live_KEY', read(s)):
                     odd.append(rel)
             except Exception:
                 pass
