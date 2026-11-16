@@ -207,16 +207,17 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('CONTROL: a reveal that carries its board still rolls to it', JSON.stringify(w4.painted) === '[["Leaderboard",2]]', JSON.stringify(w4.painted));
   /* run the TV's real betweenJoin() on a fake wall */
   var R = (function (SRC) {
-    var els = {}; function $(id){ return els[id] || (els[id] = { id:id, textContent:'' }); }
+    var els = {}; function $(id){ if(els[id]) return els[id]; var c = {}; return (els[id] = { id:id, textContent:'', classList:{ add:function(x){ c[x]=1; }, remove:function(x){ delete c[x]; }, contains:function(x){ return !!c[x]; } } }); }
     var shown = '', state = { phase:'reveal' }, boardRollTimer = 7, celebrateTimer = null;
     function show(w){ shown = w; } function renderLobby(){ $('lobbySub').textContent = 'Grab your phone and join, the quiz is about to start'; }
     function clearTimeout(){} function clearInterval(){}
     eval(SRC + ';betweenJoin();');
-    return { shown: shown, phase: state.phase, sub: $('lobbySub').textContent, roll: boardRollTimer, title: $('tvBoardTitle').textContent };
+    return { shown: shown, phase: state.phase, sub: $('lobbySub').textContent, roll: boardRollTimer, title: $('tvBoardTitle').textContent, between: $('tvLobby').classList.contains('between') };
   })(fnB);
   show('betweenJoin puts up the join screen (the lobby layer, its QR and code)', R.shown === 'tvLobby', R.shown);
   show('with "Next question coming up", never "Thanks for playing"', /^Next question coming up\./.test(R.sub) && !/thanks/i.test(R.sub + R.title), R.sub);
   show('and stops the roll to the board, so no empty Leaderboard follows', R.roll === null);
+  show('and marks the join screen "between", so that line is shown (the ready join screen hides its sub line)', R.between === true);
   show('the phase is not "lobby", so a late host_here or session message does not repaint "the quiz is about to start"', R.phase !== 'lobby', R.phase);
 
   show('and it never paints an error word on the wall for it', !/could not|error|failed|connection/i.test(BLOCK), BLOCK);

@@ -8,7 +8,8 @@ Worker in jsc with a fake database, the shipped console, the venue's own /tv) wi
 1920x1080) and plays a 12-question night twice, the way a person sees it:
 
   A. host only, NO phones (the first thing every new venue does; Dean, 15 Nov 2026), console at 375x667:
-     - after an ordinary answer and at the end of round 1 the TV shows the join screen with "Next question coming up",
+     - after an ordinary answer and at the end of round 1 the TV shows the join screen with "Next question coming up"
+       (the line ON SCREEN: on Tuesday's release the ready join screen hid it),
        never a podium, an empty LEADERBOARD title or "Thanks for playing"
      - the end of the night is the calm "Thanks for playing", no podium
   B. TWO phones, console at 390x844:
@@ -89,7 +90,7 @@ TVJ = r'''(function(){ var f=document.getElementById("gameFrame"), d=f && f.cont
   function shown(e){ if(!e) return false; var s=d.defaultView.getComputedStyle(e), b=e.getBoundingClientRect(); return !e.classList.contains("hidden") && s.display!=="none" && s.visibility!=="hidden" && b.width>0 && b.height>0; }
   var lay=[].filter.call(d.querySelectorAll(".layer"),function(l){ return shown(l); })[0], de=d.documentElement;
   return JSON.stringify({ layer: lay ? lay.id : null, board: ((d.getElementById("tvBoardTitle")||{}).textContent||"").trim(), pod: ((d.getElementById("tvPodTitle")||{}).textContent||"").trim(),
-    rows: d.querySelectorAll("#tvBoardRows .brow").length, steps: d.querySelectorAll("#tvPodiumCols .pcol").length, sub: ((d.getElementById("lobbySub")||{}).textContent||"").trim(),
+    rows: d.querySelectorAll("#tvBoardRows .brow").length, steps: d.querySelectorAll("#tvPodiumCols .pcol").length, sub: ((d.getElementById("lobbySub")||{}).textContent||"").trim(), subShown: shown(d.getElementById("lobbySub")),
     text: lay ? lay.innerText.replace(/\s+/g," ").slice(0,200) : "", scroll: de.scrollHeight>de.clientHeight+1 || de.scrollWidth>de.clientWidth+1,
     errs: (f.contentWindow.__errs||[]).length + (window.__errs||[]).length }); })()'''
 # The console's main button: on screen, with no scroll.
@@ -230,7 +231,7 @@ def night(with_phones, host_w, host_h, tag):
                 if with_phones:
                     ok('Q3 (mid-round), 8 s after the answer: the answer is still up, no leaderboard (Dean, 7 Nov 2026)', w.get('layer') == 'tvReveal', w)
                 else:
-                    ok('Q3, nobody joined: the join screen, "Next question coming up", never "Thanks for playing"', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', '')
+                    ok('Q3, nobody joined: the join screen, "Next question coming up", never "Thanks for playing"', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', '') and w.get('subShown') is True
                        and 'thanks for playing' not in w.get('text', '').lower(), w)
                 tvs_fit(tvs, 'Q3')
                 frames(tvs, host, '%s-03-q3-after-8s' % tag)
@@ -258,7 +259,7 @@ def night(with_phones, host_w, host_h, tag):
                 else:
                     time.sleep(7)
                     w = tv(tvs[0][1])
-                    ok('Q10, the end of round 1, nobody joined: the join screen, never an empty podium or board', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', ''), w)
+                    ok('Q10, the end of round 1, nobody joined: the join screen, never an empty podium or board', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', '') and w.get('subShown') is True, w)
                     time.sleep(10)
                     w = tv(tvs[0][1])
                     ok('  and still the join screen 10 s later (no board follows)', w.get('layer') == 'tvLobby', w)
