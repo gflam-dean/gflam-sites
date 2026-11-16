@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '16 Nov 2026, 19:14 · 36f4830a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 00:40 · cc3d43c9';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -17081,7 +17081,7 @@ async function vpbLogoSite(request, env, json) {
                   "I dont want a venue to be able to put it on our website we should choose".
                   Asked of the DATABASE, so if the column is missing the read is refused and the
                   strip shows nobody: it fails closed.
-     live         vp_venues.status 'active'
+     live         vp_venues.status 'active', or left within the last 90 days (closed_at, INBOX: logo drop-off)
      real         not one of Dean's test venues: no test-alpha/bravo/charlie or other "test"
                   slug or name, even if somebody switches one on
      ours         a logo URL this Worker wrote, in our own public storage for that venue
@@ -17099,8 +17099,13 @@ function vpbTrustedVenueIsReal(v) {
   return true;
 }
 async function vpbTrustedLogos(env) {
+  /* A venue that has left stays on the strip for VPB_RETENTION_DAYS (90) after vp_venues.closed_at, the clock every
+     way of leaving already stamps; then it comes off (Dean, 11 Nov 2026: "both come off at 90 days", single venue and
+     group alike: each group venue carries its own closed_at). Back on clears closed_at, so a returning venue is just
+     active again. Still HQ's switch, still real and ours. */
+  const cutoff = new Date(Date.now() - VPB_RETENTION_DAYS * 86400000).toISOString();
   const venues = await vpaSelectAll(env, 'vp_venues',
-    'status=eq.active&show_logo_on_site=eq.true'
+    'show_logo_on_site=eq.true&or=(status.eq.active,closed_at.gte.' + encodeURIComponent(cutoff) + ')'
     + '&select=id,name,slug&order=id.asc');
   const real = venues.filter(vpbTrustedVenueIsReal);
   if (!real.length) return [];

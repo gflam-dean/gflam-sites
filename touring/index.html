@@ -360,6 +360,7 @@ function numToWords(n){
       </div>
     </div>`;
   function esc(x){return (x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function tcHref(u){u=(u||"").trim();return /^([a-z][a-z0-9+.-]*:|\/|#|\?)/i.test(u)?u:"/"+u;}
   /* UPCOMING SHOWS ON EACH CARD (Dean, 19 Oct 2026: "it's a tour card so it'll be
      multiple shows"). The same shows the tour's own page lists: matched to the card by
      tour_key, the way auto-hide already matches them, on or after today in Queensland,
@@ -412,7 +413,7 @@ function numToWords(n){
     }).join("");
     const extra = list.length - TC_MAX_SHOWS;
     const more = (extra > 0 && c.button_link)
-      ? `<a class="tc-more" href="${esc(c.button_link)}">+${extra} more show${extra===1?"":"s"}</a>` : "";
+      ? `<a class="tc-more" href="${esc(tcHref(c.button_link))}">+${extra} more show${extra===1?"":"s"}</a>` : "";
     return `<ul class="tc-shows">${rows}</ul>${more}`;
   }
   function cardHTML(c, list){
@@ -420,7 +421,7 @@ function numToWords(n){
       ? `<div class="tc-img"><img src="${esc(c.image_url)}" alt="${esc(c.name)}"></div>`
       : `<div class="tc-img" style="background:var(--dark3);min-height:220px;padding:40px;text-align:center"><div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">${esc(c.name)}</div></div></div>`;
     const btn = (c.button_link && c.button_label)
-      ? `<div><a href="${esc(c.button_link)}" class="btn btn-pink">${esc(c.button_label)}</a></div>` : "";
+      ? `<div><a href="${esc(tcHref(c.button_link))}" class="btn btn-pink">${esc(c.button_label)}</a></div>` : "";
     return `<div class="tc-card">
       <div class="tc-left">
         ${c.eyebrow?`<div class="eyebrow" style="margin-bottom:14px">${esc(c.eyebrow)}</div>`:""}
