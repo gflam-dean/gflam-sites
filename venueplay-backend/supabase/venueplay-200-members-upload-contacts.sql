@@ -12,9 +12,11 @@
 -- and nothing at 200 or above in INBOX.md or NEEDS-DEAN.md, checked 16 Nov 2026 14:00 Brisbane. So 200.
 --
 -- WHAT IT ADDS
---   vp_members            email, mobile, postcode            only fields a venue's game join collects (collect_* in Game
---                                                             settings); the game Worker keeps a field only when the venue
---                                                             collects it. Mobile is the purchase raffle's form, +614xxxxxxxx.
+--   vp_members            email, mobile, postcode            every field venueplay can collect (the six collect_* of Game
+--                                                             settings), kept from the venue's file whatever it has switched
+--                                                             on today (Dean, 16 Nov 2026). Date of birth, suburb and state
+--                                                             are not fields venueplay can ask, so none is added here.
+--                                                             Mobile is the purchase raffle's form, +614xxxxxxxx.
 --                         marketing_optin (+ _at, _source)   the VENUE's own "Send me offers from {venue}" consent for that
 --                                                             member, from the club system's "Subscribed" column, with where
 --                                                             it came from ("members list import, 2026-11-19"). Null = not
@@ -89,7 +91,7 @@ create index if not exists vp_captures_member_idx on public.vp_captures (member_
 
 -- ---------------------------------------------------------------------
 -- A re-upload fills what is EMPTY on a member already on the list. The Worker decides what to send (the same rules as
--- a new member: only fields this venue collects, consent only with a way to contact them); this applies it in one
+-- a new member: email, mobile and postcode only in their own form, consent only with a way to contact them); this applies it in one
 -- statement with the guards again, so a member changed between the Worker's read and this write keeps what they have:
 --   email / mobile / postcode   coalesce: an existing value is never overwritten
 --   consent                     set only when the row sends it (set_offers), and a "yes" only over a "not said" (null):

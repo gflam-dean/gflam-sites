@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 14:16 · 8dace36e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Nov 2026, 14:44 · e23cfcd1';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -6934,8 +6934,9 @@ async function purgeMembers(env, rosterBatch) {
    members list for the venue.
 
    THE UPLOAD'S OTHER COLUMNS (Dean, 16 Nov 2026, Jobs row 445; migration 200, NOT RUN): a member's email, mobile, postcode
-   and the venue's own "Send me offers from {venue}" consent, each kept ONLY when this venue's game join collects it
-   (vp_venue_settings collect_*, read here: the screen offering the column is not the gate). Same rules as a player's own
+   and the venue's own "Send me offers from {venue}" consent: every field venueplay can collect (the six collect_* of Game
+   settings), whatever the venue has switched on today (Dean, 16 Nov 2026). Date of birth, suburb and state are not fields
+   venueplay collects, so nothing here keeps them. Same rules as a player's own
    details (gatedCapture): an email that is an email, a mobile normalised the purchase raffle's way (+614xxxxxxxx, or not
    kept), a 4-digit postcode, and consent only with a way to contact them. A member ALREADY on the list keeps every detail
    it has: an import only fills what is empty, never overwrites. An "unsubscribed" in the file always wins and an import
@@ -6946,8 +6947,8 @@ const MEMBER_EMAIL_RE = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
    "+61 (0)412 345 678". venueplay/app/vp-memberscsv.js mobile() is the page's copy; tools/test-members-upload.js runs both. */
 function memberMobile(raw) { return praffleNormPhone(String(raw == null ? '' : raw).replace(/\(0\)/g, '')); }
 function memberClean(v, n) { return String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n); }
-/* what of one member's row this venue may keep: {number, first, last, email?, mobile?, postcode?, offers?} or null */
-function memberImportRow(m, cfg) {
+/* one member's row as kept: {number, first, last, email?, mobile?, postcode?, offers?} or null */
+function memberImportRow(m) {
   const num = parseInt(m && m.number, 10);
   if (isNaN(num) || num < 0) return null;
   let first, last;
@@ -6961,10 +6962,12 @@ function memberImportRow(m, cfg) {
     last = (sp === -1 ? '' : nm.slice(sp + 1).trim()).slice(0, 80);
   }
   const out = { number: num, first: first, last: last };
-  if (cfg.collect_email && m.email != null) { const e = String(m.email).trim().toLowerCase(); if (e.length <= 200 && MEMBER_EMAIL_RE.test(e)) out.email = e; }
-  if (cfg.collect_mobile && m.mobile != null) { const mo = memberMobile(m.mobile); if (mo) out.mobile = mo; }
-  if (cfg.collect_postcode && m.postcode != null) { const pc = String(m.postcode).replace(/\s+/g, ''); if (/^\d{4}$/.test(pc)) out.postcode = pc; }
-  if (cfg.collect_marketing_optin && (m.offers === true || m.offers === false)) out.offers = m.offers;
+  /* every field venueplay can collect comes in whenever the venue's file has it (Dean, 16 Nov 2026), whatever the venue's
+     game join has switched on today */
+  if (m.email != null) { const e = String(m.email).trim().toLowerCase(); if (e.length <= 200 && MEMBER_EMAIL_RE.test(e)) out.email = e; }
+  if (m.mobile != null) { const mo = memberMobile(m.mobile); if (mo) out.mobile = mo; }
+  if (m.postcode != null) { const pc = String(m.postcode).replace(/\s+/g, ''); if (/^\d{4}$/.test(pc)) out.postcode = pc; }
+  if (m.offers === true || m.offers === false) out.offers = m.offers;
   return out;
 }
 /* the venue's column choices, by heading only (never a value from the file): { v:1, cols:{ "<heading>": field } } */
@@ -7016,10 +7019,9 @@ async function handleMembersImport(request, env, json) {
     }
   }
 
-  /* Only what this venue collects. A pasted list ({number, name}) carries none of it, reads none of the new columns and
-     works exactly as before, before or after migration 200. */
-  const cfg = await venueCollectCfg(env, venueId);
-  const wanted = members.map(function (m) { return memberImportRow(m || {}, cfg); }).filter(Boolean);
+  /* A pasted list ({number, name}) carries none of the new fields, reads none of the new columns and works exactly as
+     before, before or after migration 200. */
+  const wanted = members.map(function (m) { return memberImportRow(m || {}); }).filter(Boolean);
   const contact = wanted.some(function (w) { return w.email || w.mobile || w.postcode || w.offers != null; });
 
   // Skip numbers already present; insert the rest as valid (pickable) members.

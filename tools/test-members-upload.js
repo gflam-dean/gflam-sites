@@ -11,7 +11,9 @@
         format a club system writes, a Subscribed column, and street address / DOB / State columns that are NOT imported
      2. the full-name split: "Daniel Lee", "Lee, Daniel", "LEE,Daniel" are sure; "Mary Anne Smith", one word, two commas
         are flagged for the venue to check on the same screen
-     3. only the fields the venue's game join collects are offered, and the venue's column choices are remembered by heading
+     3. every field venueplay can collect comes in (the six collect_* of Game settings), whatever the venue has switched on;
+        DOB, suburb and state listed as not imported; every column pre-marked from its heading and its contents (fixtures
+        21, 22); the venue's choices remembered by heading, and they win
      4. the page's mobile rule and the game Worker's (praffleNormPhone, the purchase raffle's) give the same answer
      5. the game Worker's POST /host/members/import, out of venueplay-game.js: new members, the venue's collect settings as
         the gate, an existing member's details filled and never overwritten, an unsubscribe never turned back to a yes,
@@ -78,19 +80,42 @@ section('2. THE FULL NAME SPLIT');
 });
 check('markup never survives a split', M.splitName('<b>Evil</b> Person').first.indexOf('<') < 0);
 
-section('3. ONLY WHAT THE VENUE\'S GAMES ASK FOR, AND THE COLUMNS REMEMBERED');
-var none = M.guess(M.parse(fileText('19-excel-bom-semicolon-fullname.csv')), {});
-check('a venue that collects no email, mobile, postcode or offers: none of those columns is even guessed, and each is listed as not imported',
-      none.ix.email === -1 && none.ix.mobile === -1 && none.ix.offers === -1 && none.notImported.indexOf('E-mail Address') >= 0 && none.notImported.indexOf('Mobile Phone') >= 0 && none.notImported.indexOf('Subscribed') >= 0, none.ix);
-var mNone = M.members(none.rows, none.ix, none.from).members;
-check('and no member carries an email, a mobile or an offers answer', mNone.every(function (m) { return !('email' in m) && !('mobile' in m) && !('offers' in m); }), mNone[0]);
+section('3. EVERY FIELD VENUEPLAY CAN COLLECT COMES IN, WHATEVER THE VENUE HAS SWITCHED ON; THE COLUMNS REMEMBERED');
+/* Dean, 16 Nov 2026: "bring in EVERY field a venue COULD ask for in venueplay (not only the ones it currently has switched
+   on)". Those are the six collect_* fields of Game settings: first name, surname, email, mobile, postcode, offers. Date of
+   birth, suburb and state are not fields venueplay can ask today, so they are listed as not imported. */
+var COLLECT = (readFile('venueplay/app/settings.html').match(/var TOGGLES=\[([^\]]*)\]/) || [])[1] || '';
+check('Game settings collects exactly these six (if one is added, this upload must learn it): first name, last name, postcode, email, mobile, offers',
+      COLLECT === '"collect_first_name","collect_last_name","collect_postcode","collect_email","collect_mobile","collect_marketing_optin"', COLLECT);
+var dflt = M.guess(M.parse(fileText('20-club-email-mobile-postcode.csv')));
+check('with no settings at all, email, mobile, postcode and offers are all pre-marked', dflt.ix.email >= 0 && dflt.ix.mobile >= 0 && dflt.ix.postcode >= 0 && dflt.ix.offers >= 0, dflt.ix);
+var dob = M.guess(M.parse('Member No,Name,DOB,Suburb,State,Mobile\n1,Al Smith,01/02/1980,Southport,QLD,0412345678\n2,Bo Lee,03/04/1975,Burleigh,QLD,0498765432\n'));
+check('date of birth, suburb and state are not fields venueplay collects: listed as not imported', same(dob.notImported, ['DOB', 'Suburb', 'State']) && dob.heads[dob.ix.mobile] === 'Mobile', dob.notImported);
+section('3b. EVERY COLUMN PRE-MARKED FROM ITS HEADING AND ITS CONTENTS (Dean, 16 Nov 2026)');
+var p21 = M.guess(M.parse(fileText('21-odd-headings.csv')), ALL), hh = function (p, f) { return p.ix[f] >= 0 ? p.heads[p.ix[f]] : null; };
+check('21 odd headings: "Member #", "Full Name", "Ph", "E-mail", "SUBSCRIBED" are each pre-marked; Status and Joined are not imported',
+      hh(p21, 'number') === 'Member #' && hh(p21, 'full') === 'Full Name' && hh(p21, 'mobile') === 'Ph' && hh(p21, 'email') === 'E-mail' && hh(p21, 'offers') === 'SUBSCRIBED' &&
+      p21.ix.postcode === -1 && same(p21.notImported, ['Status', 'Joined']), [p21.ix, p21.notImported]);
+var m21 = M.members(p21.rows, p21.ix, p21.from).members;
+check('21 SUBSCRIBED / UNSUBSCRIBED read as yes / no; "Smith, Jane" -> Jane / Smith; 412555666 -> +61412555666',
+      m21[0].offers === true && m21[1].offers === false && m21[1].first_name === 'Jane' && m21[1].last_name === 'Smith' && m21[2].mobile === '+61412555666', m21);
+var p22 = M.guess(M.parse(fileText('22-headings-say-nothing.csv')), ALL);
+check('22 headings that say nothing (Ref, Person, Info, Reach, Code, Flag): marked from what is in them: numbers, full names, x@y, 04xx / +614, 4-digit postcodes, Yes / No',
+      hh(p22, 'number') === 'Ref' && hh(p22, 'full') === 'Person' && hh(p22, 'email') === 'Info' && hh(p22, 'mobile') === 'Reach' && hh(p22, 'postcode') === 'Code' && hh(p22, 'offers') === 'Flag', p22.ix);
+check('22 a Status column of Active / Lapsed and a Joined column of years are NOT taken for offers or a postcode', same(p22.notImported, ['Status', 'Joined']), p22.notImported);
+var mob = M.guess(M.parse('Mem No,Name,Mob,Home Phone\n1,Al Smith,0412345678,0412345679\n2,Bo Lee,0498765432,0733334444\n'));
+check('"Mob" is the mobile; a "Home Phone" column is never taken for it, even holding a mobile', mob.heads[mob.ix.mobile] === 'Mob', mob.ix);
+var unsure = M.guess(M.parse('Mem No,Name,Notes\n1,Al Smith,call after 5\n2,Bo Lee,0412345678\n3,Cy Ng,cy@x.com\n'), ALL);
+check('a column that is only partly emails or mobiles is left at None for the venue to pick', unsure.ix.email === -1 && unsure.ix.mobile === -1 && unsure.notImported.indexOf('Notes') >= 0, unsure.ix);
+var keep = M.applyMap(M.guess(M.parse(fileText('21-odd-headings.csv')), ALL), { v: 1, cols: { 'ph': 'number', 'member #': 'mobile' } }, ALL).plan;
+check('what the venue picked last time wins over the guess', keep.heads[keep.ix.number] === 'Ph' && keep.heads[keep.ix.mobile] === 'Member #', keep.ix);
 var map = M.mapOf(p19, p19.ix);
 check('the remembered choices are HEADINGS only, never a value from the file', map && map.v === 1 && same(Object.keys(map.cols).sort(), ['e mail address', 'full name', 'member no', 'mobile phone', 'subscribed']) && JSON.stringify(map).indexOf('@') < 0 && JSON.stringify(map).indexOf('0412') < 0, map);
 var swapped = M.parse('Mobile Phone;Full Name;Member No;E-mail Address;Subscribed\n0412345678;Jo Bloggs;7;jo@x.com;Yes\n');
 var back = M.applyMap(M.guess(swapped, ALL), map, ALL);
 check('next month\'s file with the columns in another order: the saved choices land on the same headings', back.used && back.plan.heads[back.plan.ix.number] === 'Member No' && back.plan.heads[back.plan.ix.full] === 'Full Name' && back.plan.heads[back.plan.ix.mobile] === 'Mobile Phone', back.plan.ix);
-var off = M.applyMap(M.guess(swapped, { email: true }), map, { email: true });
-check('a saved choice for a field the venue no longer collects is dropped (mobile, offers)', off.plan.ix.mobile === -1 && off.plan.ix.offers === -1 && off.plan.ix.email >= 0, off.plan.ix);
+var off = M.applyMap(M.guess(swapped), map);
+check('with no settings passed, every saved choice is put back (email, mobile, offers)', off.plan.ix.offers >= 0 && off.plan.ix.mobile >= 0 && off.plan.ix.email >= 0, off.plan.ix);
 check('a file with no headings remembers nothing', M.mapOf(M.guess(M.parse('7,Jo Bloggs\n8,Al Smith\n'), ALL), { number: 0, full: 1 }) === null);
 var dnc = M.guess(M.parse('Member No,Name,Email,Do Not Contact\n7,Jo Bloggs,jo@x.com,Y\n8,Al Smith,al@x.com,N\n'), ALL), mdnc = M.members(dnc.rows, dnc.ix, dnc.from).members;
 check('a "Do Not Contact" column is read the right way round: Y is a no, N is a yes', mdnc[0].offers === false && mdnc[1].offers === true, mdnc);
@@ -185,11 +210,12 @@ check('143 unsubscribed is kept as a no, with its source', mem(143).marketing_op
 check('146 Cher: "No" stays a no, no mobile (a landline was never sent)', mem(146).marketing_optin === false && mem(146).mobile === null, mem(146));
 check('the response carries counts only: no email or mobile goes back', JSON.stringify(r.body).indexOf('@') < 0 && JSON.stringify(r.body).indexOf('+614') < 0, r.body);
 check('the column choices are saved with the list: headings only', same(DB.vp_member_rosters[0].import_map, map), DB.vp_member_rosters[0]);
-check('the venue\'s own collect settings were read (the screen is not the gate)', CALLS.indexOf('cfg ' + V1) >= 0, CALLS);
+check('the import does not depend on what the venue has switched on today (no collect settings read)', CALLS.indexOf('cfg ' + V1) < 0, CALLS);
 
-arm({ cfg: { collect_email: true } });
+arm({ cfg: {} });
 r = call({ venue_id: V1, members: [{ number: 1, first_name: 'A', last_name: 'B', email: 'a@b.co', mobile: '0412345678', postcode: '4220', offers: true }] });
-check('a venue that collects email only: the mobile, postcode and offers sent anyway are NOT kept', mem(1).email === 'a@b.co' && mem(1).mobile === null && mem(1).postcode === null && mem(1).marketing_optin === null, mem(1));
+check('a venue whose games collect nothing: email, mobile, postcode and offers all kept (Dean, 16 Nov 2026), with the offers source',
+      mem(1).email === 'a@b.co' && mem(1).mobile === '+61412345678' && mem(1).postcode === '4220' && mem(1).marketing_optin === true && /^members list import/.test(mem(1).marketing_optin_source), mem(1));
 arm();
 r = call({ venue_id: V1, members: [{ number: 2, first_name: 'A', last_name: 'B', email: 'not-an-email', mobile: '0733334444', postcode: '42', offers: true }] });
 check('a bad email, a landline and a 2-digit postcode sent straight to the Worker are not kept', mem(2).email === null && mem(2).mobile === null && mem(2).postcode === null, mem(2));

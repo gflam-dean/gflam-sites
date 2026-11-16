@@ -813,7 +813,8 @@ function). No column change. NUMBER: 192 is the highest on any branch or worktre
 rollback in the file.
 
 `venueplay-200-members-upload-contacts.sql` (Dean, 16 Nov 2026, Jobs row 445, branch `fix/members-upload-thu19`, the Thursday 19 Nov
-admin release): the members list upload keeps what the venue's games collect. vp_members gets email, mobile (+614xxxxxxxx), postcode,
+admin release): the members list upload keeps every field venueplay can collect, whatever the venue has switched on (DOB, suburb
+and state are not collectable today, so not added). vp_members gets email, mobile (+614xxxxxxxx), postcode,
 marketing_optin, marketing_optin_at, marketing_optin_source (the venue's own consent for that member, with "members list import, <date>"),
 with length/shape checks and a (roster_id, mobile) index for the member match; vp_member_rosters.import_map (the venue's column choices by
 heading only); vp_players.member_id and vp_captures.member_id (a player or sign-up whose mobile matches that venue's member, on delete set

@@ -16,7 +16,8 @@ the real file input, and reads what a venue sees:
   3. the real /host/members/import keeps the email, the mobile (+614...), the consent and its source, and the columns
   4. the next upload says it used the columns picked last time
   5. the download carries the email, mobile, postcode and offers columns
-  6. a venue whose games collect none of it is offered none of it
+  6. a venue whose games collect nothing is still offered every field; a file whose headings say nothing has every
+     column pre-marked from its contents
   7. phone width (390 and 375): the upload stays hidden on a phone (Dean, round 12 note 9) and the page never scrolls
      sideways; the picker and the check are also laid out at those widths in case it is shown, nothing wider than the
      screen. Desktop 1100 and tablet 768 are shot as they are.
@@ -164,13 +165,24 @@ try:
     # (the member number column itself is the alias number:member_number, which this rig's stand-in does not apply without a
     #  column schema; tools/test-members-csv-columns.js runs the same download against the real column list and checks it)
     S.close_tab(tid)
-    print('\n6. A VENUE THAT COLLECTS NONE OF IT IS OFFERED NONE OF IT')
+    print('\n6. A VENUE WHOSE GAMES COLLECT NOTHING IS STILL OFFERED EVERY FIELD VENUEPLAY CAN COLLECT (Dean, 16 Nov 2026)')
     GW.seed('vp_venue_settings', [{'venue_id': V1, 'collect_first_name': True}], True)
     tid, sid = open_draws(1100, 1000, False)
     choose(sid)
     p3 = S.json(sid, PICKER, {})
-    ok('no Email, Mobile, Postcode or offers choice', not any(k in (p3.get('sel') or {}) for k in ('email', 'mobile', 'postcode', 'offers')), p3.get('sel'))
-    ok('and those columns are named as not imported', all(x in (p3.get('skip') or '') for x in ('E-mail Address', 'Mobile Phone', 'Subscribed')), p3.get('skip'))
+    ok('Email, Mobile and offers are pre-marked anyway, Postcode offered (None: no such column)',
+       (p3.get('sel') or {}).get('email') == 'E-mail Address' and (p3.get('sel') or {}).get('mobile') == 'Mobile Phone' and (p3.get('sel') or {}).get('offers') == 'Subscribed' and (p3.get('sel') or {}).get('postcode') == 'None', p3.get('sel'))
+    ok('and only Street Address, DOB and State are named as not imported', 'Not imported: Street Address, DOB, State.' in (p3.get('skip') or ''), p3.get('skip'))
+    S.close_tab(tid)
+    print('\n6b. HEADINGS THAT SAY NOTHING: EVERY COLUMN PRE-MARKED FROM WHAT IS IN IT')
+    tid, sid = open_draws(1100, 1000, False)
+    S.set_file(sid, '#md-csv', os.path.join(ROOT, 'tools', 'fixtures', 'members-csv', '22-headings-say-nothing.csv'))
+    S.until(sid, 'document.getElementById("md-match").style.display!=="none" && document.querySelectorAll("#md-matchrows select").length>0', 20)
+    p4 = S.json(sid, PICKER, {})
+    ok('Ref, Person, Info, Reach, Code, Flag pre-selected as Member number, Full name, Email, Mobile, Postcode, Send me offers',
+       p4.get('sel') == {'number': 'Ref', 'names': 'Full name in one column', 'full': 'Person', 'email': 'Info', 'mobile': 'Reach', 'postcode': 'Code', 'offers': 'Flag'}, p4.get('sel'))
+    ok('Status and Joined left for the venue: named as not imported', 'Not imported: Status, Joined.' in (p4.get('skip') or ''), p4.get('skip'))
+    frame(sid, 'md-match', 'members-upload-premarked-1100')
     S.close_tab(tid)
     GW.seed('vp_venue_settings', [ALL_ON], True)
     print('\n7. TABLET, AND PHONE WIDTH')

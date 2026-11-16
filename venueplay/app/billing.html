@@ -1001,18 +1001,18 @@
     <div class="scard">
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
       <div class="snote" id="mdCount">Loading your members list…</div>
-      <p class="snote">This is personal information your venue holds about your members. Keep only what your games ask for, and take someone off when they ask. Emails and mobiles stay in your account and your download: they never go on a TV or a phone.</p>
+      <p class="snote">This is personal information your venue holds about your members. We keep only the member number, names, email, mobile, postcode and whether they want your offers, and you can take someone off when they ask. Emails and mobiles stay in your account and your download: they never go on a TV or a phone.</p>
       <!-- UPLOAD FIRST (Dean, setup wizard round 11 note 7): choose the file, THEN say which column is which -->
       <div id="md-upload" class="md-nophone" style="margin-top:4px">
         <div class="scardhead" style="font-size:13px">Upload your members list</div>
-        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). Next you pick which column is the member number and the names, plus the email, mobile and postcode if your games ask for them. You check every name before anything is saved.</p>
+        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). We mark which column is the member number, the names, email, mobile, postcode and whether they want offers, for you to check. You check every name before anything is saved.</p>
         <button class="go" id="md-csvbtn" type="button">Choose a CSV file</button>
         <input type="file" id="md-csv" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel" style="display:none">
         <p class="snote" id="md-csvmsg" role="status" style="margin-top:8px"></p>
         <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
         <div id="md-match" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:12px">
           <div class="scardhead" style="font-size:13px">Which column is which?</div>
-          <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box below for you to check.</p>
+          <p class="snote" id="md-matchnote">We have marked each column we could tell from its heading and what is in it. Check them, and pick any left at None.</p>
           <p class="snote mono" id="md-matchex" style="margin-top:0"></p>
           <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
           <p class="snote" id="md-matchskip" style="margin-top:10px"></p>
@@ -3827,20 +3827,16 @@
     reader.onload = function(){ var buf = reader.result; csvMatch(typeof buf === "string" ? buf : VPMembersCsv.decode(buf)); };
     if (reader.readAsArrayBuffer) reader.readAsArrayBuffer(f); else reader.readAsText(f);
   }
-  /* WHAT THIS VENUE'S GAMES ASK FOR (collect_* in Game settings) and the columns it matched last time (vp_member_rosters.import_map,
-     migration 200). Either read failing is "ask for nothing extra" and "no columns remembered": the upload still works for
-     numbers and names. (Dean, 16 Nov 2026, Jobs row 445) */
+  /* THE COLUMNS IT MATCHED LAST TIME (vp_member_rosters.import_map, migration 200). A read that fails is "no columns remembered":
+     the upload still works. Every field venueplay can collect is offered, whatever the venue has switched on today (Dean,
+     16 Nov 2026, Jobs row 445): first name, surname, email, mobile, postcode and the offers consent. */
   function mdUploadContext(venueId){
-    var client = VP.getClient(), out = { allow: {}, map: null, rosterId: null };
-    var a = client.from("vp_venue_settings").select("collect_email,collect_mobile,collect_postcode,collect_marketing_optin").eq("venue_id", venueId).then(function(r){
-      var c = (r && !r.error && r.data && r.data[0]) || {};
-      out.allow = { email: c.collect_email === true, mobile: c.collect_mobile === true, postcode: c.collect_postcode === true, offers: c.collect_marketing_optin === true };
-    }, function(){});
-    var b = client.from("vp_member_rosters").select("id,import_map").eq("venue_id", venueId).order("created_at", { ascending: true }).then(function(r){
+    var client = VP.getClient(), out = { allow: { email: true, mobile: true, postcode: true, offers: true }, map: null, rosterId: null };
+    return client.from("vp_member_rosters").select("id,import_map").eq("venue_id", venueId).order("created_at", { ascending: true }).then(function(r){
       var row = (r && !r.error && r.data && r.data[0]) || null;
       if (row){ out.rosterId = row.id; out.map = row.import_map || null; }
-    }, function(){});
-    return Promise.all([a, b]).then(function(){ return out; }, function(){ return out; });
+      return out;
+    }, function(){ return out; });
   }
   var MD_FIELDS = [["number", "Member number"], ["names", "Names"], ["first", "First name"], ["last", "Surname"], ["full", "Full name (one column)"],
                    ["email", "Email"], ["mobile", "Mobile"], ["postcode", "Postcode"], ["offers", "Send me offers (subscribed)"]];
@@ -3861,7 +3857,6 @@
     var picks = {}, labs = {};
     MD_FIELDS.forEach(function(k){
       var f = k[0];
-      if ((f === "email" || f === "mobile" || f === "postcode" || f === "offers") && !cx.allow[f]) return;   // only what this venue's games ask for
       var lab = document.createElement("label"); lab.textContent = k[1]; lab.setAttribute("for", "md-col-" + f); lab.className = "snote"; lab.style.margin = "0";
       var sel = document.createElement("select"); sel.id = "md-col-" + f;
       sel.setAttribute("style", "width:100%;min-height:44px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 10px;font:inherit");
@@ -3893,7 +3888,7 @@
     /* every column that is not going in is named, so a venue can see its street addresses and birthdays stay on its own computer */
     function skipLine(){
       var left = VPMembersCsv.notImported(plan, ixNow()), el = $("md-matchskip");
-      el.textContent = left.length ? "Not imported: " + left.map(function(h){ return String(h).slice(0, 30); }).join(", ") + ". Only what your games ask for is kept." : "";
+      el.textContent = left.length ? "Not imported: " + left.map(function(h){ return String(h).slice(0, 30); }).join(", ") + ". We keep only the member number, names, email, mobile, postcode and offers." : "";
     }
     picks.names.onchange = layout;
     Object.keys(picks).forEach(function(f){ if (f !== "names") picks[f].addEventListener("change", skipLine); });

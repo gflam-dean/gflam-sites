@@ -115,7 +115,8 @@
     for (k = 0; k < width; k++) {
       var h = names[k], s = st[k], hs = 0;
       if (h) { if (NUM_STRONG.test(h)) hs = 3; else if (NUM_PLAIN.test(h)) hs = 2; else if (/member|membership|card|badge|patron/.test(h) && !NUM_BAD.test(h)) hs = 1; else if (NUM_BAD.test(h)) hs = -4; }
-      var cs = (s.digit >= 0.8 ? 2 : (s.digit >= 0.5 ? 1 : -3)) + (s.uniq >= 0.9 ? 1 : (s.uniq >= 0.6 ? 0 : -2)) - (s.phone >= 0.5 ? 5 : 0) - (s.at > 0 ? 3 : 0);
+      var cs = (s.digit >= 0.8 ? 2 : (s.digit >= 0.5 ? 1 : -3)) + (s.uniq >= 0.9 ? 1 : (s.uniq >= 0.6 ? 0 : -2)) - (s.phone >= 0.5 ? 5 : 0) - (s.at > 0 ? 3 : 0)
+        - (s.n >= 3 && s.uniq < 0.95 ? 8 : 0);   // member numbers never repeat: a "Code" column of postcodes that do is not one (16 Nov 2026)
       var score = hs * 3 + cs - k * 0.01;   // the leftmost wins a tie
       if (s.n && score > bestScore) { bestScore = score; best = k; }
     }
@@ -166,9 +167,10 @@
      THE OTHER COLUMNS, A FULL NAME SPLIT, AND THE VENUE'S OWN MAPPING REMEMBERED (Dean, 16 Nov 2026, Jobs row 445).
      "When a venue uploads its members spreadsheet it maps first name, surname, email and phone; a single full-name
      column must be split into first name + surname." And: "we should import the same data as they are asking from our
-     system", so a column is offered only for a field the venue's own game join collects (collect_* in Game settings):
-     email, mobile, postcode, and the "Send me offers from {venue}" consent. Every other column (street address, date of
-     birth, state) is shown as "not imported" and never leaves the venue's computer.
+     system", and later that day: every field a venue COULD ask for in venueplay, whatever it has switched on today. That
+     is the six collect_* fields of Game settings (first name, surname, email, mobile, postcode, the "Send me offers from
+     {venue}" consent) and the member number. Every other column (street address, date of birth, suburb, state) is shown
+     as "not imported" and never leaves the venue's computer.
        guess      plan() plus email / mobile / postcode / offers / a one-column full name, by the heading, then the values
        splitName  "Daniel Lee" -> Daniel / Lee; "Lee, Daniel" and "LEE,Daniel" -> Daniel / Lee; three or more words, one
                   word, or two commas -> a best guess marked sure:false, for the venue to check on the same screen
@@ -240,38 +242,54 @@
     while (cut > 1 && PARTICLES.test(w[cut - 1])) cut--;
     return { first: tidy(w.slice(0, cut).join(" ")), last: tidy(w.slice(cut).join(" ")), sure: false, why: "more than two words" };
   }
-  /* plan() plus the other columns. allow: which fields this venue collects ({email, mobile, postcode, offers}); a field
-     it does not collect is never guessed, so it can never be imported by accident. */
+  /* plan() plus the other columns. EVERY field venueplay can collect comes in (Dean, 16 Nov 2026: "bring in EVERY field a
+     venue COULD ask for in venueplay, not only the ones it currently has switched on"): the six collect_* fields of Game
+     settings, which are first name, surname, email, mobile, postcode and the offers consent, plus the member number.
+     Date of birth, suburb and state are not fields venueplay can ask today, so a column of them is "not imported".
+     allow is kept for a caller that wants fewer; left out, it is all of them. */
+  var ALL_FIELDS = { email: true, mobile: true, postcode: true, offers: true };
   function guess(rows, allow) {
-    allow = allow || {};
+    allow = allow || ALL_FIELDS;
     var p = plan(rows), width = p.heads.length, k, used = {};
     var data = p.rows.slice(p.from, p.from + 300);
     var names = []; for (k = 0; k < width; k++) names.push(p.hasHead ? norm(p.rows[p.head][k]) : "");
     var ix = { number: p.ix.number, first: p.ix.first, last: p.ix.last, full: -1, email: -1, mobile: -1, postcode: -1, offers: -1, offersInverted: false };
     /* a single "Name" / "Member Name" column is a FULL name: both names are in it */
-    if (ix.first >= 0 && ix.last < 0 && (ONE_NAME_H.test(names[ix.first]) || !names[ix.first])) {
+    if (ix.first >= 0 && ix.last < 0 && (ONE_NAME_H.test(names[ix.first]) || !FIRST.test(names[ix.first]))) {
       var vals = col(data, ix.first).filter(function (v) { return v; });
       var two = vals.filter(function (v) { return /\S[\s,]+\S/.test(v); }).length;
       if (ONE_NAME_H.test(names[ix.first]) || (vals.length && two / vals.length >= 0.6)) { ix.full = ix.first; ix.first = -1; }
     }
     [ix.number, ix.first, ix.last, ix.full].forEach(function (c) { if (c >= 0) used[c] = 1; });
-    function pick(field, headRe, valueTest, bad) {
+    /* BY ITS HEADING, THEN BY WHAT IS IN IT (Dean, 16 Nov 2026: "guess each column from its heading AND its contents").
+       A heading that names the field wins ("Ph", "Mob", "E-mail", "SUBSCRIBED"); otherwise a column whose values are
+       nearly all that kind of thing (x@y, 04xx / +614 numbers, 4-digit postcodes that repeat, Yes / No / Subscribed) is
+       pre-marked, unless its heading plainly says it is something else. Anything less sure is left at None for the
+       venue to pick. */
+    function pick(field, headRe, valueTest, bad, min, notThis, extra) {
       var best = -1, bestScore = 0;
       for (var j = 0; j < width; j++) {
         if (used[j]) continue;
         var h = names[j], vals = col(data, j).filter(function (v) { return v; }), n = vals.length || 1;
         var vs = vals.filter(valueTest).length / n, score = 0;
         if (h && headRe.test(h) && !(bad && bad.test(h))) score = 2 + vs;
-        else if (!h && vals.length && vs >= 0.8) score = 1 + vs;
+        else if (vals.length && vs >= (min || 0.8) && !(h && ((bad && bad.test(h)) || (notThis && notThis.test(h)))) && (!extra || extra(vals))) score = 1 + vs;
         if (score > bestScore) { bestScore = score; best = j; }
       }
       if (best >= 0) { ix[field] = best; used[best] = 1; }
     }
-    if (allow.email) pick("email", EMAIL_H, isEmail);
-    if (allow.mobile) pick("mobile", MOBILE_H, function (v) { return !!mobile(v); }, LANDLINE_H);
-    if (allow.postcode) pick("postcode", POSTCODE_H, function (v) { return !!postcode(v) && String(v).replace(/\s/g, "").length <= 4; });
+    if (allow.email) pick("email", EMAIL_H, isEmail, null, 0.8, /phone|mobile|name/);
+    if (allow.mobile) pick("mobile", MOBILE_H, function (v) { return !!mobile(v); }, LANDLINE_H, 0.8, /number|no|id|card|member|postcode|year/);
+    if (allow.postcode) pick("postcode", POSTCODE_H, function (v) { return !!postcode(v) && String(v).replace(/\s/g, "").length <= 4; }, null, 0.9,
+      /year|joined|since|date|dob|birth|point|balance|number|no|id|card|member|age|amount/,
+      function (vals) {   // postcodes repeat (neighbours), and a column of years is not one
+        var seen = {}, rep = 0, yr = 0;
+        vals.forEach(function (v) { v = String(v).trim(); if (seen[v]) rep++; seen[v] = 1; if (/^(19|20)\d\d$/.test(v) && +v >= 1900 && +v <= 2035) yr++; });
+        return rep > 0 && yr / vals.length < 0.5;
+      });
     if (allow.offers) {
-      pick("offers", OFFERS_H, function () { return false; });
+      pick("offers", OFFERS_H, function (v) { return /^(y|yes|n|no|true|false|subscribed|unsubscribed|not subscribed|opted in|opted out|opt in|opt out)$/i.test(String(v).trim()); },
+        null, 0.9, /status|type|class|gender|sex|state|active|financial|paid/);
       if (ix.offers >= 0) ix.offersInverted = /do not contact|unsubscri|opt ?out|optout/.test(names[ix.offers]);
     }
     p.ix = ix;
@@ -339,12 +357,12 @@
      guess; a field this venue no longer collects is dropped (allow) */
   function applyMap(p, saved, allow) {
     if (!p || !p.hasHead || !saved || !saved.cols) return { plan: p, used: false };
-    allow = allow || {};
+    allow = allow || ALL_FIELDS;
     var ix = JSON.parse(JSON.stringify(p.ix)), hit = 0;
     for (var k = 0; k < p.heads.length; k++) {
       var f = saved.cols[norm(p.rows[p.head][k]).slice(0, 60)];
       if (!f || FIELDS.indexOf(f) < 0) continue;
-      if ((f === "email" || f === "mobile" || f === "postcode" || f === "offers") && !allow[f]) continue;
+      if ((f === "email" || f === "mobile" || f === "postcode" || f === "offers") && allow && !allow[f]) continue;
       FIELDS.forEach(function (g) { if (ix[g] === k) ix[g] = -1; });
       ix[f] = k; hit++;
       if (f === "full") { ix.first = -1; ix.last = -1; }

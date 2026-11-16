@@ -2240,11 +2240,11 @@
   "counted_by": "lines"
  },
  "tools/test-members-upload.js": {
-  "checks": 69,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/members-upload-in-chrome.test.py": {
-  "checks": 28,
+  "checks": 30,
   "counted_by": "lines"
  }
 }
