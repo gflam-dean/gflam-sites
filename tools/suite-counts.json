@@ -2312,7 +2312,7 @@
   "counted_by": "lines"
  },
  "tools/canary-night.test.py": {
-  "checks": 102,
+  "checks": 188,
   "counted_by": "lines"
  },
  "tools/staging/db-functions-on-test.test.py": {

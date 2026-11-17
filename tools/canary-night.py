@@ -11,8 +11,10 @@ green and still fail the first real lobby. This is one host, one TV and two phon
 Worker, the REAL database functions and the REAL tables, at a TEST venue:
 
   TV       GET /screen?venue=<slug> (vp_screen_poll), then follows the night on GET /snapshot like a screen does
-  host     a real host sign-in (Supabase Auth, minted with the project's service key: no text, no code typed), then
-           POST /session, /host/game, /host/question, /host/reveal, /host/trivia/board, /host/game/end, /session/close
+  host     a real HOST login at the test venue, signed in the way a host signs in: by phone and a code. The login is
+           one Dean adds from Test Alpha's own Account page (+ Add a host) on a fiction mobile (0491 570 xxx), and
+           Supabase is told that number's code (Auth, Phone, Test phone numbers and OTPs), so no text is ever sent.
+           Then POST /session, /host/game, /host/question, /host/reveal, /host/trivia/board, /host/game/end, /session/close
   phones   POST /join (vp_join_context) twice for phone A (a returning phone keeps its seat), /player/answer
            (vp_player_answer), /player/score, and for musical bingo /player/card + /player/claim
 
@@ -28,13 +30,23 @@ WHAT IT NEVER DOES. Never touches a venue that is not on the allow-list (ALLOW, 
 own venue table and every call is checked against it). Never a venue that can be charged (a Stripe subscription or a
 non-comp billing row: refused before anything is opened), never a venue whose host login is staff anywhere that is not on the
 allow-list. Never writes to the database directly (every REST call is a GET; the only POSTs to Supabase are Auth's
-generate_link and verify, which send nothing). Never calls the billing Worker or Stripe. Players give a first name only
+otp + verify for the fiction mobile with create_user false, so it can never make a login; staging alone may also use
+generate_link for an existing @example.invalid login). Never calls the billing Worker or Stripe. Players give a first name only
 ("Canary A"/"Canary B"): no mobile, no email, so nothing can be texted or emailed. Every URL is checked against the target's
 own short list of hosts before it is opened. A night already on at the venue is never touched (exit 2).
 
-LIVE needs Dean's yes for the first run: --target live refuses without --live-ok-by-dean, and needs VP_CANARY_HOST_EMAIL
-(an @example.invalid host login that is staff ONLY at Test Alpha) in ~/.gflam-migrate.env. Test Alpha also needs HQ's
+LIVE needs Dean's yes for the first run: --target live refuses without --live-ok-by-dean, and needs VP_CANARY_HOST_MOBILE
+(0491 570 xxx) and VP_CANARY_HOST_OTP (that number's test code) in ~/.gflam-migrate.env. Test Alpha also needs HQ's
 "unlimited nights" switch (weekly_limit_off) or the once-a-week rule would stop the second canary of the week.
+
+WHO IT SIGNS IN AS (17 Nov 2026, after the first live run). The login is found, never named by email: the staff rows AT
+the test venue, then each one's Auth user by id, and the one whose phone is the configured fiction mobile. Before any
+sign-in it is REFUSED (exit 2) when that login has a vp_platform_admins row of any role (an HQ owner or accounts login can
+host EVERY venue in the game Worker), when it is staff at any venue that is not a test venue, when on live it is anything
+but a plain 'host' (never owner or manager), or when its email is a real one. After sign-in the session must be that same
+user id, or the token is dropped and it is refused. It never uses Auth's generate_link on live: by email that call signs
+in whoever owns the address, and for an address nobody owns it CREATES a login (the first live run, 17 Nov, did exactly
+that for canary-host@example.invalid).
 
 Exit 0 green. Exit 1 RED: the real system did something wrong (release.py rolls back on this). Exit 2 NOT RUN: refused,
 a precondition is missing or the night could not start (release.py never rolls back on this; it says so loudly).
@@ -52,18 +64,46 @@ TARGETS = {
         'site': 'https://staging.venueplay.com.au',
         'ref': TEST_REF,
         'keys': ('TEST_SUPABASE_URL', 'TEST_SERVICE_KEY', 'TEST_ANON_KEY'),
-        'host_email': 'test-host@example.invalid',       # 0491 570 001, owner of the TEST venues (seed-test-data.sql)
-        'host_email_key': None,
+        'host_mobile': '61491570006',                    # the seed's test host (test-host@example.invalid), owner of the TEST
+                                                         # venues: seeded on 0491 570 001, its mobile read 0491 570 006 on 17 Nov
+        'host_mobile_key': 'TEST_CANARY_HOST_MOBILE',    # optional override
+        'otp_key': 'TEST_CANARY_HOST_OTP',               # optional: with it staging signs in exactly as live does
+        'link_ok': True,                                 # without it, a link for that login's own @example.invalid email
+        'host_roles': None,                              # the seed's login is the test venues' owner: fine on TEST
     },
     'live': {
         'game': 'https://game.venueplay.com.au',
         'site': 'https://www.venueplay.com.au',
         'ref': LIVE_REF,
         'keys': ('NEW_SUPABASE_URL', 'NEW_SERVICE_KEY', 'NEW_ANON_KEY'),
-        'host_email': None,
-        'host_email_key': 'VP_CANARY_HOST_EMAIL',        # made by Dean/main on live; staff ONLY at Test Alpha
+        'host_mobile': None,
+        'host_mobile_key': 'VP_CANARY_HOST_MOBILE',      # a HOST at Test Alpha only, added by Dean from its Account page
+        'otp_key': 'VP_CANARY_HOST_OTP',                 # that number's code in Supabase Auth's test phone numbers
+        'link_ok': False,                                # never generate_link on live
+        'host_roles': ('host',),                         # never owner, manager or marketing
     },
 }
+
+
+def mobile_digits(m):
+    """'0491 570 050', '+61491570050', '61491570050' -> '61491570050' (Supabase stores phones without the +)."""
+    d = ''.join(ch for ch in str(m or '') if ch.isdigit())
+    if d.startswith('04') and len(d) == 10:
+        d = '61' + d[1:]
+    return d
+
+
+def is_fiction_mobile(m):
+    """0491 570 000 to 0491 579 999: never issued to a person (ACMA), and the outbox guard sends nothing to it."""
+    d = mobile_digits(m)
+    return len(d) == 11 and d.startswith('6149157')
+
+
+def why(d):
+    """Auth's own words for a refusal, for the NOT RUN line."""
+    if isinstance(d, dict):
+        return '%s: %s' % (d.get('error_code') or d.get('code') or '', d.get('msg') or d.get('error_description') or d.get('message') or d.get('error') or '')
+    return str(d)[:120]
 
 
 class NotRun(Exception):
@@ -107,28 +147,34 @@ def target_config(name, env, live_ok=False):
             bad.append('%s names the other project' % k)
     if name == 'staging' and (LIVE_REF in t['game'] or '-staging.' not in t['game']):
         bad.append('the staging game Worker address is not a staging one')
-    email = t['host_email'] or env.get(t['host_email_key'] or '', '')
-    if not email:
-        bad.append('no canary host login: %s is not in the key file' % t['host_email_key'])
-    elif not email.endswith('@example.invalid'):
-        bad.append('the canary host login must be an @example.invalid address')
+    mobile = env.get(t['host_mobile_key'] or '', '') or t['host_mobile']
+    otp = (env.get(t['otp_key'] or '', '') or '').strip()
+    if not mobile:
+        bad.append('no canary host: %s (its 0491 570 xxx mobile) is not in the key file' % t['host_mobile_key'])
+    elif not is_fiction_mobile(mobile):
+        bad.append('the canary host mobile must be a fiction number, 0491 570 000 to 0491 579 999')
+    if otp and not (otp.isdigit() and 6 <= len(otp) <= 10):
+        bad.append('%s must be the 6 digit test code' % t['otp_key'])
+    if not otp and not t['link_ok']:
+        bad.append('no sign-in code: %s (the test code for that mobile in Supabase Auth) is not in the key file' % t['otp_key'])
     if bad:
         raise NotRun('; '.join(bad))
-    t.update(name=name, supabase=url, service_key=skey, anon_key=akey, host_email=email)
+    t.update(name=name, supabase=url, service_key=skey, anon_key=akey, host_mobile=mobile_digits(mobile), host_otp=otp or None)
     t['hosts'] = {urllib.parse.urlparse(t['game']).hostname, urllib.parse.urlparse(url).hostname}
     return t
 
 
 class Net:
-    """Every request goes through here. Only the target's own hosts; Supabase REST is GET only; the only Supabase POSTs
-    are Auth's generate_link and verify. Returns (status, parsed json or text)."""
+    """Every request goes through here. Only the target's own hosts; Supabase REST is GET only; Auth is a read of one user
+    by id, a code for the fiction mobile that may not create a login, verify, and (staging only) a link for an
+    @example.invalid login. Returns (status, parsed json or text)."""
 
     def __init__(self, cfg, opener=None):
         self.cfg = cfg
         self.opener = opener or self._urllib
         self.log = []
 
-    def check(self, method, url):
+    def check(self, method, url, body=None):
         u = urllib.parse.urlparse(url)
         if u.scheme != 'https' or u.hostname not in self.cfg['hosts']:
             raise NotRun('refused: %s is not one of this target\'s hosts %s' % (u.hostname, sorted(self.cfg['hosts'])))
@@ -138,13 +184,22 @@ class Net:
         if u.hostname == urllib.parse.urlparse(self.cfg['supabase']).hostname:
             if u.path.startswith('/rest/') and method != 'GET':
                 raise NotRun('refused: the canary never writes to the database directly (%s %s)' % (method, u.path))
-            if u.path.startswith('/auth/') and method != 'GET' and u.path not in ('/auth/v1/admin/generate_link', '/auth/v1/verify'):
-                raise NotRun('refused: %s %s' % (method, u.path))
+            if u.path.startswith('/auth/'):
+                posts = ('/auth/v1/otp', '/auth/v1/verify') + (('/auth/v1/admin/generate_link',) if self.cfg.get('link_ok') else ())
+                one_user = u.path.startswith('/auth/v1/admin/users/') and len(u.path.split('/')) == 6 and len(u.path.split('/')[-1]) == 36
+                if not ((method == 'POST' and u.path in posts) or (method == 'GET' and one_user)):
+                    raise NotRun('refused: %s %s' % (method, u.path))
+                b = body if isinstance(body, dict) else {}
+                if u.path == '/auth/v1/otp' and not (b.get('create_user') is False and is_fiction_mobile(b.get('phone'))
+                                                      and 'email' not in b):
+                    raise NotRun('refused: a sign-in code only for the fiction mobile, and never one that could make a login')
+                if u.path == '/auth/v1/admin/generate_link' and not str(b.get('email') or '').endswith('@example.invalid'):
+                    raise NotRun('refused: a sign-in link only for an @example.invalid login')
             if u.path.startswith('/rest/v1/rpc/'):
                 raise NotRun('refused: the canary never calls a database function itself (the Worker does)')
 
     def __call__(self, method, url, body=None, headers=None):
-        self.check(method, url)
+        self.check(method, url, body)
         # Supabase refuses its secret key from anything that looks like a browser; Cloudflare refuses a bare client on the
         # staging game host. So: a plain name for Supabase, a browser-like one for the game Worker.
         sb = urllib.parse.urlparse(url).hostname == urllib.parse.urlparse(self.cfg['supabase']).hostname
@@ -177,7 +232,7 @@ class Canary:
             raise NotRun('refused: %r is not on the canary allow-list %s' % (venue_slug, list(ALLOW)))
         self.cfg, self.net, self.slug, self.musical, self.say, self.sleep = cfg, net, venue_slug, musical, say, sleep
         self.checks, self.failed = [], []
-        self.session_id = self.venue_id = self.token = None
+        self.session_id = self.venue_id = self.token = self.host_user_id = None
         self.closed = False
 
     # ---------------------------------------------------------------- plumbing
@@ -234,33 +289,11 @@ class Canary:
         if v.get('founding_id'):
             f = self.rest('venueplay_founding?id=eq.%s&select=status,stripe_customer_id,stripe_subscription_id' % v['founding_id'])
             if f and (f[0].get('stripe_subscription_id') or f[0].get('stripe_customer_id') or f[0].get('status') != 'comp'):
-                why = [w for w, bad in (('a Stripe subscription', f[0].get('stripe_subscription_id')),
-                                        ('a Stripe customer', f[0].get('stripe_customer_id')),
-                                        ('billing status %r, not comp' % f[0].get('status'), f[0].get('status') != 'comp')) if bad]
-                raise NotRun('refused: %s could be charged: %s' % (self.slug, ', '.join(why)))
-        # the host login, by Supabase Auth (minted with the service key: no text, no email, no code)
-        k, a = self.cfg['service_key'], self.cfg['anon_key']
-        st, g = self.net('POST', self.cfg['supabase'] + '/auth/v1/admin/generate_link',
-                         {'type': 'magiclink', 'email': self.cfg['host_email']}, {'apikey': k, 'Authorization': 'Bearer ' + k})
-        th = isinstance(g, dict) and ((g.get('properties') or {}).get('hashed_token') or g.get('hashed_token'))
-        if st != 200 or not th:
-            raise NotRun('could not make the canary host sign-in (%s)' % st)
-        st, s = self.net('POST', self.cfg['supabase'] + '/auth/v1/verify', {'type': 'magiclink', 'token_hash': th},
-                         {'apikey': a, 'Authorization': 'Bearer ' + a})
-        if st != 200 or not isinstance(s, dict) or not s.get('access_token'):
-            msg = (s.get('error_code') or s.get('code') or '', s.get('msg') or s.get('error_description') or s.get('message') or '') if isinstance(s, dict) else ('', str(s)[:120])
-            raise NotRun('the canary host sign-in was refused (%s %s: %s)' % (st, msg[0], msg[1]))
-        self.token, uid = s['access_token'], (s.get('user') or {}).get('id')
-        staff = self.rest('vp_venue_staff?auth_user_id=eq.%s&select=venue_id,role' % uid)
-        ids = {r['venue_id'] for r in staff}
-        if self.venue_id not in ids:
-            raise NotRun('the canary host is not staff at %s' % self.slug)
-        allowed = {r['id'] for r in self.rest('vp_venues?slug=in.(%s)&select=id' % ','.join(ALLOW))}
-        if self.cfg['name'] == 'staging':
-            # every venue on the TEST database is a made-up one (test- seed, stage- pubs and sign-ups); the rail is for live
-            allowed |= {r['id'] for r in self.rest('vp_venues?or=(slug.like.test-*,slug.like.stage-*)&select=id')}
-        if ids - allowed:
-            raise NotRun('refused: the canary host login is staff at %d venue(s) that are not test venues' % len(ids - allowed))
+                reasons = [w for w, bad in (('a Stripe subscription', f[0].get('stripe_subscription_id')),
+                                            ('a Stripe customer', f[0].get('stripe_customer_id')),
+                                            ('billing status %r, not comp' % f[0].get('status'), f[0].get('status') != 'comp')) if bad]
+                raise NotRun('refused: %s could be charged: %s' % (self.slug, ', '.join(reasons)))
+        self.sign_in()
         live = self.rest('vp_sessions?venue_id=eq.%s&status=in.(lobby,running,paused)&select=id' % self.venue_id)
         if live:
             raise NotRun('a night is already on at %s (session %s): never touched' % (self.slug, live[0]['id'][:8]))
@@ -275,8 +308,84 @@ class Canary:
             if not pls:
                 raise NotRun('no library playlist with 24 songs for musical bingo')
             self.playlist_id = pls[0]['id']
-        self.ok('preflight: %s is a test venue, comp, unlimited nights, nobody playing; host signed in, staff at test venues only'
+        self.ok('preflight: %s is a test venue, comp, unlimited nights, nobody playing; a host signed in by phone, no HQ login, staff at test venues only'
                 % self.slug, True)
+
+    # ---------------------------------------------------------------- the host login: found, checked, THEN signed in
+    def auth_user(self, uid):
+        k = self.cfg['service_key']
+        st, u = self.net('GET', self.cfg['supabase'] + '/auth/v1/admin/users/' + str(uid), None, {'apikey': k, 'Authorization': 'Bearer ' + k})
+        if st != 200 or not isinstance(u, dict) or u.get('id') != uid:
+            raise NotRun('could not read login %s from Auth (%s)' % (str(uid)[:8], st))
+        return u
+
+    def find_host(self):
+        """The ONE login at this venue whose phone is the configured fiction mobile. Never by email."""
+        rows = self.rest('vp_venue_staff?venue_id=eq.%s&select=auth_user_id,role&order=auth_user_id.asc&limit=60' % self.venue_id)
+        if len(rows) >= 60:
+            raise NotRun('%s has 60 or more logins: not a test venue the canary understands' % self.slug)
+        mine = [u for u in (self.auth_user(r['auth_user_id']) for r in rows)
+                if mobile_digits(u.get('phone')) == self.cfg['host_mobile']]
+        if not mine:
+            raise NotRun('no login with mobile %s is staff at %s: add it from %s\'s Account page, + Add a host'
+                         % (self.cfg['host_mobile'], self.slug, self.venue.get('name')))
+        return mine[0]
+
+    def host_rails(self, user):
+        """Refused BEFORE any sign-in: an HQ login, staff anywhere real, more than a host on live, a real email."""
+        uid = user['id']
+        hq = self.rest('vp_platform_admins?auth_user_id=eq.%s&select=role' % uid)
+        if hq:
+            raise NotRun('refused: the canary host login is a venueplay HQ staff login (%s): never signed in'
+                         % ', '.join(sorted(str(r.get('role')) for r in hq)))
+        staff = self.rest('vp_venue_staff?auth_user_id=eq.%s&select=venue_id,role&limit=200' % uid)
+        ids = {r['venue_id'] for r in staff}
+        if self.venue_id not in ids:
+            raise NotRun('the canary host is not staff at %s' % self.slug)
+        allowed = {r['id'] for r in self.rest('vp_venues?slug=in.(%s)&select=id' % ','.join(ALLOW))}
+        if self.cfg['name'] == 'staging':
+            # every venue on the TEST database is a made-up one (test- seed, stage- pubs and sign-ups); the rail is for live
+            allowed |= {r['id'] for r in self.rest('vp_venues?or=(slug.like.test-*,slug.like.stage-*)&select=id')}
+        if ids - allowed:
+            raise NotRun('refused: the canary host login is staff at %d venue(s) that are not test venues' % len(ids - allowed))
+        roles = self.cfg.get('host_roles')
+        if roles and any(r.get('role') not in roles for r in staff):
+            raise NotRun('refused: the canary host login is %s, not only a host: on live it must be a host and nothing more'
+                         % ', '.join(sorted({str(r.get('role')) for r in staff})))
+        email = user.get('email') or ''
+        if email and not email.endswith('@example.invalid'):
+            raise NotRun('refused: the canary host login has a real email address')
+
+    def sign_in(self):
+        user = self.find_host()
+        self.host_rails(user)
+        a = self.cfg['anon_key']
+        anon = {'apikey': a, 'Authorization': 'Bearer ' + a}
+        if self.cfg.get('host_otp'):
+            # exactly how a host signs in: a code to the phone (Supabase sends nothing for a test number), then verify
+            st, r = self.net('POST', self.cfg['supabase'] + '/auth/v1/otp',
+                             {'phone': self.cfg['host_mobile'], 'create_user': False, 'channel': 'sms'}, anon)
+            if st != 200:
+                raise NotRun('the canary host sign-in code was refused (%s %s)' % (st, why(r)))
+            st, s = self.net('POST', self.cfg['supabase'] + '/auth/v1/verify',
+                             {'type': 'sms', 'phone': self.cfg['host_mobile'], 'token': self.cfg['host_otp']}, anon)
+        elif self.cfg.get('link_ok') and str(user.get('email') or '').endswith('@example.invalid'):
+            # STAGING ONLY, with no test code in the key file: a link for that login's OWN email (it exists, so Auth
+            # cannot create one), minted with the TEST service key
+            k = self.cfg['service_key']
+            st, g = self.net('POST', self.cfg['supabase'] + '/auth/v1/admin/generate_link',
+                             {'type': 'magiclink', 'email': user['email']}, {'apikey': k, 'Authorization': 'Bearer ' + k})
+            th = isinstance(g, dict) and ((g.get('properties') or {}).get('hashed_token') or g.get('hashed_token'))
+            if st != 200 or not th:
+                raise NotRun('could not make the canary host sign-in (%s %s)' % (st, why(g)))
+            st, s = self.net('POST', self.cfg['supabase'] + '/auth/v1/verify', {'type': 'magiclink', 'token_hash': th}, anon)
+        else:
+            raise NotRun('no way to sign the canary host in: %s is not in the key file' % self.cfg.get('otp_key'))
+        if st != 200 or not isinstance(s, dict) or not s.get('access_token'):
+            raise NotRun('the canary host sign-in was refused (%s %s)' % (st, why(s)))
+        if (s.get('user') or {}).get('id') != user['id']:
+            raise NotRun('refused: the sign-in came back as a different login from the host found at %s' % self.slug)
+        self.token, self.host_user_id = s['access_token'], user['id']
 
     # ---------------------------------------------------------------- the night
     def tv(self):
