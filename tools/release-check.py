@@ -4607,6 +4607,11 @@ def local_checks(which):
              'test-onboarding-same-person.js',
              'runs the billing Worker: every onboarding mail to a prospect (welcome, day-3 and expiry nudges, sign-in link, card reminders, cancelled-month note) comes From the first name they met and is signed by it, plain venueplay with no name for an unnamed prospect or a venue with a card, comp, invoice or group, and never Dean', 37,
              'Harry on the welcome and a stranger on the reminder, Dean on a nudge, or a name still on the mail after the card is in'),
+            # D480: HQ reads every account through the Worker (18 Nov 2026; INBOX 480, q91), branch fix/hq-founding-reads.
+            ('D480. HQ accounts: the Admin opt-in table and the Groups billing badges read every account through GET /admin/accounts, owner and accounts only, no mobile, never an empty list or a Card account guessed from a failed read',
+             'test-admin-accounts.js',
+             "runs the billing Worker and HQ's own functions: GET /admin/accounts answers owner and accounts logins only (staff 403, no or bad token 401), sends id, venue name, email, opt-in, status, invoicing and has_sub with no mobile, contact name or Stripe id, pages past 1,000 rows and short pages, and a failed page is a 503; HQ asks nothing for staff, a failed read says Could not read, the Groups badge says Billing not read after a failed read and nothing for staff, never Card account, and a failed re-read after Approve / Never keeps the list and says so", 37,
+             'An opt-in table that says No self-serve accounts yet, a Groups badge that says Card account when nothing was read, a staff login reading every account, or a mobile in the reply'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

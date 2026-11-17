@@ -700,7 +700,7 @@
   "counted_by": "lines"
  },
  "tools/test-admin-accounts.js": {
-  "checks": 28,
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/test-analytics-ignores-robots.js": {

@@ -136,6 +136,27 @@ MUTATIONS = [
      '    if(a.status==="pending" || (!a.has_sub && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };',
      '    if(a.status==="pending" || (!a.stripe_subscription_id && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };',
      'every paying card account reads No card yet in Groups'),
+    # 18 Nov review SHOULDs: the Groups badge when the list was never read, and the re-read after Approve / Never
+    ('test-admin-accounts.js', 'venueplay/app/hq.html',
+     '      if(S.accountsFailed) return { cls:"indep", txt:"Billing not read" };\n',
+     '',
+     'a failed accounts read shows every multi-venue account as Card account in Groups'),
+    ('test-admin-accounts.js', 'venueplay/app/hq.html',
+     '      if(S.accountsNotAllowed) return null;\n',
+     '',
+     'a staff login sees a Card account badge on every multi-venue account'),
+    ('test-admin-accounts.js', 'venueplay/app/hq.html',
+     "      var badges=st ? '<span class=\"badge '+st.cls+'\">'+esc(st.txt)+'</span>' : '';",
+     "      var badges='<span class=\"badge '+st.cls+'\">'+esc(st.txt)+'</span>';",
+     'the Groups tab throws on a staff login (no badge to draw)'),
+    ('test-admin-accounts.js', 'venueplay/app/hq.html',
+     '    else vpTell("Saved. The list could not be re-read, so reload the page to see it.");\n',
+     '',
+     'a failed re-read after Approve / Never says nothing, the old badge left as if it were the answer'),
+    ('test-admin-accounts.js', 'venueplay/app/hq.html',
+     '    if(rr[0]) applyAccounts(rr[0]);\n    else vpTell(',
+     '    applyAccounts(rr[0]);\n    if(!rr[0]) vpTell(',
+     'a failed re-read after Approve / Never empties the list and marks it failed'),
     # ---- 17 Nov 2026 (INBOX 430): onboarding mail comes from the same person, tools/test-onboarding-same-person.js
     ('test-onboarding-same-person.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  return f === VPA_PROSPECT_FROM ? '' : f.split(' at venueplay')[0];\n}",
@@ -27605,6 +27626,10 @@ UNPROVABLE = {
         'its subject is the suite tools/test-quick-signup-warnings.js itself, proven row by row under that suite\'s own name (12 mutations: '
         'the warned rule, the text fallback, the opt-out, the HQ hold and both failed reads, the approve text, the one welcome, the placeholder, '
         'the club rule, the pub word and the page\'s ?vt). Proving it again by label would run the whole gate once per mutation.',
+    # 18 Nov 2026 (INBOX 480): the D480 gate line, proven row by row under its suite's name.
+    "runs the billing Worker and HQ's own functions: GET /admin/accounts answers owner and accounts logins only (staff 403, no or bad token 401), sends id, venue name, email, opt-in, status, invoicing and has_sub with no mobile, contact name or Stripe id, pages past 1,000 rows and short pages, and a failed page is a 503; HQ asks nothing for staff, a failed read says Could not read, the Groups badge says Billing not read after a failed read and nothing for staff, never Card account, and a failed re-read after Approve / Never keeps the list and says so":
+        'its subject is the suite tools/test-admin-accounts.js itself, proven row by row under that suite\'s own name (13 mutations: the role, the mobile, the spread, the unpaged read, the fail-open, the staff call, the fail-to-empty, has_sub, the two Groups badge cases, the badge guard and the re-read after Approve / Never both ways). '
+        'Proving it again by label would run the whole gate once per mutation.',
     # 17 Nov 2026 (INBOX 430): the D430 gate line, proven row by row under its suite's name.
     'runs the billing Worker: every onboarding mail to a prospect (welcome, day-3 and expiry nudges, sign-in link, card reminders, cancelled-month note) comes From the first name they met and is signed by it, plain venueplay with no name for an unnamed prospect or a venue with a card, comp, invoice or group, and never Dean':
         'its subject is the suite tools/test-onboarding-same-person.js itself, proven row by row under that suite\'s own name (14 mutations: each mail\'s From and sign-off, the sign-off helper, the Dean refusal, the switch-over and the welcome-record fallback). '

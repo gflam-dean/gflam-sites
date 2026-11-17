@@ -14,6 +14,8 @@
      a failed page is a 503, never a short list
      HQ: a staff login asks nothing and is told why; a failure rejects (so "Could not read"
      shows); the badges read has_sub; no browser read of venueplay_founding is left in hq.html
+     the Groups badge says Billing not read after a failed read and shows nothing for staff, never
+     Card account; a failed re-read after Approve / Never keeps the list and says so in one line
 
    Run from the repo root:  jsc tools/test-admin-accounts.js
 */
@@ -63,7 +65,10 @@ var S = { adminRole: 'owner' }, ASKED = [], WG = null;
 function canBilling() { return S.adminRole === 'owner' || S.adminRole === 'accounts'; }
 function workerGet(path) { ASKED.push(path); return WG(path); }
 var LIFT = '';
-['readAccounts', 'applyAccounts', 'acctStatusOf'].forEach(function (n) { var b = cut(HQ, n); check('hq.html has ' + n, !!b); LIFT += (b || '') + '\n'; });
+var TOLD = [], RENDERED = 0;
+function vpTell(m) { TOLD.push(m); }
+function renderOptin() { RENDERED++; } function renderFlagged() {} function renderAudit() {} function loadAuditOnly() {}
+['readAccounts', 'applyAccounts', 'acctStatusOf', 'afterOptinReread'].forEach(function (n) { var b = cut(HQ, n); check('hq.html has ' + n, !!b); LIFT += (b || '') + '\n'; });
 (0, eval)(LIFT);
 
 (async function () {
@@ -129,6 +134,30 @@ var LIFT = '';
   check('a refusal from the Worker REJECTS, so HQ says Could not read, not "No self-serve accounts yet"', !!threw);
   applyAccounts(null);
   check('and the failed read is marked failed, with no stale badges', S.accountsFailed === true && Object.keys(S.acctStatus).length === 0);
+
+  print('Groups badges when the list was never read (18 Nov review)');
+  var fb = acctStatusOf('f-00001');
+  check('a failed read: the badge says Billing not read, never Card account', !!fb && fb.txt === 'Billing not read', fb);
+  S = { adminRole: 'staff' }; ASKED = [];
+  applyAccounts(await readAccounts());
+  var sb = acctStatusOf('f-00001');
+  check('a staff login: no billing badge at all, never Card account', sb === null, sb);
+  check('the Groups row draws no badge when there is none (and does not throw on it)', /var badges=st \? '<span class="badge '\+st\.cls\+'">'\+esc\(st\.txt\)\+'<\/span>' : '';/.test(HQ));
+  S = { adminRole: 'owner', healthBad: { 'account:f-00002': true } }; applyAccounts(null);
+  check('a failing payment still shows as Payment failing when the list could not be read', (acctStatusOf('f-00002') || {}).txt === 'Payment failing', acctStatusOf('f-00002'));
+  S = { adminRole: 'owner' }; WG = function () { return get(DEAN).then(function (r) { return r.body; }); };
+  applyAccounts(await readAccounts());
+  check('a read list with no row for that account still reads Card account', acctStatusOf('f-99999').txt === 'Card account', acctStatusOf('f-99999'));
+
+  print('the re-read after Approve / Never');
+  var had = S.accounts.slice(); TOLD = []; RENDERED = 0;
+  afterOptinReread([{ status: 'rejected', reason: new Error('down') }, { status: 'fulfilled', value: { data: [] } }]);
+  check('a failed re-read keeps the list it had and says so in one short line', S.accounts.length === had.length && S.accountsFailed === false && TOLD.length === 1 && /Saved\./.test(TOLD[0]) && /reload/i.test(TOLD[0]) && TOLD[0].length < 90 && TOLD[0].indexOf('\u2014') === -1 && RENDERED === 1, [TOLD, S.accounts.length]);
+  TOLD = [];
+  world(3); DB.venueplay_founding[1].optin_release_approved = true;
+  afterOptinReread([{ status: 'fulfilled', value: await readAccounts() }, { status: 'fulfilled', value: { data: [] } }]);
+  check('a good re-read updates the row and says nothing', TOLD.length === 0 && S.acctStatus['f-00002'].optin_release_approved === true, [TOLD, S.acctStatus['f-00002']]);
+  check('the Approve / Never handler uses afterOptinReread', /\]\)\.then\(afterOptinReread\);/.test(HQ));
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + e.stack); fails++; });
 drainMicrotasks();

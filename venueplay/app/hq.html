@@ -4043,7 +4043,13 @@
   function acctStatusOf(fid){
     var a=(S.acctStatus||{})[fid]; var bad=(S.healthBad||{})["account:"+fid];
     if(bad) return { cls:"suspend", txt:"Payment failing" };
-    if(!a) return { cls:"indep", txt:"Card account" };
+    if(!a){
+      // The list was never read: a staff login (not asked) shows no badge, a failed read says so.
+      // Never "Card account" then, which would be a guess shown as a fact (18 Nov 2026 review).
+      if(S.accountsNotAllowed) return null;
+      if(S.accountsFailed) return { cls:"indep", txt:"Billing not read" };
+      return { cls:"indep", txt:"Card account" };
+    }
     if(a.status==="comp") return { cls:"indep", txt:"Comp, no charge" };
     if(a.status==="pending" || (!a.has_sub && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };
     if(a.bill_by_invoice) return { cls:"grouped", txt:"Invoiced" };
@@ -4120,7 +4126,7 @@
       var m=groupMatches(title, members, q); if(!m.hit) return;
       shown++;
       var key="acct:"+c.founding_id, open=!!S.openGroups[key] || m.byVenue, st=acctStatusOf(c.founding_id);
-      var badges='<span class="badge '+st.cls+'">'+esc(st.txt)+'</span>';
+      var badges=st ? '<span class="badge '+st.cls+'">'+esc(st.txt)+'</span>' : '';
       var h='<div class="panel gpanel'+(open?' open':'')+'" data-acct="'+esc(c.founding_id)+'">'+
         grpRowHead(key, esc(title)+' <span class="gkind">Account</span>', members.length+' venues on one card: '+esc(members.map(function(v){ return v.name; }).join(", ")), badges, open);
       if(open){
@@ -4639,6 +4645,17 @@
     if(capO.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("optin", capO.hidden, 5, 25));
   }
 
+  /* After Approve / Never has saved: re-read the accounts and the audit. A failed re-read keeps
+     the list we had (the save itself landed, the Worker said so) and says so in one line, so the
+     row that still shows its old badge is not taken as the answer. */
+  function afterOptinReread(st){
+    var rr=st.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
+    if(rr[0]) applyAccounts(rr[0]);
+    else vpTell("Saved. The list could not be re-read, so reload the page to see it.");
+    S.audit=(rr[1] && rr[1].data) || S.audit;
+    renderOptin(); renderFlagged(); renderAudit();
+    loadAuditOnly();   // and the flagged list's own read, so an approved signup leaves it
+  }
   /* One handler for both tables: same endpoint, same two buttons, and re-reading the accounts
      afterwards so the row shows what actually landed rather than what was clicked. */
   function wireOptinButtons(el){
@@ -4654,14 +4671,7 @@
         Promise.allSettled([
           readAccounts(),
           c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250)
-        ]).then(function(st){
-          var rr=st.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
-          // A failed re-read keeps the list we had: the save itself landed, the Worker said so.
-          if(rr[0]) applyAccounts(rr[0]);
-          S.audit=(rr[1] && rr[1].data) || S.audit;
-          renderOptin(); renderFlagged(); renderAudit();
-          loadAuditOnly();   // and the flagged list's own read, so an approved signup leaves it
-        });
+        ]).then(afterOptinReread);
       }).catch(function(){ btn.disabled=false; renderOptin(); });
     });
   }
