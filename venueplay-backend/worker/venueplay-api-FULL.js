@@ -8600,7 +8600,7 @@ async function vpbCardLink(request, env, json) {
   const venueId = String((_b.body && _b.body.venue_id) || '').trim();
   const venue = (o.venues || []).find((v) => v.id === venueId);
   if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
-  const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id,max_players&limit=1');
+  const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id,max_players,compliance_accepted_at&limit=1');
   const fid = vr && vr[0] && vr[0].founding_id;
   if (!fid) return json({ error: 'This venue has no account record yet. Email support@venueplay.com.au and we will sort it.' }, 409);
   const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,max_seats,stripe_subscription_id&limit=1');
@@ -8616,6 +8616,12 @@ async function vpbCardLink(request, env, json) {
   if (prow && prow.free_month_ends_at) { out.free_month_ends_at = prow.free_month_ends_at; out.ends_words = vpaBneDateWords(Date.parse(prow.free_month_ends_at)); }
   if (prow && prow.paused_at) out.paused = true;
   if (pp.grace) { out.offer_grace = true; out.offer_kept_until = pp.grace_ends_at; out.offer_kept_words = vpaBneDateWords(Date.parse(pp.grace_ends_at)); }
+  /* THE TERMS COME BEFORE THE CARD (18 Nov 2026, one-tap card review). No card link, so no card saved and no
+     charge, until the venue has its section 6 tick on record (compliance_accepted_at, written once by
+     /account/compliance-accept, the console's Terms card). The page shows that card and comes back here. */
+  if (!out.has_card && !(vr[0] && vr[0].compliance_accepted_at)) {
+    return json({ ok: false, code: 'terms_first', has_card: false, error: 'Tick the Terms first, then add your card.' }, 409);
+  }
   if (!out.has_card) {
     out.card_url = await vpaCardLink(env, fid);
     if (!out.card_url) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
@@ -11668,6 +11674,19 @@ function vpaFoundingOpenNow(env) {
    webhook we already have marks the row card_on_file and the provisioning it
    already runs finds the venue HQ built (it matches on founding_id) instead of
    creating a second one. Nothing new has to know about this path. */
+/* Is the Terms tick on record for EVERY venue on this account? true = yes, false = at least one venue has none,
+   null = the venues could not be read or there are none (the caller opens no payment page). */
+async function vpaCardTermsOnRecord(env, foundingId) {
+  let rows;
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,compliance_accepted_at', { headers: vpaHeaders(env) });
+    if (!res.ok) return null;
+    rows = await res.json();
+  } catch (e) { return null; }
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return rows.every((v) => !!(v && v.compliance_accepted_at));
+}
+
 async function vpaAddCardRedirect(request, env) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const page = (title, body) => new Response(
@@ -11724,6 +11743,16 @@ async function vpaAddCardRedirect(request, env) {
     const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
     const cardAtMs = Date.now();   // THE moment of the card-add: the price, the grace and the trial are all decided on it
     { const held = await vpbProspectHeld(env, prow, cardAtMs); if (held) return page('This account is on hold', vpaEsc(held)); }   // 90 days (INBOX 54.3)
+    /* THE TERMS COME BEFORE THE CARD, ON THE EMAILED LINK TOO (18 Nov 2026, fix/add-card-terms). The free month
+       reminders, the free-month-end note, HQ's welcome and a paused prospect's restart all carry this link, and it
+       used to go straight to Stripe, so a prospect who never ticked section 6 could save a card and be charged when
+       the month ended with no Terms on record. Now no Checkout is made until every venue on the account has its tick
+       (vp_venues.compliance_accepted_at, written once by /account/compliance-accept). A venue without one goes to
+       its console (/app/?card=terms), where the console's own Terms card (VP.termsBeforeCard) takes the tick and
+       goes straight on to the card. A read that fails, or finds no venue, opens nothing: never a card unasked. */
+    { const terms = await vpaCardTermsOnRecord(env, foundingId);
+      if (terms === null) return page('We could not open the payment page', 'Nothing has been charged. Try the link again in a minute, or reply to your email and we will sort it.');
+      if (terms === false) return Response.redirect(site + '/app/?card=terms', 302); }
     const pprice = prow ? await vpaProspectPriceNow(env, prow, cardAtMs) : null;
     const founding = pprice ? pprice.founding : vpaFoundingOpenNow(env);
     const price = founding

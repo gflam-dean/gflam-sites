@@ -845,6 +845,8 @@
         });
       });
       function applyLink(d) {
+        /* The Terms are not ticked yet (the Worker's "terms_first"): back to that step, which comes first. */
+        if (d && d.code === "terms_first" && steps.indexOf("terms") >= 0 && state.step === "card") { api.go("terms"); return "terms"; }
         if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; choices.style.display = "none"; retry.style.display = "none"; return "has_card"; }
         if (!d || !d.ok || !d.card_url) {
           cardMsg.style.color = C.pinkSoft;

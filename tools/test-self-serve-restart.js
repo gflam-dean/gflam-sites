@@ -142,6 +142,9 @@ async function prospect(o) {
   var pr = DB.vp_prospects.filter(function (p) { return p.venue_id === v.id; })[0];
   ['first_signin_at', 'free_month_ends_at', 'card_choice', 'card_choice_at', 'paused_at', 'cancelled_at'].forEach(function (k) { if (!(k in pr)) pr[k] = null; });
   if (!('offer_rate' in pr)) pr.offer_rate = null; if (!('reminders_sent' in pr)) pr.reminders_sent = [];
+  /* The owner ticks the Terms, as the console asks first: no card link before that (one-tap card review, 18 Nov 2026). */
+  var tk = await call('/account/compliance-accept', { venue_id: v.id, accepted: true, by: 'Sam' }, AS(st.auth_user_id, v.id));
+  if (tk.status !== 200) throw new Error('terms tick failed ' + JSON.stringify(tk.body));
   return { v: v, login: st.auth_user_id, row: function () { return DB.vp_prospects.filter(function (p) { return p.venue_id === v.id; })[0]; },
     founding: function () { return DB.venueplay_founding.filter(function (f) { return f.id === v.founding_id; })[0]; } };
 }

@@ -1186,13 +1186,26 @@
     if (pay && w.link && w.link.href === '#vp-card' && ctx && ctx.venue && ctx.venue.id) {
       pay.setAttribute('aria-disabled', 'true');
       try {
-        getClient().auth.getSession().then(function (r) {
-          var tok = (r && r.data && r.data.session && r.data.session.access_token) || '';
-          return fetch(BILLING_API + '/account/card-link', { method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'X-VP-Venue': String(ctx.venue.id) },
-            body: JSON.stringify({ venue_id: ctx.venue.id }) }).then(function (res) { return res.json(); });
-        }).then(function (j) {
-          if (j && j.card_url && /^https:\/\//.test(j.card_url)) { pay.setAttribute('href', j.card_url); pay.removeAttribute('aria-disabled'); }
+        var holdLink = function () {
+          return getClient().auth.getSession().then(function (r) {
+            var tok = (r && r.data && r.data.session && r.data.session.access_token) || '';
+            return fetch(BILLING_API + '/account/card-link', { method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'X-VP-Venue': String(ctx.venue.id) },
+              body: JSON.stringify({ venue_id: ctx.venue.id }) }).then(function (res) { return res.json(); });
+          });
+        };
+        var linkOk = function (j) { return !!(j && j.card_url && /^https:\/\//.test(j.card_url)); };
+        holdLink().then(function (j) {
+          if (linkOk(j)) { pay.setAttribute('href', j.card_url); pay.removeAttribute('aria-disabled'); }
+          else if (j && j.code === 'terms_first') {   // the Terms first, then straight on to the card (termsBeforeCard)
+            pay.removeAttribute('aria-disabled');
+            pay.addEventListener('click', function (e) {
+              if (e && e.preventDefault) e.preventDefault();
+              termsBeforeCard(ctx, function () {
+                holdLink().then(function (k) { if (linkOk(k)) { try { window.location.href = k.card_url; } catch (x) {} } }, function () {});
+              });
+            });
+          }
         }, function () {});
       } catch (e) {}
     }
@@ -1246,10 +1259,10 @@
   var BILLING_API = "https://api.venueplay.com.au";
   var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.";
   var TERMS_EFFECTIVE = "28 October 2026";
-  function termsMode(ctx) {
+  function termsMode(ctx, forCard) {
     var v = ctx && ctx.venue;
     if (!v || typeof v !== "object" || !("compliance_accepted_at" in v)) return null;
-    if (v.compliance_accepted_at || v.status === "suspended") return null;
+    if (v.compliance_accepted_at || (v.status === "suspended" && !forCard)) return null;
     var r = ctx.role;
     if (r === "owner" || r === "manager") return "accept";
     if (r === "admin") return "hq";
@@ -1265,18 +1278,40 @@
     var v = ctx && ctx.venue;
     return !!(termsMode(ctx) && v.terms_required === true);
   }
+  /* THE TERMS COME BEFORE THE CARD (18 Nov 2026, one-tap card review). The billing Worker hands out no card link
+     (/account/card-link answers code "terms_first") until the venue's tick is on record, so no card is saved and
+     nothing is charged before it. Every "Add your card" that meets that answer calls termsBeforeCard: the SAME
+     Terms card and the SAME record as above (/account/compliance-accept: the time, the name typed, and the Terms
+     date and words in HQ's audit), with Accept reading "Accept and add your card" and, once the record is in,
+     then() goes on to the card. A venue that already ticked never gets here: its card link comes straight back.
+     A paused venue (switched off) is shown the card here too, since adding the card is how it comes back. */
+  var termsThen = {}, termsListeners = [];
+  function onTermsAccepted(fn) { if (typeof fn === "function") termsListeners.push(fn); }
+  function termsBeforeCard(ctx, then) {
+    var v = ctx && ctx.venue;
+    if (!v || termsMode(ctx, true) !== "accept") return false;
+    termsThen[String(v.id)] = typeof then === "function" ? then : null;
+    termsCard(ctx, { forCard: true });
+    var card = document.getElementById("vpTermsCard"), go = document.getElementById("vpTermsGo"), tick = document.getElementById("vpTermsTick");
+    if (!card || !go) return false;
+    go.textContent = "Accept and add your card";
+    try { if (card.scrollIntoView) card.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+    try { if (tick && tick.focus) tick.focus(); } catch (e) {}
+    return true;
+  }
   function termsEl(tag, css, text) {
     var e = document.createElement(tag);
     if (css) e.setAttribute("style", css);
     if (text != null) e.textContent = text;
     return e;
   }
-  function termsCard(ctx) {
+  function termsCard(ctx, opts) {
     if (typeof document === "undefined" || !document.body) return false;
     var card = document.getElementById("vpTermsCard");
-    var mode = termsMode(ctx);
+    var forCard = !!(opts && opts.forCard);
+    var mode = termsMode(ctx, forCard);
     if (!mode) { if (card && card.parentNode) card.parentNode.removeChild(card); return false; }
-    var v = ctx.venue, name = String(v.name || "your venue"), block = termsBlocking(ctx);
+    var v = ctx.venue, name = String(v.name || "your venue"), block = termsBlocking(ctx) && v.status !== "suspended";
     if (block) mode = "block-" + mode;
     if (card && card.getAttribute("data-venue") === String(v.id) && card.getAttribute("data-mode") === mode) return true;
     if (card && card.parentNode) card.parentNode.removeChild(card);
@@ -1313,7 +1348,10 @@
       card.appendChild(termsEl("p", TEXT, "Only the venue's owner or a manager can accept them when they sign in. Their games run as normal."));
       card.appendChild(read);
     } else {
-      if (block) {
+      if (forCard && !block) {
+        card.appendChild(termsEl("h2", TITLE, "Tick the Terms, then add your card, " + name));
+        card.appendChild(termsEl("p", TEXT, "Our Terms say who is responsible for the games you run: your venue runs every game, and venueplay supplies the software. Tick once and your card is next."));
+      } else if (block) {
         card.appendChild(termsEl("h2", TITLE, "One tick and your games are ready, " + name));
         card.appendChild(termsEl("p", TEXT, "Our Terms say who is responsible for the games you run: your venue runs every game, and venueplay supplies the software. Tick once and every game is ready to start. Your TV keeps showing your ads either way."));
       } else {
@@ -1369,6 +1407,11 @@
       if (!j || j.error || !j.ok) { go.disabled = false; msg.textContent = (j && j.error) || "That did not save. Try again in a minute."; return false; }
       v.compliance_accepted_at = j.compliance_accepted_at || new Date().toISOString();
       v.compliance_accepted_by = j.compliance_accepted_by || who;
+      /* On to the card when an "Add your card" asked for the Terms first (termsBeforeCard); every other listener
+         (the header's Add your card) learns the tick is in. */
+      var then = termsThen[String(v.id)]; delete termsThen[String(v.id)];
+      termsListeners.forEach(function (fn) { try { fn(v); } catch (e) {} });
+      if (then) { try { then(v); } catch (e) {} }
       while (card.firstChild) card.removeChild(card.firstChild);
       card.setAttribute("data-mode", "done");
       card.appendChild(termsEl("p", "margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#2BD47D;font-weight:800", "Accepted"));
@@ -1428,6 +1471,28 @@
       k.style.display = "none";
     });
     return true;
+  }
+  /* AN EMAILED "ADD MY CARD" LINK, NO TERMS ON RECORD YET (18 Nov 2026, fix/add-card-terms). The billing Worker's
+     /add-card sends such a venue here, /app/?card=terms, instead of to Stripe. The console then puts up its own Terms
+     card through termsBeforeCard (the same card, the same /account/compliance-accept record), and once the tick is in
+     it asks /account/card-link again and follows the link to Stripe. Returns true when the card was put up. */
+  function termsFromCardLink(ctx, deps) {
+    var d = deps || {};
+    var search = d.search != null ? String(d.search) : String((typeof window !== "undefined" && window.location && window.location.search) || "");
+    if (!/[?&]card=terms(&|$)/.test(search)) return false;
+    var v = ctx && ctx.venue;
+    if (!v || !v.id) return false;
+    var go = d.openUrl || function (u) { try { window.location.href = u; } catch (x) {} };
+    return termsBeforeCard(ctx, function () {
+      return getClient().auth.getSession().then(function (r) {
+        var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+        return fetch(BILLING_API + "/account/card-link", { method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) },
+          body: JSON.stringify({ venue_id: v.id }) }).then(function (res) { return res.json(); });
+      }).then(function (j) {
+        if (j && typeof j.card_url === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.card_url)) go(j.card_url);
+      }, function () {});
+    });
   }
 
   /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
@@ -1693,9 +1758,12 @@
     endedFirst: endedFirst,
     holdWords: holdWords,
     termsCard: termsCard,   // section 6 of the Terms, accepted once (28 Oct 2026)
+    termsBeforeCard: termsBeforeCard,   // the same card before any card is added (18 Nov 2026)
+    onTermsAccepted: onTermsAccepted,
     termsGate: termsGate,   // a prospect venue's console is held on that card until it is ticked (migration 122)
     hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
+    termsFromCardLink: termsFromCardLink,   // the emailed card link with no tick yet: Terms, then the card (18 Nov 2026)
     closeOpenSessions: closeOpenSessions,
     closeSession: closeSession,
     retryPendingCloses: retryPendingCloses,

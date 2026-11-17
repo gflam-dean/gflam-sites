@@ -1681,8 +1681,11 @@
        console on this device (liveNightElsewhere). The card waits for a calm moment and steps aside if a game starts under it. */
     if(window.VPUpdatesOptin && VPUpdatesOptin.wants(__ctx) && window.VP && VP.getClient){ try{ VPUpdatesOptin.maybe(__ctx, { client:VP.getClient(),
       busy:function(){ return (typeof G==="object" && G && G.status==="running") || !!liveNightElsewhere(); } }); }catch(e){} }
-    if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
+    /* An emailed "Add my card" link with no Terms on record lands here as ?card=terms (18 Nov 2026): the same Terms card,
+       its button "Accept and add your card", then straight on to the card (VP.termsFromCardLink). */
+    if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ if(VP.termsFromCardLink) VP.termsFromCardLink(__ctx); go("vBoot"); return; }
     if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
+    if(window.VP && VP.termsFromCardLink) VP.termsFromCardLink(__ctx);
     /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new
        venue's owner or manager may be asked ONE short optional thing the Account page lacks, as a sheet over the
        console. Never more than one a sign-in; "Not now" always works. It never blocks the console. */

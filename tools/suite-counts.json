@@ -2370,5 +2370,9 @@
  "tools/cmdline-guards.test.py": {
   "checks": 286,
   "counted_by": "lines"
+ },
+ "tools/test-add-card-terms.js": {
+  "checks": 28,
+  "counted_by": "lines"
  }
 }

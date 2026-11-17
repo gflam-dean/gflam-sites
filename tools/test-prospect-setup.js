@@ -314,6 +314,11 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
 
   section('2. The price: the card link (now in the app, POST /account/card-link) opens Checkout on the founding monthly price, for their crowd');
   var mgr = (DB.vp_venue_staff.filter(function (x) { return x.venue_id === v.id && x.role === 'owner'; })[0] || {}).auth_user_id;
+  /* The Terms come first (one-tap card review, 18 Nov 2026): no card link until the tick is on record. */
+  var cl0 = await vpbCardLink(as(mgr, { venue_id: v.id }), ENV, J);
+  check('before the Terms are ticked: no card link, the Worker says tick the Terms first', cl0.status === 409 && cl0.body.code === 'terms_first' && !cl0.body.card_url, cl0);
+  var acc = await vpbAcceptCompliance(as(mgr, { venue_id: v.id, accepted: true, by: 'Caz' }), ENV, J);
+  check('their manager ticks the Terms: recorded with the time and their name', acc.status === 200 && !!v.compliance_accepted_at && v.compliance_accepted_by === 'Caz', acc.body);
   var cl = await vpbCardLink(as(mgr, { venue_id: v.id }), ENV, J);
   var cardHref = (cl.body && cl.body.card_url) || '';
   check('their manager asks for the card link: THIS account record, no card yet, the rate and the crowd', cl.status === 200 && cl.body.has_card === false && cardHref.indexOf('https://www.venueplay.com.au/add-card?f=' + encodeURIComponent(f.id) + '&t=') === 0 &&
