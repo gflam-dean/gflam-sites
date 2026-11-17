@@ -2372,7 +2372,7 @@
   "counted_by": "lines"
  },
  "tools/test-add-card-terms.js": {
-  "checks": 38,
+  "checks": 41,
   "counted_by": "lines"
  }
 }

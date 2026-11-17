@@ -360,6 +360,12 @@
           .then(function (res) { return res.json().catch(function () { return { error: "Something went wrong at our end. Try again in a minute." }; }); });
       }).catch(function () { return { error: "Could not reach venueplay. Check your connection and try again." }; });
     }
+    /* The card link through the ONE shared read (VP.cardLink in vp-session.js, duplicate helpers audit 18 Nov 2026):
+       the same request, the same words when it cannot be read, the same "is it a link" test as the hold card and the
+       header button. No vp-session.js on the page: no link (the card step says it could not load). */
+    function cardRead() {
+      return (VP && typeof VP.cardLink === "function") ? VP.cardLink(v.id, { fetch: fetchFn, client: client }) : Promise.resolve(null);
+    }
     function loadMe() {
       if (!client || !client.auth || !client.auth.getUser) return Promise.resolve(me);
       return client.auth.getUser().then(function (r) {
@@ -855,7 +861,7 @@
           return "terms_other";
         }
         if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; choices.style.display = "none"; retry.style.display = "none"; return "has_card"; }
-        if (!d || !d.ok || !d.card_url) {
+        if (!d || !d.ok || !(VP && VP.cardLinkOk && VP.cardLinkOk(d))) {
           cardMsg.style.color = C.pinkSoft;
           cardMsg.textContent = ((d && d.error) || "The card link could not load just now.") + " Tap Retry, or choose Later.";
           retry.style.display = "inline-block"; linkReady(false);
@@ -868,7 +874,7 @@
         return "link";
       }
       function loadLink(fresh) {
-        var ask = (!fresh && cardInfo) ? Promise.resolve(cardInfo) : billing("/account/card-link", { venue_id: v.id });
+        var ask = (!fresh && cardInfo) ? Promise.resolve(cardInfo) : cardRead();
         if (fresh) { retry.disabled = true; cardMsg.style.color = C.faint; cardMsg.textContent = "Getting your card link..."; }
         return ask.then(function (d) { retry.disabled = false; if (fresh) cardInfo = d; return applyLink(d); });
       }
@@ -919,7 +925,7 @@
       return steps[steps.length - 1];
     }
     count.textContent = ""; title.textContent = "Getting started";
-    api.ready = Promise.all([loadMe(), billing("/account/card-link", { venue_id: v.id }), billing("/account/screen-get", { venue_id: v.id })]).then(function (a) {
+    api.ready = Promise.all([loadMe(), cardRead(), billing("/account/screen-get", { venue_id: v.id })]).then(function (a) {
       if (me.phone) { drop("mobile"); state.mobile = "done"; }
       cardInfo = a[1] || null;
       if (cardInfo && cardInfo.ok && cardInfo.has_card) drop("card");

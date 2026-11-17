@@ -258,7 +258,7 @@
   $("qpCard").addEventListener("click", function(){
     qtrack("card_screen_seen"); $("qpErr").classList.remove("show");
     bill("/account/card-link", { venue_id:S.venueId }).then(function(j){
-      if(j && j.card_url && /^https:\/\//.test(j.card_url)){ setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there. the funnel's card-added step is sent only when Stripe sends them back (the console, ?card=added)
+      if(VP.cardLinkOk(j)){ setTimeout(function(){ location.href=j.card_url; }, 200); }   // Stripe's page; the email is asked for there. the funnel's card-added step is sent only when Stripe sends them back (the console, ?card=added)
       else { $("qpErr").textContent=(j&&j.has_card) ? "Your card is already added." : ((j&&j.error)||"We could not open the card page just then. Please try again."); $("qpErr").classList.add("show"); }
     });
   });

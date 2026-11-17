@@ -2064,7 +2064,7 @@
     var a = $("leftCardBtn"); if (!a) return;
     var vid = (acctVenues && acctVenues[0] && acctVenues[0].id) || pageVenueId || "";
     api("/account/card-link", { venue_id: vid }).then(function(j){
-      if (j && j.card_url && /^https:\/\//.test(j.card_url)){ a.href = j.card_url; a.removeAttribute("aria-disabled"); }
+      if (VP.cardLinkOk(j)){ a.href = j.card_url;   /* the one "is it a card link" test (vp-session.js) */ a.removeAttribute("aria-disabled"); }
       else if (j && j.error){ a.removeAttribute("href"); a.textContent = "Add your card"; showMsg(j.error); }
     });
   }

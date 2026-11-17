@@ -1186,15 +1186,8 @@
     if (pay && w.link && w.link.href === '#vp-card' && ctx && ctx.venue && ctx.venue.id) {
       pay.setAttribute('aria-disabled', 'true');
       try {
-        var holdLink = function () {
-          return getClient().auth.getSession().then(function (r) {
-            var tok = (r && r.data && r.data.session && r.data.session.access_token) || '';
-            return fetch(BILLING_API + '/account/card-link', { method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'X-VP-Venue': String(ctx.venue.id) },
-              body: JSON.stringify({ venue_id: ctx.venue.id }) }).then(function (res) { return res.json(); });
-          });
-        };
-        var linkOk = function (j) { return !!(j && j.card_url && /^https:\/\//.test(j.card_url)); };
+        var holdLink = function () { return cardLink(ctx.venue.id); };   // the one card-link read (cardLink below)
+        var linkOk = cardLinkOk;
         holdLink().then(function (j) {
           if (linkOk(j)) { pay.setAttribute('href', j.card_url); pay.removeAttribute('aria-disabled'); }
           else if (j && j.code === 'terms_first') {   // the Terms first, then straight on to the card (termsBeforeCard)
@@ -1492,6 +1485,30 @@
     });
     return true;
   }
+  /* THE CARD LINK, ONE READ (duplicate helpers audit 18 Nov 2026, Part 2 G). Every "Add your card" in the console asks
+     the billing Worker's /account/card-link for THIS venue (vpbCardLink: a signed-in owner or manager of it only) through
+     cardLink, and follows a link only when cardLinkOk says it is one (https, nothing that could break out of an href):
+     the paused venue's hold card, the emailed link's Terms step (termsFromCardLink), the setup guide's card step and the
+     header button (vp-cardbtn.js). Resolves the Worker's answer, or { error } in the guide's words when it could not be
+     read; never rejects. o.fetch and o.client are the caller's own (the guide's deps, the suites' fakes); o.needSignIn:
+     with no session nothing is asked and it resolves null. */
+  var CARD_LINK_WORDS = { reach: "Could not reach venueplay. Check your connection and try again.",
+    answer: "Something went wrong at our end. Try again in a minute." };
+  function cardLinkOk(j) { return !!(j && typeof j.card_url === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.card_url)); }
+  function cardLink(venueId, o) {
+    o = o || {};
+    var fetchFn = o.fetch || fetch;
+    return Promise.resolve().then(function () { return (o.client || getClient()).auth.getSession(); })
+      .then(function (r) { return (r && r.data && r.data.session && r.data.session.access_token) || ""; }, function () { return ""; })
+      .then(function (tok) {
+        if (!tok && o.needSignIn) return null;
+        return fetchFn(BILLING_API + "/account/card-link", { method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(venueId) },
+          body: JSON.stringify({ venue_id: venueId }) })
+          .then(function (res) { return res.json().catch(function () { return { error: CARD_LINK_WORDS.answer }; }); });
+      })
+      .then(null, function () { return { error: CARD_LINK_WORDS.reach }; });
+  }
   /* AN EMAILED "ADD MY CARD" LINK, NO TERMS ON RECORD YET (18 Nov 2026, fix/add-card-terms). The billing Worker's
      /add-card sends such a venue here, /app/?card=terms, instead of to Stripe. The console then puts up its own Terms
      card through termsBeforeCard (the same card, the same /account/compliance-accept record), and once the tick is in
@@ -1503,18 +1520,10 @@
     var v = ctx && ctx.venue;
     if (!v || !v.id) return false;
     var go = d.openUrl || function (u) { try { window.location.href = u; } catch (x) {} };
-    function cardLink() {
-      return getClient().auth.getSession().then(function (r) {
-        var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
-        return fetch(BILLING_API + "/account/card-link", { method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) },
-          body: JSON.stringify({ venue_id: v.id }) }).then(function (res) { return res.json(); });
-      });
-    }
     /* After each tick the card link is asked again: the card when every venue is ticked, or the next venue's Terms card. */
     function onward() {
-      return cardLink().then(function (j) {
-        if (j && typeof j.card_url === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.card_url)) go(j.card_url);
+      return cardLink(v.id).then(function (j) {
+        if (cardLinkOk(j)) go(j.card_url);
         else if (j && j.code === "terms_first") termsForCardAnswer(ctx, j, onward);
       }, function () {});
     }
@@ -1522,7 +1531,7 @@
     /* This venue has its tick, but /add-card sent us here, so another venue on the account (a group) has none: ask the
        card link, which names it, and put up THAT venue's Terms card (never a page with nothing on it). */
     if (termsMode(ctx, true) === null && v.compliance_accepted_at && (ctx.role === "owner" || ctx.role === "manager")) {
-      try { cardLink().then(function (j) { if (j && j.code === "terms_first" && j.venue_id && String(j.venue_id) !== String(v.id)) termsForCardAnswer(ctx, j, onward); }, function () {}); } catch (e) {}
+      try { cardLink(v.id).then(function (j) { if (j && j.code === "terms_first" && j.venue_id && String(j.venue_id) !== String(v.id)) termsForCardAnswer(ctx, j, onward); }, function () {}); } catch (e) {}
     }
     return false;
   }
@@ -1797,6 +1806,8 @@
     hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     termsFromCardLink: termsFromCardLink,   // the emailed card link with no tick yet: Terms, then the card (18 Nov 2026)
+    cardLink: cardLink,       // THE one /account/card-link read (duplicate helpers audit 18 Nov 2026)
+    cardLinkOk: cardLinkOk,   // and the one "is this a card link we may follow" test
     termsForCardAnswer: termsForCardAnswer,   // a group's card waits on every venue's tick: that venue's Terms card (18 Nov 2026)
     closeOpenSessions: closeOpenSessions,
     closeSession: closeSession,

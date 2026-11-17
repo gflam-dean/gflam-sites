@@ -291,6 +291,21 @@ async function tick(P) { return call('/account/compliance-accept', { venue_id: P
   check('in the Worker the Terms check comes before the Checkout session is made', gate > 0 && stripe > gate, [gate, stripe]);
   check('no em dashes in the new words', !/\u2014/.test(W.slice(W.indexOf('async function vpaCardTermsMissing'), W.indexOf('async function vpaAddCardRedirect'))) && !/\u2014/.test(lift(readFile('venueplay/app/vp-session.js'), 'termsFromCardLink')) && !/\u2014/.test(lift(readFile('venueplay/app/vp-session.js'), 'termsForCardAnswer')));
 
+  section('5. One card-link read (duplicate helpers audit 18 Nov 2026, Part 2 G)');
+  /* Every console script asks /account/card-link through VP.cardLink and follows only what VP.cardLinkOk passes. */
+  var cardSrcs = ['venueplay/app/vp-session.js', 'venueplay/app/vp-firstrun.js'].map(function (p) { return [p, readFile(p)]; });
+  var asks = cardSrcs.map(function (x) { return [x[0], (x[1].match(/["']\/account\/card-link["']/g) || []).length]; });
+  check('the console asks /account/card-link in one place only (VP.cardLink in vp-session.js)', asks[0][1] === 1 && asks.slice(1).every(function (x) { return x[1] === 0; }), asks);
+  var P5 = page(H.login), O5 = P5.VP;
+  check('one "is it a card link" test, strict: https only, nothing that breaks out of an href', O5.cardLinkOk({ card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc' }) === true
+    && !O5.cardLinkOk({ card_url: 'http://www.venueplay.com.au/add-card' }) && !O5.cardLinkOk({ card_url: 'https://x/"><b>' }) && !O5.cardLinkOk({ card_url: 'javascript:alert(1)' }) && !O5.cardLinkOk(null));
+  var cl5 = { auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: 'tk' } } }); } } }, noSess = { auth: { getSession: function () { return Promise.resolve({ data: { session: null } }); } } };
+  var n5 = 0, off5 = await O5.cardLink('V5', { client: cl5, fetch: function () { n5++; return Promise.reject(new Error('offline')); } });
+  var bad5 = await O5.cardLink('V5', { client: cl5, fetch: function () { n5++; return Promise.resolve({ json: function () { return Promise.reject(new Error('not json')); } }); } });
+  var none5 = await O5.cardLink('V5', { client: noSess, needSignIn: true, fetch: function () { n5++; return Promise.resolve({ json: function () { return Promise.resolve({ ok: true }); } }); } });
+  check('the read never throws: offline and a broken answer come back as words the page can show; no sign-in asks nothing when told',
+    off5 && /Could not reach venueplay/.test(off5.error) && bad5 && /Something went wrong at our end/.test(bad5.error) && none5 === null && n5 === 2, [off5, bad5, none5, n5]);
+
   print(''); print(bad ? (bad + ' OF ' + ran + ' CHECKS FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { bad++; print('  FAIL threw: ' + e + ' ' + (e && e.stack)); print(bad + ' OF ' + ran + ' CHECKS FAILED'); });
 drainMicrotasks();
