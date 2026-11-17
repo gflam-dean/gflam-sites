@@ -210,6 +210,18 @@ script tag.
   reads 2am, so the suite went red for one hour every night on the rule that
   stops a session billing every player who ever joined it. Pick a fixed value and
   assert the two fixtures actually differ.
+- **Never pass `--help`, or a flag you guessed, to a tool under `tools/` to see what it
+  does.** On 18 Nov 2026 `canary-night.py --help` ran a real night on staging,
+  `stamp-workers.py --help` stamped both Workers, `dump-rls-baseline.py` read the live
+  database and wrote over the committed baselines, and `release.py --help` would have
+  pushed to main and deployed live. These tools did not read their command line: any
+  word at all meant "go". Read the docstring at the top of the file and its `main()` or
+  argparse instead. Since `fix/tool-flag-guards-fri` the ten release tools (release,
+  stamp-workers, release-check, prove-checks, check-suite-ledger, deploy-worker,
+  gate-record, gate-server, suite-impact, dump-rls-baseline) print usage on `--help` and
+  refuse an unknown flag before doing anything (exit 2; deploy-worker exits 1, because
+  2 means "uploaded" there), proven by `tools/cmdline-guards.test.py`. An older tree
+  does not do this, and neither does any other tool, `canary-night.py` included.
 
 ## When a check looks blind, suspect your test first
 
