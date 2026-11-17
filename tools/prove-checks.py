@@ -9822,6 +9822,10 @@ MUTATIONS = [
      "    if(false){\n      var _now=Date.now();",
      'a player who shouted BINGO is dropped without a word when the host taps End game'),
 
+    ('test-terms-put-compliance-on-the-venue.js', 'venueplay/privacy.html',
+     "Rows created before this change keep the old number until they are removed under the normal retention in section 8.",
+     "Rows created before this change move to the new number as well.",
+     'the privacy page says old rows are changed too, while they keep the old number'),
     ('every "address in section N" points at the section that is really Contact us', 'venueplay/privacy.html',
      "contact us at the address in section 14. We will remove", "contact us at the address in section 10. We will remove",
      'the privacy policy sends people to the Cookies section to find our address'),
