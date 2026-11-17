@@ -2394,5 +2394,13 @@
  "tools/test-platform-admins-no-browser-write.js": {
   "checks": 52,
   "counted_by": "lines"
+ },
+ "tools/test-admin-forall-lockdown.js": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/admin-forall-no-browser-write.test.py": {
+  "checks": 10,
+  "counted_by": "lines"
  }
 }

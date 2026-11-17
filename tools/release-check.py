@@ -4132,6 +4132,13 @@ def local_checks(which):
              'runs POST /admin/staff-remove and /admin/staff on the billing Worker: only an owner removes an HQ login, never their own, with an audit row; both write through vp_hq_team_change, which locks the owner rows, so two owners removing or demoting each other at once leave one owner and a demoted owner\'s in-flight request is refused; staff, accounts, a venue owner, a stranger and no login are refused and nothing changes; the database not answering changes nothing and a new sign-in login made for it is taken away; a login already gone is a 409 HQ shows and clears, never a 404; an owner can never change their own role, and a role change is audited with the role it was; no page writes vp_platform_admins; migration 217 (paste first) and RLS-BASELINE.json leave the browser SELECT only and the function service_role only', 52,
              'A staff login that makes itself owner from the browser console and then reads every venue contact mobile, '
              'changes billing, or removes Dean from HQ'),
+            # D478: 17 tables no browser writes are SELECT-only for HQ (review R2/R3 of the platform-admins fix, 18 Nov 2026;
+            # migration 218), branch fix/admin-forall-lockdown-18nov. The page scan is tools/admin-forall-no-browser-write.test.py.
+            ('D478. No HQ login can add a discount, forge or delete an audit row, or rewrite draws, invoices, screens or questions from the browser',
+             'test-admin-forall-lockdown.js',
+             'runs nothing: reads migration 218 and RLS-BASELINE.json: the 17 tables no browser writes lose every FOR ALL policy (admin and host_write) and every write grant to public, anon and authenticated; each gets a SELECT-only admin policy with the same roles and predicate as before; host reads and SELECT grants stay; the TEST guard comes first; vp_venue_staff, vp_venue_groups, vp_venues and vp_venue_settings are not touched', 45,
+             'A staff login taking money off an invoice, deleting the audit row that says so, or rewriting a QLD draw record '
+             'from the browser console'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

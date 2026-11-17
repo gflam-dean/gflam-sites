@@ -225,20 +225,8 @@
   "venueplay_founding authenticated UPDATE",
   "venues anon SELECT",
   "venues authenticated SELECT",
-  "vp_admin_audit anon DELETE",
-  "vp_admin_audit anon INSERT",
-  "vp_admin_audit anon REFERENCES",
   "vp_admin_audit anon SELECT",
-  "vp_admin_audit anon TRIGGER",
-  "vp_admin_audit anon TRUNCATE",
-  "vp_admin_audit anon UPDATE",
-  "vp_admin_audit authenticated DELETE",
-  "vp_admin_audit authenticated INSERT",
-  "vp_admin_audit authenticated REFERENCES",
   "vp_admin_audit authenticated SELECT",
-  "vp_admin_audit authenticated TRIGGER",
-  "vp_admin_audit authenticated TRUNCATE",
-  "vp_admin_audit authenticated UPDATE",
   "vp_asked_questions anon DELETE",
   "vp_asked_questions anon INSERT",
   "vp_asked_questions anon REFERENCES",
@@ -253,20 +241,8 @@
   "vp_asked_questions authenticated TRIGGER",
   "vp_asked_questions authenticated TRUNCATE",
   "vp_asked_questions authenticated UPDATE",
-  "vp_billing_usage anon DELETE",
-  "vp_billing_usage anon INSERT",
-  "vp_billing_usage anon REFERENCES",
   "vp_billing_usage anon SELECT",
-  "vp_billing_usage anon TRIGGER",
-  "vp_billing_usage anon TRUNCATE",
-  "vp_billing_usage anon UPDATE",
-  "vp_billing_usage authenticated DELETE",
-  "vp_billing_usage authenticated INSERT",
-  "vp_billing_usage authenticated REFERENCES",
   "vp_billing_usage authenticated SELECT",
-  "vp_billing_usage authenticated TRIGGER",
-  "vp_billing_usage authenticated TRUNCATE",
-  "vp_billing_usage authenticated UPDATE",
   "vp_bingo_games anon DELETE",
   "vp_bingo_games anon INSERT",
   "vp_bingo_games anon REFERENCES",
@@ -323,20 +299,8 @@
   "vp_claims authenticated TRIGGER",
   "vp_claims authenticated TRUNCATE",
   "vp_claims authenticated UPDATE",
-  "vp_discounts anon DELETE",
-  "vp_discounts anon INSERT",
-  "vp_discounts anon REFERENCES",
   "vp_discounts anon SELECT",
-  "vp_discounts anon TRIGGER",
-  "vp_discounts anon TRUNCATE",
-  "vp_discounts anon UPDATE",
-  "vp_discounts authenticated DELETE",
-  "vp_discounts authenticated INSERT",
-  "vp_discounts authenticated REFERENCES",
   "vp_discounts authenticated SELECT",
-  "vp_discounts authenticated TRIGGER",
-  "vp_discounts authenticated TRUNCATE",
-  "vp_discounts authenticated UPDATE",
   "vp_game_feedback anon DELETE",
   "vp_game_feedback anon INSERT",
   "vp_game_feedback anon REFERENCES",
@@ -393,34 +357,10 @@
   "vp_gaming_declarations authenticated TRIGGER",
   "vp_gaming_declarations authenticated TRUNCATE",
   "vp_gaming_declarations authenticated UPDATE",
-  "vp_group_invoice_lines anon DELETE",
-  "vp_group_invoice_lines anon INSERT",
-  "vp_group_invoice_lines anon REFERENCES",
   "vp_group_invoice_lines anon SELECT",
-  "vp_group_invoice_lines anon TRIGGER",
-  "vp_group_invoice_lines anon TRUNCATE",
-  "vp_group_invoice_lines anon UPDATE",
-  "vp_group_invoice_lines authenticated DELETE",
-  "vp_group_invoice_lines authenticated INSERT",
-  "vp_group_invoice_lines authenticated REFERENCES",
   "vp_group_invoice_lines authenticated SELECT",
-  "vp_group_invoice_lines authenticated TRIGGER",
-  "vp_group_invoice_lines authenticated TRUNCATE",
-  "vp_group_invoice_lines authenticated UPDATE",
-  "vp_group_invoices anon DELETE",
-  "vp_group_invoices anon INSERT",
-  "vp_group_invoices anon REFERENCES",
   "vp_group_invoices anon SELECT",
-  "vp_group_invoices anon TRIGGER",
-  "vp_group_invoices anon TRUNCATE",
-  "vp_group_invoices anon UPDATE",
-  "vp_group_invoices authenticated DELETE",
-  "vp_group_invoices authenticated INSERT",
-  "vp_group_invoices authenticated REFERENCES",
   "vp_group_invoices authenticated SELECT",
-  "vp_group_invoices authenticated TRIGGER",
-  "vp_group_invoices authenticated TRUNCATE",
-  "vp_group_invoices authenticated UPDATE",
   "vp_marketing_optins anon DELETE",
   "vp_marketing_optins anon INSERT",
   "vp_marketing_optins anon REFERENCES",
@@ -435,48 +375,12 @@
   "vp_marketing_optins authenticated TRIGGER",
   "vp_marketing_optins authenticated TRUNCATE",
   "vp_marketing_optins authenticated UPDATE",
-  "vp_member_draw_results anon DELETE",
-  "vp_member_draw_results anon INSERT",
-  "vp_member_draw_results anon REFERENCES",
   "vp_member_draw_results anon SELECT",
-  "vp_member_draw_results anon TRIGGER",
-  "vp_member_draw_results anon TRUNCATE",
-  "vp_member_draw_results anon UPDATE",
-  "vp_member_draw_results authenticated DELETE",
-  "vp_member_draw_results authenticated INSERT",
-  "vp_member_draw_results authenticated REFERENCES",
   "vp_member_draw_results authenticated SELECT",
-  "vp_member_draw_results authenticated TRIGGER",
-  "vp_member_draw_results authenticated TRUNCATE",
-  "vp_member_draw_results authenticated UPDATE",
-  "vp_member_draws anon DELETE",
-  "vp_member_draws anon INSERT",
-  "vp_member_draws anon REFERENCES",
   "vp_member_draws anon SELECT",
-  "vp_member_draws anon TRIGGER",
-  "vp_member_draws anon TRUNCATE",
-  "vp_member_draws anon UPDATE",
-  "vp_member_draws authenticated DELETE",
-  "vp_member_draws authenticated INSERT",
-  "vp_member_draws authenticated REFERENCES",
   "vp_member_draws authenticated SELECT",
-  "vp_member_draws authenticated TRIGGER",
-  "vp_member_draws authenticated TRUNCATE",
-  "vp_member_draws authenticated UPDATE",
-  "vp_member_rosters anon DELETE",
-  "vp_member_rosters anon INSERT",
-  "vp_member_rosters anon REFERENCES",
   "vp_member_rosters anon SELECT",
-  "vp_member_rosters anon TRIGGER",
-  "vp_member_rosters anon TRUNCATE",
-  "vp_member_rosters anon UPDATE",
-  "vp_member_rosters authenticated DELETE",
-  "vp_member_rosters authenticated INSERT",
-  "vp_member_rosters authenticated REFERENCES",
   "vp_member_rosters authenticated SELECT",
-  "vp_member_rosters authenticated TRIGGER",
-  "vp_member_rosters authenticated TRUNCATE",
-  "vp_member_rosters authenticated UPDATE",
   "vp_members anon DELETE",
   "vp_members anon INSERT",
   "vp_members anon REFERENCES",
@@ -519,49 +423,13 @@
   "vp_music_plays authenticated TRIGGER",
   "vp_music_plays authenticated TRUNCATE",
   "vp_music_plays authenticated UPDATE",
-  "vp_optin_exports anon DELETE",
-  "vp_optin_exports anon INSERT",
-  "vp_optin_exports anon REFERENCES",
   "vp_optin_exports anon SELECT",
-  "vp_optin_exports anon TRIGGER",
-  "vp_optin_exports anon TRUNCATE",
-  "vp_optin_exports anon UPDATE",
-  "vp_optin_exports authenticated DELETE",
-  "vp_optin_exports authenticated INSERT",
-  "vp_optin_exports authenticated REFERENCES",
   "vp_optin_exports authenticated SELECT",
-  "vp_optin_exports authenticated TRIGGER",
-  "vp_optin_exports authenticated TRUNCATE",
-  "vp_optin_exports authenticated UPDATE",
   "vp_platform_admins authenticated SELECT",
-  "vp_playlist_songs anon DELETE",
-  "vp_playlist_songs anon INSERT",
-  "vp_playlist_songs anon REFERENCES",
   "vp_playlist_songs anon SELECT",
-  "vp_playlist_songs anon TRIGGER",
-  "vp_playlist_songs anon TRUNCATE",
-  "vp_playlist_songs anon UPDATE",
-  "vp_playlist_songs authenticated DELETE",
-  "vp_playlist_songs authenticated INSERT",
-  "vp_playlist_songs authenticated REFERENCES",
   "vp_playlist_songs authenticated SELECT",
-  "vp_playlist_songs authenticated TRIGGER",
-  "vp_playlist_songs authenticated TRUNCATE",
-  "vp_playlist_songs authenticated UPDATE",
-  "vp_playlists anon DELETE",
-  "vp_playlists anon INSERT",
-  "vp_playlists anon REFERENCES",
   "vp_playlists anon SELECT",
-  "vp_playlists anon TRIGGER",
-  "vp_playlists anon TRUNCATE",
-  "vp_playlists anon UPDATE",
-  "vp_playlists authenticated DELETE",
-  "vp_playlists authenticated INSERT",
-  "vp_playlists authenticated REFERENCES",
   "vp_playlists authenticated SELECT",
-  "vp_playlists authenticated TRIGGER",
-  "vp_playlists authenticated TRUNCATE",
-  "vp_playlists authenticated UPDATE",
   "vp_question_flags anon DELETE",
   "vp_question_flags anon INSERT",
   "vp_question_flags anon REFERENCES",
@@ -576,20 +444,8 @@
   "vp_question_flags authenticated TRIGGER",
   "vp_question_flags authenticated TRUNCATE",
   "vp_question_flags authenticated UPDATE",
-  "vp_question_sets anon DELETE",
-  "vp_question_sets anon INSERT",
-  "vp_question_sets anon REFERENCES",
   "vp_question_sets anon SELECT",
-  "vp_question_sets anon TRIGGER",
-  "vp_question_sets anon TRUNCATE",
-  "vp_question_sets anon UPDATE",
-  "vp_question_sets authenticated DELETE",
-  "vp_question_sets authenticated INSERT",
-  "vp_question_sets authenticated REFERENCES",
   "vp_question_sets authenticated SELECT",
-  "vp_question_sets authenticated TRIGGER",
-  "vp_question_sets authenticated TRUNCATE",
-  "vp_question_sets authenticated UPDATE",
   "vp_question_submissions anon DELETE",
   "vp_question_submissions anon INSERT",
   "vp_question_submissions anon REFERENCES",
@@ -604,20 +460,8 @@
   "vp_question_submissions authenticated TRIGGER",
   "vp_question_submissions authenticated TRUNCATE",
   "vp_question_submissions authenticated UPDATE",
-  "vp_questions anon DELETE",
-  "vp_questions anon INSERT",
-  "vp_questions anon REFERENCES",
   "vp_questions anon SELECT",
-  "vp_questions anon TRIGGER",
-  "vp_questions anon TRUNCATE",
-  "vp_questions anon UPDATE",
-  "vp_questions authenticated DELETE",
-  "vp_questions authenticated INSERT",
-  "vp_questions authenticated REFERENCES",
   "vp_questions authenticated SELECT",
-  "vp_questions authenticated TRIGGER",
-  "vp_questions authenticated TRUNCATE",
-  "vp_questions authenticated UPDATE",
   "vp_raffle_entries anon DELETE",
   "vp_raffle_entries anon INSERT",
   "vp_raffle_entries anon REFERENCES",
@@ -646,20 +490,8 @@
   "vp_raffle_games authenticated TRIGGER",
   "vp_raffle_games authenticated TRUNCATE",
   "vp_raffle_games authenticated UPDATE",
-  "vp_raffle_prizes anon DELETE",
-  "vp_raffle_prizes anon INSERT",
-  "vp_raffle_prizes anon REFERENCES",
   "vp_raffle_prizes anon SELECT",
-  "vp_raffle_prizes anon TRIGGER",
-  "vp_raffle_prizes anon TRUNCATE",
-  "vp_raffle_prizes anon UPDATE",
-  "vp_raffle_prizes authenticated DELETE",
-  "vp_raffle_prizes authenticated INSERT",
-  "vp_raffle_prizes authenticated REFERENCES",
   "vp_raffle_prizes authenticated SELECT",
-  "vp_raffle_prizes authenticated TRIGGER",
-  "vp_raffle_prizes authenticated TRUNCATE",
-  "vp_raffle_prizes authenticated UPDATE",
   "vp_raffle_results anon DELETE",
   "vp_raffle_results anon INSERT",
   "vp_raffle_results anon REFERENCES",
@@ -674,49 +506,13 @@
   "vp_raffle_results authenticated TRIGGER",
   "vp_raffle_results authenticated TRUNCATE",
   "vp_raffle_results authenticated UPDATE",
-  "vp_raffle_schedules anon DELETE",
-  "vp_raffle_schedules anon INSERT",
-  "vp_raffle_schedules anon REFERENCES",
   "vp_raffle_schedules anon SELECT",
-  "vp_raffle_schedules anon TRIGGER",
-  "vp_raffle_schedules anon TRUNCATE",
-  "vp_raffle_schedules anon UPDATE",
-  "vp_raffle_schedules authenticated DELETE",
-  "vp_raffle_schedules authenticated INSERT",
-  "vp_raffle_schedules authenticated REFERENCES",
   "vp_raffle_schedules authenticated SELECT",
-  "vp_raffle_schedules authenticated TRIGGER",
-  "vp_raffle_schedules authenticated TRUNCATE",
-  "vp_raffle_schedules authenticated UPDATE",
   "vp_screen_devices authenticated SELECT",
-  "vp_screen_slides anon DELETE",
-  "vp_screen_slides anon INSERT",
-  "vp_screen_slides anon REFERENCES",
   "vp_screen_slides anon SELECT",
-  "vp_screen_slides anon TRIGGER",
-  "vp_screen_slides anon TRUNCATE",
-  "vp_screen_slides anon UPDATE",
-  "vp_screen_slides authenticated DELETE",
-  "vp_screen_slides authenticated INSERT",
-  "vp_screen_slides authenticated REFERENCES",
   "vp_screen_slides authenticated SELECT",
-  "vp_screen_slides authenticated TRIGGER",
-  "vp_screen_slides authenticated TRUNCATE",
-  "vp_screen_slides authenticated UPDATE",
-  "vp_screens anon DELETE",
-  "vp_screens anon INSERT",
-  "vp_screens anon REFERENCES",
   "vp_screens anon SELECT",
-  "vp_screens anon TRIGGER",
-  "vp_screens anon TRUNCATE",
-  "vp_screens anon UPDATE",
-  "vp_screens authenticated DELETE",
-  "vp_screens authenticated INSERT",
-  "vp_screens authenticated REFERENCES",
   "vp_screens authenticated SELECT",
-  "vp_screens authenticated TRIGGER",
-  "vp_screens authenticated TRUNCATE",
-  "vp_screens authenticated UPDATE",
   "vp_session_events anon DELETE",
   "vp_session_events anon INSERT",
   "vp_session_events anon REFERENCES",
@@ -990,25 +786,25 @@
    "using": "true",
    "with_check": ""
   },
-  "vp_admin_audit.vp_admin_audit_admin_all": {
-   "cmd": "ALL",
+  "vp_admin_audit.vp_admin_audit_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
-  },
-  "vp_billing_usage.vp_billing_usage_admin_all": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_billing_usage.vp_billing_usage_admin_read": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
+   "with_check": ""
+  },
+  "vp_billing_usage.vp_billing_usage_admin_select": {
+   "cmd": "SELECT",
+   "permissive": "PERMISSIVE",
+   "roles": "authenticated",
+   "using": "vp_is_admin()",
    "with_check": ""
   },
   "vp_bingo_games.vp_bingo_games_admin_select": {
@@ -1053,18 +849,18 @@
    "using": "(game_id IN ( SELECT vp_games.id\n   FROM vp_games\n  WHERE (vp_games.session_id IN ( SELECT vp_sessions.id\n           FROM vp_sessions\n          WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))))",
    "with_check": ""
   },
-  "vp_discounts.vp_discounts_admin_all": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
-  },
   "vp_discounts.vp_discounts_admin_read": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
+   "with_check": ""
+  },
+  "vp_discounts.vp_discounts_admin_select": {
+   "cmd": "SELECT",
+   "permissive": "PERMISSIVE",
+   "roles": "authenticated",
+   "using": "vp_is_admin()",
    "with_check": ""
   },
   "vp_game_feedback.vp_game_feedback_no_anon": {
@@ -1095,19 +891,19 @@
    "using": "(session_id IN ( SELECT vp_sessions.id\n   FROM vp_sessions\n  WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
    "with_check": ""
   },
-  "vp_group_invoice_lines.vp_group_invoice_lines_admin_all": {
-   "cmd": "ALL",
+  "vp_group_invoice_lines.vp_group_invoice_lines_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
-  "vp_group_invoices.vp_group_invoices_admin_all": {
-   "cmd": "ALL",
+  "vp_group_invoices.vp_group_invoices_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_marketing_optins.vp_marketing_optins_admin_select": {
    "cmd": "SELECT",
@@ -1116,12 +912,12 @@
    "using": "vp_is_admin()",
    "with_check": ""
   },
-  "vp_member_draw_results.vp_member_draw_results_admin_all": {
-   "cmd": "ALL",
+  "vp_member_draw_results.vp_member_draw_results_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_member_draw_results.vp_member_draw_results_host_select": {
    "cmd": "SELECT",
@@ -1130,12 +926,12 @@
    "using": "(draw_id IN ( SELECT vp_member_draws.id\n   FROM vp_member_draws\n  WHERE (vp_member_draws.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
    "with_check": ""
   },
-  "vp_member_draws.vp_member_draws_admin_all": {
-   "cmd": "ALL",
+  "vp_member_draws.vp_member_draws_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
+   "with_check": ""
   },
   "vp_member_draws.vp_member_draws_host_select": {
    "cmd": "SELECT",
@@ -1144,12 +940,12 @@
    "using": "(venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
   },
-  "vp_member_rosters.vp_member_rosters_admin_all": {
-   "cmd": "ALL",
+  "vp_member_rosters.vp_member_rosters_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
+   "with_check": ""
   },
   "vp_member_rosters.vp_member_rosters_host_select": {
    "cmd": "SELECT",
@@ -1193,12 +989,12 @@
    "using": "(game_id IN ( SELECT vp_games.id\n   FROM vp_games\n  WHERE (vp_games.session_id IN ( SELECT vp_sessions.id\n           FROM vp_sessions\n          WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))))",
    "with_check": ""
   },
-  "vp_optin_exports.vp_optin_exports_admin_all": {
-   "cmd": "ALL",
+  "vp_optin_exports.vp_optin_exports_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_platform_admins.vp_platform_admins_admin_select": {
    "cmd": "SELECT",
@@ -1221,12 +1017,12 @@
    "using": "(session_id IN ( SELECT vp_sessions.id\n   FROM vp_sessions\n  WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
    "with_check": ""
   },
-  "vp_playlist_songs.vp_playlist_songs_admin_all": {
-   "cmd": "ALL",
+  "vp_playlist_songs.vp_playlist_songs_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_playlist_songs.vp_playlist_songs_host_select": {
    "cmd": "SELECT",
@@ -1235,19 +1031,12 @@
    "using": "(playlist_id IN ( SELECT vp_playlists.id\n   FROM vp_playlists\n  WHERE ((vp_playlists.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) OR (vp_playlists.owner_venue_id IS NULL))))",
    "with_check": ""
   },
-  "vp_playlist_songs.vp_playlist_songs_host_write": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "(playlist_id IN ( SELECT vp_playlists.id\n   FROM vp_playlists\n  WHERE (vp_playlists.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
-   "with_check": "(playlist_id IN ( SELECT vp_playlists.id\n   FROM vp_playlists\n  WHERE (vp_playlists.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))"
-  },
-  "vp_playlists.vp_playlists_admin_all": {
-   "cmd": "ALL",
+  "vp_playlists.vp_playlists_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_playlists.vp_playlists_host_select": {
    "cmd": "SELECT",
@@ -1256,19 +1045,12 @@
    "using": "((owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) OR (owner_venue_id IS NULL))",
    "with_check": ""
   },
-  "vp_playlists.vp_playlists_host_write": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "(owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
-   "with_check": "(owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))"
-  },
-  "vp_question_sets.vp_question_sets_admin_all": {
-   "cmd": "ALL",
+  "vp_question_sets.vp_question_sets_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
+   "with_check": ""
   },
   "vp_question_sets.vp_question_sets_host_select": {
    "cmd": "SELECT",
@@ -1277,19 +1059,12 @@
    "using": "((owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) OR ((owner_venue_id IS NULL) AND (visibility = 'library'::text)))",
    "with_check": ""
   },
-  "vp_question_sets.vp_question_sets_host_write": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "(owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
-   "with_check": "((owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) AND (visibility = 'private'::text))"
-  },
-  "vp_questions.vp_questions_admin_all": {
-   "cmd": "ALL",
+  "vp_questions.vp_questions_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_questions.vp_questions_host_select": {
    "cmd": "SELECT",
@@ -1297,13 +1072,6 @@
    "roles": "authenticated",
    "using": "(set_id IN ( SELECT vp_question_sets.id\n   FROM vp_question_sets\n  WHERE ((vp_question_sets.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) OR ((vp_question_sets.owner_venue_id IS NULL) AND (vp_question_sets.visibility = 'library'::text)))))",
    "with_check": ""
-  },
-  "vp_questions.vp_questions_host_write": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "((from_library = false) AND (set_id IN ( SELECT s.id\n   FROM vp_question_sets s\n  WHERE (s.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)))))",
-   "with_check": "((from_library = false) AND (set_id IN ( SELECT s.id\n   FROM vp_question_sets s\n  WHERE (s.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)))))"
   },
   "vp_raffle_entries.vp_raffle_entries_admin_select": {
    "cmd": "SELECT",
@@ -1333,12 +1101,12 @@
    "using": "(game_id IN ( SELECT vp_games.id\n   FROM vp_games\n  WHERE (vp_games.session_id IN ( SELECT vp_sessions.id\n           FROM vp_sessions\n          WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))))",
    "with_check": ""
   },
-  "vp_raffle_prizes.vp_raffle_prizes_admin_all": {
-   "cmd": "ALL",
+  "vp_raffle_prizes.vp_raffle_prizes_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
+   "with_check": ""
   },
   "vp_raffle_prizes.vp_raffle_prizes_host_select": {
    "cmd": "SELECT",
@@ -1361,12 +1129,12 @@
    "using": "(game_id IN ( SELECT vp_games.id\n   FROM vp_games\n  WHERE (vp_games.session_id IN ( SELECT vp_sessions.id\n           FROM vp_sessions\n          WHERE (vp_sessions.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))))",
    "with_check": ""
   },
-  "vp_raffle_schedules.vp_raffle_schedules_admin_all": {
-   "cmd": "ALL",
+  "vp_raffle_schedules.vp_raffle_schedules_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_raffle_schedules.vp_raffle_schedules_host_select": {
    "cmd": "SELECT",
@@ -1382,12 +1150,12 @@
    "using": "vp_is_platform_admin()",
    "with_check": ""
   },
-  "vp_screen_slides.vp_screen_slides_admin_all": {
-   "cmd": "ALL",
+  "vp_screen_slides.vp_screen_slides_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "vp_is_admin()",
-   "with_check": "vp_is_admin()"
+   "with_check": ""
   },
   "vp_screen_slides.vp_screen_slides_host_select": {
    "cmd": "SELECT",
@@ -1396,12 +1164,12 @@
    "using": "(venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
   },
-  "vp_screens.vp_screens_admin_all": {
-   "cmd": "ALL",
+  "vp_screens.vp_screens_admin_select": {
+   "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "public",
    "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
+   "with_check": ""
   },
   "vp_screens.vp_screens_host_select": {
    "cmd": "SELECT",
