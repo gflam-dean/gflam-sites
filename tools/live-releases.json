@@ -1,4 +1,10 @@
 {
  "about": "Releases that passed the full gate AND a real night, newest last. Written by tools/release.py (and the urgent lane's after-gate) through tools/release-lanes.py; read by the rollback lane from origin's main. Never edit by hand.",
- "releases": []
+ "releases": [
+  {
+   "sha": "efc35a3438051b6264f643f73e31d56a13f05157",
+   "when": "2026-11-16 17:45:00 +1000",
+   "lane": "release"
+  }
+ ]
 }
