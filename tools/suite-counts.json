@@ -1128,7 +1128,7 @@
   "counted_by": "lines"
  },
  "tools/test-no-mail-to-placeholder.js": {
-  "checks": 25,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-offer-grace.js": {

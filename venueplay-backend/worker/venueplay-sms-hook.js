@@ -80,7 +80,7 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '13 Nov 2026, 10:39 · ee312249';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 06:28 · 7c43ef0b';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 

@@ -35,7 +35,7 @@ globalThis.Response = FakeResponse; globalThis.URL = FakeURL;
 var logs = []; globalThis.console = { log: function (s) { logs.push(String(s)); } };
 
 var W = null;
-function boot(env) {   // a fresh isolate: new stand-in network, the guard installed as the Worker installs it
+function boot(env, noInstall) {   // a fresh isolate: new stand-in network, the guard installed as the Worker installs it
   var sent = [];
   globalThis.fetch = function (input, init) { sent.push({ url: typeof input === 'string' ? input : input.url, init: init, to: (function () { try { return JSON.parse(init.body); } catch (e) { return null; } })() }); return Promise.resolve(new FakeResponse('{"id":"real-1"}', { status: 200 })); };
   globalThis.__vpgInstalled = false; globalThis.__vpOutbox = []; logs = [];
@@ -48,7 +48,7 @@ function boot(env) {   // a fresh isolate: new stand-in network, the guard insta
     + 'async function vpUnsubHeaders() { return {}; }\n'
     + fn('vpaSendEmail') + fn('helpSendEmail') + fn('vpaFireProspectWelcome')
     + '\nreturn { VPG: VPG, vpgInstall: vpgInstall, vpgIsPlaceholderEmail: vpgIsPlaceholderEmail, vpaSendEmail: vpaSendEmail, helpSendEmail: helpSendEmail, vpaFireProspectWelcome: vpaFireProspectWelcome };})()'))();
-  W.vpgInstall(env);
+  if (!noInstall) W.vpgInstall(env);
   return sent;
 }
 var RESEND = 'https://api.resend.com/emails';
@@ -126,6 +126,17 @@ SECS.push(async function () {
   check('vpaSendEmail to a real owner still sends', r === true && sent.length === 1);
   r = await W.vpaFireProspectWelcome(LIVE, { email: 'owner@realpub.com.au', venueName: 'The Test Pub' });
   check('the prospect welcome to a real email still sends', r && r.ok === true && sent.length === 2, r);
+});
+
+print('THE INBOUND HELP DESK EMAIL ENTRY installs the guard too (a fresh isolate has not run fetch() or scheduled())');
+SECS.push(async function () {
+  var m = /\n  async email\(message, env, ctx\) \{\s*\n([^\n]*)/.exec(API);
+  check('email() installs the guard on its first line', !!(m && /vpgInstall\(env\)/.test(m[1])), m && m[1]);
+  var sent = boot(LIVE, true);
+  var body = API.slice(API.indexOf('async email(message, env, ctx) {'), API.indexOf('\n  },', API.indexOf('async email(message, env, ctx) {')) + 5);
+  var ENTRY = (new Function('W', 'helpSendEmail', 'return (function(){ ' + SRC.replace(/^[\s\S]*$/, '') + ' var vpgInstall = W.vpgInstall; var helpInboundEmail = async function (message, env) { W.tried = await helpSendEmail(env, { to: message.from, from: "h <hello@send.venueplay.com.au>", subject: "ack", html: "x" }); }; return ({' + body.replace(/\n  \},$/, '\n  }') + '}); })()'))(W, W.helpSendEmail);
+  var out = await ENTRY.email({ from: PH }, LIVE, {});
+  check('a reply sent from the email() entry to a placeholder address is refused, nothing leaves', sent.length === 0 && W.tried === false && globalThis.__vpgInstalled === true, { sent: sent.length, tried: W.tried });
 });
 
 (async function () { for (var i = 0; i < SECS.length; i++) await SECS[i](); print(fails ? ran + ' checks, ' + fails + ' failed' : 'ALL ' + ran + ' CHECKS PASSED'); if (fails) exit(1); })().catch(function (e) { print('CRASH ' + e + ' ' + (e && e.stack)); exit(1); });

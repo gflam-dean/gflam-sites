@@ -565,6 +565,7 @@ export default {
   /* INBOUND EMAIL TO THE HELP DESK. Cloudflare Email Routing on the help subdomains delivers here
      (see ~/venue-enrich/HELP-DESK-EMAIL-SETUP.md). Never rejects: Migadu keeps its own copy. */
   async email(message, env, ctx) {
+    vpgInstall(env);   // OUTBOX GUARD: a fresh isolate for an inbound mail has not run fetch() yet; the help desk replies from here
     await helpInboundEmail(message, env);
   },
 
