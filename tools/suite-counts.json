@@ -1264,7 +1264,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 105,
+  "checks": 109,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1452,7 +1452,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 103,
+  "checks": 117,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {
