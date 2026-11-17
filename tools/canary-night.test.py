@@ -36,7 +36,8 @@ def ok(what, cond, extra=''):
 
 ENV = {'TEST_SUPABASE_URL': 'https://%s.supabase.co' % TEST_REF, 'TEST_SERVICE_KEY': 'svc-test', 'TEST_ANON_KEY': 'anon-test',
        'NEW_SUPABASE_URL': 'https://%s.supabase.co' % LIVE_REF, 'NEW_SERVICE_KEY': 'svc-live', 'NEW_ANON_KEY': 'anon-live',
-       'VP_CANARY_HOST_EMAIL': 'canary-host@example.invalid'}
+       'VP_CANARY_HOST_MOBILE': '0491 570 050', 'VP_CANARY_HOST_OTP': '135790'}
+LIVE = ('--target', 'live', '--live-ok-by-dean')
 
 
 class World:
@@ -53,7 +54,15 @@ class World:
         self.venue.update(over.get('venue', {}))
         self.founding = {'status': 'comp', 'stripe_customer_id': None, 'stripe_subscription_id': None}
         self.founding.update(over.get('founding', {}))
-        self.staff = [{'venue_id': self.alpha, 'role': 'owner'}] + over.get('extra_staff', [])
+        role = over.get('role') or ('host' if target == 'live' else 'owner')
+        self.staff = [{'venue_id': self.alpha, 'role': role}] + [dict(r, venue_id=self.alpha if r['venue_id'] == 'ALPHA' else r['venue_id'])
+                                                                 for r in over.get('extra_staff', [])]
+        self.user = {'id': self.uid, 'phone': '61491570050' if target == 'live' else '61491570006',
+                     'email': None if target == 'live' else 'test-host@example.invalid'}
+        self.user.update(over.get('user', {}))
+        self.other = {'id': str(uuid.uuid4()), 'phone': '61412345678', 'email': 'dean@example.com'}   # a real person, also staff
+        self.admins = over.get('admins', [])
+        self.auth_posts = []
         self.live_sessions = over.get('live_sessions', [])
         self.calls, self.writes = [], []
         self.session = None
@@ -82,10 +91,22 @@ class World:
         return self.worker(method, u, body or {}, headers)
 
     def supabase(self, method, u, body, headers):
-        if u.path == '/auth/v1/admin/generate_link':
-            return 200, {'properties': {'hashed_token': 'h'}}
-        if u.path == '/auth/v1/verify':
-            return 200, {'access_token': 'host-jwt', 'user': {'id': self.uid}}
+        if u.path.startswith('/auth/'):
+            if method == 'POST':
+                self.auth_posts.append((u.path, dict(body or {})))
+            if u.path == '/auth/v1/admin/generate_link':
+                return 200, {'properties': {'hashed_token': 'h'}}
+            if u.path == '/auth/v1/otp':
+                return (429, {'error_code': 'over_sms_send_rate_limit', 'msg': 'wait'}) if 'otp_refused' in self.f else (200, {})
+            if u.path == '/auth/v1/verify':
+                if 'verify_refused' in self.f:
+                    return 403, {'error_code': 'otp_expired', 'msg': 'Token has expired or is invalid'}
+                return 200, {'access_token': 'host-jwt', 'user': {'id': self.other['id'] if 'verify_other_user' in self.f else self.uid}}
+            uid = u.path.rsplit('/', 1)[-1]
+            for x in (self.user, self.other):
+                if x['id'] == uid:
+                    return 200, dict(x)
+            return 404, {'msg': 'User not found'}
         if method != 'GET':
             self.writes.append(u.path)
             return 201, []
@@ -107,7 +128,12 @@ class World:
         if t == 'venueplay_founding':
             return 200, [dict(self.founding)]
         if t == 'vp_venue_staff':
+            if 'venue_id=eq.' in q:      # who is staff AT the venue: the canary's login and a real person
+                return 200, [{'auth_user_id': self.other['id'], 'role': 'owner'},
+                             {'auth_user_id': self.uid, 'role': self.staff[0]['role']}]
             return 200, list(self.staff)
+        if t == 'vp_platform_admins':
+            return 200, list(self.admins)
         if t == 'vp_sessions':
             if 'status=in.' in q:
                 return 200, list(self.live_sessions)
@@ -256,6 +282,51 @@ def game_posts(w):
     return [c for c in w.calls if c[0] == 'POST' and c[1].startswith('game')]
 
 
+# ------------------------------------------------------------------ COMMAND LINE (18 Nov 2026: `--help` played a REAL night)
+def cmdline(argv):
+    """Runs main()'s parse step for real. Records whether the key file was read or a Net was made (= a night could start)."""
+    touched = []
+    real_env, real_net = C.read_env, C.Net
+    C.read_env = lambda *a, **k: touched.append('read_env') or dict(ENV)
+    C.Net = lambda *a, **k: touched.append('Net') or (_ for _ in ()).throw(AssertionError('Net made'))
+    out, err = io.StringIO(), io.StringIO()
+    from contextlib import redirect_stderr
+    try:
+        with redirect_stdout(out), redirect_stderr(err):
+            try:
+                rc = C.main(list(argv), opener=lambda *a, **k: touched.append('opener'), say=print)
+            except SystemExit as e:
+                rc = ('SystemExit', e.code)
+            except AssertionError:
+                rc = 'night started'
+    finally:
+        C.read_env, C.Net = real_env, real_net
+    return rc, touched, out.getvalue() + err.getvalue()
+
+
+for flag in ('--help', '-h'):
+    rc, touched, out = cmdline([flag])
+    ok('CMDLINE: %s exits 0 with usage' % flag, rc == 0 and 'usage' in out.lower() and '--target' in out, [rc, out[-200:]])
+    ok('CMDLINE: %s reads no key file and opens nothing' % flag, not touched, touched)
+rc, touched, out = cmdline(['--target', 'staging', '--help'])
+ok('CMDLINE: --help after --target still only prints usage', rc == 0 and not touched, [rc, touched])
+for bad in (['--target', 'staging', '--nope'], ['--nope'], ['--target', 'staging', 'stray'], ['--target', 'staging', '--no-music'],
+            ['--target', 'prod'], ['--target']):
+    rc, touched, out = cmdline(bad)
+    ok('CMDLINE: %s exits 2 with a message' % ' '.join(bad), rc == 2 and 'error' in out.lower(), [rc, out[-200:]])
+    ok('CMDLINE: %s reads no key file and opens nothing' % ' '.join(bad), not touched, touched)
+for argv in ([], ['--no-musical'], ['--live-ok-by-dean', '--venue', 'test-alpha']):
+    rc, touched, out = cmdline(argv)
+    ok('CMDLINE: no --target (%s) refuses, exit 2, nothing opened' % (' '.join(argv) or 'no flags'),
+       rc == 2 and '--target' in out and not touched, [rc, touched, out[-200:]])
+# the real script, as a person types it: --help only (a key file that does not exist, so even a regression cannot sign in)
+import subprocess
+r = subprocess.run([sys.executable, os.path.join(HERE, 'canary-night.py'), '--help'], capture_output=True, text=True, timeout=30,
+                   env=dict(os.environ, VP_CANARY_ENV_FILE=os.path.join(HERE, 'no-such-canary-env-file')))
+ok('CMDLINE: python3 tools/canary-night.py --help exits 0 with usage, plays nothing',
+   r.returncode == 0 and 'usage' in r.stdout.lower() and 'CANARY NIGHT on' not in r.stdout, [r.returncode, r.stdout[-200:], r.stderr[-200:]])
+
+
 # ------------------------------------------------------------------ GREEN
 rc, w, out = play()
 ok('GREEN: a correct night is green (exit 0)', rc == 0, out[-600:])
@@ -271,6 +342,26 @@ ok('GREEN: musical bingo was dealt and a claim confirmed', any(c['status'] == 'c
 ok('GREEN: phones gave a first name only (no mobile, no email reached /join)',
    len(w.join_bodies) == 3 and all(set(b) == {'code', 'name', 'pid'} and b['name'].startswith('Canary ') for b in w.join_bodies), w.join_bodies)
 ok('GREEN: nothing the canary sent anywhere holds a mobile or an email', not any(k in json.dumps(w.join_bodies) for k in ('mobile', 'email', '@')))
+ok('GREEN: staging with no test code signs in with a link for the found login\'s OWN @example.invalid email',
+   [p for p, _ in w.auth_posts] == ['/auth/v1/admin/generate_link', '/auth/v1/verify']
+   and w.auth_posts[0][1].get('email') == 'test-host@example.invalid', w.auth_posts)
+ok('GREEN: the host was found by phone among the venue\'s logins (the real person beside it was read, never signed in)',
+   any(c[2] == '/auth/v1/admin/users/' + w.other['id'] for c in w.calls), [c for c in w.calls if 'admin/users' in c[2]])
+rc, w, out = play(argv=LIVE, target='live')
+ok('GREEN LIVE: a correct night is green (exit 0)', rc == 0, out[-600:])
+ok('GREEN LIVE: signed in the way a host does: a code for the fiction mobile, then verify, nothing else',
+   [p for p, _ in w.auth_posts] == ['/auth/v1/otp', '/auth/v1/verify'], w.auth_posts)
+ok('GREEN LIVE: the code request can never make a login and names only 61491570050',
+   w.auth_posts and w.auth_posts[0][1] == {'phone': '61491570050', 'create_user': False, 'channel': 'sms'}, w.auth_posts[:1])
+ok('GREEN LIVE: verify is the sms type with the key file\'s code',
+   len(w.auth_posts) > 1 and w.auth_posts[1][1] == {'type': 'sms', 'phone': '61491570050', 'token': '135790'}, w.auth_posts[1:])
+ok('GREEN LIVE: never a generate_link on live', not any('generate_link' in c[2] for c in w.calls))
+ok('GREEN LIVE: every call went to the live game Worker or the live project',
+   all(h in ('game.venueplay.com.au', '%s.supabase.co' % LIVE_REF) for _, h, _ in w.calls), {h for _, h, _ in w.calls})
+env = dict(ENV); env['TEST_CANARY_HOST_OTP'] = '246802'
+rc, w, out = play(env=env)
+ok('GREEN: staging WITH a test code signs in exactly as live does (otp + verify, no link)',
+   rc == 0 and [p for p, _ in w.auth_posts] == ['/auth/v1/otp', '/auth/v1/verify'] and w.auth_posts[1][1].get('token') == '246802', [rc, w.auth_posts])
 rc, w, out = play(argv=('--target', 'staging', '--no-musical'))
 ok('GREEN: --no-musical plays trivia only', rc == 0 and not w.claims and len(w.games) == 1, out[-300:])
 
@@ -297,19 +388,59 @@ rc, w, out = play(venue={'name': 'The Royal Hotel'})
 refused('a venue not named like a test venue', rc, w, out)
 rc, w, out = play(venue={'included_players': 1})
 refused('a plan too small for 2 players (would bill overage)', rc, w, out)
-rc, w, out = play(argv=('--target', 'live', '--live-ok-by-dean'), target='live', extra_staff=[{'venue_id': 'real-venue', 'role': 'owner'}])
+rc, w, out = play(argv=LIVE, target='live', extra_staff=[{'venue_id': 'real-venue', 'role': 'host'}])
 refused('a live host login that is staff at a real venue', rc, w, out)
+ok('REFUSED: staff at a real venue -> never signed in (no Auth POST at all)', not w.auth_posts, w.auth_posts)
+
+
+def never_signed_in(label, rc, w, out, words):
+    refused(label, rc, w, out)
+    ok('REFUSED: %s -> never signed in (no Auth POST at all)' % label, not w.auth_posts, w.auth_posts)
+    ok('REFUSED: %s -> says why (%s)' % (label, words), words in out, out[-300:])
+
+
+for tgt, argv in (('live', LIVE), ('staging', ('--target', 'staging'))):
+    for role in ('owner', 'accounts', 'staff'):
+        rc, w, out = play(argv=argv, target=tgt, admins=[{'role': role}])
+        never_signed_in('%s: the host login is an HQ %s login' % (tgt, role), rc, w, out, 'HQ staff login')
+for role in ('owner', 'manager', 'marketing'):
+    rc, w, out = play(argv=LIVE, target='live', role=role)
+    never_signed_in('live: the login is %s at Test Alpha, not a host' % role, rc, w, out, 'not only a host')
+rc, w, out = play(argv=LIVE, target='live', extra_staff=[{'venue_id': 'ALPHA', 'role': 'manager'}])
+never_signed_in('live: a host row AND a manager row', rc, w, out, 'not only a host')
+rc, w, out = play(argv=LIVE, target='live', user={'phone': '61491570051'})
+never_signed_in('live: no login at Test Alpha has the canary mobile', rc, w, out, 'Add a host')
+rc, w, out = play(argv=LIVE, target='live', user={'email': 'dean@gflam.com.au'})
+never_signed_in('live: the host login carries a real email', rc, w, out, 'real email')
+rc, w, out = play(argv=('--target', 'staging'), user={'email': None})
+never_signed_in('staging, no test code, and the login has no @example.invalid email to link', rc, w, out, 'TEST_CANARY_HOST_OTP')
+rc, w, out = play(('verify_other_user',), argv=LIVE, target='live')
+refused('live: the sign-in comes back as another login', rc, w, out)
+ok('REFUSED: another login -> says so and the token is never used', 'different login' in out and not any(c[1].startswith('game') and c[2] != '/health' for c in w.calls), out[-300:])
+rc, w, out = play(('verify_refused',), argv=LIVE, target='live')
+refused('live: Auth refuses the code', rc, w, out)
+ok('REFUSED: Auth refuses the code -> NOT RUN names Auth\'s reason', 'otp_expired' in out, out[-300:])
+rc, w, out = play(('otp_refused',), argv=LIVE, target='live')
+refused('live: Auth will not issue the code (rate limit)', rc, w, out)
 rc, w, out = play(live_sessions=[{'id': 'someone-elses-night'}])
 refused('a night already on at Test Alpha', rc, w, out)
 env = dict(ENV); env['TEST_SUPABASE_URL'] = 'https://%s.supabase.co' % LIVE_REF
 rc, w, out = play(env=env)
 refused('staging pointed at the LIVE project', rc, w, out)
-env = dict(ENV); env['VP_CANARY_HOST_EMAIL'] = 'dean@gflam.com.au'
-rc, w, out = play(argv=('--target', 'live', '--live-ok-by-dean'), env=env, target='live')
-refused('a live host login with a real email', rc, w, out)
-env = dict(ENV); env.pop('VP_CANARY_HOST_EMAIL')
-rc, w, out = play(argv=('--target', 'live', '--live-ok-by-dean'), env=env, target='live')
-refused('live with no canary host login in the key file', rc, w, out)
+env = dict(ENV); env['VP_CANARY_HOST_MOBILE'] = '0412 345 678'
+rc, w, out = play(argv=LIVE, env=env, target='live')
+refused('a live canary mobile that is a real number', rc, w, out)
+ok('REFUSED: a real mobile -> refused before anything is read, and says it must be a fiction number',
+   'fiction number' in out and not w.calls, out[-300:])
+env = dict(ENV); env.pop('VP_CANARY_HOST_MOBILE'); env['VP_CANARY_HOST_EMAIL'] = 'canary-host@example.invalid'
+rc, w, out = play(argv=LIVE, env=env, target='live')
+refused('live with only the old email line in the key file (no mobile)', rc, w, out)
+env = dict(ENV); env.pop('VP_CANARY_HOST_OTP')
+rc, w, out = play(argv=LIVE, env=env, target='live')
+refused('live with no test code in the key file (live never uses a link)', rc, w, out)
+env = dict(ENV); env['VP_CANARY_HOST_OTP'] = '12ab'
+rc, w, out = play(argv=LIVE, env=env, target='live')
+refused('live with a test code that is not digits', rc, w, out)
 cfg = C.target_config('staging', ENV)
 net = C.Net(cfg, opener=lambda *a: (200, {}))
 for label, m, url in (('a host that is not the target\'s', 'GET', 'https://api.venueplay.com.au/health'),
@@ -318,12 +449,39 @@ for label, m, url in (('a host that is not the target\'s', 'GET', 'https://api.v
                       ('a REST delete', 'DELETE', 'https://%s.supabase.co/rest/v1/vp_players' % TEST_REF),
                       ('a database function called directly', 'GET', 'https://%s.supabase.co/rest/v1/rpc/vp_player_answer' % TEST_REF),
                       ('an Auth admin write', 'POST', 'https://%s.supabase.co/auth/v1/admin/users' % TEST_REF),
+                      ('an Auth admin change to one login', 'PUT', 'https://%s.supabase.co/auth/v1/admin/users/%s' % (TEST_REF, uuid.uuid4())),
+                      ('a read of every Auth login', 'GET', 'https://%s.supabase.co/auth/v1/admin/users?per_page=200' % TEST_REF),
                       ('plain http', 'GET', 'http://game-staging.venueplay.com.au/health')):
     try:
         net(m, url)
         ok('Net refuses %s' % label, False, 'it went through')
     except C.NotRun:
         ok('Net refuses %s' % label, True)
+
+lcfg = C.target_config('live', ENV, live_ok=True)
+lnet = C.Net(lcfg, opener=lambda *a: (200, {}))
+SB = 'https://%s.supabase.co' % LIVE_REF
+for label, m, url, body in (('a sign-in link on LIVE (it signs in whoever owns the email, or creates a login)', 'POST', SB + '/auth/v1/admin/generate_link', {'type': 'magiclink', 'email': 'canary-host@example.invalid'}),
+                            ('a code request that may create a login', 'POST', SB + '/auth/v1/otp', {'phone': '61491570050', 'create_user': True}),
+                            ('a code request that does not say create_user', 'POST', SB + '/auth/v1/otp', {'phone': '61491570050'}),
+                            ('a code to a real mobile', 'POST', SB + '/auth/v1/otp', {'phone': '61412345678', 'create_user': False}),
+                            ('a code by email', 'POST', SB + '/auth/v1/otp', {'phone': '61491570050', 'create_user': False, 'email': 'x@example.invalid'}),
+                            ('a new Auth user', 'POST', SB + '/auth/v1/signup', {'phone': '61491570050'})):
+    try:
+        lnet(m, url, body)
+        ok('Net (live) refuses %s' % label, False, 'it went through')
+    except C.NotRun:
+        ok('Net (live) refuses %s' % label, True)
+try:
+    net('POST', 'https://%s.supabase.co/auth/v1/admin/generate_link' % TEST_REF, {'type': 'magiclink', 'email': 'dean@gflam.com.au'})
+    ok('Net (staging) refuses a sign-in link for a real email', False, 'it went through')
+except C.NotRun:
+    ok('Net (staging) refuses a sign-in link for a real email', True)
+ok('mobile_digits: 0491 570 050 and +61 491 570 050 are 61491570050',
+   C.mobile_digits('0491 570 050') == C.mobile_digits('+61 491 570 050') == '61491570050')
+ok('is_fiction_mobile: 0491 570 000 to 0491 579 999 only',
+   C.is_fiction_mobile('0491 570 000') and C.is_fiction_mobile('61491579999') and not C.is_fiction_mobile('0491 580 000')
+   and not C.is_fiction_mobile('0412 345 678') and not C.is_fiction_mobile('6149157000'))
 
 # ------------------------------------------------------------------ RED (exit 1, night still closed)
 for fault, label in (('health_bad', 'the game Worker /health is not ok'),
