@@ -1195,16 +1195,26 @@
      member_number is not guaranteed unique across a venue's rosters, and ties can
      repeat or skip a row across a page boundary. The id breaks them. */
   function loadAllMembers(ids){
-    var PAGE = 1000, out = [], from = 0;
+    /* HQ VIEW AS READS NAMES, NEVER CONTACTS (Dean's open question 10, migration 208). The table answers a
+       venue's OWN staff only. An HQ admin's login gets nobody from it, so when the table's FIRST page is empty
+       the same list is read from v_vp_members_list: number, names and status, never an email or a mobile.
+       A venue with nobody on its list gets nobody from either. A database without the view (before 208)
+       answers the view with an error, which here means "nobody", exactly what the table said. */
+    var PAGE = 1000, out = [], from = 0, rel = "vp_members", cols = "*";
     function nextPage(){
-      return client.from("vp_members").select("*").in("roster_id", ids)
+      return client.from(rel).select(cols).in("roster_id", ids)
         .order("member_number",{ascending:true}).order("id",{ascending:true})
         .range(from, from + PAGE - 1)
         .then(function(r){
+          if(rel === "v_vp_members_list" && from === 0 && r && r.error) return out;
           /* A FAILED page is not an empty one. Read as empty, it ends the loop and hands back a
              short list with no error, which is the exact truncation this loop exists to stop. */
           if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your members list", r);
           var rows = r.data;
+          if(!rows.length && from === 0 && rel === "vp_members"){
+            rel = "v_vp_members_list"; cols = "id,roster_id,member_number,first_name,last_name,status,updated_at";
+            return nextPage();
+          }
           if(!rows.length) return out;            // empty page: that is the end
           out = out.concat(rows);
           from += rows.length;

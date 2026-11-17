@@ -919,6 +919,18 @@ dump it then). Safe to run any time: until it runs, POST /track, GET /track/look
 carry on. Needs vp_venues. Any order with the billing Worker. After loading the codes (tools/make-journey-codes.py output) set sent_at per send.
 Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
 
+`venueplay-208-hq-no-member-contacts.sql` (Dean's open question 10, 16 Nov 2026: "Block HQ admin database reads of members'
+email/mobile?", suggested yes; scope set by Dean 17 Nov: ONLY a club's uploaded members list, never players, the player profile or
+subscribers, which HQ keeps seeing). Drops policy vp_members_admin_all (HQ admin FOR ALL on every club's members list) and adds view
+v_vp_members_list (id, roster_id, member_number, first_name, last_name, status, updated_at: no email, mobile, postcode, consent or
+note; own venues for staff, every venue for an HQ admin; owner rights, security_barrier, select to authenticated only). The members
+console and the account page count read the table, then the view when the table answers nobody (HQ View as). vp_members_host_select,
+every grant on vp_members and every player table are untouched. Branch `feature/hq-no-member-contacts-q10`. RUN on TEST only, twice
+(17 Nov 2026 ~22:40, the second run "policy does not exist, skipping"), read back and proven with a rolled-back HQ-admin and venue-owner
+session. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-GUARD block; the live run is the statements after
+its END marker. Either order with the pages. After the live run dump RLS-BASELINE.json (this branch already carries the post-208
+state). Rollback: in the file. NUMBER: 195 to 207 taken on other branches/worktrees (checked 17 Nov 2026), so 208.
+
 `venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
 release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
 per PHONE, held by venueplay: first name, mobile in +614 form, and what venues asked; each venue receives only the fields it asks;

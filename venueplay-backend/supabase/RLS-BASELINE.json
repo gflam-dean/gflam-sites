@@ -186,6 +186,7 @@
   "v_vp_host_players authenticated TRIGGER",
   "v_vp_host_players authenticated TRUNCATE",
   "v_vp_host_players authenticated UPDATE",
+  "v_vp_members_list authenticated SELECT",
   "v_vp_monthly_metering authenticated DELETE",
   "v_vp_monthly_metering authenticated INSERT",
   "v_vp_monthly_metering authenticated REFERENCES",
@@ -1169,13 +1170,6 @@
    "roles": "authenticated",
    "using": "(venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
-  },
-  "vp_members.vp_members_admin_all": {
-   "cmd": "ALL",
-   "permissive": "PERMISSIVE",
-   "roles": "public",
-   "using": "vp_is_platform_admin()",
-   "with_check": "vp_is_platform_admin()"
   },
   "vp_members.vp_members_host_select": {
    "cmd": "SELECT",
@@ -2222,6 +2216,7 @@
   "v_touring_shows",
   "v_vp_feedback_by_session",
   "v_vp_host_players",
+  "v_vp_members_list",
   "v_vp_monthly_metering",
   "v_vp_player_optins",
   "v_vp_prizes_given",
