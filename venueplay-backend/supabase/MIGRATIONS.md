@@ -818,7 +818,7 @@ still to be re-dumped for its new SECURITY DEFINER function vp_settings_manager_
 
 `venueplay-197-purchase-raffle-members.sql` (Dean, 14 Nov 2026, INBOX 415 purchase raffle rework, branch `fix/t17-praffle`):
 vp_purchase_raffle_entrants gains postcode and member_capture_id (+ index), last_name may be empty (not null and the length check
-relaxed). Additive and safe to re-run. RUN on TEST only (tools/staging/run-on-test.py). NOT RUN ON LIVE. The file as committed
+relaxed). Additive and safe to re-run. RUN on TEST (tools/staging/run-on-test.py). RUN on LIVE (probe 17 Nov: check-migrations-live 01:05 and the Tue 10:20 read). The file as committed
 carries the VP-STAGING-GUARD block, which REFUSES on the live project: the live run is the statements between the guard's END
 marker and the end of the file. Run it on LIVE BEFORE the game Worker of this release ships (that Worker writes the columns).
 Rollback: in the file.
@@ -930,7 +930,7 @@ is the venue search that found nothing, digits and @ stripped; clear that text a
 revoked from public / anon / authenticated, select/insert/update to service_role only (so RLS-BASELINE.json gains two tables after it is run:
 dump it then). Safe to run any time: until it runs, POST /track, GET /track/lookup and the HQ Journey routes answer "nothing recorded" and the pages
 carry on. Needs vp_venues. Any order with the billing Worker. After loading the codes (tools/make-journey-codes.py output) set sent_at per send.
-Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
+Branch `feature/journey-413-15nov`. RUN on LIVE (probe 17 Nov: check-migrations-live 01:05 and the Tue 10:20 read). Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
 `venueplay-199-billing-credits.sql` (Dean, 16 Nov 2026, INBOX 419 DECISION + add-on, Terms line 122, branch `fix/thu19-billing-credit`): one new table
 `vp_billing_credits` (the yearly credit ledger, one row per cut, held for the PAYER: a card account or a vp_venue_groups group, never the pub),
 plus `vp_venue_groups.billing_term` ('monthly' default or 'yearly') and `term_renewal` (date) so a hand-invoiced group can be yearly. Service role only

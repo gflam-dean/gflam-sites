@@ -8344,6 +8344,8 @@ function vpaProspectFrom(senderName, senderEmail) {
   const s = vpaProspectSender(senderName, senderEmail);
   const first = String((s && s.name) || '').trim().split(/\s+/)[0];
   if (!first || !/^[A-Za-z][A-Za-z'-]{0,19}$/.test(first) || first.toLowerCase() === 'dean') return VPA_PROSPECT_FROM;
+  /* Dean's own mailbox under ANY display name ("Sales Desk" on dean@) is Dean's: plain venueplay, signed "Cheers" with no name (INBOX 458, 18 Nov 2026). */
+  if (/^dean([._+-]|@)/i.test(String((s && s.email) || ''))) return VPA_PROSPECT_FROM;
   return first.charAt(0).toUpperCase() + first.slice(1) + ' at venueplay <hello@send.venueplay.com.au>';
 }
 /* ONE VOICE FOR THE WHOLE ONBOARDING (Dean, 17 Nov 2026, INBOX 430: "the emails to onboard them they should get from the

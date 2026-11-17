@@ -538,6 +538,10 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var S1c = await prospect({ name: 'Lower Case Hotel', sender_name: 'dean', sender_email: 'hello@venueplay.com.au' });
   var m1c = await firstReminder(S1c);
   check('Dean written any way ("dean", from hello@): still no name, "Cheers, the venueplay team", from plain venueplay', !!m1c && /Cheers,<br>the venueplay team<br>/.test(m1c.html) && !/dean<br>/i.test(m1c.html) && m1c.from === PLAIN_FROM, m1c && m1c.html.slice(m1c.html.indexOf('Cheers'), m1c.html.indexOf('Cheers') + 80));
+  var S1d = await prospect({ name: 'Dean Box Other Name Hotel', sender_name: 'Sales Desk', sender_email: 'dean@venueplay.online' });
+  var m1d = await firstReminder(S1d);
+  check('Dean\'s dean@ mailbox under another display name ("Sales Desk"): plain "Cheers, the venueplay team", never Dean, never "Sales", from plain venueplay (INBOX 458)',
+    !!m1d && /Cheers,<br>the venueplay team<br>/.test(m1d.html) && !/Sales|Dean/.test(m1d.html.slice(m1d.html.indexOf('Cheers'), m1d.html.indexOf('Cheers') + 60)) && !/Sales|Dean/.test(m1d.from) && m1d.from === PLAIN_FROM, m1d && [m1d.from, m1d.html.slice(m1d.html.indexOf('Cheers'), m1d.html.indexOf('Cheers') + 80)]);
   var S2 = await prospect({ name: 'No Sender Hotel' });
   var m2 = await firstReminder(S2);
   check('nobody signed the setup: signed by the venueplay team and from plain venueplay, as before', !!m2 && /Cheers,<br>the venueplay team<br>/.test(m2.html) && m2.from === PLAIN_FROM, m2 && m2.html.slice(m2.html.indexOf('Cheers'), m2.html.indexOf('Cheers') + 80));
