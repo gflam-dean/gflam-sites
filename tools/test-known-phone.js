@@ -11,6 +11,9 @@
      4. /join/known tells the phone a first name and the NAMES of missing fields, never a value (no mobile, no email)
      5. a field the venue adds later is the only one asked; what is given is added to the row; nothing is overwritten
      6. another venue: straight in, and only the fields IT asks (Dean 16 Nov 2026); the first-game notice once per player
+     6a. a DIFFERENT number (or email) typed at a venue is that venue's night only: the venue is never marked as holding
+        the row's number, so its next game is never filled with a number it was not given (INBOX 445; migration 210
+        later keeps each venue's own number so it can be pre-filled)
      7. before migration 202 (the tables missing) every join works exactly as today
      8. consent: 'single' unless env.CONSENT_BLOCK is 'three'; then venueplay + the venue, plus the host only when a
         HOST login with a brand card opened the game (never the owner); each box its own row with its answer, version,
@@ -174,6 +177,80 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   show('...the phone is asked again instead (the one-tap row, the held number masked)', jk.body.known && jk.body.known.confirm.some(function (x) { return x.field === 'mobile'; }), JSON.stringify(jk.body.known));
   j = await call(handleJoin, { code: s2.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], mobile: '0412345678' });
   show('the SAME number typed again where it is held still marks the venue as having it', (DB.vp_known_players[0].shared[VENUE] || []).indexOf('mobile') >= 0, JSON.stringify(DB.vp_known_players[0].shared));
+
+  print('5a. DIFFERENT NUMBER AT A VENUE: ITS NEXT GAME IS NEVER FILLED WITH THE NUMBER IT WAS NOT GIVEN (INBOX 445)');
+  world();
+  s1 = await open();
+  j = await call(handleJoin, { code: s1.join_code, name: 'Alan', pid: pid(), first_name: 'Alan', mobile: '0412345678' });
+  var DK = j.body.known_key;
+  close(s1);
+  var sb1 = await open(OTHER);
+  jk = await call(handleJoinKnown, { code: sb1.join_code, keys: [DK] });
+  show('venue B first time: the one-tap row for the number held (venue A\'s), masked', jk.body.known && jk.body.known.confirm.length === 1 && jk.body.known.confirm[0].field === 'mobile', JSON.stringify(jk.body.known));
+  j = await call(handleJoin, { code: sb1.join_code, name: 'Alan', pid: pid(), known_keys: [DK], mobile: '0499 888 777' });
+  show('Different number at B: B\'s player row has the NEW number typed there', lastPlayer().mobile === '+61499888777', JSON.stringify(lastPlayer()));
+  show('...what venueplay held is not overwritten', DB.vp_known_players[0].mobile === '+61412345678', JSON.stringify(DB.vp_known_players[0]));
+  show('...and B is NOT marked as holding the number the row holds (it was never given it)', !sharedWith(DB.vp_known_players[0], OTHER, 'mobile'), JSON.stringify(DB.vp_known_players[0].shared));
+  close(sb1);
+  var sb2 = await open(OTHER, 'musical_bingo');
+  jk = await call(handleJoinKnown, { code: sb2.join_code, keys: [DK] });
+  show('B next game: the one-tap row again (the player chooses), nothing silent', jk.body.known && jk.body.known.confirm.length === 1 && jk.body.known.confirm[0].field === 'mobile', JSON.stringify(jk.body.known));
+  j = await call(handleJoin, { code: sb2.join_code, name: 'Alan', pid: pid(), known_keys: [DK] });
+  show('B next game, key only: the OLD number (venue A\'s) is NEVER filled in at B', j.status === 200 && lastPlayer().mobile === undefined && lastPlayer().first_name === 'Alan', JSON.stringify(lastPlayer()));
+  j = await call(handleJoin, { code: sb2.join_code, name: 'Alan', pid: pid(), known_keys: [DK], mobile: '0499888777' });
+  show('B next game, Different number again: B gets its own number, still not marked', lastPlayer().mobile === '+61499888777' && !sharedWith(DB.vp_known_players[0], OTHER, 'mobile'), JSON.stringify(lastPlayer()));
+  var bRows = DB.vp_players.filter(function (x) { return DB.vp_sessions.some(function (s) { return s.id === x.session_id && s.venue_id === OTHER; }); });
+  show('no player row at B ever carries the number B was never given', bRows.length === 3 && bRows.every(function (x) { return x.mobile !== '+61412345678'; }), JSON.stringify(bRows.map(function (x) { return x.mobile; })));
+  var sa2 = await open(VENUE, 'musical_bingo');
+  jk = await call(handleJoinKnown, { code: sa2.join_code, keys: [DK] });
+  show('venue A (which only ever got the first number) still asks nothing', jk.body.known && jk.body.known.need.length === 0 && jk.body.known.confirm.length === 0, JSON.stringify(jk.body.known));
+  await call(handleJoin, { code: sa2.join_code, name: 'Alan', pid: pid(), known_keys: [DK] });
+  show('...and A still holds its own number, never the one typed at B', lastPlayer().mobile === '+61412345678', JSON.stringify(lastPlayer()));
+  close(sa2);
+  var sb3 = await open(OTHER);
+  j = await call(handleJoin, { code: sb3.join_code, name: 'Alan', pid: pid(), known_keys: [DK], mobile: '0412 345 678' });
+  show('typing the SAME number the row holds at B: B has it now (marked), and fills silently next game', sharedWith(DB.vp_known_players[0], OTHER, 'mobile') && lastPlayer().mobile === '+61412345678', JSON.stringify(DB.vp_known_players[0].shared));
+  close(sb3);
+  DB.vp_venue_settings[1].collect_postcode = true;
+  var sb4 = await open(OTHER);
+  jk = await call(handleJoinKnown, { code: sb4.join_code, keys: [DK] });
+  show('a returning player is asked ONLY the new field B now asks (postcode)', jk.body.known && JSON.stringify(jk.body.known.need) === '["postcode"]' && jk.body.known.confirm.length === 0, JSON.stringify(jk.body.known));
+  DB.vp_venue_settings[1].collect_postcode = false;
+  close(sb4);
+  /* the same for email: venue A collected one, venue B is typed another */
+  DB.vp_venue_settings[0].collect_email = true; DB.vp_venue_settings[1].collect_email = true;
+  var sa3 = await open();
+  await call(handleJoin, { code: sa3.join_code, name: 'Alan', pid: pid(), known_keys: [DK], email: 'alan@example.com' });
+  show('an email typed at A when the row held none: added to the row, and A has it', DB.vp_known_players[0].email === 'alan@example.com' && sharedWith(DB.vp_known_players[0], VENUE, 'email'), JSON.stringify(DB.vp_known_players[0]));
+  close(sa3);
+  var sb5 = await open(OTHER);
+  await call(handleJoin, { code: sb5.join_code, name: 'Alan', pid: pid(), known_keys: [DK], email: 'al@work.com.au' });
+  show('Different email at B: B gets the one typed, is not marked as holding the row\'s', lastPlayer().email === 'al@work.com.au' && !sharedWith(DB.vp_known_players[0], OTHER, 'email'), JSON.stringify(DB.vp_known_players[0].shared));
+  close(sb5);
+  var sb6 = await open(OTHER);
+  await call(handleJoin, { code: sb6.join_code, name: 'Alan', pid: pid(), known_keys: [DK] });
+  show('...B next game, key only: venue A\'s email is never filled in at B', lastPlayer().email === undefined, JSON.stringify(lastPlayer()));
+  await call(handleJoin, { code: sb6.join_code, name: 'Alan', pid: pid(), known_keys: [DK], email: ' Alan@Example.com ' });
+  show('...the same email typed in other capitals: B is not marked (letters compared exactly), so it is asked again, never filled', !sharedWith(DB.vp_known_players[0], OTHER, 'email'), JSON.stringify(DB.vp_known_players[0].shared));
+  await call(handleJoin, { code: sb6.join_code, name: 'Alan', pid: pid(), known_keys: [DK] });
+  show('...and B\'s next key-only join still never carries venue A\'s email', lastPlayer().email === undefined, JSON.stringify(lastPlayer()));
+  DB.vp_venue_settings[0].collect_email = false; DB.vp_venue_settings[1].collect_email = false;
+  /* the bingo phone (/capture) goes through the same knownAtJoin */
+  world();
+  var sa4 = await open();
+  j = await call(handleJoin, { code: sa4.join_code, name: 'Bo', pid: pid(), first_name: 'Bo', mobile: '0412333444' });
+  var BK2 = j.body.known_key;
+  var sbb = await open(OTHER, 'bingo');
+  DB.vp_players.push({ id: 'bbbbbbbb-0000-4000-8000-000000000002', session_id: sbb.id, token_hash: await sha256Hex('tokB2'), display_name: 'Bo', kicked: false });
+  async function capB(body) {
+    BODY = body; var h = { 'x-player-token': 'tokB2' };
+    try { return await handleCapture({ headers: { get: function (k) { return h[String(k).toLowerCase()] || ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+    catch (e) { return { status: e.status || 500, body: { error: e.message } }; }
+  }
+  await capB({ code: fnvVenueCode('other'), first_name: 'Bo', known_keys: [BK2], mobile: '0499 111 222' });
+  await capB({ code: fnvVenueCode('other'), first_name: 'Bo', known_keys: [BK2] });
+  var bcap = DB.vp_captures[DB.vp_captures.length - 1];
+  show('bingo phone at B: Different number, then the key only: never the number venue A was given', bcap && bcap.mobile === undefined && !sharedWith(DB.vp_known_players[0], OTHER, 'mobile') && DB.vp_captures.every(function (x) { return x.mobile !== '+61412333444'; }), JSON.stringify(DB.vp_captures));
 
   print('5b. THE FIRST-GAME NOTICE, ONCE PER PLAYER');
   world();

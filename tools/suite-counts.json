@@ -2320,7 +2320,7 @@
   "counted_by": "lines"
  },
  "tools/test-known-phone.js": {
-  "checks": 79,
+  "checks": 97,
   "counted_by": "lines"
  },
  "tools/test-vp-known.js": {
