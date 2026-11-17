@@ -3676,7 +3676,14 @@
           if (readFailed(rr)){ mdCountFailed(venueId); return; }
           var ids = (rr.data || []).map(function(x){ return x.id; });
           if (!ids.length){ $("mdCount").textContent = "No members yet."; paintLeftDraws(); return; }
-          return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
+          /* The table counts for the venue's OWN staff only. An HQ admin's View as gets 0 from it (migration 208, Dean's
+             open question 10: HQ never reads a member's email or mobile), so a 0 asks v_vp_members_list, which counts the
+             same rows without any contact column. Before 208 the view is missing, and that error keeps the table's 0. */
+          var countIn = function(rel){ return client.from(rel).select("id",{ count:"exact", head:true }).in("roster_id", ids); };
+          return countIn("vp_members").then(function(rc){
+            if (readFailed(rc) || rc.count !== 0) return rc;
+            return countIn("v_vp_members_list").then(function(rv){ return (!readFailed(rv) && typeof rv.count === "number") ? rv : rc; });
+          }).then(function(rc){
             if (stale()) return;
             if (readFailed(rc) || typeof rc.count !== "number"){ mdCountFailed(venueId); return; }
             var n = rc.count;

@@ -421,6 +421,15 @@
   "kicked",
   "is_test"
  ],
+ "v_vp_members_list": [
+  "id",
+  "roster_id",
+  "member_number",
+  "first_name",
+  "last_name",
+  "status",
+  "updated_at"
+ ],
  "v_vp_monthly_metering": [
   "venue_id",
   "period_month",
