@@ -95,8 +95,10 @@ function roleOf(id) { var r = DB.vp_platform_admins.filter(function (a) { return
     check(who[i][0] + ' cannot remove anyone (' + who[i][2] + ')', x.status === who[i][2] && !x.body.ok, x);
   }
   check('...and after all of them the Team list is exactly as it was, with no audit row', snap() === before && DB.vp_admin_audit.length === 0, DB.vp_platform_admins);
+  check('...and the Worker refused every one of them itself: none reached vp_hq_team_change', RPC_CALLS.length === 0, RPC_CALLS);
   var me = await call(vpaHandleStaffRemove, DEAN, { auth_user_id: DEAN });
-  check('an owner cannot remove their own login (403), so the last owner can never be removed', me.status === 403 && roleOf(DEAN) === 'owner', me);
+  check('an owner cannot remove their own login (403, refused by the Worker before the database), so the last owner can never be removed',
+        me.status === 403 && /You cannot remove your own login/.test(me.body.error) && RPC_CALLS.length === 0 && roleOf(DEAN) === 'owner', me);
   var o2 = await call(vpaHandleStaffRemove, DEAN, { auth_user_id: OWNER2 });
   check('one owner can remove another owner', o2.status === 200 && roleOf(OWNER2) === null, o2);
   var gone = await call(vpaHandleStaffRemove, DEAN, { auth_user_id: U(99) });
@@ -145,7 +147,8 @@ function roleOf(id) { var r = DB.vp_platform_admins.filter(function (a) { return
   print('2. POST /admin/staff never changes your own role');
   world();
   var self = await call(vpaHandleStaff, DEAN, { name: 'Dean', mobile: '0400 000 001', role: 'staff' });
-  check('an owner re-adding their OWN mobile as staff is refused (403) and stays owner', self.status === 403 && roleOf(DEAN) === 'owner', self);
+  check('an owner re-adding their OWN mobile as staff is refused (403, by the Worker before the database) and stays owner',
+        self.status === 403 && /your own login/.test(self.body.error) && RPC_CALLS.length === 0 && roleOf(DEAN) === 'owner', self);
   check('...and nothing is audited', DB.vp_admin_audit.length === 0, DB.vp_admin_audit);
   var up = await call(vpaHandleStaff, DEAN, { name: 'Pat', mobile: '0400 000 003', role: 'accounts' });
   var ua = DB.vp_admin_audit.filter(function (a) { return a.action === 'staff_added'; });
