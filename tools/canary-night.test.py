@@ -282,6 +282,51 @@ def game_posts(w):
     return [c for c in w.calls if c[0] == 'POST' and c[1].startswith('game')]
 
 
+# ------------------------------------------------------------------ COMMAND LINE (18 Nov 2026: `--help` played a REAL night)
+def cmdline(argv):
+    """Runs main()'s parse step for real. Records whether the key file was read or a Net was made (= a night could start)."""
+    touched = []
+    real_env, real_net = C.read_env, C.Net
+    C.read_env = lambda *a, **k: touched.append('read_env') or dict(ENV)
+    C.Net = lambda *a, **k: touched.append('Net') or (_ for _ in ()).throw(AssertionError('Net made'))
+    out, err = io.StringIO(), io.StringIO()
+    from contextlib import redirect_stderr
+    try:
+        with redirect_stdout(out), redirect_stderr(err):
+            try:
+                rc = C.main(list(argv), opener=lambda *a, **k: touched.append('opener'), say=print)
+            except SystemExit as e:
+                rc = ('SystemExit', e.code)
+            except AssertionError:
+                rc = 'night started'
+    finally:
+        C.read_env, C.Net = real_env, real_net
+    return rc, touched, out.getvalue() + err.getvalue()
+
+
+for flag in ('--help', '-h'):
+    rc, touched, out = cmdline([flag])
+    ok('CMDLINE: %s exits 0 with usage' % flag, rc == 0 and 'usage' in out.lower() and '--target' in out, [rc, out[-200:]])
+    ok('CMDLINE: %s reads no key file and opens nothing' % flag, not touched, touched)
+rc, touched, out = cmdline(['--target', 'staging', '--help'])
+ok('CMDLINE: --help after --target still only prints usage', rc == 0 and not touched, [rc, touched])
+for bad in (['--target', 'staging', '--nope'], ['--nope'], ['--target', 'staging', 'stray'], ['--target', 'staging', '--no-music'],
+            ['--target', 'prod'], ['--target']):
+    rc, touched, out = cmdline(bad)
+    ok('CMDLINE: %s exits 2 with a message' % ' '.join(bad), rc == 2 and 'error' in out.lower(), [rc, out[-200:]])
+    ok('CMDLINE: %s reads no key file and opens nothing' % ' '.join(bad), not touched, touched)
+for argv in ([], ['--no-musical'], ['--live-ok-by-dean', '--venue', 'test-alpha']):
+    rc, touched, out = cmdline(argv)
+    ok('CMDLINE: no --target (%s) refuses, exit 2, nothing opened' % (' '.join(argv) or 'no flags'),
+       rc == 2 and '--target' in out and not touched, [rc, touched, out[-200:]])
+# the real script, as a person types it: --help only (a key file that does not exist, so even a regression cannot sign in)
+import subprocess
+r = subprocess.run([sys.executable, os.path.join(HERE, 'canary-night.py'), '--help'], capture_output=True, text=True, timeout=30,
+                   env=dict(os.environ, VP_CANARY_ENV_FILE=os.path.join(HERE, 'no-such-canary-env-file')))
+ok('CMDLINE: python3 tools/canary-night.py --help exits 0 with usage, plays nothing',
+   r.returncode == 0 and 'usage' in r.stdout.lower() and 'CANARY NIGHT on' not in r.stdout, [r.returncode, r.stdout[-200:], r.stderr[-200:]])
+
+
 # ------------------------------------------------------------------ GREEN
 rc, w, out = play()
 ok('GREEN: a correct night is green (exit 0)', rc == 0, out[-600:])

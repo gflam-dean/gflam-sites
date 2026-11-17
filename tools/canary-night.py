@@ -560,17 +560,34 @@ class Canary:
             self.say('  (closing the night failed too: %s)' % str(e)[:200])
 
 
+def parse_args(argv):
+    """The command line, strictly (18 Nov 2026: `--help` once played a REAL night on staging because unknown flags were
+    ignored). --help/-h prints usage and exits 0; any unknown flag or stray word exits 2; --target is required, no default.
+    Raises SystemExit; nothing is read or opened here."""
+    import argparse
+    ap = argparse.ArgumentParser(prog='canary-night.py', allow_abbrev=False,
+                                 description='THE CANARY NIGHT: a short real game at a test venue (see the top of this file).')
+    ap.add_argument('--target', required=True, choices=('staging', 'live'), help='staging (TEST database) or live')
+    ap.add_argument('--venue', default=DEFAULT_VENUE, help='test venue slug (allow-list only), default %s' % DEFAULT_VENUE)
+    ap.add_argument('--report', default=None, help='write a JSON report to this path')
+    ap.add_argument('--no-musical', action='store_true', help='trivia only')
+    ap.add_argument('--live-ok-by-dean', action='store_true', help="LIVE needs this (Dean's yes)")
+    return ap.parse_args(argv)
+
+
 def main(argv=None, env=None, opener=None, say=print):
     argv = list(sys.argv[1:] if argv is None else argv)
-    target = argv[argv.index('--target') + 1] if '--target' in argv else 'staging'
-    venue = argv[argv.index('--venue') + 1] if '--venue' in argv else DEFAULT_VENUE
-    report = argv[argv.index('--report') + 1] if '--report' in argv else None
+    try:
+        a = parse_args(argv)
+    except SystemExit as e:              # --help = 0; a bad command line = 2. Nothing was opened.
+        return e.code if isinstance(e.code, int) else 2
+    target, venue, report = a.target, a.venue, a.report
     env = read_env() if env is None else env
     t0 = time.time()
     try:
-        cfg = target_config(target, env, live_ok='--live-ok-by-dean' in argv)
+        cfg = target_config(target, env, live_ok=a.live_ok_by_dean)
         net = Net(cfg, opener)
-        c = Canary(cfg, net, venue, musical='--no-musical' not in argv, say=say)
+        c = Canary(cfg, net, venue, musical=not a.no_musical, say=say)
     except NotRun as e:
         say('NOT RUN: %s' % e)
         return 2
