@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 00:41 · 7b707239';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 22:55 · 4dbc513d';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -472,6 +472,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-rename'    && typeof vpaHandleVenueRename === 'function')    return await vpaHandleVenueRename(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-address'   && typeof vpaHandleVenueAddress === 'function')   return await vpaHandleVenueAddress(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/permit-register-check' && typeof vpaHandlePermitRegisterCheck === 'function') return await vpaHandlePermitRegisterCheck(request, env, json);
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
@@ -2118,7 +2119,14 @@ function vpVenueMatch(aName, aPostcode, bName, bPostcode) {
    Existing venues are untouched. This only decides the name a NEW venue gets. */
 async function vpaSlugTaken(env, slug) {
   const rows = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(slug) + '&select=id&limit=1');
-  return !!(rows && rows.length);
+  if (rows && rows.length) return true;
+  /* AN OLD ADDRESS IS TAKEN FOR EVER (migration 212, Dean's open question 32). A venue that moved its TV address keeps
+     the old one forwarding: printed table talkers, TV bookmarks and the TV apps carry it. A new venue handed that
+     address would get the old pub's printed QR codes. Before 212 runs the table is not there, vpaSelect answers [] and
+     nothing changes; after it, the database refuses the insert anyway (vp_venues_slug_alias_guard), and this keeps a
+     sign-up from ever reaching that refusal. */
+  const old = await vpaSelect(env, 'vp_venue_slug_aliases', 'slug=eq.' + encodeURIComponent(slug) + '&select=venue_id&limit=1');
+  return !!(old && old.length);
 }
 
 async function vpaUniqueSlug(env, base, seed, postcode) {
@@ -9728,6 +9736,76 @@ async function vpaHandleVenueRename(request, env, json) {
     return json({ error: 'The change could not be recorded, so the name was put back. Nothing changed. Try again.' }, 500);
   }
   return json({ ok: true, venue_id: venueId, from: oldName, name: name, slug: v.slug || null, account_renamed: !!account });
+}
+
+/* POST /admin/venue-address  {venue_id, preview?, slug?}   (Dean's open question 32, "yes, step 2", 16 Nov 2026)
+   HQ "Move TV address": the Lunatic Hotel fix. Rename venue (above) changes the name only; this moves the TV address
+   (the slug) to follow it, and the OLD ADDRESS KEEPS WORKING FOR EVER (migration 212, vp_venue_slug_aliases).
+   - preview: any HQ role. Answers the current address, the old addresses that still forward, and the address the
+     venue's current name would give (free of every current and old address). Changes nothing.
+   - move ({slug}): HQ OWNER ONLY. One database call, vp_venue_move_address, which in ONE transaction refuses a taken
+     address (current or old), a channel another venue already uses, and a venue with a game open; keeps the join code
+     (so the code on the wall and every printed code stay the same); records the old address; moves the TV's slides;
+     asks every TV at the venue to reload (it then follows the new address); and writes the audit row
+     (venue_address_moved, from, to). Nothing half done, and no move without its audit line.
+   Before migration 212 runs the function is not there: answered "not set up yet", nothing changed. */
+const VPA_ADDRESS_REFUSED = {
+  bad_slug: 'An address is lowercase letters, numbers and single hyphens, 2 to 80 characters.',
+  same: 'That is already its TV address.',
+  taken: 'Another venue already has that TV address.',
+  taken_old: 'That was another venue\'s TV address and still forwards to it, so it can never be used again.',
+  code_clash: 'That address would share a screen channel with another venue. Add the suburb or postcode to it.',
+  game_on: 'A game is open at this venue right now. Move the address once the night is over.',
+  no_code: 'This venue has no join code of its own, so its printed code would change. Ask for help before moving it.',
+  no_venue: 'That venue no longer exists.',
+  no_slug: 'This venue has no TV address yet.',
+};
+async function vpaVenueAddressRpc(env, args) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_venue_move_address', {
+    method: 'POST', headers: vpaHeaders(env), body: JSON.stringify(args),
+  });
+  if (res.status === 404) return { missing: true };
+  if (!res.ok) return { failed: true, status: res.status };
+  return { body: await res.json() };
+}
+async function vpaHandleVenueAddress(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts', 'support']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const v = ((await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,join_code&limit=1')) || [])[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  const olds = ((await vpaSelect(env, 'vp_venue_slug_aliases', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slug,retired_at,retired_by&order=retired_at.asc&limit=50')) || [])
+    .map(function (a) { return { slug: a.slug, retired_at: a.retired_at || null, retired_by: a.retired_by || null }; });
+
+  if (b.preview === true) {
+    const stem = vpaSlugify(v.name);
+    let proposed = stem;
+    if (stem && stem !== v.slug && !olds.some(function (a) { return a.slug === stem; })) {
+      proposed = await vpaUniqueSlug(env, stem, venueId, v.postcode);
+    }
+    return json({ ok: true, venue_id: venueId, name: v.name || '', slug: v.slug || '', join_code: v.join_code || null,
+                  old_addresses: olds, proposed: proposed || '', matches_name: !stem || proposed === v.slug });
+  }
+
+  if (actor.role !== 'owner') return json({ error: 'Only an HQ Owner can move a TV address.' }, 403);
+  const want = String(b.slug == null ? '' : b.slug).trim().toLowerCase();
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(want) || want.length < 2 || want.length > 80) return json({ error: VPA_ADDRESS_REFUSED.bad_slug }, 400);
+  if (want === v.slug) return json({ error: VPA_ADDRESS_REFUSED.same }, 400);
+
+  const r = await vpaVenueAddressRpc(env, { p_venue_id: venueId, p_new_slug: want, p_actor_admin: actor.actorId || null, p_actor_label: actor.label || 'admin' });
+  if (r.missing) return json({ error: 'Moving a TV address is not set up yet (database change 212). Nothing changed.' }, 503);
+  if (r.failed || !r.body) return json({ error: 'The move could not be saved. Nothing changed. Try again.' }, 500);
+  const out = r.body;
+  if (out.ok !== true) {
+    const why = String(out.reason || '');
+    return json({ error: VPA_ADDRESS_REFUSED[why] || 'The move was refused. Nothing changed.', reason: why }, why === 'no_venue' ? 404 : 409);
+  }
+  return json({ ok: true, venue_id: venueId, from: out.from, to: out.to, join_code: out.join_code || null,
+                old_addresses: Array.isArray(out.old_addresses) ? out.old_addresses : [] });
 }
 
 async function vpaHandleVenueStatus(request, env, json) {

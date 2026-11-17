@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Nov 2026, 23:20 · 212cfb74';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 02:13 · 7caaddbe';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2221,6 +2221,17 @@ async function refreshVenueCodes(env) {
     }
     map[c] = v.id; seen[c] = v.slug;
   }
+  /* AN OLD ADDRESS'S CODE STILL NAMES ITS VENUE (migration 212, open question 32). A table talker printed before the
+     venue's TV address moved shows hash(old slug) and its QR is /play?venue=<old slug>, which the phone hashes. The
+     issued join_code is that same hash for almost every venue (migration 91) and never moves, so this is the floor
+     for the rest: a venue that pressed Change code AND then moved its address. A current slug's code always wins. */
+  let olds = [];
+  try { olds = await sbGetAll(env, 'vp_venue_slug_aliases', 'select=slug,venue_id&order=slug.asc'); } catch (e) { olds = []; }
+  for (const a of (olds || [])) {
+    if (!a || !a.slug || !a.venue_id) continue;
+    const h = fnvVenueCode(a.slug);
+    if (!hashMap[h]) { hashMap[h] = a.venue_id; hashSeen[h] = a.slug; }
+  }
   _vcMap = map; _vcAt = now; _vcDupes = dupes; _vcHashMap = hashMap; _vcMapAll = all; _vcSuspended = susp;
 }
 
@@ -2896,7 +2907,11 @@ async function signingVenueForReceiver(env, url) {
   if (venue) {
     if (!/^[a-z0-9-]+$/.test(venue)) return null;
     const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(venue) + '&select=id,broadcast_enforce&limit=1');
-    return (rows && rows[0]) || null;
+    if (rows && rows[0]) return rows[0];
+    const now = await venueSlugMoved(env, venue);   // an old address (migration 212): the venue's own key
+    if (!now) return null;
+    const moved = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(now) + '&select=id,broadcast_enforce&limit=1');
+    return (moved && moved[0]) || null;
   }
   const code = String(url.searchParams.get('code') || '').trim();
   if (code) return await venueRowByCode(env, code, 'broadcast_enforce');   // one read, not two (31 Oct 2026)
@@ -4144,8 +4159,30 @@ async function handleVenueLookup(request, env, json) {
     }
   }
   if (v === null) v = await venueLookupThreeTrips(env, url, slugOk ? slug : '', ver);
+  /* AN OLD TV ADDRESS (migration 212, open question 32). The venue's address moved after its name changed; a bookmark,
+     a TV app or a paired browser still opens the old one. Asked only when the address did not answer as itself, so the
+     ordinary poll pays nothing. The reply names the new address and moved_from, and the TV sends itself there. */
+  let movedFrom = '';
+  if (slugOk && (v === null || (v.slug && v.slug !== slug))) {
+    const now = await venueSlugMoved(env, slug);
+    if (now && v === null) v = await venueLookupThreeTrips(env, url, now, ver);
+    if (now && v && v.slug === now) movedFrom = slug;
+  }
   if (v === null) return json({ exists: false });
-  return venueLookupReply(json, v);
+  return venueLookupReply(json, v, movedFrom);
+}
+
+/* THE VENUE'S CURRENT ADDRESS FOR ONE OF ITS OLD ADDRESSES, or '' (migration 212). Two indexed reads. Before 212 runs the
+   table is not there: '' and nothing changes. Never throws: an old address that cannot be looked up is just not found. */
+async function venueSlugMoved(env, slug) {
+  slug = String(slug || '').trim().toLowerCase();
+  if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug)) return '';
+  try {
+    const a = await sbGet(env, 'vp_venue_slug_aliases', 'slug=eq.' + enc(slug) + '&select=venue_id&limit=1');
+    if (!a || !a[0] || !a[0].venue_id) return '';
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(a[0].venue_id) + '&select=slug&limit=1');
+    return (v && v[0] && v[0].slug) || '';
+  } catch (e) { return ''; }
 }
 
 /* The pre-72 path, kept as the fallback above. Returns the venue row (the fields the
@@ -4218,9 +4255,12 @@ async function venueLookupThreeTrips(env, url, slug, ver) {
    reload delivered here reaches a screen whose websocket has died - which is
    precisely the screen that needs reloading, and the one a broadcast can never
    reach. Costs no extra request and no extra query. */
-function venueLookupReply(json, v) {
+function venueLookupReply(json, v, movedFrom) {
   return json({
     exists: true,
+    /* Present only when the screen asked by an OLD address of this venue (migration 212): the screen moves itself to
+       slug, and remembers that instead. */
+    moved_from: movedFrom || undefined,
     /* Which formats are on the room, from the Worker's own constant (no database). A screen that
        decided its roads before a format's flip sees this change and reloads between games. */
     room_formats: (typeof roomFormatsKey === 'function') ? roomFormatsKey() : '',
@@ -4718,6 +4758,16 @@ async function handleScreen(request, env, json) {
     draws = (d || []).filter((x) => x && x.draw_day);
   } catch (e) { /* the board is a nicety; never fail the whole screen for it */ }
 
+  /* AN OLD ADDRESS (migration 212): answered as the venue's current one, naming it, once. */
+  if (!venueIsReal && url.searchParams.get('moved') !== '1') {
+    const now = await venueSlugMoved(env, slug);
+    if (now && now !== slug) {
+      const u2 = new URL(request.url);
+      u2.searchParams.set('venue', now); u2.searchParams.set('moved', '1');
+      return await handleScreen(new Request(u2.toString(), { method: 'GET' }), env,
+        function (body, status) { if (body && body.exists) { body.slug = now; body.moved_from = slug; } return json(body, status); });
+    }
+  }
   return json({
     exists: venueIsReal,
     name: name,

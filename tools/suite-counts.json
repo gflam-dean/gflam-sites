@@ -2359,6 +2359,10 @@
   "checks": 15,
   "counted_by": "lines"
  },
+ "tools/test-venue-address.js": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
  "tools/test-venue-rename.js": {
   "checks": 34,
   "counted_by": "lines"

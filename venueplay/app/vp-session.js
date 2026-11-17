@@ -378,7 +378,19 @@
     if (!want) return Promise.resolve(null);
     var q = client.from("vp_venues").select("id,name,slug");
     q = UUID_RX.test(want) ? q.eq("id", want) : q.eq("slug", want);
-    return q.maybeSingle().then(function (r) { return (r && r.data) || null; }, function () { return null; });
+    return q.maybeSingle().then(function (r) { return (r && r.data) || null; }, function () { return null; })
+      .then(function (row) {
+        /* AN OLD TV ADDRESS (migration 212, Dean's open question 32). A console bookmarked before the venue's address
+           moved names the old slug; the database says which address it is now (vp_venue_current_slug, public: slugs are
+           in every TV address) and the venue is read by that. Before 212 runs the call fails and nothing changes. */
+        if (row || UUID_RX.test(want) || !client.rpc) return row;
+        return client.rpc("vp_venue_current_slug", { p_slug: want }).then(function (r) {
+          var now = r && typeof r.data === "string" ? r.data : "";
+          if (!now || now === want) return null;
+          return client.from("vp_venues").select("id,name,slug").eq("slug", now).maybeSingle()
+            .then(function (r2) { return (r2 && r2.data) || null; }, function () { return null; });
+        }, function () { return null; });
+      });
   }
   function urlVenueBanner(asked, workingName) {
     try {

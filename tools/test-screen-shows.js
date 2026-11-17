@@ -106,6 +106,7 @@ var screenPollRpcMissing = false, screenShownRpcMissing = false, screenKindRpcMi
 eval(liftFrom(GAME, 'screenShownTally', 'venueplay-game.js'));
 eval(liftFrom(GAME, 'screenKindParam', 'venueplay-game.js'));
 eval(liftFrom(GAME, 'handleVenueLookup', 'venueplay-game.js'));
+eval(liftFrom(GAME, 'venueSlugMoved', 'venueplay-game.js'));   // an address that did not answer as itself asks whether it is an OLD one (migration 212)
 function req(q) { return { url: 'https://api/venue?' + q }; }
 var TALLY = enc(JSON.stringify({ n: '2026-10-09', s: 'tvABCDEF12', c: { 'i:parma-1.jpg': [3, 21], 'bad key': [1, 1], 't:Zero': [0, 0], 'auto:draws': ['12', '120'] } }));
 

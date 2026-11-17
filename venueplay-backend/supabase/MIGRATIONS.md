@@ -931,6 +931,21 @@ session. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-G
 its END marker. Either order with the pages. After the live run dump RLS-BASELINE.json (this branch already carries the post-208
 state). Rollback: in the file. NUMBER: 195 to 207 taken on other branches/worktrees (checked 17 Nov 2026), so 208.
 
+`venueplay-212-venue-old-addresses.sql` (Dean's open question 32, 16 Nov 2026, "yes, step 2": HQ Move TV address, the Lunatic
+Hotel fix). Additive: `vp_venue_slug_aliases` (one row per OLD TV address: slug primary key, venue_id, retired_at, retired_by; RLS on,
+no policies, everything revoked from public / anon / authenticated, service role only); two triggers so no two venues can ever hold
+one address, current or old, whatever path writes (each takes an advisory lock on the slug); `vp_venue_move_address(venue, new slug,
+actor id, actor label)`, service role only, the ONE way an address moves: in one transaction it refuses a taken address, a channel
+hash another venue uses, or a venue with a game open, keeps the join code (fills a null one with hash(old slug)), moves vp_venues.slug
+and vp_venue_screen.slug, sets screen_reload_at, records the alias and writes the vp_admin_audit row `venue_address_moved`; and
+`vp_venue_current_slug(slug)` (anon + authenticated may call it: slugs are public) for a console bookmarked on an old address.
+Run BEFORE the billing Worker that offers the button (until then it answers "not set up yet"); the game Worker and pages are safe
+either side. Needs 15, 63, 68, 91. Branch `feature/hq-rename-slug-q32`. RUN on TEST only, twice (17 Nov 2026), and exercised there in
+rolled-back transactions. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-GUARD block; the live run is the
+statements after its END marker. After the live run, dump RLS-BASELINE.json / COLUMNS-BASELINE.json. NUMBER: 210 is claimed twice
+(replay/sun29-no-contact and the q28 worktree), so 211 is left for the loser; checked every branch and worktree 17 Nov 2026.
+Rollback (only while no address has moved): in the file.
+
 `venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
 release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
 per PHONE, held by venueplay: first name, mobile in +614 form, and what venues asked; each venue receives only the fields it asks;
