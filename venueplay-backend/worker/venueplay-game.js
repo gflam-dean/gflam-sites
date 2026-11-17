@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Nov 2026, 00:07 · 970862f2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 01:57 · 69b9cac6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2797,7 +2797,7 @@ async function handleNumberVerify(request, env, json) {
   if (!c) return json({ error: 'Please start again.' }, 410);
   if (c.done_at) return json({ ok: true, masked: maskContact('mobile', c.new_mobile) });
   if (c.attempts >= NUMBER_CHANGE.maxTries) return json({ error: 'Too many tries. Ask for a new number change.', tries_left: 0 }, 429);
-  if (Date.parse(c.expires_at) < Date.now()) return json({ error: 'That code has expired. Tap Send again.', expired: true }, 410);
+  if (Date.parse(c.expires_at) < Date.now()) return json({ error: 'That code has expired. Tap Resend.', expired: true }, 410);
   /* the try is counted BEFORE the code is compared, by compare-and-set: two taps at once cannot both get a free try */
   const tried = Number(c.attempts) + 1, held = String(c.code_hash || ''), newMobile = c.new_mobile;
   const upd = await sbPatchReturning(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&attempts=eq.' + (tried - 1) + '&done_at=is.null', { attempts: tried });
@@ -2810,7 +2810,7 @@ async function handleNumberVerify(request, env, json) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_number_change_apply', { method: 'POST', headers: sbHeaders(env), body: JSON.stringify({ p_change: cid }) });
   if (!res.ok) return json({ error: 'We could not change your number just now. Please try again.' }, 502);
   const out = await res.json().catch(() => null);
-  if (!out || out.ok !== true) return json({ error: out && out.why === 'expired' ? 'That code has expired. Tap Send again.' : 'Please start again.', expired: !!(out && out.why === 'expired') }, 410);
+  if (!out || out.ok !== true) return json({ error: out && out.why === 'expired' ? 'That code has expired. Tap Resend.' : 'Please start again.', expired: !!(out && out.why === 'expired') }, 410);
   return json({ ok: true, masked: maskContact('mobile', newMobile) });
 }
 

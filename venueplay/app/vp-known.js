@@ -96,23 +96,25 @@
      line is the new one, everywhere. Every word set with textContent. */
   function numberPanel(g, known) {
     var d = root.document;
-    var BTN = "flex:0 0 auto;min-height:40px;padding:0 12px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;background:#FF1F8E;color:#0A0A0B;border:1.5px solid #FF1F8E";
+    var BTN = "flex:0 0 auto;min-height:40px;padding:0 12px;border-radius:10px;font:700 15px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;background:#FF1F8E;color:#0A0A0B;border:1.5px solid #FF1F8E";
     var IN = "flex:1 1 auto;min-width:0;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid #2A2A31;background:#17171A;color:#fff;font:16px/1.2 Manrope,system-ui,sans-serif";
-    var LINK = "flex:0 0 auto;background:none;border:0;padding:12px 0;margin:-12px 0;font:inherit;font-size:13px;color:#C9C9D1;text-decoration:underline;cursor:pointer";
+    var LINK = "flex:0 0 auto;background:none;border:0;padding:12px 0;margin:-12px 0;font:inherit;font-size:15px;color:#C9C9D1;text-decoration:underline;cursor:pointer";
     var changeId = "", newNum = "", errTimer = 0;
     while (g.firstChild || (g.children && g.children.length)) g.removeChild(g.firstChild || g.children[0]);
     /* 320 x 568 fit (Dean 18 Nov 2026): the form is THREE short things, not five. Top line: the prompt, "Send again" and
        "Cancel" side by side (they used to be their own line under the form). Under it the number box and its button. A
        problem ("That code is not right", "Please wait") takes the place of the top line for a few seconds, so it never
        adds a line; typing clears it. Every state keeps the Join button in view. */
-    g.style.marginTop = "6px";
+    g.style.marginTop = "6px"; g.style.fontSize = "15px";
+    /* the bingo host-wait note is not needed while the form is open: out of the way here, back when the line is repainted */
+    var hn = d.getElementById("joinHostNote"); if (hn) hn.style.display = "none";
     var top = d.createElement("div"); top.setAttribute("style", "display:flex;flex-wrap:wrap;align-items:center;gap:0 8px");
     var say = d.createElement("span"); say.id = "vpNumSay"; say.setAttribute("style", "flex:1 1 auto;min-width:0;color:#E7E7EC");
     var row = d.createElement("div"); row.setAttribute("style", "display:flex;gap:8px;margin-top:6px");
     var inp = d.createElement("input"); inp.id = "vpNumIn"; inp.setAttribute("style", IN);
     var go = d.createElement("button"); go.type = "button"; go.id = "vpNumGo"; go.setAttribute("style", BTN);
     var err = d.createElement("span"); err.id = "vpNumErr"; err.setAttribute("role", "alert"); err.setAttribute("style", "display:none;color:#FF8FA3");
-    var again = d.createElement("button"); again.type = "button"; again.id = "vpNumAgain"; again.setAttribute("style", LINK); again.textContent = "Send again";
+    var again = d.createElement("button"); again.type = "button"; again.id = "vpNumAgain"; again.setAttribute("style", LINK); again.textContent = "Resend";
     var cancel = d.createElement("button"); cancel.type = "button"; cancel.id = "vpNumCancel"; cancel.setAttribute("style", LINK); cancel.textContent = "Cancel";
     row.appendChild(inp); row.appendChild(go);
     top.appendChild(say); top.appendChild(err); top.appendChild(cancel);
@@ -202,6 +204,7 @@
     var nameIn = o.nameIn || (d && d.getElementById("nameIn"));
     var fld = nameIn ? (nameIn.closest && nameIn.closest(".field")) || nameIn : null;
     var hello = known ? String(known.hello || "").trim() : "";
+    var hostNote = d && d.getElementById("joinHostNote"); if (hostNote) hostNote.style.display = "";   // back after a number change is closed or done
     var greet = d && d.getElementById("vpKnownHi");
     if (greet && greet.parentNode) greet.parentNode.removeChild(greet);
     if (fld) fld.style.display = "";
@@ -274,7 +277,7 @@
         t.textContent = (x.field === "mobile" ? "Mobile" : "Email") + " for " + vname + ": " + String(x.masked);
         row.appendChild(t);
         var bs = d.createElement("div"); bs.setAttribute("style", "display:flex;gap:8px;margin-top:6px");
-        var BTN = "flex:1 1 0;min-height:38px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;";
+        var BTN = "flex:1 1 0;min-height:38px;border-radius:10px;font:700 15px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;";
         var yes = d.createElement("button"); yes.type = "button"; yes.id = "vpkUseYes_" + x.field; yes.textContent = "Use this";
         yes.setAttribute("aria-pressed", "false");
         yes.setAttribute("style", BTN + "background:#17171A;color:#fff;border:1.5px solid #FF1F8E");
