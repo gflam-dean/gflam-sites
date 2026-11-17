@@ -2732,6 +2732,12 @@
      the same link and end (Dean, 6 Nov 2026). The one different case kept behind it: a welcome still BOOKED to go carries their link already, so
      it offers to send that now (welcome-now) rather than a second link that would stop the booked one's button working.
      p: the prospect row, when HQ > Prospects has one (their email, mobile and booked welcome). */
+  /* NO EMAIL ON FILE (18 Nov 2026): a quick sign-up's link went by TEXT to the mobile that passed its sign-up code. The
+     last 3 digits only (mobile_last3), never the number and never an address. */
+  function hqTextedWords(r){
+    var l3=String(r.mobile_last3||"").replace(/\D/g,"").slice(-3);
+    return "Texted the sign-in link to the mobile ending ..."+l3+(r.expires_words?", link works until "+r.expires_words:"")+".";
+  }
   function hqSigninLink(id, btn, p){
     p = p || (window.VPProspects && VPProspects.get ? VPProspects.get(id) : null) || null;
     var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||(p&&p.name)||"this venue";
@@ -2751,6 +2757,7 @@
       });
     }
     var how = !p ? "by email, and by text too if their login has a mobile"
+      : (!p.email && p.mobile) ? "by text to the mobile they signed up with (there is no email on file)"
       : p.mobile ? "by email to "+(p.email||"their login")+" and by text to "+p.mobile
       : "by email only, to "+(p.email||"their login")+" (add a mobile in Edit details to text it too)";
     /* No number before the Worker has minted the link (Dean, 4 Nov 2026: never print a number that is not the real
@@ -2762,6 +2769,7 @@
       return workerPost("/admin/signin-link", { venue_id:id, text:true }).then(function(r){
         done();
         if(r.error){ vpTell(r.error); return r; }
+        if(r.texted){ vpTell(hqTextedWords(r)); if(window.VPProspects && p) VPProspects.load(); return r; }
         vpTell((r.line || ("Sent by email, link works until "+(r.expires_words||"it expires")+"."))+"\n\nThe email went to "+r.to+(r.text&&r.text.mobile&&(r.text.status==="sent"||r.text.status==="queued")?", the text to "+r.text.mobile:"")+".");
         if(window.VPProspects && p) VPProspects.load();
         return r;
@@ -2784,6 +2792,7 @@
       return workerPost("/admin/signin-link", { venue_id:id, text:true, fresh:true }).then(function(r){
         btn.disabled=false; btn.textContent=was;
         if(r.error){ vpTell(r.error); return r; }
+        if(r.texted){ vpTell("A fresh "+days+" days started. "+hqTextedWords(r)); if(window.VPProspects && p) VPProspects.load(); return r; }
         vpTell("A fresh "+days+" days started. "+(r.line || ("Sent by email, link works until "+(r.expires_words||"it expires")+"."))+"\n\nThe email went to "+r.to+(r.text&&r.text.mobile&&(r.text.status==="sent"||r.text.status==="queued")?", the text to "+r.text.mobile:"")+".");
         if(window.VPProspects && p) VPProspects.load();
         return r;

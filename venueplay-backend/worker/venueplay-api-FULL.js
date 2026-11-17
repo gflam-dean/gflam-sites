@@ -7732,6 +7732,14 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const user = await vpaAuthGetUser(env, authUserId);
   const email = user && user.email ? String(user.email).trim().toLowerCase() : '';
   if (!user || !email) return { ok: false, reason: 'no_email' };
+  /* A QUICK SIGN-UP'S PLACEHOLDER LOGIN (18 Nov 2026, rehearsal v6 'Gap'): its address (VPQ_PLACEHOLDER_DOMAIN,
+     vpqIsPlaceholderEmail, the same test the outbox guard makes) is never a mailbox, so it is never mailed and never
+     shown. HQ's "Resend sign-in link" (opts.hq) TEXTS the link instead, only to the self sign-up's code-checked mobile
+     (vpaProspectVerifiedMobile: vp_prospects.source 'self', the account record's mobile), never to an opted-out
+     number; every other caller is told there is no email, BEFORE any link is made or retired. */
+  const placeholder = vpqIsPlaceholderEmail(email);
+  if (placeholder && !opts.hq) return { ok: false, reason: 'no_email' };
+  const shownTo = placeholder ? undefined : email;
   if (user.banned_until && Date.parse(user.banned_until) > Date.now()) return { ok: false, reason: 'no_login' };
   const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=venue_id,role&order=venue_id.asc&limit=50');
   if (!staff || !staff.length) return { ok: false, reason: 'no_venue' };
@@ -7741,7 +7749,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
   if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
   const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
-  if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
+  if (recent.length >= cap) return { ok: false, reason: 'limit', to: shownTo, count: recent.length };
   /* AN AUTOMATIC FOLLOW-UP KEEPS AN UNSUBSCRIBE (INBOX 414, 16 Nov 2026). The nudge is the one email of the prospect
      flow nobody asked for, so it carries the one-click header and a footer link like the card reminders, and an
      address on the unsubscribe list (or a list we cannot read) gets nothing: checked BEFORE any link is made or
@@ -7770,8 +7778,25 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
      Dean chooses whether to resend from HQ. HQ's "Start a fresh 90 days" (opts.fresh, below) is the one place a fresh
      90 days starts (Dean, 6 Nov 2026: a normal resend never renews them, so after the 90 days it is refused too). */
   if (win && win.ended && !opts.fresh) {
-    return { ok: false, reason: 'ended', to: email, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
+    return { ok: false, reason: 'ended', to: shownTo, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
              window_from: new Date(win.from).toISOString(), window_end: new Date(win.end).toISOString() };
+  }
+  /* THE PLACEHOLDER'S TEXT, CHECKED BEFORE ANY LINK IS MADE OR RETIRED (so a refusal leaves their working link as it
+     was): a code-checked self sign-up mobile, a text provider, not opted out, and the HQ sign-in text's hours (9am to
+     8pm Brisbane, never a Sunday: vpaSmsAllowedAt). Outside them nothing is queued (the queued text says it was
+     emailed too): HQ is told when to press again. Only the last 3 digits ever leave here. */
+  let textTo = null;
+  if (placeholder) {
+    let prow = null, vrow = null;
+    try { const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id) + '&select=source&limit=1'); prow = pr && pr[0]; } catch (_) { prow = null; }
+    try { const vv = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=id,founding_id&limit=1'); vrow = vv && vv[0]; } catch (_) { vrow = null; }
+    try { textTo = await vpaProspectVerifiedMobile(env, prow, vrow); } catch (_) { textTo = null; }
+    if (!textTo) return { ok: false, reason: 'no_email_no_mobile' };
+    const last3 = textTo.slice(-3);
+    if (!(vpaHasMobileMessage(env) || vpaHasClickSend(env))) return { ok: false, reason: 'sms_off', mobile_last3: last3 };
+    if (await vpaSmsOptedOut(env, textTo)) return { ok: false, reason: 'opted_out', mobile_last3: last3 };
+    const nowT = Date.now(), atT = vpaSmsAllowedAt(nowT);
+    if (atT > nowT) return { ok: false, reason: 'sms_hours', mobile_last3: last3, when: vpaBrisbaneTime(atT) };
   }
   let windowEnd = null, restart = false;
   if (opts.expiresAtMs != null) windowEnd = Number(opts.expiresAtMs);
@@ -7812,13 +7837,13 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1');
   const venueName = (vs && vs[0] && vs[0].name) || '';
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const url = vpaTagUrl(vpaOneClickUrl(site, token, email), opts.tag || '');   // which message it went in (16 Nov 2026)
+  const url = vpaTagUrl(vpaOneClickUrl(site, token, placeholder ? '' : email), opts.tag || '');   // which message it went in (16 Nov 2026); a placeholder never rides in a link
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   /* WHO IT COMES FROM (INBOX 430): a prospect gets the name they met, a venue (card added) plain venueplay. */
   const voice = win ? await vpaProspectVoice(env, pick.venue_id) : { from: VPA_PROSPECT_FROM, name: null };
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
   const BUTTON = vpaEmailButton(vpaEsc(url), 'Open your venueplay') + '<div style="height:18px;line-height:18px;font-size:0">&nbsp;</div>';
-  const done = { ok: true, to: email, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
+  const done = { ok: true, to: shownTo, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
   /* FOR A REPLY IN THEIR OWN THREAD (opts.returnOnly, Dean 5 Nov 2026): the same fresh link, retired-older-first and
@@ -7839,6 +7864,20 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge'), null, { from: voice.from }); } catch (_) { sentN = false; }
     if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
+  }
+  /* THE PLACEHOLDER'S LINK BY TEXT (18 Nov 2026): the HQ sign-in text's words without "We've emailed it too", the
+     short link when they have one. A text that does not go retires the link it made (never the prospect's one link). */
+  if (placeholder) {
+    const textUrl = oneLink ? vpaShortSigninUrl(site, token) : vpaOneClickUrl(site, token, '');
+    const last3 = textTo.slice(-3);
+    let s;
+    try { s = await vpaSendSms(env, textTo, vpaSigninTextBody(first, venueName, textUrl, expiresAt, true), 'signin-' + String(pick.venue_id).slice(0, 8)); } catch (_) { s = { ok: false }; }
+    if (!s || !s.ok) {
+      if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+      if (s && s.blocked) await vpaSmsRecordOptOut(env, textTo, pick.venue_id);
+      return { ok: false, reason: s && s.blocked ? 'opted_out' : 'text_failed', mobile_last3: last3 };
+    }
+    return Object.assign(done, { texted: true, mobile_last3: last3, text_id: s.id || undefined });
   }
   /* A PROSPECT WHO HAS NOT SIGNED IN YET, before their offer's date (Dean, 7 Nov 2026): the same sentence as the welcome,
      "Your first month is on us. It starts the first time you sign in. Sign in by 30 November to keep $2.50 a player." */
@@ -8059,13 +8098,13 @@ function vpaLinkAvailableWords(expiresMs, nowMs) {
    is one part: a text over it drops " for {venue}", then the first name; past that it is two parts (never more: the
    link and the opt-out are never cut, and every other piece has a fixed length). */
 const VPA_SMS_ONE_PART = 160;
-function vpaSigninTextBody(first, venueName, url, expiresMs) {
+function vpaSigninTextBody(first, venueName, url, expiresMs, noEmail) {
   const f = String(first || '').trim().split(/\s+/)[0].slice(0, 20);
   const v = String(venueName || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
   const n = Math.max(1, vpaDaysLeft(expiresMs, Date.now()));
   /* Dean, 6 Nov 2026: one short line that the login went by email too, and may be in junk. The text only ever goes
      with the email (HQ's Resend sends both; a queued text follows the email that already went). */
-  const tail = ': ' + url + ' We\'ve emailed it too, check junk. Available for ' + n + (n === 1 ? ' day' : ' days') + '. Reply STOP to opt out';
+  const tail = ': ' + url + (noEmail ? '' : ' We\'ve emailed it too, check junk.') + ' Available for ' + n + (n === 1 ? ' day' : ' days') + '. Reply STOP to opt out';
   const make = (who, where) => 'Hi ' + (who || 'there') + ', here\'s your venueplay sign-in link' + (where ? ' for ' + where : '') + tail;
   let t = make(f, v);
   if (t.length > VPA_SMS_ONE_PART) t = make(f, '');
@@ -8197,12 +8236,18 @@ async function vpaAdminSigninLink(request, env, json) {
   } catch (_) {}
   const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(venueId) + '&role=in.(owner,manager)&select=auth_user_id,role&limit=20');
   (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((s) => { if (ids.indexOf(s.auth_user_id) < 0) ids.push(s.auth_user_id); });
-  let r = { ok: false, reason: 'no_login' };
+  let r = { ok: false, reason: 'no_login' }, noMobile = false;
   for (let i = 0; i < ids.length && i < 6; i++) {
     r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true, fresh: fresh });
-    if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
+    if (r.reason === 'no_email_no_mobile') noMobile = true;   // a placeholder login with no checked mobile: try the next login
+    if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login' && r.reason !== 'no_email_no_mobile')) break;
   }
-  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });   // the key keeps its name: older rows and audit searches use it (the window is 90 days since 7 Nov 2026)
+  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, texted: r.texted || undefined, to_last3: r.mobile_last3 || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });
+  /* TEXTED, NOT EMAILED (18 Nov 2026): a quick sign-up's login has no email, so its link went by text to the mobile that
+     passed the sign-up code. The same shape as Approve (texted: true); HQ sees the last 3 digits, never the number. */
+  if (r.ok && r.texted) return json({ ok: true, texted: true, mobile_last3: r.mobile_last3, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left,
+                                      prospect: !!r.prospect, restarted: !!r.restarted, redated: !!r.redated,
+                                      line: 'Texted the sign-in link to the mobile ending ...' + r.mobile_last3 + (r.expires_words ? ', link works until ' + r.expires_words : '') + '.' });   // the key keeps its name: older rows and audit searches use it (the window is 90 days since 7 Nov 2026)
   /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
   let text = null;
   if (r.ok && _b.body && _b.body.text === true) {
@@ -8214,7 +8259,13 @@ async function vpaAdminSigninLink(request, env, json) {
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
   if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so the same link cannot be sent again. To give them a new link and a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days, press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days.', ended: true, window_end: r.window_end }, 409);
-  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
+  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + (r.to || 'their login') + ' in the last day. Check with them before sending another.' }, 429);
+  const ending = r.mobile_last3 ? 'the mobile ending ...' + r.mobile_last3 : 'their mobile';
+  if (r.reason === 'opted_out') return json({ error: 'No email on file, and ' + ending + ' has opted out of texts, so nothing was sent. Ask the venue to sign in with their mobile.' }, 409);
+  if (r.reason === 'sms_off') return json({ error: 'No email on file, and texts are switched off until the SMS provider is set up, so nothing was sent. Ask the venue to sign in with their mobile.' }, 503);
+  if (r.reason === 'sms_hours') return json({ error: 'No email on file, so the link goes by text, and texts go 9am to 8pm, not Sundays. Press again after ' + r.when + '.' }, 409);
+  if (r.reason === 'text_failed') return json({ error: 'The text to ' + ending + ' did not send (the SMS provider said no), so nothing reached them. Try again in a minute.' }, 502);
+  if (noMobile || r.reason === 'no_email_no_mobile') return json({ error: 'No email on file and no verified mobile: ask the venue to sign in with their mobile' }, 400);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
   if (r.reason === 'no_table') return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503);
   return json({ error: 'Nobody at ' + name + ' has an email on their login, so there is nowhere to send a link. They sign in with their mobile.' }, 400);

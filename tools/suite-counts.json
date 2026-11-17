@@ -971,6 +971,10 @@
   "checks": 37,
   "counted_by": "lines"
  },
+ "tools/test-hq-resend-signin-text.js": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
  "tools/test-jackpot-cap-15-oct.js": {
   "checks": 69,
   "counted_by": "lines"
