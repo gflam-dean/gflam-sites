@@ -463,6 +463,7 @@
   "staging-site.test.py",
   "stale-answer-after-rejoin-in-chrome.test.py",
   "stale-phone-and-end-once-in-chrome.test.py",
+  "stamp-workers.test.py",
   "stripe-fields-detector.test.py",
   "stripe-idempotency.test.js",
   "subscribe-in-chrome.test.py",

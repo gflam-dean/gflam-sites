@@ -138,7 +138,50 @@ def lanes():
     return _load('release_lanes', 'tools/release-lanes.py')
 
 
+USAGE = ('usage: release.py [--plan]\n'
+         '       release.py --rollback [--to SHA] [--reason WHY] [--allow-migration FILE ...] [--go]\n'
+         '       release.py --urgent WHY [--go]')
+LANE_VALUE = ('--to', '--reason', '--allow-migration', '--urgent')
+LANE_FLAG = ('--rollback', '--go', '--plan')
+
+
+def cmdline(argv):
+    """None = go on. Otherwise the exit code: 0 after the usage for --help / -h, 2 for an unknown flag, a stray word, a
+    flag with no value or the two lanes together (18 Nov 2026, Friday's flag guards). Nothing is run or read first.
+    Accepted: nothing or --plan (the release); --rollback / --urgent with exactly the words release-lanes.py reads."""
+    argv = list(argv)
+    if argv in (['--help'], ['-h']):
+        print(USAGE)
+        return 0
+    if not ('--rollback' in argv or '--urgent' in argv):
+        bad = [a for a in argv if a != '--plan']
+    else:
+        bad, i = [], 0
+        while i < len(argv):
+            a = argv[i]
+            if a in LANE_VALUE:
+                if i + 1 >= len(argv) or argv[i + 1].startswith('--'):
+                    bad.append(a + ' (needs a value)')
+                i += 2
+                continue
+            if a not in LANE_FLAG:
+                bad.append(a)
+            i += 1
+        if '--rollback' in argv and '--urgent' in argv:
+            bad.append('--rollback with --urgent (one lane at a time)')
+        if '--urgent' in argv and any(a in argv for a in ('--to', '--allow-migration')):
+            bad.append('--to / --allow-migration belong to --rollback')
+    if bad:
+        print('release.py: error: unknown or incomplete argument(s): %s; nothing was done\n%s' % (', '.join(bad), USAGE))
+        return 2
+    return None
+
+
 def main():
+    # 18 Nov 2026: `release.py --help` ran a REAL release. The command line is judged before anything else (cmdline()).
+    code = cmdline(sys.argv[1:])
+    if code is not None:
+        return code
     # THE TWO FAST LANES (Jobs 442, 16 Nov 2026): tools/release-lanes.py. PLAN unless --go is given.
     if '--rollback' in sys.argv or '--urgent' in sys.argv:
         return lanes().main([a for a in sys.argv[1:] if a != '--plan'])

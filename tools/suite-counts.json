@@ -2362,5 +2362,9 @@
  "tools/test-yearly-credit-16nov.js": {
   "checks": 45,
   "counted_by": "lines"
+ },
+ "tools/stamp-workers.test.py": {
+  "checks": 43,
+  "counted_by": "lines"
  }
 }

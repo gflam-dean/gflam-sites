@@ -20,8 +20,14 @@ churns the stamp, and a stamp that has not moved means nothing has moved.
 
     python3 tools/stamp-workers.py          stamp any that have changed
     python3 tools/stamp-workers.py --check   fail if any is unstamped (for the hook)
+    python3 tools/stamp-workers.py --help    this, and nothing else
+
+18 Nov 2026: `--help` used to STAMP every Worker, because main() only looked for
+'--check' and treated anything else as "go". The command line is now read before
+any file is: --help or -h prints the usage and exits 0, and an unknown flag or a
+stray word exits 2. Either way no Worker is opened, let alone written.
 """
-import datetime, hashlib, io, os, re, sys
+import argparse, datetime, hashlib, io, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKERS = [
@@ -116,8 +122,20 @@ def stamp(path, check_only=False):
     return 'stamped', want
 
 
-def main():
-    check_only = '--check' in sys.argv
+def parse_args(argv):
+    """The command line, read BEFORE any Worker is. --help exits 0, anything unknown exits 2."""
+    ap = argparse.ArgumentParser(prog='stamp-workers.py', allow_abbrev=False,
+                                 description='Stamp every Worker with a BUILD line: when its code last changed, '
+                                             'and a hash of the file without that line. With no flag, any Worker '
+                                             'whose code changed is restamped (the file is written).')
+    ap.add_argument('--check', action='store_true',
+                    help='write nothing; exit 1 if any Worker is unstamped or stale (release.py, pre-push hook)')
+    return ap.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(sys.argv[1:] if argv is None else list(argv))
+    check_only = args.check
     bad = 0
     for w in WORKERS:
         state, fp = stamp(w, check_only)
