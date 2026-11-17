@@ -61,8 +61,14 @@ var SECS = [];
 print('the settings');
 SECS.push(async function () {
   boot(LIVE);
-  var m = /const VPQ_PLACEHOLDER_DOMAIN = '([^']+)'/.exec(API);
-  check('the guard\'s domain is the very domain quick sign-ups are given (VPQ_PLACEHOLDER_DOMAIN)', !!m && W.VPG.placeholderEmailDomain === m[1], m && m[1]);
+  /* ONE constant and ONE test (duplicate helpers audit 18 Nov, Part 2 B): the quick form's VPQ_PLACEHOLDER_DOMAIN IS the
+     guard's setting, and vpqIsPlaceholderEmail IS the guard's test, run here with the guard it calls. */
+  check('the guard\'s domain is the very domain quick sign-ups are given (VPQ_PLACEHOLDER_DOMAIN is VPG.placeholderEmailDomain)',
+    /\nconst VPQ_PLACEHOLDER_DOMAIN = VPG\.placeholderEmailDomain;/.test(API) && !/\nconst VPQ_PLACEHOLDER_DOMAIN = '/.test(API) && W.VPG.placeholderEmailDomain === 'phone.venueplay.com.au');
+  var Q = (new Function('return (function(){' + SRC + '\n' + fn('vpqIsPlaceholderEmail') + '\nreturn vpqIsPlaceholderEmail;})()'))();
+  check('one placeholder test: the quick form\'s vpqIsPlaceholderEmail gives the guard\'s answer, "Name <addr>" included',
+    [PH, PH.toUpperCase(), 'Jo <' + PH + '>', ' ' + PH + ' ', 'a@notphone.venueplay.com.au', 'owner@realpub.com.au', '', null].every(function (e) { return Q(e) === W.vpgIsPlaceholderEmail(e); }) && Q('Jo <' + PH + '>') === true,
+    [Q('Jo <' + PH + '>'), W.vpgIsPlaceholderEmail('Jo <' + PH + '>')]);
   check('a placeholder is one, in any case, bare or "Name <addr>"', W.vpgIsPlaceholderEmail(PH) && W.vpgIsPlaceholderEmail(PH.toUpperCase()) && W.vpgIsPlaceholderEmail('Jo <' + PH + '>') && W.vpgIsPlaceholderEmail(' ' + PH + ' '));
   check('look-alikes are NOT (another subdomain, a longer domain, venueplay itself, empty)', !W.vpgIsPlaceholderEmail('a@notphone.venueplay.com.au') && !W.vpgIsPlaceholderEmail('a@phone.venueplay.com.au.evil.com') && !W.vpgIsPlaceholderEmail('a@venueplay.com.au') && !W.vpgIsPlaceholderEmail('') && !W.vpgIsPlaceholderEmail('phone.venueplay.com.au'));
   var sends = (API.match(/fetch\('https:\/\/api\.resend\.com\/emails', \{/g) || []).length;

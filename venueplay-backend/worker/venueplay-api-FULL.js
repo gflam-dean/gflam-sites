@@ -4493,7 +4493,7 @@ async function vpsStartVerify(request, env, json) {
  *     account-ready email is skipped (the text goes), no welcome is queued.
  *   - NO CARD until a real email is on the account: vpqCardGate(). VPQ_CARD_NEEDS_REAL_EMAIL switches it.
  * ======================================================================== */
-const VPQ_PLACEHOLDER_DOMAIN = 'phone.venueplay.com.au';   // never mailed; the Worker never sends to it (vpqRealEmail)
+const VPQ_PLACEHOLDER_DOMAIN = VPG.placeholderEmailDomain;   // ONE constant (the outbox guard's): never mailed (vpqRealEmail)
 const VPQ_DEFAULT_KIND = 'for_profit';                      // a pub: the stricter gaming rules; HQ can change it
 const VPQ_CARD_NEEDS_REAL_EMAIL = false;   // OFF (INBOX 412 UPDATE 7): Stripe's page asks for the email; the gate stays for the day Dean wants it back
 const VPQ_VENUES_PER_IP = 40;                               // picker searches per network per minute
@@ -4504,10 +4504,9 @@ const VPQ_WORDS = {
   card_email: 'Add your email in Account details first, then add your card.',
   more_done: 'Thanks, we\'ll be in touch.',
 };
-function vpqIsPlaceholderEmail(e) {
-  const m = /^[^\s@]+@([^\s@]+)$/.exec(String(e || '').trim().toLowerCase());
-  return !!m && m[1] === VPQ_PLACEHOLDER_DOMAIN;
-}
+/* ONE placeholder test (duplicate helpers audit 18 Nov, Part 2 B): the outbox guard's, so the quick form and the guard
+   give the same answer, "Name <addr>" included. */
+function vpqIsPlaceholderEmail(e) { return vpgIsPlaceholderEmail(e); }
 /* The email if it is a real one, else null. The one door every prospect email goes through. */
 function vpqRealEmail(e) {
   const x = String(e || '').trim();

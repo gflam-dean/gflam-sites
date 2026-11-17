@@ -4502,7 +4502,7 @@ def local_checks(which):
             # D203: NO MAIL TO A PLACEHOLDER (18 Nov 2026, fix/no-mail-to-placeholder). The same outbox guard block (D200).
             ('D203. No email ever goes to a quick sign-up\'s placeholder address, from any sender',
              'test-no-mail-to-placeholder.js',
-             "no email ever goes to a quick sign-up's placeholder login (phone.venueplay.com.au), live or staging, whichever sender: the shared outbox guard takes it off to / cc / bcc with a log line, refuses (422) a send left with nobody so the caller sees a failure, and sends real addresses byte for byte; vpaSendEmail, helpSendEmail and the prospect welcome are run through it", 24,
+             "no email ever goes to a quick sign-up's placeholder login (phone.venueplay.com.au), live or staging, whichever sender: the shared outbox guard takes it off to / cc / bcc with a log line, refuses (422) a send left with nobody so the caller sees a failure, and sends real addresses byte for byte; vpaSendEmail, helpSendEmail and the prospect welcome are run through it", 25,
              'Email to a made-up address bounces on send.venueplay.com.au for every venue, and a quick sign-up '
              'told "we\'ll text you" never hears about it; a real person dropped off a send is just as bad'),
             ('D202. A staging page can never reach a live address: the tripwire in vp-env.js refuses it, and live pages are untouched',

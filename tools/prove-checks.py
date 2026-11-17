@@ -850,6 +850,16 @@ MUTATIONS = [
      'return globalThis.fetch(input, Object.assign({}, init, { body: ph.body }));',
      'return real.apply(this, arguments);',
      'a mixed list is sent with the placeholder still on it'),
+    # ONE PLACEHOLDER CHECK (duplicate helpers audit 18 Nov, Part 2 B): the quick form calls the guard's test and reads the
+    # guard's domain. Each proven red by hand with jsc.
+    ('test-no-mail-to-placeholder.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     'function vpqIsPlaceholderEmail(e) { return vpgIsPlaceholderEmail(e); }',
+     "function vpqIsPlaceholderEmail(e) { return /^[^\\s@]+@phone\\.venueplay\\.com\\.au$/i.test(String(e || '').trim()); }",
+     'the quick form keeps its own placeholder test and reads "Name <placeholder>" as a real address'),
+    ('test-no-mail-to-placeholder.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     'const VPQ_PLACEHOLDER_DOMAIN = VPG.placeholderEmailDomain;',
+     "const VPQ_PLACEHOLDER_DOMAIN = 'phone.venueplay.com.au';",
+     'the quick form keeps a second copy of the placeholder domain'),
     # ---- 13 Nov 2026 (INBOX 295 never-again map, 309.1a): tools/never-again.test.py reads tools/never-again-map.json
     ('never-again.test.py', 'tools/never-again-map.json',
      '"check": "tools/tv-safe-area-in-chrome.test.py"',
