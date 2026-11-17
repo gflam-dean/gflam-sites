@@ -143,7 +143,7 @@ SECS.push(async function () {
   check('a reply sent from the email() entry to a placeholder address is refused, nothing leaves', sent.length === 0 && W.tried === false && globalThis.__vpgInstalled === true, { sent: sent.length, tried: W.tried });
 });
 
-print('FAILS CLOSED: a throw inside the guard, comma strings, Request objects, non-string bodies');
+print('Closed on error: a throw inside the guard, comma strings, Request objects, non-string bodies');
 SECS.push(async function () {
   var sent = boot(LIVE), x;
   globalThis.__vpOutbox = 'broken';   // vpgRecord now throws inside the placeholder branch
