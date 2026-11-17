@@ -1704,6 +1704,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_backup_192_duplicate_players": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_billing_usage": {
    "enabled": true,
    "forced": false
@@ -1741,6 +1745,10 @@
    "forced": false
   },
   "vp_claims": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_coaster_contacts": {
    "enabled": true,
    "forced": false
   },
@@ -1856,6 +1864,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_journey_events": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_licensed_venues": {
    "enabled": true,
    "forced": false
@@ -1956,6 +1968,14 @@
    "enabled": true,
    "forced": false
   },
+  "vp_quick_events": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_quick_leads": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_raffle_entries": {
    "enabled": true,
    "forced": false
@@ -2021,6 +2041,10 @@
    "forced": false
   },
   "vp_subscribers": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_track_links": {
    "enabled": true,
    "forced": false
   },
@@ -2191,6 +2215,10 @@
    "authenticated": false
   },
   "vp_set_game_prefs(p_venue_id uuid, p_game text, p_prefs jsonb)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_settings_manager_ticks_guard()": {
    "anon": false,
    "authenticated": false
   },
