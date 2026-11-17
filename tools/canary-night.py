@@ -234,7 +234,10 @@ class Canary:
         if v.get('founding_id'):
             f = self.rest('venueplay_founding?id=eq.%s&select=status,stripe_customer_id,stripe_subscription_id' % v['founding_id'])
             if f and (f[0].get('stripe_subscription_id') or f[0].get('stripe_customer_id') or f[0].get('status') != 'comp'):
-                raise NotRun('refused: %s could be charged (a Stripe customer or subscription, or not a comp account)' % self.slug)
+                why = [w for w, bad in (('a Stripe subscription', f[0].get('stripe_subscription_id')),
+                                        ('a Stripe customer', f[0].get('stripe_customer_id')),
+                                        ('billing status %r, not comp' % f[0].get('status'), f[0].get('status') != 'comp')) if bad]
+                raise NotRun('refused: %s could be charged: %s' % (self.slug, ', '.join(why)))
         # the host login, by Supabase Auth (minted with the service key: no text, no email, no code)
         k, a = self.cfg['service_key'], self.cfg['anon_key']
         st, g = self.net('POST', self.cfg['supabase'] + '/auth/v1/admin/generate_link',
