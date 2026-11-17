@@ -556,6 +556,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-contacts'  && typeof vpaHandleVenueContacts === 'function')  return await vpaHandleVenueContacts(request, env, json);
       // HQ > Reports: every venue's month, the totals and who is trending down (Dean, 31 Oct 2026).
       if (request.method === 'POST' && path === '/admin/month-report'    && typeof vpaHandleMonthReport === 'function')    return await vpaHandleMonthReport(request, env, json);
       // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
@@ -9552,6 +9553,30 @@ async function vpaHandleDiscountRemove(request, env, json) {
  *    body: { venue_id, status:'active'|'suspended', reason? }
  *    -> { ok:true }
  * ======================================================================== */
+/* POST /admin/venue-contacts  {}  (owner | accounts)
+   THE VENUE CONTACT'S NAME AND MOBILE, for a cancelled venue's card in HQ (Dean, 29 Oct 2026; HQ menu step 1, 18 Nov 2026).
+   A person's number, so it is served here and only to the two roles that see that card (canBilling in hq.html). It used
+   to be a browser read of venueplay_founding by every HQ login, which put every contact mobile in a staff login's
+   memory and network log whether or not anything drew it (review of feature/hq-menu-step1, 18 Nov 2026). A staff
+   login gets a 403 and no rows. Only id, contact_name and mobile leave the database; never an email, a card or a
+   Stripe id. Paged, and a database fault is an error, never a short list that reads as "none on file". */
+async function vpaHandleVenueContacts(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_name,mobile&order=id.asc');
+  } catch (e) {
+    return json({ error: 'Could not read the venue contacts just now. Please try again.' }, 502);
+  }
+  const contacts = {};
+  for (const r of rows) {
+    if (!r || !r.id) continue;
+    contacts[r.id] = { name: String(r.contact_name || ''), phone: String(r.mobile || '') };
+  }
+  return json({ ok: true, contacts: contacts });
+}
+
 /* POST /admin/quiet-venues  {days?}  (owner | accounts)
    A retention call list: who has not run a game lately, soonest first, so the venue that went
    quiet last week is rung before the one that has been gone three months. Quiet at a week is a

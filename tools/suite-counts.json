@@ -2064,7 +2064,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-hq.test.js": {
-  "checks": 90,
+  "checks": 93,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
@@ -2381,6 +2381,14 @@
  },
  "tools/test-add-card-terms.js": {
   "checks": 41,
+  "counted_by": "lines"
+ },
+ "tools/test-hq-menu.js": {
+  "checks": 102,
+  "counted_by": "lines"
+ },
+ "tools/test-hq-venue-contacts.js": {
+  "checks": 13,
   "counted_by": "lines"
  }
 }

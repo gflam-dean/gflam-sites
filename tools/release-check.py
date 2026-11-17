@@ -4171,6 +4171,20 @@ def local_checks(which):
              'An unsubscribe that stops counting once someone has signed up, a confirmation email sent '
              'before Dean switched it on, the form used to flood an inbox or to ask who is on our list, or a '
              'subscriber treated as a cold lead'),
+            # D118: the HQ menu, step 1 (Dean, 29 Oct 2026; design reports/hq-menu-18nov, 18 Nov 2026), branch feature/hq-menu-step1.
+            # D118 was the 5 Nov fix/hq-menu-restructure's number; that branch was never merged and this replaces it.
+            ('D118. HQ groups its tabs as Venues, Sales, Support and Reporting with every tab and link still reachable, and a cancelled venue shows its contact phone',
+             'test-hq-menu.js',
+             "the real menu script on a page built from the real tab buttons: every tab HQ had on 18 Nov and the help desk still a button and in a section, the four sections hold exactly the tabs the design names in its order with the new names, a section shows its own tabs only, Cancelled in Venues and Sales, a tab with no section stays on show; each old #tab link opens its tab in a section that holds it, #helpdesk and #help-N left to the help desk; goPane and the help desk move the menu; role-hidden and not-yet-on tabs are not offered; section counts add up only the counts the design names; every moved block (Flagged split four ways, Set up a prospect, Venues that have left, Coaster) in its new pane once, Owner and Accounts still on what left Flagged; the help desk tab still added; a cancelled venue card shows the contact's own phone as a tap to ring link, none on file when missing, owner or accounts only", 90,
+             'A tab lost in the regroup, an old link that lands on the wrong list, a menu that disagrees with the pane on screen, '
+             'a moved block shown to a role that could not see it before, or a cancelled venue nobody can ring'),
+            # D476: contact mobiles for HQ's cancelled venue cards come from the Worker, owner and accounts only (review of
+            # feature/hq-menu-step1, 18 Nov 2026). The page side (no HQ page reads a contact mobile itself) is in D118.
+            ('D476. A venue contact\'s mobile reaches HQ owner and accounts only, from the Worker, never a staff login',
+             'test-hq-venue-contacts.js',
+             "runs POST /admin/venue-contacts on the billing Worker: owner and accounts get every account's contact name and mobile by account id, past 1000 rows; a staff HQ login, a venue's own owner, a stranger and no login are refused with no number; nothing but name and phone leaves; a database fault is an error, never an empty list", 13,
+             'Every venue contact mobile handed to a staff HQ login, or a database blip that reads as '
+             '"no number on file" for every cancelled venue'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

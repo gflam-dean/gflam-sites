@@ -220,8 +220,10 @@ try:
     gone = S.until(sid, '!' + PAINTED % 'document.getElementById("hdBadge")', 10)
     ok('nothing new left: the Help desk tab shows no badge at all, not a "0"', gone is True,
        js(sid, '[document.getElementById("hdBadge").hidden, document.getElementById("hdBadge").textContent]'))
-    cx = js(sid, '(function(){var s=document.querySelector(\'#hqNav button[data-pane="cancelled"] .tabcount\');return s?[s.hidden,s.getBoundingClientRect().width]:null;})()')
-    ok('...and a tab count of nought (Cancelled) is not painted either', cx == [True, 0], cx)
+    # HQ menu (18 Nov 2026): Cancelled's tab is under Venues and Sales, so from Support the whole tab is off screen and its
+    # width says nothing. Judge the badge's own display, which is what would paint it once that section is open.
+    cx = js(sid, '(function(){var s=document.querySelector(\'#hqNav button[data-pane="cancelled"] .tabcount\');return s?[s.hidden,getComputedStyle(s).display]:null;})()')
+    ok('...and a tab count of nought (Cancelled) is not painted either', cx == [True, 'none'], cx)
     q = js(sid, '(function(){var c=document.querySelector("#hdNotes .hdnote.change"),m=document.querySelector(".hdmsg");if(!c)return null;var a=getComputedStyle(c),b=getComputedStyle(m);'
                 'return {text:c.textContent,bw:a.borderLeftWidth,bg:a.backgroundColor,fs:parseFloat(a.fontSize),mfs:parseFloat(b.fontSize),h:c.getBoundingClientRect().height};})()')
     ok('"Opened by Dean" is one quiet line: no box, no coloured edge, smaller than the message', bool(q) and 'Opened by Dean' in q['text'] and q['bw'] == '0px'

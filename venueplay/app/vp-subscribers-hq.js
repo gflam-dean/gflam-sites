@@ -1,5 +1,6 @@
 /* ============================================================================
-   HQ > SUBSCRIBERS (31 Oct 2026; migration 134). Loaded by app/hq.html with one line.
+   HQ > SALES > WEBSITE SIGN-UPS (31 Oct 2026; migration 134; the tab was "Subscribers" until the HQ menu, 18 Nov 2026,
+   so it is not mixed up with a venue's own subscribers in its monthly report). Loaded by app/hq.html with one line.
 
    Who asked for the monthly VenuePlay email from the sales pages (home, the offer page, See a
    night), how many a week and from which page, and any venue or prospect each one looks like.
@@ -84,7 +85,7 @@
     var rows = (d.subscribers || []).filter(function (r) {
       return S.filter === "all" ? true : S.filter === "matched" ? !!r.match : S.filter === "active" ? (r.state === "active" || r.state === "resubscribed") : r.state === S.filter;
     });
-    return '<div class="rowbetween" style="margin-bottom:12px"><div class="lblk" style="margin:0">Monthly email subscribers</div>'
+    return '<div class="rowbetween" style="margin-bottom:12px"><div class="lblk" style="margin:0">Website sign-ups to the monthly email</div>'
       + '<span class="sp"></span><button class="btn ghost" id="vpsExport">Export CSV</button> <button class="btn ghost" id="vpsRefresh">Refresh</button></div>'
       + '<div class="note" style="margin:0 0 12px">People who asked for the one venueplay email a month from the website. They get the "What\'s new at venueplay" news with the monthly report, nothing else. '
       + "<b>Not cold leads:</b> never add them to Instantly, and a match is for knowing who they are, not a reason to contact them."
@@ -149,7 +150,7 @@
       + ".vpstable td,.vpsweeks td{vertical-align:top;overflow-wrap:anywhere}"
       + "#paneSubscribers .stats{grid-template-columns:repeat(4,minmax(0,1fr))}"
       + "@media (max-width:640px){#paneSubscribers .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}"
-      + "</style><div id=\"vpsBody\"><div class=\"note\">Loading subscribers...</div></div>";
+      + "</style><div id=\"vpsBody\"><div class=\"note\">Loading website sign-ups...</div></div>";
     host.insertBefore(p, $("paneLive") || null);
     p.addEventListener("click", onClick);
     p.addEventListener("change", function (e) { if (e.target && e.target.id === "vpsFilter") { S.filter = e.target.value; draw(); } });

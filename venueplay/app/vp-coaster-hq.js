@@ -1,6 +1,8 @@
 /* ============================================================================
-   HQ > PROSPECTS > COASTER VENUES (Dean, 4 Nov 2026, /live-here-now v2; migration 153). Loaded by
-   app/hq.html with one line, after vp-prospects-hq.js, and drawn inside its pane (#paneProspects).
+   HQ > SALES > COASTER (Dean, 4 Nov 2026, /live-here-now v2; migration 153). Loaded by app/hq.html with one line,
+   after vp-prospects-hq.js. It sat at the bottom of Prospects until the HQ menu (step 1, 18 Nov 2026) gave it its own
+   tab: it draws inside #paneCoaster, loads when that tab opens, and turns the tab on when the prospects list arrives
+   (the same owner and accounts rule as Prospects).
 
    All 10,000 drink coasters carry ONE QR. A player gives a first name, picks where they are playing from
    what is in venueplay (customers, prospects and coaster venues) or types a pub that is not listed, and
@@ -161,7 +163,7 @@
     "@media (max-width:560px){#coasterHq .cqacts .btn{flex:1 1 100%}}";
   function mount() {
     if ($("coasterHq")) return $("coasterHq");
-    var host = $("paneProspects"); if (!host) return null;
+    var host = $("paneCoaster"); if (!host) return null;
     var el = doc.createElement("div"); el.id = "coasterHq";
     el.innerHTML = "<style>" + CSS + '</style><div id="cqBody"></div>';
     host.appendChild(el);
@@ -276,8 +278,10 @@
     var nav = $("hqNav"); if (!nav) return;
     nav.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest("button");
-      if (b && b.getAttribute("data-pane") === "prospects") load();
+      if (b && b.getAttribute("data-pane") === "coaster") load();
     });
+    /* The tab is offered to whoever may see Prospects: vp-prospects-hq.js fires this once its list arrives. */
+    doc.addEventListener("vp-prospects", function () { var t = $("cqTab"); if (t) t.hidden = false; });
   }
 
   root.VPCoaster = { load: load,

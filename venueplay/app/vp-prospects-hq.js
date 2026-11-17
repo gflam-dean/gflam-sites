@@ -388,10 +388,16 @@
     sp.hidden = !n;
     sp.setAttribute("aria-label", (n || 0) + " to call");
   }
+  /* HQ menu step 1 (18 Nov 2026): hq.html now has its own #paneProspects (Set up a prospect at the top, Venues who want
+     to hear from us at the bottom) with a #prSlot for this list. With no slot this makes the pane itself, as before. */
   function addPane() {
-    if ($("paneProspects")) return;
-    var host = $("paneVenues") ? $("paneVenues").parentNode : doc.body;
-    var p = doc.createElement("div"); p.id = "paneProspects"; p.className = "hidden";
+    if ($("prBody")) return;
+    var slot = $("prSlot"), p = slot;
+    if (!slot) {
+      if ($("paneProspects")) return;
+      var host = $("paneVenues") ? $("paneVenues").parentNode : doc.body;
+      p = doc.createElement("div"); p.id = "paneProspects"; p.className = "hidden";
+    }
     p.innerHTML = "<style>" +
       ".prlist{display:grid;gap:12px}" +
       ".prcard{border-left:3px solid transparent}.prcard.flagged{border-left-color:var(--roll)}" +
@@ -432,7 +438,7 @@
       ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
       "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}.practs > *{flex:1 1 auto}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
-    host.insertBefore(p, $("paneLive") || null);
+    if (!slot) host.insertBefore(p, $("paneLive") || null);
     p.addEventListener("click", onClick);
   }
   function draw() {

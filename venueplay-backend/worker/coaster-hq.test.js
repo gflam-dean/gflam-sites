@@ -417,7 +417,8 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   function mk(id) { return { id: id || '', value: '', innerHTML: '', textContent: '', hidden: false, className: '', disabled: false, kids: [], ls: {},
     appendChild: function (c) { this.kids.push(c); if (c.id) ELS[c.id] = c; if (c.id === 'coasterHq') ELS.cqBody = mk('cqBody'); return c; },
     addEventListener: function (t, f) { this.ls[t] = f; }, focus: function () {}, scrollIntoView: function () {} }; }
-  var ELS = {}; ELS.paneProspects = mk('paneProspects'); ELS.hqNav = mk('hqNav');
+  var ELS = {}; ELS.paneCoaster = mk('paneCoaster'); ELS.paneProspects = mk('paneProspects'); ELS.hqNav = mk('hqNav'); ELS.cqTab = mk('cqTab'); ELS.cqTab.hidden = true;
+  var DOCLS = {};
   ['cqName', 'cqSuburb', 'cqPostcode', 'cqMsg'].forEach(function (id) { ELS[id] = mk(id); });
   var PREFILL = [], CALLS = [];
   var W = { VP: { getClient: function () { return { auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: ADMIN } } }); } } }; } },
@@ -425,14 +426,18 @@ function nextTick() { return new Promise(function (r) { r(); }); }
     fetch: function (url, opts) { var path = String(url).replace(API, ''); CALLS.push(path);
       return _d.fetch(req(path, JSON.parse(opts.body), opts.headers), ENV).then(function (res) {
         return { status: res.status, ok: res.status >= 200 && res.status < 300, json: function () { return Promise.resolve(res.body ? JSON.parse(res.body) : {}); } }; }); } };
-  W.document = { readyState: 'complete', getElementById: function (id) { return ELS[id] || null; }, createElement: function () { return mk(''); }, addEventListener: function () {} };
+  W.document = { readyState: 'complete', getElementById: function (id) { return ELS[id] || null; }, createElement: function () { return mk(''); }, addEventListener: function (t, f) { DOCLS[t] = f; } };
   (new Function('window', PANE))(W);
   var T7 = W.VPCoaster && W.VPCoaster._t;
-  check('the file loads and starts on hq.html\'s nav: opening the Prospects tab loads it', !!T7 && typeof ELS.hqNav.ls.click === 'function');
+  check('the file loads and starts on hq.html\'s nav: opening the Coaster tab loads it (HQ menu, 18 Nov 2026)', !!T7 && typeof ELS.hqNav.ls.click === 'function');
   ELS.hqNav.ls.click({ target: { closest: function () { return { getAttribute: function () { return 'prospects'; } }; } } });
+  check('opening Prospects no longer loads the coaster sections: they have their own tab', CALLS.length === 0 && !T7.S.loading && ELS.paneCoaster.kids.length === 0, CALLS);
+  check('the Coaster tab stays off until the prospects list arrives, then turns on (owner and accounts, like Prospects)', ELS.cqTab.hidden === true && typeof DOCLS['vp-prospects'] === 'function' && (DOCLS['vp-prospects'](), ELS.cqTab.hidden === false));
+  ELS.hqNav.ls.click({ target: { closest: function () { return { getAttribute: function () { return 'coaster'; } }; } } });
+  check('opening the Coaster tab starts the load itself', !!T7.S.loading && ELS.paneCoaster.kids.length === 1);
   await W.VPCoaster.load();
   var H = ELS.cqBody.innerHTML;
-  check('opening the tab asks the real Worker for /admin/coaster/list and draws inside the Prospects pane', CALLS[0] === '/admin/coaster/list' && ELS.paneProspects.kids.length === 1 && ELS.paneProspects.kids[0].id === 'coasterHq' && /Coaster venues \(no emails\)/.test(H), [CALLS, H.slice(0, 200)]);
+  check('opening the tab asks the real Worker for /admin/coaster/list and draws inside the Coaster pane, not Prospects', CALLS[0] === '/admin/coaster/list' && ELS.paneCoaster.kids.length === 1 && ELS.paneCoaster.kids[0].id === 'coasterHq' && ELS.paneProspects.kids.length === 0 && /Coaster venues \(no emails\)/.test(H), [CALLS, H.slice(0, 200)]);
   check('names, suburbs and leads are escaped, never markup', H.indexOf('<b>Bar</b>') === -1 && H.indexOf('<script>') === -1 && H.indexOf('<i>Heads') === -1 &&
     H.indexOf('Sam&#39;s &lt;b&gt;Bar&lt;/b&gt; &amp; Grill') !== -1 && H.indexOf('Fox &lt;script&gt;alert(1)&lt;/script&gt; Hounds') !== -1);
   check('a coaster venue shows its logo, where it is, "No emails", its play, and both buttons', /<img class="cqlogo" alt="" src="https:\/\/db\/storage\/v1\/object\/public\/venue-logos\/coaster\//.test(H) &&
@@ -507,8 +512,8 @@ function nextTick() { return new Promise(function (r) { r(); }); }
     function (path, body) { posted.push({ path: path, body: body }); return Promise.resolve({ ok: true, venue: { id: U(70), name: body.name }, welcome_sent: true, tv_url: 'https://www.venueplay.com.au/tv?x', login: { email: body.email }, phone: null, slides: 0 }); },
     function () { return ''; }, function () {}, function () {}, function () {}, WIN);
   HF.prefill({ name: 'Sam\'s <b>Bar</b>', postcode: '4220', coaster_id: C(30) });
-  check('hq.html: the prefill goes to Venues, opens Set up a prospect, fills the name and postcode, carries the coaster id and says what will happen (escaped)',
-    panes[0] === 'venues' && shown.prospectPanel === true && F.ppName.value === 'Sam\'s <b>Bar</b>' && F.ppPostcode.value === '4220' && PP.coasterId === C(30) &&
+  check('hq.html: the prefill goes to Sales > Prospects (where the form is since 18 Nov 2026), opens Set up a prospect, fills the name and postcode, carries the coaster id and says what will happen (escaped)',
+    panes[0] === 'prospects' && shown.prospectPanel === true && F.ppName.value === 'Sam\'s <b>Bar</b>' && F.ppPostcode.value === '4220' && PP.coasterId === C(30) &&
     /Making <b>Sam&#39;s &lt;b&gt;Bar&lt;\/b&gt;<\/b> a normal prospect/.test(F.ppCoaster.innerHTML) && /normal prospect emails/.test(F.ppCoaster.innerHTML) && shown.ppCoaster === true, [panes, F.ppCoaster && F.ppCoaster.innerHTML]);
   fel('ppEmail').value = 'owner@sams.example'; fel('ppKind').value = 'for_profit'; fel('ppPlayers').value = '10'; fel('ppDelay').value = '90';
   HF.go(); await nextTick(); await nextTick();

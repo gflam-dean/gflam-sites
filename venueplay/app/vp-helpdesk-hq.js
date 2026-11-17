@@ -142,7 +142,9 @@
     var nav = $("hqNav"); if (!nav || $("hdTab")) return;
     var b = doc.createElement("button"); b.setAttribute("data-pane", "helpdesk"); b.id = "hdTab";
     b.innerHTML = 'Help desk <span id="hdBadge" class="hdbadge" hidden></span>';
-    var lab = $("showTestWrap"); nav.insertBefore(b, lab || null);
+    /* Before the Show test venues switch only while it sits in this row: since the HQ menu (18 Nov 2026) it lives in the
+       section row (#hqGroups), and insertBefore a node of another row throws, which would leave HQ with no Help desk. */
+    var lab = $("showTestWrap"); nav.insertBefore(b, lab && lab.parentNode === nav ? lab : null);
     nav.addEventListener("click", function (e) {
       var t = e.target.closest && e.target.closest("button"); if (!t || !t.getAttribute("data-pane")) return;
       var mine = t.getAttribute("data-pane") === "helpdesk";

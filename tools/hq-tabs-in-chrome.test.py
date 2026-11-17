@@ -18,7 +18,9 @@ way Dean does:
   Cancelled  a contacted venue is one line with its last day and who rang; Reactivate emails them a
              link (through the real Worker) and charges and changes nothing; Open shows the card;
              a venue whose subscription ended is on the list
-  Quiet      the archive panel has its padding back and every row's buttons sit in one tidy row
+  Quiet      every row's buttons sit in one tidy row; the archive panel ("Venues that have left") is on Cancelled since
+             the HQ menu (18 Nov 2026), with its padding
+  Menu       the four sections two to a row on a phone, a section shows only its tabs (edited 18 Nov 2026, not run yet)
   Venues     one line per venue, no screen address under the name; search still finds it by address
   Team       no raw login ids; Flagged names the venue; an account nobody has approved no longer
              stops the page drawing
@@ -143,7 +145,8 @@ def spread(rs, key):
     return (max(vals) - min(vals)) if vals and len(vals) == len(rs) else 999
 
 
-TOOLS = ['#venueSearch', '#venueFilter', '#addVenueToggle', '#prospectToggle', '.vtools a.btn.pink']
+# Set up a prospect moved to Sales > Prospects (HQ menu, 18 Nov 2026): the Venues toolbar is the search, the filter and two buttons.
+TOOLS = ['#venueSearch', '#venueFilter', '#addVenueToggle', '.vtools a.btn.pink']
 # The four cards BY WHAT THEY ARE (data-stat, 4 Nov 2026), not by nth-child: a card added or reordered at the top of HQ
 # (the menu restructure is queued) must not turn a layout check red or point it at the wrong card.
 CARDS = ['#app > .stats .scard[data-stat="venues"]', '#app > .stats .scard[data-stat="live"]', '#app > .stats .scard[data-stat="groups"]', '#app > .stats .scard[data-stat="suspended"]']
@@ -421,10 +424,14 @@ try:
     time.sleep(0.3)
     ok('Open shows the whole card again', 'It costs too much' in (js(sid, 'document.getElementById("cxList").innerText') or ''))
 
-    print('\nQuiet, Team, Flagged')
+    print('\nQuiet, Cancelled, Team, Flagged sign-ups')
+    # "Venues that have left" moved from Quiet to Cancelled (HQ menu, 18 Nov 2026).
+    pane(sid, 'cancelled')
+    ok('the "Venues that have left" panel is on Cancelled now, showing, with its padding',
+       js(sid, '(function(){var p=document.getElementById("archiveCheck").closest(".panel");return document.getElementById("paneCancelled").contains(p) && p.getBoundingClientRect().width>0 && parseFloat(getComputedStyle(p).paddingLeft);})()') >= 16)
     pane(sid, 'quiet')
     S.until(sid, '!!document.querySelector("#quietRows .actcell")', 20)
-    ok('the "Venues that have left" panel has its padding back', js(sid, 'parseFloat(getComputedStyle(document.getElementById("archiveCheck").closest(".panel")).paddingLeft)') >= 16)
+    ok('...and gone from Quiet', js(sid, '!document.getElementById("paneQuiet").querySelector("#archiveCheck") && document.getElementById("paneQuiet").innerText.indexOf("Venues that have left")===-1') is True)
     tops = js(sid, '[].map.call(document.querySelectorAll("#quietRows .actcell"), function(c){var t=[].map.call(c.querySelectorAll("button"), function(b){return Math.round(b.getBoundingClientRect().top);}); return Math.max.apply(null,t)-Math.min.apply(null,t);})') or [1]
     ok('each row\'s buttons sit in one row', max(tops) <= 2, tops)
     shot(sid, 'quiet-desktop')
@@ -461,8 +468,8 @@ try:
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     time.sleep(1.5)
     tr = rects(sid, TOOLS) or []
-    ok('the search, the filter and the three buttons are one height (42px) on one line',
-       len(tr) == 5 and all(tr) and spread(tr, 'h') <= 1 and spread(tr, 't') <= 1 and tr[0]['h'] == 42, tr)
+    ok('the search, the filter and the two buttons are one height (42px) on one line',
+       len(tr) == 4 and all(tr) and spread(tr, 'h') <= 1 and spread(tr, 't') <= 1 and tr[0]['h'] == 42, tr)
     cr = rects(sid, CARDS) or []
     ok('the four cards are one height on one line', len(cr) == 4 and all(cr) and spread(cr, 'h') <= 1 and spread(cr, 't') <= 1, cr)
     lr = rects(sid, ['.titlerow .h2', CARDS[0], '#hqNav button[data-pane="venues"]', '#venueSearch', '#paneVenues > .panel:not(.pad)']) or []
@@ -475,8 +482,8 @@ try:
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     time.sleep(1.5)
     tr = rects(sid, TOOLS) or []
-    ok('the search, the filter and the three buttons stack, each the full width of the page, one left edge',
-       len(tr) == 5 and all(tr) and spread(tr, 'l') <= 1 and spread(tr, 'w') <= 1 and tr[0]['w'] >= 300 and len(set(r['t'] for r in tr)) == 5, tr)
+    ok('the search, the filter and the two buttons stack, each the full width of the page, one left edge',
+       len(tr) == 4 and all(tr) and spread(tr, 'l') <= 1 and spread(tr, 'w') <= 1 and tr[0]['w'] >= 300 and len(set(r['t'] for r in tr)) == 4, tr)
     cr = rects(sid, CARDS) or []
     ok('the four cards are one height, two to a row', len(cr) == 4 and all(cr) and spread(cr, 'h') <= 1 and cr[0]['t'] == cr[1]['t'] and cr[2]['t'] == cr[3]['t'] and cr[0]['t'] != cr[2]['t'], cr)
     pane(sid, 'screens')
@@ -492,12 +499,28 @@ try:
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     time.sleep(2)
     bad = []
-    for p in ('venues', 'live', 'screens', 'quiet', 'cancelled', 'billing', 'groups', 'usage', 'team', 'flagged', 'audit'):
+    # HQ menu (18 Nov 2026): the section row first. Four sections two to a row, Show test venues on its own row, and a tap on
+    # a section shows its tabs only (the design: reports/hq-menu-18nov).
+    sec = js(sid, '[].map.call(document.querySelectorAll("#hqGroups [data-group]"), function(b){var r=b.getBoundingClientRect(); return {g:b.getAttribute("data-group"), t:Math.round(r.top), w:Math.round(r.width)};})') or []
+    sw = rects(sid, ['#showTestWrap']) or [None]
+    ok('phone: Venues, Sales, Support and Reporting two to a row, the Show test venues switch below them',
+       [x['g'] for x in sec] == ['venues', 'sales', 'support', 'reporting'] and sec[0]['t'] == sec[1]['t'] and sec[2]['t'] == sec[3]['t'] and sec[0]['t'] < sec[2]['t']
+       and bool(sw[0]) and sw[0]['t'] > sec[2]['t'] and no_sideways(sid), [sec, sw])
+    click(sid, '#hqGroups [data-group="sales"]')
+    time.sleep(0.6)
+    on = js(sid, '[].map.call(document.querySelectorAll("#hqNav button[data-pane]"), function(b){return b.getBoundingClientRect().width>0 ? b.getAttribute("data-pane") : null;}).filter(Boolean)') or []
+    ok('a tap on Sales shows only its tabs (Prospects, Coaster, Flagged sign-ups, Website sign-ups, Cancelled) and opens the first',
+       set(on) <= {'prospects', 'coaster', 'journey', 'flagged', 'subscribers', 'cancelled'} and 'cancelled' in on and 'venues' not in on
+       and js(sid, '!document.getElementById("paneProspects").classList.contains("hidden") || !document.getElementById("paneCancelled").classList.contains("hidden")') is True, on)
+    shot(sid, 'menu-sales-phone')
+    click(sid, '#hqGroups [data-group="venues"]')
+    time.sleep(0.4)
+    for p in ('venues', 'live', 'screens', 'quiet', 'cancelled', 'billing', 'groups', 'usage', 'team', 'flagged', 'privacy', 'prospects', 'coaster', 'audit'):
         pane(sid, p)
         time.sleep(1.2)
         if not no_sideways(sid):
             bad.append(p)
-        if p in ('audit', 'groups', 'venues', 'billing', 'cancelled', 'quiet'):
+        if p in ('audit', 'groups', 'venues', 'billing', 'cancelled', 'quiet', 'privacy', 'prospects'):
             shot(sid, p + '-phone')
     ok('no tab scrolls sideways at 390 pixels', not bad, bad)
     pane(sid, 'venues')

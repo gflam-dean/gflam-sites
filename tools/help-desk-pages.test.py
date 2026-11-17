@@ -1055,7 +1055,11 @@ def main():
         rows = t.until('document.querySelectorAll("#hdRows [data-id]").length===3 && 3', 8)
         time.sleep(0.5)   # HQ's pills fade their colour over 0.15s: measure and photograph after it
         check('hq: the tab shows the desk and hides the other panes', rows == 3 and t.js('document.getElementById("paneVenues").classList.contains("hidden") && !document.getElementById("paneHelpdesk").classList.contains("hidden")') is True)
-        check('hq: the Help desk pill is the pink one now, and Venues is not', t.js('getComputedStyle(document.getElementById("hdTab")).backgroundColor') == 'rgb(255, 31, 142)' and t.js('getComputedStyle(document.querySelector("[data-pane=venues]")).backgroundColor') != 'rgb(255, 31, 142)')
+        # HQ menu (18 Nov 2026): the open SECTION is the pink pill; the open tab under it has a pink edge, quieter.
+        check('hq: the Help desk opens under Support: Support is the pink section, the Help desk tab has the pink edge, All venues is not on show',
+              t.js('(function(){var s=document.querySelector("#hqGroups [data-group=support]");return !!s&&getComputedStyle(s).backgroundColor;})()') == 'rgb(255, 31, 142)'
+              and t.js('getComputedStyle(document.getElementById("hdTab")).borderTopColor') == 'rgb(255, 31, 142)'
+              and t.js('getComputedStyle(document.querySelector("#hqNav [data-pane=venues]")).display') == 'none')
         check('hq: every ticket shows its brand (All: the most recently touched first)', t.js('Array.prototype.map.call(document.querySelectorAll("#hdRows .hdbrand"),function(x){return x.textContent}).join()') == 'PartyPlay,venueplay,venueplay')
         check('hq: a PartyPlay ticket says host support, not venue support', 'Host support' in (t.js('document.getElementById("hdRows").textContent') or ''))
         check('hq: every request carries the HQ login', all((p.get('headers') or {}).get('Authorization') == 'Bearer hq-admin-token' for p in (t.js('window.__posts') or [])))

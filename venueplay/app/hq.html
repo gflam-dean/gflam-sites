@@ -103,6 +103,22 @@
   .navpills button{border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:9px;padding:8px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
   .navpills button.on{background:var(--pink);color:#fff;border-color:transparent}
   .navpills button:hover{color:#fff}
+  /* HQ MENU (vp-hq-menu.js, design reports/hq-menu-18nov): the four sections are today's pink pills one size up; the
+     tabs inside a section sit underneath, quieter. With no script the section row holds only Show test venues and
+     every tab shows, as before. */
+  #hqGroups{align-items:center;margin-bottom:10px}
+  #hqGroups button{padding:10px 18px;font-size:14px;font-weight:800}
+  #hqGroups #showTestWrap{margin-left:auto}
+  #hqNav{padding-top:10px;border-top:1px solid var(--line-2)}
+  #hqNav button{background:transparent;padding:7px 14px;white-space:nowrap}
+  #hqNav button.on{background:var(--ink-3);color:#fff;border-color:var(--pink)}
+  #hqNav button.on .hdbadge{background:#E5484D;color:#fff}
+  .navpills button.vpm-off{display:none}
+  @media (max-width:520px){
+    #hqGroups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #hqGroups button{width:100%;padding:10px 8px}
+    #hqGroups #showTestWrap{grid-column:1 / -1;margin-left:0}
+  }
 
   .panel{background:linear-gradient(180deg,#131315,#0e0e10);border:1px solid var(--line);border-radius:16px;overflow:hidden}
   .panel.pad{padding:18px}
@@ -330,15 +346,30 @@
     <div class="scard" data-stat="suspended"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>
   </div>
 
+  <!-- HQ MENU (vp-hq-menu.js, step 1 of reports/hq-menu-18nov): Venues / Sales / Support / Reporting. The script puts the
+       four section buttons in this row, before the Show test venues switch, and shows only that section's tabs below.
+       Every tab is still a button in #hqNav, so goPane, the counts, the help desk and the Chrome suites carry on; the
+       sections and their order are ONE table in vp-hq-menu.js, the tab names are these buttons, once. -->
+  <div class="navpills" id="hqGroups" aria-label="HQ sections">
+    <!-- NOTHING IS EVER TRULY HIDDEN. One switch brings the test venues back on every screen
+         at once, so "where did that venue go" is always one click, never a support question. -->
+    <label id="showTestWrap" style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="showTest" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer">
+      Show test venues
+    </label>
+  </div>
   <div class="navpills" id="hqNav">
-    <button data-pane="venues" class="on">Venues</button>
-    <!-- HQ > Prospects (Dean, 29 Oct 2026): its tab, pane and count are vp-prospects-hq.js's own. It is one
-         button and one pane (#prTab, #paneProspects), so when HQ gets its sub menus it moves under Sales
-         (prospects / call requested / cancelled / flagged) by moving this line. -->
+    <button data-pane="venues" class="on">All venues</button>
+    <!-- Sales > Prospects (Dean, 29 Oct 2026): its tab, list and count are vp-prospects-hq.js's own; Set up a prospect
+         and Venues who want to hear from us sit in its pane (#paneProspects below). -->
     <button data-pane="prospects" id="prTab" hidden>Prospects</button>
-    <!-- HQ > Subscribers (31 Oct 2026; migration 134): the monthly email sign-ups from the website. Its pane and
-         count are vp-subscribers-hq.js's own; it moves under Sales with Prospects when HQ gets its sub menus. -->
-    <button data-pane="subscribers" id="vpsTab" hidden>Subscribers</button>
+    <!-- Sales > Coaster (design 18 Nov 2026): the coaster sections that sat at the bottom of Prospects, vp-coaster-hq.js.
+         Owner and accounts, like Prospects: it turns itself on when the prospects list arrives. -->
+    <button data-pane="coaster" id="cqTab" hidden>Coaster</button>
+    <!-- Sales > Website sign-ups (31 Oct 2026; migration 134): the monthly email sign-ups from the website, vp-subscribers-hq.js.
+         It was "Subscribers"; renamed (design question 1, suggested yes) because a venue's monthly report now says
+         "subscribers" for that venue's own players. The pane is still #paneSubscribers and the link #subscribers. -->
+    <button data-pane="subscribers" id="vpsTab" hidden>Website sign-ups</button>
     <button data-pane="live">Live now</button>
     <!-- HQ > Screens (Dean, 3 Nov 2026): one command for every venue screen, and TVs by type. It used to sit
          inside the Venues list. -->
@@ -348,19 +379,18 @@
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
-    <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): every venue's month, who is trending down, and the news in the monthly email. -->
-    <button data-pane="reports">Reports</button>
+    <!-- Reporting > Monthly reports (vp-reports-hq.js, 31 Oct 2026): every venue's month, who is trending down, and the
+         news in the monthly email. It was "Reports". -->
+    <button data-pane="reports">Monthly reports</button>
     <!-- HQ > Journey (vp-journey-hq.js, INBOX 413): the funnel step by step with the likely reason, the campaign table, and each venue's journey. -->
     <button data-pane="journey">Journey</button>
     <button data-pane="team">Team</button>
-    <button data-pane="flagged">Flagged</button>
+    <!-- Sales > Flagged sign-ups: the Flagged tab, split four ways (design 18 Nov 2026). Paper play went to Usage, Venues
+         who want to hear from us to Prospects, Remove a player to Support > Players & privacy. -->
+    <button data-pane="flagged">Flagged sign-ups</button>
+    <!-- Support > Players & privacy: Remove a player who has asked and Remove a login, from the old Flagged tab. -->
+    <button data-pane="privacy" id="privacyTab">Players &amp; privacy</button>
     <button data-pane="audit">Audit</button>
-    <!-- NOTHING IS EVER TRULY HIDDEN. One switch brings the test venues back on every screen
-         at once, so "where did that venue go" is always one click, never a support question. -->
-    <label id="showTestWrap" style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap">
-      <input type="checkbox" id="showTest" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer">
-      Show test venues
-    </label>
   </div>
 
   <!-- ============ VENUES ============ -->
@@ -388,7 +418,6 @@
         </select>
       <div class="acts">
         <button class="btn ghost" id="addVenueToggle">+ Add venue</button>
-        <button class="btn ghost" id="prospectToggle">Set up a prospect</button>
         <a class="btn pink" href="onboard.html">Full onboarding</a>
       </div>
     </div>
@@ -437,6 +466,26 @@
       <div class="errflash" id="addVenueErr"></div>
     </div>
 
+    <!-- WELCOME EMAILS (migration 124): prospect welcomes booked but not gone yet; cancel one, or send it now. They stay on
+         Venues (design 18 Nov 2026) while Set up a prospect moved to Sales > Prospects. Owner and accounts: the Worker
+         answers nobody else, and with none waiting this block is not shown. -->
+    <div id="ppWaitingWrap" class="panel pad hidden" style="margin-bottom:16px">
+      <div class="lblk" style="margin-top:0">Welcome emails</div>
+      <div id="ppWaiting"></div>
+    </div>
+
+    <div class="lblk" id="venuesLbl" style="margin-top:0">All venues</div>
+    <div class="panel"><div class="tscroll"><table class="vtable">
+      <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
+      <tbody id="venueRows"></tbody>
+    </table></div></div>
+  </div>
+
+  <!-- ============ PROSPECTS (Sales) ============
+       vp-prospects-hq.js draws its list into #prSlot; hq.html's own Set up a prospect form sits at the top (it was on the
+       Venues tab until 18 Nov 2026) and Venues who want to hear from us at the bottom (it was on Flagged). -->
+  <div id="paneProspects" class="hidden">
+    <div style="margin:0 0 14px"><button class="btn ghost" id="prospectToggle">Set up a prospect</button></div>
     <!-- SET UP A PROSPECT (Dean, 28 Oct 2026): a venue replied "yes, tell me more" to a cold email.
          One button builds their account (venue, account record at the founding price, an email login,
          their slides) and sends ONE email that gets them running on their own. Nobody reads them the
@@ -473,19 +522,24 @@
       <button class="btn pink" id="ppGo" style="margin-top:6px">Set up and send</button>
       <div class="errflash" id="ppErr"></div>
       <div id="ppResult" class="note hidden" role="status" style="margin-top:12px;padding:12px 14px;border:1px solid rgba(43,212,125,.45);border-radius:10px;background:rgba(43,212,125,.07);color:var(--text, #E7E7EC);line-height:1.6"></div>
-      <!-- Emails booked but not gone yet (migration 124): cancel one, or send it now. -->
-      <div id="ppWaitingWrap" class="hidden" style="margin-top:16px">
-        <div class="lblk" style="margin-top:0">Welcome emails</div>
-        <div id="ppWaiting"></div>
-      </div>
+    </div>
+    <div id="prSlot"></div>
+
+    <!-- VENUES WHO WANT TO HEAR FROM US (design 18 Nov 2026): moved here from the old Flagged tab. -->
+    <!-- OUR list, not a venue's. Kept above the player-data table and labelled so the two are
+         never confused: these venues said yes to hearing from US, the players said yes to their
+         venue. Mixing them would be the exact thing the rest of this screen exists to prevent. -->
+    <div class="lblk" style="margin-top:22px">Venues who want to hear from us</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="note" style="margin:0 0 10px">Venues who ticked "send me the occasional update" when they signed up. This is <b>our</b> mailing list, nothing to do with a venue's own players. Only the ones who actually ticked it are in the file, because under the Spam Act that tick is the consent.</div>
+      <button class="btn ghost sp" id="vmExport">Download the list</button>
+      <span class="note" id="vmMsg" style="margin-left:10px"></span>
     </div>
 
-    <div class="lblk" id="venuesLbl" style="margin-top:0">All venues</div>
-    <div class="panel"><div class="tscroll"><table class="vtable">
-      <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
-      <tbody id="venueRows"></tbody>
-    </table></div></div>
   </div>
+
+  <!-- ============ COASTER (Sales) ============ vp-coaster-hq.js draws every coaster section here (design 18 Nov 2026). -->
+  <div id="paneCoaster" class="hidden"></div>
 
   <!-- ============ SCREENS ============
        Its own tab (Dean, 3 Nov 2026: "default 3am should apply to every screen; maybe move it to its own tab").
@@ -547,16 +601,6 @@
       <tbody id="quietRows"></tbody>
     </table></div></div>
     <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. Bingo is recorded from the first ball, so a night the host never formally ended still counts. A venue that has never run a night is measured from the day it was set up. We only look back a year, so an older venue with nothing in that window reads <b>over a year</b> rather than never.</div>
-
-    <div class="lblk">Venues that have left</div>
-    <div class="panel pad">
-      <div class="note" style="margin:0 0 12px">A venue whose owner has cancelled is archived automatically 30 days after their paid period ends, so departed venues stop sitting on the active lists. It never touches a venue that is still paying, still inside its paid period, or that has run a night since cancelling. Check first, then run it.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost" id="archiveCheck">Check who would be archived</button>
-        <button class="btn" id="archiveRun" hidden>Archive them now</button>
-      </div>
-      <div id="archiveOut" style="margin-top:10px"></div>
-    </div>
   </div>
 
   <!-- ============ CANCELLED ============ -->
@@ -578,6 +622,17 @@
       <button class="btn ghost sp" id="cxRefresh">Refresh</button>
     </div>
     <div id="cxList"></div>
+
+    <!-- VENUES THAT HAVE LEFT (design 18 Nov 2026): moved here from Quiet. Same buttons, same Worker route. -->
+    <div class="lblk" style="margin-top:22px">Venues that have left</div>
+    <div class="panel pad">
+      <div class="note" style="margin:0 0 12px">A venue whose owner has cancelled is archived automatically 30 days after their paid period ends, so departed venues stop sitting on the active lists. It never touches a venue that is still paying, still inside its paid period, or that has run a night since cancelling. Check first, then run it.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost" id="archiveCheck">Check who would be archived</button>
+        <button class="btn" id="archiveRun" hidden>Archive them now</button>
+      </div>
+      <div id="archiveOut" style="margin-top:10px"></div>
+    </div>
   </div>
 
   <!-- ============ BILLING ============ -->
@@ -677,6 +732,21 @@
       <tbody id="usageRows"></tbody>
     </table></div></div>
     <div class="note">Counted live from the sessions themselves, the same way an overage charge is counted, so a figure here cannot disagree with an invoice. Peak rule: the biggest metered night sets the month, so two busy Saturdays are one charge and not two. Raffles and members draws mint no players and never count. A phone that opened the page but was never dealt in is not billed.</div>
+
+    <!-- PAPER PLAY moved here from the old Flagged tab (design 18 Nov 2026). Owner and accounts only, as it was there:
+         hq.html hides #paperWrap for any other HQ role at sign-in. -->
+    <div id="paperWrap">
+    <!-- PAPER PLAY (Dean, 25 Sep 2026: "we should have an alert for that"). Written by the game Worker:
+         paper_suspect_trivia when a trivia game asked 15+ questions and 2 or fewer phones answered,
+         paper_declared when a musical host printed paper cards and said at Start game how many were
+         played. Shown here only when that was none. Nothing is blocked; it is a conversation to have. -->
+    <div class="lblk" style="margin-top:22px">Paper play, last 60 days</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>When</th><th>Venue</th><th>What happened</th></tr></thead>
+      <tbody id="paperRows"></tbody>
+    </table></div></div>
+    <div class="note">A trivia night that asked a lot of questions with almost no phones answering, or a musical bingo night where paper cards were printed and the host said none were played. Paper players only count towards a venue's bill once they are checked or scored, so these are the nights worth a friendly call.</div>
+    </div>
   </div>
 
   <!-- ============ REPORTS (vp-reports-hq.js builds it) ============ -->
@@ -754,45 +824,14 @@
     </div>
   </div>
 
-  <!-- ============ FLAGGED SIGNUPS ============ -->
-  <div id="paneFlagged" class="hidden">
-    <div class="lblk">Flagged signups</div>
-    <div class="panel"><div class="tscroll"><table>
-      <thead><tr><th>When</th><th>Venue</th><th>Email</th><th>Decision</th></tr></thead>
-      <tbody id="flaggedRows"></tbody>
-    </table></div></div>
-    <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "No opt-ins" records your decision and leaves them running games on team names, just without collecting player data.</div>
-
-    <!-- PAPER PLAY (Dean, 25 Sep 2026: "we should have an alert for that"). Written by the game Worker:
-         paper_suspect_trivia when a trivia game asked 15+ questions and 2 or fewer phones answered,
-         paper_declared when a musical host printed paper cards and said at Start game how many were
-         played. Shown here only when that was none. Nothing is blocked; it is a conversation to have. -->
-    <div class="lblk" style="margin-top:22px">Paper play, last 60 days</div>
-    <div class="panel"><div class="tscroll"><table>
-      <thead><tr><th>When</th><th>Venue</th><th>What happened</th></tr></thead>
-      <tbody id="paperRows"></tbody>
-    </table></div></div>
-    <div class="note">A trivia night that asked a lot of questions with almost no phones answering, or a musical bingo night where paper cards were printed and the host said none were played. Paper players only count towards a venue's bill once they are checked or scored, so these are the nights worth a friendly call.</div>
-
-    <!-- EVERY ACCOUNT, not only the flagged ones. The list above is built from signup_flagged
-         audit rows, so an account that was never flagged has no row and therefore no button,
-         and an old flag scrolls out of the audit window and becomes unapprovable the same way.
-         The Mini Bar hit exactly that on 17 Sep 2026: its own domain, never flagged, and the
-         settings page told it to email us with nothing here to click. -->
-    <!-- OUR list, not a venue's. Kept above the player-data table and labelled so the two are
-         never confused: these venues said yes to hearing from US, the players said yes to their
-         venue. Mixing them would be the exact thing the rest of this screen exists to prevent. -->
-    <div class="lblk" style="margin-top:26px">Venues who want to hear from us</div>
-    <div class="panel pad" style="margin-bottom:14px">
-      <div class="note" style="margin:0 0 10px">Venues who ticked "send me the occasional update" when they signed up. This is <b>our</b> mailing list, nothing to do with a venue's own players. Only the ones who actually ticked it are in the file, because under the Spam Act that tick is the consent.</div>
-      <button class="btn ghost sp" id="vmExport">Download the list</button>
-      <span class="note" id="vmMsg" style="margin-left:10px"></span>
-    </div>
-
+  <!-- ============ PLAYERS & PRIVACY (Support) ============
+       From the old Flagged tab (design 18 Nov 2026). Owner and accounts only, as Flagged was. The delete-a-profile screen
+       (feature/delete-player-profile-sun29, migration 216) joins it once that branch is in. -->
+  <div id="panePrivacy" class="hidden">
     <!-- A PLAYER ASKS TO COME OFF A LIST. The privacy policy says we do it and tell the venue.
          Dean, 21 Sep 2026: if the venue has already downloaded its list, email them to delete
          the person from their copy; if it has not, just remove them. -->
-    <div class="lblk" style="margin-top:26px">Remove a player who has asked</div>
+    <div class="lblk" style="margin-top:0">Remove a player who has asked</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="note" style="margin:0 0 10px">Type the <b>whole</b> email address or mobile number they gave the venue. You will see every venue that holds it before anything is removed. Where a venue has downloaded its list since they joined, we email that venue asking them to delete the person from their own copy as well.</div>
       <input id="rpQuery" aria-label="Email or mobile of the login" type="text" autocomplete="off" placeholder="name@example.com or 0412 345 678" style="max-width:340px">
@@ -810,7 +849,22 @@
       <button class="btn ghost sp" id="rlFind" style="margin-left:8px">Find the login</button>
       <div id="rlResults" style="margin-top:12px"></div>
     </div>
+  </div>
 
+  <!-- ============ FLAGGED SIGNUPS ============ -->
+  <div id="paneFlagged" class="hidden">
+    <div class="lblk" style="margin-top:0">Flagged sign-ups</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>When</th><th>Venue</th><th>Email</th><th>Decision</th></tr></thead>
+      <tbody id="flaggedRows"></tbody>
+    </table></div></div>
+    <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "No opt-ins" records your decision and leaves them running games on team names, just without collecting player data.</div>
+
+    <!-- EVERY ACCOUNT, not only the flagged ones. The list above is built from signup_flagged
+         audit rows, so an account that was never flagged has no row and therefore no button,
+         and an old flag scrolls out of the audit window and becomes unapprovable the same way.
+         The Mini Bar hit exactly that on 17 Sep 2026: its own domain, never flagged, and the
+         settings page told it to email us with nothing here to click. -->
     <div class="lblk" style="margin-top:26px">Player data collection, every account</div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Account</th><th>Email</th><th>Venues</th><th>Collecting</th><th>Decision</th></tr></thead>
@@ -831,7 +885,7 @@
 <!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. Before the page's
      own script, which asks it isProspect(); it waits for the page to finish loading before it draws anything. -->
 <script src="vp-prospects-hq.js"></script>
-<script src="vp-coaster-hq.js"></script>   <!-- HQ > Prospects > Coaster venues (no emails) and coaster leads (migration 153) -->
+<script src="vp-coaster-hq.js"></script>   <!-- Sales > Coaster: coaster venues (no emails) and coaster leads (migration 153) -->
 <!-- Remove a login that belongs to no other venue (vp-logins-hq.js, 30 Oct 2026). HQ only; started by hq.html below. -->
 <!-- The sign-in page's mobile rules, one copy (VPAboutYou.mobileE164), for Change mobile on a login (INBOX 138). It draws nothing here. -->
 <script src="vp-about-you.js"></script>
@@ -840,8 +894,11 @@
 <script src="vp-reports-hq.js"></script>
 <!-- HQ > Journey (vp-journey-hq.js, INBOX 413): HQ only; started by hq.html below. -->
 <script src="vp-journey-hq.js"></script>
-<!-- HQ > Subscribers (vp-subscribers-hq.js, 31 Oct 2026): the monthly email sign-ups. HQ only; it draws its own pane. -->
+<!-- Sales > Website sign-ups (vp-subscribers-hq.js, 31 Oct 2026): the monthly email sign-ups. HQ only; it draws its own pane. -->
 <script src="vp-subscribers-hq.js"></script>
+<!-- HQ menu (vp-hq-menu.js, 18 Nov 2026): Venues / Sales / Support / Reporting over the same tab buttons. After the tab scripts;
+     the help desk's own tab, added later, is picked up as it arrives. -->
+<script src="vp-hq-menu.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -1032,9 +1089,11 @@
     S.ctx=ctx; S.adminRole=ctx.adminRole||"staff";
     $("whoLabel").innerHTML = "admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
     // Audit is visible only to Owner + Accounts.
-    if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ ['audit','flagged'].forEach(function(p){ var _ab=document.querySelector('[data-pane="'+p+'"]'); if(_ab) _ab.style.display="none"; }); }
+    /* Players & privacy and Paper play came off the old Flagged tab (HQ menu, 18 Nov 2026): the same Owner and Accounts rule. */
+    if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ ['audit','flagged','privacy'].forEach(function(p){ var _ab=document.querySelector('[data-pane="'+p+'"]'); if(_ab) _ab.style.display="none"; }); show("paperWrap", false); }
     $("app").style.display="block";
     loadAll();
+    if(canBilling()) ppLoadWaiting();   // Welcome emails sit on Venues, the tab HQ opens on (HQ menu, 18 Nov 2026)
   });
 
   /* TVs BY TYPE (migration 139, Dean 1 Nov 2026: "we do not know what TVs our venues use").
@@ -1196,6 +1255,9 @@
       /* Which venues have a logo, so the website switch can say "no logo yet, it will not show".
          Its own query: a failure leaves the note unsaid, never the list empty. */
       c.from("vp_venue_screen").select("venue_id,logo_url")
+      /* NOT HERE: the venue contact's name and mobile for a cancelled venue's card. They are a person's number, so they come
+         from the Worker (/admin/venue-contacts, owner and accounts only) in loadContacts below, never from a browser read
+         every HQ login makes (review of HQ menu step 1, 18 Nov 2026). */
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -1220,6 +1282,7 @@
       S.nightPass={}; S.nightPassKnown = !!(r[15] && !r[15].error && r[15].data);
       ((r[15] && r[15].data) || []).forEach(function(v){ S.nightPass[v.id]=v; });
       S.accounts=(r[13] && r[13].data) || [];
+      loadContacts();
       S.acctStatus={}; ((r[16] && !r[16].error && r[16].data) || []).forEach(function(a){ S.acctStatus[a.id]=a; });
       S.flagAudit = (r[17] && !r[17].error && r[17].data) ? r[17].data : null;
       S.praffle={}; S.praffleKnown = !!(r[18] && !r[18].error && r[18].data);
@@ -1421,7 +1484,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","prospects","subscribers","live","screens","quiet","cancelled","billing","groups","usage","reports","journey","team","flagged","audit"];
+  var PANES=["venues","prospects","coaster","subscribers","live","screens","quiet","cancelled","billing","groups","usage","reports","journey","team","flagged","privacy","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
   /* Venues > Prospects reads that same list, which the Worker gives owner and accounts only. So the option is taken out
@@ -1450,6 +1513,8 @@
        there was no way to tell that from a slow request. Two screens need it; the pane switch
        is the one place both go through. Found in Chrome, 12 Sep 2026. */
     if(pane==="billing" || pane==="usage") needMeter();
+    if(pane==="venues" && canBilling()) ppLoadWaiting();   // Welcome emails stay on Venues (HQ menu, 18 Nov 2026)
+    if(window.VPHQMenu) window.VPHQMenu.sync(pane);   // the section row follows the pane (vp-hq-menu.js)
   }
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
@@ -1962,6 +2027,29 @@
     out.sort(function(a,b){ return String(b.when||"").localeCompare(String(a.when||"")); });
     return out;
   }
+  /* THE CONTACTS FOR A CANCELLED VENUE'S CARD, owner and accounts only, from the Worker, which refuses any other role (a staff login is
+     never sent a number, not just never shown one). Asked once per load; a refusal or a fault leaves S.contacts empty, so
+     each card says "none on file" rather than drawing nothing. A cancelled list already drawn is drawn again with them. */
+  function loadContacts(){
+    S.contacts={};
+    if(!canBilling()) return null;
+    return workerPost("/admin/venue-contacts", {}).then(function(res){
+      if(!res || res.error || !res.contacts || typeof res.contacts!=="object") return;
+      S.contacts=res.contacts;
+      if(S.cancelAudit) renderCancelled();   // already drawn without them: draw again, now with the numbers
+    }).catch(function(){});
+  }
+  /* A CANCELLED VENUE'S CONTACT PHONE (Dean, 29 Oct 2026). HQ only and the same check as the rest of this screen (canBilling:
+     owner or accounts), because it is a person's number. It is the venue's own contact from its account, tap to ring; never
+     Dean's mobile. No number on file says so, so the card is never silently short. */
+  function cxContactHtml(st){
+    if(!canBilling()) return "";
+    var c=(S.contacts||{})[st && st.v && st.v.founding_id] || null;
+    var raw=String((c && c.phone) || "").trim(), dial=raw.replace(/[^0-9+]/g,"");
+    var who=(c && c.name) ? esc(c.name)+" " : "";
+    if(!raw || dial.replace(/\D/g,"").length<8) return '<div class="cxk" data-cxphone="none" style="color:var(--faint)">Contact phone <b>none on file</b></div>';
+    return '<div class="cxk" data-cxphone="yes">Contact '+who+'<b><a class="mono" href="'+esc("tel:"+dial)+'" style="color:inherit">'+esc(raw)+'</a></b></div>';
+  }
   function cxPasses(st){
     if(S.cxFilter==="open" && !st.leaving) return false;
     if(S.cxFilter==="gone" && !st.gone) return false;
@@ -2185,6 +2273,7 @@
         + '<div class="cxgrid">'
           + '<div class="cxk">Cancelled <b>'+(st.when?esc(cxWhen(st.when)):'<span style="color:var(--faint)">date unknown</span>')+'</b></div>'
           + ends
+          + cxContactHtml(st)
           + '<div class="cxk">Reason <b>'+reason+'</b></div>'
           + alertLine
         + '</div>'
@@ -4455,6 +4544,7 @@
     try{ renderPaperFlags(); }catch(e){}
     var b=$("flaggedRows"); if(!b) return; b.innerHTML="";
     var rows=flaggedAccounts();
+    setTabBadge("flagged", rows.length);   // flagged sign-ups waiting: adds up on Sales (HQ menu, 18 Nov 2026)
     if(!rows.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No signups waiting for review. Non-venue emails show up here.</div></td></tr>'; return; }
     rows.forEach(function(a){
       var fid=String(a.target||"").replace(/^account:/,""), d=a.detail||{};
@@ -4735,13 +4825,13 @@
   var PP = { slides: [] };   // data URLs, already fitted to the TV
   var PP_MAX_SLIDES = 20;    // the Worker's VPB_MAX_SLIDES
   $("prospectToggle").addEventListener("click", function(){ var open=$("prospectPanel").classList.contains("hidden"); show("prospectPanel", open); if(open) ppLoadWaiting(); });
-  /* MAKE IT A NORMAL PROSPECT (HQ > Prospects > Coaster venues, vp-coaster-hq.js; migration 153). Opens THIS form
-     on Venues with the name and postcode filled in and the coaster id carried in PP.coasterId. The Worker moves the
+  /* MAKE IT A NORMAL PROSPECT (Sales > Coaster, vp-coaster-hq.js; migration 153). Opens THIS form
+     on Sales > Prospects with the name and postcode filled in and the coaster id carried in PP.coasterId. The Worker moves the
      coaster board only after the prospect is fully set up. From then on it is a normal prospect, emails and all. */
   function ppCoasterClear(){ PP.coasterId=null; var n=$("ppCoaster"); if(n){ n.textContent=""; show(n,false); } }
   window.hqProspectPrefill=function(o){
     o=o||{};
-    goPane("venues");
+    goPane("prospects");
     show("prospectPanel", true); ppLoadWaiting();
     $("ppName").value=String(o.name||""); $("ppPostcode").value=String(o.postcode||"").replace(/[^0-9]/g,"").slice(0,4);
     ppStateNote();
@@ -4865,7 +4955,7 @@
       if(!res || res.error){ errFlash("ppErr",(res && res.error) || "That did not work. Nothing was sent."); return; }
       var r=$("ppResult");
       r.innerHTML='<b>'+esc(res.venue.name)+' is set up.</b><br>'+
-        (!res.welcome_sent ? '<b>The welcome email did not send.</b>' : (res.welcome && res.welcome.status==="scheduled") ? 'Email goes at <b>'+esc(ppWhen(res.welcome.send_at))+'</b>, to '+esc(email)+'. Cancel it or send it now below.' : 'Their welcome email went to '+esc(email)+'.')+'<br>'+
+        (!res.welcome_sent ? '<b>The welcome email did not send.</b>' : (res.welcome && res.welcome.status==="scheduled") ? 'Email goes at <b>'+esc(ppWhen(res.welcome.send_at))+'</b>, to '+esc(email)+'. Cancel it or send it now in Welcome emails, on Venues > All venues.' : 'Their welcome email went to '+esc(email)+'.')+'<br>'+
         'TV: <span class="mono">'+esc(res.tv_url)+'</span><br>'+
         'Login: '+esc(res.login ? (res.login.email+(res.login.mobile ? ' and '+res.login.mobile : '')) : 'none')+
         ' &middot; Phone: '+esc(res.phone || 'none (Prospects will say to email them)')+

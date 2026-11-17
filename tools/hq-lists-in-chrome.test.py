@@ -158,6 +158,9 @@ try:
     # Cancelled screen for the 30 days before it is archived. It counts now: nobody has rung it.
     ok('Cancelled: 3 (the archived one and the ended one nobody rang, and one rung about an EARLIER cancellation)',
        badge(sid, 'cancelled') == '3', badge(sid, 'cancelled'))
+    # HQ menu (18 Nov 2026): the Venues section adds up Quiet's count (Cancelled's counts on Sales, not twice).
+    vsec = S.js(sid, '(function(){var b=document.querySelector("#hqGroups [data-group=venues] .hdbadge");return b ? (b.hidden ? "hidden" : b.textContent) : "none";})()')
+    ok('the Venues section wears Quiet\'s 2, and nothing from Cancelled', vsec == '2', vsec)
     ok('in the help desk tab\'s red badge style', 'rgb(229, 72, 77)' in (S.js(sid, 'getComputedStyle(document.querySelector(\'#hqNav button[data-pane="quiet"] .tabcount\')).backgroundColor') or ''),
        S.js(sid, 'getComputedStyle(document.querySelector(\'#hqNav button[data-pane="quiet"] .tabcount\')).backgroundColor'))
     shot(sid, 'hq-tab-badges')
