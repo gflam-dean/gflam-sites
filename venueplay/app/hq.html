@@ -4353,6 +4353,9 @@
     // which RLS let ANY admin do; migration 217 leaves the browser SELECT only on vp_platform_admins.
     // The auth user itself is left intact, as before; only the HQ row goes.
     workerPost("/admin/staff-remove", { auth_user_id: uid }).then(function(res){
+      // Already off the list (another owner or another tab got there first): the Worker answers 409 gone:true,
+      // never a 404 (which this page reads as "route not deployed"). Say so and take the stale row away (review R5).
+      if(res && res.gone){ vpTell(res.error||"That staff login is not on the Team list any more."); S.admins=S.admins.filter(function(a){ return a.auth_user_id!==uid; }); renderTeam(); loadAuditOnly(); return; }
       if(!res || res.error){ b.disabled=false; vpTell("Could not remove: "+((res&&res.error)||"try again")); return; }
       S.admins=S.admins.filter(function(a){ return a.auth_user_id!==uid; });
       renderTeam();

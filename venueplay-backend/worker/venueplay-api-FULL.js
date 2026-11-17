@@ -10869,13 +10869,14 @@ async function vpaHandleStaff(request, env, json) {
   if (email && email.indexOf('@') === -1) return json({ error: 'That email does not look valid. Leave it blank if you are not sure.' }, 400);
   if (['owner', 'accounts', 'staff'].indexOf(role) === -1) return json({ error: "role must be 'owner', 'accounts' or 'staff'." }, 400);
 
-  let authUserId = null;
+  let authUserId = null, madeHere = false;
   try {
     const u = await vpaAuthCreateUser(env, {
       phone: mobile, phone_confirm: true,
       user_metadata: email ? { name: name, email: email } : { name: name },
     });
     authUserId = u.id;
+    madeHere = true;
   } catch (e) {
     if (e.alreadyExists) {
       const found = await vpaFindAuthUser(env, { phone: mobile });
@@ -10886,30 +10887,53 @@ async function vpaHandleStaff(request, env, json) {
     }
   }
 
-  // NEVER YOUR OWN ROLE (18 Nov 2026, review F1). The upsert below changes the role of a login that is already
+  // NEVER YOUR OWN ROLE (18 Nov 2026, review F1). The write below changes the role of a login that is already
   // on the Team list, so an owner typing their own mobile would demote (or re-add) themselves, and could leave
   // HQ with no owner at all. Your own role is never changed here; another owner does it.
   if (authUserId === actor.actorId) return json({ error: 'That mobile is your own login. You cannot change your own role. Nothing was changed.' }, 403);
-  let was;
-  try {
-    was = await vpaReadPage(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,role&limit=1');
-  } catch (e) { return json({ error: 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, 503); }
-  const wasRole = (was && was[0] && was[0].role) || null;
 
-  // Idempotent-ish: upsert the admin row on its primary key (auth_user_id).
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_platform_admins', {
-    method: 'POST',
-    headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify({ auth_user_id: authUserId, role: role, label: name }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error('vp_platform_admins insert failed: ' + t);
+  // ONE TRANSACTION (18 Nov 2026, review R4): vp_hq_team_change (migration 217) locks the owner rows, re-checks the
+  // caller is still an owner, refuses a change that would leave no owner, and upserts the row on auth_user_id.
+  const out = await vpaTeamChange(env, { p_actor: actor.actorId, p_target: authUserId, p_action: 'set', p_role: role, p_label: name });
+  if (!out || !out.ok) {
+    // NEVER A LOGIN WITHOUT ITS TEAM ROW (review R7): a sign-in login this request made is taken away again, so a
+    // refusal or a database blip leaves nothing behind. A login that already existed is left exactly as it was.
+    let undone = !madeHere;
+    if (madeHere) {
+      try { const d = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(authUserId), { method: 'DELETE', headers: vpaHeaders(env) }); undone = !!(d && d.ok); }
+      catch (e) { undone = false; }
+    }
+    const left = undone ? '' : ' A sign-in login was made for that mobile but it is not on the Team list; adding it again finishes the job.';
+    const t = vpaTeamRefusal(out);
+    return json({ error: (t ? t.error : 'Could not change the Team list just now. Nothing was changed. Try again in a minute.') + left }, t ? t.status : 503);
   }
+  const wasRole = out.was_role || null;
 
   await vpaAudit(env, actor, 'staff_added', 'admin:' + authUserId, { name: name, mobile: mobile, email: email || null, role: role, was_role: wasRole });
 
   return json({ ok: true, auth_user_id: authUserId });
+}
+
+/* vp_hq_team_change (migration 217, service_role only): the Team list's one writer. -> its jsonb answer
+   { ok, was_role, label } or { ok:false, reason }, or null when it could not be asked (a blip, or 217 not run). */
+async function vpaTeamChange(env, args) {
+  let res;
+  try {
+    res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_hq_team_change', { method: 'POST', headers: vpaHeaders(env), body: JSON.stringify(args) });
+  } catch (e) { return null; }
+  if (!res || !res.ok) return null;
+  const out = await res.json().catch(function () { return null; });
+  return (out && typeof out === 'object' && typeof out.ok === 'boolean') ? out : null;
+}
+/* A refusal from vp_hq_team_change in words -> { status, error }, or null when there is none to give. */
+function vpaTeamRefusal(out) {
+  const why = out && out.reason;
+  if (why === 'not_owner') return { status: 403, error: 'Only an Owner can change the Team list, and this login is not an Owner any more. Nothing was changed.' };
+  if (why === 'self') return { status: 403, error: 'That is your own login. Another Owner can change it. Nothing was changed.' };
+  if (why === 'last_owner') return { status: 409, error: 'That would leave HQ with no Owner. Nothing was changed.' };
+  if (why === 'not_found') return { status: 409, error: 'That staff login is not on the Team list any more.' };
+  if (why === 'bad_role') return { status: 400, error: "role must be 'owner', 'accounts' or 'staff'." };
+  return null;
 }
 
 /* ===========================================================================
@@ -10920,8 +10944,9 @@ async function vpaHandleStaff(request, env, json) {
  *    add itself rows, or delete the owner's row. Migration 217 leaves the browser SELECT only, and the
  *    one write the Team tab makes comes here.
  *    Refused, and nothing changes: not an owner (403), your own login (403: another owner removes you,
- *    which also means the last owner can never be removed), a login not on the Team list (404), a read
- *    that fails (503).
+ *    which also means the last owner can never be removed), a login not on the Team list (409, gone:true;
+ *    never 404, which HQ reads as "route not deployed"), the database not answering (503).
+ *    The check and the delete are one transaction in vp_hq_team_change (migration 217, review R4).
  *    Only the HQ row goes; the Supabase Auth user is left (as before), so the login simply stops being HQ.
  *    Every removal is in the audit log with the name and role it had.
  * ======================================================================== */
@@ -10934,16 +10959,19 @@ async function vpaHandleStaffRemove(request, env, json) {
   const target = String(b.auth_user_id || '');
   if (!VPA_UUID_RE.test(target)) return json({ error: 'auth_user_id is required.' }, 400);
   if (target === actor.actorId) return json({ error: 'You cannot remove your own login. Another Owner can. Nothing was changed.' }, 403);
-  // The last Owner can never be removed here: only an Owner may call this, and never on their own row, so
-  // another Owner (the caller) always remains.
-  let rows;
-  try {
-    rows = await vpaReadPage(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target) + '&select=auth_user_id,role,label&limit=1');
-  } catch (e) { return json({ error: 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, 503); }
-  const row = rows && rows[0];
-  if (!row) return json({ error: 'That staff login is not on the Team list any more.' }, 404);
-  const gone = await vpaDelete(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target));
-  if (!gone.length) return json({ error: 'That staff login is not on the Team list any more.' }, 404);
+  // ONE TRANSACTION (review R4): vp_hq_team_change (migration 217) locks every owner row, re-checks the caller is
+  // still an owner (two owners removing each other at once: the second is refused), refuses the last owner, and
+  // deletes. Its answer carries the name and role the row had, for the audit.
+  const out = await vpaTeamChange(env, { p_actor: actor.actorId, p_target: target, p_action: 'remove' });
+  if (!out) return json({ error: 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, 503);
+  if (!out.ok) {
+    // Not on the list any more (another owner or another tab got there first): 409 with gone:true, never a 404,
+    // which HQ reads as "this route is not deployed" (review R5). HQ takes the row off the list.
+    if (out.reason === 'not_found') return json({ error: 'That staff login is not on the Team list any more.', gone: true }, 409);
+    const t = vpaTeamRefusal(out);
+    return json({ error: t ? t.error : 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, t ? t.status : 503);
+  }
+  const row = { label: out.label, role: out.was_role };
   await vpaAudit(env, actor, 'staff_removed', 'admin:' + target, { label: row.label || null, role: row.role || null });
   return json({ ok: true, auth_user_id: target });
 }
