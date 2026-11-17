@@ -11284,6 +11284,10 @@ MUTATIONS = [
     ('old-tv-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '.ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;', '.ringwrap .rnum{position:absolute;inset:0;display:flex;',
      'SECS sits beside the number instead of under it'),
+    # 17 Nov 2026: the trivia lobby wall must be on air when it is photographed (the narrow speck tolerance in is_speck must not hide it).
+    ('old-tv-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     '<div class="layer qgrid join" id="tvLobby">', '<div class="layer qgrid join" id="tvLobbyX">',
+     'the trivia lobby wall is not on air when the lobby is photographed'),
     # THE LIVE CONNECTION ON AN OLDER TV, 2 Nov 2026: supabase-js 2.118.0 needs Chromium 85 to parse.
     ('old-tv-syntax.test.py', 'venueplay/tv.html',
      '<script src="/app/vendor/supabase-js-2.118.0.min.js"></script>\n<script src="/app/vp-supabase-oldtv.js"></script>',
