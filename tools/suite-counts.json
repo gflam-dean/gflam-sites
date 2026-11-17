@@ -820,7 +820,7 @@
   "counted_by": "lines"
  },
  "tools/test-console-status-area.js": {
-  "checks": 70,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-console-venue-from-link.js": {
@@ -908,7 +908,7 @@
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
-  "checks": 145,
+  "checks": 150,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
@@ -1268,7 +1268,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
-  "checks": 131,
+  "checks": 134,
   "counted_by": "lines"
  },
  "tools/test-prospect-terms-first-game.js": {
