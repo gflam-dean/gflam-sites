@@ -107,7 +107,10 @@ SCREENS = [
     # the SAME page differ there (seen 12 Nov 2026 on the test server), which is motion, not layout. The new-look stages on
     # an old TV need a suite of their own that steps VPDrawStyle by ctl.seek(t) (written up for main, INBOX 281).
     ('raffle', '/app/raffle/screen.html?demo=1', [('result', 21000, 'tvResult')]),
-    ('members draw', '/app/members/screen.html?demo=1', [('win', 16000, 'tvStyle'), ('result', 22500, 'tvResult')]),
+    # The members win is photographed at 17 s, not 16 (17 Nov 2026): at 16 s the claim line is on the last 0.02 px of its ease
+    # (opacity 0.9987, translateY 0.024px, and both differ load to load by the frame the clock last ticked), so its text rasterised two
+    # ways (6,717 px on Friday gate 1). By 17 s it is opacity 1, no transform, and 24 loads are pixel-equal.
+    ('members draw', '/app/members/screen.html?demo=1', [('win', 17000, 'tvStyle'), ('result', 22500, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),
 ]
 SIZES = [(1920, 1080), (1280, 720)]
@@ -266,6 +269,23 @@ def pixels_differ(a, b):
     return sum(1 for px in d.crop(bb).getdata() if px != (0, 0, 0)), bb
 
 
+def is_speck(a, b):
+    """THE ONE NARROW TOLERANCE (17 Nov 2026). Chrome's software rasteriser paints the LCD-antialiased title
+    TRIVIA with a stray fragment about one load in five: a 1 px wide, 5 px tall edge pixel of the T, near black
+    ((10,17,56) on (10,10,11)), appears 22 px above where the same load puts it in the others, and the page,
+    its layout and its fonts are identical (24 loads, probe at ~/venue-enrich/reports/old-tv-strip-17nov/).
+    That is not a page difference. A difference counts as such a speck only when it is at most 24 pixels, in a
+    box at most 3 px wide and 48 px tall, and no channel moves by more than 64. A brightness or colour change, a
+    moved box or a missing word is far over every one of those, so the check keeps its power."""
+    if not a or not b: return False
+    ia, ib = Image.open(io.BytesIO(a)).convert('RGB'), Image.open(io.BytesIO(b)).convert('RGB')
+    if ia.size != ib.size: return False
+    d = ImageChops.difference(ia, ib); bb = d.getbbox()
+    if not bb: return True
+    px = [p for p in d.crop(bb).getdata() if p != (0, 0, 0)]
+    return len(px) <= 24 and bb[2] - bb[0] <= 3 and bb[3] - bb[1] <= 48 and max(max(p) for p in px) <= 64
+
+
 def compare(native, other):
     """[(index, label, max corner move px, font native, font other, has own text)] for boxes on screen in both."""
     rows = []
@@ -331,7 +351,7 @@ def main():
                         n3, _bb3 = pixels_differ(again, pm) if again else (-1, None)
                         inside = bool(bb and bb2 and bb[0] >= bb2[0] and bb[1] >= bb2[1] and bb[2] <= bb2[2] and bb[3] <= bb2[3])
                         ok(tag + ': a modern Chrome paints the page it painted before (it differs from itself only at %s)' % (bb2,),
-                           n3 == 0 or (n2 > 0 and inside),
+                           n3 == 0 or (n2 > 0 and inside) or is_speck(pb, pm) or is_speck(again, pm),
                            '%s pixels differ in %s; two loads of the old page differ by %s in %s; modern vs the second load differ by %s'
                            % (n, bb, n2, bb2, n3))
                     else:
