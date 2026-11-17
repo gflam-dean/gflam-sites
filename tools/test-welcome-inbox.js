@@ -83,6 +83,12 @@ function welcome(o) {
   check('a lowercase name is written as a name: "Kayla at venueplay"', k.m.from === 'Kayla at venueplay <hello@send.venueplay.com.au>', k.m.from);
   var d = await welcome({ senderName: 'Dean Tindale', senderEmail: 'dean@venueplay.online' });
   check('one of Dean\'s boxes: plain "venueplay", never Dean\'s own name on the From line', d.m.from === 'venueplay <hello@send.venueplay.com.au>', d.m.from);
+  /* Dean, 17 Nov 2026, of emails signed "Cheers, Dean": "You can just say cheers". */
+  check('Harry\'s prospect: the welcome is signed "Cheers, Harry, the venueplay team" (first name only)', /Cheers,<br>Harry<br>the venueplay team<br>/.test(h.m.html || '') && !/Finch/.test(h.m.html || ''), (h.m.html || '').slice((h.m.html || '').indexOf('Cheers'), (h.m.html || '').indexOf('Cheers') + 80));
+  check('one of Dean\'s boxes: the welcome is signed "Cheers, the venueplay team", no Dean in the HTML, the text part, the subject or the From (Dean, 17 Nov: "You can just say cheers")',
+    /Cheers,<br>the venueplay team<br>/.test(d.m.html || '') && !/Dean|Tindale/.test((d.m.html || '') + (d.m.text || '') + (d.m.subject || '') + d.m.from) && /Cheers,?\s+the venueplay team/.test(d.m.text || ''), (d.m.html || '').slice((d.m.html || '').indexOf('Cheers'), (d.m.html || '').indexOf('Cheers') + 80));
+  var d2 = await welcome({ senderName: 'Sales Desk', senderEmail: 'dean@venueplay.com.au' });
+  check('Dean\'s own dean@ mailbox under another name: still "Cheers, the venueplay team"', /Cheers,<br>the venueplay team<br>/.test(d2.m.html || '') && !/Sales<br>/.test(d2.m.html || ''), (d2.m.html || '').slice((d2.m.html || '').indexOf('Cheers'), (d2.m.html || '').indexOf('Cheers') + 80));
   var n = await welcome({});
   check('no sender given: plain "venueplay <hello@send.venueplay.com.au>"', n.m.from === 'venueplay <hello@send.venueplay.com.au>', n.m.from);
   var x = await welcome({ senderName: 'Harry', senderEmail: 'harry@gmail.com' });

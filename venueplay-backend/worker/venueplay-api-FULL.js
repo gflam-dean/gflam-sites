@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '17 Nov 2026, 21:50 · 2c211276';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 21:52 · f7abffcd';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -8109,6 +8109,16 @@ function vpaProspectFrom(senderName, senderEmail) {
   return first.charAt(0).toUpperCase() + first.slice(1) + ' at venueplay <hello@send.venueplay.com.au>';
 }
 function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
+/* WHO SIGNS THE WELCOME: the first name of the person they wrote to (Harry, Kayla, Sarah), checked by vpaProspectSender.
+   Never Dean (Dean, 17 Nov 2026, of emails signed "Cheers, Dean": "You can just say cheers"): a prospect from one of
+   Dean's boxes (his name, or a dean@ mailbox) gets the plain "Cheers, the venueplay team", as vpaProspectFrom gives
+   them the plain "venueplay" From. '' = the team. */
+function vpaWelcomeSigner(senderName, senderEmail) {
+  const s = vpaProspectSender(senderName, senderEmail);
+  const name = (s && !s.error && s.name) ? s.name : '';
+  if (/^dean$/i.test(name.split(/\s+/)[0] || '') || /^dean([._+-]|@)/i.test(String((s && s.email) || ''))) return '';
+  return name;
+}
 async function vpaRenderProspectWelcome(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const email = String(o.email || '').trim();
@@ -8153,7 +8163,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     // The sign-off (and, until the new template is on Pages, the old fixed one in its place).
-    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(vpaProspectSender(o.senderName, o.senderEmail).name));
+    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(vpaWelcomeSigner(o.senderName, o.senderEmail)));
   return vpaEmailDocument(vpaFillSupport(html), vpaProspectSubject(o.venueName));
 }
 async function vpaFireProspectWelcome(env, o) {
