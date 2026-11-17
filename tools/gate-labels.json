@@ -118,6 +118,7 @@
   "check-venue-scoping.py",
   "clip-fade-in-chrome.test.py",
   "closed venues lose their player details, and nobody else does (52 checks)",
+  "cmdline-guards.test.py",
   "coaster-hq.test.js",
   "coaster-page.test.js",
   "coaster-round.test.js",

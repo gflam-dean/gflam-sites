@@ -23,8 +23,15 @@ of the locks does not go red every time a migration adds a column.
 
 Read-only. Needs NEW_DB_URL in ~/.gflam-migrate.env and the pg8000 package
 (python3 -m pip install --user pg8000). Never prints the URL.
+
+    python3 venueplay-backend/tools/dump-rls-baseline.py --help     this, and nothing else
+
+18 Nov 2026 (flag audit): anything but --check, --help and a typo like --chek included, used to
+read the LIVE database and OVERWRITE both committed baselines. The command line is now read
+before the database is: --help or -h prints the usage and exits 0, an unknown flag or a stray
+word exits 2, and neither connects to anything or writes any file.
 """
-import io, json, os, sys, urllib.parse
+import argparse, io, json, os, sys, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'venueplay-backend', 'supabase', 'RLS-BASELINE.json')
@@ -102,10 +109,22 @@ def flatten(snap):
     return lines
 
 
-def main():
+def parse_args(argv):
+    """The command line, read BEFORE the database is. --help exits 0, anything unknown exits 2."""
+    ap = argparse.ArgumentParser(prog='dump-rls-baseline.py', allow_abbrev=False,
+                                 description='Read the live database\'s row security, policies, grants, views and '
+                                             'SECURITY DEFINER functions. With no flag, REWRITE the committed '
+                                             'RLS-BASELINE.json and COLUMNS-BASELINE.json from live.')
+    ap.add_argument('--check', action='store_true',
+                    help='write nothing; exit 1 if live differs from RLS-BASELINE.json (release-check.py live half)')
+    return ap.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(sys.argv[1:] if argv is None else list(argv))
     live = snapshot()
     cols = live.pop('_columns', {})
-    if '--check' in sys.argv:
+    if args.check:
         try:
             base = json.load(io.open(OUT, encoding='utf-8'))
         except Exception:

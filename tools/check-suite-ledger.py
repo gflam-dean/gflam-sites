@@ -22,9 +22,36 @@ and compares with a committed ledger:
 
 Shrinking a suite is sometimes right. Then run --update, and the diff to suite-counts.json is
 the record that it was a decision.
+
+    python3 tools/check-suite-ledger.py --help     this, and nothing else
+
+COMMAND LINE (18 Nov 2026, flag audit). Read before any suite runs: --help or -h prints this and exits 0,
+an unknown flag or a stray word exits 2 (both used to run every suite, six at once, Chrome included), and
+--reuse or --judged-elsewhere with nothing after it exits 2 (it used to crash at import). The flags the
+gate passes (--reuse DIR, --skip-chrome, --judged-elsewhere FILE) and --update are read as before.
 """
-import glob, io, json, os, re, subprocess, sys
+import argparse, glob, io, json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
+
+
+def parse_cmdline(argv):
+    """The command line, read BEFORE any suite runs. --help exits 0, anything unknown exits 2."""
+    ap = argparse.ArgumentParser(prog='check-suite-ledger.py', allow_abbrev=False, description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--update', action='store_true', help='rewrite tools/suite-counts.json from suites that pass')
+    ap.add_argument('--skip-chrome', action='store_true', help='leave the Chrome suites out (a targeted prove run)')
+    ap.add_argument('--reuse', metavar='DIR', help='count suites the gate already ran from their kept output')
+    ap.add_argument('--judged-elsewhere', metavar='FILE', help='Chrome suites a signed server record judged (one per line)')
+    argv = list(argv)
+    # The rest of this file finds a value as the word AFTER the flag, so --reuse=DIR would be read as no --reuse.
+    for a in argv:
+        if a.startswith(('--reuse=', '--judged-elsewhere=')):
+            ap.error('write %s with a space, not "=": %s' % (a.split('=', 1)[0], a))
+    return ap.parse_args(argv)
+
+
+if __name__ == '__main__':
+    parse_cmdline(sys.argv[1:])   # exits here on --help (0) or anything unknown (2); nothing has run yet
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'

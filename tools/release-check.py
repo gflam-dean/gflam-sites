@@ -38,13 +38,48 @@ broadcasts on no real venue's channel: VenuePlay has a live client.
         anything reaches the venue. Note what a preview does NOT isolate: it
         serves branch SITE code but talks to the same Workers and the same
         database as production, so play on it with a throwaway venue slug.
+
+  python3 tools/release-check.py --help     this, and nothing else
+
+COMMAND LINE (18 Nov 2026, flag audit). Read before anything else in this file runs: --help or -h
+prints this and exits 0; an unknown flag or a stray word exits 2. Both used to run the WHOLE gate
+(the Chrome suites, the heavy lock, the live probes), a typo of --local included. The flags the
+hook, release.py, deploy-worker and prove-checks pass are read exactly as before.
 """
+import argparse
 import ast
 import importlib.util
 import hashlib
 import atexit, io, json, os, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def parse_cmdline(argv):
+    """The command line, read BEFORE the heavy lock, any suite, Chrome or production. --help exits 0, anything
+    unknown exits 2. Only a check that the line is understood: the flags themselves are still read where they
+    always were (LOCAL_ONLY, SKIP_CHROME, CHROME_RECORD below, and main())."""
+    ap = argparse.ArgumentParser(prog='release-check.py', allow_abbrev=False, description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('which', nargs='?', choices=('venueplay', 'partyplay'), help='one product only (default both)')
+    ap.add_argument('--local', action='store_true', help='the pre-push half only')
+    ap.add_argument('--live', action='store_true', help='production only, skip the local half')
+    ap.add_argument('--wait', action='store_true', help='wait for the deploy first, then check')
+    ap.add_argument('--skip-chrome', action='store_true', help='leave the Chrome suites out (never a release gate)')
+    ap.add_argument('--chrome-record', action='store_true', help='skip Chrome suites a signed server record covers (the hook)')
+    ap.add_argument('--update-labels', action='store_true', help='rewrite tools/gate-labels.json')
+    ap.add_argument('--vp-base', metavar='URL', help='check a venueplay Pages preview instead of production')
+    ap.add_argument('--pp-base', metavar='URL', help='check a partyplay Pages preview instead of production')
+    argv = list(argv)
+    # main() finds a URL as the word AFTER the flag, so --vp-base=URL would quietly check PRODUCTION.
+    for a in argv:
+        if a.startswith(('--vp-base=', '--pp-base=')):
+            ap.error('write %s with a space, not "=": %s' % (a.split('=', 1)[0], a))
+    return ap.parse_args(argv)
+
+
+if __name__ == '__main__':
+    parse_cmdline(sys.argv[1:])   # exits here on --help (0) or anything unknown (2); nothing has run yet
 
 
 _SCANNER_ERROR = None

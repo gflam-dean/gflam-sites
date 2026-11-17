@@ -760,9 +760,40 @@ def host_key_fingerprint():
     return fps[-1] if fps else ''
 
 
+USAGE = 'usage: gate-server.py run [-j N] | check | init-key | --help   (N is 1 to 4)'
+
+
+def parse_cmdline(argv):
+    """(18 Nov 2026, flag audit) The command line, read BEFORE any key, record, git or server is touched. Returns
+    (cmd, jobs) for a line it knows, or an exit code: 0 for --help/-h (the usage printed), 2 for anything else (an
+    unknown subcommand, a stray word after one, or a -j that is not 1 to 4: `run --oops` used to run the remote gate,
+    and a bad -j silently ran 4 at once). No subcommand at all prints the doc and exits 2, as before."""
+    argv = list(argv)
+    if '--help' in argv or '-h' in argv:
+        print(__doc__)
+        print(USAGE)
+        return 0
+    if not argv:
+        print(__doc__)
+        return 2
+    cmd, rest = argv[0], argv[1:]
+    if cmd in ('check', 'init-key') and not rest:
+        return cmd, None
+    if cmd == 'run':
+        if not rest:
+            return cmd, JOBS
+        if len(rest) == 2 and rest[0] == '-j' and rest[1] in ('1', '2', '3', '4'):
+            return cmd, int(rest[1])
+    print('gate-server.py: error: not understood: %s. Nothing was run.\n%s' % (' '.join(argv), USAGE))
+    return 2
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    cmd = argv[0] if argv else ''
+    parsed = parse_cmdline(argv)
+    if not isinstance(parsed, tuple):
+        return parsed
+    cmd, jobs = parsed
     if cmd == 'init-key':
         good, text = init_key()
         print('  gate key: ' + text)
@@ -809,15 +840,14 @@ def main(argv=None):
         if not os.path.isfile(REMOTE_RUN):
             print('  gate record: not run: %s is not on this Mac' % REMOTE_RUN)
             return 1
-        # run -j N (1 to 4): fewer at once when the shared server is busy. Only how many run together, never which
-        # suites or how they are judged.
-        jobs = int(argv[2]) if len(argv) > 2 and argv[1] == '-j' and argv[2] in ('1', '2', '3', '4') else JOBS
+        # run -j N (1 to 4, read by parse_cmdline): fewer at once when the shared server is busy. Only how many run
+        # together, never which suites or how they are judged.
         good, text, rec = make_record(ROOT, remote_runner(ROOT), key, host='vp-tests-1 ' + HOST, host_key=host_key_fingerprint(), jobs=jobs)
         if good:
             text += '; written to ' + write_record(rec)
         print('  gate record: ' + text)
         return 0 if good else 1
-    print(__doc__)
+    print(__doc__)   # not reached: parse_cmdline knows only the three above
     return 2
 
 

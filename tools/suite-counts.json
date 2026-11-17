@@ -2366,5 +2366,9 @@
  "tools/stamp-workers.test.py": {
   "checks": 43,
   "counted_by": "lines"
+ },
+ "tools/cmdline-guards.test.py": {
+  "checks": 154,
+  "counted_by": "lines"
  }
 }

@@ -393,6 +393,28 @@ def gate_or_die(flags, name, path):
     print('  gate green (%s checks)' % (ran.group(1) or ran.group(2)))
 
 
+KNOWN_FLAGS = {'--live', '--list', '--full-gate', '--gate-only'}
+VALUE_FLAGS = ('--do-class=', '--emergency=')
+
+
+def parse_cmdline(argv):
+    """(18 Nov 2026, flag audit) The command line, read BEFORE the credentials, the API or the gate. --help or -h
+    prints the usage and exits 0. An unknown flag (or a single-dash word) is refused here, EXIT 1 like every other
+    refusal (2 means uploaded in this tool's exit codes, so it is not used for a typo). It used to be refused only
+    after the credentials were read and the account's Workers were listed over the API. Returns None to go on."""
+    argv = list(argv)
+    if '--help' in argv or '-h' in argv:
+        print(__doc__)
+        print(main.__doc__)
+        print('usage: deploy-worker.py [--live] [--full-gate] [--gate-only] [--do-class=Name] [--emergency=why] <worker name> <file>')
+        print('       deploy-worker.py --list')
+        return 0
+    unknown = sorted(a for a in argv if a.startswith('-') and a not in KNOWN_FLAGS and not a.startswith(VALUE_FLAGS))
+    if unknown:
+        die('unknown flag(s): ' + ', '.join(unknown))
+    return None
+
+
 def main():
     """Exit codes, printed on the last line as EXIT n so a tee'd log still shows them:
          0  deployed and proved by /health (or --gate-only and the gate is green)
@@ -402,6 +424,8 @@ def main():
 
        --gate-only <worker> <file>   run the fast gate for that file and stop: no credentials, no upload.
        --full-gate                   the whole local gate instead of the fast one (the old behaviour)."""
+    if parse_cmdline(sys.argv[1:]) == 0:
+        sys.exit(0)
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     flags = {a for a in sys.argv[1:] if a.startswith('--')}
     gate_only = '--gate-only' in flags

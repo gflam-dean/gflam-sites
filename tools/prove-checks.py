@@ -34,7 +34,17 @@ HOW FAST (27 Oct 2026). A proof runs only what judges its label: the one suite t
 names (jsc or Chrome), or the gate WITHOUT its Chrome suites for a gate check. Each line
 says which and how long it took. A one-label run no longer ends with a full gate for the
 coverage report; the whole-table run still does. Chrome proofs take /tmp/vp-heavy.lock.
+
+  prove-checks.py --list     does every mutation still apply (read only, the gate runs this)
+  prove-checks.py --live     the live table
+  prove-checks.py --help     this, and nothing else
+
+COMMAND LINE (18 Nov 2026, flag audit). Read before anything else in this file runs: --help or -h
+prints this and exits 0. An unknown flag or a second word exits 2. `--help` used to be dropped as a
+flag, so it proved EVERY mutation (hours, Chrome, the heavy lock), and `-h` became a label filter.
+One label filter, --full, --live and --list are read exactly as before.
 """
+import argparse
 import io
 import os
 import re
@@ -45,6 +55,22 @@ import tempfile
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def parse_cmdline(argv):
+    """The command line, read BEFORE any copy, lock, suite or gate. --help exits 0, anything unknown exits 2.
+    Only a check that the line is understood: FULL, main() and --list still read sys.argv as they always did."""
+    ap = argparse.ArgumentParser(prog='prove-checks.py', allow_abbrev=False, description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('label', nargs='?', help='prove only the rows whose label contains this (case ignored)')
+    ap.add_argument('--full', action='store_true', help='the whole local gate for every mutation (slow)')
+    ap.add_argument('--live', action='store_true', help='the live table')
+    ap.add_argument('--list', action='store_true', help='check every mutation still applies; proves nothing')
+    return ap.parse_args(list(argv))
+
+
+if __name__ == '__main__':
+    parse_cmdline(sys.argv[1:])   # exits here on --help (0) or anything unknown (2); nothing has run yet
 GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0m'
 
 # (what we expect to go red, file, find, replace, why this mutation is the right one)
@@ -363,6 +389,47 @@ MUTATIONS = [
      'ended_after_failed_card: unpaid,',
      'ended_after_failed_card: 0,',
      'the record does not say how many venues ended after a failed card'),
+    # ---- 18 Nov 2026 (flag audit, reports/flag-audit-18nov.md): --help or a typo ran the tool for real in eight more tools
+    ('cmdline-guards.test.py', 'venueplay-backend/tools/dump-rls-baseline.py',
+     '    return ap.parse_args(argv)',
+     '    return ap.parse_known_args(argv)[0]',
+     'dump-rls-baseline takes a typo (--chek) as "no flag": reads LIVE and overwrites the committed baselines'),
+    ('cmdline-guards.test.py', 'venueplay-backend/tools/dump-rls-baseline.py',
+     '    args = parse_args(sys.argv[1:] if argv is None else list(argv))\n    live = snapshot()',
+     '    live = snapshot()\n    args = parse_args(sys.argv[1:] if argv is None else list(argv))',
+     'dump-rls-baseline reads the live database before its command line, so --help connects first'),
+    ('cmdline-guards.test.py', 'tools/release-check.py',
+     '    parse_cmdline(sys.argv[1:])   # exits here on --help (0) or anything unknown (2); nothing has run yet',
+     '    pass',
+     'release-check.py --help (or a typo of --local) runs the WHOLE gate: Chrome, the heavy lock, live probes'),
+    ('cmdline-guards.test.py', 'tools/release-check.py',
+     "        if a.startswith(('--vp-base=', '--pp-base=')):",
+     '        if False:',
+     'release-check.py --vp-base=URL is taken, main() never sees it, and PRODUCTION is checked instead of the preview'),
+    ('cmdline-guards.test.py', 'tools/prove-checks.py',
+     "if __name__ == '__main__':\n    parse_cmdline(sys.argv[1:])",
+     "if __name__ == '__main__':\n    pass",
+     'prove-checks.py --help proves EVERY mutation (hours of Chrome on the shared Mac); -h becomes a label filter'),
+    ('cmdline-guards.test.py', 'tools/check-suite-ledger.py',
+     '    parse_cmdline(sys.argv[1:])   # exits here on --help (0) or anything unknown (2); nothing has run yet',
+     '    pass',
+     'check-suite-ledger.py --help runs every suite, six at once, Chrome included'),
+    ('cmdline-guards.test.py', 'tools/gate-record.py',
+     '    return ap.parse_args(argv)',
+     '    return ap.parse_known_args(argv)[0]',
+     'gate-record acts on --write anywhere in the line, so `--write --oops` writes a record'),
+    ('cmdline-guards.test.py', 'tools/gate-server.py',
+     "        if len(rest) == 2 and rest[0] == '-j' and rest[1] in ('1', '2', '3', '4'):\n            return cmd, int(rest[1])",
+     "        return cmd, int(rest[1]) if len(rest) > 1 and rest[0] == '-j' and rest[1] in ('1', '2', '3', '4') else JOBS",
+     'gate-server.py run --oops runs the remote gate, and a bad -j silently runs 4 at once'),
+    ('cmdline-guards.test.py', 'tools/deploy-worker.py',
+     '    if parse_cmdline(sys.argv[1:]) == 0:\n        sys.exit(0)\n',
+     '',
+     'deploy-worker.py --help reads the Cloudflare credentials and lists the Workers over the API'),
+    ('cmdline-guards.test.py', 'tools/suite-impact.py',
+     "    unknown = [a for a in argv if a.startswith('-') and a != '--merge']",
+     '    unknown = []',
+     'suite-impact.py with --merg (a typo) quietly drops the trial merge'),
     # ---- 18 Nov 2026 (Sunday runsheet S9): `stamp-workers.py --help` STAMPED the Workers (only --check was read)
     ('stamp-workers.test.py', 'tools/stamp-workers.py',
      "    return ap.parse_args(argv)",

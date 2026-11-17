@@ -17,6 +17,12 @@ What it does NOT do: it cannot see a check that measures layout (a pixel, an ord
 and it cannot see a token that stays in the file but moves (a field folded away keeps its id). Those are
 caught only by running the suites it names against the merged tree, which `--merge` leaves ready in a
 temp worktree (printed; delete it with `git worktree remove`). Everything here is local git: no remote.
+
+    python3 tools/suite-impact.py --help                       this, and nothing else
+
+COMMAND LINE (18 Nov 2026, flag audit): read before git is. --help or -h prints this and exits 0; a flag
+other than --merge (a typo of it included, which used to drop the trial merge without a word) exits 2.
+Not exactly two of <base> <branch> prints this and exits 2, as before.
 """
 import io, json, os, re, subprocess, sys, tempfile
 
@@ -239,10 +245,25 @@ def reached_chrome_suites(base, branch):
     return sorted(s for s in reach if s != 'tools/prove-checks.py' and gatelib.uses_chrome(os.path.join(ROOT, s)))
 
 
-def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+def parse_cmdline(argv):
+    """(base, branch, merge) for a line it knows, or an exit code: 0 for --help/-h, 2 for anything else."""
+    argv = list(argv)
+    if '--help' in argv or '-h' in argv:
+        print(__doc__); return 0
+    unknown = [a for a in argv if a.startswith('-') and a != '--merge']
+    if unknown:
+        print('suite-impact.py: error: unknown flag(s): %s (only --merge). Nothing was run.' % ' '.join(unknown)); return 2
+    args = [a for a in argv if not a.startswith('--')]
     if len(args) != 2:
         print(__doc__); return 2
+    return args[0], args[1], '--merge' in argv
+
+
+def main(argv=None):
+    parsed = parse_cmdline(sys.argv[1:] if argv is None else argv)
+    if not isinstance(parsed, tuple):
+        return parsed
+    args = list(parsed[:2])
     base, branch = args
     print('# suite-impact: %s onto %s' % (branch, base))
     print('# %s' % (branch if branch.startswith('dir:') else git('log', '--oneline', '-1', branch).strip()))
@@ -278,7 +299,7 @@ def main():
     print('\n## Ledger (tools/suite-counts.json), merge-base %s' % mb[:8])
     for r in drift or ['  no drift']:
         print('  ' + r)
-    if '--merge' in sys.argv and not branch.startswith('dir:'):
+    if parsed[2] and not branch.startswith('dir:'):
         wt, conflicts, rot, tail = trial_merge(base, branch)
         print('\n## Trial merge (local, in %s)' % wt)
         print('  conflicts: %s' % (', '.join(conflicts) if conflicts else 'none'))

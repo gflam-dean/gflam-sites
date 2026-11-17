@@ -25,8 +25,13 @@ step 0 both refuse a dirty tree already; this is the same rule in the same words
 
 The record is written ONLY on a green gate. A red gate writes nothing and REMOVES any record for
 this tree, so a tree that failed can never ride an older record.
+
+COMMAND LINE (18 Nov 2026, flag audit). Read before anything else: --help or -h prints this and exits
+0; an unknown flag or a stray word exits 2 and acts on nothing (it used to act on --write anywhere in
+the line, so `--help --write` wrote a record); --root needs a folder after it. No flag at all prints
+this and exits 2, as before.
 """
-import io, json, os, subprocess, sys, time
+import argparse, io, json, os, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RECORD = os.path.join('tools', 'gate-record.json')
@@ -116,19 +121,29 @@ def decide(root, now=None, max_age_s=MAX_AGE_S):
                   % (tree[:12], rec.get('head', '')[:8], age // 60, rec.get('when', '?'), max_age_s // 3600))
 
 
+def parse_args(argv):
+    """The command line, read BEFORE any record or git is touched. --help exits 0, anything unknown exits 2."""
+    ap = argparse.ArgumentParser(prog='gate-record.py', allow_abbrev=False, description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--write', action='store_true', help='record this tree as gated green (the pre-push hook)')
+    ap.add_argument('--clear', action='store_true', help='remove the record (the pre-push hook, on a red gate)')
+    ap.add_argument('--decide', action='store_true', help='print the step-5 decision; exit 0 skip Chrome, 1 full gate')
+    ap.add_argument('--root', help='the checkout to act on (default: this one)')
+    return ap.parse_args(argv)
+
+
 def main(argv=None):
-    argv = sys.argv[1:] if argv is None else argv
-    root = ROOT
-    if '--root' in argv:
-        root = argv[argv.index('--root') + 1]
-    if '--write' in argv:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    args = parse_args(argv)
+    root = args.root if args.root is not None else ROOT
+    if args.write:
         good, text = write_record(root)
         print('  gate record: ' + text)
         return 0 if good else 1
-    if '--clear' in argv:
+    if args.clear:
         print('  gate record: %s' % ('removed' if clear_record(root) else 'none to remove'))
         return 0
-    if '--decide' in argv:
+    if args.decide:
         skip, why = decide(root)
         print('  ' + why)
         return 0 if skip else 1
