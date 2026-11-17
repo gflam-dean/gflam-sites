@@ -6948,10 +6948,24 @@ async function vpaProspectTextTo(env, p, v) {
   const e = m ? vpaNormaliseMobileAU(m) : null;
   return vpaIsAuMobileE164(e) ? e : null;
 }
-/* One reminder as a text. { ok } or { ok:false, why }. */
+/* WHO A REMINDER MAY BE TEXTED TO (18 Nov 2026, review SHOULD 2). Only a venue that signed ITSELF up (vp_prospects.source
+   'self': /quick and the offer page's quick form, through vpsMakeAccount), and only to the mobile on its account record,
+   the one that passed the sign-up code. A prospect HQ or the autopilot set up is never texted by the sweep, whatever
+   phone its lead data holds (Dean: prospect texts carry only their sign-in link, and a number from a cold list is not
+   theirs to be texted on). Not texted = not warned, so the pause is held for HQ (vpaPauseHeldForHq). +61 form or null. */
+async function vpaProspectVerifiedMobile(env, p, v) {
+  if (!p || p.source !== 'self' || !v || !v.founding_id) return null;
+  const f = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=mobile&limit=1').catch(() => []);
+  const raw = (f && f[0] && f[0].mobile) || '';
+  const e = raw ? vpaNormaliseMobileAU(raw) : null;
+  return vpaIsAuMobileE164(e) ? e : null;
+}
+/* One reminder as a text. { ok } or { ok:false, why }. The sweep calls it only inside the send window (vpaInSendWindow:
+   Monday to Friday, 9 to 12 and 2 to 5, the venue's own time). */
 async function vpaProspectReminderText(env, p, v, kind, endsWhen) {
+  if (!p || p.source !== 'self') return { ok: false, why: 'not a self sign-up' };
   if (!(vpaHasMobileMessage(env) || vpaHasClickSend(env))) return { ok: false, why: 'no text provider' };
-  const to = await vpaProspectTextTo(env, p, v);
+  const to = await vpaProspectVerifiedMobile(env, p, v);
   if (!to) return { ok: false, why: 'no mobile' };
   if (await vpaSmsOptedOut(env, to)) return { ok: false, why: 'opted out of texts' };
   let r;

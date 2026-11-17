@@ -1304,7 +1304,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-signup-warnings.js": {
-  "checks": 45,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {

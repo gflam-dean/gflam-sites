@@ -230,6 +230,30 @@ async function main() {
   check('two pages read (offset 0 and 1000), not one', pages.length >= 2 && /offset=1000/.test(pages[1] || ''), pages);
   check('the venue on the second page got its day 3 text', MMS.length === 1 && JSON.stringify(P.p().reminders_sent) === '[3]', [MMS.length, P.p().reminders_sent]);
 
+  section('3b. Only a venue that signed itself up, only on the mobile that passed the code (review SHOULD 2)');
+  world(); listed();
+  var Q = await quickSignedIn({});
+  check('a quick sign-up is recorded as a self sign-up', Q.p().source === 'self', Q.p().source);
+  var HQP = await quickSignedIn({ mobile: '0412 345 677', venue: 'Royal Hotel', postcode: '4000' });
+  HQP.p().source = 'hq'; HQP.p().phone = '0412 345 677';   // a prospect HQ set up, no email, a phone from the lead data
+  var AUP = await quickSignedIn({ mobile: '0412 345 676', venue: 'Railway Hotel', postcode: '4350' });
+  AUP.p().source = 'autopilot'; AUP.p().phone = '0412 345 676';
+  var NOV = await quickSignedIn({ mobile: '0412 345 675', venue: 'Commercial Hotel', postcode: '2800' });
+  DB.venueplay_founding.filter(function (f) { return f.id === NOV.v.founding_id; })[0].mobile = null; NOV.p().phone = '0412 345 675';   // no code-checked mobile, only a typed phone
+  MMS = [];
+  /* Day 3 is Thu 5 Nov. Swept only outside the window first: 8:30am, 12:30pm, 5pm, then Saturday and Sunday. */
+  var o2 = [bne(2026, 11, 5, 8, 30), bne(2026, 11, 5, 12, 30), bne(2026, 11, 5, 17, 0), bne(2026, 11, 7, 10, 0), bne(2026, 11, 8, 15, 0)];
+  for (var w = 0; w < o2.length; w++) await vpaProspectReminderSweep(ENV, o2[w]);
+  check('outside the send window (before 9, 12 to 2, from 5, Saturday, Sunday) no reminder text goes, and it stays due', REMS().length === 0 && JSON.stringify(Q.p().reminders_sent) === '[]', [REMS(), Q.p().reminders_sent]);
+  var o3 = await vpaProspectReminderSweep(ENV, bne(2026, 11, 9, 9, 30));
+  check('the self sign-up gets its day 3 text at the next window (Mon 9 Nov, 9:30am)', REMS().filter(function (m) { return m.to === '+61412345678'; }).length === 1, REMS());
+  check('a prospect HQ set up (no email, a phone on the lead) is never texted', !REMS().some(function (m) { return m.to === '+61412345677'; }) && JSON.stringify(HQP.p().reminders_sent) === '[]', REMS());
+  check('nor one the autopilot set up', !REMS().some(function (m) { return m.to === '+61412345676'; }) && JSON.stringify(AUP.p().reminders_sent) === '[]');
+  check('the sweep says why: not a self sign-up', (o3.text_not_sent || []).filter(function (x) { return x.why === 'not a self sign-up'; }).length === 2, o3.text_not_sent);
+  check('a self sign-up with no code-checked mobile on its account is not texted on a typed phone', !REMS().some(function (m) { return m.to === '+61412345675'; }) && (o3.text_not_sent || []).some(function (x) { return x.venue === NOV.v.id && x.why === 'no mobile'; }), o3.text_not_sent);
+  await vpaProspectReminderSweep(ENV, AFTER);
+  check('never texted, so never paused unwarned: the HQ prospect is held for HQ with one ticket', HQP.v.status === 'active' && heldTickets(HQP.v).length === 1, [HQP.v.status, heldTickets(HQP.v).length]);
+
   section('4. Could not be warned: never paused before HQ has seen it');
   world(); listed();
   delete ENV.MOBILEMESSAGE_USERNAME; delete ENV.MOBILEMESSAGE_PASSWORD;   // no text provider

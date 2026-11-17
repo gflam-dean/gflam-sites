@@ -1728,7 +1728,7 @@ MUTATIONS = [
      "    + '';",
      'the text never says the login was emailed too, or to check junk'),
     ('test-account-ready.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     'vpsReadyText(venueName, out.emailed)',
+     'vpsReadyText(venueName, out.emailed || welcomeSent)',
      'vpsReadyText(venueName, true)',
      'the text says the login was emailed when no email went'),
     ('test-account-ready.js', 'venueplay/emails/welcome-self.html',
@@ -6736,7 +6736,7 @@ MUTATIONS = [
      "async function vpsAdminDecide(request, env, json) {\n  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts', 'staff']);",
      'a staff admin approves free months'),
     ('test-signup-core.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  try { made = await vpsMakeAccount(env, row, actor, true); }',
+     '  try { made = await vpsMakeAccount(env, row, actor, !!vpqRealEmail(row.email)); }',
      '  try { made = await vpsMakeAccount(env, row, actor, false); }',
      'HQ approves and the venue is never welcomed'),
     ('test-signup-core.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
@@ -27194,6 +27194,20 @@ MUTATIONS = [
      'var vt = /[?&]vt=(pub|club)(?:&|$)/i.exec(root.location.search || "");',
      'var vt = null;',
      "the quick form drops the link's ?vt=club, so a club is made a pub"),
+    # ONLY A SELF SIGN-UP IS TEXTED, ONLY ON ITS CODE-CHECKED MOBILE, ONLY IN THE WINDOW (18 Nov 2026, review SHOULD 2):
+    # each proven red by hand with jsc.
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (!p || p.source !== 'self') return { ok: false, why: 'not a self sign-up' };\n",
+     '',
+     'a prospect HQ or the autopilot set up with no email is texted card reminders on a phone from its lead data'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const to = await vpaProspectVerifiedMobile(env, p, v);\n  if (!to) return',
+     '  const to = await vpaProspectTextTo(env, p, v);\n  if (!to) return',
+     'a self sign-up with no code-checked mobile is texted on a phone typed into its prospect row'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    if (!vpaInSendWindow(nowMs, vpaSendState(v))) continue;',
+     '    if (false) continue;',
+     'card reminder texts go at night, at lunch and on weekends, outside the venue send window'),
 ]
 
 
