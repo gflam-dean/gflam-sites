@@ -16880,7 +16880,7 @@ MUTATIONS = [
     # CARD REMINDERS SIGNED BY THE PERSON IN CONTACT (Dean, 9 Nov 2026; job "Prospect card reminders", Tue 24 Nov).
     ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "senderName: await vpaReminderSender(env, v.id),", "",
-     'a prospect who wrote to Dean gets card reminders signed by the team, not by Dean'),
+     'a prospect who wrote to Harry gets card reminders signed by the team, not by Harry'),
     ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "vpaProspectSignoff(o.senderName || '')", "vpaProspectSignoff('')",
      'the reminder is told who signs it and still prints the team'),
@@ -16891,8 +16891,12 @@ MUTATIONS = [
      "      s = l ? vpaProspectSender(l.senderName, l.senderEmail) : {};", "      s = {};",
      'a setup row without a sender loses the name the welcome was signed with'),
     ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     "    return (s && !s.error && s.name) ? s.name : '';\n  } catch (e) { return ''; }", "    return (s && !s.error && s.name) ? s.name : '';\n  } catch (e) { throw e; }",
+     "    return name;\n  } catch (e) { return ''; }", "    return name;\n  } catch (e) { throw e; }",
      'an unreadable audit table stops the card reminder going at all'),
+    # Dean, 17 Nov 2026, of the card reminders signed "Cheers, Dean": "You can just say cheers".
+    ('test-prospect-free-month.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (/^dean$/i.test(name.trim().split(/\\s+/)[0] || '')) return '';\n", "",
+     'a card reminder to a prospect Dean set up is signed "Cheers, Dean" again'),
     ('test-receipts-plain-words.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "      function (m, per) { return 'venueplay plan' + (per ? ' (' + per.toLowerCase() + ')' : ''); })",
      "      function (m, per) { return m; })",

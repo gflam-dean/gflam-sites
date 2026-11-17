@@ -516,12 +516,21 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
     var g = await walk(s0, bne(2026, 11, 5, 16, 0));
     return g[0] && g[0].msg;
   }
-  var S1 = await prospect({ name: 'Signed By Dean Hotel', sender_name: 'Dean Tindale', sender_email: 'dean@venueplaygames.com' });
+  var S1 = await prospect({ name: 'Signed By Owner Hotel', sender_name: 'Dean Tindale', sender_email: 'dean@venueplaygames.com' });
   var m1 = await firstReminder(S1);
-  check('set up from Dean\'s mailbox: the day-3 reminder is signed "Cheers, Dean, the venueplay team" (his first name only, never the surname)',
-    !!m1 && /Cheers,<br>Dean<br>the venueplay team<br>/.test(m1.html) && !/Tindale/.test(m1.html + m1.text), m1 && m1.html.slice(m1.html.indexOf('Cheers'), m1.html.indexOf('Cheers') + 120));
+  /* Dean, 17 Nov 2026, of the reminders signed "Cheers, Dean": "You can just say cheers". */
+  check('set up from Dean\'s mailbox: the day-3 reminder is signed "Cheers, the venueplay team", never with Dean\'s name (Dean, 17 Nov: "You can just say cheers")',
+    !!m1 && /Cheers,<br>the venueplay team<br>/.test(m1.html) && !/Dean|Tindale/.test(m1.html + (m1.text || '') + m1.subject + m1.from), m1 && m1.html.slice(m1.html.indexOf('Cheers'), m1.html.indexOf('Cheers') + 120));
+  check('...and the plain-text copy says "Cheers" with no name either', !!m1 && /Cheers,?\s+the venueplay team/.test(m1.text || '') && !/Dean/.test(m1.text || ''), m1 && String(m1.text).slice(String(m1.text).indexOf('Cheers'), String(m1.text).indexOf('Cheers') + 80));
   check('...and it still comes FROM and replies to hello@, never from Dean\'s mailbox', !!m1 && m1.from === 'venueplay <hello@send.venueplay.com.au>' && m1.reply_to === 'hello@venueplay.com.au' &&
     !/venueplaygames/.test(JSON.stringify(m1)), m1 && [m1.from, m1.reply_to]);
+  var S1b = await prospect({ name: 'Signed By Harry Hotel', sender_name: 'Harry Finch', sender_email: 'harry@venueplaylive.com.au' });
+  var m1b = await firstReminder(S1b);
+  check('set up from Harry\'s mailbox: still "Cheers, Harry, the venueplay team" (first name only, never the surname)',
+    !!m1b && /Cheers,<br>Harry<br>the venueplay team<br>/.test(m1b.html) && !/Finch/.test(m1b.html), m1b && m1b.html.slice(m1b.html.indexOf('Cheers'), m1b.html.indexOf('Cheers') + 120));
+  var S1c = await prospect({ name: 'Lower Case Hotel', sender_name: 'dean', sender_email: 'hello@venueplay.com.au' });
+  var m1c = await firstReminder(S1c);
+  check('Dean written any way ("dean", from hello@): still no name, "Cheers, the venueplay team"', !!m1c && /Cheers,<br>the venueplay team<br>/.test(m1c.html) && !/dean<br>/i.test(m1c.html), m1c && m1c.html.slice(m1c.html.indexOf('Cheers'), m1c.html.indexOf('Cheers') + 80));
   var S2 = await prospect({ name: 'No Sender Hotel' });
   var m2 = await firstReminder(S2);
   check('nobody signed the setup: signed by the venueplay team, as before', !!m2 && /Cheers,<br>the venueplay team<br>/.test(m2.html), m2 && m2.html.slice(m2.html.indexOf('Cheers'), m2.html.indexOf('Cheers') + 80));

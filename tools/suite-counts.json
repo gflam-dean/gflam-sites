@@ -1252,7 +1252,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 104,
+  "checks": 107,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {

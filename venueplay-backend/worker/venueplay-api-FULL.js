@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '16 Nov 2026, 22:50 · 41c061b0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 21:50 · 2c211276';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -6537,8 +6537,9 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     /* SIGNED BY THE PERSON THEY WERE TALKING TO (Dean, 9 Nov 2026, Lunatic Hotel: "sign from the person in contact"):
-       o.senderName is the first name the setup was signed with (vpaReminderSender), "Cheers, Dean, the venueplay team".
-       Still FROM and replying to hello@ (Dean, 29 Oct 2026). No sender on record: the team, as before. */
+       o.senderName is the first name the setup was signed with (vpaReminderSender), "Cheers, Harry, the venueplay team".
+       Never Dean (Dean, 17 Nov 2026, of "Cheers, Dean": "You can just say cheers"): a setup Dean signed gets the plain
+       "Cheers, the venueplay team". Still FROM and replying to hello@ (Dean, 29 Oct 2026). No sender on record: the team, as before. */
     .replace(/{{signoff}}/g, vpaProspectSignoff(o.senderName || ''));
   const subject = o.kind === 'final' ? 'Last day of your first month at ' + (o.venueName || 'your venue')
     : o.kind === 'last' ? 'Your first month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
@@ -6562,7 +6563,10 @@ async function vpaReminderSender(env, venueId) {
       const l = w && w[0] && w[0].detail && typeof w[0].detail === 'object' ? w[0].detail : null;
       s = l ? vpaProspectSender(l.senderName, l.senderEmail) : {};
     }
-    return (s && !s.error && s.name) ? s.name : '';
+    const name = (s && !s.error && s.name) ? s.name : '';
+    /* Dean, 17 Nov 2026, of the card reminders signed "Cheers, Dean": "You can just say cheers". His name never signs one. */
+    if (/^dean$/i.test(name.trim().split(/\s+/)[0] || '')) return '';
+    return name;
   } catch (e) { return ''; }
 }
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
