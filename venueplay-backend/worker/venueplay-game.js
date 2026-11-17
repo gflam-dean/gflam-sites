@@ -451,7 +451,11 @@ function vpgStripPlaceholders(bodyText) {
     let mine = 0;
     ['to', 'cc', 'bcc'].forEach(function (k) {
       if (m[k] == null) return;
-      const was = Array.isArray(m[k]) ? m[k] : [m[k]];
+      const was = [];   // one string may hold several addresses ("a@x, b@y"): each is judged on its own, like a list
+      (Array.isArray(m[k]) ? m[k] : [m[k]]).forEach(function (a) {
+        if (typeof a === 'string' && /[,;]/.test(a)) a.split(/[,;]/).forEach(function (p) { if (p.trim()) was.push(p.trim()); });
+        else was.push(a);
+      });
       const keep = was.filter(function (a) { return !vpgIsPlaceholderEmail(a); });
       if (keep.length === was.length) return;
       mine += was.length - keep.length;
@@ -461,6 +465,27 @@ function vpgStripPlaceholders(bodyText) {
     dropped += mine;
   });
   return dropped ? { body: JSON.stringify(j), dropped: dropped, empty: empty } : null;
+}
+/* FAIL CLOSED helpers (18 Nov): the placeholder domain anywhere in raw text, any case (a JSON \u0040 counts as @). */
+function vpgHasPlaceholder(text) {
+  return String(text == null ? '' : text).replace(/\\u0040/gi, '@').toLowerCase().indexOf('@' + VPG.placeholderEmailDomain) >= 0;
+}
+function vpgPlaceholderRefusal() {
+  return new Response(JSON.stringify({ statusCode: 422, name: 'validation_error', message: 'outbox guard: ' + VPG.placeholderEmailDomain + ' is a quick sign-up placeholder and is never mailed' }), { status: 422, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'refused-placeholder' } });
+}
+/* The text of a body that is not a plain string (a Request, bytes, a Blob, form data). null = cannot be read (a stream). */
+async function vpgBodyText(input, isReq, raw) {
+  if (raw != null) {
+    if (typeof raw === 'string') return raw;
+    if (typeof raw.getReader === 'function') return null;
+    if (typeof raw.text === 'function') return String(await raw.text());
+    const view = (typeof ArrayBuffer !== 'undefined' && raw instanceof ArrayBuffer) ? new Uint8Array(raw) : ((typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(raw)) ? new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength) : null);
+    if (view) { let t = ''; for (let i = 0; i < view.length; i++) t += String.fromCharCode(view[i]); return t; }
+    let t = String(raw);
+    if (typeof raw.entries === 'function') { try { t += ' ' + JSON.stringify(Array.from(raw.entries())); } catch (e) { return null; } }
+    return t;
+  }
+  return isReq ? String(await input.clone().text()) : '';
 }
 function vpgIsTestRecipient(r) { return vpgIsTestMobile(r) || vpgIsTestEmail(r); }
 /* '' when the settings are safe for this deployment, else why not (staging only). */
@@ -505,51 +530,74 @@ function vpgInstall(env) {
   if (typeof real !== 'function') return;
   globalThis.__vpgInstalled = true;
   globalThis.fetch = function (input, init) {
-    let host = '', method = 'GET', body = '', auth = '';
+    const self = this, args = arguments;
+    let host = '', method = 'GET', body = '', auth = '', raw = null;
     try {
       const u = new URL(typeof input === 'string' ? input : (input && input.url) || String(input));
       host = u.hostname;
       method = String((init && init.method) || (input && typeof input === 'object' && input.method) || 'GET').toUpperCase();
-      body = init && init.body != null ? String(init.body) : '';
+      raw = init && init.body != null ? init.body : null;
+      body = raw != null ? String(raw) : '';
       const h = init && init.headers;
       auth = h ? String(typeof h.get === 'function' ? (h.get('Authorization') || '') : (h.Authorization || h.authorization || '')) : '';
     } catch (e) { return real.apply(this, arguments); }
-    try {
-      /* NEVER TO A PLACEHOLDER (live and staging alike): checked before anything else. */
-      if (method === 'POST' && host.toLowerCase() === 'api.resend.com' && body) {
-        const ph = vpgStripPlaceholders(body);
-        if (ph) {
-          vpgRecord('placeholder', host, method, [], ph.dropped + ' placeholder address' + (ph.dropped === 1 ? '' : 'es') + ' on ' + VPG.placeholderEmailDomain + (ph.empty ? ' and nobody else: NOT SENT' : ' taken off, sent to the rest'));
-          if (ph.empty) return Promise.resolve(new Response(JSON.stringify({ statusCode: 422, name: 'validation_error', message: 'outbox guard: ' + VPG.placeholderEmailDomain + ' is a quick sign-up placeholder and is never mailed' }), { status: 422, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'refused-placeholder' } }));
-          return globalThis.fetch(input, Object.assign({}, init, { body: ph.body }));
+    /* Everything after the placeholder check: staging blocks, live fiction recipients. */
+    const rest = function () {
+      try {
+        if (staging) {
+          if (VPG.stagingHosts.test(host)) return real.apply(self, args);
+          if (host.indexOf(VPG.liveSupabaseRef) >= 0) return Promise.resolve(new Response(JSON.stringify({ message: 'outbox guard: the LIVE database is not reachable from staging' }), { status: 403, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+          if (host === 'api.stripe.com') {
+            if (/(sk|rk)_live_/.test(auth) || /(sk|rk)_live_/.test(body)) return Promise.resolve(new Response(JSON.stringify({ error: { type: 'invalid_request_error', message: 'outbox guard: a LIVE Stripe key is refused on staging' } }), { status: 401, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
+            return real.apply(self, args);
+          }
+          const isSend = VPG.sendHosts.test(host) || (hookHost && host === hookHost);
+          const writesLive = VPG.liveHosts.test(host) && method !== 'GET' && method !== 'HEAD';
+          if (isSend || writesLive) {
+            const recips = vpgRecipients(body);
+            const n = vpgRecord(isSend ? 'send' : 'live-write', host, method, recips, 'staging sends nothing');
+            return Promise.resolve(vpgFake(host, recips, n));
+          }
+          return real.apply(self, args);
         }
-      }
-      if (staging) {
-        if (VPG.stagingHosts.test(host)) return real.apply(this, arguments);
-        if (host.indexOf(VPG.liveSupabaseRef) >= 0) return Promise.resolve(new Response(JSON.stringify({ message: 'outbox guard: the LIVE database is not reachable from staging' }), { status: 403, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
-        if (host === 'api.stripe.com') {
-          if (/(sk|rk)_live_/.test(auth) || /(sk|rk)_live_/.test(body)) return Promise.resolve(new Response(JSON.stringify({ error: { type: 'invalid_request_error', message: 'outbox guard: a LIVE Stripe key is refused on staging' } }), { status: 401, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
-          return real.apply(this, arguments);
-        }
-        const isSend = VPG.sendHosts.test(host) || (hookHost && host === hookHost);
-        const writesLive = VPG.liveHosts.test(host) && method !== 'GET' && method !== 'HEAD';
-        if (isSend || writesLive) {
+        /* LIVE: only a message addressed purely to fiction numbers / example.invalid is caught. Anything unclear passes through. */
+        if (method === 'POST' && /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com)$/i.test(host)) {
           const recips = vpgRecipients(body);
-          const n = vpgRecord(isSend ? 'send' : 'live-write', host, method, recips, 'staging sends nothing');
-          return Promise.resolve(vpgFake(host, recips, n));
+          if (recips.length > 0 && recips.every(vpgIsTestRecipient)) {
+            const n = vpgRecord('test-recipient', host, method, recips, 'only fiction / example.invalid recipients');
+            return Promise.resolve(vpgFake(host, recips, n));
+          }
         }
-        return real.apply(this, arguments);
-      }
-      /* LIVE: only a message addressed purely to fiction numbers / example.invalid is caught. Anything unclear passes through. */
-      if (method === 'POST' && /^(api\.resend\.com|api\.mobilemessage\.com\.au|rest\.clicksend\.com)$/i.test(host)) {
-        const recips = vpgRecipients(body);
-        if (recips.length > 0 && recips.every(vpgIsTestRecipient)) {
-          const n = vpgRecord('test-recipient', host, method, recips, 'only fiction / example.invalid recipients');
-          return Promise.resolve(vpgFake(host, recips, n));
+      } catch (e) { /* the guard itself must never break a send: fall through */ }
+      return real.apply(self, args);
+    };
+    /* NEVER TO A PLACEHOLDER (live and staging alike): checked before anything else, and FAILS CLOSED: if the check
+       itself throws, a send whose raw text names the placeholder domain is refused (422), any other goes on. */
+    try {
+      if (method === 'POST' && String(host).toLowerCase() === 'api.resend.com') {
+        const isReq = !!input && typeof input === 'object' && typeof input.clone === 'function' && typeof input.text === 'function';
+        if (isReq || (raw != null && typeof raw !== 'string')) {
+          /* a Request or a body that is not a string: read its text; the placeholder in it = refused whole */
+          return vpgBodyText(input, isReq, raw).then(function (text) {
+            return text === null || vpgHasPlaceholder(text) ? vpgPlaceholderRefusal() : rest();
+          }, function () { return vpgPlaceholderRefusal(); });
+        }
+        if (body) {
+          const ph = vpgStripPlaceholders(body);
+          if (ph) {
+            vpgRecord('placeholder', host, method, [], ph.dropped + ' placeholder address' + (ph.dropped === 1 ? '' : 'es') + ' on ' + VPG.placeholderEmailDomain + (ph.empty ? ' and nobody else: NOT SENT' : ' taken off, sent to the rest'));
+            if (ph.empty) return Promise.resolve(vpgPlaceholderRefusal());
+            return globalThis.fetch(input, Object.assign({}, init, { body: ph.body }));
+          }
+          /* not JSON, so nothing could be stripped: the placeholder anywhere in the raw text refuses it */
+          let json = true; try { JSON.parse(body); } catch (e) { json = false; }
+          if (!json && vpgHasPlaceholder(body)) return Promise.resolve(vpgPlaceholderRefusal());
         }
       }
-    } catch (e) { /* the guard itself must never break a send: fall through */ }
-    return real.apply(this, arguments);
+    } catch (e) {
+      if (method === 'POST' && String(host).toLowerCase() === 'api.resend.com' && vpgHasPlaceholder(body)) return Promise.resolve(vpgPlaceholderRefusal());
+    }
+    return rest();
   };
 }
 /* OUTBOX GUARD END */

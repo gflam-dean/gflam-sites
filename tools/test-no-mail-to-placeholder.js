@@ -72,8 +72,12 @@ SECS.push(async function () {
   check('a placeholder is one, in any case, bare or "Name <addr>"', W.vpgIsPlaceholderEmail(PH) && W.vpgIsPlaceholderEmail(PH.toUpperCase()) && W.vpgIsPlaceholderEmail('Jo <' + PH + '>') && W.vpgIsPlaceholderEmail(' ' + PH + ' '));
   check('look-alikes are NOT (another subdomain, a longer domain, venueplay itself, empty)', !W.vpgIsPlaceholderEmail('a@notphone.venueplay.com.au') && !W.vpgIsPlaceholderEmail('a@phone.venueplay.com.au.evil.com') && !W.vpgIsPlaceholderEmail('a@venueplay.com.au') && !W.vpgIsPlaceholderEmail('') && !W.vpgIsPlaceholderEmail('phone.venueplay.com.au'));
   var sends = (API.match(/fetch\('https:\/\/api\.resend\.com\/emails', \{/g) || []).length;
-  var aliased = /^(const|let|var) [A-Za-z_$][\w$]* = (globalThis\.)?fetch\b/m.test(API);
+  var outside = API.replace(lift(API), '');
+  var aliased = /^[ \t]*(const|let|var) [A-Za-z_$][\w$]* = (globalThis\.)?fetch\b/m.test(outside) || /\bfetch\.(bind|call|apply)\(/.test(outside);
+  var odd = (outside.match(/new Request\(/g) || []).length;
+  var strays = outside.split('\n').filter(function (l) { return /api\.resend\.com/.test(l) && !/^\s*(\/\/|\*|\/\*)/.test(l) && !/fetch\('https:\/\/api\.resend\.com\/emails(\/[^']*)?'/.test(l); });
   check('every Resend send in the billing Worker is a plain fetch( (so it passes the guard), and nothing keeps the unguarded fetch', sends >= 10 && !aliased, { sends: sends, aliased: aliased });
+  check('no mail goes to Resend through a Request object, a held URL or a non-string body: every code mention of api.resend.com outside the guard is a plain fetch with a string URL', odd === 0 && strays.length === 0, { odd: odd, strays: strays.slice(0, 3) });
 });
 
 print('LIVE: never to a placeholder, real people untouched');
@@ -137,6 +141,58 @@ SECS.push(async function () {
   var ENTRY = (new Function('W', 'helpSendEmail', 'return (function(){ ' + SRC.replace(/^[\s\S]*$/, '') + ' var vpgInstall = W.vpgInstall; var helpInboundEmail = async function (message, env) { W.tried = await helpSendEmail(env, { to: message.from, from: "h <hello@send.venueplay.com.au>", subject: "ack", html: "x" }); }; return ({' + body.replace(/\n  \},$/, '\n  }') + '}); })()'))(W, W.helpSendEmail);
   var out = await ENTRY.email({ from: PH }, LIVE, {});
   check('a reply sent from the email() entry to a placeholder address is refused, nothing leaves', sent.length === 0 && W.tried === false && globalThis.__vpgInstalled === true, { sent: sent.length, tried: W.tried });
+});
+
+print('FAILS CLOSED: a throw inside the guard, comma strings, Request objects, non-string bodies');
+SECS.push(async function () {
+  var sent = boot(LIVE), x;
+  globalThis.__vpOutbox = 'broken';   // vpgRecord now throws inside the placeholder branch
+  x = await globalThis.fetch(RESEND, post({ to: [PH], subject: 'Welcome' }));
+  check('a throw inside the placeholder branch + the placeholder in the body: REFUSED (422, marked), nothing sent', sent.length === 0 && x && x.status === 422 && x.headers['x-vp-outbox-guard'] === 'refused-placeholder', { sent: sent.length, status: x && x.status });
+  x = await globalThis.fetch(RESEND, { method: 'POST', headers: {}, body: '{"to":["' + PH.toUpperCase() + '"], broken json' });
+  check('...also when the body is not valid JSON at all (raw text, any case)', sent.length === 0 && x.status === 422, x && x.status);
+  x = await globalThis.fetch(RESEND, post({ to: ['owner@realpub.com.au'], subject: 'ok' }));
+  check('a throw inside the branch with NO placeholder in the body: sent unchanged', sent.length === 1 && x.status === 200);
+  boot(LIVE); sent = null;
+  sent = boot(LIVE);
+  x = await globalThis.fetch(RESEND, post({ to: PH + ', owner@realpub.com.au', subject: 's' }));
+  check('a comma-separated "to" string with the placeholder FIRST: placeholder stripped, the real owner still gets it', sent.length === 1 && JSON.stringify(sent[0].to.to) === '["owner@realpub.com.au"]' && x.status === 200, sent[0] && sent[0].to);
+  x = await globalThis.fetch(RESEND, post({ to: 'owner@realpub.com.au; ' + PH, subject: 's' }));
+  check('...placeholder last (semicolon) is stripped the same way', sent.length === 2 && JSON.stringify(sent[1].to.to) === '["owner@realpub.com.au"]', sent[1] && sent[1].to);
+  x = await globalThis.fetch(RESEND, post({ to: PH + ', ' + PH.toUpperCase(), subject: 's' }));
+  check('...a comma string of only placeholders is refused (422)', sent.length === 2 && x.status === 422);
+  x = await globalThis.fetch(RESEND, post({ to: 'a@realpub.com.au, b@realpub.com.au', subject: 's' }));
+  check('...a comma string of real addresses goes byte for byte', sent.length === 3 && sent[2].to.to === 'a@realpub.com.au, b@realpub.com.au' && x.status === 200);
+});
+SECS.push(async function () {
+  var sent = boot(LIVE), x;
+  function req(url, text, method) { return { url: url, method: method || 'POST', clone: function () { return this; }, text: function () { return Promise.resolve(text); } }; }
+  x = await globalThis.fetch(req(RESEND, JSON.stringify({ to: [PH] })));
+  check('a Request object to Resend with the placeholder in its body: refused (422), nothing sent', sent.length === 0 && x.status === 422 && x.headers['x-vp-outbox-guard'] === 'refused-placeholder', { n: sent.length, s: x && x.status });
+  x = await globalThis.fetch(req(RESEND, JSON.stringify({ to: ['owner@realpub.com.au', PH.toUpperCase()] })));
+  check('...also a Request naming a real owner AND the placeholder (refused whole)', sent.length === 0 && x.status === 422);
+  x = await globalThis.fetch(req(RESEND, JSON.stringify({ to: ['owner@realpub.com.au'] })));
+  check('a Request object to Resend with no placeholder passes through', sent.length === 1 && x.status === 200);
+  x = await globalThis.fetch(req('https://example.com/other', JSON.stringify({ to: [PH] })));
+  check('a Request to any other URL is untouched', sent.length === 2 && x.status === 200);
+  x = await globalThis.fetch(req(RESEND + '/abc', '', 'GET'));
+  check('a GET Request to Resend passes', sent.length === 3);
+  function bytes(t) { var a = new Uint8Array(t.length); for (var i = 0; i < t.length; i++) a[i] = t.charCodeAt(i); return a; }
+  x = await globalThis.fetch(RESEND, { method: 'POST', headers: {}, body: bytes(JSON.stringify({ to: [PH] })) });
+  check('a non-string body (bytes) with the placeholder in it: refused (422)', sent.length === 3 && x.status === 422, x && x.status);
+  x = await globalThis.fetch(RESEND, { method: 'POST', headers: {}, body: bytes(JSON.stringify({ to: ['owner@realpub.com.au'] })) });
+  check('a non-string body (bytes) with no placeholder passes through', sent.length === 4 && x.status === 200);
+  x = await globalThis.fetch(RESEND, { method: 'POST', headers: {}, body: { getReader: function () {} } });
+  check('a stream body (cannot be read) to Resend is refused rather than guessed', sent.length === 4 && x.status === 422);
+  x = await globalThis.fetch('https://example.com/other', { method: 'POST', headers: {}, body: bytes(JSON.stringify({ to: [PH] })) });
+  check('a non-string body to any other URL is untouched', sent.length === 5 && x.status === 200);
+  var URL0 = globalThis.URL; globalThis.URL = function (u) { this.href = u; };   // a runtime whose URL has no hostname (some test rigs)
+  var thrown = null; try { x = await globalThis.fetch('https://db.example/rest/v1/t', { method: 'POST', body: '{}' }); } catch (e) { thrown = e; }
+  globalThis.URL = URL0;
+  check('a URL object without a hostname never breaks a send (the guard steps aside, it does not throw)', thrown === null && sent.length === 6 && x.status === 200, String(thrown));
+  sent = boot(STG);
+  x = await globalThis.fetch(req(RESEND, JSON.stringify({ to: ['owner@realpub.com.au'] })));
+  check('on staging a clean Request still goes to the staging outbox, not the network', sent.length === 0 && x.status === 200 && /staging-blocked/.test(x.body), x && x.status);
 });
 
 (async function () { for (var i = 0; i < SECS.length; i++) await SECS[i](); print(fails ? ran + ' checks, ' + fails + ' failed' : 'ALL ' + ran + ' CHECKS PASSED'); if (fails) exit(1); })().catch(function (e) { print('CRASH ' + e + ' ' + (e && e.stack)); exit(1); });
