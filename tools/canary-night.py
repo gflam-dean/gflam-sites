@@ -248,7 +248,8 @@ class Canary:
         st, s = self.net('POST', self.cfg['supabase'] + '/auth/v1/verify', {'type': 'magiclink', 'token_hash': th},
                          {'apikey': a, 'Authorization': 'Bearer ' + a})
         if st != 200 or not isinstance(s, dict) or not s.get('access_token'):
-            raise NotRun('the canary host sign-in was refused (%s)' % st)
+            msg = (s.get('error_code') or s.get('code') or '', s.get('msg') or s.get('error_description') or s.get('message') or '') if isinstance(s, dict) else ('', str(s)[:120])
+            raise NotRun('the canary host sign-in was refused (%s %s: %s)' % (st, msg[0], msg[1]))
         self.token, uid = s['access_token'], (s.get('user') or {}).get('id')
         staff = self.rest('vp_venue_staff?auth_user_id=eq.%s&select=venue_id,role' % uid)
         ids = {r['venue_id'] for r in staff}
