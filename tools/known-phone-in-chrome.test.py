@@ -54,6 +54,7 @@ except Exception: PRIV = ''
 # RETURNING (Dean 16 Nov 2026): RSM.. a NEW venue asking the same fields; RMR.. a new venue asking one MORE (postcode);
 # RNT.. the same venue, a second night. All known, no notice, the boxes as each sender's current answer.
 MASK = '04\u2022\u2022 \u2022\u2022\u2022 246'
+MASK2 = '04\u2022\u2022 \u2022\u2022\u2022 999'
 RET = {
   'RSM': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, []),
   'RMR': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, ['postcode']),
@@ -90,9 +91,16 @@ class Site(http.server.BaseHTTPRequestHandler):
             if KEY in keys and code[:3] in RET:
                 consent, need = RET[code[:3]]
                 known = {'hello': 'Grace', 'need': need, 'ix': keys.index(KEY),
-                         # a NEW venue: the mobile we hold is not yet its own, so a one-tap row (Dean 16 Nov 2026)
-                         'confirm': [{'field': 'mobile', 'masked': MASK}] if code[:3] in ('RSM', 'RMR') else []}
+                         # a NEW venue: the mobile we hold is not yet its own (Dean 16 Nov 2026); since 17 Nov it is the
+                         # "Playing as" line (mobile_masked), and "Not my number" when texts can be sent (change_number)
+                         'confirm': [{'field': 'mobile', 'masked': MASK}] if code[:3] in ('RSM', 'RMR') else [],
+                         'mobile_masked': MASK, 'change_number': code[:3] in ('RMR', 'RSM')}
             return J({'known': known, 'consent': consent, 'organiser': 'The Royal Hotel', 'notice': None if known else NOTICE})
+        if p == '/join/number/start':
+            return J({'ok': True, 'change_id': 'chg-1', 'to': MASK2, 'resend_in': 30})
+        if p == '/join/number/verify':
+            if str((body or {}).get('sms_code')) == '123456': return J({'ok': True, 'masked': MASK2})
+            return self.send(400, json.dumps({'ok': False, 'error': 'That code is not right. 4 tries left.'}), 'application/json')
         if p == '/play/live':
             return J({'live': True, 'exists': True, 'age_gate': False, 'paper_bingo': False})
         if p in ('/join', '/capture'):
@@ -296,35 +304,34 @@ def returning(game, path, w, h):
                 except Exception as e: print('  (no screenshot: %s)' % e)
             t = L.get('text', '')
             newv = pre in ('RSM', 'RMR')
-            ok('R %s %s %s: no name, no address, no venue played at; only "Not my details"' % (game, size, tag), 'Not my details' in t and 'grace' not in t.lower() and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
+            ok('R %s %s %s: "Playing as Grace, 04.. ... 246" and "Not me"; no address, no venue played at (Dean 17 Nov)' % (game, size, tag), ('Playing as Grace, ' + MASK) in t and 'Not me' in t and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
             if newv:
-                ok('R %s %s %s: the mobile we hold is one row, masked: "Mobile for The Royal Hotel: 04.. ... 246", Use this / Different number' % (game, size, tag), ('Mobile for The Royal Hotel: ' + MASK) in t and 'Use this' in t and 'Different number' in t and '412' not in t, t)
+                ok('R %s %s %s: no one-tap row and no "Different number": the number on the line is the one used' % (game, size, tag), 'Mobile for' not in t and 'Use this' not in t and 'Different number' not in t and '412' not in t, t)
             else:
-                ok('R %s %s %s: the same venue already has it: no mobile row, no number at all' % (game, size, tag), 'Mobile for' not in t and '04' not in t, t)
+                ok('R %s %s %s: the same venue already has it: the same line, no mobile row' % (game, size, tag), 'Mobile for' not in t and ('Playing as Grace, ' + MASK) in t and 'Not my number' not in t, t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
             ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
             ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'A ticked box shares' not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RSM':
-                ask(sid, 'document.getElementById("vpkUseYes_mobile").click(); true'); time.sleep(0.3)
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-5-use-this-tapped.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-5-playing-as.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
                 if team: fill(sid, {'nameIn': 'Quiz Kids'})
                 ask(sid, 'document.getElementById("joinBtn").click(); true')
                 got = joins(c)
-                ok('R %s %s: Use this, venue box ticked: the join asks for the held mobile to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
+                ok('R %s %s: venue box ticked: the join asks for the number on the line to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
             if pre == 'RMR':
-                ask(sid, 'document.getElementById("vpkUseNo_mobile").click(); true'); time.sleep(0.4)
+                ask(sid, 'document.getElementById("vpKnownNotNum").click(); true'); time.sleep(0.4)
                 L2 = look(sid)
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-6-different-number.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-6-not-my-number.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
-                ok('R %s %s: Different number: the row becomes an empty mobile box' % (game, size), 'xMobile' in L2.get('ids', []) and 'Mobile for' not in L2.get('text', '') and ask(sid, 'document.getElementById("xMobile").value===""'), L2.get('ids'))
+                ok('R %s %s: Not my number: the line becomes a small form asking the new mobile (never a join box)' % (game, size), 'vpNumIn' in L2.get('ids', []) and 'xMobile' not in L2.get('ids', []) and 'Your new mobile' in L2.get('text', '') and ask(sid, 'document.getElementById("vpNumIn").value===""'), L2.get('ids'))
                 ok('R %s %s: ...still one screen, no scroll' % (game, size), fits(L2), dict((k, L2.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RNT':
                 ask(sid, 'document.getElementById("vpKnownNotMe").click(); true'); time.sleep(0.5)
@@ -332,9 +339,48 @@ def returning(game, path, w, h):
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-4-not-my-details.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-4-not-me.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
-                ok('R %s %s: Not my details clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Not my details' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
+                ok('R %s %s: Not me clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Playing as' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
+        finally:
+            B.close_tab(tid)
+
+
+def number_flow(game, path, w, h):
+    """17 Nov 2026 (one number per player): every state the feature adds, one screen with the Join button in view, at 320/375/390."""
+    sep = '&' if '?' in path else '?'
+    team = game == 'trivia'
+    size = '%dx%d' % (w, h)
+    print('\n%s "Not my number" states at %s' % (game, size))
+    for pre, label in (('RMR', 'extra-box'), ('RSM', 'same-fields')):
+        c = code(pre); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
+        try:
+            if not until(sid, READY + ' && !!document.getElementById("vpKnownNotMe") && !!document.getElementById("xConsent3")'):
+                ok('N %s %s %s: page up' % (game, size, label), False, ask(sid, 'document.body.innerText.slice(0,200)')); continue
+            time.sleep(0.5)
+            L = look(sid); shot(sid, 'num-%s-%s-%s-1-playing-as' % (label, game, size))
+            ok('N %s %s %s: "Playing as" line + Not my number, Join in view, no scroll' % (game, size, label), 'Not my number' in L.get('text', '') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            ask(sid, 'document.getElementById("vpKnownNotNum").click(); true'); time.sleep(0.4)
+            L = look(sid); shot(sid, 'num-%s-%s-%s-2-new-mobile' % (label, game, size))
+            ok('N %s %s %s: new-mobile form, Join in view, no scroll' % (game, size, label), 'Text me a code' in ask(sid, 'document.getElementById("vpNumGo").innerText') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            fill(sid, {'vpNumIn': '0412 000 999'})
+            ask(sid, 'document.getElementById("vpNumGo").click(); true')
+            ok('N %s %s %s: code step up' % (game, size, label), until(sid, 'document.getElementById("vpNumGo").innerText==="Confirm"'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
+            time.sleep(0.3); L = look(sid); shot(sid, 'num-%s-%s-%s-3-code' % (label, game, size))
+            ok('N %s %s %s: code step (Sent to, Resend, Cancel), Join in view, no scroll' % (game, size, label), 'Sent to' in L.get('text', '') and 'Resend' in L.get('text', '') and 'Cancel' in L.get('text', '') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            fill(sid, {'vpNumIn': '000000'})
+            ask(sid, 'document.getElementById("vpNumGo").click(); true')
+            ok('N %s %s %s: wrong code shows the error line' % (game, size, label), until(sid, '(document.getElementById("vpNumErr")||{}).innerText.indexOf("not right")>=0'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
+            time.sleep(0.3); L = look(sid); shot(sid, 'num-%s-%s-%s-4-wrong-code' % (label, game, size))
+            ok('N %s %s %s: with the error line, Join still in view, no scroll' % (game, size, label), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            ask(sid, 'document.getElementById("vpNumAgain").click(); true'); time.sleep(0.5)
+            L = look(sid); shot(sid, 'num-%s-%s-%s-5-wait-error' % (label, game, size))
+            ok('N %s %s %s: Resend inside 30 s: the wait line, Join in view' % (game, size, label), 'Please wait' in L.get('text', '') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            fill(sid, {'vpNumIn': '123456'})
+            ask(sid, 'document.getElementById("vpNumGo").click(); true')
+            ok('N %s %s %s: right code: the line shows the new number' % (game, size, label), until(sid, '(document.getElementById("vpPlayingAs")||{}).innerText&&document.getElementById("vpPlayingAs").innerText.indexOf("999")>=0'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
+            time.sleep(0.3); L = look(sid); shot(sid, 'num-%s-%s-%s-6-changed' % (label, game, size))
+            ok('N %s %s %s: after the change, Join in view, no scroll, no form left' % (game, size, label), fits(L) and 'vpNumIn' not in L.get('ids', []), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
         finally:
             B.close_tab(tid)
 
@@ -354,6 +400,9 @@ if __name__ == '__main__':
         for w, h in ((375, 667), (390, 844)):
             for g, p in PAGES:
                 returning(g, p, w, h)
+        for w, h in ((320, 568), (375, 667), (390, 844)):
+            for g, p in PAGES:
+                number_flow(g, p, w, h)
     finally:
         try: B.close()
         except Exception: pass

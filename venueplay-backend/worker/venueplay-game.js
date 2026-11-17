@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Nov 2026, 02:13 · 7caaddbe';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 02:14 · 14296875';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -571,6 +571,8 @@ export default {
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
       if (method === 'POST' && path === '/join/list')          return await handleJoinList(request, env, json);
       if (method === 'POST' && path === '/join/known')         return await handleJoinKnown(request, env, json);
+      if (method === 'POST' && path === '/join/number/start')  return await handleNumberStart(request, env, json);
+      if (method === 'POST' && path === '/join/number/verify') return await handleNumberVerify(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/feedback')           return await handleFeedback(request, env, json);
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
@@ -2673,6 +2675,9 @@ async function handleJoinKnown(request, env, json) {
   const k = await knownFor(env, venueId, knownKeysFrom(b.keys));
   const ka = k ? knownAsk(cfg, k.row, venueId) : null;
   const known = k ? { hello: String(k.row.first_name || '').trim().split(/\s+/)[0].slice(0, 20), need: ka.need, confirm: ka.confirm, ix: k.ix } : null;
+  /* ONE NUMBER PER PLAYER (Dean 17 Nov 2026): "Playing as Sarah, 04.. ... 123", masked to its last three digits, and
+     whether "Not my number" is offered (only while texts can be sent: numberChangeOn) */
+  if (known) { const mm = maskContact('mobile', k.row.mobile); if (mm) known.mobile_masked = mm; known.change_number = !!(mm && numberChangeOn(env)); }
   /* the first-game notice: until this phone's row says it saw the current version */
   const notice = (k && k.row.notice_version === JOIN_NOTICE.version) ? null : JOIN_NOTICE;
   let consent = { mode: 'single' };
@@ -2681,6 +2686,143 @@ async function handleJoinKnown(request, env, json) {
     consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => (typeof p.current === 'boolean' ? { party: p.party, name: p.name, current: p.current } : { party: p.party, name: p.name })) };
   }
   return json({ known: known, consent: consent, organiser: venueName, notice: notice });
+}
+
+/* ------------------------------ ONE NUMBER PER PLAYER ------------------------------
+ * Dean, 17 Nov 2026 (~23:15): each venueplay player has ONE mobile, the same at every venue. It replaces the "keep both
+ * numbers" idea (question 28, shelved) and the "Different number" box that gave one venue a number of its own. The flow
+ * is the one WhatsApp, Uber and the banks use:
+ *   1. a known phone's join screen shows "Playing as Sarah, 04.. ... 123" (masked) and a small "Not my number"
+ *   2. the player types the new number: POST /join/number/start { keys, mobile }  -> { ok, change_id, to (masked),
+ *      expires_in, resend_in, sends_left }; a six-digit code is texted to the NEW number. The same call with change_id
+ *      is "Send again" (NUMBER_CHANGE.resendSecs apart, NUMBER_CHANGE.maxSends texts per change)
+ *   3. the player types the code: POST /join/number/verify { keys, change_id, sms_code } -> { ok, masked }. Each try is
+ *      counted BEFORE the code is compared (NUMBER_CHANGE.maxTries); the code lives NUMBER_CHANGE.codeMins minutes; only
+ *      its SHA-256 (with the change id) is kept
+ *   4. right code: vp_number_change_apply (migration 215) swaps it in ONE transaction: the known row's mobile, and the
+ *      contact lists of every venue that already had this player's mobile (shared). Consent is per player (known_id),
+ *      never per number, so every venue's answer stays as given
+ * THE SWITCH: env.NUMBER_CHANGE_SMS_ON = "on" AND the Mobile Message login on this Worker. Off (the default), /join/known
+ * says change_number:false, the phone shows no "Not my number", and both routes answer 503. Texts go through
+ * gameSendSms: Mobile Message, sender "venueplay" (SMS_SENDER overrides). The outbox guard answers a text to a fiction
+ * number (+61 491 57x xxx) as sent and never delivers it, on live as well as staging; staging sends nothing at all.
+ * Abuse: per network (rateLimit), per player (perPlayerPerDay) and per NEW number (perNumberPerDay, so nobody can use
+ * venueplay to text-bomb a stranger). Before migration 215 both routes answer 503 and nothing is texted. */
+const NUMBER_CHANGE = { codeMins: 10, maxTries: 5, maxSends: 3, resendSecs: 30, perPlayerPerDay: 5, perNumberPerDay: 3, perIpPerHour: 20 };
+function numberChangeOn(env) {
+  return String((env && env.NUMBER_CHANGE_SMS_ON) || '').trim().toLowerCase() === 'on' && !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD);
+}
+/* Six digits, every value equally likely (crypto, never Math.random). */
+function numberChangeCode() {
+  const a = new Uint32Array(1);
+  for (;;) { crypto.getRandomValues(a); if (a[0] < 4294000000) return String(a[0] % 1000000).padStart(6, '0'); }
+}
+async function numberChangeHash(id, code) { return await sha256Hex('vpnc:' + id + ':' + code); }
+function numberChangeText(code) {
+  return 'Your venueplay code is ' + code + '. It expires in ' + NUMBER_CHANGE.codeMins + " minutes. Didn't ask for it? Ignore this text.";
+}
+/* One text through Mobile Message. { ok } or { ok:false, status }. Never throws. */
+async function gameSendSms(env, toE164, body, ref) {
+  if (!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD)) return { ok: false, status: 'no provider' };
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 10000);
+  try {
+    const res = await fetch('https://api.mobilemessage.com.au/v1/messages', { method: 'POST', signal: abort.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD) },
+      body: JSON.stringify({ messages: [{ to: toE164, message: body, sender: String(env.SMS_SENDER || 'venueplay').slice(0, 11), custom_ref: String(ref || 'number-change').slice(0, 64) }] }) });
+    const j = await res.json().catch(() => null);
+    const m = j && Array.isArray(j.results) && j.results[0];
+    const st = String((m && m.status) || '').toLowerCase();
+    return res.ok && st === 'success' ? { ok: true } : { ok: false, status: res.status + (st ? ' ' + st : '') };
+  } catch (e) { return { ok: false, status: 'unreachable' }; }
+  finally { clearTimeout(timer); }
+}
+async function handleNumberStart(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'numchg:ip:' + ipHash, NUMBER_CHANGE.perIpPerHour, 3600);
+    if (!rl.ok) return json({ error: 'Too many tries from this network. Please try again later.' }, 429);
+  }
+  if (!numberChangeOn(env)) return json({ error: 'Changing your number is not available right now.', off: true }, 503);
+  const k = await knownFor(env, null, knownKeysFrom(b.keys));
+  if (!k) return json({ error: 'We could not find your details on this phone.' }, 404);
+  const to = praffleNormPhone(b.mobile);
+  if (!to) return json({ error: 'Please check the mobile number.' }, 400);
+  if (to === k.row.mobile) return json({ error: 'That is the number we already have.' }, 400);
+  const now = Date.now();
+  const code = numberChangeCode();
+  let id = null, sends = 1;
+  try {
+    const cid = String(b.change_id || '');
+    if (cid) {
+      /* SEND AGAIN: the same change, a new code (the old one stops working), the clock restarted within the row's cap */
+      if (!UUID_RE.test(cid)) return json({ error: 'Please start again.' }, 400);
+      const rows = await sbGet(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&known_id=eq.' + enc(k.row.id) + '&done_at=is.null&select=id,new_mobile,attempts,sends,created_at,last_sent_at,expires_at&limit=1');
+      const c = rows && rows[0];
+      if (!c || c.new_mobile !== to || c.attempts >= NUMBER_CHANGE.maxTries) return json({ error: 'Please start again.' }, 410);
+      if (c.sends >= NUMBER_CHANGE.maxSends) return json({ error: 'That is the most codes we can send. Please try again later.' }, 429);
+      const wait = Math.ceil((Date.parse(c.last_sent_at) + NUMBER_CHANGE.resendSecs * 1000 - now) / 1000);
+      if (wait > 0) return json({ error: 'Please wait ' + wait + ' seconds before asking again.', resend_in: wait }, 429);
+      const cap = Date.parse(c.created_at) + 30 * 60000, had = Number(c.sends);
+      const upd = await sbPatchReturning(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&sends=eq.' + had + '&done_at=is.null',
+        { code_hash: await numberChangeHash(cid, code), sends: had + 1, last_sent_at: new Date(now).toISOString(),
+          expires_at: new Date(Math.min(now + NUMBER_CHANGE.codeMins * 60000, cap)).toISOString() });
+      if (!upd || !upd.length) return json({ error: 'Please try again.' }, 409);
+      id = cid; sends = had + 1;
+    } else {
+      const since = new Date(now - 86400000).toISOString();
+      const mine = await sbGet(env, 'vp_number_changes', 'known_id=eq.' + enc(k.row.id) + '&created_at=gte.' + enc(since) + '&select=id&limit=' + (NUMBER_CHANGE.perPlayerPerDay + 1));
+      if (mine.length >= NUMBER_CHANGE.perPlayerPerDay) return json({ error: 'That is the most changes we can do today. Please try again tomorrow.' }, 429);
+      const theirs = await sbGet(env, 'vp_number_changes', 'new_mobile=eq.' + enc(to) + '&created_at=gte.' + enc(since) + '&select=id&limit=' + (NUMBER_CHANGE.perNumberPerDay + 1));
+      if (theirs.length >= NUMBER_CHANGE.perNumberPerDay) return json({ error: 'That number has had too many codes today. Please try again tomorrow.' }, 429);
+      id = crypto.randomUUID();
+      const old3 = String(k.row.mobile || '').replace(/[^0-9]/g, '').slice(-3);
+      await sbInsert(env, 'vp_number_changes', { id: id, known_id: k.row.id, new_mobile: to, old_last3: /^[0-9]{3}$/.test(old3) ? old3 : null,
+        code_hash: await numberChangeHash(id, code), ip_hash: ipHash || null, expires_at: new Date(now + NUMBER_CHANGE.codeMins * 60000).toISOString() }, false);
+    }
+  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }   // before migration 215
+  const sent = await gameSendSms(env, to, numberChangeText(code), 'number-change');
+  if (!sent.ok) return json({ error: 'We could not send a text just now. Please try again.' }, 502);
+  return json({ ok: true, change_id: id, to: maskContact('mobile', to), expires_in: NUMBER_CHANGE.codeMins * 60,
+    resend_in: NUMBER_CHANGE.resendSecs, sends_left: NUMBER_CHANGE.maxSends - sends });
+}
+async function handleNumberVerify(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'numok:ip:' + ipHash, NUMBER_CHANGE.perIpPerHour * NUMBER_CHANGE.maxTries, 3600);
+    if (!rl.ok) return json({ error: 'Too many tries from this network. Please try again later.' }, 429);
+  }
+  if (!numberChangeOn(env)) return json({ error: 'Changing your number is not available right now.', off: true }, 503);
+  const k = await knownFor(env, null, knownKeysFrom(b.keys));
+  if (!k) return json({ error: 'We could not find your details on this phone.' }, 404);
+  const cid = String(b.change_id || ''), code = String(b.sms_code || '').replace(/\s+/g, '');
+  if (!UUID_RE.test(cid)) return json({ error: 'Please start again.' }, 400);
+  if (!/^[0-9]{6}$/.test(code)) return json({ error: 'The code is the six numbers in the text.' }, 400);
+  let c;
+  try {
+    const rows = await sbGet(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&known_id=eq.' + enc(k.row.id) + '&select=id,new_mobile,code_hash,attempts,expires_at,done_at&limit=1');
+    c = rows && rows[0];
+  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }
+  if (!c) return json({ error: 'Please start again.' }, 410);
+  if (c.done_at) return json({ ok: true, masked: maskContact('mobile', c.new_mobile) });
+  if (c.attempts >= NUMBER_CHANGE.maxTries) return json({ error: 'Too many tries. Ask for a new number change.', tries_left: 0 }, 429);
+  if (Date.parse(c.expires_at) < Date.now()) return json({ error: 'That code has expired. Tap Resend.', expired: true }, 410);
+  /* the try is counted BEFORE the code is compared, by compare-and-set: two taps at once cannot both get a free try */
+  const tried = Number(c.attempts) + 1, held = String(c.code_hash || ''), newMobile = c.new_mobile;
+  const upd = await sbPatchReturning(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&attempts=eq.' + (tried - 1) + '&done_at=is.null', { attempts: tried });
+  if (!upd || !upd.length) return json({ error: 'Please try again.' }, 409);
+  const left = NUMBER_CHANGE.maxTries - tried;
+  const h = await numberChangeHash(cid, code);
+  let diff = h.length ^ held.length;
+  for (let i = 0; i < h.length; i++) diff |= h.charCodeAt(i) ^ held.charCodeAt(i);
+  if (diff !== 0) return json({ error: left > 0 ? 'That code is not right. ' + left + (left === 1 ? ' try' : ' tries') + ' left.' : 'Too many tries. Ask for a new number change.', tries_left: left }, left > 0 ? 400 : 429);
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_number_change_apply', { method: 'POST', headers: sbHeaders(env), body: JSON.stringify({ p_change: cid }) });
+  if (!res.ok) return json({ error: 'We could not change your number just now. Please try again.' }, 502);
+  const out = await res.json().catch(() => null);
+  if (!out || out.ok !== true) return json({ error: out && out.why === 'expired' ? 'That code has expired. Tap Resend.' : 'Please start again.', expired: !!(out && out.why === 'expired') }, 410);
+  return json({ ok: true, masked: maskContact('mobile', newMobile) });
 }
 
 /* ------------------------------ POST /join/list ------------------------------

@@ -946,6 +946,22 @@ statements after its END marker. After the live run, dump RLS-BASELINE.json / CO
 (replay/sun29-no-contact and the q28 worktree), so 211 is left for the loser; checked every branch and worktree 17 Nov 2026.
 Rollback (only while no address has moved): in the file.
 
+`venueplay-215-one-number-per-player.sql` (Dean, 17 Nov 2026 ~23:15: ONE phone number per venueplay player, the same at every
+venue; replaces question 28's "keep both", whose migration 210 on feature/known-phone-keep-both-q28 is SHELVED and never ran on live).
+Additive, needs 202: table `vp_number_changes` (one row per "Not my number": the known row, the NEW number, the SHA-256 of the texted
+code, 10-minute expiry capped at 30 minutes, 5 tries, 3 texts, the old number only as its last three digits) and the definer
+function `vp_number_change_apply(uuid)` (one transaction: the known row's mobile, then vp_players (through vp_sessions) and
+vp_captures rows holding the OLD number ONLY at venues whose `shared` list had this player's mobile; other open changes closed).
+RLS on, no policies, nothing granted to anon/authenticated; EXECUTE for service_role only. Run BEFORE the game Worker that uses it
+(before it, /join/number/* answer 503 and the phone shows no "Not my number"; the Worker's switch NUMBER_CHANGE_SMS_ON is also off
+by default). Branch `feature/one-number-per-player`. RUN on TEST only, twice (17 Nov 2026 ~23:22, the second run "already exists,
+skipping"), and read back in a rolled-back transaction (locks, the swap at a venue that had it, another venue untouched,
+idempotent, an expired change refused, three checks refuse). NOT RUN ON LIVE: ships on Dean's yes. The file carries the
+VP-STAGING-GUARD block; the live run is the statements after its END marker. RLS-BASELINE.json: dump after the live run (one table,
+one definer function). Rollback: `drop function if exists public.vp_number_change_apply(uuid); drop table if exists
+public.vp_number_changes;`. NUMBER: 210 twice, 211 held for the loser of that clash, 212 venue-old-addresses; no 213 anywhere (it went to q9)
+(checked every branch and worktree 17 Nov 2026 23:20); RENUMBERED 214 the same night, then 215 on 18 Nov (main claimed 214 for feature/hq-coaster-leads) because q9 (feature/members-upload-more-fields-q9) claimed 213 first: the TEST run was under 213, only comments changed, the table and function are identical.
+
 `venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
 release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
 per PHONE, held by venueplay: first name, mobile in +614 form, and what venues asked; each venue receives only the fields it asks;
