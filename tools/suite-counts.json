@@ -2388,7 +2388,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-number.js": {
-  "checks": 49,
+  "checks": 64,
   "counted_by": "lines"
  }
 }
