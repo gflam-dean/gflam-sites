@@ -80,7 +80,7 @@ alter table public.vp_number_changes enable row level security;
 revoke all on public.vp_number_changes from public, anon, authenticated;
 
 comment on table public.vp_number_changes is
-  'A player''s "Not my number": the new number, the hash of the texted code, tries, texts, expiry, and when it was done. One number per player (Dean 17 Nov 2026). Service role only. Migration 214.';
+  'A player''s "Not my number": the new number, the hash of the texted code, tries, texts, expiry, and when it was done. One number per player (Dean 17 Nov 2026). Service role only. Migration 215.';
 
 create or replace function public.vp_number_change_apply(p_change uuid)
 returns jsonb
@@ -130,7 +130,7 @@ revoke all on function public.vp_number_change_apply(uuid) from public, anon, au
 grant execute on function public.vp_number_change_apply(uuid) to service_role;
 
 comment on function public.vp_number_change_apply(uuid) is
-  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile. Service role only. Migration 214.';
+  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile. Service role only. Migration 215.';
 
 -- Read back (read-only):
 --   select relrowsecurity from pg_class where relname = 'vp_number_changes';                         expects true

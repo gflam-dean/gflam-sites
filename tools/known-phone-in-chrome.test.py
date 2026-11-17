@@ -100,7 +100,7 @@ class Site(http.server.BaseHTTPRequestHandler):
             return J({'ok': True, 'change_id': 'chg-1', 'to': MASK2, 'resend_in': 30})
         if p == '/join/number/verify':
             if str((body or {}).get('sms_code')) == '123456': return J({'ok': True, 'masked': MASK2})
-            return self.send(400, json.dumps({'ok': False, 'error': 'That code is not right. You have 4 tries left.'}), 'application/json')
+            return self.send(400, json.dumps({'ok': False, 'error': 'That code is not right. 4 tries left.'}), 'application/json')
         if p == '/play/live':
             return J({'live': True, 'exists': True, 'age_gate': False, 'paper_bingo': False})
         if p in ('/join', '/capture'):

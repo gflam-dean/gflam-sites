@@ -2328,7 +2328,7 @@
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {
-  "checks": 363,
+  "checks": 525,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/winner-pin.test.js": {
