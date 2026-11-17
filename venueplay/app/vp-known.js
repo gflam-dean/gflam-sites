@@ -20,6 +20,10 @@
    filled and hidden on the bingo and musical phones. "Not my details" forgets that key on this phone and draws the normal
    empty form again.
    The first-game notice (info.notice) is drawn once per player, as the Worker says.
+   ONE NUMBER PER PLAYER (Dean 17 Nov 2026, replacing the typed-in second number): with known.mobile_masked the line is "Playing
+   as Sarah, 04.. ... 123" with "Not my number" (only when known.change_number) and "Not me". "Not my number" asks the
+   new number, the Worker texts a code to it (POST /join/number/start), the player types it back (/join/number/verify)
+   and the new number replaces the old one at every venue. A number is never typed into a join any more.
 
    Asked for at most ASK_MS: a slow answer never holds the join screen, it is simply the full form.
    Everything a person reads is set with textContent. No em dashes. */
@@ -45,8 +49,10 @@
   /* The keys go on every join body, read at send time (a key kept after the first send is on the next one). */
   function addTo(body) { if (body) { var k = keys(); if (k.length) body.known_keys = k; } return body; }
 
+  var _api = "", _code = "";
   function ask(api, code) {
     var f = root.fetch;
+    _api = String(api || ""); _code = String(code || "");
     if (typeof f !== "function" || !code) return Promise.resolve(null);
     var asked = f(api + "/join/known", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code, keys: keys() }) })
       .then(function (r) { return (r && r.ok) ? r.json() : null; })
@@ -70,6 +76,101 @@
     return c;
   }
 
+  /* The masked number for "Playing as": the Worker's mobile_masked, or the masked mobile of a one-tap row (an older
+     Worker). Only the masked form ("04.. ... 123") ever reaches the phone. */
+  function playingMask(known) {
+    if (!known) return "";
+    if (typeof known.mobile_masked === "string" && known.mobile_masked) return known.mobile_masked;
+    var c = Array.isArray(known.confirm) ? known.confirm.filter(function (x) { return x && x.field === "mobile" && x.masked; })[0] : null;
+    return c ? String(c.masked) : "";
+  }
+  function post(path, body) {
+    var f = root.fetch;
+    if (typeof f !== "function" || !_api) return Promise.resolve({ status: 0, j: null });
+    return f(_api + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }, function () { return { status: r.status, j: null }; }); })
+      .catch(function () { return { status: 0, j: null }; });
+  }
+  /* "NOT MY NUMBER" (Dean 17 Nov 2026): the new number, a code texted to it, the code typed back. The line turns into
+     a small form in place (no new screen, no scroll); Cancel puts the line back. On the right code the number on the
+     line is the new one, everywhere. Every word set with textContent. */
+  function numberPanel(g, known) {
+    var d = root.document;
+    var BTN = "flex:0 0 auto;min-height:40px;padding:0 12px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;background:#FF1F8E;color:#0A0A0B;border:1.5px solid #FF1F8E";
+    var IN = "flex:1 1 auto;min-width:0;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid #2A2A31;background:#17171A;color:#fff;font:16px/1.2 Manrope,system-ui,sans-serif";
+    var LINK = "background:none;border:0;padding:6px 0;margin:-6px 0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer";
+    var changeId = "", newNum = "";
+    while (g.firstChild || (g.children && g.children.length)) g.removeChild(g.firstChild || g.children[0]);
+    var say = d.createElement("span"); say.id = "vpNumSay"; say.setAttribute("style", "color:#E7E7EC");
+    var row = d.createElement("div"); row.setAttribute("style", "display:flex;gap:8px;margin-top:6px");
+    var inp = d.createElement("input"); inp.id = "vpNumIn"; inp.setAttribute("style", IN);
+    var go = d.createElement("button"); go.type = "button"; go.id = "vpNumGo"; go.setAttribute("style", BTN);
+    var err = d.createElement("span"); err.id = "vpNumErr"; err.setAttribute("role", "alert"); err.setAttribute("style", "display:block;color:#FF8FA3;margin-top:4px");
+    var foot = d.createElement("div"); foot.setAttribute("style", "margin-top:4px");
+    var again = d.createElement("button"); again.type = "button"; again.id = "vpNumAgain"; again.setAttribute("style", LINK); again.textContent = "Send again";
+    var cancel = d.createElement("button"); cancel.type = "button"; cancel.id = "vpNumCancel"; cancel.setAttribute("style", LINK); cancel.textContent = "Cancel";
+    row.appendChild(inp); row.appendChild(go);
+    g.appendChild(say); g.appendChild(row); g.appendChild(err); g.appendChild(foot);
+    foot.appendChild(cancel);
+    cancel.addEventListener("click", function () { if (_last) paint(_last); });
+    function stepNumber() {
+      say.textContent = "Your new mobile";
+      inp.value = ""; inp.setAttribute("type", "tel"); inp.setAttribute("inputmode", "tel"); inp.setAttribute("autocomplete", "tel"); inp.setAttribute("maxlength", "16");
+      inp.setAttribute("aria-label", "Your new mobile"); inp.setAttribute("placeholder", "04xx xxx xxx");
+      go.textContent = "Text me a code";
+      try { inp.focus(); } catch (e) {}
+    }
+    var waitUntil = 0;
+    function stepCode(masked, wait) {
+      say.textContent = "We texted a code to " + masked + ".";
+      inp.value = ""; inp.setAttribute("type", "text"); inp.setAttribute("inputmode", "numeric"); inp.setAttribute("autocomplete", "one-time-code"); inp.setAttribute("maxlength", "6");
+      inp.setAttribute("aria-label", "The code in the text"); inp.setAttribute("placeholder", "6 numbers");
+      go.textContent = "Confirm";
+      if (again.parentNode !== foot) { foot.insertBefore(again, cancel); foot.insertBefore(d.createTextNode("   "), cancel); }
+      waitUntil = Date.now() + (wait > 0 ? wait : 30) * 1000;
+      try { inp.focus(); } catch (e) {}
+    }
+    function busy(on) { go.disabled = !!on; if (on) go.setAttribute("aria-busy", "true"); else go.removeAttribute && go.removeAttribute("aria-busy"); }
+    function send(isAgain) {
+      if (isAgain && Date.now() < waitUntil) { err.textContent = "Please wait " + Math.ceil((waitUntil - Date.now()) / 1000) + " seconds before asking again."; return; }
+      err.textContent = ""; busy(true);
+      var body = { code: _code, keys: keys(), mobile: newNum };
+      if (isAgain && changeId) body.change_id = changeId;
+      post("/join/number/start", body).then(function (r) {
+        busy(false);
+        if (r.j && r.j.ok && r.j.change_id) { changeId = String(r.j.change_id); stepCode(String(r.j.to || ""), +r.j.resend_in || 30); if (isAgain) err.textContent = "New code sent."; return; }
+        if (isAgain && r.status === 410) { changeId = ""; stepNumber(); }
+        err.textContent = (r.j && typeof r.j.error === "string") ? r.j.error : "We could not send a text just now. Please try again.";
+      });
+    }
+    go.addEventListener("click", function () {
+      if (go.disabled) return;
+      if (!changeId) {
+        newNum = String(inp.value || "").replace(/[^0-9+]/g, "");
+        if (!/^(\+?61|0)?4[0-9]{8}$/.test(newNum)) { err.textContent = "Please check the mobile number."; return; }
+        send(false); return;
+      }
+      var code = String(inp.value || "").replace(/[^0-9]/g, "");
+      if (code.length !== 6) { err.textContent = "The code is the six numbers in the text."; return; }
+      err.textContent = ""; busy(true);
+      post("/join/number/verify", { code: _code, keys: keys(), change_id: changeId, sms_code: code }).then(function (r) {
+        busy(false);
+        if (r.j && r.j.ok && r.j.masked) {
+          known.mobile_masked = String(r.j.masked);
+          if (Array.isArray(known.confirm)) known.confirm.forEach(function (x) { if (x && x.field === "mobile") x.masked = known.mobile_masked; });
+          if (_last) paint(_last);
+          var pa = root.document.getElementById("vpPlayingAs");
+          if (pa) pa.textContent = pa.textContent + ". Number changed.";
+          return;
+        }
+        if (r.status === 410 && !(r.j && r.j.expired)) { changeId = ""; stepNumber(); }
+        err.textContent = (r.j && typeof r.j.error === "string") ? r.j.error : "We could not check the code just now. Please try again.";
+      });
+    });
+    again.addEventListener("click", function () { send(true); });
+    stepNumber();
+  }
+
   /* o = { box, collect, info (known_info), kind:"person"|"team", venueName, nameIn, head, after(h) }
      Draws the boxes and the consent into o.box and calls o.after(h) (h: the boxes' html, "" when none), so the page adds
      its own notice under them. Answers h. */
@@ -86,17 +187,35 @@
     if (greet && greet.parentNode) greet.parentNode.removeChild(greet);
     if (fld) fld.style.display = "";
     if (known) {
-      /* NOT CREEPY (Dean 16 Nov 2026, final): NO name, no hello, nothing we hold. The venue's normal join screen with only a
-         field still to ask, the ticks and Join, and one small "Not my details" link that clears it. The name box is filled
-         (the TV shows the name) and out of the way on the bingo and musical phones. */
+      /* The venue's normal join screen with only a field still to ask, the ticks and Join. The name box is filled (the TV
+         shows the name) and out of the way on the bingo and musical phones.
+         ONE NUMBER PER PLAYER (Dean 17 Nov 2026): when the Worker sends the masked number, one line "Playing as Sarah,
+         04.. ... 123" with a small "Not my number" (only when the Worker says change_number: texts can be sent) and
+         "Not me". Without a number (an older Worker), the 16 Nov line: one small "Not my details", no name. */
       if (!team && nameIn && known.need.indexOf("first_name") < 0 && hello) { nameIn.value = hello.slice(0, 20); fld.style.display = "none"; }
+      var mm = playingMask(known);
       var g = d.createElement("p");
       g.id = "vpKnownHi"; g.className = "vp-notice";
-      g.setAttribute("style", "margin:10px 0 0;font-size:14px;line-height:1.45;color:#9A9AA4");
+      g.setAttribute("style", "margin:10px 0 0;font-size:14px;line-height:1.45;color:#9A9AA4;text-align:left");
+      var LINK = "background:none;border:0;padding:6px 0;margin:-6px 0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer";
+      if (mm) {
+        var pa = d.createElement("span"); pa.id = "vpPlayingAs";
+        pa.setAttribute("style", "color:#E7E7EC");
+        pa.textContent = "Playing as " + (hello ? hello.slice(0, 20) + ", " : "") + mm;
+        g.appendChild(pa);
+        g.appendChild(d.createElement("br"));
+        if (known.change_number === true) {
+          var nn = d.createElement("button"); nn.type = "button"; nn.id = "vpKnownNotNum"; nn.setAttribute("style", LINK);
+          nn.textContent = "Not my number";
+          nn.addEventListener("click", function () { numberPanel(g, known); });
+          g.appendChild(nn);
+          g.appendChild(d.createTextNode("   "));
+        }
+      }
       var nm = d.createElement("button");
       nm.type = "button"; nm.id = "vpKnownNotMe";
-      nm.setAttribute("style", "background:none;border:0;padding:0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer");
-      nm.textContent = "Not my details";
+      nm.setAttribute("style", mm ? LINK : "background:none;border:0;padding:0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer");
+      nm.textContent = mm ? "Not me" : "Not my details";
       nm.addEventListener("click", function () {
         forget(known.ix);
         if (nameIn) { nameIn.value = ""; }
@@ -117,11 +236,15 @@
     var h = (VD && typeof VD.html === "function") ? VD.html(c, { firstBox: team }) : "";
     _use = {};
     var confirm = (known && Array.isArray(known.confirm)) ? known.confirm.filter(function (x) { return x && (x.field === "mobile" || x.field === "email") && x.masked; }) : [];
+    /* the mobile is never a row of its own now: it is the "Playing as" line, and the number on it is the one used
+       (the Worker still passes it to a venue that did not have it only with that venue's offers box ticked) */
+    if (confirm.some(function (x) { return x.field === "mobile"; }) && playingMask(known)) _use.mobile = true;
+    confirm = confirm.filter(function (x) { return x.field !== "mobile"; });
     if (o.box) {
       o.box.innerHTML = h;
-      /* A CONTACT DETAIL WE HOLD, NOT YET THIS VENUE'S (Dean 16 Nov 2026): one row, masked by the Worker, and one tap.
-         "Use this" passes it to this venue (only with its offers box ticked, the Worker checks); "Different number" turns
-         the row into the normal empty box. No tap: nothing is passed. */
+      /* AN EMAIL WE HOLD, NOT YET THIS VENUE'S (Dean 16 Nov 2026): one row, masked by the Worker, and one tap.
+         "Use this" passes it to this venue (only with its offers box ticked, the Worker checks); "Different email" turns
+         the row into the normal empty box. No tap: nothing is passed. (The mobile is the "Playing as" line, above.) */
       var vname = String((info && info.organiser) || o.venueName || "this venue");
       confirm.forEach(function (x) {
         var row = d.createElement("div");
@@ -136,7 +259,7 @@
         var yes = d.createElement("button"); yes.type = "button"; yes.id = "vpkUseYes_" + x.field; yes.textContent = "Use this";
         yes.setAttribute("aria-pressed", "false");
         yes.setAttribute("style", BTN + "background:#17171A;color:#fff;border:1.5px solid #FF1F8E");
-        var no = d.createElement("button"); no.type = "button"; no.id = "vpkUseNo_" + x.field; no.textContent = x.field === "mobile" ? "Different number" : "Different email";
+        var no = d.createElement("button"); no.type = "button"; no.id = "vpkUseNo_" + x.field; no.textContent = "Different email";
         no.setAttribute("style", BTN + "background:#17171A;color:#C9C9D1;border:1.5px solid #2A2A31");
         yes.addEventListener("click", function () {
           _use[x.field] = true; yes.setAttribute("aria-pressed", "true");
@@ -154,10 +277,10 @@
         bs.appendChild(yes); bs.appendChild(no); row.appendChild(bs);
         o.box.appendChild(row);
       });
-      if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known && !confirm.length });
+      if (VC && typeof VC.render === "function") VC.render(o.box, o.collect, { venueName: o.venueName, consent: info && info.consent && info.consent.mode === "three" ? info.consent : null, known: !!known && !confirm.length && !_use.mobile });
     }
     /* a venue asking for (nearly) everything plus the three boxes: the tighter join step (vp-phone.css, .vp-long) */
-    var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length + 2 * confirm.length;   // a one-tap row is about two boxes tall
+    var vj = d && d.getElementById("vJoin"), nBoxes = (h.match(/<input/g) || []).length + 2 * confirm.length + (_use.mobile ? 2 : 0);   // a one-tap row is about two boxes tall; the "Playing as" line with its links, where the mobile row was, counts the same
     if (vj && vj.classList) vj.classList.toggle("vp-long", !!(VC && typeof VC.answers === "function" && VC.answers()) && nBoxes >= 3);
     /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026): one line, once per player; the Worker sends it until the phone's row says
        this version was seen, and the join records it (notice_version). Words and link from the Worker's one constant. */
@@ -199,5 +322,5 @@
   function isKnown() { return !!_known; }
 
   root.VPKnown = { keys: keys, keep: keep, forget: forget, addTo: addTo, ask: ask, withInfo: withInfo, paint: paint, capture: capture,
-                   boxesFor: boxesFor, isKnown: isKnown, LS: LS, ASK_MS: ASK_MS };
+                   boxesFor: boxesFor, isKnown: isKnown, playingMask: playingMask, LS: LS, ASK_MS: ASK_MS };
 })(typeof window !== "undefined" ? window : this);

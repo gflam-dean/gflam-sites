@@ -2324,7 +2324,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-known.js": {
-  "checks": 68,
+  "checks": 80,
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {
@@ -2377,6 +2377,10 @@
  },
  "tools/tv-flip-name-in-chrome.test.py": {
   "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/test-one-number.js": {
+  "checks": 49,
   "counted_by": "lines"
  }
 }

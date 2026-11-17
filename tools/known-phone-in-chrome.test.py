@@ -90,8 +90,10 @@ class Site(http.server.BaseHTTPRequestHandler):
             if KEY in keys and code[:3] in RET:
                 consent, need = RET[code[:3]]
                 known = {'hello': 'Grace', 'need': need, 'ix': keys.index(KEY),
-                         # a NEW venue: the mobile we hold is not yet its own, so a one-tap row (Dean 16 Nov 2026)
-                         'confirm': [{'field': 'mobile', 'masked': MASK}] if code[:3] in ('RSM', 'RMR') else []}
+                         # a NEW venue: the mobile we hold is not yet its own (Dean 16 Nov 2026); since 17 Nov it is the
+                         # "Playing as" line (mobile_masked), and "Not my number" when texts can be sent (change_number)
+                         'confirm': [{'field': 'mobile', 'masked': MASK}] if code[:3] in ('RSM', 'RMR') else [],
+                         'mobile_masked': MASK, 'change_number': code[:3] == 'RMR'}
             return J({'known': known, 'consent': consent, 'organiser': 'The Royal Hotel', 'notice': None if known else NOTICE})
         if p == '/play/live':
             return J({'live': True, 'exists': True, 'age_gate': False, 'paper_bingo': False})
@@ -296,35 +298,34 @@ def returning(game, path, w, h):
                 except Exception as e: print('  (no screenshot: %s)' % e)
             t = L.get('text', '')
             newv = pre in ('RSM', 'RMR')
-            ok('R %s %s %s: no name, no address, no venue played at; only "Not my details"' % (game, size, tag), 'Not my details' in t and 'grace' not in t.lower() and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
+            ok('R %s %s %s: "Playing as Grace, 04.. ... 246" and "Not me"; no address, no venue played at (Dean 17 Nov)' % (game, size, tag), ('Playing as Grace, ' + MASK) in t and 'Not me' in t and '@' not in t and 'welcome' not in t.lower() and 'last played' not in t.lower(), t)
             if newv:
-                ok('R %s %s %s: the mobile we hold is one row, masked: "Mobile for The Royal Hotel: 04.. ... 246", Use this / Different number' % (game, size, tag), ('Mobile for The Royal Hotel: ' + MASK) in t and 'Use this' in t and 'Different number' in t and '412' not in t, t)
+                ok('R %s %s %s: no one-tap row and no "Different number": the number on the line is the one used' % (game, size, tag), 'Mobile for' not in t and 'Use this' not in t and 'Different number' not in t and '412' not in t, t)
             else:
-                ok('R %s %s %s: the same venue already has it: no mobile row, no number at all' % (game, size, tag), 'Mobile for' not in t and '04' not in t, t)
+                ok('R %s %s %s: the same venue already has it: the same line, no mobile row' % (game, size, tag), 'Mobile for' not in t and ('Playing as Grace, ' + MASK) in t and 'Not my number' not in t, t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
             ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
             ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'A ticked box shares' not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RSM':
-                ask(sid, 'document.getElementById("vpkUseYes_mobile").click(); true'); time.sleep(0.3)
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-5-use-this-tapped.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-5-playing-as.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
                 if team: fill(sid, {'nameIn': 'Quiz Kids'})
                 ask(sid, 'document.getElementById("joinBtn").click(); true')
                 got = joins(c)
-                ok('R %s %s: Use this, venue box ticked: the join asks for the held mobile to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
+                ok('R %s %s: venue box ticked: the join asks for the number on the line to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
             if pre == 'RMR':
-                ask(sid, 'document.getElementById("vpkUseNo_mobile").click(); true'); time.sleep(0.4)
+                ask(sid, 'document.getElementById("vpKnownNotNum").click(); true'); time.sleep(0.4)
                 L2 = look(sid)
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-6-different-number.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-6-not-my-number.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
-                ok('R %s %s: Different number: the row becomes an empty mobile box' % (game, size), 'xMobile' in L2.get('ids', []) and 'Mobile for' not in L2.get('text', '') and ask(sid, 'document.getElementById("xMobile").value===""'), L2.get('ids'))
+                ok('R %s %s: Not my number: the line becomes a small form asking the new mobile (never a join box)' % (game, size), 'vpNumIn' in L2.get('ids', []) and 'xMobile' not in L2.get('ids', []) and 'Your new mobile' in L2.get('text', '') and ask(sid, 'document.getElementById("vpNumIn").value===""'), L2.get('ids'))
                 ok('R %s %s: ...still one screen, no scroll' % (game, size), fits(L2), dict((k, L2.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RNT':
                 ask(sid, 'document.getElementById("vpKnownNotMe").click(); true'); time.sleep(0.5)
@@ -332,9 +333,9 @@ def returning(game, path, w, h):
                 if PRIV:
                     try:
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
-                        f = os.path.join(PRIV, '%s-%s-4-not-my-details.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
+                        f = os.path.join(PRIV, '%s-%s-4-not-me.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
-                ok('R %s %s: Not my details clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Not my details' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
+                ok('R %s %s: Not me clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Playing as' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
         finally:
             B.close_tab(tid)
 
