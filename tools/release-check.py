@@ -151,7 +151,9 @@ if CHROME_RECORD:
         _gs_spec = _ilu.spec_from_file_location('gate_server', os.path.join(ROOT, 'tools', 'gate-server.py'))
         _gs = _ilu.module_from_spec(_gs_spec)
         _gs_spec.loader.exec_module(_gs)
-        _CHROME_COVERED, _CHROME_RECORD_WHY = _gs.accepted(ROOT)
+        # --billing-range=BASE..HEAD (the hook's exact pushed range, 16 Nov 2026): billing code in it keeps the billing
+        # suites on this Mac (gate-server.py BILLING_SUITES); a range can only take suites out of the record.
+        _CHROME_COVERED, _CHROME_RECORD_WHY = _gs.accepted(ROOT, extra_ranges=_gs.billing_ranges(sys.argv[1:]))
     except Exception as _e:
         _CHROME_COVERED, _CHROME_RECORD_WHY = set(), 'tools/gate-server.py could not be read (%s)' % type(_e).__name__
 

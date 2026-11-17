@@ -84,7 +84,8 @@ MAC_ONLY = ('signin-logo-in-chrome.test.py',)
 # its name the day it is added). This is the ONE place the list lives: collect() and suite_accepted() both read
 # never_rerun(). Add to it freely; take a suite OFF it only with Dean's yes. gate-server.test.py checks every named
 # file still exists, so a renamed suite cannot drop off silently.
-NEVER_RERUN = (
+# MONEY_SUITES and MONEY_PATTERNS are the money half of NEVER_RERUN; BILLING_SUITES below reads them too.
+MONEY_SUITES = (
     # money, billing, charges, refunds, free months, prices and offers
     'account-review-in-chrome.test.py', 'account-structure-in-chrome.test.py', 'account-tabs-in-chrome.test.py',
     'billing-words-in-chrome.test.py', 'cancelled-account-in-chrome.test.py', 'cancelled-prospect-hq-in-chrome.test.py',
@@ -93,6 +94,8 @@ NEVER_RERUN = (
     'purchase-raffle-in-chrome.test.py', 'purchase-raffle-walk-in-chrome.test.py', 'raffle-ticket-stub-in-chrome.test.py',
     'site-offer-footer-in-chrome.test.py', 'subscribe-in-chrome.test.py', 'trial-cancel-page-in-chrome.test.py',
     'quick-game-in-chrome.test.py',
+)
+NEVER_RERUN = MONEY_SUITES + (
     # sign-in and security
     'phone-signin-in-chrome.test.py', 'signin-logo-in-chrome.test.py', 'signup-start-in-chrome.test.py',
     'signup-tick-in-chrome.test.py', 'welcome-name-in-chrome.test.py', 'partyplay-resend-in-chrome.test.py',
@@ -101,15 +104,17 @@ NEVER_RERUN = (
     'consent-split-in-chrome.test.py', 'details-autofill-in-chrome.test.py', 'feedback-followup-in-chrome.test.py',
     'one-phone-a-night-in-chrome.test.py', 'hq-journey-in-chrome.test.py',
 )
-NEVER_RERUN_PATTERNS = ('*billing*', '*bill-*', '*subscri*', '*charge*', '*refund*', '*invoice*', '*stripe*', '*money*',
-                        '*paid*', '*purchase*', '*payment*', '*price*', '*pricing*', '*offer*', '*free-month*', '*cancel*',
-                        '*signin*', '*sign-in*', '*signup*', '*sign-up*', '*login*', '*session*', '*security*', '*nolive*',
+MONEY_PATTERNS = ('*billing*', '*bill-*', '*subscri*', '*charge*', '*refund*', '*invoice*', '*stripe*', '*money*',
+                  '*paid*', '*purchase*', '*payment*', '*price*', '*pricing*', '*offer*', '*free-month*', '*cancel*')
+NEVER_RERUN_PATTERNS = MONEY_PATTERNS + ('*signin*', '*sign-in*', '*signup*', '*sign-up*', '*login*', '*session*', '*security*', '*nolive*',
                         '*no-live*', '*consent*', '*privacy*', '*player-data*', '*details*', '*members*', '*export*')
 
 
-# BILLING CODE IS JUDGED ON THE MAC TOO (Dean, 16 Nov 2026). The push may use the signed server record EXCEPT when the
-# pushed range changes billing code; then the record is not used and every Chrome suite runs on the Mac as well. Billing
-# code is: a file NAMED in BILLING_FILES; a non-tools file whose path matches BILLING_PATH_PATTERNS; in BILLING_WORKER,
+# BILLING CODE IS JUDGED ON THE MAC TOO (Dean, 16 Nov 2026; narrowed 16 Nov evening on tools/fast-release-16nov, see
+# BILLING_SUITES below). The push may use the signed server record for every Chrome suite EXCEPT, when the pushed range
+# changes billing code, the BILLING SUITES: those run on the Mac as well (the record must still be green for them too:
+# there is no partial record). A range that cannot be read, or no origin/main to measure from, uses no record at all,
+# as before. Billing code is: a file NAMED in BILLING_FILES; a non-tools file whose path matches BILLING_PATH_PATTERNS; in BILLING_WORKER,
 # a changed line or the function around it (the hunk header) that matches BILLING_WORDS; in any other non-tools code
 # file, a changed line that matches STRIPE_WORDS (Stripe code, invoices). Read by billing_changes(), which both the
 # hook (the exact pushed range, `gate-server.py billing <base> <head>`) and accepted() (HEAD against origin/main, so
@@ -121,6 +126,50 @@ BILLING_WORDS = re.compile(r'stripe|invoice|billing|subscri|charge|refund|credit
                            r'payment|past.?due|pro.?rat|yearly|plan_', re.I)
 STRIPE_WORDS = re.compile(r'stripe|invoice', re.I)
 BILLING_BASE_REF = 'origin/main'
+
+# THE BILLING SUITES: the Chrome suites that run ON THE MAC when the range changes billing code (the rest are taken from
+# the signed server record). A Chrome suite is one when ANY of these holds; each is read from the suite itself, so a new
+# billing suite is caught the day it is added:
+#   1. it is named in MONEY_SUITES (the money half of NEVER_RERUN)
+#   2. its file name matches MONEY_PATTERNS (billing, subscri, charge, refund, invoice, stripe, paid, purchase, price, offer,
+#      cancel, ...: the money half of NEVER_RERUN_PATTERNS)
+#   3. its source drives billing: it names billing.html, a /billing route or the billing Worker's rig (billing-stdio),
+#      Stripe (as a word: not a CSS "vpds-stripe" class), or an invoice (BILLING_SUITE_WORDS)
+#   4. its source names a billing file this range changes, by file name (play-quick.html), except index.html (every
+#      folder's front page has that name, so it says nothing) and the billing Worker (rule 3 finds the suites that drive
+#      its billing)
+# MAC_ONLY suites run on the Mac whatever the range. Add freely; take a rule off only with Dean's yes.
+BILLING_SUITE_WORDS = re.compile(r'billing\.html|/billing\b|billing-stdio|(?<![\w-])stripe(?![\w-])|\binvoices?\b', re.I)
+BILLING_NAME_SKIP = ('index.html', os.path.basename(BILLING_WORKER))
+
+
+def billing_suites(root, changes=()):
+    """{suite basename: why} for the Chrome suites that run on the Mac when the range changes billing code (the rules
+    above). changes: billing_changes() of the range, for rule 4."""
+    names = sorted({os.path.basename(p) for p, _ in (changes or ())} - set(BILLING_NAME_SKIP))
+    out = {}
+    for s in chrome_suites(root):
+        why = []
+        if s in MONEY_SUITES:
+            why.append('a money suite (MONEY_SUITES)')
+        if any(fnmatch.fnmatch(s, p) for p in MONEY_PATTERNS):
+            why.append('its name is a money name')
+        try:
+            src = io.open(os.path.join(root, 'tools', s), encoding='utf-8', errors='replace').read()
+        except Exception:
+            src = None
+        if src is None:
+            why.append('its source could not be read')
+        else:
+            m = BILLING_SUITE_WORDS.search(src)
+            if m:
+                why.append('it drives billing ("%s")' % m.group(0))
+            hit = [n for n in names if n in src]
+            if hit:
+                why.append('it opens %s, which this range changes' % hit[0])
+        if why:
+            out[s] = '; '.join(why)
+    return out
 
 
 def billing_changes(root, base, head='HEAD'):
@@ -155,6 +204,17 @@ def billing_changes(root, base, head='HEAD'):
             found.append((path, '%s says "%s"' % (kind, m.group(0))))
             seen.add(path)
     return found
+
+
+def billing_ranges(args):
+    """[(base, head)] from --billing-range=BASE..HEAD arguments (the hook's exact pushed range). Read by release-check.py
+    --chrome-record and `check`; a range only ever takes suites out of a record."""
+    out = []
+    for a in args:
+        if a.startswith('--billing-range='):
+            base, _, head = a.split('=', 1)[1].partition('..')
+            out.append((base, head or 'HEAD'))
+    return out
 
 
 def billing_verdict(root, base, head='HEAD'):
@@ -482,8 +542,12 @@ def record_path(tree, record_dir=RECORD_DIR):
     return os.path.join(record_dir, tree + '.json')
 
 
-def accepted(root=ROOT, now=None, key_file=KEY_FILE, record_dir=RECORD_DIR):
-    """What release-check.py --chrome-record asks. (covered basenames, one-line reason). Never raises."""
+def accepted(root=ROOT, now=None, key_file=KEY_FILE, record_dir=RECORD_DIR, extra_ranges=()):
+    """What release-check.py --chrome-record asks. (covered basenames, one-line reason). Never raises.
+    Billing code is measured on HEAD against origin/main AND on every extra range (the hook passes the exact pushed range
+    as --billing-range=BASE..HEAD): a range can only take suites OUT of the record, never put one in. Billing code changed:
+    the record covers every Chrome suite except billing_suites(), which run on the Mac as well. A range that cannot be
+    read, or no origin/main: no record at all."""
     try:
         now = time.time() if now is None else now
         tree, head, dirty = current_tree(root)
@@ -493,13 +557,24 @@ def accepted(root=ROOT, now=None, key_file=KEY_FILE, record_dir=RECORD_DIR):
         if key is None:
             return set(), why
         mb = subprocess.run(['git', 'merge-base', 'HEAD', BILLING_BASE_REF], cwd=root, capture_output=True, text=True)
-        bill = billing_verdict(root, mb.stdout.strip(), 'HEAD') if mb.returncode == 0 and mb.stdout.strip() else (
-            'no %s here to tell what this push changes, so it is treated as billing' % BILLING_BASE_REF)
-        if bill:
-            return set(), 'not used: ' + bill
+        if mb.returncode != 0 or not mb.stdout.strip():
+            return set(), 'not used: no %s here to tell what this push changes, so it is treated as billing' % BILLING_BASE_REF
+        changes = []
+        for base, hd in [(mb.stdout.strip(), 'HEAD')] + [tuple(r) for r in extra_ranges]:
+            c = billing_changes(root, base, hd)
+            if c is None:
+                return set(), 'not used: the range %s..%s could not be read, so it is treated as billing' % (base[:12], hd[:12])
+            changes += [x for x in c if x not in changes]
         p = record_path(tree, record_dir)
         raw = io.open(p, encoding='utf-8', errors='replace').read() if os.path.isfile(p) else None
-        return verify(raw, tree, key, now, chrome_suites(root), ledger(root), suite_passed_rule(root))
+        covered, why = verify(raw, tree, key, now, chrome_suites(root), ledger(root), suite_passed_rule(root))
+        if not changes or not covered:
+            return covered, why
+        mac = billing_suites(root, changes)
+        kept = sorted(s for s in covered if s in mac)
+        return covered - set(mac), ('%s; BILLING CODE CHANGED (%s), so %d billing suite(s) run on this Mac as well '
+                                    '(Dean, 16 Nov 2026): %s' % (why, '; '.join('%s: %s' % f for f in changes[:3]), len(kept),
+                                                                  ', '.join(kept)))
     except Exception as e:
         return set(), 'the gate record could not be checked (%s: %s)' % (type(e).__name__, str(e)[:120])
 
@@ -693,15 +768,39 @@ def main(argv=None):
         print('  gate key: ' + text)
         return 0 if good else 1
     if cmd == 'check':
-        covered, why = accepted(ROOT)
+        covered, why = accepted(ROOT, extra_ranges=billing_ranges(argv[1:]))
         print('  gate record: %s: %s' % ('ACCEPTED' if covered else 'not used', why))
         return 0 if covered else 1
     if cmd == 'billing' and len(argv) == 3:
-        # The pre-push hook asks this of the EXACT pushed range: exit 0 = billing code changed (the record is not
-        # used), 1 = no billing code. Read only.
-        why = billing_verdict(ROOT, argv[1], argv[2])
-        print('  billing: ' + (why or 'this range changes no billing code'))
-        return 0 if why else 1
+        # The pre-push hook asks this of the EXACT pushed range. Read only. Exit 0 = billing code changed (the record is
+        # used for every Chrome suite but the billing suites, which run on the Mac), 4 = no billing code, 3 = the range
+        # could not be read (no record at all: every Chrome suite on the Mac).
+        # Exit 4 (not 1) means "no billing code": a crash exits 1, and the hook reads anything but 0 and 4 as "could not
+        # be judged", which uses no record at all.
+        try:
+            found = billing_changes(ROOT, argv[1], argv[2])
+        except Exception as e:
+            print('  billing: the range could not be judged (%s); no record is used' % type(e).__name__)
+            return 3
+        if found is None:
+            print('  billing: ' + billing_verdict(ROOT, argv[1], argv[2]) + '; no record is used')
+            return 3
+        if not found:
+            print('  billing: this range changes no billing code')
+            return 4
+        try:
+            mac = sorted(billing_suites(ROOT, found))
+        except Exception as e:
+            mac = ['(the list could not be read here: %s; release-check works it out again)' % type(e).__name__]
+        print('  billing: this range changes billing code (%s), so the billing suites run on this Mac as well: %s'
+              % ('; '.join('%s: %s' % f for f in found[:3]), ', '.join(mac)))
+        return 0
+    if cmd == 'billing-suites':
+        # Read only: the billing suites for a range (with no range, rules 1 to 3 alone), and why each one.
+        found = billing_changes(ROOT, argv[1], argv[2]) if len(argv) == 3 else []
+        for s, why in sorted(billing_suites(ROOT, found or []).items()):
+            print('  %s  %s' % (s, why))
+        return 0
     if cmd == 'run':
         key, why = read_key()
         if key is None:

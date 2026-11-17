@@ -1774,7 +1774,7 @@
   function imgRetry(u){
     try{
       var t=new Image();
-      t.onload=function(){ delete BAD_IMG[u]; try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} };
+      t.onload=function(){ delete BAD_IMG[u]; try{ IMG_OK[u]=1; }catch(e){} try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} };
       t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, allPicturesOut() ? IMG_ALL_OUT_RETRY_MS : IMG_RETRY_MS); };
       t.src=imgFresh(u);   // a fresh request, never the failure the TV may have kept
     }catch(e){}
@@ -1794,11 +1794,31 @@
     try{ (ADS.slides||[]).forEach(function(s){ if(s && s.image_url){ n++; if(BAD_IMG[String(s.image_url)]) out++; } }); }catch(e){}
     return n>0 && out===n;
   }
+  /* A PICTURE IS LIT ONLY ONCE IT HAS LOADED (release gate, 16 Nov 2026: tools/tv-first-slide-in-chrome.test.py ONE caught
+     Test Charlie's broken picture LIT at 118 ms). The slides were built and the clock's slide lit at once, before the
+     check on its picture had answered, so a broken picture was the slide on the wall until its error came back: about
+     15 ms on the test rig, and on a pub's slow wifi the whole round trip, seconds of a black slide. Now a picture slide
+     (data-img) is not lit until its picture has really loaded (IMG_OK); while it is still loading, the next slide that
+     is ready stands in (startAds), or the one already up stays up (advance), and nothing is lit only when nothing is
+     ready yet (the first moment of a wall of pictures: the floor, the same holding look). A check that has not
+     answered in IMG_PROBE_MAX_MS counts as a failure (the slide leaves the loop and is tried again as any failure is),
+     so a picture host that hangs cannot hold the wall. */
+  var IMG_OK={}, adHeld=false, IMG_PROBE_MAX_MS=15000;
+  function adReady(s){ try{ var u=s && s.getAttribute && s.getAttribute("data-img"); return !u || IMG_OK[u]===1; }catch(e){ return true; } }
   function probeImg(u){
     if(_probed[u]) return; _probed[u]=1;
     try{
-      var im=new Image();
+      var im=new Image(), done=false;
+      im.onload=function(){
+        if(done && !BAD_IMG[u]) return;
+        done=true; IMG_OK[u]=1;
+        if(BAD_IMG[u]){ delete BAD_IMG[u]; try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} return; }   // it came in after the time box: back in the loop
+        /* The wall was waiting with nothing lit (every slide a picture still loading): light what is ready now. A slide that
+           stood in stays up to the end of its turn, as any slide does, and the rotation picks the picture up from there. */
+        try{ if(adHeld && tvMode==="ads" && !document.querySelector("#tvAds .ad.show")) startAds(); }catch(e){}
+      };
       im.onerror=function(){
+        if(done) return; done=true;
         imgErrors++; try{ window.__vpTvImgErrors=imgErrors; }catch(e){}
         BAD_IMG[u]=1;
         /* AND START THE ROTATION AGAIN. This used to be buildAds(true) alone, and buildAds hands back
@@ -1810,6 +1830,7 @@
         try{ buildAds(true); if(tvMode==="ads") startAds(); }catch(e){}
         setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_SECOND_TRY_MS);   // the first try again is four seconds off (then a minute or ten, imgRetry)
       };
+      if(typeof IMG_PROBE_MAX_MS==="number") setTimeout(function probeCap(){ if(!done) im.onerror(); }, IMG_PROBE_MAX_MS);   // the jsc suites that lift probeImg alone have no time box
       im.src=u;
     }catch(e){}
   }
@@ -1897,6 +1918,7 @@
         /* A PHOTO SLIDE STAYS FULL-BLEED on the TV's 5% safe margin (Dean via main, INBOX 321.2, 12 Nov 2026):
            /app/vp-tvsafe.css takes .ad-photo back out to the window's edges; words stay in the safe box. */
         if(div.querySelector(".adimg")) div.className+=" ad-photo";
+        if(div.querySelector(".adimg") && e && e.type==="slide" && e.slide && e.slide.image_url) div.setAttribute("data-img", String(e.slide.image_url));   // lit only once this picture has loaded (adReady)
         pending.appendChild(div); built++;
       }catch(err){}
     });
@@ -1965,6 +1987,13 @@
     if(typeof window!=="undefined") window.__vpAdClock = { durs: durs.slice(), slot: function(){ return adSlotAt(Date.now(), durs); } };   // the guard is for the jsc suites that lift startAds
     var at=adSlotAt(Date.now(), durs);
     var cur=at.i;
+    /* The clock's slide, unless it is a picture that has not loaded yet: then the next slide that is ready stands in
+       until the clock moves on, and nothing is lit only when nothing is ready (see adReady). */
+    var ready=function(i){ return typeof adReady!=="function" || adReady(slides[i]); };   // the jsc suites that lift startAds alone have no adReady
+    var pick=-1;
+    for(var pi=0; pi<slides.length; pi++){ if(ready((cur+pi)%slides.length)){ pick=(cur+pi)%slides.length; break; } }
+    try{ adHeld = (pick!==cur); }catch(e){}
+    if(pick>=0) cur=pick;
     adIdx=cur;
     // The one on screen starts on top of the stack and stays there, so a rebuild or a
     // resume cannot leave a later slide painting over the visible one. See advance().
@@ -1979,10 +2008,10 @@
        (tools/tv-first-slide-in-chrome.test.py ROTATION, 2 Nov 2026). So while the slide on screen is
        still arriving, the one it is fading in over stays lit underneath until it has. */
     var arriving = false;
-    try{ arriving = !!slides[cur] && slides[cur].classList.contains("show") && +getComputedStyle(slides[cur]).opacity < 0.99; }catch(e){}
+    try{ arriving = pick>=0 && !!slides[cur] && slides[cur].classList.contains("show") && +getComputedStyle(slides[cur]).opacity < 0.99; }catch(e){}
     var under = [];
     slides.forEach(function(s,i){
-      var on = (i===cur);
+      var on = (pick>=0 && i===cur);
       if(on && !s.classList.contains("show")){
         try{ s.style.transition="none"; s.classList.add("show"); void s.offsetWidth; s.style.transition=""; }catch(e){ s.classList.add("show"); }
       } else if(!on && arriving && s.classList.contains("show")) under.push(s);
@@ -2008,6 +2037,8 @@
     function advance(){
       var now = adSlotAt(Date.now(), durs);
       if(now.i === adIdx){ adTimer = setTimeout(advance, Math.max(250, now.left)); return; }   // woke a little early: wait for the boundary
+      /* A picture that has not loaded yet is never handed the wall: the slide that is up stays up through its turn. */
+      if(typeof adReady==="function" && !adReady(slides[now.i])){ adHeld=true; adTimer = setTimeout(advance, Math.max(250, now.left)); return; }
       var out = slides[adIdx];
       adIdx = now.i;
       var into = slides[adIdx];

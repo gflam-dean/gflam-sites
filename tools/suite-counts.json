@@ -264,7 +264,7 @@
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
-  "checks": 60,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
@@ -272,7 +272,7 @@
   "counted_by": "lines"
  },
  "tools/gate-server.test.py": {
-  "checks": 144,
+  "checks": 161,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {
@@ -300,7 +300,7 @@
   "counted_by": "lines"
  },
  "tools/home-counts-in-chrome.test.py": {
-  "checks": 34,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/home-hero-in-chrome.test.py": {
@@ -357,6 +357,10 @@
  },
  "tools/migrations-live.test.py": {
   "checks": 40,
+  "counted_by": "lines"
+ },
+ "tools/look-publish.test.py": {
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/migrations-parse.test.py": {
@@ -549,6 +553,10 @@
  },
  "tools/regulated.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/release-lanes.test.py": {
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/release-push.test.py": {
@@ -988,7 +996,7 @@
   "counted_by": "lines"
  },
  "tools/test-library-counts.js": {
-  "checks": 41,
+  "checks": 43,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
@@ -1256,7 +1264,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 98,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1792,7 +1800,7 @@
   "counted_by": "lines"
  },
  "tools/tv-first-slide-in-chrome.test.py": {
-  "checks": 33,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/tv-fullbleed-in-chrome.test.py": {
@@ -1917,6 +1925,10 @@
  },
  "venueplay-backend/app/hq-contact-rule.test.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/look-page.test.js": {
+  "checks": 58,
   "counted_by": "lines"
  },
  "venueplay-backend/app/members/draw-again.test.js": {
@@ -2317,6 +2329,18 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/canary-night.test.py": {
+  "checks": 102,
+  "counted_by": "lines"
+ },
+ "tools/staging/db-functions-on-test.test.py": {
+  "checks": 130,
+  "counted_by": "lines"
+ },
+ "tools/look-page-in-chrome.test.py": {
+  "checks": 32,
   "counted_by": "lines"
  },
  "tools/test-welcome-inbox.js": {

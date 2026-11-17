@@ -110,3 +110,8 @@
 # 14 Nov 2026, INBOX 412: the old see-a-night page is replaced by Play a quick game. Every old link (cold emails, the autopilot reply, search) lands there.
 /see-a-night       /quick  301
 /see-a-night.html  /quick  301
+
+# ONE VENUE'S TV SLIDES (build job 7, 5 Nov 2026). venueplay.com.au/look/<code> is look.html, which reads the
+# code from the address and fetches /look-data/<code>/look.json. The code is 128 random bits (tools/look-publish.py)
+# and nothing on the site lists them: Pages never lists a folder, and look-data is in no sitemap or page.
+/look/*   /look  200

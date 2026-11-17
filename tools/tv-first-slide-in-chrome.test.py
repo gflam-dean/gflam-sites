@@ -20,6 +20,11 @@ Worker in jsc, supabase-js stood in) at 1920x1080 and checks:
   REBUILD  a good picture and a text slide, 3 s each, and the wall rebuilt (buildAds + startAds, as the
            screen refresh, the poll and the tab coming forward do) 60 ms into every hand-over, while the new
            slide is still fading in: the floor must never show through (it did, on the ROTATION run, 2 Nov).
+  SLOW PICTURE  the broken picture's answer held 3 s by the local site (pub wifi), its slide the clock's slide when the wall
+           starts: it is never lit, not for a moment, while its answer is on the way (a picture is lit only once it has
+           loaded; release gate 16 Nov 2026, the broken picture lit at 118 ms), and the good picture stands in at once.
+  Every scene with the broken picture also watches every class change on the wall (not the 100 ms samples), so a broken
+  picture lit for a few milliseconds is seen too.
   SLOW     the venue's screen takes 6 s to answer: until it does, the wall and the floor under it say
            "Setting up this screen" under the venueplay tv logo (Dean, 3 Nov 2026), not "Waiting for the host";
            then the venue's slide arrives and the floor under it says "Waiting for the host".
@@ -67,11 +72,17 @@ DONE = 'WAITING FOR THE HOST'   # the finished floor's line once set up (Dean, 3
 # Runs in the page before any of its own script: every 100 ms, what is LIT on the wall (opacity over a
 # half, so a slide fading out does not count), and what the floor under it says.
 WATCH = r'''
-(function(){ window.__wall=[]; window.__badIn=[];
+(function(){ window.__wall=[]; window.__badIn=[]; window.__badLit=[];
   document.addEventListener("DOMContentLoaded", function(){ try{
     new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes, function(n){
       if(n.nodeType===1 && /no-such-picture-here/.test(n.innerHTML||"")) window.__badIn.push(Math.round(performance.now())); }); }); })
       .observe(document.getElementById("tvAds"), { childList:true });
+    /* EVERY moment the broken picture's slide is given the wall, not a sample every 100 ms: on the test rig its error
+       comes back in a few ms, so a slide lit until then was seen only when a sample happened to land inside it. */
+    var host=document.getElementById("tvAds");
+    var lit=function(a){ if(a && a.classList && a.classList.contains("ad") && a.classList.contains("show") && /no-such-picture-here/.test(a.innerHTML||"")) window.__badLit.push(Math.round(performance.now())); };
+    new MutationObserver(function(ms){ ms.forEach(function(m){ if(m.type==="attributes") lit(m.target); else [].forEach.call(m.addedNodes, lit); }); })
+      .observe(host, { subtree:true, childList:true, attributes:true, attributeFilter:["class"] });
   }catch(e){} });
   setInterval(function(){ try{
     var lit=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(a){return +getComputedStyle(a).opacity>0.5;});
@@ -119,7 +130,7 @@ def main():
         good = r.base + '/logos/ad-slides/tugun-tuesday.jpg'
         broken = r.base + '/logos/ad-slides/no-such-picture-here.jpg'
 
-        def watch_scene(name, slides, secs, want_both=False, change=None, extra='', broken=True):
+        def watch_scene(name, slides, secs, want_both=False, change=None, extra='', broken=True, midfade=True):
             row = lambda sl: [{'venue_id': r.W.info['venue'], 'slug': slug, 'logo_url': None, 'raffle': None, 'slides': sl}]
             r.W.seed('vp_venue_screen', row(slides), replace=True)
             tid, sid = r.open('/tv?venue=' + slug, before=FAST_TIMERS + WATCH + extra, width=1920, height=1080)
@@ -136,6 +147,9 @@ def main():
                len(w) > secs * 7 and first is not None and not gaps, [len(w), gaps[:3]])
             ok('%s: the broken picture is never the slide lit' % name, not any('no-such-picture-here' in x[1] for x in w),
                [x for x in w if 'no-such-picture-here' in x[1]][:2])
+            if broken:
+                bl = r.json(sid, 'JSON.stringify(window.__badLit||null)', None)
+                ok('%s: and never given the wall, not even for a moment (every change on the wall watched, not sampled)' % name, bl == [], bl)
             if want_both:
                 ok('%s: and the loop really turns: both good slides take their turn' % name,
                    any('tugun-tuesday.jpg' in x[1] for x in w) and any(TEXT_HEAD.upper() in x[1].upper() for x in w), sorted(set(x[1][:60] for x in w)))
@@ -144,7 +158,7 @@ def main():
                first is not None and not [t for t in bad_in if t > first], [first, bad_in])
             if change:
                 ok('%s: the edited slides went up (the refresh swapped them in)' % name, any('THURSDAY' in x[1].upper() for x in w), sorted(set(x[1][:50] for x in w)))
-            if extra:
+            if extra and midfade:
                 n = r.ask(sid, 'window.__midFade||0')
                 ok('%s: the wall really was rebuilt mid hand-over, again and again' % name, isinstance(n, int) and n >= 3, n)
             if broken:
@@ -169,6 +183,18 @@ def main():
                                 {'head': TEXT_HEAD, 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 3}], 16, want_both=True, extra=MID_FADE, broken=False)
         r.close()
 
+        print('\nSLOW PICTURE: the broken picture\'s answer takes 3 s, and its slide is the clock\'s slide as the wall starts')
+        r = RIG.Rig(hold={'/logos/ad-slides/no-such-picture-here.jpg': 3})
+        slug = r.W.info['slug']
+        good = r.base + '/logos/ad-slides/tugun-tuesday.jpg'
+        broken = r.base + '/logos/ad-slides/no-such-picture-here.jpg'
+        # The loop is the broken picture's 120 s then the good one's 4 s, and the page's clock is set 1 s into the loop, so
+        # the clock's slide at load IS the broken one, every run (the wall reads its slide off Date.now, tv.html adSlotAt).
+        AT_BROKEN = '(function(){ var n=Date.now, d=124000 - (n() % 124000) + 1000; Date.now=function(){ return n()+d; }; })();'
+        watch_scene('SLOW PICTURE', [{'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 120},
+                                     {'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 4}], 14, extra=AT_BROKEN, midfade=False)
+        r.close()
+
         print('\nSLOW: the venue\'s screen takes 6 seconds to answer')
         r = RIG.Rig(hold={'/__worker/screen': 6})
         slug = r.W.info['slug']
@@ -189,7 +215,13 @@ def main():
         ok('once it answers, the venue\'s own slide is lit', got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show")&&document.querySelector("#tvAds .ad.show").innerText'))
         fname = r.ask(sid, '(function(){var n=document.querySelector("#tvFloor .fl-done");return n?n.textContent:"";})()')
         ok('and the floor under it now says "Waiting for the host" under the logo', fname == 'Waiting for the host', fname)
-        ok('and the floor goes on to its finished line', DONE in (wall(r, sid)[-1][2] or '').upper() and READY not in (wall(r, sid)[-1][2] or '').upper(), wall(r, sid)[-1:])
+        # The samples from AFTER the slide was seen lit, not the last one taken: on a loaded machine the 100 ms sampler can lag
+        # the page, and the last sample was still the loading card from before the answer (Mac after-push gate, 16 Nov 2026,
+        # [6314, 'TEXT Setting up this screen']). The page drops the loading line before it builds the slides (screenLoaded).
+        t_lit = r.ask(sid, 'Math.round(performance.now())')
+        r.until(sid, '(function(w){ return !!w && w.length>0 && w[w.length-1][0] >= %d; })(window.__wall)' % (t_lit or 0), 10)
+        after = [x for x in wall(r, sid) if isinstance(t_lit, int) and x[0] >= t_lit]
+        ok('and the floor goes on to its finished line', len(after) >= 1 and all(DONE in (x[2] or '').upper() and READY not in (x[2] or '').upper() for x in after), [t_lit, after[:2], wall(r, sid)[-1:]])
         r.close_tab(tid)
         r.close()
 

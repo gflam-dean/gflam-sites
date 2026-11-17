@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Your screen on venueplay</title>
+<!-- ONE VENUE'S PAGE, NEVER A SEARCH RESULT (build job 7, 5 Nov 2026). venueplay.com.au/look/<code> is sent
+     to one prospect in one email. It must never be indexed, and the code in its address must never leave in a
+     Referer header: _headers sets X-Robots-Tag and Referrer-Policy on /look/* and /look-data/* as well. -->
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="A few quick TV slides, made for one venue by the venueplay team.">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Nothing on this page is set under 15px (Dean's floor for this page). */
+  :root{
+    --ink:#0A0A0B; --surface:#1A1A1F; --surface-2:#121214; --pink:#FF1F8E; --white:#FFFFFF;
+    --muted:#B4B4BE; --line:rgba(255,255,255,0.10);
+    --fs-min:15px; --fs-body:17px; --fs-lead:19px; --fs-h2:clamp(26px,5.6vw,38px); --fs-h1:clamp(34px,8vw,64px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--white)}
+  body{font-family:'Manrope',system-ui,-apple-system,sans-serif;font-size:var(--fs-body);line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+  a{color:var(--white)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+  header.top{padding:22px 0 8px}
+  header.top img{height:34px;width:auto;display:block}
+  .eyebrow{display:inline-block;font-size:var(--fs-min);font-weight:700;letter-spacing:.06em;color:var(--pink);
+    margin:26px 0 10px;overflow-wrap:anywhere}
+  h1{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs-h1);
+    line-height:1.02;letter-spacing:.01em;margin:0 0 14px}
+  h2{font-family:'Anton',Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs-h2);
+    line-height:1.08;margin:0 0 12px}
+  .lead{font-size:var(--fs-lead);color:var(--muted);max-width:720px;margin:0 0 24px}
+  .lead b{color:var(--white);font-weight:700}
+
+  /* The slides: their own 1920 x 1080 pictures, shown whole at 16:9. No drawn TV around them. */
+  .show{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;
+    border:1px solid var(--line)}
+  .show img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;
+    transition:opacity 350ms cubic-bezier(0.22,1,0.36,1)}
+  .show img.on{opacity:1}
+  .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 0}
+  .controls button{min-width:52px;min-height:52px;border-radius:999px;border:1px solid var(--pink);background:transparent;
+    color:var(--white);font:700 var(--fs-body) 'Manrope',sans-serif;cursor:pointer;padding:0 18px}
+  .controls button:focus-visible,.btn:focus-visible{outline:3px solid var(--white);outline-offset:3px}
+  .count{font-size:var(--fs-min);color:var(--muted);text-align:center;flex:1}
+  .count b{color:var(--white)}
+
+  /* The fallback: the real venueplay screen in its demo mode, laid out at 1920 x 1080 and scaled to fit. */
+  .demo{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+  .demo iframe{position:absolute;top:0;left:0;width:1920px;height:1080px;border:0;transform-origin:top left;pointer-events:none}
+  .caption{font-size:var(--fs-min);color:var(--muted);margin:12px 0 0}
+
+  .cards{display:grid;grid-template-columns:1fr;gap:16px;margin:34px 0 0}
+  @media (min-width:820px){ .cards{grid-template-columns:1.25fr 1fr} }
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px 22px}
+  .card p{margin:0 0 14px}
+  .card p:last-child{margin-bottom:0}
+  .card .small{font-size:var(--fs-min);color:var(--muted)}
+  .price{font-family:'Anton',Impact,sans-serif;font-size:clamp(40px,10vw,56px);line-height:1;margin:4px 0 10px}
+  .price span{font-family:'Manrope',sans-serif;font-size:var(--fs-min);font-weight:600;color:var(--muted);letter-spacing:0}
+  .label{font-size:var(--fs-min);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;
+    font:700 var(--fs-body) 'Manrope',sans-serif;text-decoration:none;background:var(--pink);color:var(--white);margin-top:6px}
+  .btn.ghost{background:transparent;border:1px solid var(--pink)}
+  .more{margin:28px 0 0;font-size:var(--fs-body);display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .more .small{font-size:var(--fs-min);color:var(--muted)}
+  .more[hidden]{display:none}
+  footer{margin:48px 0 0;padding:26px 0 34px;border-top:1px solid var(--line);font-size:var(--fs-min);color:var(--muted)}
+  footer img{height:28px;width:auto;display:block;margin:0 0 12px}
+  footer a{color:var(--muted)}
+  [hidden]{display:none !important}
+  @media (prefers-reduced-motion: reduce){ .show img{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><a href="/" aria-label="venueplay home"><img src="/logos/venueplay-primary.svg" alt="venueplay" width="146" height="34"></a></header>
+
+  <main id="lkMain" aria-live="polite">
+    <section id="lkLoading">
+      <p class="lead" style="margin-top:28px">Getting your slides ready...</p>
+    </section>
+
+    <section id="lkMissing" hidden>
+      <h1 style="margin-top:28px">This link isn't working</h1>
+      <p class="lead">It may have been swapped for a newer one. You can still try venueplay now.</p>
+      <a class="btn" href="/quick?from=look">Play a quick game</a>
+    </section>
+
+    <section id="lkSlides" hidden>
+      <span class="eyebrow">Made for <span class="lkVenue"></span></span>
+      <h1>Your TV, your slides</h1>
+      <p class="lead">We knocked up a few quick slides for <b class="lkVenue"></b> off your website, so you can see how your own screen could look. They play between games.</p>
+      <div class="show" id="lkShow" role="region" aria-roledescription="slideshow" aria-label="Your TV slides"></div>
+      <div class="controls">
+        <button type="button" id="lkPrev" aria-label="Previous slide">Back</button>
+        <div class="count" id="lkCount" aria-live="polite"></div>
+        <button type="button" id="lkNext" aria-label="Next slide">Next</button>
+      </div>
+    </section>
+
+    <section id="lkDemo" hidden>
+      <span class="eyebrow">Made for <span class="lkVenue"></span></span>
+      <h1>Here's what your screen could look like</h1>
+      <p class="lead">This is the real venueplay screen, playing a sample venue's slides between games. Reply yes and we'll make <b class="lkVenue"></b>'s own slides with you, from your best photos.</p>
+      <div class="demo" id="lkDemoBox"></div>
+      <p class="caption">A sample venue, shown on the real screen. Yours would carry your name and your slides.</p>
+    </section>
+
+    <div id="lkCards" hidden><div class="cards">
+      <div class="card">
+        <h2>Reply yes and it's yours to play with</h2>
+        <p>Just reply yes to our email and we'll set you up an account so you can have a play: <span id="lkYesWhat">these slides on your own screen</span>, and a game or two of trivia, musical bingo or bingo.</p>
+        <p class="small">No card needed to have a look around.</p>
+      </div>
+      <div class="card" id="lkOffer" hidden>
+        <p class="label">The offer</p>
+        <p class="price">$2.50 <span>a player a month</span></p>
+        <p>If you join by <b id="lkOfferDay"></b>, that rate is locked in for as long as you stay, and your first month is free. Our standard rate is $3.</p>
+        <a class="btn ghost" id="lkOfferLink" href="/quick?from=look">See the offer</a>
+      </div>
+      <div class="card" id="lkStandard" hidden>
+        <p class="label">Pricing</p>
+        <p class="price">$3 <span>a player a month</span></p>
+        <p>New venues get their first month free, and you can cancel any time before your first payment.</p>
+      </div>
+    </div></div>
+
+    <p class="more" id="lkMore" hidden><a class="btn" id="lkNight" href="/quick?from=look">Play a quick game</a> <span class="small">Five quick trivia questions, the real game.</span></p>
+  </main>
+
+  <footer>
+    <img src="/logos/venueplay-primary.svg" alt="venueplay" width="120" height="28">
+    <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a>
+  </footer>
+</div>
+
+<script src="/app/vp-offer.js"></script>
+<script>
+/* LOOK PAGE LOGIC (build job 7, 5 Nov 2026). Pure functions, no page access: jsc runs this exact block in
+   venueplay-backend/app/look-page.test.js. The render script below only paints what plan() returns.
+
+   THE CODE. 22 or more URL-safe characters (tools/look-publish.py makes 22 from 16 random bytes: 128 bits).
+   Anything else is never fetched, so a dot, a slash or a short guess cannot reach another path.
+
+   POOR PHOTOS ARE NEVER SHOWN. "Poor" is the slide maker's own record (prospect-slides.py, prospect-autopilot
+   needs_social_photos): each slide says whether it carries a real photo of theirs or a drawn panel. Fewer real
+   photos than min(3, the slides that can carry one) is a website with poor photos, and the venue gets the real
+   screen's demo instead of its slides. tools/look-publish.py applies the same rule and never uploads those
+   slides; this is the second lock, for a manifest edited by hand. Fewer than 3 slides is a demo too. */
+(function (root) {
+  var MIN_REAL_PHOTOS = 3, MIN_SLIDES = 3, MAX_SLIDES = 12;
+  /* PLAY A QUICK GAME (INBOX 412 item 8, 16 Nov 2026): /see-a-night is gone (301 to /quick), so the page's game
+     button goes straight to the real 5-question trivia. from=look tells the funnel where they came from. */
+  var QUICK = '/quick?from=look';
+  var CODE_RX = /^[A-Za-z0-9_-]{22,64}$/;
+  var FILE_RX = /^\d{2}\.jpg$/;
+  var MON3 = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+  function codeFrom(pathname, search) {
+    var m = /^\/look\/([^\/?#]+)\/?$/.exec(pathname || '');
+    var c = m ? m[1] : null;
+    if (!c) { var q = /[?&]c=([^&#]+)/.exec(search || ''); c = q ? q[1] : null; }   // a plain file server: /look.html?c=
+    return (c && CODE_RX.test(c)) ? c : null;
+  }
+
+  function poorPhotos(slides) {
+    var can = 0, real = 0;
+    for (var i = 0; i < slides.length; i++) {
+      if (!slides[i].social) can++;
+      if (slides[i].photo === true) real++;
+    }
+    return can === 0 || real < Math.min(MIN_REAL_PHOTOS, can);
+  }
+
+  /* The offer row a manifest names, and whether it has ended (marked, or its month over in Brisbane). An
+     ended month is never rolled on to the next one (Dean, 1 Nov 2026): the page quotes the standard rate. */
+  function offerFor(key, offers, nowMs, workerOpen) {
+    var row = key && offers && offers[key];
+    if (!row) return { show: false, ended: true };
+    var y = /-(20\d\d)$/.exec(row.code || '');
+    var d = new Date((nowMs == null ? Date.now() : nowMs) + 10 * 3600 * 1000);
+    var nowYM = d.getUTCFullYear() * 12 + d.getUTCMonth();
+    var rowYM = y ? Number(y[1]) * 12 + MON3.indexOf(key) : -1;
+    var ended = !!row.ended || !y || nowYM > rowYM || workerOpen === false;
+    return ended ? { show: false, ended: true, key: key }
+                 : { show: true, ended: false, key: key, day: row.day, code: row.code, href: '/offer-' + key };
+  }
+
+  function plan(manifest, code, opts) {
+    opts = opts || {};
+    var m = manifest;
+    if (!code || !m || m.v !== 1 || typeof m.venue !== 'string' || !m.venue.trim()) return { state: 'missing' };
+    var venue = m.venue.trim().slice(0, 80);
+    var offer = offerFor(m.offer, opts.offers, opts.now, opts.workerOpen);
+    var slides = [];
+    var raw = Object.prototype.toString.call(m.slides) === '[object Array]' ? m.slides : [];
+    for (var i = 0; i < raw.length && slides.length < MAX_SLIDES; i++) {
+      var s = raw[i] || {};
+      if (typeof s.file !== 'string' || !FILE_RX.test(s.file)) continue;
+      slides.push({ src: '/look-data/' + code + '/' + s.file, alt: typeof s.head === 'string' ? s.head.slice(0, 120) : '',
+                    photo: s.photo === true, social: s.social === true });
+    }
+    var demo = m.mode !== 'slides' || slides.length < MIN_SLIDES || poorPhotos(slides);
+    return { state: demo ? 'demo' : 'slides', venue: venue, slides: demo ? [] : slides, offer: offer,
+             night: QUICK };
+  }
+
+  root.VPLook = { codeFrom: codeFrom, poorPhotos: poorPhotos, offerFor: offerFor, plan: plan, QUICK: QUICK,
+                  MIN_REAL_PHOTOS: MIN_REAL_PHOTOS, MIN_SLIDES: MIN_SLIDES };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+<script>
+/* LOOK PAGE RENDER. Fetches /look-data/<code>/look.json (written by tools/look-publish.py), asks the billing
+   Worker once whether the offer code is still open (as the offer page does), then paints plan(). The venue
+   name only ever goes in through textContent. */
+(function () {
+  var L = window.VPLook, $ = function (id) { return document.getElementById(id); };
+  var code = L.codeFrom(location.pathname, location.search);
+  function show(id) { $('lkLoading').hidden = true; $(id).hidden = false; }
+  function missing() { show('lkMissing'); }
+  if (!code) { missing(); return; }
+
+  function paint(p) {
+    if (p.state === 'missing') { missing(); return; }
+    var names = document.querySelectorAll('.lkVenue');
+    for (var i = 0; i < names.length; i++) names[i].textContent = p.venue;
+    document.title = p.venue + ' on venueplay';
+    $('lkCards').hidden = false; $('lkMore').hidden = false;
+    $('lkNight').setAttribute('href', p.night);
+    if (p.offer.show) {
+      $('lkOffer').hidden = false; $('lkOfferDay').textContent = p.offer.day;
+      $('lkOfferLink').setAttribute('href', p.offer.href);
+    } else {
+      $('lkStandard').hidden = false;
+    }
+    if (p.state === 'slides') { show('lkSlides'); slideshow(p.slides); }
+    else { $('lkYesWhat').textContent = 'your own slides on your own screen'; show('lkDemo'); demo(); }
+  }
+
+  function slideshow(slides) {
+    var box = $('lkShow'), imgs = [], at = 0, timer = null;
+    for (var i = 0; i < slides.length; i++) {
+      var im = document.createElement('img');
+      im.alt = slides[i].alt; im.decoding = 'async';
+      if (i > 1) im.loading = 'lazy';
+      im.src = slides[i].src;
+      box.appendChild(im); imgs.push(im);
+    }
+    function go(n) {
+      imgs[at].classList.remove('on');
+      at = (n + imgs.length) % imgs.length;
+      imgs[at].classList.add('on');
+      $('lkCount').innerHTML = '';
+      var b = document.createElement('b'); b.textContent = String(at + 1);
+      $('lkCount').appendChild(b); $('lkCount').appendChild(document.createTextNode(' of ' + imgs.length));
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    go(0);
+    $('lkPrev').onclick = function () { stop(); go(at - 1); };
+    $('lkNext').onclick = function () { stop(); go(at + 1); };
+    var x0 = null;
+    box.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    box.addEventListener('touchend', function (e) {
+      if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) { stop(); go(at + (dx < 0 ? 1 : -1)); }
+    }, { passive: true });
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) timer = setInterval(function () { go(at + 1); }, 7000);
+  }
+
+  function demo() {
+    var box = $('lkDemoBox'), f = document.createElement('iframe');
+    var ext = /\.html$/.test(location.pathname) ? '.html' : '';
+    f.src = '/tv' + ext + '?demo=1&ads=1';   // the same safe embed the homepage and /see-a-night use
+    f.title = 'The venueplay screen, playing a sample venue'; f.tabIndex = -1;
+    f.setAttribute('aria-hidden', 'true'); f.setAttribute('scrolling', 'no'); f.loading = 'lazy';
+    box.appendChild(f);
+    function fit() { f.style.transform = 'scale(' + (box.clientWidth / 1920) + ')'; }
+    fit(); window.addEventListener('resize', fit);
+  }
+
+  var got = null, open = null;
+  function done() {
+    paint(L.plan(got, code, { offers: window.VPOffer && VPOffer.OFFERS, now: Date.now(), workerOpen: open }));
+  }
+  fetch('/look-data/' + code + '/look.json', { cache: 'no-cache', credentials: 'omit' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      got = d;
+      var row = d && d.offer && window.VPOffer && VPOffer.OFFERS[d.offer];
+      if (!row) return null;
+      return fetch('https://api.venueplay.com.au/founding?code=' + encodeURIComponent(row.code), { credentials: 'omit' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (w) { if (w && w.open === false) open = false; })
+        .catch(function () {});   // could not tell: the dates stand, as on the offer page
+    })
+    .catch(function () { got = null; })
+    .then(done);
+})();
+</script>
+</body>
+</html>

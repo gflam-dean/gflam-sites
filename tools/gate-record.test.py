@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""THE PRE-PUSH GATE RECORD AND release.py STEP 5, RUN. GATELIB_NO_CHROME.
+"""THE PRE-PUSH GATE RECORD, AND release.py AFTER THE PUSH (LIVE ONLY) AND ITS HOOK CHECK, RUN. GATELIB_NO_CHROME.
 
     python3 tools/gate-record.test.py
 
 A throwaway git repo is built in a temp folder with a copy of tools/gate-record.py, the REAL
 tools/hooks/pre-push, and fake stamp-workers.py and release-check.py that exit as told. The hook is
-run for real (green and red), the record is read back, and release.py's own step-5 code (gate_after,
+run for real (green and red), the record is read back, and release.py's own step-5 code (live_after,
 loaded from the real file) is called with a fake runner that records the command it was given.
 
 REBUILT 27 Oct 2026 after this suite took venueplay.com.au down. The first version ran its git with
@@ -29,8 +29,9 @@ What it runs:
                     tree, the age and --skip-chrome; a commit-message amend keeps the same tree
   3. the hook       a green gate writes the record for the pushed tree; a red gate writes none and
                     removes an older one; the gate the hook runs does not inherit GIT_DIR
-  4. release.py     step 5 runs release-check.py --skip-chrome only on a fresh matching record, the
-                    full gate otherwise, prints the reason first, and returns the gate's own exit
+  4. release.py     after the push, step 5 runs release-check.py --live only (16 Nov 2026: never the local half
+                    again), says why first, returns its exit; the steps run deploy, Pages, screens, canary, live
+                    half; step 0 stops on a missing, stale or non-executable installed hook (VP_OLD_HOOK_OK=1 goes on)
   5. git            tools/gate-record.json is ignored, so the hook's own dirty-tree check and release.py
                     step 0 cannot be tripped by the record they just wrote
   6. the fence      the push landed in the bare temp remote and the real repository has not moved
@@ -242,7 +243,7 @@ try:
        re.search(r'^unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE', hook_src, re.M) is not None
        and hook_src.index('unset GIT_DIR') < hook_src.index('release-check.py'))
 
-    print('\n4. release.py step 5 runs the Chrome suites only when the hook has not already, and says why')
+    print('\n4. release.py after the push: the LIVE half only, never the local half again (16 Nov 2026), and step 0 refuses a stale hook')
     rel = load('release_py', os.path.join(TOOLS, 'release.py'))
     ran = []
 
@@ -254,48 +255,79 @@ try:
         ran.append((list(argv), cwd, dict(env if env is not None else os.environ)))
         return Done(int(os.environ.get('FAKE_GATE_RC', '0')))
 
-    # This very suite runs INSIDE release.py step 5, where VP_CHROME_GATED is already set for the
-    # whole gate. gate_after must not hand that stale reason to a full-gate child (27 Oct 2026: the
-    # first release of the push guard went red here for exactly that). Set for both calls below.
+    # This very suite can run INSIDE a release-check run that set VP_CHROME_GATED; step 5 must not hand it on.
     os.environ['VP_CHROME_GATED'] = 'stale reason inherited from a parent release'
-    o = io.StringIO()
-    with contextlib.redirect_stdout(o):
-        r = rel.gate_after(repo, run=fake_run)
-    ok('no record: the FULL gate, release-check.py with no --skip-chrome', ran[-1][0][1:] == ['tools/release-check.py'] and ran[-1][1] == repo, ran[-1])
-    ok('... and the reason is printed before it runs', 'full gate: no record' in o.getvalue() and o.getvalue().index('full gate') < o.getvalue().index('running:'), o.getvalue())
     gr.write_record(repo)
     o = io.StringIO()
     with contextlib.redirect_stdout(o):
-        r = rel.gate_after(repo, run=fake_run)
+        r = rel.live_after(repo, run=fake_run)
     os.environ.pop('VP_CHROME_GATED', None)
-    ok('fresh matching record: release-check.py --skip-chrome (the live half still runs: no --local)',
-       ran[-1][0][1:] == ['tools/release-check.py', '--skip-chrome'], ran[-1])
-    ok('... and the printed reason says exactly why', 'Chrome suites skipped: the pre-push gate ran all of them green on this same tree' in o.getvalue(), o.getvalue())
-    ok('... and the gate\'s green exit comes back', r.returncode == 0)
-    ok('... and the gate is told the reason (VP_CHROME_GATED), so its summary does not call itself "NOT a release gate"',
-       'Chrome suites skipped' in (ran[-1][2].get('VP_CHROME_GATED') or ''), sorted(k for k in ran[-1][2] if k.startswith('VP_')))
-    ok('... which the full-gate path does not set', 'VP_CHROME_GATED' not in ran[-2][2])
+    ok('step 5 runs release-check.py --live and nothing else (no --local, no --skip-chrome: no local check, no Chrome suite)',
+       ran[-1][0][1:] == ['tools/release-check.py', '--live'] and ran[-1][1] == repo, ran[-1])
+    ok('... with a fresh matching gate record or none: the same live-only command', rel.live_argv()[1:] == ['tools/release-check.py', '--live'])
+    ok('... and it says why the local half is not run again, before it runs',
+       'is not run again: the pre-push hook gated this exact tree' in o.getvalue()
+       and o.getvalue().index('not run again') < o.getvalue().index('running:'), o.getvalue())
+    ok('... and never hands on an inherited VP_CHROME_GATED', 'VP_CHROME_GATED' not in ran[-1][2])
+    ok('... and the live half\'s green exit comes back', r.returncode == 0)
     os.environ['FAKE_GATE_RC'] = '1'
     with contextlib.redirect_stdout(io.StringIO()):
-        r = rel.gate_after(repo, run=fake_run)
-    ok('a red gate on the skip path still comes back red (release.py stops on it)', r.returncode == 1)
+        r = rel.live_after(repo, run=fake_run)
     del os.environ['FAKE_GATE_RC']
-    rec = json.load(io.open(rec_path)); rec['time'] -= 3 * 3600; put(rec_path, json.dumps(rec))
-    o = io.StringIO()
-    with contextlib.redirect_stdout(o):
-        rel.gate_after(repo, run=fake_run)
-    ok('a 3 hour old record: the full gate again', ran[-1][0][1:] == ['tools/release-check.py'] and 'over the 2 hour limit' in o.getvalue())
-    gr.write_record(repo)
-    put(os.path.join(repo, 'venueplay', 'index.html'), '<html>three</html>\n')
-    git(repo, 'add', '-A'); git(repo, 'commit', '-q', '-m', 'three')
-    o = io.StringIO()
-    with contextlib.redirect_stdout(o):
-        rel.gate_after(repo, run=fake_run)
-    ok('a record for the previous tree: the full gate', ran[-1][0][1:] == ['tools/release-check.py'] and 'have not judged these files' in o.getvalue())
+    ok('a red live half comes back red (release.py stops on it)', r.returncode == 1)
     rel_src = io.open(os.path.join(TOOLS, 'release.py'), encoding='utf-8').read()
-    i5 = rel_src.index("step(5, 'the full gate, after')")
-    ok('release.py step 5 is gate_after and stops on its exit', 'gate_after(ROOT)' in rel_src[i5:i5 + 300] and 'stop(' in rel_src[i5:i5 + 500])
-    ok('step 4 (the live-screen stamp) still runs before step 5', rel_src.index("step(4, 'a real browser looks at the screens") < i5 and "'tools/verify-live.py', '--stamp'" in rel_src)
+    i5 = rel_src.index("    step(5, 'the live half, after")
+    ok('release.py step 5 is live_after and stops on its exit',
+       'r = live_after(ROOT)\n    if r.returncode != 0:\n        stop(' in rel_src[i5:i5 + 400], rel_src[i5:i5 + 300])
+    ok('release.py no longer runs the full gate after the push (no gate_after, no --skip-chrome re-run)',
+       'def gate_after(' not in rel_src and 'gate_after(ROOT)' not in rel_src and "'--skip-chrome'" not in rel_src)
+    i2, i3 = rel_src.index("    step(2, 'deploy"), rel_src.index("    step(3, 'wait until")
+    i4, i4c = rel_src.index("    step(4, 'a real browser looks at the screens"), rel_src.index("    step('4c', 'the canary night")
+    ok('after the push, in order: deploy (2), Pages served (3), screens looked at (4), canary night (4c), live half (5)',
+       i2 < i3 < i4 < i4c < i5, (i2, i3, i4, i4c, i5))
+    s4 = rel_src[i4:i4c]
+    ok('step 4 stamps when a screen file changed, and runs verify-live read only when none did, stopping on a red',
+       "'tools/verify-live.py', '--stamp'" in s4 and "[PY, 'tools/verify-live.py']" in s4 and s4.count('stop(') >= 2
+       and "        r = subprocess.run([PY, 'tools/verify-live.py'], cwd=ROOT)\n        if r.returncode != 0:\n            stop(" in s4, s4[:200])
+
+    # Step 0: the installed hook must be this tree's tools/hooks/pre-push (16 Nov 2026: the 27 Oct copy was installed).
+    hr = os.path.join(TMP, 'hookcheck')
+    os.makedirs(os.path.join(hr, 'tools', 'hooks'))
+    git(hr, 'init', '-q')
+    put(os.path.join(hr, 'tools', 'hooks', 'pre-push'), '#!/bin/bash\necho new hook\n')
+    installed = os.path.join(hr, '.git', 'hooks', 'pre-push')
+    if os.path.exists(installed):
+        os.remove(installed)
+    g, why = rel.hook_installed(hr)
+    ok('no hook installed: refused (the push would go out ungated)', not g and 'NO pre-push hook' in why, why)
+    go, line = rel.hook_gate(hr, env={})
+    ok('... and step 0 stops the release before anything is pushed', not go and 'install.sh' in line, line)
+    put(installed, '#!/bin/bash\necho old 27 Oct hook\n', exe=True)
+    g, why = rel.hook_installed(hr)
+    ok('an installed hook that is not this tree\'s: refused, and the reason names the server record and the lanes',
+       not g and 'not this tree' in why and 'server record' in why, why)
+    go, line = rel.hook_gate(hr, env={})
+    ok('... step 0 stops on it', not go)
+    go, line = rel.hook_gate(hr, env={'VP_OLD_HOOK_OK': '1'})
+    ok('... unless VP_OLD_HOOK_OK=1, which goes on and says so', go and 'VP_OLD_HOOK_OK=1' in line, line)
+    shutil.copy(os.path.join(hr, 'tools', 'hooks', 'pre-push'), installed)
+    os.chmod(installed, 0o644)
+    g, why = rel.hook_installed(hr)
+    ok('the same hook, not executable (git would skip it): refused', not g and 'not executable' in why, why)
+    os.chmod(installed, 0o755)
+    g, why = rel.hook_installed(hr)
+    go, line = rel.hook_gate(hr, env={})
+    ok('the same hook, executable: accepted, and step 0 goes on', g and go, why)
+    leak_env = dict(os.environ, GIT_DIR=os.path.join(repo, '.git'))
+    saved_env = dict(os.environ)
+    os.environ.clear(); os.environ.update(leak_env)
+    try:
+        g2, why2 = rel.hook_installed(hr)
+    finally:
+        os.environ.clear(); os.environ.update(saved_env)
+    ok('a GIT_DIR exported by a hook does not make it read another repository\'s hooks', g2, why2)
+    ok('release.py step 0 runs the hook check before anything is pushed',
+       rel_src.index('go, line = hook_gate(ROOT)\n    if not go:\n        stop(line)') < rel_src.index("step('0b'") < rel_src.index("step(1, 'push"))
 
     print('\n5. git ignores the record (the repo\'s own .gitignore, asked in the throwaway repo: prove-checks copies this repo without .git)')
     shutil.copy(os.path.join(ROOT, '.gitignore'), os.path.join(repo, '.gitignore'))

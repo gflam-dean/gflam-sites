@@ -3976,7 +3976,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
    (vpaFireProspectWelcome): a mobile login opens the text-code sign-in with their number filled in (no token, nothing
    to leak), an email login gets a one-use token (vpaMintSigninLinkFor, hash only) that ends with their 90 days.
    Returns { url, kind: 'sms' | 'link', expires_at, days_left, mobile_ends } or { url: null, reason }. */
-async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobileRaw, email, endMs) {
+async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobileRaw, email, endMs, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   if (mobileLogin) {
     const m = vpaProspectPhone(mobileRaw);
@@ -3987,7 +3987,7 @@ async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobi
   if (!authUserId) return { url: null, reason: 'no_login' };
   try {
     const m = (await vpaProspectOneLink(env, venueId, authUserId, {})) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), endMs);
-    return { url: vpaOneClickUrl(site, m.token, email), kind: 'link', expires_at: new Date(m.expiresAt).toISOString(),
+    return { url: vpaTagUrl(vpaOneClickUrl(site, m.token, email), vpaLinkTag('thread', opts && opts.step || 'signup')), kind: 'link', expires_at: new Date(m.expiresAt).toISOString(),
              expires_words: vpaBneDateWords(m.expiresAt), days_left: vpaDaysLeft(m.expiresAt, Date.now()) };
   } catch (e) { return { url: null, reason: 'no_table' }; }
 }
@@ -5529,7 +5529,8 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { win: win })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaShortSigninUrl(site, token) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
+  const smsTag = vpaLinkTag('text', vpaLinkStep(b.step, purpose === 'yes_reply' ? 'signup' : 'expiry'));   // which message (16 Nov 2026)
+  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaTagUrl(vpaShortSigninUrl(site, token), smsTag) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
   let r;
   try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
@@ -5589,7 +5590,8 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
   /* NOT hq: an automatic follow-up never restarts the 90 days, and after them it sends nothing (reason 'ended'
      below): Dean decides from HQ. The HQ per-day link cap still applies (opts.hqCap). */
-  const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: subjectRaw || 'Your venueplay is ready when you are' });
+  const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: subjectRaw || 'Your venueplay is ready when you are',
+    tag: vpaLinkTag('account_email', vpaLinkStep(b.step, 'day3')) });
   await vpaAudit(env, actor, r.ok ? 'prospect_nudge_sent' : 'prospect_nudge_refused', 'venue:' + venueId,
     { name: p.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, expires_at: r.ok ? r.expires_at : undefined, days_left: r.ok ? r.days_left : undefined });
   if (r.ok) return json({ ok: true, to: r.to, expires_at: r.expires_at, days_left: r.days_left, shortened: !!r.shortened });
@@ -5648,7 +5650,7 @@ async function vpaAutopilotThreadSigninLink(request, env, json) {
     if (!t.url) return await refuse('Their login has a mobile we cannot read, so no link was made.');
     out = { ok: true, url: t.url, kind: 'sms', mobile_ends: t.mobile_ends, to: user.email || null, tapped: tapped };
   } else {
-    const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, returnOnly: true });
+    const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, returnOnly: true, tag: vpaLinkTag('thread', vpaLinkStep(b.step, 'signup')) });
     if (!r.ok) {
       if (r.reason === 'ended') return await refuse('Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so no link was made. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', { ended: true });
       if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have been made for ' + r.to + ' in the last day, so no more were made.' }, 429);
@@ -6525,6 +6527,7 @@ async function vpaProspectStartMonth(env, prow, atMs) {
     if (prow.first_signin_at === first) {
       await vpaAudit(env, { actorId: null, label: 'first sign-in' }, 'prospect_month_started', 'venue:' + prow.venue_id,
         { offer_code: code || null, offer_rate: rate, signin_by: vpaOfferDayWords(code) || null });
+      await vpaLinkSignedIn(env, prow.venue_id, atMs).catch(() => null);   // which message's link did it (16 Nov 2026)
     }
   }
   return prow;
@@ -7127,6 +7130,28 @@ function vpaShortSigninCode() {
 /* In a text the link is written without https:// and www. (12 characters, the difference between one SMS part and
    two): every phone's Messages app makes venueplay.com.au/s/... a link by itself. */
 function vpaShortSigninUrl(site, code) { return String(site).replace(/^https?:\/\//, '').replace(/^www\./, '') + '/s/' + code; }
+/* WHICH MESSAGE A SIGN-IN LINK CAME FROM (Dean, 16 Nov 2026: "can we track which link they clicked?"). A prospect has ONE
+   short link (vpaProspectOneLink), the same letters in every email and text, so the message is told by two more letters
+   after it: venueplay.com.au/s/<12 letters>/<tag>. The tag names the channel and the step, nothing about the person:
+     channel  account_email (hello@send), thread (our reply in their own thread / help desk email), text
+     step     signup, day3, expiry
+   /s/ (venueplay/s.html) sends it to POST /short/open, which keeps a journey event "signin_link_opened" with the two words
+   (vp_journey_events, migration 196, venue_id; no IP, no name, no mobile), and the first sign-in after it keeps
+   "signin_link_signed_in" with the same two (vpaLinkSignedIn). HQ > Journey says "Opened the sign-in link from the text
+   sent before their link expired". A link without a tag, or with one not in this table, opens exactly as before. */
+const VPA_LINK_TAGS = { es: ['account_email', 'signup'], e3: ['account_email', 'day3'], ex: ['account_email', 'expiry'],
+  rs: ['thread', 'signup'], r3: ['thread', 'day3'], rx: ['thread', 'expiry'], ts: ['text', 'signup'], tx: ['text', 'expiry'] };
+function vpaLinkTag(channel, step) {
+  for (const k in VPA_LINK_TAGS) if (VPA_LINK_TAGS[k][0] === channel && VPA_LINK_TAGS[k][1] === step) return k;
+  return '';
+}
+/* The step a caller names (the Mac's nudge says which), or the fallback; only the three steps. */
+function vpaLinkStep(raw, fallback) { const v = String(raw || ''); return ['signup', 'day3', 'expiry'].indexOf(v) >= 0 ? v : fallback; }
+/* A short link with its message tag: only a /s/<12 letters> address takes one; any other link comes back as it was. */
+function vpaTagUrl(url, tag) {
+  const u = String(url || '');
+  return (tag && VPA_LINK_TAGS[tag] && /\/s\/[A-Z0-9]{12}$/.test(u)) ? u + '/' + tag : u;
+}
 /* A token as typed or tapped: the long one as it is, a short handle in capitals. '' when it is neither. */
 function vpaSigninTokenShape(t) {
   const v = String(t || '').trim();
@@ -7270,11 +7295,35 @@ async function vpaShortOpen(request, env, json) {
   const L = await vpaShortLookup(request, env, _b.body && _b.body.code);
   if (L.busy) return json({ error: VPA_SHORT_WORDS.busy, busy: true, go: '/app/' }, 429);
   if (L.state !== 'unclaimed') return json({ go: '/app/', state: L.state });
-  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'signin_link_used', 'venue:' + L.row.venue_id, { via: 'short' }).catch(() => null);
+  const tag = (_b.body && typeof _b.body.via === 'string' && VPA_LINK_TAGS[_b.body.via]) ? _b.body.via : '';
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'signin_link_used', 'venue:' + L.row.venue_id, tag ? { via: 'short', tag: tag } : { via: 'short' }).catch(() => null);
+  if (tag) await vpaLinkOpened(request, env, L.row.venue_id, tag).catch(() => null);
   const m = await vpaShortMobileOnFile(env, L.row, L.user);
   if (m && (await vpaShortPutMobile(env, L.user, m))) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal(m), state: 'unclaimed' });
   if (L.user.phone) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal('+' + String(L.user.phone).replace(/\D/g, '')), state: 'unclaimed' });
   return json({ go: '/app/?signin=sms', state: 'unclaimed', attach: true });
+}
+/* "signin_link_opened" in the journey store: the channel and the step, the venue, a fresh session id; a mail scanner or a
+   robot by its user agent is kept as scanner (never counted as a person, as for the 413 links). Never stops the open. */
+async function vpaLinkOpened(request, env, venueId, tag) {
+  const t = VPA_LINK_TAGS[tag]; if (!t || !venueId) return;
+  const ua = String(request.headers.get('user-agent') || '');
+  const raw = new Uint8Array(12); crypto.getRandomValues(raw);
+  const sid = Array.prototype.map.call(raw, (x) => ('0' + x.toString(16)).slice(-2)).join('');
+  const scanner = VPJ_SCANNER_UA.test(ua) || VPJ_BOT_UA.test(ua);
+  await vpaInsert(env, 'vp_journey_events', { sid: sid, event: scanner ? 'scanner_hit' : 'signin_link_opened', props: { channel: t[0], step: t[1] },
+    src: 'cold_email', path: '/s', scanner: scanner, venue_id: venueId, at: new Date().toISOString() }, false);
+}
+/* The first sign-in at a prospect venue: if a tagged sign-in link was opened there in the 24 hours before, keep
+   "signin_link_signed_in" with the same channel and step (and its session), so HQ can say which message did it. */
+async function vpaLinkSignedIn(env, venueId, atMs) {
+  const since = new Date((Number(atMs) || Date.now()) - 86400000).toISOString();
+  const got = await vpaSelect(env, 'vp_journey_events', 'venue_id=eq.' + encodeURIComponent(venueId) + '&event=eq.signin_link_opened&at=gte.' + encodeURIComponent(since)
+    + '&select=sid,props,at&order=at.desc&limit=1');
+  const o = got && got[0];
+  if (!o || !o.props || !o.props.channel) return;
+  await vpaInsert(env, 'vp_journey_events', { sid: o.sid, event: 'signin_link_signed_in', props: { channel: o.props.channel, step: o.props.step },
+    src: 'cold_email', path: '/app', scanner: false, venue_id: venueId, at: new Date(Number(atMs) || Date.now()).toISOString() }, false);
 }
 async function vpaShortAttach(request, env, json) {
   const _b = await vpaBody(request, json);
@@ -7511,7 +7560,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1');
   const venueName = (vs && vs[0] && vs[0].name) || '';
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const url = vpaOneClickUrl(site, token, email);
+  const url = vpaTagUrl(vpaOneClickUrl(site, token, email), opts.tag || '');   // which message it went in (16 Nov 2026)
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   /* WHO IT COMES FROM (INBOX 430): a prospect gets the name they met, a venue (card added) plain venueplay. */
   const voice = win ? await vpaProspectVoice(env, pick.venue_id) : { from: VPA_PROSPECT_FROM, name: null };
@@ -8383,7 +8432,7 @@ async function vpaRenderProspectWelcome(env, o) {
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
-    .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
+    .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaTagUrl(vpaOneClickUrl(site, o.signinToken, email), 'es'))
     .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
     .replace(/{{player_count}}/g, String(parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS))
     .replace(/{{plan_total}}/g, '$' + ((parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS) * rate).toFixed(2))
@@ -25777,6 +25826,13 @@ async function vpjAdminCampaigns(request, env, json) {
   return json({ ok: true, rows: vpjCampaignTable(links || [], ev || []) });
 }
 /* One venue's journey, in order, in plain words. */
+/* "Opened the sign-in link from the text sent before their link expired" / "Signed in from ..." (16 Nov 2026). */
+function vpjSayLink(e) {
+  const p = e.props || {};
+  const from = { account_email: 'the account email', thread: 'our reply in their own email thread', text: 'the text' }[p.channel] || 'a message';
+  const when = { signup: 'when their account was made', day3: 'on day 3', expiry: 'before their link expired' }[p.step] || '';
+  return (e.event === 'signin_link_signed_in' ? 'Signed in from ' : 'Opened the sign-in link from ') + from + (when ? ' sent ' + when : '');
+}
 function vpjSayEvent(e, links) {
   const l = e.link_id ? links[e.link_id] : null;
   switch (e.event) {
@@ -25786,6 +25842,7 @@ function vpjSayEvent(e, links) {
     case 'enquiry_sent': return 'Sent a website enquiry' + (e.props && e.props.ticket ? ' (ticket ' + e.props.ticket + ')' : '');
     case 'account_made': return 'Account made'; case 'signed_in': return 'Signed in'; case 'card_added': return 'Added a card';
     case 'first_game': return 'Played a first real game';
+    case 'signin_link_opened': case 'signin_link_signed_in': return vpjSayLink(e);
     default: { const s = VPJ_FUNNEL.filter((f) => f.step === e.event)[0]; return s ? s.label : e.event.replace(/_/g, ' '); }
   }
 }

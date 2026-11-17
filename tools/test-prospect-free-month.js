@@ -508,6 +508,52 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('a state we do not know (or none) keeps Brisbane\'s clock', at(null, bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0) && at('XX', bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0));
   check('the venue\'s state comes from au_state, else its postcode', vpaSendState({ au_state: 'wa' }) === 'WA' && vpaSendState({ postcode: '2000' }) === 'NSW' && vpaSendState({}) === null);
 
+  /* 10. THE NAME THEY MET (Dean, 17 Nov 2026, INBOX 430, replacing the 9 Nov "sign from the person in contact" rule and
+     its vpaReminderSender): a card reminder comes From "<first name> at venueplay" and is signed by that name, the
+     person whose cold email they replied to (vpaProspectVoice). Never Dean: a setup from Dean's mailbox, or Dean written
+     any way, gets plain "venueplay" signed "Cheers, the venueplay team". No sender, an odd one, or a failed read: plain. */
+  section('10. Card reminders come from and are signed by the name they met, never Dean (Dean, 17 Nov 2026, INBOX 430)');
+  var NAMED_FROM = 'Harry at venueplay <hello@send.venueplay.com.au>', PLAIN_FROM = 'venueplay <hello@send.venueplay.com.au>';
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  async function firstReminder(P) {
+    var s0 = bne(2026, 11, 2, 10, 0);
+    P.row().first_signin_at = new Date(s0).toISOString(); P.row().free_month_ends_at = new Date(vpaFreeMonthEnd(s0)).toISOString();
+    var g = await walk(s0, bne(2026, 11, 5, 16, 0));
+    return g[0] && g[0].msg;
+  }
+  var S1 = await prospect({ name: 'Signed By Owner Hotel', sender_name: 'Dean Tindale', sender_email: 'dean@venueplaygames.com' });
+  var m1 = await firstReminder(S1);
+  /* Dean, 17 Nov 2026, of the reminders signed "Cheers, Dean": "You can just say cheers". */
+  check('set up from Dean\'s mailbox: the day-3 reminder is signed "Cheers, the venueplay team", never with Dean\'s name (Dean, 17 Nov: "You can just say cheers")',
+    !!m1 && /Cheers,<br>the venueplay team<br>/.test(m1.html) && !/Dean|Tindale/.test(m1.html + (m1.text || '') + m1.subject + m1.from), m1 && m1.html.slice(m1.html.indexOf('Cheers'), m1.html.indexOf('Cheers') + 120));
+  check('...and the plain-text copy says "Cheers" with no name either', !!m1 && /Cheers,?\s+the venueplay team/.test(m1.text || '') && !/Dean/.test(m1.text || ''), m1 && String(m1.text).slice(String(m1.text).indexOf('Cheers'), String(m1.text).indexOf('Cheers') + 80));
+  check('...and it comes from plain "venueplay" at hello@ and replies to hello@, never from Dean\'s mailbox or his name', !!m1 && m1.from === PLAIN_FROM && m1.reply_to === 'hello@venueplay.com.au' &&
+    !/venueplaygames/.test(JSON.stringify(m1)), m1 && [m1.from, m1.reply_to]);
+  var S1b = await prospect({ name: 'Signed By Harry Hotel', sender_name: 'Harry Finch', sender_email: 'harry@venueplaylive.com.au' });
+  var m1b = await firstReminder(S1b);
+  check('set up from Harry\'s mailbox: still "Cheers, Harry, the venueplay team" (first name only, never the surname)',
+    !!m1b && /Cheers,<br>Harry<br>the venueplay team<br>/.test(m1b.html) && !/Finch/.test(m1b.html), m1b && m1b.html.slice(m1b.html.indexOf('Cheers'), m1b.html.indexOf('Cheers') + 120));
+  check('...and it comes From "Harry at venueplay" (the name they met), replying to hello@, never Harry\'s own mailbox',
+    !!m1b && m1b.from === NAMED_FROM && m1b.reply_to === 'hello@venueplay.com.au' && !/venueplaylive|Finch/.test(m1b.from + m1b.reply_to), m1b && [m1b.from, m1b.reply_to]);
+  var S1c = await prospect({ name: 'Lower Case Hotel', sender_name: 'dean', sender_email: 'hello@venueplay.com.au' });
+  var m1c = await firstReminder(S1c);
+  check('Dean written any way ("dean", from hello@): still no name, "Cheers, the venueplay team", from plain venueplay', !!m1c && /Cheers,<br>the venueplay team<br>/.test(m1c.html) && !/dean<br>/i.test(m1c.html) && m1c.from === PLAIN_FROM, m1c && m1c.html.slice(m1c.html.indexOf('Cheers'), m1c.html.indexOf('Cheers') + 80));
+  var S2 = await prospect({ name: 'No Sender Hotel' });
+  var m2 = await firstReminder(S2);
+  check('nobody signed the setup: signed by the venueplay team and from plain venueplay, as before', !!m2 && /Cheers,<br>the venueplay team<br>/.test(m2.html) && m2.from === PLAIN_FROM, m2 && m2.html.slice(m2.html.indexOf('Cheers'), m2.html.indexOf('Cheers') + 80));
+  var S3 = await prospect({ name: 'Odd Sender Hotel', sender_name: 'Harry Finch', sender_email: 'harry@venueplaylive.com.au' });
+  DB.vp_admin_audit.forEach(function (a) { if (a.action === 'prospect_set_up' && a.target === 'venue:' + S3.v.id) { a.detail.sender_name = '<b>Harry</b>'; } });
+  var m3 = await firstReminder(S3);
+  check('a sender on record that is not a plain name from our own mailbox is never printed: the team signs it', !!m3 && /Cheers,<br>the venueplay team<br>/.test(m3.html) && !/&lt;b&gt;|<b>Harry/.test(m3.html) && m3.from === PLAIN_FROM, m3 && m3.html.slice(m3.html.indexOf('Cheers'), m3.html.indexOf('Cheers') + 80));
+  var S4 = await prospect({ name: 'Welcome Record Hotel' });
+  DB.vp_prospect_welcomes.push({ venue_id: S4.v.id, send_at: new Date(bne(2026, 10, 30, 9, 0)).toISOString(), detail: { senderName: 'Harry Finch', senderEmail: 'harry@venueplaylive.com.au' } });
+  var m4 = await firstReminder(S4);
+  check('no sender on the setup row but the last welcome was signed by Harry: "Cheers, Harry", From "Harry at venueplay"', !!m4 && /Cheers,<br>Harry<br>the venueplay team<br>/.test(m4.html) && m4.from === NAMED_FROM, m4 && m4.html.slice(m4.html.indexOf('Cheers'), m4.html.indexOf('Cheers') + 80));
+  var realSel = vpaSelect, S5 = await prospect({ name: 'Audit Down Hotel', sender_name: 'Dean Tindale', sender_email: 'dean@venueplaygames.com' });
+  vpaSelect = function (env, table, q) { if (table === 'vp_admin_audit' || table === 'vp_prospect_welcomes') return Promise.reject(new Error('down')); return realSel.apply(this, arguments); };
+  var m5; try { m5 = await firstReminder(S5); } finally { vpaSelect = realSel; }
+  check('the audit table cannot be read: the reminder still goes, signed by the team, from plain venueplay', !!m5 && /Cheers,<br>the venueplay team<br>/.test(m5.html) && m5.from === PLAIN_FROM && JSON.stringify(S5.row().reminders_sent) === '[3]', m5 ? 'sent' : 'not sent');
+
   if (badCount()) throw new Error('prospect free month: ' + badCount() + ' of ' + ran + ' failed');
   print(''); print('ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });

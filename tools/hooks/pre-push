@@ -57,8 +57,10 @@ fi
 # no record: the Chrome suites run on the Mac.
 CHROME_FLAG="--chrome-record"
 HERE_TREE=$(git rev-parse 'HEAD^{tree}' 2>/dev/null)
+PUSH_SHA=""; REMOTE_SHA=""; PUSH_REFS=0; PUSH_REF=""; BILLING_ARGS=""
 while read -r _lref LSHA _rref _rsha; do
   [ -z "$LSHA" ] && continue
+  PUSH_REFS=$((PUSH_REFS + 1)); PUSH_SHA="$LSHA"; REMOTE_SHA="$_rsha"; PUSH_REF="$_rref"
   case "$LSHA" in *[!0]*) ;; *) continue;; esac          # a delete pushes no files
   if [ "$(git rev-parse "$LSHA^{tree}" 2>/dev/null)" != "$HERE_TREE" ]; then
     CHROME_FLAG=""
@@ -66,13 +68,23 @@ while read -r _lref LSHA _rref _rsha; do
   fi
   # BILLING CODE RUNS ON THE MAC TOO (Dean, 16 Nov 2026): when the pushed range changes billing code (the billing parts
   # of venueplay-api-FULL.js, Stripe code, invoices, venueplay/app/billing.html: BILLING_* in tools/gate-server.py),
-  # the server record is not used and every Chrome suite runs here as well. A new branch (remote sha all zeros) is
-  # judged from where it leaves origin/main; a range that cannot be read counts as billing.
+  # the BILLING SUITES (gate-server.py BILLING_SUITES: the money suites and every Chrome suite that drives billing.html,
+  # Stripe, invoices or a changed billing page) run here as well, and the signed server record covers the rest (it must
+  # still be green for all of them). The exact pushed range is handed to the gate (--billing-range), which can only take
+  # suites out of the record, never put one in. A new branch (remote sha all zeros) is judged from where it leaves
+  # origin/main. A range that cannot be read, no origin/main, or no gate-server.py: no record, every Chrome suite here.
   case "$_rsha" in *[!0]*) PBASE="$_rsha" ;; *) PBASE=$(git merge-base "$LSHA" origin/main 2>/dev/null) ;; esac
   if [ -n "$CHROME_FLAG" ]; then
-    if [ -z "$PBASE" ] || [ ! -f "$ROOT/tools/gate-server.py" ] || python3 "$ROOT/tools/gate-server.py" billing "$PBASE" "$LSHA"; then
+    BRC=3
+    if [ -n "$PBASE" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
+      python3 "$ROOT/tools/gate-server.py" billing "$PBASE" "$LSHA"; BRC=$?
+    fi
+    if [ "$BRC" = "0" ]; then
+      BILLING_ARGS="$BILLING_ARGS --billing-range=$PBASE..$LSHA"
+      echo "  the push changes billing code: the billing suites run here, the signed server record (if any) covers the rest"
+    elif [ "$BRC" != "4" ]; then
       CHROME_FLAG=""
-      echo "  the push changes billing code (or its range could not be read): no server record is used, every Chrome suite runs here"
+      echo "  the push's range could not be judged for billing code: no server record is used, every Chrome suite runs here"
     fi
   fi
 done
@@ -81,7 +93,7 @@ done
 # REFUSE it. It can only ever stop a push, never let one through, and it runs no suite.
 if [ "${VP_HOOK_DRY_RUN:-}" = "1" ]; then
   if [ -n "$CHROME_FLAG" ] && [ -f "$ROOT/tools/gate-server.py" ]; then
-    python3 "$ROOT/tools/gate-server.py" check
+    python3 "$ROOT/tools/gate-server.py" check $BILLING_ARGS
   else
     echo "  gate record: not used: the pushed files are not this checkout's"
   fi
@@ -89,7 +101,23 @@ if [ "${VP_HOOK_DRY_RUN:-}" = "1" ]; then
   exit 1
 fi
 
-if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG; then
+# THE RELEASE LANES (Jobs 442, 16 Nov 2026, tools/release-lanes.py hook_accept). One push of this checkout to main is let
+# through WITHOUT the gate only when every file in it has already been through one: a bookkeeping push (the record of
+# live-checked releases, .verify-live.json), a rollback (every file a live-checked release's, or exactly what is on main
+# now), or an urgent fix whose exact tree the urgent lane gated and signed on this Mac under an hour ago. Anything else,
+# or any doubt, and the gate below runs as it always has. It can only ever skip the gate for those three. Asked for a
+# push that changes billing code too (16 Nov 2026): a rollback brings back only files that were gated and played live, so
+# rolling back a billing release must not cost the 2 h Mac run (the urgent lane refuses billing itself, U1).
+if [ -n "$CHROME_FLAG" ] && [ "$PUSH_REFS" = "1" ] && [ "$PUSH_REF" = "refs/heads/main" ] && [ -f "$ROOT/tools/release-lanes.py" ]; then
+  if python3 "$ROOT/tools/release-lanes.py" hook-accept "$PUSH_SHA" "$REMOTE_SHA"; then
+    echo "── ok, pushing (release lane, above) ──"
+    echo
+    exit 0
+  fi
+fi
+
+[ -z "$CHROME_FLAG" ] && BILLING_ARGS=""
+if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG $BILLING_ARGS; then
   # A red gate leaves no record: a tree that failed can never ride an older one.
   [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --clear
   echo
@@ -98,10 +126,9 @@ if ! python3 "$ROOT/tools/release-check.py" --local $CHROME_FLAG; then
   exit 1
 fi
 
-# GREEN: write down the tree this gate judged and when (tools/gate-record.json, ignored by git).
-# release.py step 5 reads it and skips ONLY the Chrome suites, only when the tree it is about to
-# gate is this exact tree and this record is under two hours old. The same 15 Chrome suites ran
-# twice per release on the identical tree before 27 Oct 2026, 27 minutes each time.
+# GREEN: write down the tree this gate judged and when (tools/gate-record.json, ignored by git). Since 16 Nov 2026
+# release.py step 5 runs only the live half and never re-runs the local one, so nothing in a release reads this; it
+# stays as the record of what the hook last gated green (tools/gate-record.py decide says whether it names a tree).
 [ -f "$ROOT/tools/gate-record.py" ] && python3 "$ROOT/tools/gate-record.py" --write
 
 # Anything a machine cannot judge, put in front of the person pushing.

@@ -135,8 +135,8 @@ io.open(RN.record_path(BUILD), 'w', encoding='utf-8').write(record(**{'Raffle': 
 on, good, lines = REL.real_night(BUILD, env={'VP_REAL_NIGHT': '1', 'VP_REAL_NIGHT_MODE': 'hand'})
 ok('ON with a record that has a FAIL: NOT done, and the FAIL is printed', on is True and good is False and any('Raffle: FAIL' in l for l in lines), lines)
 src = io.open(os.path.join(ROOT, 'tools', 'release.py'), encoding='utf-8').read()
-i5, i6, iL = src.find("step(5, 'the full gate, after')"), src.find('step(6, '), src.find("LIVE and checked: %s")
-ok('step 6 comes after the full gate and before "LIVE and checked" (and stops the release when ON and not done)',
+i5, i6, iL = src.find("step(5, 'the live half, after"), src.find('step(6, '), src.find("LIVE and checked: %s")
+ok('step 6 comes after the live half (step 5) and before "LIVE and checked" (and stops the release when ON and not done)',
    0 < i5 < i6 < iL and 'if on and not good:\n        stop(' in src[i6:iL], (i5, i6, iL))
 
 shutil.rmtree(TMP, ignore_errors=True)

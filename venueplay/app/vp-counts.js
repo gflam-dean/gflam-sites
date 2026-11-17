@@ -16,8 +16,13 @@
 (function (w, d) {
   "use strict";
   var MAX = 10000000;   // a count past ten million is not a count, it is a fault
+  /* UNDER A THOUSAND IS A FAULT TOO (16 Nov 2026). The words beside the number are "questions and counting"
+     and the fallback says "Thousands"; the real banks hold tens of thousands. A count under 1,000 means the
+     library lost most of its sets (or this is the test database, which holds 10 questions), so the page keeps
+     its words rather than telling a pub we have "10 questions". */
+  var MIN = 1000;
 
-  function good(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n > 0 && n < MAX; }
+  function good(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n >= MIN && n < MAX; }
 
   function paint(counts) {
     var shown = 0, els = d.querySelectorAll ? d.querySelectorAll("[data-vp-count]") : [];
