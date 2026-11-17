@@ -2368,7 +2368,7 @@
   "counted_by": "lines"
  },
  "tools/cmdline-guards.test.py": {
-  "checks": 154,
+  "checks": 286,
   "counted_by": "lines"
  }
 }

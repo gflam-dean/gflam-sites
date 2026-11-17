@@ -146,13 +146,13 @@ LANE_FLAG = ('--rollback', '--go', '--plan')
 
 
 def cmdline(argv):
-    """None = go on. Otherwise the exit code: 0 after the usage for --help / -h, 2 for an unknown flag, a stray word, a
-    flag with no value or the two lanes together (18 Nov 2026, Friday's flag guards). Nothing is run or read first.
+    """None = go on. Otherwise the exit code: 0 after the usage for --help / -h (with nothing unknown beside it), 2 for an
+    unknown flag, a stray word, a flag with no value or the two lanes together (18 Nov 2026, Friday's flag guards).
+    Nothing is run or read first.
     Accepted: nothing or --plan (the release); --rollback / --urgent with exactly the words release-lanes.py reads."""
     argv = list(argv)
-    if argv in (['--help'], ['-h']):
-        print(USAGE)
-        return 0
+    asked_help = '--help' in argv or '-h' in argv
+    argv = [a for a in argv if a not in ('--help', '-h')]
     if not ('--rollback' in argv or '--urgent' in argv):
         bad = [a for a in argv if a != '--plan']
     else:
@@ -174,6 +174,9 @@ def cmdline(argv):
     if bad:
         print('release.py: error: unknown or incomplete argument(s): %s; nothing was done\n%s' % (', '.join(bad), USAGE))
         return 2
+    if asked_help:
+        print(USAGE)
+        return 0
     return None
 
 

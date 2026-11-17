@@ -12,6 +12,12 @@ a misspelt --merge (suite-impact). Now each one: --help/-h prints usage and exit
 (deploy-worker: EXIT 1, because 2 means "uploaded" there), BEFORE any work, and every flag its callers pass (the
 pre-push hook, release.py, deploy-worker, prove-checks, gate-server, the runsheets) still gets through.
 
+FRIDAY 20 NOV (fix/tool-flag-guards-fri, on 804525c6 + 157f8d78): the first guards refused lines Wednesday's tree
+uses: `gate-server.py billing BASE HEAD` and `check --billing-range=...` (the 16 Nov hook), `release-check.py
+--billing-range=BASE..HEAD` (the hook) and `release.py --rollback / --urgent` (the release lanes). Every one is now
+accepted, and section C runs EVERY line the pre-push hook, release.py, release-lanes.py and the release runsheets
+(~/venue-enrich/reports/release-*/) pass to a guarded tool, hook lines read from tools/hooks/pre-push itself.
+
 HOW, WITHOUT RUNNING ANY OF THEM FOR REAL:
   * release-check, prove-checks, check-suite-ledger read the line at the very top of the file. The test cuts the
     file just after that guard, appends `print GUARD-PASSED; exit 99`, and runs THAT: the real guard, and nothing
@@ -109,11 +115,19 @@ TOP = {
         [[], ['--local'], ['--local', '--skip-chrome'], ['--local', '--chrome-record'],   # pre-push hook, deploy-worker
          ['--skip-chrome'], ['--live'], ['--live', '--skip-chrome'],                       # release.py step 5, prove-checks
          ['--wait'], ['partyplay'], ['venueplay', '--local'], ['--update-labels'], ['--local', '--update-labels'],
-         ['--vp-base', 'https://b.venueplay.pages.dev'], ['--pp-base', 'https://b.partyplay.pages.dev', '--local']],
+         ['--vp-base', 'https://b.venueplay.pages.dev'], ['--pp-base', 'https://b.partyplay.pages.dev', '--local'],
+         ['--local', '--chrome-record', '--billing-range=efc35a34..HEAD'],                  # the 16 Nov hook, a billing push
+         ['--local', '--chrome-record', '--billing-range=1daeabc3..804525c6', '--billing-range=efc35a34..f00dcafe'],
+         ['--chrome-record'],                                                               # release-lanes after-gate
+         ['--billing-range=abc..'], ['--local', '--live', '--wait']],
         [['--loca'], ['--local', '--nope'], ['stray'], ['venueplay', 'partyplay'], ['--vp-base'], ['--chrome'],
-         ['--vp-base=https://b.venueplay.pages.dev'], ['--local=yes'], ['-l']]),
+         ['--vp-base=https://b.venueplay.pages.dev'], ['--local=yes'], ['-l'],
+         ['--local', '--billing-range', 'efc35a34..HEAD'], ['--billing-range=efc35a34'], ['--billing-range='],
+         ['--billing-range=..HEAD'], ['--billing-range=a..b..c'], ['--billing-rang=a..b'], ['--billing-ranges=a..b'],
+         ['--billing-range=-x..b']]),
     'tools/prove-checks.py': (
-        [[], ['--list'], ['--list', 'all'], ['--live'], ['--full'], ['esc'], ['canary-night.test.py'],
+        [[], ['--list'], ['--list', 'all'], ['--live'], ['--full'], ['esc'], ['canary-night.test.py'], ['canary-night'],
+         ['test-prospect-free-month.js'], ['test-welcome-inbox.js'],
          ['a label with spaces in it'], ['--live', 'esc'], ['esc', '--full']],
         [['--lis'], ['--nope'], ['esc', 'more'], ['-x'], ['--list=yes'], ['--full', '--fast']]),
     'tools/check-suite-ledger.py': (
@@ -235,17 +249,32 @@ try:
     S.read_key = rec('read_key', ('k' * 64, ''), throw=False)
     S.remote_runner, S.host_key_fingerprint = rec('remote_runner', None, throw=False), rec('host_key', '', throw=False)
     S.make_record = rec('make_record')
+    S.billing_changes, S.billing_suites, S.billing_verdict = rec('billing_changes'), rec('billing_suites'), rec('billing_verdict')
     for argv in (['--help'], ['-h'], ['run', '--help'], ['check', '-h']):
         rc, did, out = call(S.main, argv)
         ok('gate-server %s: exits 0 with usage, nothing run' % ' '.join(argv), rc == 0 and 'usage' in out.lower() and not did, [rc, did])
     for argv in (['bogus'], ['run', '--oops'], ['run', '-j', '9'], ['run', '-j'], ['run', '-j', '3', 'extra'],
-                 ['check', 'extra'], ['init-key', '--force'], ['--run'], ['run', 'check']):
+                 ['check', 'extra'], ['init-key', '--force'], ['--run'], ['run', 'check'],
+                 ['billing'], ['billing', 'efc35a34'], ['billing', 'a', 'b', 'c'], ['billing', '--x', 'b'], ['billing', 'a', '-j'],
+                 ['check', '--billing-range'], ['check', '--billing-range', 'a..b'], ['check', '--billing-range=nodots'],
+                 ['check', '--billing-range=..b'], ['check', '--billing-range=a..b', 'extra'], ['check', '--billing-rang=a..b'],
+                 ['billing-suites', 'a'], ['billing-suites', 'a', 'b', 'c'], ['billing-suites', '--all'], ['billing-range']):
         rc, did, out = call(S.main, argv)
         ok('gate-server %s: exits 2, nothing run' % ' '.join(argv), rc == 2 and 'error' in out.lower() and not did, [rc, did])
     rc, did, out = call(S.main, ['check'])
     ok('gate-server check: still reads the record (pre-push hook)', did == ['accepted'], [rc, did])
     rc, did, out = call(S.main, ['init-key'])
     ok('gate-server init-key: still makes the key', did == ['init-key'], [rc, did])
+    rc, did, out = call(S.main, ['check', '--billing-range=abc..def', '--billing-range=1a2b..HEAD'])
+    ok('gate-server check --billing-range=A..B --billing-range=C..D: still reads the record, with both ranges (hook dry run)',
+       did == ['accepted'] and acted[0][2].get('extra_ranges') == [('abc', 'def'), ('1a2b', 'HEAD')], [rc, did, acted[:1]])
+    rc, did, out = call(S.main, ['billing', 'efc35a34', 'bb2d9d8c'])
+    ok('gate-server billing BASE HEAD: still judges that exact range (the 16 Nov pre-push hook)',
+       did == ['billing_changes'] and acted[0][1][1:] == ('efc35a34', 'bb2d9d8c'), [rc, did, acted[:1]])
+    for argv in (['billing-suites'], ['billing-suites', 'efc35a34', 'HEAD']):
+        rc, did, out = call(S.main, argv)
+        ok('gate-server %s: still lists the billing suites (read only)' % ' '.join(argv),
+           did[:1] == (['billing_suites'] if len(argv) == 1 else ['billing_changes']), [rc, did])
     for argv, jobs in ((['run'], S.JOBS), (['run', '-j', '3'], 3), (['run', '-j', '1'], 1)):
         rc, did, out = call(S.main, argv)
         mk = [a for a in acted if a[0] == 'make_record']
@@ -273,7 +302,12 @@ try:
                         (['--live', '--full-gate', 'venueplay-game', GAME], 'creds'),
                         (['--do-class=VenueRoom', 'venueplay-game-sydney', GAME], 'creds'),
                         (['--live', '--emergency=rolling back a bad deploy, gate is down', 'venueplay-game', GAME], 'creds'),
-                        (['--gate-only', 'venueplay-game', GAME], 'gate')):
+                        (['--gate-only', 'venueplay-game', GAME], 'gate'),
+                        # runsheets (release-fri-20nov, release-wed-18nov, release-15nov/rollback) and release-lanes R5:
+                        (['--live', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js'], 'creds'),
+                        (['--live', 'venueplay-api', '/Users/x/venue-enrich/reports/release-15nov/rollback/venueplay-api-FULL.LIVE-ca7c9886.js'], 'creds'),
+                        (['--live', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js', '--emergency=api down, venues waiting'], 'creds'),
+                        (['--live', '--emergency=rollback to efc35a34', 'venueplay-game', GAME], 'creds')):
         rc, did, out = call(W.main, argv, sys_argv=['deploy-worker.py'])
         ok('deploy-worker %s: still goes on (%s first; release.py passes --live)' % (' '.join(argv) or '(no flag)', first),
            did[:1] == [first], [rc, did, out[-120:]])
@@ -298,6 +332,125 @@ try:
         ok('suite-impact %s: still runs' % ' '.join(argv), did[:1] == [first], [rc, did])
     rc, did, out = call(I.main, ['--help'], sys_argv=['suite-impact.py'])
     ok('suite-impact main() with no argument reads sys.argv (how the script runs it)', rc == 0 and not did, [rc, did])
+
+    # ---- release.py: the release itself AND the two fast lanes (release-lanes.py, Jobs 442) through one guard
+    print('\nB6. tools/release.py (the release, --rollback, --urgent)')
+    R = load(os.path.join(TOOLS, 'release.py'), 'release_under_test')
+
+    class FakeLanes(object):
+        main = staticmethod(rec('lanes.main'))
+    R.sh, R.remote_main, R.lanes = rec('sh'), rec('remote_main'), rec('lanes', FakeLanes, throw=False)
+    SHA = 'efc35a3438051b6264f643f73e31d56a13f05157'
+    for argv in (['--help'], ['-h'], ['--plan', '--help'], ['--rollback', '--help'], ['--urgent', 'why', '-h']):
+        rc, did, out = call(R.main, argv, sys_argv=['release.py'])
+        ok('release.py %s: exits 0 with usage, nothing run' % ' '.join(argv), rc == 0 and 'usage' in out.lower() and not did, [rc, did])
+    for argv in (['--nope'], ['--pla'], ['stray'], ['--rollbak'], ['--rollback', '--oops'], ['--rollback', 'stray'],
+                 ['--rollback', '--to'], ['--rollback', '--reason', '--go'], ['--rollback', '--go=yes'], ['--urgent'],
+                 ['--urgent', '--go'], ['--rollback', '--urgent', 'why'], ['--urgent', 'why', '--to', SHA],
+                 ['--urgent', 'why', '--allow-migration', 'x.sql'], ['--rollback', '--help', '--nope'], ['--rollback', '-g']):
+        rc, did, out = call(R.main, argv, sys_argv=['release.py'])
+        ok('release.py %s: exits 2, nothing run' % ' '.join(argv), rc == 2 and 'error' in out.lower() and not did, [rc, did])
+    for argv in ([], ['--plan']):
+        rc, did, out = call(R.main, argv, sys_argv=['release.py'])
+        ok('release.py %s: still goes on to git (the release)' % (' '.join(argv) or '(no flag)'), did[:1] == ['sh'], [rc, did])
+    for argv in (['--rollback'], ['--rollback', '--go'], ['--rollback', '--to', SHA, '--reason', 'the canary night was red'],
+                 ['--rollback', '--to', SHA, '--reason', 'why', '--go'], ['--rollback', '--plan'],
+                 ['--rollback', '--allow-migration', 'venueplay-201-x.sql', '--allow-migration', 'y.sql', '--reason', 'why'],
+                 ['--urgent', 'buzzer stuck on trivia'], ['--urgent', 'buzzer stuck', '--go']):
+        rc, did, out = call(R.main, argv, sys_argv=['release.py'])
+        lane = [a for a in acted if a[0] == 'lanes.main']
+        ok('release.py %s: still hands the lane exactly its words' % ' '.join(argv),
+           did == ['lanes', 'lanes.main'] and lane and lane[0][1][0] == [a for a in argv if a != '--plan'], [rc, did])
+
+    # ---- C. EVERY LINE THE HOOK, release.py, release-lanes.py AND THE RUNSHEETS PASS TO A GUARDED TOOL IS ACCEPTED
+    print('\nC. every line the pre-push hook, release.py, release-lanes.py and the release runsheets use')
+    import re as _re
+    W2 = load(os.path.join(TOOLS, 'stamp-workers.py'), 'stamp_workers_under_test')
+
+    def accepted(tool, argv):
+        """(accepted, detail). Each runs only the tool's guard, or its main() with every way out a recorder."""
+        if tool in TOP:
+            rc, out = run_top(tool, argv)
+            return rc == 99, rc
+        if tool == 'tools/stamp-workers.py':
+            try:
+                with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                    W2.parse_args(list(argv))
+                return True, 'parsed'
+            except SystemExit as e:
+                return False, e.code
+        fn, sa = {'tools/gate-server.py': (S.main, None), 'tools/gate-record.py': (G.main, None),
+                  'tools/deploy-worker.py': (W.main, ['deploy-worker.py']), 'tools/release.py': (R.main, ['release.py']),
+                  'venueplay-backend/tools/dump-rls-baseline.py': (D.main, None), 'tools/suite-impact.py': (I.main, None)}[tool]
+        rc, did, out = call(fn, argv, sys_argv=sa)
+        return bool(did), [rc, did]   # accepted = it went on to its first real action (a recorder saw it)
+
+    # The hook's own lines, read from tools/hooks/pre-push, its shell words filled in as a billing push fills them.
+    hook = io.open(os.path.join(TOOLS, 'hooks', 'pre-push'), encoding='utf-8').read()
+    fill = {'$CHROME_FLAG': '--chrome-record', '$BILLING_ARGS': '--billing-range=efc35a34..9f8e7d6c',
+            '"$PBASE"': 'efc35a34', '"$LSHA"': '9f8e7d6c', '"$PUSH_SHA"': '9f8e7d6c', '"$REMOTE_SHA"': 'efc35a34'}
+    hook_lines = []
+    for m in _re.finditer(r'python3 "\$ROOT/(tools/[\w.-]+\.py)"([^;|\n]*)', hook):
+        rest = m.group(2)
+        rest = _re.sub(r'\s*(\|\||then|&&).*$', '', rest).strip()
+        for k, v in fill.items():
+            rest = rest.replace(k, v)
+        hook_lines.append((m.group(1), rest.split()))
+    tools_seen = sorted(set(t for t, _ in hook_lines))
+    ok('the hook calls the tools this test knows (stamp-workers, gate-server, release-lanes, release-check, gate-record)',
+       tools_seen == ['tools/gate-record.py', 'tools/gate-server.py', 'tools/release-check.py', 'tools/release-lanes.py',
+                      'tools/stamp-workers.py'], tools_seen)
+    ok('the hook hands release-check and gate-server check the exact pushed range (--billing-range=...)',
+       ('tools/release-check.py', ['--local', '--chrome-record', '--billing-range=efc35a34..9f8e7d6c']) in hook_lines
+       and ('tools/gate-server.py', ['check', '--billing-range=efc35a34..9f8e7d6c']) in hook_lines, hook_lines)
+    hook_lines += [('tools/release-check.py', ['--local']), ('tools/release-check.py', ['--local', '--chrome-record']),
+                   ('tools/gate-server.py', ['check']),
+                   ('tools/release-check.py', ['--local', '--chrome-record', '--billing-range=a1..b2', '--billing-range=c3..d4'])]
+
+    CALLERS = [
+        # release.py
+        ('tools/stamp-workers.py', ['--check']), ('tools/deploy-worker.py', ['--live', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-game', GAME]), ('tools/gate-server.py', ['run']),
+        ('tools/release-check.py', ['--live']), ('tools/release-check.py', ['--local']),
+        # release-lanes.py (rollback R5/R8, urgent U2/U4/U6, after-gate U9)
+        ('tools/deploy-worker.py', ['--live', '--emergency=rollback to efc35a34', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js']),
+        ('tools/release-check.py', ['--local', '--skip-chrome']), ('tools/release-check.py', ['--chrome-record']),
+        # release-check.py (the ledger and the RLS line), deploy-worker.py (its fast gate), suite-impact --merge
+        ('tools/check-suite-ledger.py', ['--reuse', '/tmp/suite-out']), ('tools/check-suite-ledger.py', ['--reuse', '/tmp/o', '--skip-chrome', '--judged-elsewhere', '/tmp/o/judged-elsewhere.txt']),
+        ('venueplay-backend/tools/dump-rls-baseline.py', ['--check']), ('tools/prove-checks.py', ['--list']),
+    ]
+    RUNSHEETS = [
+        # ~/venue-enrich/reports/release-fri-20nov/RUNSHEET.md, release-wed-18nov/RUNSHEET.md, release-sun-22nov/RUNSHEET.md,
+        # release-15nov/rollback/ROLLBACK.md, the b2/b9/ledger notes and wed-to-fri-checklist-18nov.md (grep of 18 Nov)
+        ('tools/stamp-workers.py', []), ('tools/stamp-workers.py', ['--check']),
+        ('tools/prove-checks.py', ['--list', 'all']), ('tools/prove-checks.py', ['canary-night']),
+        ('tools/prove-checks.py', ['canary-night.test.py']), ('tools/prove-checks.py', ['test-prospect-free-month.js']),
+        ('tools/release-check.py', ['--local', '--skip-chrome']), ('tools/release-check.py', ['--skip-chrome']),
+        ('tools/release-check.py', ['--local', '--update-labels']), ('tools/release-check.py', ['--live']),
+        ('tools/release-check.py', ['--local', '--chrome-record', '--billing-range=efc35a34..HEAD']),
+        ('tools/release-check.py', ['--vp-base', 'https://fix-x.venueplay.pages.dev']),
+        ('tools/check-suite-ledger.py', []), ('tools/check-suite-ledger.py', ['--update']), ('tools/check-suite-ledger.py', ['--skip-chrome']),
+        ('venueplay-backend/tools/dump-rls-baseline.py', ['--check']), ('venueplay-backend/tools/dump-rls-baseline.py', []),
+        ('tools/gate-server.py', ['run', '-j', '3']), ('tools/gate-server.py', ['run', '-j', '4']), ('tools/gate-server.py', ['run']),
+        ('tools/gate-server.py', ['check']), ('tools/gate-server.py', ['init-key']),
+        ('tools/gate-server.py', ['billing', 'efc35a34', 'bb2d9d8c']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-game', 'venueplay-backend/worker/venueplay-game.js']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-api', 'venueplay-backend/worker/venueplay-api-FULL.js', '--emergency=why']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-game', 'venueplay-backend/worker/venueplay-game.js', '--emergency=why']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-api', '/Users/x/venue-enrich/reports/release-15nov/rollback/venueplay-api-FULL.LIVE-ca7c9886.js']),
+        ('tools/deploy-worker.py', ['--live', 'venueplay-game', '/Users/x/venue-enrich/reports/release-15nov/rollback/venueplay-game.LIVE-ca7c9886.js']),
+        ('tools/release.py', []), ('tools/release.py', ['--plan']), ('tools/release.py', ['--rollback']),
+        ('tools/release.py', ['--rollback', '--go']),
+        ('tools/release.py', ['--rollback', '--to', 'efc35a3438051b6264f643f73e31d56a13f05157', '--reason', 'Wednesday never reached step 7']),
+        ('tools/gate-record.py', ['--decide']), ('tools/suite-impact.py', ['origin/main', 'release/thu-19nov-d', '--merge']),
+    ]
+    for source, lines in (('hook', hook_lines), ('caller', CALLERS), ('runsheet', RUNSHEETS)):
+        for tool, argv in lines:
+            if tool == 'tools/release-lanes.py':
+                continue   # not a guarded tool (it is reached through release.py, B6); its hook line is named above
+            good, detail = accepted(tool, argv)
+            ok('%s line accepted: %s %s' % (source, os.path.basename(tool), ' '.join(argv) or '(no flag)'), good, detail)
 finally:
     subprocess.run, urllib.request.urlopen, socket.create_connection = REAL_RUN, REAL_URLOPEN, REAL_CONN
     shutil.rmtree(TMP, ignore_errors=True)

@@ -70,11 +70,22 @@ def parse_cmdline(argv):
     ap.add_argument('--update-labels', action='store_true', help='rewrite tools/gate-labels.json')
     ap.add_argument('--vp-base', metavar='URL', help='check a venueplay Pages preview instead of production')
     ap.add_argument('--pp-base', metavar='URL', help='check a partyplay Pages preview instead of production')
+    ap.add_argument('--billing-range', metavar='BASE..HEAD', action='append',
+                    help='the pushed range (the hook, with --chrome-record): billing code in it keeps the billing suites '
+                         'on this Mac. Written with "=", once per pushed ref')
     argv = list(argv)
     # main() finds a URL as the word AFTER the flag, so --vp-base=URL would quietly check PRODUCTION.
     for a in argv:
         if a.startswith(('--vp-base=', '--pp-base=')):
             ap.error('write %s with a space, not "=": %s' % (a.split('=', 1)[0], a))
+        # The other way round for --billing-range (18 Nov 2026, Friday): gate-server.billing_ranges reads ONLY the
+        # "=" form, so a range written with a space would be quietly dropped and the billing suites left to the record.
+        if a == '--billing-range':
+            ap.error('write --billing-range=BASE..HEAD with "=", not a space')
+        if a.startswith('--billing-range='):
+            base, dots, head = a.split('=', 1)[1].partition('..')
+            if not base or not dots or base.startswith('-') or head.startswith('-') or '..' in head:
+                ap.error('--billing-range needs BASE..HEAD, got %r' % a.split('=', 1)[1])
     return ap.parse_args(argv)
 
 

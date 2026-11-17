@@ -760,14 +760,27 @@ def host_key_fingerprint():
     return fps[-1] if fps else ''
 
 
-USAGE = 'usage: gate-server.py run [-j N] | check | init-key | --help   (N is 1 to 4)'
+USAGE = ('usage: gate-server.py run [-j N] | check [--billing-range=BASE..HEAD ...] | billing BASE HEAD\n'
+         '       | billing-suites [BASE HEAD] | init-key | --help   (N is 1 to 4)')
+
+
+def _range_ok(a):
+    """--billing-range=BASE..HEAD exactly as billing_ranges() reads it (the hook's dry run hands these to `check`)."""
+    if not a.startswith('--billing-range='):
+        return False
+    base, dots, head = a.split('=', 1)[1].partition('..')
+    return bool(base) and bool(dots) and not base.startswith('-') and not head.startswith('-') and '..' not in head
 
 
 def parse_cmdline(argv):
     """(18 Nov 2026, flag audit) The command line, read BEFORE any key, record, git or server is touched. Returns
     (cmd, jobs) for a line it knows, or an exit code: 0 for --help/-h (the usage printed), 2 for anything else (an
     unknown subcommand, a stray word after one, or a -j that is not 1 to 4: `run --oops` used to run the remote gate,
-    and a bad -j silently ran 4 at once). No subcommand at all prints the doc and exits 2, as before."""
+    and a bad -j silently ran 4 at once). No subcommand at all prints the doc and exits 2, as before.
+    Friday 20 Nov (fix/tool-flag-guards-fri): also every line the 16 Nov hook uses: `billing BASE HEAD` (exit 0/4/3
+    are the hook's answers, so a refusal here is 2 and the hook reads it as "could not judge": every Chrome suite on
+    the Mac, never a weaker gate), `check --billing-range=BASE..HEAD` (the hook's dry run, one per pushed ref) and
+    `billing-suites [BASE HEAD]` (read only)."""
     argv = list(argv)
     if '--help' in argv or '-h' in argv:
         print(__doc__)
@@ -777,7 +790,14 @@ def parse_cmdline(argv):
         print(__doc__)
         return 2
     cmd, rest = argv[0], argv[1:]
-    if cmd in ('check', 'init-key') and not rest:
+    words = [a for a in rest if not a.startswith('-')]
+    if cmd == 'init-key' and not rest:
+        return cmd, None
+    if cmd == 'check' and all(_range_ok(a) for a in rest):
+        return cmd, None
+    if cmd == 'billing' and len(rest) == 2 and words == rest:
+        return cmd, None
+    if cmd == 'billing-suites' and len(rest) in (0, 2) and words == rest:
         return cmd, None
     if cmd == 'run':
         if not rest:
@@ -847,7 +867,7 @@ def main(argv=None):
             text += '; written to ' + write_record(rec)
         print('  gate record: ' + text)
         return 0 if good else 1
-    print(__doc__)   # not reached: parse_cmdline knows only the three above
+    print(__doc__)   # not reached: parse_cmdline knows only the subcommands above
     return 2
 
 
