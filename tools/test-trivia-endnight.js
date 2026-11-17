@@ -352,7 +352,7 @@ function hostRig(opts) {
     'function paintBuzzer(){} function buzzKey(){ return "b"; } function whereKey(){ return "w"; }\n' +
     liftAll(HOST, ['send', 'triviaKey', 'saveTrivia', 'renderRun', 'finish', 'finishOutcome', 'finishNow', 'replayState', 'applyTriviaPrefs',
                    'finSuspense', 'finSteps', 'finStage', 'finPastAds', 'finMsg', 'withFin', 'sendFinale', 'armFinale', 'restoreFinale', 'startFinale',
-                   'finTap', 'autoFinish', 'finSkip', 'finTicker', 'stopFinale', 'finTick', 'finLineText', 'paintFinLine', 'previewFeed', 'previewShow'], 'trivia/host.html') +
+                   'finTap', 'autoFinish', 'finSkip', 'finTicker', 'stopFinale', 'finTick', 'finLineText', 'paintFinLine', 'previewFeed', 'previewShow', 'endRoundBtn'], 'trivia/host.html') +
     '; return { tap: finTap, render: renderRun, arm: armFinale, withFin: withFin, replay: replayState, prefs: applyTriviaPrefs, restore: restoreFinale, tick: finTick, save: saveTrivia, ends: function(){ return endRoundCalls; } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));

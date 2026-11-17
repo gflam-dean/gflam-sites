@@ -126,7 +126,7 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  'capLineText', 'renderCapLine', 'stateLimit', 'capAdvice', 'numOrNull', 'renderCapAdvice',
  'renderStats', 'renderDrawSelect', 'renderMembers', 'renderSettings', 'applyRoleGates', 'alreadyDrawnTonight',
  'drawBtnIdle', 'loadAll', 'loadDraws', 'loadAllMembers', 'loadRoster', 'saveSettings', 'startDraw',
- 'revealWinner', 'onClaim', 'onRollover',
+ 'revealWinner', 'onClaim', 'onRollover', 'winnerMsg', 'currentLook',
  // SA/NT (22 Oct 2026): an SA pub's drawn member has won with no present-to-win countdown, and
  // a claim adds the state's after-win reminder
  'noPresent', 'winReminder',
