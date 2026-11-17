@@ -21189,7 +21189,7 @@ MUTATIONS = [
      'a venue a new number was typed at is filled with the OLD number next game'),
     # 18 Nov 2026: the Not my number form fits 320 x 568 with Join in view (Chrome rows: run on vp-tests-1 in a scratch copy)
     ('known-phone-in-chrome.test.py', 'venueplay/app/vp-known.js',
-     'display:flex;flex-wrap:wrap;align-items:center;gap:0 8px', 'display:block;gap:0 8px',
+     'display:flex;flex-wrap:wrap;align-items:center;gap:0 8px', 'display:flex;flex-direction:column;gap:0 8px',
      'Send again and Cancel drop back to their own line under the number form (Join falls off a 320 x 568 phone)'),
     ('known-phone-in-chrome.test.py', 'venueplay/app/vp-known.js',
      '      say.style.display = on ? "none" : "";\n', '      say.style.display = "";\n',
