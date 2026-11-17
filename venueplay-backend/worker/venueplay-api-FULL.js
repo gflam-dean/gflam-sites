@@ -586,6 +586,8 @@ export default {
       if (request.method === 'GET'  && path === '/admin/optin-export'    && typeof vpaHandleAdminOptinExport === 'function') return await vpaHandleAdminOptinExport(request, env, json);
       if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
+      // Every account for HQ's opt-in table and Groups billing badges (18 Nov 2026): the browser cannot read venueplay_founding.
+      if (request.method === 'GET'  && path === '/admin/accounts'        && typeof vpaHandleAdminAccounts === 'function')  return await vpaHandleAdminAccounts(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       // Rename an HQ staff login (Dean, 2 Nov 2026): any admin their own, an Owner anyone's.
       if (request.method === 'POST' && path === '/admin/staff-name'      && typeof vpaHandleStaffName === 'function')      return await vpaHandleStaffName(request, env, json);
@@ -10770,6 +10772,42 @@ async function vpaHandleOptinApprove(request, env, json) {
   await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId), { optin_release_approved: approved });
   await vpaAudit(env, actor, approved ? 'optin_approved' : 'optin_revoked', 'account:' + foundingId, {});
   return json({ ok: true, approved: approved });
+}
+
+/* GET /admin/accounts  (owner/accounts)  -> { ok:true, accounts:[...] }
+ *
+ * HQ READ venueplay_founding STRAIGHT FROM THE BROWSER, and RLS lets only the Workers read it,
+ * so the read came back [] with no error: the Admin opt-in table always said "No self-serve
+ * accounts yet" and every Groups billing badge said "Card account". Silent, live, found 18 Nov
+ * 2026 (reports/founding-reads-18nov.md). A read policy would have handed every staff login
+ * every contact mobile, so the read comes here instead, for the same two roles that may press
+ * Approve (vpaHandleOptinApprove).
+ *
+ * ONLY WHAT THOSE SCREENS SHOW. Named columns, never select=*: no mobile, no contact_name, no
+ * Stripe ids. The subscription id is reduced to has_sub, which is all the badge asks. Paged
+ * (vpaSelectAll, ordered by id) and it fails closed: a short list here would read as accounts
+ * that do not exist, so an error is an error, and HQ says "Could not read".
+ */
+const VPA_ACCOUNT_COLS = 'id,venue_name,contact_email,optin_release_approved,status,bill_by_invoice,stripe_subscription_id';
+async function vpaHandleAdminAccounts(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'venueplay_founding', 'select=' + VPA_ACCOUNT_COLS + '&order=id.asc');
+  } catch (e) {
+    return json({ error: 'Could not read the accounts just now. Reload the page in a minute.' }, 503);
+  }
+  const accounts = rows.map((r) => ({
+    id: r.id,
+    venue_name: r.venue_name || null,
+    contact_email: r.contact_email || null,
+    optin_release_approved: r.optin_release_approved === true ? true : (r.optin_release_approved === false ? false : null),
+    status: r.status || null,
+    bill_by_invoice: r.bill_by_invoice === true,
+    has_sub: !!r.stripe_subscription_id,
+  }));
+  return json({ ok: true, accounts: accounts });
 }
 
 

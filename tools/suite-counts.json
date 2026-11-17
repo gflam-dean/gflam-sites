@@ -699,6 +699,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/test-admin-accounts.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/test-analytics-ignores-robots.js": {
   "checks": 42,
   "counted_by": "lines"

@@ -328,7 +328,7 @@ Object.keys(HQ_SRCS).forEach(function (f) {
 });
 check('no HQ page reads venueplay_founding.mobile (or *) from the database itself', founderMobile.length === 0, founderMobile);
 check('the venue list load asks for the contacts once, through loadContacts', (HQ.match(/\n\s*loadContacts\(\);/g) || []).length === 1 &&
-  /S\.accounts=\(r\[13\][^\n]*\n\s*loadContacts\(\);/.test(HQ));
+  /(S\.accounts=\(r\[13\]|applyAccounts\(settled\[13\])[^\n]*\n\s*loadContacts\(\);/.test(HQ));   // applyAccounts: INBOX 480 (GET /admin/accounts)
 var LC = new Function('S', 'canBilling', 'workerPost', 'renderCancelled', lift(HQ, 'loadContacts') + '\nreturn loadContacts;');
 function runLC(isBilling, answer, withAudit) {
   var st = { contacts: { OLD: { name: 'stale', phone: '0400 000 000' } }, cancelAudit: withAudit ? [] : null }, calls = [], drawn = 0;

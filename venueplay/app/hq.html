@@ -1076,6 +1076,27 @@
 
   function canBilling(){ return S.adminRole==="owner" || S.adminRole==="accounts"; }
   function canTeam(){ return S.adminRole==="owner"; }
+
+  /* EVERY ACCOUNT COMES THROUGH THE WORKER (18 Nov 2026). HQ used to read venueplay_founding from
+     the browser, and RLS lets only the Workers read it, so the read came back empty with no error:
+     the opt-in table said "No self-serve accounts yet" and every Groups badge said "Card account".
+     GET /admin/accounts answers owner and accounts logins only, and never sends a mobile.
+     This is the ONE place HQ reads the accounts; loadAll and the re-read after Approve both use it.
+     Resolves { accounts:[...] } or { notAllowed:true }; rejects when the read failed, so the
+     table says "Could not read" rather than showing an empty list as if it were true. */
+  function readAccounts(){
+    if(!canBilling()) return Promise.resolve({ notAllowed:true, accounts:[] });
+    return workerGet("/admin/accounts").then(function(j){
+      if(!j || j.error || !Array.isArray(j.accounts)) throw new Error((j && j.error) || "Could not read the accounts.");
+      return { accounts:j.accounts };
+    });
+  }
+  function applyAccounts(res){
+    S.accountsFailed = !res;
+    S.accountsNotAllowed = !!(res && res.notAllowed);
+    S.accounts = (res && res.accounts) || [];
+    S.acctStatus = {}; S.accounts.forEach(function(a){ S.acctStatus[a.id]=a; });
+  }
   function groupName(id){ var g=S.groupById[id]; return g?g.name:"(unknown group)"; }
   function venueName(id){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i].name; } return "(unknown venue)"; }
 
@@ -1228,18 +1249,19 @@
       c.from("vp_admin_audit").select("action,target,created_at")
        .in("action",["venue_marked_test","venue_unmarked_test"])
        .order("created_at",{ascending:false}).limit(500),
-      // Who may collect player contact details. Its own query so a failure here cannot take
-      // the venue list down with it; the panel says so rather than rendering empty.
-      c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
+      // Who may collect player contact details, and how each account pays (slot 16 is folded in
+      // here). Through the Worker, see readAccounts. A failure here cannot take the venue list
+      // down with it; the panel says so rather than rendering empty.
+      readAccounts(),
       /* UNLIMITED NIGHTS (migration 107). Its own query for the same reason as show_logo_on_site above:
          before 107 is run this one 400s and every switch reads "off"; the venue list is untouched. */
       c.from("vp_venues").select("id,weekly_limit_off"),
       /* ONE-NIGHT PASS (migration 110). Its own query, same reason: before 110 is run this one 400s
          and the venue card says the pass is not available yet; nothing else is touched. */
       c.from("vp_venues").select(NIGHT_PASS_COLS),
-      /* HOW EACH CARD ACCOUNT PAYS, for the Groups tab's one-line rows (21 Oct 2026). Its own
-         query: a refusal only loses the billing badge, never the venue list. */
-      c.from("venueplay_founding").select("id,status,stripe_subscription_id,bill_by_invoice"),
+      /* Slot 16 was how each card account pays, for the Groups tab's badges. It now comes in the
+         same reply as slot 13 (readAccounts), so nothing is asked and the slots after it stay put. */
+      Promise.resolve({ data:null }),
       /* FLAGGED SIGNUPS, ITS OWN QUERY (21 Oct 2026). It was read out of the newest 250 audit rows of
          every kind, so a flagged signup scrolled off this screen as soon as 250 other things had
          happened, and read as "nothing waiting for review". */
@@ -1281,15 +1303,13 @@
       ((r[14] && r[14].data) || []).forEach(function(v){ S.weeklyOff[v.id]=v.weekly_limit_off===true; });
       S.nightPass={}; S.nightPassKnown = !!(r[15] && !r[15].error && r[15].data);
       ((r[15] && r[15].data) || []).forEach(function(v){ S.nightPass[v.id]=v; });
-      S.accounts=(r[13] && r[13].data) || [];
+      applyAccounts(settled[13].status==="fulfilled" ? r[13] : null);
       loadContacts();
-      S.acctStatus={}; ((r[16] && !r[16].error && r[16].data) || []).forEach(function(a){ S.acctStatus[a.id]=a; });
       S.flagAudit = (r[17] && !r[17].error && r[17].data) ? r[17].data : null;
       S.praffle={}; S.praffleKnown = !!(r[18] && !r[18].error && r[18].data);
       ((r[18] && r[18].data) || []).forEach(function(v){ S.praffle[v.id]=v.purchase_raffle_on===true; });
       S.bingoOn={}; S.bingoOnKnown = !!(r[19] && !r[19].error && r[19].data);
       ((r[19] && r[19].data) || []).forEach(function(v){ S.bingoOn[v.id]=v.number_bingo_on===true; });
-      S.accountsFailed = settled[13] && settled[13].status !== "fulfilled";
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
       S.discounts=(r[2] && r[2].data) || [];
@@ -4025,7 +4045,7 @@
     if(bad) return { cls:"suspend", txt:"Payment failing" };
     if(!a) return { cls:"indep", txt:"Card account" };
     if(a.status==="comp") return { cls:"indep", txt:"Comp, no charge" };
-    if(a.status==="pending" || (!a.stripe_subscription_id && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };
+    if(a.status==="pending" || (!a.has_sub && !a.bill_by_invoice)) return { cls:"suspend", txt:"No card yet" };
     if(a.bill_by_invoice) return { cls:"grouped", txt:"Invoiced" };
     return { cls:"live", txt:"Paying by card" };
   }
@@ -4573,6 +4593,10 @@
   /* ---- Every account, and whether it may collect player contact details ---- */
   function renderOptin(){
     var b=$("optinRows"); if(!b) return; b.innerHTML="";
+    if(S.accountsNotAllowed){
+      b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">Only owner and accounts logins can see this list.</div></td></tr>';
+      return;
+    }
     if(S.accountsFailed){
       b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'
         + 'Could not read the accounts table. Nothing here is a decision you have made, so do not '
@@ -4627,11 +4651,13 @@
       workerPost("/admin/optin-approve",{ founding_id:fid, approved:approved }).then(function(r){
         if(r && r.error){ vpTell(r.error); btn.disabled=false; renderOptin(); renderFlagged(); return; }
         var c=VP.getClient();
-        Promise.all([
-          c.from("venueplay_founding").select("id,venue_name,contact_email,optin_release_approved"),
+        Promise.allSettled([
+          readAccounts(),
           c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250)
-        ]).then(function(rr){
-          S.accounts=(rr[0] && rr[0].data) || S.accounts;
+        ]).then(function(st){
+          var rr=st.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
+          // A failed re-read keeps the list we had: the save itself landed, the Worker said so.
+          if(rr[0]) applyAccounts(rr[0]);
           S.audit=(rr[1] && rr[1].data) || S.audit;
           renderOptin(); renderFlagged(); renderAudit();
           loadAuditOnly();   // and the flagged list's own read, so an approved signup leaves it
