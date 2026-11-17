@@ -2099,6 +2099,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_hq_team_change(p_actor uuid, p_target uuid, p_action text, p_role text, p_label text)": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_is_admin()": {
    "anon": true,
    "authenticated": true
