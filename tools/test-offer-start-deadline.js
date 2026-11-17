@@ -251,6 +251,7 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var G2 = await setupAt(NOV5, { name: 'Nothing To Keep Hotel', offer_code: 'OFFER-NOV-2026' });
   await signInAt(G1, NOV_LAST); await signInAt(G2, DEC_FIRST);
   var pauseAt = bms(2027, 1, 1, 9, 0);
+  G1.row().reminders_sent = [3, 23, 30]; G2.row().reminders_sent = [3, 23, 30];   // warned (an unwarned venue is held for HQ, 18 Nov 2026: test-quick-signup-warnings.js)
   await withClock(pauseAt, function () { return vpaProspectReminderSweep(ENV, pauseAt); });
   check('both paused after their month', !!G1.row().paused_at && !!G2.row().paused_at, [G1.row().paused_at, G2.row().paused_at]);
   var g1 = await checkoutAt(G1, bms(2027, 1, 2, 12, 0)), g2 = await checkoutAt(G2, bms(2027, 1, 2, 12, 0));

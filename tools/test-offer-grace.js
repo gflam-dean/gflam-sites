@@ -178,11 +178,13 @@ async function checkoutAt(P, ms) {
       trial: (/subscription_data%5Btrial_end%5D=(\d+)/.exec(body) || [])[1] || null, expires: (/expires_at=(\d+)/.exec(body) || [])[1] || null };
   });
 }
+var MONTH_WARNED = false;   // from section 3: a prospect whose month (and its reminders) is skipped, not walked
 async function newProspect(name, offerOpen) {
   world(); ENV.FOUNDING_CODES = offerOpen === false ? '' : 'OFFER-NOV-2099';
   var P = await prospect({ name: name });
   P.row().first_signin_at = new Date(BNE_FIRST).toISOString(); P.row().free_month_ends_at = new Date(MONTH_END).toISOString();
   P.row().offer_rate = offerOpen === false ? null : 2.5;   // their first sign-in came while the offer was open (decided at the sign-in, 7 Nov 2026)
+  if (MONTH_WARNED) P.row().reminders_sent = [3, 23, 30];   // the month's reminders went (an unwarned venue is held for HQ, 18 Nov 2026: test-quick-signup-warnings.js)
   ENV.FOUNDING_CODES = '';   // the offer they were set up on has long closed: only THEIR offer_rate can hold the price
   return P;
 }
@@ -234,6 +236,7 @@ async function newProspect(name, offerOpen) {
   check('HQ > Prospects shows a paused prospect and when the offer is kept to', !!hqrow && hqrow.status === 'paused' && hqrow.offer_kept_until === '2026-12-07T13:59:59.000Z', hqrow);
 
   section('3. The boundary, to the millisecond, through Checkout');
+  MONTH_WARNED = true;
   var B = await newProspect('Boundary Hotel');
   await withClock(at(3, 0, 5), function () { return vpaProspectReminderSweep(ENV, at(3, 0, 5)); });
   check('paused by the sweep just after midnight of day 1', B.v.status === 'suspended' && !!B.row().paused_at);
@@ -325,6 +328,7 @@ async function newProspect(name, offerOpen) {
   E.founding().stripe_subscription_id = 'sub_in_month';
   await walk(BNE_FIRST, at(10, 12), 6 * 3600000);
   check('a card in the month: never paused, even ten days past its end', E.v.status === 'active' && !E.row().paused_at);
+  MONTH_WARNED = false;   // walked: the reminders go for real
   var R = await newProspect('Reminders Unchanged Hotel');
   var got = await walk(BNE_FIRST, MONTH_END, 3600000);
   check('the settled reminders are untouched: day 3, 23 and 30 only (Dean, 5 Nov 2026 ~7pm: the last day itself), nothing new for the grace',

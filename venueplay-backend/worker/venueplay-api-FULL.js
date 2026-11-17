@@ -4398,7 +4398,8 @@ async function vpsDone(env, venueId, authUserId) {
    QUIET HOURS: none, on purpose. Both answer something the person did seconds ago (the code text goes at any hour
    too); the 9am to 8pm rule is for texts HQ starts (vp_signin_texts). NEVER TWICE: only the one request that moved
    the sign-up from pending to made (vpsClaim) gets here, and a ready row for the venue already in the audit, or an
-   audit that will not answer, sends nothing. A held sign-up gets nothing here; HQ's Approve sends the normal welcome.
+   audit that will not answer, sends nothing. A held sign-up gets these when HQ approves it (18 Nov 2026): the text
+   always, and the email only when the prospect welcome did not already go (opts.welcomeSent).
    Nothing here can stop the done screen: every failure is caught and only reported in { texted, emailed }. */
 const VPS_READY_ACTION = 'signup_ready_sent';
 function vpsReadyVenueWords(name) {
@@ -4441,15 +4442,16 @@ async function vpsRenderReady(env, o) {
   const subject = 'Welcome to venueplay';
   return { subject: subject, html: vpaEmailDocument(vpaFillSupport(page), subject) };
 }
-async function vpsAccountReady(env, row, venueId, done) {
+async function vpsAccountReady(env, row, venueId, done, opts) {
   const out = { texted: false, emailed: false };
+  const welcomeSent = !!(opts && opts.welcomeSent);   // HQ's Approve: the prospect welcome already went to their email
   try {
     if (!venueId || await vpsReadySentBefore(env, venueId)) return Object.assign(out, { skipped: 'sent before, or could not check' });
     const venueName = (done && done.venue) || row.venue_name;
     const to = vpaNormaliseMobileAU(row.mobile);
     const mobileWords = vpaProspectPhone(to);
     const email = vpqRealEmail(row.email) || '';   // a quick start has no real email: the text goes, no email (INBOX 412)
-    if (email && env.RESEND_API_KEY && mobileWords) {
+    if (email && env.RESEND_API_KEY && mobileWords && !welcomeSent) {
       const msg = await vpsRenderReady(env, { venueName: venueName, contactName: row.contact_name, mobileWords: mobileWords, tvCode: done && done.tv_code, email: email });
       if (msg) {
         const res = await fetch('https://api.resend.com/emails', { method: 'POST',
@@ -4461,11 +4463,11 @@ async function vpsAccountReady(env, row, venueId, done) {
     }
     if (vpaIsAuMobileE164(to) && (vpaHasMobileMessage(env) || vpaHasClickSend(env)) && !(await vpaSmsOptedOut(env, to))) {
       let r;
-      try { r = await vpaSendSms(env, to, vpsReadyText(venueName, out.emailed), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
+      try { r = await vpaSendSms(env, to, vpsReadyText(venueName, out.emailed || welcomeSent), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
       out.texted = !!(r && r.ok);
       if (r && r.blocked) await vpaSmsRecordOptOut(env, to, venueId);
     }
-    await vpaAudit(env, { actorId: null, label: 'Self sign-up (no-card start)' }, VPS_READY_ACTION, 'venue:' + venueId,
+    await vpaAudit(env, { actorId: null, label: welcomeSent || (opts && opts.approved) ? 'Self sign-up (HQ approved)' : 'Self sign-up (no-card start)' }, VPS_READY_ACTION, 'venue:' + venueId,
       { start_id: row.id, texted: out.texted, emailed: out.emailed, email_id: out.email_id, to_last3: to ? to.slice(-3) : undefined });
   } catch (e) { console.log('[start] ready: ' + String((e && e.message) || e).slice(0, 200)); }
   return { texted: out.texted, emailed: out.emailed };
@@ -4522,8 +4524,8 @@ async function vpsStartVerify(request, env, json) {
  * SAME one /start makes: vpaProspectSetUp, 10 players, free month from the first sign-in) -> the trivia demo on their
  * own account -> what games do you run -> the console, ready.  Verify and resend are /start's own routes.
  *
- *   POST /quick/begin   { name, mobile, venue, postcode?, suburb?, turnstile?, website? (honeypot) }
- *                       Three boxes. No email, no pub-or-club (VPQ_DEFAULT_KIND). The venue comes from the picker
+ *   POST /quick/begin   { name, mobile, venue, postcode?, suburb?, kind? (pub|club, the link's ?vt=), turnstile?, website? (honeypot) }
+ *                       Three boxes. No email, no pub-or-club question (vpqKindFor: the link's ?vt=, the name, else VPQ_DEFAULT_KIND). The venue comes from the picker
  *                       (GET /quick/venues) with its postcode, or is typed with a suburb; the suburb finds the postcode
  *                       on our licensed list, and only when it does not does the page ask for the 4-digit postcode
  *                       (the postcode sets the state's gaming rules and the timezone, so it is never guessed).
@@ -4544,6 +4546,18 @@ async function vpsStartVerify(request, env, json) {
  * ======================================================================== */
 const VPQ_PLACEHOLDER_DOMAIN = VPG.placeholderEmailDomain;   // ONE constant (the outbox guard's): never mailed (vpqRealEmail)
 const VPQ_DEFAULT_KIND = 'for_profit';                      // a pub: the stricter gaming rules; HQ can change it
+/* PUB OR CLUB WHEN WE KNOW IT (18 Nov 2026): a club gets a club's permits by state (non_profit: vpaPaidEntryDefault).
+   The link's own answer first (?vt=club or ?vt=pub, from the website scan, sent by the page as kind), then the venue's
+   name: a club word (Club, RSL, Bowls, Bowlo, Leagues, Diggers, Surf Life Saving) and no pub word (a "Club Hotel" is a
+   pub). Anything else is VPQ_DEFAULT_KIND. ONE copy: /quick and the offer page's quick form both post /quick/begin. */
+const VPQ_CLUB_WORDS = /\b(club|clubs|rsl|bowlo|bowls|leagues|diggers|sub[ -]?branch|surf life saving|slsc)\b/i;
+const VPQ_PUB_WORDS = /\b(hotel|tavern|inn|pub|bar|brewery|brewing|arms)\b/i;
+function vpqKindFor(kindSignal, venueName) {
+  const said = vpsEntity(kindSignal);
+  if (said) return said;
+  const n = String(venueName || '');
+  return VPQ_CLUB_WORDS.test(n) && !VPQ_PUB_WORDS.test(n) ? 'non_profit' : VPQ_DEFAULT_KIND;
+}
 const VPQ_CARD_NEEDS_REAL_EMAIL = false;   // OFF (INBOX 412 UPDATE 7): Stripe's page asks for the email; the gate stays for the day Dean wants it back
 const VPQ_VENUES_PER_IP = 40;                               // picker searches per network per minute
 const VPQ_VENUE_LIMIT = 5;
@@ -4614,7 +4628,8 @@ async function vpqQuickBegin(request, env, json) {
     return json({ error: VPS_START_WORDS.off, off: true }, 503);
   }
   if (!row || !row.id) return json({ error: VPS_START_WORDS.blip }, 502);
-  try { await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { entity_type: VPQ_DEFAULT_KIND }); row.entity_type = VPQ_DEFAULT_KIND; } catch (e) { /* 173 not run */ }
+  const kind = vpqKindFor(b.kind, venue);
+  try { await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { entity_type: kind }); row.entity_type = kind; } catch (e) { /* 173 not run */ }
   // A per-lead link (cold email): remembered on the start, so the account is tied to the lead. Unknown codes are simply ignored.
   if (b.lead) {
     const lead = await vpqLeadFor(env, String(b.lead));
@@ -4790,7 +4805,8 @@ async function vpsAdminDecide(request, env, json) {
   if (!(await vpsClaim(env, row, was, 'approved'))) return json({ error: 'That sign-up has already been decided.' }, 409);
   // The prospect setup's own refusals still stand: an email that already signs in, the same venue twice.
   let made;
-  try { made = await vpsMakeAccount(env, row, actor, true); }
+  // The welcome only to a REAL email: a quick game sign-up's placeholder is never mailed (vpqRealEmail; 18 Nov 2026, it was).
+  try { made = await vpsMakeAccount(env, row, actor, !!vpqRealEmail(row.email)); }
   catch (e) { made = { status: 500, body: { error: 'The account was not made: ' + String((e && e.message) || e).slice(0, 160) } }; }
   if (made.status !== 200 || !made.body.ok) {
     await vpsSetOutcome(env, row, { outcome: was }).catch(() => {});
@@ -4798,7 +4814,10 @@ async function vpsAdminDecide(request, env, json) {
   }
   await vpsSetOutcome(env, row, Object.assign({ venue_id: made.body.venue.id, founding_id: made.body.founding_id }, by));
   await vpaAudit(env, actor, 'signup_start_approved', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode, venue_id: made.body.venue.id });
-  return json({ ok: true, outcome: 'approved', venue: made.body.venue, welcome_sent: !!made.body.welcome_sent, warnings: made.body.warnings });
+  /* THE SAME "ACCOUNT READY" AS A SIGN-UP MADE STRAIGHT AWAY (18 Nov 2026): a held quick game sign-up has no email, so
+     before this the approval told them nothing. The text always goes; the email only if the welcome did not. */
+  const ready = await vpsAccountReady(env, row, made.body.venue.id, null, { welcomeSent: !!made.body.welcome_sent, approved: true });
+  return json({ ok: true, outcome: 'approved', venue: made.body.venue, welcome_sent: !!made.body.welcome_sent, ready: ready, warnings: made.body.warnings });
 }
 
 /* ===========================================================================
@@ -6895,6 +6914,92 @@ async function vpaRenderProspectReminder(env, o) {
     : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
   return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
 }
+/* ===========================================================================
+ * EVERY VENUE IS WARNED BEFORE ITS FIRST MONTH ENDS (18 Nov 2026; reports/release-wed-18nov/quick-game-email-gap.md)
+ *
+ * A quick game sign-up (/quick, and the offer page's quick form) holds NO email, only the mobile that passed the code.
+ *   - vpaProspectReminderText: the day 3, day 23 and last-day reminders go as a TEXT to that mobile when there is no
+ *     real email (vpqRealEmail), through the SMS path every other text uses (vpaSendSms: Mobile Message, ClickSend as
+ *     backup). Opt-outs honoured. No link in it (they sign in by code, as the account-ready text).
+ *   - vpaProspectWarned / vpaPauseHeldForHq: a venue that had NO "one week left" or "last day" reminder by any route
+ *     is NOT paused at the end of its month. HQ gets ONE urgent sales ticket (help desk) and the venue stays on until
+ *     HQ closes that ticket; the next hourly sweep then pauses it. Every read that does not answer holds the pause.
+ * ONE COPY: the offer page's quick form makes the same accounts and reaches these through the same sweep.
+ * ======================================================================== */
+const VPA_PAUSE_HELD_ACTION = 'prospect_pause_held';
+function vpaReminderSmsText(o) {
+  const first = String(o.firstName || '').replace(/[^A-Za-z' -]/g, ' ').trim().split(/\s+/)[0] || '';
+  const hi = first ? 'Hi ' + first.slice(0, 20) + ', ' : 'Hi, ';
+  const venue = vpsReadyVenueWords(o.venueName);
+  const how = 'Sign in at venueplay.com.au/app (we text you a code) and add your card in Account.';
+  if (o.kind === 'final') return hi + 'today is the last day of your first month of venueplay at ' + venue + '. ' + how + ' With no card your games pause tonight. Reply STOP to opt out.';
+  if (o.kind === 'last') return hi + 'your first month of venueplay at ' + venue + ' ends ' + o.endsWhen + '. ' + how + ' With no card your games pause then. Reply STOP to opt out.';
+  return hi + 'how is venueplay going at ' + venue + '? Your first month ends ' + o.endsWhen + '. To keep your games on after that: ' + how + ' Reply STOP to opt out.';
+}
+/* The mobile to text, in +61 form: the account's (proven by the sign-up code), else the prospect row's phone, through
+   vpaProspectMobile (the one rule for "which number is their mobile"). */
+async function vpaProspectTextTo(env, p, v) {
+  let raw = '';
+  if (v && v.founding_id) {
+    const f = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=mobile&limit=1').catch(() => []);
+    raw = (f && f[0] && f[0].mobile) || '';
+  }
+  const m = vpaProspectMobile(raw, p && p.phone);
+  const e = m ? vpaNormaliseMobileAU(m) : null;
+  return vpaIsAuMobileE164(e) ? e : null;
+}
+/* One reminder as a text. { ok } or { ok:false, why }. */
+async function vpaProspectReminderText(env, p, v, kind, endsWhen) {
+  if (!(vpaHasMobileMessage(env) || vpaHasClickSend(env))) return { ok: false, why: 'no text provider' };
+  const to = await vpaProspectTextTo(env, p, v);
+  if (!to) return { ok: false, why: 'no mobile' };
+  if (await vpaSmsOptedOut(env, to)) return { ok: false, why: 'opted out of texts' };
+  let r;
+  try { r = await vpaSendSms(env, to, vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen }), 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
+  catch (e) { r = { ok: false }; }
+  if (r && r.blocked) await vpaSmsRecordOptOut(env, to, v.id);
+  return r && r.ok ? { ok: true } : { ok: false, why: r && r.blocked ? 'opted out of texts' : 'text not sent' };
+}
+/* Warned = the "one week left" (23) or "last day" (30) reminder went, by email or text. */
+function vpaProspectWarned(p) {
+  const s = Array.isArray(p && p.reminders_sent) ? p.reminders_sent : [];
+  return s.some((d) => Number(d) >= VPA_LAST_REMINDER_FROM);
+}
+/* { held: true } until HQ has closed the ONE ticket about this venue; { held: false } once it has (or deleted it). */
+async function vpaPauseHeldForHq(env, p, v, endMs) {
+  const get = async function (table, q) {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + q, { method: 'GET', headers: vpaHeaders(env) });
+    if (!res || !res.ok) return null;
+    const rows = await res.json().catch(() => null);
+    return Array.isArray(rows) ? rows : null;
+  };
+  try {
+    const a = await get('vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + v.id) + '&action=eq.' + VPA_PAUSE_HELD_ACTION + '&select=detail&limit=1');
+    if (!a) return { held: true, why: 'could not check' };
+    if (a.length) {
+      const tid = a[0] && a[0].detail && a[0].detail.ticket_id;
+      if (!tid) return { held: true, why: 'no ticket on record' };
+      const t = await get('vp_help_tickets', 'id=eq.' + encodeURIComponent(tid) + '&select=status&limit=1');
+      if (!t) return { held: true, why: 'could not check' };
+      return t.length && t[0].status !== 'closed' ? { held: true } : { held: false, hq_closed: true };
+    }
+    const mobile = await vpaProspectTextTo(env, p, v);
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'manual', priority: 'urgent',
+      title: 'Not paused, could not warn: ' + (v.name || 'a venue'),
+      message: ['The first month at ' + (v.name || 'this venue') + ' ended ' + vpaBneDateWords(endMs) + ' with no card, but we could not warn them first:',
+        'no "one week left" or "last day" reminder went (no email on the account, and no text went).', '',
+        'The venue has NOT been paused.', '',
+        'Name: ' + (p.contact_name || ''), 'Mobile: ' + (mobile ? vpaProspectPhone(mobile) : '(none)'), 'Venue: ' + (v.name || '') + (v.postcode ? ' (' + v.postcode + ')' : ''), '',
+        'Call or text them. When you close this ticket the venue pauses at the next hourly check. A card added before then keeps it on.'].join('\n'),
+      contact_name: p.contact_name || null, contact_phone: mobile ? vpaProspectPhone(mobile) : null,
+      lead_venue_name: v.name || null, lead_locality: v.postcode || null, venue_id: v.id });
+    if (!t || !t.id) return { held: true, why: 'ticket not made' };
+    try { await helpAnnounce(env, t, v.name || ''); } catch (e) {}
+    await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, VPA_PAUSE_HELD_ACTION, 'venue:' + v.id,
+      { ticket_id: t.id, ticket_no: t.ticket_no || null, ended: new Date(endMs).toISOString() });
+    return { held: true, ticket_no: t.ticket_no || null };
+  } catch (e) { return { held: true, why: 'could not check' }; }
+}
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
 async function vpaProspectReminderSweep(env, nowMs) {
   const out = { started: 0, sent: [], paused: [], stopped: 0 };
@@ -6927,6 +7032,12 @@ async function vpaProspectReminderSweep(env, nowMs) {
     }
     const firstMs = Date.parse(p.first_signin_at), endMs = Date.parse(p.free_month_ends_at) || vpaFreeMonthEnd(firstMs);
     if (nowMs > endMs) {
+      /* NEVER PAUSED UNWARNED (18 Nov 2026, reports/release-wed-18nov/quick-game-email-gap.md): a venue that had no
+         "one week left" or "last day" reminder (no email, no text went) is NOT paused until HQ has seen it (vpaPauseHeldForHq). */
+      if (v.status === 'active' && !vpaProspectWarned(p)) {
+        const hold = await vpaPauseHeldForHq(env, p, v, endMs);
+        if (hold.held) { (out.held = out.held || []).push(v.id); continue; }
+      }
       if (v.status === 'active') {
         await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id) + '&status=eq.active', {
           /* closed_at starts the 90-day clock (INBOX item 33, 5 Nov 2026): a paused prospect who never comes back
@@ -6949,8 +7060,24 @@ async function vpaProspectReminderSweep(env, nowMs) {
     const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && sent.indexOf(r.day) === -1);
     if (!due.length) continue;
     const r = due[due.length - 1];
-    const email = p.email;
-    if (!email || !env.RESEND_API_KEY) continue;
+    /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
+    const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
+    const markSent = async function (via) {
+      due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
+      await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
+      await vpaAudit(env, { actorId: null, label: 'automatic (card reminder)' }, 'prospect_reminder_sent', 'venue:' + v.id, { day: r.day, kind: kind, skipped: due.length - 1, via: via });
+      out.sent.push({ venue: v.id, day: r.day, kind: kind, via: via });
+    };
+    /* NO REAL EMAIL (a quick game sign-up, 18 Nov 2026): the same reminder as a TEXT to the mobile that passed the code,
+       same day, same send window. A text that does not go stays due (nothing marked sent), like an email. */
+    const email = vpqRealEmail(p.email);
+    if (!email) {
+      const t = await vpaProspectReminderText(env, p, v, kind, vpaEndsWhen(endMs, today) || 'on ' + vpaBneDateWords(endMs));
+      if (!t.ok) { (out.text_not_sent = out.text_not_sent || []).push({ venue: v.id, why: t.why }); continue; }
+      await markSent('text');
+      continue;
+    }
+    if (!env.RESEND_API_KEY) continue;
     /* THEIR UNSUBSCRIBE IS KEPT (9 Nov 2026 audit). Every reminder carries "Unsubscribe from product emails",
        and the page says "we will not contact you again", but nothing here read vp_unsubscribes, so the next
        reminder still went. Read once a sweep; a list that cannot be read holds every reminder this hour
@@ -6958,8 +7085,6 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.unsub_unread = true; continue; }
     if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
-    /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
-    const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const voice = await vpaProspectVoice(env, v.id);
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name, senderFirst: voice.name,
       endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
@@ -6973,10 +7098,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
       body: JSON.stringify({ from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
         headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
     if (!res || !res.ok) continue;
-    due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
-    await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
-    await vpaAudit(env, { actorId: null, label: 'automatic (card reminder)' }, 'prospect_reminder_sent', 'venue:' + v.id, { day: r.day, kind: kind, skipped: due.length - 1 });
-    out.sent.push({ venue: v.id, day: r.day, kind: kind });
+    await markSent('email');
   }
   // A paused venue whose card has since come in, if the webhook's own switch-on did not land.
   try {

@@ -27145,6 +27145,55 @@ MUTATIONS = [
      '      if (terms === false) return Response.redirect(',
      "      if (terms === 'never') return Response.redirect(",
      "the gate's emailed card link line stays green while an unticked venue is sent to Stripe"),
+    # 18 Nov 2026 (INBOX 472, fix/quick-signup-warnings): quick game sign-ups warned before day 30, told on HQ approve, clubs are clubs.
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  return s.some((d) => Number(d) >= VPA_LAST_REMINDER_FROM);\n',
+     '  return true;\n',
+     'a quick game venue nobody could warn is paused at day 30 with no HQ ticket'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    if (!email) {\n      const t = await vpaProspectReminderText(',
+     '    if (!email) { continue;\n      const t = await vpaProspectReminderText(',
+     'a venue with no email gets no card reminder at all (the text fallback is gone)'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (await vpaSmsOptedOut(env, to)) return { ok: false, why: 'opted out of texts' };",
+     "  if (false) return { ok: false, why: 'opted out of texts' };",
+     'a mobile that opted out is texted the card reminders again'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      return t.length && t[0].status !== 'closed' ? { held: true } : { held: false, hq_closed: true };",
+     '      return { held: false, hq_closed: true };',
+     'an unwarned venue is paused an hour after the ticket, before HQ has closed it'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (!a) return { held: true, why: 'could not check' };",
+     '    if (!a) return { held: false };',
+     'an audit read that fails pauses an unwarned venue'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      if (!t) return { held: true, why: 'could not check' };",
+     '      if (!t) return { held: false };',
+     'a ticket read that fails pauses an unwarned venue'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const ready = await vpsAccountReady(env, row, made.body.venue.id, null, { welcomeSent: !!made.body.welcome_sent, approved: true });',
+     '  const ready = null;',
+     'HQ approves a held quick sign-up and nothing tells them'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    if (email && env.RESEND_API_KEY && mobileWords && !welcomeSent) {',
+     '    if (email && env.RESEND_API_KEY && mobileWords) {',
+     'an approved sign-up with an email gets two welcome emails'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  try { made = await vpsMakeAccount(env, row, actor, !!vpqRealEmail(row.email)); }',
+     '  try { made = await vpsMakeAccount(env, row, actor, true); }',
+     'HQ approval mails the welcome to the placeholder login address'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const kind = vpqKindFor(b.kind, venue);',
+     '  const kind = VPQ_DEFAULT_KIND;',
+     'every quick sign-up is a pub again: a club link or a club name is ignored'),
+    ('test-quick-signup-warnings.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  return VPQ_CLUB_WORDS.test(n) && !VPQ_PUB_WORDS.test(n) ? 'non_profit' : VPQ_DEFAULT_KIND;",
+     "  return VPQ_CLUB_WORDS.test(n) ? 'non_profit' : VPQ_DEFAULT_KIND;",
+     'a "Club Hotel" pub is made a club'),
+    ('test-quick-signup-warnings.js', 'venueplay/app/vp-quick.js',
+     'var vt = /[?&]vt=(pub|club)(?:&|$)/i.exec(root.location.search || "");',
+     'var vt = null;',
+     "the quick form drops the link's ?vt=club, so a club is made a pub"),
 ]
 
 
@@ -27171,6 +27220,11 @@ MUTATIONS = [
 # they read as "cannot be done, here is why" rather than "nobody got round to it",
 # which is what an unexplained gap in the list looks like.
 UNPROVABLE = {
+    # 18 Nov 2026 (INBOX 472): the D472 gate line, proven row by row under its suite's name.
+    'runs the billing Worker: a quick game sign-up with no email gets its day 3, day 23 and last-day card reminders as texts ':
+        'its subject is the suite tools/test-quick-signup-warnings.js itself, proven row by row under that suite\'s own name (12 mutations: '
+        'the warned rule, the text fallback, the opt-out, the HQ hold and both failed reads, the approve text, the one welcome, the placeholder, '
+        'the club rule, the pub word and the page\'s ?vt). Proving it again by label would run the whole gate once per mutation.',
     # 17 Nov 2026 (INBOX 430): the D430 gate line, proven row by row under its suite's name.
     'runs the billing Worker: every onboarding mail to a prospect (welcome, day-3 and expiry nudges, sign-in link, card reminders, cancelled-month note) comes From the first name they met and is signed by it, plain venueplay with no name for an unnamed prospect or a venue with a card, comp, invoice or group, and never Dean':
         'its subject is the suite tools/test-onboarding-same-person.js itself, proven row by row under that suite\'s own name (14 mutations: each mail\'s From and sign-off, the sign-off helper, the Dean refusal, the switch-over and the welcome-record fallback). '

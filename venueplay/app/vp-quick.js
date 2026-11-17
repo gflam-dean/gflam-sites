@@ -72,6 +72,7 @@
     var body = { name: d.name, mobile: d.mobile, venue: d.venue, postcode: S.pc || val("qPost"), suburb: S.suburb || val("qSuburb"),
       website: val("qWeb"), turnstile: tsToken() };
     var lead = /[?&]l=([A-Za-z0-9_-]{16,64})(&|$)/.exec(root.location.search || ""); if (lead) body.lead = lead[1];
+    var vt = /[?&]vt=(pub|club)(?:&|$)/i.exec(root.location.search || ""); if (vt) body.kind = vt[1].toLowerCase();   // a club link: a club's permits (vpqKindFor)
     var btn = $("qGo"); busy(btn, true, "Sending your code...");
     root.vpTrackStep("form_sent");
     post("/quick/begin", body).then(function (j) {

@@ -448,6 +448,7 @@ function newSubs() { return ST.created.length; }
   section('6. A paused prospect, and a cancelled one');
   async function pausedProspect(name) {
     var P = await newProspect(name); ENV.VPB_SELF_RESTART = '1';
+    P.row().reminders_sent = [3, 23, 30];   // warned, as the walk would have (an unwarned venue is held for HQ, 18 Nov 2026: test-quick-signup-warnings.js)
     await withClock(at(3, 1), function () { return vpaProspectReminderSweep(ENV, at(3, 1)); });
     return P;
   }

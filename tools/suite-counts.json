@@ -1303,6 +1303,10 @@
   "checks": 61,
   "counted_by": "lines"
  },
+ "tools/test-quick-signup-warnings.js": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
  "tools/test-raffle-console.js": {
   "checks": 77,
   "counted_by": "lines"
