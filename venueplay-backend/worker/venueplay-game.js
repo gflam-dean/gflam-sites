@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Nov 2026, 02:14 · 14296875';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 07:45 · 328203ef';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2930,6 +2930,8 @@ async function handleCapture(request, env, json) {
   const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
   optinAfterFill(cfg, capIn, venueYes, consentAns ? CONSENT_THREE_VERSION : '');
   const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
+  /* the known row that made this list row: a number change moves only these (migration 215, F1 18 Nov 2026) */
+  if (knownRes.knownId) row.known_id = knownRes.knownId;
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
      beyond a venue code derived from a public slug: anyone can post a forged capture, including a
@@ -2980,6 +2982,11 @@ async function handleCapture(request, env, json) {
     await sbInsert(env, 'vp_captures', row, false);
     return await capReply();
   } catch (e) {
+    /* before migration 215 there is no known_id column: the row is stored without it (never moved by a change) */
+    if ('known_id' in row) {
+      delete row.known_id;
+      try { await sbInsert(env, 'vp_captures', row, false); return await capReply(); } catch (e2) { /* the older fallbacks below */ }
+    }
     const msg = String((e && e.message) || e);
     if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 &&
         msg.indexOf('player_id') === -1 && msg.indexOf('42703') === -1) throw e;
@@ -5317,9 +5324,18 @@ async function handleJoin(request, env, json) {
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
   if (devIdValid && !unproven) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39); never on an unproven seat (A1)
   Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
+  /* WHICH KNOWN PLAYER MADE THIS SEAT (migration 215, F1 18 Nov 2026): a number change moves only the seats its own
+     known row made, never every seat that happens to hold the number. Before 215 runs the column is not there, so a
+     refused insert is tried once more without it (the seat is then never moved by a change: the safe side). */
+  if (knownRes.knownId) playerRow.known_id = knownRes.knownId;
   let inserted;
   try {
-    inserted = await sbInsert(env, 'vp_players', playerRow, true);
+    try { inserted = await sbInsert(env, 'vp_players', playerRow, true); }
+    catch (e0) {
+      if (!('known_id' in playerRow) || (e0 && e0.status === 409)) throw e0;
+      delete playerRow.known_id;
+      inserted = await sbInsert(env, 'vp_players', playerRow, true);
+    }
   } catch (e) {
     /* THE UNIQUE INDEX SAYS THIS PHONE IS ALREADY IN (migration 192). sbInsert turns PostgREST's 409 (23505) into a
        409 of its own; for a phone that sent a device id that is "already joined", not a fault: the other join won the

@@ -15,7 +15,21 @@
 -- The file as committed carries the VP-STAGING-GUARD block, which REFUSES on the live project: the live run is the
 -- statements after the guard's END marker.
 --
--- WHAT IT ADDS (additive only: one table and one function; nothing existing is altered or removed)
+-- OWN ROWS ONLY (18 Nov 2026, review rejoin-merge-review-18nov.md finding F1; fix/215-number-change-own-rows-18nov).
+-- The first draft rewrote EVERY seat and capture at the shared venues that carried the old number. Typed numbers are
+-- never verified, so anyone who typed a regular's number at a join and then ran "Not my number" to their own phone
+-- moved that regular's seats and list rows to their own number. Now a row moves only when it carries THIS known row's
+-- id (known_id, a new nullable column on vp_players and vp_captures, written by the Worker at the join or bingo capture
+-- that made the row) AND still holds the old number. Rows from before this column (known_id null) are NEVER rewritten:
+-- they keep the old number. That is the safe side: a missed update costs a venue one stale number, a wrong one hands a
+-- stranger someone else's seat and contact. THIS EDIT (the two columns, two indexes and the narrower WHERE) HAS NOT BEEN
+-- RUN ON TEST YET: run it there twice before live. It takes a short lock on vp_players and vp_captures (add column,
+-- the foreign key check over all-null rows, two small partial indexes): run it outside game hours, as every migration.
+--
+-- WHAT IT ADDS (additive only: one table, one function, and one nullable column + partial index on each of
+-- vp_players and vp_captures; nothing existing is altered or removed)
+--   vp_players.known_id,       the vp_known_players row whose phone made this seat or this list row (null: not known,
+--   vp_captures.known_id       or made before migration 215). on delete set null. Service role writes it.
 --   vp_number_changes          one row per "Not my number" request: the known row, the NEW number, the SHA-256 of the
 --                              code (never the code), when it expires (10 minutes), how many wrong tries (5 at most),
 --                              how many texts (3 at most), when it was done and how many venue list rows moved. The
@@ -23,7 +37,8 @@
 --   vp_number_change_apply(id) the swap, in ONE transaction, only for a change that is not done and not expired:
 --                              vp_known_players.mobile := the new number; then, ONLY at venues whose shared list says
 --                              they had the mobile from this player, vp_players (through vp_sessions.venue_id) and
---                              vp_captures rows holding the OLD number get the new one. Any other open change for
+--                              vp_captures rows that THIS known row made (known_id = its id) and that still hold the
+--                              OLD number get the new one. Never a row by number alone. Any other open change for
 --                              the same row is closed. Answers { ok, rows } or { ok:false, why }.
 --
 -- PRIVACY (player data is tier one). RLS on, no policies, everything revoked from public, anon and authenticated; the
@@ -35,6 +50,9 @@
 -- available" and the phone never shows "Not my number" (the switch NUMBER_CHANGE_SMS_ON is also off by default).
 -- Rollback (after the Worker is rolled back or the switch is off):
 --   drop function if exists public.vp_number_change_apply(uuid); drop table if exists public.vp_number_changes;
+--   (known_id on vp_players / vp_captures may stay: nullable, read by nothing else. To remove it, AFTER the Worker that
+--   writes it is rolled back: alter table public.vp_players drop column if exists known_id;
+--   alter table public.vp_captures drop column if exists known_id;)
 -- =====================================================================
 -- VP-STAGING-GUARD-BEGIN
 do $guard$
@@ -56,6 +74,13 @@ begin
 end
 $guard$;
 -- VP-STAGING-GUARD-END
+
+/* WHICH KNOWN PLAYER MADE THIS ROW (F1, 18 Nov 2026). Nullable, no backfill (an old row cannot be proven to be
+   anyone's, so it is never moved). Indexed only where set: the apply below and the on-delete-set-null read it. */
+alter table public.vp_players add column if not exists known_id uuid references public.vp_known_players(id) on delete set null;
+alter table public.vp_captures add column if not exists known_id uuid references public.vp_known_players(id) on delete set null;
+create index if not exists vp_players_known_idx on public.vp_players (known_id) where known_id is not null;
+create index if not exists vp_captures_known_idx on public.vp_captures (known_id) where known_id is not null;
 
 create table if not exists public.vp_number_changes (
   id            uuid primary key default gen_random_uuid(),
@@ -102,7 +127,9 @@ begin
   select * into k from public.vp_known_players where id = c.known_id for update;
   if not found then return jsonb_build_object('ok', false, 'why', 'none'); end if;
 
-  /* only the venues that already had THIS player's mobile (typed there, or Use this with its box ticked) */
+  /* only the venues that already had THIS player's mobile (typed there, or Use this with its box ticked), and there
+     only the rows THIS known row made (known_id) that still hold its old number. Never every row with that number:
+     a typed number is not proof, so that would let anyone move a stranger's seats and list rows (F1, 18 Nov 2026). */
   select coalesce(array_agg(e.key::uuid), '{}') into venues
     from jsonb_each(coalesce(k.shared, '{}'::jsonb)) e
    where jsonb_typeof(e.value) = 'array' and e.value ? 'mobile'
@@ -111,10 +138,10 @@ begin
   if k.mobile is not null and k.mobile <> c.new_mobile and array_length(venues, 1) > 0 then
     update public.vp_players p set mobile = c.new_mobile
       from public.vp_sessions s
-     where p.session_id = s.id and s.venue_id = any(venues) and p.mobile = k.mobile;
+     where p.session_id = s.id and s.venue_id = any(venues) and p.known_id = k.id and p.mobile = k.mobile;
     get diagnostics n1 = row_count;
     update public.vp_captures set mobile = c.new_mobile
-     where venue_id = any(venues) and mobile = k.mobile;
+     where venue_id = any(venues) and known_id = k.id and mobile = k.mobile;
     get diagnostics n2 = row_count;
   end if;
 
@@ -130,7 +157,7 @@ revoke all on function public.vp_number_change_apply(uuid) from public, anon, au
 grant execute on function public.vp_number_change_apply(uuid) to service_role;
 
 comment on function public.vp_number_change_apply(uuid) is
-  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile. Service role only. Migration 215.';
+  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile, and there only the rows this known row made (known_id). Service role only. Migration 215.';
 
 -- Read back (read-only):
 --   select relrowsecurity from pg_class where relname = 'vp_number_changes';                         expects true
@@ -138,3 +165,5 @@ comment on function public.vp_number_change_apply(uuid) is
 --      and grantee in ('anon', 'authenticated');                                                       expects 0
 --   select has_function_privilege('anon', 'public.vp_number_change_apply(uuid)', 'execute');           expects false
 --   select prosecdef from pg_proc where proname = 'vp_number_change_apply';                            expects true
+--   select count(*) from information_schema.columns where table_schema = 'public' and column_name = 'known_id'
+--      and table_name in ('vp_players', 'vp_captures');                                                expects 2

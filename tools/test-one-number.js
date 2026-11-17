@@ -16,6 +16,9 @@
      6. send again: 30 seconds apart, three texts at most, the old code stops working
      7. abuse limits: five changes a day per player, three codes a day to any one new number
      8. no "Different number" path left on the phone module; the outbox guard swallows fiction numbers on live
+     9. F1 (18 Nov 2026): a number TYPED at a join is not proof. An attacker who typed a regular's number and then changed
+        it to their own moves only their own seat; the regular's seats and list rows keep their number. The swap's two
+        WHERE clauses are read out of migration 215 itself (FAKE_APPLY), so the SQL that ships is the SQL tested
    Run from the repo root:  jsc tools/test-one-number.js */
 load('tools/rig-game-worker.js');
 
@@ -32,9 +35,27 @@ crypto.randomUUID = function () { _uuid++; return 'c0c0c0c0-0000-4000-8000-' + (
 if (typeof btoa !== 'function') btoa = function (s) { return 'b64:' + s; };
 if (typeof AbortController !== 'function') AbortController = function () { this.signal = {}; this.abort = function () {}; };
 var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b', THIRD = '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c0c';
-var TEXTS = [], SMS_FAIL = false, MISSING = false;
-/* what migration 215's function does, in JS (the SQL was proven on TEST) */
+var TEXTS = [], SMS_FAIL = false, MISSING = false, NO_KNOWN_COL = false;
+/* what migration 215's function does, in JS. THE TWO ROW REWRITES ARE READ OUT OF THE MIGRATION ITSELF (F1, 18 Nov
+   2026): each WHERE condition of its vp_players and vp_captures updates is applied here by name, and a condition this
+   stand-in does not know stops the suite. So dropping "known_id = k.id" from the SQL turns this suite red, and the SQL
+   the gate signs is the SQL these checks ran. */
+var SQL215 = readFile('venueplay-backend/supabase/venueplay-215-one-number-per-player.sql').replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+function sqlWhere(re) { var m = re.exec(SQL215); return m ? m[1].replace(/\s+/g, ' ').trim().split(/ and /i) : null; }
+var W_PLAYERS = sqlWhere(/update public\.vp_players p set mobile = c\.new_mobile\s+from public\.vp_sessions s\s+where ([^;]+);/);
+var W_CAPTURES = sqlWhere(/update public\.vp_captures set mobile = c\.new_mobile\s+where ([^;]+);/);
+function sqlHolds(cond, row, s, k, venues) {
+  switch (cond) {
+    case 'p.session_id = s.id': return !!s && row.session_id === s.id;
+    case 's.venue_id = any(venues)': return !!s && venues.indexOf(s.venue_id) >= 0;
+    case 'venue_id = any(venues)': return venues.indexOf(row.venue_id) >= 0;
+    case 'p.mobile = k.mobile': case 'mobile = k.mobile': return row.mobile != null && row.mobile === k.mobile;
+    case 'p.known_id = k.id': case 'known_id = k.id': return row.known_id != null && row.known_id === k.id;
+    default: throw new Error('FAKE_APPLY does not know the SQL condition "' + cond + '": teach it, do not skip it');
+  }
+}
 function FAKE_APPLY(id) {
+  if (!W_PLAYERS || !W_CAPTURES) throw new Error('the two updates in migration 215 were not found');
   var c = (DB.vp_number_changes || []).filter(function (x) { return x.id === id; })[0];
   if (!c) return { ok: false, why: 'none' };
   if (c.done_at) return { ok: true, rows: c.rows_changed || 0, already: true };
@@ -42,12 +63,14 @@ function FAKE_APPLY(id) {
   var k = DB.vp_known_players.filter(function (x) { return x.id === c.known_id; })[0];
   var venues = Object.keys(k.shared || {}).filter(function (v) { return Array.isArray(k.shared[v]) && k.shared[v].indexOf('mobile') >= 0; });
   var n = 0;
-  if (k.mobile && k.mobile !== c.new_mobile) {
-    DB.vp_players.forEach(function (p) {
+  if (k.mobile && k.mobile !== c.new_mobile && venues.length) {
+    var hitP = DB.vp_players.filter(function (p) {
       var s = DB.vp_sessions.filter(function (x) { return x.id === p.session_id; })[0];
-      if (s && venues.indexOf(s.venue_id) >= 0 && p.mobile === k.mobile) { p.mobile = c.new_mobile; n++; }
+      return W_PLAYERS.every(function (w) { return sqlHolds(w, p, s, k, venues); });
     });
-    (DB.vp_captures || []).forEach(function (r) { if (venues.indexOf(r.venue_id) >= 0 && r.mobile === k.mobile) { r.mobile = c.new_mobile; n++; } });
+    var hitC = (DB.vp_captures || []).filter(function (r) { return W_CAPTURES.every(function (w) { return sqlHolds(w, r, null, k, venues); }); });
+    hitP.forEach(function (p) { p.mobile = c.new_mobile; n++; });
+    hitC.forEach(function (r) { r.mobile = c.new_mobile; n++; });
   }
   k.mobile = c.new_mobile;
   c.done_at = new Date().toISOString(); c.rows_changed = n;
@@ -70,6 +93,7 @@ fetch = async function (url, opts) {
       if (!r.created_at) r.created_at = new Date().toISOString(); if (!r.last_sent_at) r.last_sent_at = r.created_at; });
     opts = Object.assign({}, opts, { body: JSON.stringify(b) });
   }
+  if (NO_KNOWN_COL && /\/rest\/v1\/(vp_players|vp_captures)$/.test(u) && opts && opts.method === 'POST' && /"known_id"/.test(opts.body)) return resp(400, { code: 'PGRST204', message: "Could not find the 'known_id' column" });
   if (/\/rest\/v1\/vp_players$/.test(u) && opts && opts.method === 'POST') {
     var pb = JSON.parse(opts.body); (Array.isArray(pb) ? pb : [pb]).forEach(function (r) { if (r.kicked === undefined) r.kicked = false; });
     opts = Object.assign({}, opts, { body: JSON.stringify(pb) });
@@ -78,7 +102,7 @@ fetch = async function (url, opts) {
 };
 requireStaff = async function (env, uid, venueId) { return { id: 'staff-1', role: 'owner', venue_id: venueId, auth_user_id: uid }; };
 function world() {
-  DB = {}; LOG.length = 0; TEXTS.length = 0; SMS_FAIL = false; MISSING = false;
+  DB = {}; LOG.length = 0; TEXTS.length = 0; SMS_FAIL = false; MISSING = false; NO_KNOWN_COL = false;
   delete ENV.CONSENT_BLOCK; delete ENV.NUMBER_CHANGE_SMS_ON; delete ENV.MOBILEMESSAGE_USERNAME; delete ENV.MOBILEMESSAGE_PASSWORD;
   DB.vp_venues = [VENUE, OTHER, THIRD].map(function (id, i) { return { id: id, name: ['The Royal', 'The Other Pub', 'The Third'][i], slug: 'v' + i, status: 'active', au_state: 'QLD', entity_type: 'for_profit', terms_required: false, max_players: 50, founding_id: 'f' + i, timezone: 'Australia/Brisbane', created_at: '2026-01-01T00:00:00Z' }; });
   DB.venueplay_founding = [0, 1, 2].map(function (i) { return { id: 'f' + i, status: 'active', stripe_customer_id: 'cus_' + i, stripe_subscription_id: 'sub_' + i, first_signin_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', contact_email: 'gm' + i + '@pub.com.au' }; });
@@ -175,7 +199,8 @@ function later(ms) { NOWMS += ms; }
   await call(handleJoin, { code: s3.join_code, name: 'Sarah', pid: pid(), known_keys: [KEY] });
   var atThird = lastPlayer();
   DB.vp_players.push({ id: 'stranger-row', session_id: s3.id, first_name: 'Kim', mobile: '+61412345123' });   // the old number at a venue that never had it from Sarah
-  DB.vp_captures.push({ id: 'cap-other', venue_id: OTHER, first_name: 'Sarah', mobile: '+61412345123' });
+  DB.vp_captures.push({ id: 'cap-other', venue_id: OTHER, first_name: 'Sarah', mobile: '+61412345123', known_id: DB.vp_known_players[0].id });   // her bingo capture (the Worker writes known_id: section 9)
+  DB.vp_captures.push({ id: 'cap-old', venue_id: OTHER, first_name: 'Sarah', mobile: '+61412345123' });   // a row from before migration 215: no known_id
   DB.vp_player_consents.push({ id: 'cons-1', venue_id: OTHER, known_id: DB.vp_known_players[0].id, party: 'venue', granted: true, wording_version: 'vpc-4-22nov', source: 'trivia' });
   var consBefore = JSON.stringify(DB.vp_player_consents);
   show('before: OTHER had the old number from Sarah, THIRD had none', atOther.mobile === '+61412345123' && atThird.mobile === undefined, JSON.stringify([atOther, atThird]));
@@ -187,6 +212,7 @@ function later(ms) { NOWMS += ms; }
   show('the right code: ok, the new number masked', v.status === 200 && v.body.ok === true && v.body.masked === '04•• ••• 456', JSON.stringify(v));
   show('the known row now holds the NEW number, and only it', DB.vp_known_players[0].mobile === '+61412000456' && JSON.stringify(DB.vp_known_players[0]).indexOf('412345123') < 0, JSON.stringify(DB.vp_known_players[0]));
   show('every venue that had it from Sarah has the new one (the first venue\'s rows, the other venue\'s row and capture)', DB.vp_players.filter(function (p) { return p.first_name === 'Sarah'; }).every(function (p) { return p.mobile !== '+61412345123'; }) && atOther.mobile === '+61412000456' && DB.vp_captures[0].mobile === '+61412000456', JSON.stringify(DB.vp_players));
+  show('a row with no known_id (made before 215, so nobody can prove whose it is) keeps the old number: never moved by number alone', DB.vp_captures.filter(function (x) { return x.id === 'cap-old'; })[0].mobile === '+61412345123');
   show('a venue that never had it from her is untouched (a stranger with the old number there keeps it)', DB.vp_players.filter(function (p) { return p.id === 'stranger-row'; })[0].mobile === '+61412345123' && atThird.mobile === undefined);
   show('consent rows untouched: each venue\'s answer stays, per player', JSON.stringify(DB.vp_player_consents) === consBefore);
   show('the change is marked done', !!ch.done_at, JSON.stringify(ch));
@@ -246,6 +272,57 @@ function later(ms) { NOWMS += ms; }
   var GSRC = readFile('venueplay-backend/worker/vp-outbox-guard.js');
   var G = (new Function('Response', 'URL', GSRC.slice(GSRC.indexOf('/* OUTBOX GUARD BEGIN'), GSRC.indexOf('/* OUTBOX GUARD END */')) + '\nreturn { vpgIsTestMobile: vpgIsTestMobile };'))(Response, URL);
   show('the outbox guard treats 0491 570 xxx (and +61 491 570 xxx) as fiction: never delivered', G.vpgIsTestMobile('0491 570 001') && G.vpgIsTestMobile('+61491570123') && !G.vpgIsTestMobile('+61412000456'));
+
+  print('9. ONLY THE ROWS THIS PLAYER MADE (F1, 18 Nov 2026): A TYPED NUMBER IS NOT PROOF');
+  world(); on();
+  var MV = '+61412555001', MA = '+61412555999';
+  var sv = await open(VENUE);
+  var vj = await call(handleJoin, { code: sv.join_code, name: 'Sam', pid: pid(), first_name: 'Sam', mobile: '0412 555 001', marketing_optin: true });
+  var victimSeat = lastPlayer(), VKEY = vj.body.known_key;
+  var victimKnown = DB.vp_known_players.filter(function (x) { return x.mobile === MV; })[0];
+  show('the join writes the known row that made the seat onto the seat (known_id)', !!victimKnown && victimSeat.known_id === victimKnown.id, JSON.stringify(victimSeat));
+  var sbv = await open(VENUE);   // Sam's bingo night: the phone holds a seat token
+  DB.vp_players.push({ id: 'vvvvvvvv-0000-4000-8000-000000000002', session_id: sbv.id, token_hash: await sha256Hex('tokV2'), display_name: 'Sam', kicked: false });
+  BODY = { code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [VKEY], marketing_optin: true };
+  var capRes;
+  try { capRes = await handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tokV2' : ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+  catch (e) { capRes = { status: e.status || 500, body: { error: e.message } }; }
+  var victimCap = DB.vp_captures[DB.vp_captures.length - 1];
+  show('the bingo capture writes the known row too (known_id), with the number the row holds', capRes.status === 200 && victimCap && victimCap.known_id === victimKnown.id && victimCap.mobile === MV, JSON.stringify([capRes, victimCap]));
+  DB.vp_captures.push({ id: 'cap-victim-old', venue_id: VENUE, first_name: 'Sam', mobile: MV });   // Sam's list row from before 215
+  /* the attacker joins the same night and TYPES Sam's number (never verified), then "Not my number" to their own phone */
+  var aj = await call(handleJoin, { code: sv.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 001' });
+  var attackerSeat = lastPlayer(), AKEY = aj.body.known_key;
+  var attackerKnown = DB.vp_known_players.filter(function (x) { return x.id !== victimKnown.id && x.mobile === MV; })[0];
+  show('setup: the attacker has a known row of their own holding Sam\'s typed number, shared with this venue', !!AKEY && !!attackerKnown && attackerSeat.known_id === attackerKnown.id && sharedWith(attackerKnown, VENUE, 'mobile'), JSON.stringify(attackerKnown));
+  later(31000);
+  st = await call(handleNumberStart, { keys: [AKEY], mobile: '0412 555 999' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [AKEY], change_id: st.body.change_id, sms_code: CODE });
+  show('setup: the attacker\'s change goes through (the code went to their own phone)', st.status === 200 && v.status === 200 && attackerKnown.mobile === MA, JSON.stringify([st, v]));
+  show('ATTACK: Sam\'s seat keeps Sam\'s number (not moved to the attacker\'s)', victimSeat.mobile === MV, JSON.stringify(victimSeat));
+  show('ATTACK: Sam\'s bingo list row keeps Sam\'s number', victimCap.mobile === MV, JSON.stringify(victimCap));
+  show('ATTACK: Sam\'s list row from before 215 keeps Sam\'s number', DB.vp_captures.filter(function (x) { return x.id === 'cap-victim-old'; })[0].mobile === MV);
+  show('ATTACK: no row anywhere holds the attacker\'s number except the attacker\'s own seat', DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MA; }).every(function (r) { return r === attackerSeat; }), JSON.stringify(DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MA; })));
+  show('the attacker\'s OWN seat (made by their known row) does move: an own-number change still works', attackerSeat.mobile === MA, JSON.stringify(attackerSeat));
+  show('Sam\'s known row is untouched', victimKnown.mobile === MV);
+  /* Sam's own change, after the attack: Sam's seat and capture move, the old unlinked row does not */
+  later(31000);
+  st = await call(handleNumberStart, { keys: [VKEY], mobile: '0412 555 777' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [VKEY], change_id: st.body.change_id, sms_code: CODE });
+  show('Sam\'s own change: Sam\'s seat and bingo list row move to Sam\'s new number', v.status === 200 && victimSeat.mobile === '+61412555777' && victimCap.mobile === '+61412555777', JSON.stringify([v, victimSeat, victimCap]));
+  show('...and the attacker\'s seat is not touched by Sam\'s change', attackerSeat.mobile === MA);
+  /* before migration 215 runs there is no known_id column: a join and a bingo capture still land, without the link */
+  NO_KNOWN_COL = true;
+  var nb = DB.vp_players.length, nc = DB.vp_captures.length;
+  var jn = await call(handleJoin, { code: sv.join_code, name: 'Sam', pid: pid(), known_keys: [VKEY] });
+  show('before 215: a known phone still joins (the seat is stored without known_id, so no change ever moves it)', jn.status === 200 && !!jn.body.token && DB.vp_players.length === nb + 1 && lastPlayer().known_id === undefined, JSON.stringify([jn.status, lastPlayer()]));
+  BODY = { code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [VKEY], marketing_optin: true };
+  try { capRes = await handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tokV2' : ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+  catch (e) { capRes = { status: e.status || 500, body: { error: e.message } }; }
+  show('before 215: a bingo capture is still stored, without known_id', capRes.status === 200 && DB.vp_captures.length === nc + 1 && DB.vp_captures[nc].known_id === undefined, JSON.stringify([capRes, DB.vp_captures[nc]]));
+  NO_KNOWN_COL = false;
 
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
