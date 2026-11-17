@@ -4311,6 +4311,13 @@ def local_checks(which):
              'runs POST /admin/venue-rename through the billing Worker: accounts, support, a venue login and no login are refused with nothing written; the patch is the name only (never the slug or join code); the audit row holds the old and new name, and a failed audit puts the name back; another venue\'s name needs a confirm; a one-venue account named after the pub follows it, a multi-venue account does not; HQ shows the button to an Owner only and Cancel or No sends nothing', 34,
              'A support login renaming a pub, a rename that changes the TV address and blanks the TV, two venues made to look the same by accident, '
              'or a name change nobody can trace'),
+            # Dean's open question 32 (16 Nov 2026, "yes, step 2"), branch feature/hq-rename-slug-q32. Migration 212 (vp_venue_slug_aliases,
+            # vp_venue_move_address, vp_venue_current_slug): run on TEST twice, NOT on live. Ships on Dean's yes.
+            ('D449. HQ Move TV address: the address follows the new name, the old one keeps opening the venue for ever, Owner only, never two venues on one address',
+             'test-venue-address.js',
+             'runs POST /admin/venue-address, the game Worker at an old address and the pages: Owner only moves (one database call), a preview never proposes a current or old address, every refusal is a plain sentence; /venue, /screen, the signing key and an old printed code all find the venue at its old address; the TV moves itself, its memory and its pairing to the new address; a console bookmarked on the old address finds its venue; HQ shows old and new addresses and Cancel or No sends nothing', 70,
+             'A renamed pub\'s TV, table talkers or TV app going blank, a new venue handed an old pub\'s printed QR codes, '
+             'a support login moving an address, or a move nobody can trace'),
             ('D215. Game sounds are per game and the host\'s switch: off until switched on, the three recorded sounds sit in their named slots, and the two paid picks have empty named slots',
              'test-game-sounds.js',
              'trivia, musical bingo and bingo each keep a Game sounds switch through the Worker (junk dropped, default Off), a slot plays nothing until its game is told ON, a phone needs a tap and the mute button, a demo page is silent', 34,

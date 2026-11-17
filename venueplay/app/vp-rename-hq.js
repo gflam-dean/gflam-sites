@@ -10,7 +10,8 @@
    the new name. NOTHING HERE RUNS BY ITSELF: Cancel at any step sends nothing.
 
    hq.html calls VPRename.init() with its own workerPost, vpAsk, vpAskText, vpTell and owner test, so
-   this file has no login of its own. tools/test-venue-rename.js runs it with a fake page and Worker. */
+   this file has no login of its own. tools/test-venue-rename.js runs it with a fake page and Worker.
+   Move TV address (below, open question 32) is tools/test-venue-address.js. */
 (function (root) {
   "use strict";
   var H = { post: null, ask: null, askText: null, tell: null, isOwner: function () { return false; } };
@@ -73,6 +74,81 @@
     });
   }
 
-  var api = { init: init, button: button, rename: rename, clean: clean, confirmText: confirmText };
+  /* ---- MOVE TV ADDRESS (Dean's open question 32, "yes, step 2"; migration 212) ----
+     The Lunatic Hotel fix. The TV address (venueplay.com.au/tv?venue=<slug>) follows the new name, and the OLD
+     address keeps working for ever: printed table talkers, TV bookmarks and the TV apps still open this venue, and
+     the join code never changes. Owner only. Offered straight after a rename, and on its own button in Details.
+     POST /admin/venue-address {venue_id, preview:true} answers the current address, the old ones and the address
+     the name gives; {venue_id, slug} moves it. Cancel or No at any step sends nothing. */
+  var SITE = "venueplay.com.au/tv?venue=";
+  function addressButton(v) {
+    if (!H.isOwner() || !v || !v.id) return "";
+    return '<button class="mini" data-moveaddr="' + esc(v.id) + '">Move TV address</button>';
+  }
+  function cleanSlug(raw) {
+    return String(raw == null ? "" : raw).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+  function moveText(from, to) {
+    return "Move the TV address?\n\nNow: " + SITE + from + "\nNew: " + SITE + to + "\n\n" +
+      "The old address keeps working: printed QR codes, bookmarks and the TV app still open this venue. " +
+      "The join code stays the same. Any TV showing the venue reloads itself onto the new address.";
+  }
+  /* v: the HQ venue row. offered: true when asked straight after a rename (then a name that already matches says
+     nothing). Resolves to the Worker's answer when moved, else null. */
+  function moveAddress(v, offered) {
+    if (!v || !v.id) return Promise.resolve(null);
+    if (!H.isOwner()) { if (!offered) H.tell("Only an HQ Owner can move a TV address."); return Promise.resolve(null); }
+    return H.post("/admin/venue-address", { venue_id: v.id, preview: true }).then(function (p) {
+      p = p || {};
+      if (p.error || !p.ok) { H.tell("Could not read the TV address: " + (p.error || "no answer from the server.")); return null; }
+      if (offered && p.matches_name) return null;
+      var first = offered
+        ? H.ask("The TV address is still " + SITE + p.slug + ".\n\nMove it to " + SITE + p.proposed + " to match the new name? The old address keeps working.")
+        : Promise.resolve(true);
+      return first.then(function (go) {
+        if (!go) return null;
+        return H.askText("New TV address for " + (v.name || "this venue") + " (letters, numbers and hyphens)", p.proposed || p.slug).then(function (typed) {
+          if (typed === null || typed === undefined) return null;
+          var to = cleanSlug(typed);
+          if (!to) { H.tell("Type the new TV address."); return null; }
+          if (to === p.slug) { H.tell("That is already its TV address."); return null; }
+          return H.ask(moveText(p.slug, to)).then(function (ok) {
+            if (ok !== true) return null;
+            return H.post("/admin/venue-address", { venue_id: v.id, slug: to }).then(function (r) {
+              r = r || {};
+              if (r.error || !r.ok) { H.tell("The TV address did not move: " + (r.error || "no answer from the server.") + " Nothing changed."); return null; }
+              v.slug = r.to; delete ADDR[v.id];
+              H.tell("Moved. The TV address is now " + SITE + r.to + ". " + SITE + r.from + " still opens this venue.");
+              return r;
+            });
+          });
+        });
+      });
+    });
+  }
+  /* Details shows the old addresses that still forward here: hq.html leaves <span data-oldaddr="VENUE ID"> beside the
+     screen address and calls fillAddresses(id) after every draw. Any HQ role. Kept 20 seconds. */
+  var ADDR = {};
+  function addressSlot(v) { return (v && v.id) ? '<span class="oldaddr" data-oldaddr="' + esc(v.id) + '"></span>' : ""; }
+  function drawAddresses(vid, p) {
+    var el = root.document && root.document.querySelector('[data-oldaddr="' + String(vid).replace(/"/g, "") + '"]');
+    if (!el) return;
+    var olds = (p && p.old_addresses) || [];
+    el.innerHTML = olds.length
+      ? ' &middot; <b>Old addresses</b> (still open this venue) ' + olds.map(function (a) { return SITE + esc(a.slug); }).join(", ")
+      : "";
+  }
+  function fillAddresses(vid) {
+    if (!vid || !H.post) return;
+    var c = ADDR[vid];
+    if (c && Date.now() - c.at < 20000) { drawAddresses(vid, c.p); return; }
+    H.post("/admin/venue-address", { venue_id: vid, preview: true }).then(function (p) {
+      if (p && p.ok) { ADDR[vid] = { at: Date.now(), p: p }; drawAddresses(vid, p); }
+    });
+  }
+
+  var api = { init: init, button: button, rename: rename, clean: clean, confirmText: confirmText,
+              addressButton: addressButton, moveAddress: moveAddress, moveText: moveText, cleanSlug: cleanSlug,
+              addressSlot: addressSlot, fillAddresses: fillAddresses };
   root.VPRename = api;
 })(typeof window !== "undefined" ? window : this);

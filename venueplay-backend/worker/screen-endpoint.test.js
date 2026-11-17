@@ -70,6 +70,7 @@ function sbGet(env, table, q) {
   return Promise.resolve(fn || []);
 }
 eval(lift('handleScreen'));
+eval(lift('venueSlugMoved'));   // an unknown address asks whether it is a venue's OLD address (migration 212, open question 32)
 eval(lift('publicEvents'));
 eval(lift('screenWeek')); eval(lift('joinNights'));   // and the venue's game nights for its What's on slide   // the What's on nights ride the same read (INBOX 110, migration 177)
 

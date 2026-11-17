@@ -581,6 +581,10 @@
     for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
     return out;
   }
+  /* The code a sign PRINTS is the venue's issued join_code (the server's answer, migration 212: a moved TV address
+     keeps the code it was issued, so a hash of the NEW address would print a code that finds nothing). The hash is
+     only the first paint and the fallback when the server cannot be asked. */
+  function printCode(){ return state.code || (state.slug ? venueCode(state.slug) : "------"); }
   function cleanSlug(v){ return String(v||"").toLowerCase().trim().replace(/^.*[?\/]/,"").replace(/[^a-z0-9-]/g,""); }
 
   // ---- build the repeated sheets from the poster's markup so there is one source of truth ----
@@ -603,7 +607,7 @@
   })();
 
   // ---- paint every sign on the page ----
-  var state={ slug:"", name:"", whats:"", head:"", line:"", kick:"", logo:"", logoChecked:false };
+  var state={ slug:"", code:"", name:"", whats:"", head:"", line:"", kick:"", logo:"", logoChecked:false };
   /* THE DEFAULT WORDS (skills review, 23 Oct 2026). The headline stays SCAN TO PLAY. The small line names the
      TV and keeps one absence ("nothing to download") instead of a list of them; the bottom line matches the
      moment ("can't scan?"); the eyebrow is the venue's to change into its nights. A venue's own words win. */
@@ -842,7 +846,7 @@
   window.addEventListener("beforeprint", function(){ markLastSheet(); refitAll(); });
   function render(){
     var slug=state.slug;
-    var code=slug ? venueCode(slug) : "------";
+    var code=printCode();
     var url = venueUrl();
     var name=state.name || (slug ? slug.replace(/-/g," ").replace(/\b\w/g,function(c){ return c.toUpperCase(); }) : "Your venue");
     var signs=document.querySelectorAll("[data-sign]");
@@ -988,8 +992,26 @@
   }
   function check(){
     if(!state.slug) return;
-    var code=venueCode(state.slug);
     setStatus("Checking…", "");
+    /* Ask the screen endpoint first: it answers by address (an old, moved address answers as the current one) and
+       carries the venue's issued join_code. Only if that cannot be asked do we fall back to the hash. */
+    fetch(VP_SCREEN_API+"/screen?venue="+encodeURIComponent(state.slug))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(d && d.exists===true && d.join_code){
+          if(d.slug && d.slug!==state.slug){ state.slug=d.slug; }   // opened on an old address: print the current one
+          state.code=String(d.join_code).toUpperCase();
+          if(d.name){ state.name=d.name; }
+          paintVenue(); render(); loadVenueLogo(state.slug);
+          setFound(d.name||"your venue", state.code);
+          return;
+        }
+        checkByHash();
+      })
+      .catch(function(){ checkByHash(); });
+  }
+  function checkByHash(){
+    var code=venueCode(state.slug);
     fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(code))
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){

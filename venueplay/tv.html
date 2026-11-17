@@ -1220,6 +1220,18 @@
             return;
           }
           strikes=0;
+          /* THE VENUE'S TV ADDRESS MOVED (migration 212, Dean's open question 32: the Lunatic Hotel fix). This screen
+             opened an OLD address (a bookmark, a TV app's memory, a paired browser TV) and the Worker named the new one.
+             Remember the new one wherever this browser kept the old, then open it: same settings, same venue, same join
+             code, and the new address's channel, which is the one the console is on. Only for moved_from naming THIS
+             address, never a demo or a probe. */
+          if(d.moved_from && d.slug && d.moved_from===VENUE_SLUG && d.slug!==VENUE_SLUG && !VP_DEMO && !/[?&]probe=1(&|$)/.test(location.search) && window.VPVenueURL && VPVenueURL.moved){
+            try{ if(localStorage.getItem("vpTvVenue")===VENUE_SLUG) localStorage.setItem("vpTvVenue", d.slug); if(localStorage.getItem("vpTvConfirmed")===VENUE_SLUG) localStorage.setItem("vpTvConfirmed", d.slug); }catch(e){}
+            try{ if(window.VPTvPaired && VPTvPaired.move) VPTvPaired.move(VENUE_SLUG, d.slug); }catch(e){}
+            try{ sessionStorage.setItem("vpTvReloadWhy","address-moved"); }catch(e){}
+            location.replace(location.pathname + VPVenueURL.moved(location.search, d.slug) + location.hash);
+            return;
+          }
           /* CONFIRMED. Anything but exists:false means this address is a real venue, so the
              "Setting up" wording has done its job. Rebuild is forced: the holding entry's
              signature does not change when only its words do, so buildAds() would compare
