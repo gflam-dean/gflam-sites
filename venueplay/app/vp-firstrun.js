@@ -847,6 +847,13 @@
       function applyLink(d) {
         /* The Terms are not ticked yet (the Worker's "terms_first"): back to that step, which comes first. */
         if (d && d.code === "terms_first" && steps.indexOf("terms") >= 0 && state.step === "card") { api.go("terms"); return "terms"; }
+        /* A group: this venue is ticked but another on the account is not (the Worker names it, 18 Nov 2026). That venue's
+           Terms card goes up (VP.termsForCardAnswer, one rule with the emailed link), then the card link is asked again. */
+        if (d && d.code === "terms_first" && d.venue_id && String(d.venue_id) !== String(v.id) && VP && VP.termsForCardAnswer &&
+            VP.termsForCardAnswer(ctx, d, function () { return loadLink(true); })) {
+          cardMsg.style.color = C.faint; cardMsg.textContent = "Tick the Terms for " + (d.venue_name || "your other venue") + " first, then your card is next."; linkReady(false);
+          return "terms_other";
+        }
         if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; choices.style.display = "none"; retry.style.display = "none"; return "has_card"; }
         if (!d || !d.ok || !d.card_url) {
           cardMsg.style.color = C.pinkSoft;

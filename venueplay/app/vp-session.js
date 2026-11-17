@@ -1201,9 +1201,13 @@
             pay.removeAttribute('aria-disabled');
             pay.addEventListener('click', function (e) {
               if (e && e.preventDefault) e.preventDefault();
-              termsBeforeCard(ctx, function () {
-                holdLink().then(function (k) { if (linkOk(k)) { try { window.location.href = k.card_url; } catch (x) {} } }, function () {});
-              });
+              var holdOn = function () {
+                holdLink().then(function (k) {
+                  if (linkOk(k)) { try { window.location.href = k.card_url; } catch (x) {} }
+                  else if (k && k.code === 'terms_first') termsForCardAnswer(ctx, k, holdOn);   // a group: the next venue's tick
+                }, function () {});
+              };
+              termsForCardAnswer(ctx, j, holdOn);
             });
           }
         }, function () {});
@@ -1298,6 +1302,22 @@
     try { if (card.scrollIntoView) card.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
     try { if (tick && tick.focus) tick.focus(); } catch (e) {}
     return true;
+  }
+  /* A GROUP: THE VENUE STILL TO TICK MAY NOT BE THE ONE IN VIEW (18 Nov 2026, review SHOULD 1). A card covers the whole
+     account, so the billing Worker hands out no card link until EVERY venue on it has its own tick (vpaCardTermsMissing,
+     the same rule as the emailed /add-card link), and its "terms_first" answer names the venue still to tick (venue_id,
+     venue_name). This puts up the Terms card for THAT venue, the same card and the same per-venue record, then() goes
+     on. The venue in view first; another of the caller's venues by its own staff row. Returns true when a card is up. */
+  function termsForCardAnswer(ctx, j, then) {
+    var v = ctx && ctx.venue;
+    if (!v || !j || j.code !== "terms_first") return false;
+    var vid = j.venue_id ? String(j.venue_id) : String(v.id);
+    if (vid === String(v.id)) return termsBeforeCard(ctx, then);
+    var row = (ctx.staff || []).filter(function (r) { return r && String(r.venue_id) === vid; })[0] || null;
+    var other = { id: j.venue_id, name: j.venue_name || "your other venue", compliance_accepted_at: null };
+    var octx = {}; for (var k in ctx) octx[k] = ctx[k];
+    octx.venue = other; octx.currentVenueId = j.venue_id; octx.role = (row && row.role) || ctx.role;
+    return termsBeforeCard(octx, then);
   }
   function termsEl(tag, css, text) {
     var e = document.createElement(tag);
@@ -1483,17 +1503,30 @@
     var v = ctx && ctx.venue;
     if (!v || !v.id) return false;
     var go = d.openUrl || function (u) { try { window.location.href = u; } catch (x) {} };
-    return termsBeforeCard(ctx, function () {
+    function cardLink() {
       return getClient().auth.getSession().then(function (r) {
         var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
         return fetch(BILLING_API + "/account/card-link", { method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) },
           body: JSON.stringify({ venue_id: v.id }) }).then(function (res) { return res.json(); });
-      }).then(function (j) {
+      });
+    }
+    /* After each tick the card link is asked again: the card when every venue is ticked, or the next venue's Terms card. */
+    function onward() {
+      return cardLink().then(function (j) {
         if (j && typeof j.card_url === "string" && /^https:\/\/[^\s"'<>]+$/.test(j.card_url)) go(j.card_url);
+        else if (j && j.code === "terms_first") termsForCardAnswer(ctx, j, onward);
       }, function () {});
-    });
+    }
+    if (termsBeforeCard(ctx, onward)) return true;
+    /* This venue has its tick, but /add-card sent us here, so another venue on the account (a group) has none: ask the
+       card link, which names it, and put up THAT venue's Terms card (never a page with nothing on it). */
+    if (termsMode(ctx, true) === null && v.compliance_accepted_at && (ctx.role === "owner" || ctx.role === "manager")) {
+      try { cardLink().then(function (j) { if (j && j.code === "terms_first" && j.venue_id && String(j.venue_id) !== String(v.id)) termsForCardAnswer(ctx, j, onward); }, function () {}); } catch (e) {}
+    }
+    return false;
   }
+
 
   /* A HOST IS THE STAFF (Dean, 28 Oct 2026). The game Worker's kill-switch answers 403 in one of two
      sets of words: the host's ("Your tab has run a bit long...") or the room's ("Games are paused
@@ -1764,6 +1797,7 @@
     hostRefusal: hostRefusal,
     noteOpenSession: noteOpenSession,
     termsFromCardLink: termsFromCardLink,   // the emailed card link with no tick yet: Terms, then the card (18 Nov 2026)
+    termsForCardAnswer: termsForCardAnswer,   // a group's card waits on every venue's tick: that venue's Terms card (18 Nov 2026)
     closeOpenSessions: closeOpenSessions,
     closeSession: closeSession,
     retryPendingCloses: retryPendingCloses,

@@ -1268,7 +1268,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
-  "checks": 129,
+  "checks": 131,
   "counted_by": "lines"
  },
  "tools/test-prospect-terms-first-game.js": {
@@ -2372,7 +2372,7 @@
   "counted_by": "lines"
  },
  "tools/test-add-card-terms.js": {
-  "checks": 28,
+  "checks": 38,
   "counted_by": "lines"
  }
 }

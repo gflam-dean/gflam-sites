@@ -57,7 +57,7 @@ globalThis.fetch = function (url, opts) {
   return rigFetch(url, opts);
 };
 function U(nn) { return '55000000-0000-4000-8000-' + ('000000000000' + nn).slice(-12); }
-var ADMIN = U(9), STRANGER = U(6);
+var ADMIN = U(9), STRANGER = U(6), W0;
 function world() {
   DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; AUTH = [];
   ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
@@ -254,12 +254,42 @@ async function tick(P) { return call('/account/compliance-accept', { venue_id: P
   var PT = page(F.login, { search: '?card=terms' }); var TV = {}; for (var tk4 in F.v) TV[tk4] = F.v[tk4];
   check('a venue that has ticked: nothing put up (the card link itself goes to Stripe)', PT.VP.termsFromCardLink(ctxOf(PT, 'owner', TV), { openUrl: function () {} }) === false && !PT.doc.getElementById('vpTermsCard'));
 
+  section('3b. A group: one rule for both paths, never a dead end (review SHOULD 1)');
+  world();
+  var H = await prospect(); await call('/account/prospect-start', { venue_id: H.v.id }, AS(H.login, H.v.id)); await tick(H);
+  var HB = U(778);
+  DB.vp_venues.push({ id: HB, name: 'Group Hotel Upstairs', slug: 'grp-up', status: 'active', founding_id: H.v.founding_id, max_players: 20, created_at: '2026-11-18T00:00:00Z', compliance_accepted_at: null });
+  DB.vp_venue_staff.push({ venue_id: HB, auth_user_id: H.login, role: 'owner' });
+  var MGR = U(5); DB.vp_venue_staff.push({ venue_id: H.v.id, auth_user_id: MGR, role: 'manager' });
+  var h0 = await call('/account/card-link', { venue_id: H.v.id }, AS(H.login, H.v.id));
+  check('venue A ticked, B on the same account not: the console card link refuses too (the same rule as /add-card), no link', h0.status === 409 && h0.body.code === 'terms_first' && !h0.body.card_url, [h0.status, h0.body]);
+  check('and it names the venue still to tick, so the console can put up THAT card', h0.body.venue_id === HB && h0.body.venue_name === 'Group Hotel Upstairs' && /Group Hotel Upstairs/.test(h0.body.error || ''), h0.body);
+  var hm = await call('/account/card-link', { venue_id: H.v.id }, AS(MGR, H.v.id));
+  check('a manager of A only: told in words that B needs its own tick, never handed B\'s id', hm.status === 409 && hm.body.code === 'terms_first' && !hm.body.venue_id && /Group Hotel Upstairs/.test(hm.body.error || ''), [hm.status, hm.body]);
+  var ha = await addCard(H);
+  check('the emailed link for the same account: no Checkout, on to /app/?card=terms', ha.stripe === 0 && /card=terms$/.test(ha.res.redirect || ''), [ha.stripe, ha.res]);
+  var HV = {}; for (var hk in H.v) HV[hk] = H.v[hk];
+  var PG = page(H.login, { search: '?card=terms' }); var GONE2 = [];
+  var upG = PG.VP.termsFromCardLink(ctxOf(PG, 'owner', HV), { openUrl: function (u) { GONE2.push(u); } }); for (var s1 = 0; s1 < 6; s1++) await settle();
+  var cardG = PG.doc.getElementById('vpTermsCard'), goG = PG.doc.getElementById('vpTermsGo');
+  check('the console opens on A (ticked): B\'s Terms card goes up, not a page with nothing on it', upG === false && !!cardG && cardG.getAttribute('data-venue') === HB && !!goG && goG.textContent === 'Accept and add your card', [upG, cardG && cardG.getAttribute('data-venue')]);
+  PG.doc.getElementById('vpTermsTick').checked = true; PG.doc.getElementById('vpTermsBy').value = 'Sam Smith';
+  await goG.click(); for (var s2 = 0; s2 < 8; s2++) await settle();
+  var HBrow = DB.vp_venues.filter(function (x) { return x.id === HB; })[0];
+  check('B\'s tick is recorded on B (one record per venue), A\'s record untouched', !!HBrow.compliance_accepted_at && HBrow.compliance_accepted_by === 'Sam Smith' && H.v.compliance_accepted_by === 'Sam Smith', [HBrow.compliance_accepted_at, HBrow.compliance_accepted_by]);
+  check('then straight on to the account\'s card link', GONE2.length === 1 && /\/add-card\?f=/.test(GONE2[0]), GONE2);
+  var hz = await addCard(H);
+  check('and the emailed link now opens Stripe', hz.stripe === 1, hz.stripe);
+  var SESSW = readFile('venueplay/app/vp-session.js'), FRW = readFile('venueplay/app/vp-firstrun.js');
+  check('the paused card and the setup guide take the same answer (termsForCardAnswer), not the venue in view alone', /termsForCardAnswer\(ctx, j, holdOn\)/.test(SESSW) && /VP\.termsForCardAnswer\(ctx, d,/.test(FRW));
+  check('both Worker paths ask the one shared rule (vpaCardTermsMissing)', (W0 = readFile('venueplay-backend/worker/venueplay-api-FULL.js')).indexOf('await vpaCardTermsMissing(env, fid)') > 0 && /async function vpaCardTermsOnRecord\(env, foundingId\) \{\n  const missing = await vpaCardTermsMissing\(env, foundingId\);/.test(W0));
+
   section('4. The wiring and the words');
   check('index.html runs it on the held boot (termsGate) and the normal boot', /VP\.termsGate\(__ctx\)\)\{ if\(VP\.termsFromCardLink\) VP\.termsFromCardLink\(__ctx\);/.test(INDEX) && /if\(window\.VP && VP\.termsFromCardLink\) VP\.termsFromCardLink\(__ctx\);/.test(INDEX));
   var W = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   var gate = W.indexOf('vpaCardTermsOnRecord(env, foundingId)'), stripe = W.indexOf("fetch('https://api.stripe.com/v1/checkout/sessions'", W.indexOf('async function vpaAddCardRedirect('));
   check('in the Worker the Terms check comes before the Checkout session is made', gate > 0 && stripe > gate, [gate, stripe]);
-  check('no em dashes in the new words', !/\u2014/.test(W.slice(W.indexOf('async function vpaCardTermsOnRecord'), W.indexOf('async function vpaAddCardRedirect'))) && !/\u2014/.test(lift(readFile('venueplay/app/vp-session.js'), 'termsFromCardLink')));
+  check('no em dashes in the new words', !/\u2014/.test(W.slice(W.indexOf('async function vpaCardTermsMissing'), W.indexOf('async function vpaAddCardRedirect'))) && !/\u2014/.test(lift(readFile('venueplay/app/vp-session.js'), 'termsFromCardLink')) && !/\u2014/.test(lift(readFile('venueplay/app/vp-session.js'), 'termsForCardAnswer')));
 
   print(''); print(bad ? (bad + ' OF ' + ran + ' CHECKS FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { bad++; print('  FAIL threw: ' + e + ' ' + (e && e.stack)); print(bad + ' OF ' + ran + ' CHECKS FAILED'); });

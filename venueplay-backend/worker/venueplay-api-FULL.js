@@ -8619,8 +8619,23 @@ async function vpbCardLink(request, env, json) {
   /* THE TERMS COME BEFORE THE CARD (18 Nov 2026, one-tap card review). No card link, so no card saved and no
      charge, until the venue has its section 6 tick on record (compliance_accepted_at, written once by
      /account/compliance-accept, the console's Terms card). The page shows that card and comes back here. */
-  if (!out.has_card && !(vr[0] && vr[0].compliance_accepted_at)) {
-    return json({ ok: false, code: 'terms_first', has_card: false, error: 'Tick the Terms first, then add your card.' }, 409);
+  /* EVERY VENUE ON THE ACCOUNT, as /add-card asks (vpaCardTermsMissing, the one rule): a group with this venue ticked
+     and another not gets no card link either, and the answer names the venue still to tick (this one first), so the
+     console puts up THAT venue's Terms card instead of nothing. A venue the caller cannot tick (a manager of one pub)
+     is named in words only. A read that fails hands out no link. */
+  if (!out.has_card) {
+    const missing = await vpaCardTermsMissing(env, fid);
+    if (missing === null) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
+    if (missing.length) {
+      const next = missing.find((m) => m.id === venueId) || missing.find((m) => (o.venues || []).some((v) => v.id === m.id)) || missing[0];
+      const mine = next.id === venueId || (o.venues || []).some((v) => v.id === next.id);
+      const nm = next.name || 'your other venue';
+      const tf = { ok: false, code: 'terms_first', has_card: false,
+        error: next.id === venueId ? 'Tick the Terms first, then add your card.'
+          : (mine ? 'Tick the Terms for ' + nm + ' first, then add your card.' : 'The owner or a manager of ' + nm + ' needs to tick the Terms there first, then the card can go on.') };
+      if (mine) { tf.venue_id = next.id; tf.venue_name = nm; }
+      return json(tf, 409);
+    }
   }
   if (!out.has_card) {
     out.card_url = await vpaCardLink(env, fid);
@@ -11676,15 +11691,25 @@ function vpaFoundingOpenNow(env) {
    creating a second one. Nothing new has to know about this path. */
 /* Is the Terms tick on record for EVERY venue on this account? true = yes, false = at least one venue has none,
    null = the venues could not be read or there are none (the caller opens no payment page). */
-async function vpaCardTermsOnRecord(env, foundingId) {
+/* ONE RULE FOR A CARD, BOTH PATHS (18 Nov 2026, review SHOULD 1). The Terms tick is recorded per VENUE
+   (vp_venues.compliance_accepted_at, one record each, written once by /account/compliance-accept), and a card is
+   added for the whole ACCOUNT (venueplay_founding: one card, one charge for a group). So a card waits until every
+   venue on the account has its own tick, whichever way the card is asked for: the emailed /add-card link and the
+   console's /account/card-link both ask here. Answers the venues still without a tick ([] = all ticked), or null when
+   the venues could not be read or there are none (the caller opens no payment page). */
+async function vpaCardTermsMissing(env, foundingId) {
   let rows;
   try {
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,compliance_accepted_at', { headers: vpaHeaders(env) });
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,name,compliance_accepted_at&order=created_at.asc', { headers: vpaHeaders(env) });
     if (!res.ok) return null;
     rows = await res.json();
   } catch (e) { return null; }
   if (!Array.isArray(rows) || !rows.length) return null;
-  return rows.every((v) => !!(v && v.compliance_accepted_at));
+  return rows.filter((v) => !(v && v.compliance_accepted_at)).map((v) => ({ id: v && v.id, name: (v && v.name) || '' }));
+}
+async function vpaCardTermsOnRecord(env, foundingId) {
+  const missing = await vpaCardTermsMissing(env, foundingId);
+  return missing === null ? null : missing.length === 0;
 }
 
 async function vpaAddCardRedirect(request, env) {
