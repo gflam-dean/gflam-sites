@@ -3297,8 +3297,8 @@
      construction, and a Hotel or Tavern is not. So we suggest, HQ confirms in one click, and
      nothing is ever set from a guess on its own. Getting this wrong decides what a venue is
      allowed to do, so it does not get to be silent. */
-  var CLUBWORDS = /\b(rsl|bowls|bowling|bowlo|leagues|diggers|sub[ -]?branch|slsc|workers|workmen|club|clubs|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
-  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewing|brewhouse|bar|motel|resort|lodge)\b/i;
+  var CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
   function guessEntity(name){
     var n = String(name || "");
     var club = CLUBWORDS.test(n), pub = PUBWORDS.test(n);

@@ -195,17 +195,39 @@ async function main() {
   var c7 = await club({ venue: 'The Bowlo', postcode: '2830', mobile: '0412 000 007', kind: 'bar' });
   check('a kind we do not know is no answer: the name decides (a hotel a pub, a bowlo a club)', c6.entity_type === 'for_profit' && c7.entity_type === 'non_profit', [c6.entity_type, c7.entity_type]);
   check('the shared rule, one copy: vpqKindFor', vpqKindFor('CLUB', 'x') === 'non_profit' && vpqKindFor('', 'Grand Hotel') === 'for_profit' && vpqKindFor(null, 'Merrylands Bowls Club') === 'non_profit' && vpqKindFor(null, 'Leagues Tavern') === 'for_profit');
-  /* ONE WORD LIST (duplicate helpers audit 18 Nov, Part 2 A): the quick form reads the name through vpaGuessEntity, so
-     HQ and the sign-up pages call a Bowlo, Diggers or a sub-branch a club too, and the three page copies say exactly
-     what the Worker says. */
-  check('the quick form and HQ agree: a Bowlo, Diggers, a sub-branch and an SLSC are clubs to both, a Brewing Co a pub',
-    ['Mudgeeraba Bowlo', 'Smithton Diggers', 'Burleigh RSL Sub-Branch', 'Kurrawa SLSC'].every(function (n) { return vpaGuessEntity(n) === 'non_profit' && vpqKindFor(null, n) === 'non_profit'; })
-    && vpaGuessEntity('Black Hops Brewing') === 'for_profit', [vpaGuessEntity('Mudgeeraba Bowlo'), vpaGuessEntity('Black Hops Brewing')]);
+  /* ONE HELPER, TWO NAMED LISTS (dedupe re-check 18 Nov): vpaGuessEntity(name, VPA_ENTITY_WORDS.quick) for the quick form,
+     the signup list for everyone else, each caller with exactly the words it had before the dedupe (ccde3da0). RUN, both
+     callers: the quick form through /quick/begin, the sales@ new signup email through vpaNotifyNewSignup. */
+  var q1 = await club({ venue: 'Golf Hotel', postcode: '2800', mobile: '0412 000 011' });
+  var q2 = await club({ venue: 'Kirra Surf Shack', postcode: '2800', mobile: '0412 000 012' });
+  var q3 = await club({ venue: 'Acme Inc', postcode: '2800', mobile: '0412 000 013' });
+  var q4 = await club({ venue: 'Smith Services', postcode: '2800', mobile: '0412 000 014' });
+  check('the quick form keeps its narrow words: a Golf Hotel, Kirra Surf Shack, Acme Inc and Smith Services stay pubs with paid entry OFF in NSW',
+    [q1, q2, q3, q4].every(function (v) { return v.entity_type === 'for_profit' && v.paid_entry_enabled === false; }), [q1, q2, q3, q4].map(function (v) { return [v.entity_type, v.paid_entry_enabled]; }));
+  var q5 = await club({ venue: 'Smithton Diggers', postcode: '2800', mobile: '0412 000 015' });
+  var q6 = await club({ venue: 'Burleigh Sub-Branch', postcode: '2800', mobile: '0412 000 016' });
+  var q7 = await club({ venue: 'Kurrawa SLSC', postcode: '2800', mobile: '0412 000 017' });
+  var q8 = await club({ venue: 'Black Hops Brewing Club', postcode: '2800', mobile: '0412 000 018' });
+  check('...and its own club words still make a club (Diggers, Sub-Branch, SLSC), a Brewing name with "Club" stays a pub',
+    q5.entity_type === 'non_profit' && q6.entity_type === 'non_profit' && q7.entity_type === 'non_profit' && q8.entity_type === 'for_profit', [q5.entity_type, q6.entity_type, q7.entity_type, q8.entity_type]);
+  async function signupNote(name) {
+    sent.length = 0;
+    await vpaNotifyNewSignup(ENV, { customer_details: {}, metadata: {} }, { postcode: '2800' }, [{ name: name, seats: 10 }], false);
+    var h = sent.length ? String(sent[sent.length - 1].html || '') : '';
+    return /The name reads as <b>a club/.test(h) ? 'club' : /The name reads as <b>a pub/.test(h) ? 'pub' : /Needs a person/.test(h) ? 'ask' : 'none';
+  }
+  var e1 = await signupNote('Kirra Surf Shack'), e2 = await signupNote('Acme Inc'), e3 = await signupNote('Golf Hotel');
+  var e4 = await signupNote('Mudgeeraba Bowlo'), e5 = await signupNote('Smithton Diggers'), e6 = await signupNote('Black Hops Brewing'), e7 = await signupNote('Grand Hotel');
+  check('the other caller keeps its wide words: the sales@ signup email reads Kirra Surf Shack and Acme Inc as clubs, asks a person about a Golf Hotel, a Grand Hotel is a pub',
+    e1 === 'club' && e2 === 'club' && e3 === 'ask' && e7 === 'pub', [e1, e2, e3, e7]);
+  check('...and never learned the quick words: a Bowlo, Diggers and a Brewing name still need a person, as before the dedupe',
+    e4 === 'ask' && e5 === 'ask' && e6 === 'ask', [e4, e5, e6]);
   var WSRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   var wordsIn = function (src, which) { var m = new RegExp('(?:const|var) ' + which + '\\s*=\\s*(/[^\\n]*/i);').exec(src); return m ? m[1] : null; };
   var pagesSay = ['venueplay/app/hq.html', 'venueplay/index.html', 'venueplay/nsw.html'].map(function (p) { var s = readFile(p); return [p, wordsIn(s, 'CLUBWORDS'), wordsIn(s, 'PUBWORDS')]; });
-  check('one club and pub word list: hq.html, index.html and nsw.html say exactly what vpaGuessEntity says, and the Worker has no second list',
-    !!wordsIn(WSRC, 'VPA_CLUBWORDS') && !!wordsIn(WSRC, 'VPA_PUBWORDS') && !/VPQ_CLUB_WORDS|VPQ_PUB_WORDS/.test(WSRC)
+  check('one helper, two named lists in one place: hq.html, index.html and nsw.html say exactly what the signup list says, the Worker has no third list',
+    !!wordsIn(WSRC, 'VPA_CLUBWORDS') && !!wordsIn(WSRC, 'VPA_QUICK_CLUBWORDS') && !/VPQ_CLUB_WORDS|VPQ_PUB_WORDS/.test(WSRC)
+    && /signup:\s*\{ club: VPA_CLUBWORDS, pub: VPA_PUBWORDS \}/.test(WSRC) && /quick:\s*\{ club: VPA_QUICK_CLUBWORDS, pub: VPA_QUICK_PUBWORDS \}/.test(WSRC)
     && pagesSay.every(function (x) { return x[1] === wordsIn(WSRC, 'VPA_CLUBWORDS') && x[2] === wordsIn(WSRC, 'VPA_PUBWORDS'); }), pagesSay);
   /* The page's own line, run: ?vt= is sent as kind (vp-quick.js, shared with the offer page's quick form). */
   var line = (/\n(\s*var vt = [^\n]+)/.exec(LIFT_SRC) || [])[1] || '';

@@ -4548,11 +4548,15 @@ const VPQ_PLACEHOLDER_DOMAIN = VPG.placeholderEmailDomain;   // ONE constant (th
 const VPQ_DEFAULT_KIND = 'for_profit';                      // a pub: the stricter gaming rules; HQ can change it
 /* PUB OR CLUB WHEN WE KNOW IT (18 Nov 2026): a club gets a club's permits by state (non_profit: vpaPaidEntryDefault).
    The link's own answer first (?vt=club or ?vt=pub, from the website scan, sent by the page as kind), then the venue's
-   name through vpaGuessEntity (a club word and no pub word is a club; a "Club Hotel" is a pub). Anything else is
-   VPQ_DEFAULT_KIND. ONE word list (VPA_CLUBWORDS / VPA_PUBWORDS, mirrored in hq.html, index.html and nsw.html, held equal
-   by test-quick-signup-warnings): /quick, the offer page's quick form, HQ and the sign-up pages all read the same words. */
+   name through vpaGuessEntity with the QUICK word list (VPA_ENTITY_WORDS.quick: a club word and no pub word is a club; a
+   "Club Hotel" is a pub). Anything else is VPQ_DEFAULT_KIND. ONE helper, two named lists in one place: the quick list is
+   the narrow one because here a club gets paid entry ON by state, so a "Golf Hotel", "Kirra Surf Shack" or "Acme Inc"
+   stays a pub (dedupe re-check 18 Nov). /quick and the offer page's quick form both post /quick/begin. */
 function vpqKindFor(kindSignal, venueName) {
-  return vpsEntity(kindSignal) || vpaGuessEntity(venueName) || VPQ_DEFAULT_KIND;
+  const said = vpsEntity(kindSignal);
+  if (said) return said;
+  /* Only a club answer is taken from the name; a pub name, a mixed name or no word at all is VPQ_DEFAULT_KIND. */
+  return vpaGuessEntity(venueName, VPA_ENTITY_WORDS.quick) === 'non_profit' ? 'non_profit' : VPQ_DEFAULT_KIND;
 }
 const VPQ_CARD_NEEDS_REAL_EMAIL = false;   // OFF (INBOX 412 UPDATE 7): Stripe's page asks for the email; the gate stays for the day Dean wants it back
 const VPQ_VENUES_PER_IP = 40;                               // picker searches per network per minute
@@ -11298,8 +11302,21 @@ function vpaTimezoneFromPostcode(pc) {
  * Paid entry stays switched off until a human turns it on in HQ, which is a separate action and
  * one this never takes. Kept in step with guessEntity() in app/hq.html.
  */
-const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|bowlo|leagues|diggers|sub[ -]?branch|slsc|workers|workmen|club|clubs|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
-const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewing|brewhouse|bar|motel|resort|lodge)\b/i;
+/* TWO NAMED WORD LISTS, ONE HELPER (dedupe re-check 18 Nov). Each caller passes the list it has always had:
+ *   VPA_ENTITY_WORDS.signup  the wide list: HQ's suggestion, the sign-up pages' suggestion and the sales@ new signup
+ *                            email (vpaNotifyNewSignup). A suggestion only, a person confirms. Mirrored word for word in
+ *                            app/hq.html, index.html and nsw.html (held equal by test-quick-signup-warnings).
+ *   VPA_ENTITY_WORDS.quick   the narrow list: the quick form (vpqKindFor), where the answer is WRITTEN and a club gets
+ *                            paid entry by state, so only words that are a club by construction count.
+ */
+const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+const VPA_QUICK_CLUBWORDS = /\b(club|clubs|rsl|bowlo|bowls|leagues|diggers|sub[ -]?branch|surf life saving|slsc)\b/i;
+const VPA_QUICK_PUBWORDS  = /\b(hotel|tavern|inn|pub|bar|brewery|brewing|arms)\b/i;
+const VPA_ENTITY_WORDS = {
+  signup: { club: VPA_CLUBWORDS, pub: VPA_PUBWORDS },
+  quick:  { club: VPA_QUICK_CLUBWORDS, pub: VPA_QUICK_PUBWORDS },
+};
 /* Should paid entry be ON for this venue from day one?
  *
  * Only ever when the VENUE told us what it is at signup. A guess from the trading name is fine
@@ -11392,9 +11409,10 @@ async function vpaBingoReviewTicket(env, f, venue, entry) {
   } catch (e) { /* the venue is provisioned either way; HQ can still see the state on the venue card */ }
 }
 
-function vpaGuessEntity(name) {
+function vpaGuessEntity(name, words) {
+  const w = words || VPA_ENTITY_WORDS.signup;          // no list named = the signup list, as every caller had before
   const n = String(name || '');
-  const club = VPA_CLUBWORDS.test(n), pub = VPA_PUBWORDS.test(n);
+  const club = w.club.test(n), pub = w.pub.test(n);
   if (club && !pub) return 'non_profit';
   if (pub && !club) return 'for_profit';
   return null;
