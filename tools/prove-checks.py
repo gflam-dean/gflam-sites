@@ -12204,7 +12204,7 @@ MUTATIONS = [
      '      Help: <a href="/help">venueplay.com.au/help</a><br>\n', '',
      'the Privacy contact lines lose the help page'),
     ('test-terms-put-compliance-on-the-venue.js', 'venueplay/privacy.html',
-     'The quickest way to ask us about your privacy, including a request to see or correct your personal information, is our help page at <a href="/help">venueplay.com.au/help</a>: choose who you are and send us a message. ',
+     'The quickest way to ask us about your privacy, including a request to see, correct or delete your personal information, is our help page at <a href="/help">venueplay.com.au/help</a>: choose who you are and send us a message. ',
      '',
      'privacy requests stop being sent to the help page first'),
     ('test-terms-put-compliance-on-the-venue.js', 'venueplay/privacy.html',
