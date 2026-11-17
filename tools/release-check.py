@@ -4499,6 +4499,12 @@ def local_checks(which):
              'on staging (VP_ENV) every send host, the SMS hook and any write to a live venueplay address is answered "sent" and kept in an outbox; a live Stripe key, the live database address or a real-looking send key makes the Worker answer 503; the test Stripe key and the test database work; on live only a message addressed purely to +61 491 57x xxx or @example.invalid is held back, everything else goes untouched; the block is identical in all three Workers and each handler calls it first', 60,
              'A seeded test number getting a real text, staging mailing a venue, a live Stripe key charging a test card, '
              'or the guard on live blocking a real message'),
+            # D203: NO MAIL TO A PLACEHOLDER (18 Nov 2026, fix/no-mail-to-placeholder). The same outbox guard block (D200).
+            ('D203. No email ever goes to a quick sign-up\'s placeholder address, from any sender',
+             'test-no-mail-to-placeholder.js',
+             "no email ever goes to a quick sign-up's placeholder login (phone.venueplay.com.au), live or staging, whichever sender: the shared outbox guard takes it off to / cc / bcc with a log line, refuses (422) a send left with nobody so the caller sees a failure, and sends real addresses byte for byte; vpaSendEmail, helpSendEmail and the prospect welcome are run through it", 24,
+             'Email to a made-up address bounces on send.venueplay.com.au for every venue, and a quick sign-up '
+             'told "we\'ll text you" never hears about it; a real person dropped off a send is just as bad'),
             ('D202. A staging page can never reach a live address: the tripwire in vp-env.js refuses it, and live pages are untouched',
              'test-vp-env.js',
              'on a staging host any fetch, XHR, WebSocket or beacon to the live database, api or game Worker is refused and logged, a write to the live site too, a read of the live site allowed; staging\'s own addresses and the test database go through; on the live host, an apex, localhost or a Pages preview nothing is wrapped and the tab title is untouched', 23,

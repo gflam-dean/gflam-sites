@@ -263,6 +263,7 @@
   "no consent box is ticked from a script",
   "no corner of a screen mixes cqw and px",
   "no em dashes in copy",
+  "no email ever goes to a quick sign-up's placeholder login (phone.venueplay.com.au), live or staging, whichever sender: the shared outbox guard takes it off to / cc / bcc with a log line, refuses (422) a send left with nobody so the caller sees a failure, and sends real addresses byte for byte; vpaSendEmail, helpSendEmail and the prospect welcome are run through it",
   "no file claims an exemption vp-sign does not grant",
   "no founding page has outlived its own deadline",
   "no handler reads the body without a guard",

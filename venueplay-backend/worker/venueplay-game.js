@@ -385,11 +385,17 @@ async function sessionSeatRows(env, sessionId, ids) {
    LIVE (VP_ENV unset): changes nothing, except one thing that can never hurt a real person: a message addressed ONLY to
    a fiction mobile (+61 491 57x xxx, the regulator's reserved range) or an @example.invalid address is answered as sent
    and not delivered, so test rows can never cost a text or bounce an email.
+   BOTH (18 Nov 2026, fix/no-mail-to-placeholder): a quick sign-up's login is a placeholder address on
+   VPG.placeholderEmailDomain (the billing Worker's VPQ_PLACEHOLDER_DOMAIN). It is never a mailbox, so NO email ever goes
+   to it, whichever code path sends: every Resend POST has those addresses taken out of to / cc / bcc, with one log line
+   ("[outbox-guard] placeholder ..."). Anyone real left on it still gets it; a message with nobody left in "to" is
+   REFUSED (422, x-vp-outbox-guard: refused-placeholder), so the caller sees a failed send, never a false "sent".
    Every setting is in VPG below. Change them there. */
 const VPG = {
   stagingValue: 'staging',                 // env.VP_ENV
   testMobilePrefix: '6149157',             // +61 491 57x xxx, fiction range reserved for drama (INBOX 357B Q7)
   testEmailDomain: 'example.invalid',
+  placeholderEmailDomain: 'phone.venueplay.com.au', // a quick sign-up's login (VPQ_PLACEHOLDER_DOMAIN): NEVER mailed, live or staging
   liveSupabaseRef: 'ijkzgmdtwtgfkedqspxm', // LIVE. Never reachable from staging.
   dummyKeyPrefix: 'staging-',              // a send key on staging must start with this
   sendKeys: ['RESEND_API_KEY', 'MOBILEMESSAGE_USERNAME', 'MOBILEMESSAGE_PASSWORD', 'CLICKSEND_USERNAME', 'CLICKSEND_API_KEY', 'TWILIO_AUTH_TOKEN', 'SEND_SMS_HOOK_SECRET'],
@@ -426,6 +432,35 @@ function vpgRecipients(bodyText) {
     });
   })(j, 0);
   return out;
+}
+/* true for an address on the placeholder domain, in any case, bare or as "Name <addr>". Only that exact domain. */
+function vpgIsPlaceholderEmail(s) {
+  const t = String(s == null ? '' : s).trim().toLowerCase().replace(/^[^<]*</, '').replace(/[>\s]+$/, '');
+  const at = t.lastIndexOf('@');
+  return at > 0 && t.slice(at + 1) === VPG.placeholderEmailDomain;
+}
+/* A Resend body (one message or a batch list) with every placeholder taken out of to / cc / bcc. null when there was
+   none (send it exactly as it was); else { body, dropped, empty }: empty = a message has nobody left in "to". */
+function vpgStripPlaceholders(bodyText) {
+  let j = null;
+  try { j = JSON.parse(String(bodyText)); } catch (e) { return null; }
+  const list = Array.isArray(j) ? j : [j];
+  let dropped = 0, empty = false;
+  list.forEach(function (m) {
+    if (!m || typeof m !== 'object') return;
+    let mine = 0;
+    ['to', 'cc', 'bcc'].forEach(function (k) {
+      if (m[k] == null) return;
+      const was = Array.isArray(m[k]) ? m[k] : [m[k]];
+      const keep = was.filter(function (a) { return !vpgIsPlaceholderEmail(a); });
+      if (keep.length === was.length) return;
+      mine += was.length - keep.length;
+      if (keep.length) m[k] = keep; else delete m[k];
+    });
+    if (mine && (m.to == null || (Array.isArray(m.to) && !m.to.length))) empty = true;
+    dropped += mine;
+  });
+  return dropped ? { body: JSON.stringify(j), dropped: dropped, empty: empty } : null;
 }
 function vpgIsTestRecipient(r) { return vpgIsTestMobile(r) || vpgIsTestEmail(r); }
 /* '' when the settings are safe for this deployment, else why not (staging only). */
@@ -480,6 +515,15 @@ function vpgInstall(env) {
       auth = h ? String(typeof h.get === 'function' ? (h.get('Authorization') || '') : (h.Authorization || h.authorization || '')) : '';
     } catch (e) { return real.apply(this, arguments); }
     try {
+      /* NEVER TO A PLACEHOLDER (live and staging alike): checked before anything else. */
+      if (method === 'POST' && host.toLowerCase() === 'api.resend.com' && body) {
+        const ph = vpgStripPlaceholders(body);
+        if (ph) {
+          vpgRecord('placeholder', host, method, [], ph.dropped + ' placeholder address' + (ph.dropped === 1 ? '' : 'es') + ' on ' + VPG.placeholderEmailDomain + (ph.empty ? ' and nobody else: NOT SENT' : ' taken off, sent to the rest'));
+          if (ph.empty) return Promise.resolve(new Response(JSON.stringify({ statusCode: 422, name: 'validation_error', message: 'outbox guard: ' + VPG.placeholderEmailDomain + ' is a quick sign-up placeholder and is never mailed' }), { status: 422, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'refused-placeholder' } }));
+          return globalThis.fetch(input, Object.assign({}, init, { body: ph.body }));
+        }
+      }
       if (staging) {
         if (VPG.stagingHosts.test(host)) return real.apply(this, arguments);
         if (host.indexOf(VPG.liveSupabaseRef) >= 0) return Promise.resolve(new Response(JSON.stringify({ message: 'outbox guard: the LIVE database is not reachable from staging' }), { status: 403, headers: { 'Content-Type': 'application/json', 'x-vp-outbox-guard': 'blocked' } }));
