@@ -4185,6 +4185,13 @@ def local_checks(which):
              "runs POST /admin/venue-contacts on the billing Worker: owner and accounts get every account's contact name and mobile by account id, past 1000 rows; a staff HQ login, a venue's own owner, a stranger and no login are refused with no number; nothing but name and phone leaves; a database fault is an error, never an empty list", 13,
              'Every venue contact mobile handed to a staff HQ login, or a database blip that reads as '
              '"no number on file" for every cancelled venue'),
+            # D477: the HQ Team list (vp_platform_admins) is written by the Worker only (HQ admin routes review F1, 18 Nov 2026;
+            # migration 217), branch fix/platform-admins-no-browser-write-18nov.
+            ('D477. No HQ login can change its own role or anyone else\'s from the browser; the Team list is changed by an owner, through the Worker, audited',
+             'test-platform-admins-no-browser-write.js',
+             'runs POST /admin/staff-remove and /admin/staff on the billing Worker: only an owner removes an HQ login, never their own (so never the last owner), with an audit row; staff, accounts, a venue owner, a stranger and no login are refused and nothing changes; a failed read deletes nothing; an owner can never change their own role, and a role change is audited with the role it was; HQ Team Remove goes to the Worker and no page writes vp_platform_admins; migration 217 and RLS-BASELINE.json leave the browser SELECT only', 35,
+             'A staff login that makes itself owner from the browser console and then reads every venue contact mobile, '
+             'changes billing, or removes Dean from HQ'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

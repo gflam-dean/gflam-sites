@@ -1231,6 +1231,10 @@
   "checks": 86,
   "counted_by": "lines"
  },
+ "tools/test-platform-admins-no-browser-write.js": {
+  "checks": 35,
+  "counted_by": "lines"
+ },
  "tools/test-platform-worker-15-oct.js": {
   "checks": 15,
   "counted_by": "lines"

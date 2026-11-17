@@ -4349,12 +4349,14 @@
     var uid=b.getAttribute("data-rmadmin"), label=b.getAttribute("data-label");
     vpAsk("Remove the venueplay staff login "+(label||uid)+"? This strips their admin access.").then(function(ok){ if (!ok) return;
     b.disabled=true;
-    // Direct browser delete allowed by RLS (admin FOR ALL on vp_platform_admins). The auth user
-    // itself is left intact; the Worker can fully delete it later.
-    VP.getClient().from("vp_platform_admins").delete().eq("auth_user_id",uid).then(function(r){
-      if(r.error){ b.disabled=false; vpTell("Could not remove: "+r.error.message); return; }
+    // Through the Worker, owner only (18 Nov 2026, review F1). The browser used to delete the row itself,
+    // which RLS let ANY admin do; migration 217 leaves the browser SELECT only on vp_platform_admins.
+    // The auth user itself is left intact, as before; only the HQ row goes.
+    workerPost("/admin/staff-remove", { auth_user_id: uid }).then(function(res){
+      if(!res || res.error){ b.disabled=false; vpTell("Could not remove: "+((res&&res.error)||"try again")); return; }
       S.admins=S.admins.filter(function(a){ return a.auth_user_id!==uid; });
       renderTeam();
+      loadAuditOnly();
     });
     });
   });
