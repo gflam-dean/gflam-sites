@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '17 Nov 2026, 23:29 · b06c0da9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 23:57 · 31703893';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2688,7 +2688,7 @@ async function handleJoinKnown(request, env, json) {
  *   3. the player types the code: POST /join/number/verify { keys, change_id, sms_code } -> { ok, masked }. Each try is
  *      counted BEFORE the code is compared (NUMBER_CHANGE.maxTries); the code lives NUMBER_CHANGE.codeMins minutes; only
  *      its SHA-256 (with the change id) is kept
- *   4. right code: vp_number_change_apply (migration 213) swaps it in ONE transaction: the known row's mobile, and the
+ *   4. right code: vp_number_change_apply (migration 214) swaps it in ONE transaction: the known row's mobile, and the
  *      contact lists of every venue that already had this player's mobile (shared). Consent is per player (known_id),
  *      never per number, so every venue's answer stays as given
  * THE SWITCH: env.NUMBER_CHANGE_SMS_ON = "on" AND the Mobile Message login on this Worker. Off (the default), /join/known
@@ -2696,7 +2696,7 @@ async function handleJoinKnown(request, env, json) {
  * gameSendSms: Mobile Message, sender "venueplay" (SMS_SENDER overrides). The outbox guard answers a text to a fiction
  * number (+61 491 57x xxx) as sent and never delivers it, on live as well as staging; staging sends nothing at all.
  * Abuse: per network (rateLimit), per player (perPlayerPerDay) and per NEW number (perNumberPerDay, so nobody can use
- * venueplay to text-bomb a stranger). Before migration 213 both routes answer 503 and nothing is texted. */
+ * venueplay to text-bomb a stranger). Before migration 214 both routes answer 503 and nothing is texted. */
 const NUMBER_CHANGE = { codeMins: 10, maxTries: 5, maxSends: 3, resendSecs: 30, perPlayerPerDay: 5, perNumberPerDay: 3, perIpPerHour: 20 };
 function numberChangeOn(env) {
   return String((env && env.NUMBER_CHANGE_SMS_ON) || '').trim().toLowerCase() === 'on' && !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD);
@@ -2770,7 +2770,7 @@ async function handleNumberStart(request, env, json) {
       await sbInsert(env, 'vp_number_changes', { id: id, known_id: k.row.id, new_mobile: to, old_last3: /^[0-9]{3}$/.test(old3) ? old3 : null,
         code_hash: await numberChangeHash(id, code), ip_hash: ipHash || null, expires_at: new Date(now + NUMBER_CHANGE.codeMins * 60000).toISOString() }, false);
     }
-  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }   // before migration 213
+  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }   // before migration 214
   const sent = await gameSendSms(env, to, numberChangeText(code), 'number-change');
   if (!sent.ok) return json({ error: 'We could not send a text just now. Please try again.' }, 502);
   return json({ ok: true, change_id: id, to: maskContact('mobile', to), expires_in: NUMBER_CHANGE.codeMins * 60,

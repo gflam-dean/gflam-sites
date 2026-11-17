@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 213: ONE phone number per venueplay player, changed only with a text code (Dean, 17 Nov 2026 ~23:15)
+-- Migration 214: ONE phone number per venueplay player, changed only with a text code (Dean, 17 Nov 2026 ~23:15)
 -- ---------------------------------------------------------------------
 -- Dean decided each player has ONE mobile, the same at every venue. It replaces open question 28's "keep both numbers"
 -- (branch feature/known-phone-keep-both-q28, migration 210 there: SHELVED, never run on live). The flow, as WhatsApp,
@@ -11,7 +11,7 @@
 -- WRITTEN, RUN ON TEST ONLY (rkfaftxgzpsmmrzudlqy, twice). NOT RUN ON LIVE: ships on Dean's yes, early, before the Worker.
 -- Branch feature/one-number-per-player, on release/sun-22nov-assembled-d (needs migration 202's two tables).
 -- NUMBER: 210 is taken twice (prospect-no-contact, and the shelved q28), 211 is held for the loser of that clash
--- (sites-wt-q32 MIGRATIONS.md), 212 is venue-old-addresses; no 213 on any branch or worktree (checked 17 Nov 2026 23:20).
+-- (sites-wt-q32 MIGRATIONS.md), 212 is venue-old-addresses; no 213 on any branch or worktree (checked 17 Nov 2026 23:20). RENUMBERED 214: q9 (feature/members-upload-more-fields-q9) claimed 213 first. The TEST run was as 213; only comments changed, objects are identical.
 -- The file as committed carries the VP-STAGING-GUARD block, which REFUSES on the live project: the live run is the
 -- statements after the guard's END marker.
 --
@@ -80,7 +80,7 @@ alter table public.vp_number_changes enable row level security;
 revoke all on public.vp_number_changes from public, anon, authenticated;
 
 comment on table public.vp_number_changes is
-  'A player''s "Not my number": the new number, the hash of the texted code, tries, texts, expiry, and when it was done. One number per player (Dean 17 Nov 2026). Service role only. Migration 213.';
+  'A player''s "Not my number": the new number, the hash of the texted code, tries, texts, expiry, and when it was done. One number per player (Dean 17 Nov 2026). Service role only. Migration 214.';
 
 create or replace function public.vp_number_change_apply(p_change uuid)
 returns jsonb
@@ -130,7 +130,7 @@ revoke all on function public.vp_number_change_apply(uuid) from public, anon, au
 grant execute on function public.vp_number_change_apply(uuid) to service_role;
 
 comment on function public.vp_number_change_apply(uuid) is
-  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile. Service role only. Migration 213.';
+  'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile. Service role only. Migration 214.';
 
 -- Read back (read-only):
 --   select relrowsecurity from pg_class where relname = 'vp_number_changes';                         expects true
