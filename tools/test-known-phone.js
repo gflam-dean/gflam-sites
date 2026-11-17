@@ -167,6 +167,13 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   DB.vp_venue_settings[1].collect_email = false;
   j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], mobile: '0499 888 777', marketing_optin: false });
   show('Different number: the number typed is this venue\'s; what we held is not overwritten', lastPlayer().mobile === '+61499888777' && DB.vp_known_players[0].mobile === '+61412345678', JSON.stringify(lastPlayer()));
+  show('...and the venue a DIFFERENT number was typed at is NOT marked as having the held number (17 Nov fault)', (DB.vp_known_players[0].shared[OTHER] || []).indexOf('mobile') < 0, JSON.stringify(DB.vp_known_players[0].shared));
+  j = await call(handleJoin, { code: so.join_code, name: 'Alan', pid: pid(), known_keys: [KEY] });
+  show('...so its next game is NEVER silently filled with the OLD number', lastPlayer().mobile !== '+61412345678', JSON.stringify(lastPlayer()));
+  jk = await call(handleJoinKnown, { code: so.join_code, keys: [KEY] });
+  show('...the phone is asked again instead (the one-tap row, the held number masked)', jk.body.known && jk.body.known.confirm.some(function (x) { return x.field === 'mobile'; }), JSON.stringify(jk.body.known));
+  j = await call(handleJoin, { code: s2.join_code, name: 'Alan', pid: pid(), known_keys: [KEY], mobile: '0412345678' });
+  show('the SAME number typed again where it is held still marks the venue as having it', (DB.vp_known_players[0].shared[VENUE] || []).indexOf('mobile') >= 0, JSON.stringify(DB.vp_known_players[0].shared));
 
   print('5b. THE FIRST-GAME NOTICE, ONCE PER PLAYER');
   world();

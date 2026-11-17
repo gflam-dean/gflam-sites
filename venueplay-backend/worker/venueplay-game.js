@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '16 Nov 2026, 18:50 · 7e9ea974';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '17 Nov 2026, 23:20 · 212cfb74';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2593,6 +2593,7 @@ async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen, use, venueY
     const shared = Object.assign({}, (k.row.shared && typeof k.row.shared === 'object') ? k.row.shared : {});
     const mine = Array.isArray(shared[venueId]) ? shared[venueId].slice() : [];
     const share = (f) => { if (mine.indexOf(f) < 0) mine.push(f); };
+    const unshare = (f) => { const i = mine.indexOf(f); if (i >= 0) mine.splice(i, 1); };
     for (const f of KNOWN_FIELDS) {
       if (!asks[f]) continue;
       const contact = CONTACT_FIELDS.indexOf(f) >= 0;
@@ -2601,10 +2602,13 @@ async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen, use, venueY
         else if (useList.indexOf(f) >= 0 && venueYes === true) { cap[f] = k.row[f]; share(f); }   // Use this, and this venue's box ticked
       } else if (cap[f] != null) {
         if (k.row[f] == null) add[f] = cap[f];
-        if (contact) share(f);                                                                    // typed here: this venue has it
+        /* typed here: this venue has it, but ONLY when it is the detail the row holds. A DIFFERENT number (or email)
+           typed here is that night's row only and never marks the venue as having the row's detail: before this, the
+           next game at this venue was silently filled with the OLD number the player had just replaced (17 Nov 2026). */
+        if (contact) { if (k.row[f] == null || k.row[f] === cap[f]) share(f); else unshare(f); }
       }
     }
-    if (mine.length && JSON.stringify(mine) !== JSON.stringify(shared[venueId] || [])) { shared[venueId] = mine; add.shared = shared; }
+    if (JSON.stringify(mine) !== JSON.stringify(shared[venueId] || [])) { if (mine.length) shared[venueId] = mine; else delete shared[venueId]; add.shared = shared; }
     add.last_seen_at = new Date().toISOString();
     if (sawNotice && k.row.notice_version !== JOIN_NOTICE.version) { add.notice_version = JOIN_NOTICE.version; add.notice_at = add.last_seen_at; }
     try { await sbPatch(env, 'vp_known_players', 'id=eq.' + enc(k.row.id), add); } catch (e) { /* the join goes on */ }
