@@ -111,11 +111,17 @@ def open_screen():
 
 def choose(sid, path, w, h):
     """Choose a file and wait for THAT picture to be in the editor (the editor may still be open
-    on the last one, so "the editor is open" alone proves nothing)."""
+    on the last one, so "the editor is open" alone proves nothing) AND for the automatic save that
+    choosing starts to be finished (Save logo enabled again, the note says "Saved."). Choosing a
+    logo saves it at once (21 Oct 2026); until that save lands, Save logo is disabled and a click on
+    it does nothing, so a test that snapshots storage and clicks Save in that window races the page
+    (17 Nov 2026: about half the runs, 26/28). The state to wait on is "the first save is done"."""
     S.js(sid, 'document.getElementById("logoCanvas").width = 1; true')
     S.set_file(sid, '#logoFile', path)
     return S.until(sid, '!document.getElementById("logoEdit").hidden && document.getElementById("logoCanvas").width === %d '
-                        '&& document.getElementById("logoCanvas").height === %d' % (w, h), 20)
+                        '&& document.getElementById("logoCanvas").height === %d '
+                        '&& !document.getElementById("logoSave").disabled '
+                        '&& /^Saved[.]/.test(document.getElementById("logoEditNote").textContent)' % (w, h), 30)
 
 
 def save(sid, before):
