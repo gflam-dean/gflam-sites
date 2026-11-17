@@ -1287,8 +1287,8 @@
   }
   /* Only ever a suggestion on this form: the venue confirms or changes it before paying. Kept in
      step with guessEntity() in app/hq.html and vpaGuessEntity() in the Worker. */
-  var CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
-  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+  var CLUBWORDS = /\b(rsl|bowls|bowling|bowlo|leagues|diggers|sub[ -]?branch|slsc|workers|workmen|club|clubs|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewing|brewhouse|bar|motel|resort|lodge)\b/i;
   function guessEntityFromName(n){
     n = String(n || '');
     var c = CLUBWORDS.test(n), p = PUBWORDS.test(n);

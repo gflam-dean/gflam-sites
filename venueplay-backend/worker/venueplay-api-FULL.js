@@ -4548,15 +4548,11 @@ const VPQ_PLACEHOLDER_DOMAIN = VPG.placeholderEmailDomain;   // ONE constant (th
 const VPQ_DEFAULT_KIND = 'for_profit';                      // a pub: the stricter gaming rules; HQ can change it
 /* PUB OR CLUB WHEN WE KNOW IT (18 Nov 2026): a club gets a club's permits by state (non_profit: vpaPaidEntryDefault).
    The link's own answer first (?vt=club or ?vt=pub, from the website scan, sent by the page as kind), then the venue's
-   name: a club word (Club, RSL, Bowls, Bowlo, Leagues, Diggers, Surf Life Saving) and no pub word (a "Club Hotel" is a
-   pub). Anything else is VPQ_DEFAULT_KIND. ONE copy: /quick and the offer page's quick form both post /quick/begin. */
-const VPQ_CLUB_WORDS = /\b(club|clubs|rsl|bowlo|bowls|leagues|diggers|sub[ -]?branch|surf life saving|slsc)\b/i;
-const VPQ_PUB_WORDS = /\b(hotel|tavern|inn|pub|bar|brewery|brewing|arms)\b/i;
+   name through vpaGuessEntity (a club word and no pub word is a club; a "Club Hotel" is a pub). Anything else is
+   VPQ_DEFAULT_KIND. ONE word list (VPA_CLUBWORDS / VPA_PUBWORDS, mirrored in hq.html, index.html and nsw.html, held equal
+   by test-quick-signup-warnings): /quick, the offer page's quick form, HQ and the sign-up pages all read the same words. */
 function vpqKindFor(kindSignal, venueName) {
-  const said = vpsEntity(kindSignal);
-  if (said) return said;
-  const n = String(venueName || '');
-  return VPQ_CLUB_WORDS.test(n) && !VPQ_PUB_WORDS.test(n) ? 'non_profit' : VPQ_DEFAULT_KIND;
+  return vpsEntity(kindSignal) || vpaGuessEntity(venueName) || VPQ_DEFAULT_KIND;
 }
 const VPQ_CARD_NEEDS_REAL_EMAIL = false;   // OFF (INBOX 412 UPDATE 7): Stripe's page asks for the email; the gate stays for the day Dean wants it back
 const VPQ_VENUES_PER_IP = 40;                               // picker searches per network per minute
@@ -11302,8 +11298,8 @@ function vpaTimezoneFromPostcode(pc) {
  * Paid entry stays switched off until a human turns it on in HQ, which is a separate action and
  * one this never takes. Kept in step with guessEntity() in app/hq.html.
  */
-const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
-const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|bowlo|leagues|diggers|sub[ -]?branch|slsc|workers|workmen|club|clubs|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewing|brewhouse|bar|motel|resort|lodge)\b/i;
 /* Should paid entry be ON for this venue from day one?
  *
  * Only ever when the VENUE told us what it is at signup. A guess from the trading name is fine

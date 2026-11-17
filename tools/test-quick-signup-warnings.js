@@ -195,6 +195,18 @@ async function main() {
   var c7 = await club({ venue: 'The Bowlo', postcode: '2830', mobile: '0412 000 007', kind: 'bar' });
   check('a kind we do not know is no answer: the name decides (a hotel a pub, a bowlo a club)', c6.entity_type === 'for_profit' && c7.entity_type === 'non_profit', [c6.entity_type, c7.entity_type]);
   check('the shared rule, one copy: vpqKindFor', vpqKindFor('CLUB', 'x') === 'non_profit' && vpqKindFor('', 'Grand Hotel') === 'for_profit' && vpqKindFor(null, 'Merrylands Bowls Club') === 'non_profit' && vpqKindFor(null, 'Leagues Tavern') === 'for_profit');
+  /* ONE WORD LIST (duplicate helpers audit 18 Nov, Part 2 A): the quick form reads the name through vpaGuessEntity, so
+     HQ and the sign-up pages call a Bowlo, Diggers or a sub-branch a club too, and the three page copies say exactly
+     what the Worker says. */
+  check('the quick form and HQ agree: a Bowlo, Diggers, a sub-branch and an SLSC are clubs to both, a Brewing Co a pub',
+    ['Mudgeeraba Bowlo', 'Smithton Diggers', 'Burleigh RSL Sub-Branch', 'Kurrawa SLSC'].every(function (n) { return vpaGuessEntity(n) === 'non_profit' && vpqKindFor(null, n) === 'non_profit'; })
+    && vpaGuessEntity('Black Hops Brewing') === 'for_profit', [vpaGuessEntity('Mudgeeraba Bowlo'), vpaGuessEntity('Black Hops Brewing')]);
+  var WSRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  var wordsIn = function (src, which) { var m = new RegExp('(?:const|var) ' + which + '\\s*=\\s*(/[^\\n]*/i);').exec(src); return m ? m[1] : null; };
+  var pagesSay = ['venueplay/app/hq.html', 'venueplay/index.html', 'venueplay/nsw.html'].map(function (p) { var s = readFile(p); return [p, wordsIn(s, 'CLUBWORDS'), wordsIn(s, 'PUBWORDS')]; });
+  check('one club and pub word list: hq.html, index.html and nsw.html say exactly what vpaGuessEntity says, and the Worker has no second list',
+    !!wordsIn(WSRC, 'VPA_CLUBWORDS') && !!wordsIn(WSRC, 'VPA_PUBWORDS') && !/VPQ_CLUB_WORDS|VPQ_PUB_WORDS/.test(WSRC)
+    && pagesSay.every(function (x) { return x[1] === wordsIn(WSRC, 'VPA_CLUBWORDS') && x[2] === wordsIn(WSRC, 'VPA_PUBWORDS'); }), pagesSay);
   /* The page's own line, run: ?vt= is sent as kind (vp-quick.js, shared with the offer page's quick form). */
   var line = (/\n(\s*var vt = [^\n]+)/.exec(LIFT_SRC) || [])[1] || '';
   function pageKind(search) { var root = { location: { search: search } }, body = {}; (new Function('root', 'body', line))(root, body); return body.kind; }
