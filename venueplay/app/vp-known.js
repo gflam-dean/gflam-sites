@@ -98,23 +98,42 @@
     var d = root.document;
     var BTN = "flex:0 0 auto;min-height:40px;padding:0 12px;border-radius:10px;font:700 14px/1.2 Manrope,system-ui,sans-serif;cursor:pointer;background:#FF1F8E;color:#0A0A0B;border:1.5px solid #FF1F8E";
     var IN = "flex:1 1 auto;min-width:0;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid #2A2A31;background:#17171A;color:#fff;font:16px/1.2 Manrope,system-ui,sans-serif";
-    var LINK = "background:none;border:0;padding:6px 0;margin:-6px 0;font:inherit;color:#C9C9D1;text-decoration:underline;cursor:pointer";
-    var changeId = "", newNum = "";
+    var LINK = "flex:0 0 auto;background:none;border:0;padding:12px 0;margin:-12px 0;font:inherit;font-size:13px;color:#C9C9D1;text-decoration:underline;cursor:pointer";
+    var changeId = "", newNum = "", errTimer = 0;
     while (g.firstChild || (g.children && g.children.length)) g.removeChild(g.firstChild || g.children[0]);
-    var say = d.createElement("span"); say.id = "vpNumSay"; say.setAttribute("style", "color:#E7E7EC");
+    /* 320 x 568 fit (Dean 18 Nov 2026): the form is THREE short things, not five. Top line: the prompt, "Send again" and
+       "Cancel" side by side (they used to be their own line under the form). Under it the number box and its button. A
+       problem ("That code is not right", "Please wait") takes the place of the top line for a few seconds, so it never
+       adds a line; typing clears it. Every state keeps the Join button in view. */
+    g.style.marginTop = "6px";
+    var top = d.createElement("div"); top.setAttribute("style", "display:flex;flex-wrap:wrap;align-items:center;gap:0 8px");
+    var say = d.createElement("span"); say.id = "vpNumSay"; say.setAttribute("style", "flex:1 1 auto;min-width:0;color:#E7E7EC");
     var row = d.createElement("div"); row.setAttribute("style", "display:flex;gap:8px;margin-top:6px");
     var inp = d.createElement("input"); inp.id = "vpNumIn"; inp.setAttribute("style", IN);
     var go = d.createElement("button"); go.type = "button"; go.id = "vpNumGo"; go.setAttribute("style", BTN);
-    var err = d.createElement("span"); err.id = "vpNumErr"; err.setAttribute("role", "alert"); err.setAttribute("style", "display:block;color:#FF8FA3;margin-top:4px");
-    var foot = d.createElement("div"); foot.setAttribute("style", "margin-top:4px");
+    var err = d.createElement("span"); err.id = "vpNumErr"; err.setAttribute("role", "alert"); err.setAttribute("style", "display:none;color:#FF8FA3");
     var again = d.createElement("button"); again.type = "button"; again.id = "vpNumAgain"; again.setAttribute("style", LINK); again.textContent = "Send again";
     var cancel = d.createElement("button"); cancel.type = "button"; cancel.id = "vpNumCancel"; cancel.setAttribute("style", LINK); cancel.textContent = "Cancel";
     row.appendChild(inp); row.appendChild(go);
-    g.appendChild(say); g.appendChild(row); g.appendChild(err); g.appendChild(foot);
-    foot.appendChild(cancel);
+    top.appendChild(say); top.appendChild(err); top.appendChild(cancel);
+    g.appendChild(top); g.appendChild(row);
     cancel.addEventListener("click", function () { if (_last) paint(_last); });
+    /* the one line for a problem or a note: it hides the prompt and the two links until it is cleared */
+    function setErr(t) {
+      try { if (errTimer) root.clearTimeout(errTimer); } catch (e) {}
+      errTimer = 0;
+      err.textContent = t || "";
+      var on = !!t;
+      err.style.display = on ? "block" : "none";
+      say.style.display = on ? "none" : "";
+      cancel.style.display = on ? "none" : "";
+      again.style.display = on ? "none" : "";
+      if (on && typeof root.setTimeout === "function") errTimer = root.setTimeout(function () { setErr(""); }, 4500);
+    }
+    inp.addEventListener("input", function () { if (err.textContent) setErr(""); });
     function stepNumber() {
       say.textContent = "Your new mobile";
+      if (again.parentNode === top) top.removeChild(again);
       inp.value = ""; inp.setAttribute("type", "tel"); inp.setAttribute("inputmode", "tel"); inp.setAttribute("autocomplete", "tel"); inp.setAttribute("maxlength", "16");
       inp.setAttribute("aria-label", "Your new mobile"); inp.setAttribute("placeholder", "04xx xxx xxx");
       go.textContent = "Text me a code";
@@ -122,37 +141,37 @@
     }
     var waitUntil = 0;
     function stepCode(masked, wait) {
-      say.textContent = "We texted a code to " + masked + ".";
+      say.textContent = "Sent to " + masked;
       inp.value = ""; inp.setAttribute("type", "text"); inp.setAttribute("inputmode", "numeric"); inp.setAttribute("autocomplete", "one-time-code"); inp.setAttribute("maxlength", "6");
       inp.setAttribute("aria-label", "The code in the text"); inp.setAttribute("placeholder", "6 numbers");
       go.textContent = "Confirm";
-      if (again.parentNode !== foot) { foot.insertBefore(again, cancel); foot.insertBefore(d.createTextNode("   "), cancel); }
+      if (again.parentNode !== top) top.insertBefore(again, cancel);
       waitUntil = Date.now() + (wait > 0 ? wait : 30) * 1000;
       try { inp.focus(); } catch (e) {}
     }
     function busy(on) { go.disabled = !!on; if (on) go.setAttribute("aria-busy", "true"); else go.removeAttribute && go.removeAttribute("aria-busy"); }
     function send(isAgain) {
-      if (isAgain && Date.now() < waitUntil) { err.textContent = "Please wait " + Math.ceil((waitUntil - Date.now()) / 1000) + " seconds before asking again."; return; }
-      err.textContent = ""; busy(true);
+      if (isAgain && Date.now() < waitUntil) { setErr("Please wait " + Math.ceil((waitUntil - Date.now()) / 1000) + " seconds, then try again."); return; }
+      setErr(""); busy(true);
       var body = { code: _code, keys: keys(), mobile: newNum };
       if (isAgain && changeId) body.change_id = changeId;
       post("/join/number/start", body).then(function (r) {
         busy(false);
-        if (r.j && r.j.ok && r.j.change_id) { changeId = String(r.j.change_id); stepCode(String(r.j.to || ""), +r.j.resend_in || 30); if (isAgain) err.textContent = "New code sent."; return; }
+        if (r.j && r.j.ok && r.j.change_id) { changeId = String(r.j.change_id); stepCode(String(r.j.to || ""), +r.j.resend_in || 30); if (isAgain) setErr("New code sent."); return; }
         if (isAgain && r.status === 410) { changeId = ""; stepNumber(); }
-        err.textContent = (r.j && typeof r.j.error === "string") ? r.j.error : "We could not send a text just now. Please try again.";
+        setErr((r.j && typeof r.j.error === "string") ? r.j.error : "We could not send a text just now. Please try again.");
       });
     }
     go.addEventListener("click", function () {
       if (go.disabled) return;
       if (!changeId) {
         newNum = String(inp.value || "").replace(/[^0-9+]/g, "");
-        if (!/^(\+?61|0)?4[0-9]{8}$/.test(newNum)) { err.textContent = "Please check the mobile number."; return; }
+        if (!/^(\+?61|0)?4[0-9]{8}$/.test(newNum)) { setErr("Please check the mobile number."); return; }
         send(false); return;
       }
       var code = String(inp.value || "").replace(/[^0-9]/g, "");
-      if (code.length !== 6) { err.textContent = "The code is the six numbers in the text."; return; }
-      err.textContent = ""; busy(true);
+      if (code.length !== 6) { setErr("The code is the six numbers in the text."); return; }
+      setErr(""); busy(true);
       post("/join/number/verify", { code: _code, keys: keys(), change_id: changeId, sms_code: code }).then(function (r) {
         busy(false);
         if (r.j && r.j.ok && r.j.masked) {
@@ -160,11 +179,11 @@
           if (Array.isArray(known.confirm)) known.confirm.forEach(function (x) { if (x && x.field === "mobile") x.masked = known.mobile_masked; });
           if (_last) paint(_last);
           var pa = root.document.getElementById("vpPlayingAs");
-          if (pa) pa.textContent = pa.textContent + ". Number changed.";
+          if (pa) pa.textContent = pa.textContent + ". Done.";
           return;
         }
         if (r.status === 410 && !(r.j && r.j.expired)) { changeId = ""; stepNumber(); }
-        err.textContent = (r.j && typeof r.j.error === "string") ? r.j.error : "We could not check the code just now. Please try again.";
+        setErr((r.j && typeof r.j.error === "string") ? r.j.error : "We could not check the code just now. Please try again.");
       });
     });
     again.addEventListener("click", function () { send(true); });

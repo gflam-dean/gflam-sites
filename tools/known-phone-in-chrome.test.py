@@ -367,7 +367,7 @@ def number_flow(game, path, w, h):
             ask(sid, 'document.getElementById("vpNumGo").click(); true')
             ok('N %s %s %s: code step up' % (game, size, label), until(sid, 'document.getElementById("vpNumGo").innerText==="Confirm"'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))
             time.sleep(0.3); L = look(sid); shot(sid, 'num-%s-%s-%s-3-code' % (label, game, size))
-            ok('N %s %s %s: code step (We texted a code, Send again, Cancel), Join in view, no scroll' % (game, size, label), 'We texted a code to' in L.get('text', '') and 'Send again' in L.get('text', '') and 'Cancel' in L.get('text', '') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            ok('N %s %s %s: code step (Sent to, Send again, Cancel), Join in view, no scroll' % (game, size, label), 'Sent to' in L.get('text', '') and 'Send again' in L.get('text', '') and 'Cancel' in L.get('text', '') and fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             fill(sid, {'vpNumIn': '000000'})
             ask(sid, 'document.getElementById("vpNumGo").click(); true')
             ok('N %s %s %s: wrong code shows the error line' % (game, size, label), until(sid, '(document.getElementById("vpNumErr")||{}).innerText.indexOf("not right")>=0'), ask(sid, 'document.getElementById("vJoin").innerText.slice(0,300)'))

@@ -226,7 +226,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   document.getElementById('vpNumGo').click();
   for (var tk = 0; tk < 20; tk++) await Promise.resolve();
   show('Text me a code: /join/number/start with the keys and the new number', SENT.length === 1 && SENT[0].u === 'https://game.example/join/number/start' && SENT[0].b.mobile === '0412000456' && SENT[0].b.keys[0] === k('d') && SENT[0].b.code === 'ROYAL1', SENT);
-  show('...then "We texted a code to 04.. ... 456." and a box for the code (one-time-code, six numbers)', document.getElementById('vpNumSay').textContent === 'We texted a code to 04•• ••• 456.' && document.getElementById('vpNumIn').getAttribute('autocomplete') === 'one-time-code' && document.getElementById('vpNumIn').getAttribute('maxlength') === '6' && document.getElementById('vpNumGo').textContent === 'Confirm');
+  show('...then "Sent to 04.. ... 456." and a box for the code (one-time-code, six numbers)', document.getElementById('vpNumSay').textContent === 'Sent to 04•• ••• 456' && document.getElementById('vpNumIn').getAttribute('autocomplete') === 'one-time-code' && document.getElementById('vpNumIn').getAttribute('maxlength') === '6' && document.getElementById('vpNumGo').textContent === 'Confirm');
   document.getElementById('vpNumAgain').click();
   show('Send again straight away: the phone says wait, nothing sent', /^Please wait \d+ seconds/.test(document.getElementById('vpNumErr').textContent) && SENT.length === 1, document.getElementById('vpNumErr').textContent);
   REPLY = function () { return [400, { error: 'That code is not right. 4 tries left.', tries_left: 4 }]; };
@@ -238,7 +238,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   document.getElementById('vpNumIn').value = '222222';
   document.getElementById('vpNumGo').click();
   for (var tk = 0; tk < 20; tk++) await Promise.resolve();
-  show('the right code: the line is back with the NEW number, and says it changed', document.getElementById('vpPlayingAs').textContent === 'Playing as Sarah, 04•• ••• 456. Number changed.' && !document.getElementById('vpNumIn'), document.getElementById('vpPlayingAs').textContent);
+  show('the right code: the line is back with the NEW number, and says it changed', document.getElementById('vpPlayingAs').textContent === 'Playing as Sarah, 04•• ••• 456. Done.' && !document.getElementById('vpNumIn'), document.getElementById('vpPlayingAs').textContent);
   document.getElementById('vpKnownNotNum').click();
   document.getElementById('vpNumCancel').click();
   show('Cancel: the line comes back as it was', document.getElementById('vpPlayingAs') && !document.getElementById('vpNumIn'));
