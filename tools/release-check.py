@@ -956,7 +956,9 @@ def local_checks(which):
     # vpVenueKey, vpVenuePostcode and vpVenueMatch joined on 5 Nov 2026 (INBOX 62, 81): "is this the same
     # venue?" is asked by the no-card start's licensed list and later (item 62) the coaster round.
     # The source is venueplay-backend/worker/vp-venue-match.js; each Worker carries a copy.
-    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus', 'vpVenueKey', 'vpVenuePostcode', 'vpVenueMatch']
+    # vpTeamTally joined on 18 Nov 2026 (Jobs row 266): the monthly report's Top teams and the TV's Team of the month
+    # must name the same team. Source venueplay-backend/worker/vp-team-tally.js; each Worker carries a copy.
+    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus', 'vpVenueKey', 'vpVenuePostcode', 'vpVenueMatch', 'vpTeamTally']
     def fnbody(src, name):
         m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
         if not m:

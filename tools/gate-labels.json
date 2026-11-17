@@ -614,6 +614,7 @@
   "vp-ask-once.test.js",
   "vp-follow.test.js",
   "vp-tvapp.test.js",
+  "vpTeamTally() is the same in all 2 file(s)",
   "vpVenueKey() is the same in all 2 file(s)",
   "vpVenueMatch() is the same in all 2 file(s)",
   "vpVenuePostcode() is the same in all 2 file(s)",

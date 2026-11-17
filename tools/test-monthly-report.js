@@ -228,6 +228,52 @@ function world() {
   READS = 0; await vprMonth(ENV, [A], '2026-11', NOW);
   check('a month still running is read every time', READS > 0, READS);
 
+  /* "PAPER TEAM 3" IS A TABLE NUMBER, NOT A TEAM (live fault found in the Jobs row 266 review, 18 Nov 2026).
+     A paper team the host scores without typing a name is labelled "Paper team <n>" (ensurePaperPlayer, game
+     Worker). The report merged teams by name, so table 3 on four different nights added up to one "Paper team 3"
+     that topped the month. The Paper Venue, Brisbane, October, by hand:
+       Thu 8 Oct   Paper team 3 40, Brainiacs 30, Paper Tigers 25 (a named paper team, kept)
+       Thu 15 Oct  "paper  TEAM 3 " 45, Brainiacs 35, Paper card 2 5
+       Thu 22 Oct  Brainiacs 20, Paper Team 7 Legends 18 (a name, kept), Paper team 3 10
+       Thu 29 Oct  1,100 named teams on 1 point each, then Paper team 3 50 and Brainiacs 2: past the 1,000-row page
+     = Brainiacs 1 win (22 Oct; the paper rows still set the top score on the other nights), 87 points. Before the fix
+     "Paper team 3" came first with 3 wins and 145 points. */
+  print('a paper team with no name is a table number, never a top team');
+  var VX = 'a0000000-0000-4000-8000-0000000000ee', X = { id: VX, name: 'The Paper Venue', slug: 'paper-venue', status: 'active', timezone: 'Australia/Brisbane', created_at: '2026-08-01T00:00:00Z' };
+  var xboard = [];
+  [['X1', '2026-10-08', [['Paper team 3', 40], ['Brainiacs', 30], ['Paper Tigers', 25]]],
+   ['X2', '2026-10-15', [['paper  TEAM 3 ', 45], ['Brainiacs', 35], ['Paper card 2', 5]]],
+   ['X3', '2026-10-22', [['Brainiacs', 20], ['Paper Team 7 Legends', 18], ['Paper team 3', 10]]],
+   ['X4', '2026-10-29', (function () { var a = []; for (var f = 0; f < 1100; f++) a.push(['Filler ' + ('000' + f).slice(-4), 1]); return a.concat([['Paper team 3', 50], ['Brainiacs', 2]]); })()]
+  ].forEach(function (n) {
+    DB.vp_sessions.push({ id: n[0], venue_id: VX, created_at: n[1] + 'T08:30:00Z', opened_at: n[1] + 'T08:30:00Z', ended_at: n[1] + 'T12:00:00Z' });
+    DB.vp_games.push({ id: 'g' + n[0], session_id: n[0], format: 'trivia', started_at: n[1] + 'T09:00:00Z' });
+    n[2].forEach(function (row, i) {
+      var paper = /^paper/i.test(row[0]);
+      var pl = P(n[0], (paper ? 'paper-' : 'x') + n[0] + '-' + i, n[1] + 'T08:40:00Z', { played_at: n[1] + 'T09:01:00Z' });
+      xboard.push({ game_id: 'g' + n[0], player_id: pl.id, display_name: row[0], points: row[1] });
+    });
+  });
+  Array.prototype.push.apply(DB.v_vp_trivia_leaderboard, xboard);
+  var xo = (await vprMonth(ENV, [X], '2026-10', NOW))[VX].this_month;
+  var xt = xo.top_teams.map(function (x) { return x.name + ':' + x.wins + ':' + x.points; }).join('|');
+  check('top teams: Brainiacs 1 win and 87 points, then the named paper teams, then the 1-point teams by name',
+        xt === 'Brainiacs:1:87|Paper Tigers:0:25|Paper Team 7 Legends:0:18|Filler 0000:0:1|Filler 0001:0:1', xt);
+  check('no "Paper team <n>" or "Paper card <n>" is ever listed, however it was typed',
+        xo.top_teams.every(function (x) { return !/^paper (team|card) \d+$/i.test(x.name.replace(/\s+/g, ' ').trim()); }), xt);
+  check('table 3 on four nights did not add up into one team that topped the month', xo.top_teams[0].name === 'Brainiacs' && xt.toLowerCase().indexOf('paper team 3') === -1, xt);
+  check('a paper row still sets its night\'s top score: Brainiacs did not win 8, 15 or 29 October', xo.top_teams[0].wins === 1, xo.top_teams[0]);
+  check('the scores past the first 1,000 board rows are read (29 Oct: Brainiacs 2 is in the 87)', xo.top_teams[0].points === 87, xo.top_teams[0]);
+  check('an unnamed paper team is still a player on its night (3, 3, 3 and 1,102)', xo.night_list.map(function (n) { return n.players; }).join() === '3,3,3,1102', xo.night_list);
+  /* ONE RULE: the source file vp-team-tally.js and the billing Worker's copy give the same answer on a paper board. */
+  var srcTally = new Function(read('venueplay-backend/worker/vp-team-tally.js') + '\nreturn vpTeamTally;')();
+  var pb = [[{ display_name: 'Paper team 3', points: 40 }, { display_name: 'Brainiacs', points: 30 }, { display_name: 'Paper Card 9', points: 2 }],
+            [{ display_name: 'Brainiacs', points: 20 }, { display_name: ' paper team  3', points: 10 }, { display_name: 'Paper team 3s', points: 5 }]];
+  var srcOut = JSON.stringify(srcTally(pb)), workerOut = JSON.stringify(vpTeamTally(pb));
+  check('the source file and the billing Worker\'s copy agree on a paper board', srcOut === workerOut, [srcOut, workerOut]);
+  check('and the answer is Brainiacs (1 win, 50) and "Paper team 3s" (a name, kept), nothing else',
+        workerOut === JSON.stringify([{ name: 'Brainiacs', wins: 1, games: 2, points: 50, best: 30 }, { name: 'Paper team 3s', wins: 0, games: 1, points: 5, best: 5 }]), workerOut);
+
   print('the venue sees its own, and only its own');
   world();
   var r1 = await call(vpbMonthReport, OWNER, { venue_id: VA, month: '2026-10' });

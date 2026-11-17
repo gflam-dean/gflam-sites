@@ -2187,6 +2187,29 @@ function vpVenueMatch(aName, aPostcode, bName, bPostcode) {
 }
 /* ===== VP-VENUE-MATCH END ===== */
 
+/* ===== VP-TEAM-TALLY: a copy of venueplay-backend/worker/vp-team-tally.js. Edit that file, then every copy;
+   the gate refuses any copy that differs. ===== */
+function vpTeamTally(boards) {
+  const teams = {};
+  (boards || []).forEach((board) => {
+    const top = board.reduce((m, b) => Math.max(m, parseInt(b.points, 10) || 0), 0);
+    const seen = new Set();
+    board.forEach((b) => {
+      const label = String(b.display_name || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      const key = label.toLowerCase();
+      if (!key || key === 'player' || /^paper (team|card) \d+$/.test(key) || seen.has(key)) return;
+      seen.add(key);
+      const pts = parseInt(b.points, 10) || 0;
+      const t = teams[key] = teams[key] || { name: label, wins: 0, games: 0, points: 0, best: 0 };
+      t.games++; t.points += pts; if (pts > t.best) t.best = pts;
+      if (top > 0 && pts === top) t.wins++;
+    });
+  });
+  return Object.keys(teams).map((k) => teams[k])
+    .sort((a, b) => b.wins - a.wins || b.points - a.points || (a.name < b.name ? -1 : 1));
+}
+/* ===== VP-TEAM-TALLY END ===== */
+
 /* THE SLUG IS THE VENUE'S IDENTITY, AND AUSTRALIA REUSES PUB NAMES CONSTANTLY.
 
    Measured against the 18,567 licensed venues in the prospect database: 376 names
@@ -20262,26 +20285,10 @@ function vprFigures(venue, rows, month) {
     if (seenBefore.has(ph)) fromBefore++;
   });
 
-  /* TOP TEAMS. Wins (the top score on a game's board, a tie is a win each), then points. One team
-     is one name however it was typed: "The Quizzards" and "the quizzards " are one team. */
-  const teams = {};
-  games.filter((g) => g.format === 'trivia').forEach((g) => {
-    const board = (boardOf[g.id] || []).filter((b) => realRow(b.player_id));
-    const top = board.reduce((m, b) => Math.max(m, parseInt(b.points, 10) || 0), 0);
-    const seen = new Set();
-    board.forEach((b) => {
-      const label = String(b.display_name || '').replace(/\s+/g, ' ').trim().slice(0, 40);
-      const key = label.toLowerCase();
-      if (!key || key === 'player' || seen.has(key)) return;
-      seen.add(key);
-      const pts = parseInt(b.points, 10) || 0;
-      const t = teams[key] = teams[key] || { name: label, wins: 0, games: 0, points: 0, best: 0 };
-      t.games++; t.points += pts; if (pts > t.best) t.best = pts;
-      if (top > 0 && pts === top) t.wins++;
-    });
-  });
-  const topTeams = Object.keys(teams).map((k) => teams[k])
-    .sort((a, b) => b.wins - a.wins || b.points - a.points || (a.name < b.name ? -1 : 1)).slice(0, VPR_TOP_TEAMS);
+  /* TOP TEAMS: vpTeamTally (venueplay-backend/worker/vp-team-tally.js), the same rule the TV's Team of the month
+     reads (Jobs row 266), so the slide and this report always name the same team. Test and kicked players are out. */
+  const topTeams = vpTeamTally(games.filter((g) => g.format === 'trivia')
+    .map((g) => (boardOf[g.id] || []).filter((b) => realRow(b.player_id)))).slice(0, VPR_TOP_TEAMS);
 
   const optins = rows.optins.filter((o) => vprNightKey(o.opted_in_at, tz).slice(0, 7) === month).length;
   const ads = vprAds(rows, month);

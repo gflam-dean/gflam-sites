@@ -1060,7 +1060,7 @@
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
-  "checks": 129,
+  "checks": 137,
   "counted_by": "lines"
  },
  "tools/test-multi-raffle.js": {
