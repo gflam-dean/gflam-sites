@@ -2390,5 +2390,9 @@
  "tools/test-one-number.js": {
   "checks": 86,
   "counted_by": "lines"
+ },
+ "tools/test-platform-admins-no-browser-write.js": {
+  "checks": 35,
+  "counted_by": "lines"
  }
 }

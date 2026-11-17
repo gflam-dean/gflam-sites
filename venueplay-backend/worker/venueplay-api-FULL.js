@@ -490,6 +490,8 @@ export default {
       if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
+      // Remove an HQ staff login from the Team list (18 Nov 2026, review F1): owner only; the browser can no longer write the table.
+      if (request.method === 'POST' && path === '/admin/staff-remove'    && typeof vpaHandleStaffRemove === 'function')    return await vpaHandleStaffRemove(request, env, json);
       // Remove a login that belongs to no other venue (Dean, 30 Oct 2026). HQ only; the delete is owner only, on his own tap.
       if (request.method === 'POST' && path === '/admin/logins'          && typeof vpaHandleLogins === 'function')         return await vpaHandleLogins(request, env, json);
       if (request.method === 'POST' && path === '/admin/login-find'      && typeof vpaHandleLoginFind === 'function')      return await vpaHandleLoginFind(request, env, json);
@@ -10218,6 +10220,16 @@ async function vpaHandleStaff(request, env, json) {
     }
   }
 
+  // NEVER YOUR OWN ROLE (18 Nov 2026, review F1). The upsert below changes the role of a login that is already
+  // on the Team list, so an owner typing their own mobile would demote (or re-add) themselves, and could leave
+  // HQ with no owner at all. Your own role is never changed here; another owner does it.
+  if (authUserId === actor.actorId) return json({ error: 'That mobile is your own login. You cannot change your own role. Nothing was changed.' }, 403);
+  let was;
+  try {
+    was = await vpaReadPage(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,role&limit=1');
+  } catch (e) { return json({ error: 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, 503); }
+  const wasRole = (was && was[0] && was[0].role) || null;
+
   // Idempotent-ish: upsert the admin row on its primary key (auth_user_id).
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_platform_admins', {
     method: 'POST',
@@ -10229,9 +10241,45 @@ async function vpaHandleStaff(request, env, json) {
     throw new Error('vp_platform_admins insert failed: ' + t);
   }
 
-  await vpaAudit(env, actor, 'staff_added', 'admin:' + authUserId, { name: name, mobile: mobile, email: email || null, role: role });
+  await vpaAudit(env, actor, 'staff_added', 'admin:' + authUserId, { name: name, mobile: mobile, email: email || null, role: role, was_role: wasRole });
 
   return json({ ok: true, auth_user_id: authUserId });
+}
+
+/* ===========================================================================
+ * POST /admin/staff-remove   (OWNER ONLY)   { auth_user_id }   -> { ok:true, auth_user_id }
+ *    (18 Nov 2026, HQ admin routes review F1.) The Team tab's Remove button used to DELETE the
+ *    vp_platform_admins row straight from the browser, which RLS allowed for ANY admin login (policy
+ *    vp_platform_admins_admin_all, FOR ALL): so a staff login could also update its own role to owner,
+ *    add itself rows, or delete the owner's row. Migration 217 leaves the browser SELECT only, and the
+ *    one write the Team tab makes comes here.
+ *    Refused, and nothing changes: not an owner (403), your own login (403: another owner removes you,
+ *    which also means the last owner can never be removed), a login not on the Team list (404), a read
+ *    that fails (503).
+ *    Only the HQ row goes; the Supabase Auth user is left (as before), so the login simply stops being HQ.
+ *    Every removal is in the audit log with the name and role it had.
+ * ======================================================================== */
+async function vpaHandleStaffRemove(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const target = String(b.auth_user_id || '');
+  if (!VPA_UUID_RE.test(target)) return json({ error: 'auth_user_id is required.' }, 400);
+  if (target === actor.actorId) return json({ error: 'You cannot remove your own login. Another Owner can. Nothing was changed.' }, 403);
+  // The last Owner can never be removed here: only an Owner may call this, and never on their own row, so
+  // another Owner (the caller) always remains.
+  let rows;
+  try {
+    rows = await vpaReadPage(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target) + '&select=auth_user_id,role,label&limit=1');
+  } catch (e) { return json({ error: 'Could not check the Team list just now. Nothing was changed. Try again in a minute.' }, 503); }
+  const row = rows && rows[0];
+  if (!row) return json({ error: 'That staff login is not on the Team list any more.' }, 404);
+  const gone = await vpaDelete(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(target));
+  if (!gone.length) return json({ error: 'That staff login is not on the Team list any more.' }, 404);
+  await vpaAudit(env, actor, 'staff_removed', 'admin:' + target, { label: row.label || null, role: row.role || null });
+  return json({ ok: true, auth_user_id: target });
 }
 
 
