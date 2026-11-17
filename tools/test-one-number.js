@@ -1,4 +1,4 @@
-/* ONE PHONE NUMBER PER PLAYER, CHANGED ONLY WITH A TEXT CODE (Dean, 17 Nov 2026 ~23:15; migration 214).
+/* ONE PHONE NUMBER PER PLAYER, CHANGED ONLY WITH A TEXT CODE (Dean, 17 Nov 2026 ~23:15; migration 215).
 
    RUNS the real venueplay-game.js on tools/rig-game-worker.js through the handlers a real night uses (/join, /join/known,
    /join/number/start, /join/number/verify). The database function vp_number_change_apply is stood in for by FAKE_APPLY
@@ -33,7 +33,7 @@ if (typeof btoa !== 'function') btoa = function (s) { return 'b64:' + s; };
 if (typeof AbortController !== 'function') AbortController = function () { this.signal = {}; this.abort = function () {}; };
 var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b', THIRD = '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c0c';
 var TEXTS = [], SMS_FAIL = false, MISSING = false;
-/* what migration 214's function does, in JS (the SQL was proven on TEST) */
+/* what migration 215's function does, in JS (the SQL was proven on TEST) */
 function FAKE_APPLY(id) {
   var c = (DB.vp_number_changes || []).filter(function (x) { return x.id === id; })[0];
   if (!c) return { ok: false, why: 'none' };
@@ -130,7 +130,7 @@ function later(ms) { NOWMS += ms; }
   show('the number we already hold is refused', (await call(handleNumberStart, { keys: [KEY], mobile: '0412 345 123' })).status === 400 && TEXTS.length === 0);
   MISSING = true;
   st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
-  show('before migration 214: 503, nothing texted', st.status === 503 && TEXTS.length === 0, JSON.stringify(st));
+  show('before migration 215: 503, nothing texted', st.status === 503 && TEXTS.length === 0, JSON.stringify(st));
   MISSING = false;
   st = await call(handleNumberStart, { keys: [KEY], mobile: '0412 000 456' });
   show('a code is texted, once, to the NEW number in the one form', st.status === 200 && TEXTS.length === 1 && TEXTS[0].to === '+61412000456', JSON.stringify([st, TEXTS]));

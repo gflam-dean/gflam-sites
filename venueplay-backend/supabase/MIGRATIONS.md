@@ -919,7 +919,7 @@ dump it then). Safe to run any time: until it runs, POST /track, GET /track/look
 carry on. Needs vp_venues. Any order with the billing Worker. After loading the codes (tools/make-journey-codes.py output) set sent_at per send.
 Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
 
-`venueplay-214-one-number-per-player.sql` (Dean, 17 Nov 2026 ~23:15: ONE phone number per venueplay player, the same at every
+`venueplay-215-one-number-per-player.sql` (Dean, 17 Nov 2026 ~23:15: ONE phone number per venueplay player, the same at every
 venue; replaces question 28's "keep both", whose migration 210 on feature/known-phone-keep-both-q28 is SHELVED and never ran on live).
 Additive, needs 202: table `vp_number_changes` (one row per "Not my number": the known row, the NEW number, the SHA-256 of the texted
 code, 10-minute expiry capped at 30 minutes, 5 tries, 3 texts, the old number only as its last three digits) and the definer
@@ -933,7 +933,7 @@ idempotent, an expired change refused, three checks refuse). NOT RUN ON LIVE: sh
 VP-STAGING-GUARD block; the live run is the statements after its END marker. RLS-BASELINE.json: dump after the live run (one table,
 one definer function). Rollback: `drop function if exists public.vp_number_change_apply(uuid); drop table if exists
 public.vp_number_changes;`. NUMBER: 210 twice, 211 held for the loser of that clash, 212 venue-old-addresses; no 213 anywhere (it went to q9)
-(checked every branch and worktree 17 Nov 2026 23:20); RENUMBERED 214 the same night because q9 (feature/members-upload-more-fields-q9) claimed 213 first: the TEST run was under 213, only comments changed, the table and function are identical.
+(checked every branch and worktree 17 Nov 2026 23:20); RENUMBERED 214 the same night, then 215 on 18 Nov (main claimed 214 for feature/hq-coaster-leads) because q9 (feature/members-upload-more-fields-q9) claimed 213 first: the TEST run was under 213, only comments changed, the table and function are identical.
 
 `venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
 release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
