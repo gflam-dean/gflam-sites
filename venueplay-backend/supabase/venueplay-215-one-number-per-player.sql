@@ -24,7 +24,16 @@
 -- they keep the old number. That is the safe side: a missed update costs a venue one stale number, a wrong one hands a
 -- stranger someone else's seat and contact. THIS EDIT (the two columns, two indexes and the narrower WHERE) HAS NOT BEEN
 -- RUN ON TEST YET: run it there twice before live. It takes a short lock on vp_players and vp_captures (add column,
--- the foreign key check over all-null rows, two small partial indexes): run it outside game hours, as every migration.
+-- two small partial indexes): run it outside game hours, as every migration.
+-- LOCKS (review F-B, 18 Nov 2026): the first statement after the guard is set lock_timeout = '3s'. If a long read or
+-- an open transaction holds either table, the paste FAILS after 3 seconds with "canceling statement due to lock
+-- timeout" instead of queueing every join behind it. Then simply paste again: every statement is safe to run twice, so
+-- that holds whether the SQL editor ran the paste as one transaction (nothing kept) or statement by statement.
+-- The two foreign keys are added NOT VALID (the column was just added, so every row is null and there is nothing to
+-- check; new rows are checked from that moment) and then validated as their own statements: VALIDATE needs only a
+-- SHARE UPDATE EXCLUSIVE lock, which does not stop a join (if the editor runs the paste as ONE transaction, the
+-- add-column lock is held to the end anyway: then this saves nothing and costs nothing). Each foreign key is added only when pg_constraint does not
+-- already have it, and VALIDATE on a valid key does nothing, so the file is still safe to run twice.
 --
 -- WHAT IT ADDS (additive only: one table, one function, and one nullable column + partial index on each of
 -- vp_players and vp_captures; nothing existing is altered or removed)
@@ -74,11 +83,29 @@ begin
 end
 $guard$;
 -- VP-STAGING-GUARD-END
+set lock_timeout = '3s';
 
 /* WHICH KNOWN PLAYER MADE THIS ROW (F1, 18 Nov 2026). Nullable, no backfill (an old row cannot be proven to be
-   anyone's, so it is never moved). Indexed only where set: the apply below and the on-delete-set-null read it. */
-alter table public.vp_players add column if not exists known_id uuid references public.vp_known_players(id) on delete set null;
-alter table public.vp_captures add column if not exists known_id uuid references public.vp_known_players(id) on delete set null;
+   anyone's, so it is never moved). Indexed only where set: the apply below and the on-delete-set-null read it.
+   The foreign keys: NOT VALID first (no scan under the add-column lock), validated just below (F-B, 18 Nov 2026). */
+alter table public.vp_players add column if not exists known_id uuid;
+alter table public.vp_captures add column if not exists known_id uuid;
+do $fk$
+begin
+  if not exists (select 1 from pg_constraint
+                  where conrelid = 'public.vp_players'::regclass and conname = 'vp_players_known_id_fkey') then
+    alter table public.vp_players add constraint vp_players_known_id_fkey
+      foreign key (known_id) references public.vp_known_players(id) on delete set null not valid;
+  end if;
+  if not exists (select 1 from pg_constraint
+                  where conrelid = 'public.vp_captures'::regclass and conname = 'vp_captures_known_id_fkey') then
+    alter table public.vp_captures add constraint vp_captures_known_id_fkey
+      foreign key (known_id) references public.vp_known_players(id) on delete set null not valid;
+  end if;
+end
+$fk$;
+alter table public.vp_players validate constraint vp_players_known_id_fkey;
+alter table public.vp_captures validate constraint vp_captures_known_id_fkey;
 create index if not exists vp_players_known_idx on public.vp_players (known_id) where known_id is not null;
 create index if not exists vp_captures_known_idx on public.vp_captures (known_id) where known_id is not null;
 
@@ -159,6 +186,8 @@ grant execute on function public.vp_number_change_apply(uuid) to service_role;
 comment on function public.vp_number_change_apply(uuid) is
   'One number per player (Dean 17 Nov 2026): a verified number change, in one transaction. The known row, then only the venues whose shared list had this player''s mobile, and there only the rows this known row made (known_id). Service role only. Migration 215.';
 
+reset lock_timeout;
+
 -- Read back (read-only):
 --   select relrowsecurity from pg_class where relname = 'vp_number_changes';                         expects true
 --   select count(*) from information_schema.role_table_grants where table_name = 'vp_number_changes'
@@ -167,3 +196,5 @@ comment on function public.vp_number_change_apply(uuid) is
 --   select prosecdef from pg_proc where proname = 'vp_number_change_apply';                            expects true
 --   select count(*) from information_schema.columns where table_schema = 'public' and column_name = 'known_id'
 --      and table_name in ('vp_players', 'vp_captures');                                                expects 2
+--   select count(*) from pg_constraint where conname in ('vp_players_known_id_fkey', 'vp_captures_known_id_fkey')
+--      and contype = 'f' and convalidated;                                                             expects 2

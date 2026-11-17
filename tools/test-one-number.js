@@ -19,6 +19,11 @@
      9. F1 (18 Nov 2026): a number TYPED at a join is not proof. An attacker who typed a regular's number and then changed
         it to their own moves only their own seat; the regular's seats and list rows keep their number. The swap's two
         WHERE clauses are read out of migration 215 itself (FAKE_APPLY), so the SQL that ships is the SQL tested
+    10. review fixes (fix-215-review-18nov.md): only "no such column known_id" is tried again (a timeout or a 5xx after
+        the row was committed is not: no second seat, no second list row) and that one fallback logs a line with no
+        personal data; a known_id sent by the phone is dropped; an already-known player who types a regular's number
+        and then changes their own cannot move the regular's rows; the migration fails fast on a lock (lock_timeout)
+        and adds its foreign keys NOT VALID, guarded, then validated
    Run from the repo root:  jsc tools/test-one-number.js */
 load('tools/rig-game-worker.js');
 
@@ -36,6 +41,11 @@ if (typeof btoa !== 'function') btoa = function (s) { return 'b64:' + s; };
 if (typeof AbortController !== 'function') AbortController = function () { this.signal = {}; this.abort = function () {}; };
 var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b', THIRD = '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c0c';
 var TEXTS = [], SMS_FAIL = false, MISSING = false, NO_KNOWN_COL = false;
+/* F-A (review 18 Nov 2026): FAIL_MODE makes the NEXT insert into one table fail in a way that is NOT a missing column.
+   'after-commit-504' / 'after-commit-500' store the row, then answer a gateway timeout / server error (the row IS in);
+   'throw' is a fetch that never got an answer. POSTS counts inserts per table; WARNS keeps console.warn lines. */
+var FAIL_MODE = null, POSTS = {}, WARNS = [];
+console.warn = function () { WARNS.push(Array.prototype.join.call(arguments, ' ')); };
 /* what migration 215's function does, in JS. THE TWO ROW REWRITES ARE READ OUT OF THE MIGRATION ITSELF (F1, 18 Nov
    2026): each WHERE condition of its vp_players and vp_captures updates is applied here by name, and a condition this
    stand-in does not know stops the suite. So dropping "known_id = k.id" from the SQL turns this suite red, and the SQL
@@ -93,6 +103,16 @@ fetch = async function (url, opts) {
       if (!r.created_at) r.created_at = new Date().toISOString(); if (!r.last_sent_at) r.last_sent_at = r.created_at; });
     opts = Object.assign({}, opts, { body: JSON.stringify(b) });
   }
+  var pm = /\/rest\/v1\/(vp_players|vp_captures)$/.exec(u);
+  if (pm && opts && opts.method === 'POST') {
+    POSTS[pm[1]] = (POSTS[pm[1]] || 0) + 1;
+    if (FAIL_MODE && FAIL_MODE.table === pm[1]) {
+      var how = FAIL_MODE.how; FAIL_MODE = null;
+      if (how === 'throw') throw new Error('network connection lost');
+      await rigFetch(url, opts);   // committed
+      return how === 'after-commit-504' ? resp(504, { message: 'upstream request timeout' }) : resp(500, { message: 'internal error' });
+    }
+  }
   if (NO_KNOWN_COL && /\/rest\/v1\/(vp_players|vp_captures)$/.test(u) && opts && opts.method === 'POST' && /"known_id"/.test(opts.body)) return resp(400, { code: 'PGRST204', message: "Could not find the 'known_id' column" });
   if (/\/rest\/v1\/vp_players$/.test(u) && opts && opts.method === 'POST') {
     var pb = JSON.parse(opts.body); (Array.isArray(pb) ? pb : [pb]).forEach(function (r) { if (r.kicked === undefined) r.kicked = false; });
@@ -103,6 +123,7 @@ fetch = async function (url, opts) {
 requireStaff = async function (env, uid, venueId) { return { id: 'staff-1', role: 'owner', venue_id: venueId, auth_user_id: uid }; };
 function world() {
   DB = {}; LOG.length = 0; TEXTS.length = 0; SMS_FAIL = false; MISSING = false; NO_KNOWN_COL = false;
+  FAIL_MODE = null; POSTS = {}; WARNS.length = 0;
   delete ENV.CONSENT_BLOCK; delete ENV.NUMBER_CHANGE_SMS_ON; delete ENV.MOBILEMESSAGE_USERNAME; delete ENV.MOBILEMESSAGE_PASSWORD;
   DB.vp_venues = [VENUE, OTHER, THIRD].map(function (id, i) { return { id: id, name: ['The Royal', 'The Other Pub', 'The Third'][i], slug: 'v' + i, status: 'active', au_state: 'QLD', entity_type: 'for_profit', terms_required: false, max_players: 50, founding_id: 'f' + i, timezone: 'Australia/Brisbane', created_at: '2026-01-01T00:00:00Z' }; });
   DB.venueplay_founding = [0, 1, 2].map(function (i) { return { id: 'f' + i, status: 'active', stripe_customer_id: 'cus_' + i, stripe_subscription_id: 'sub_' + i, first_signin_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', contact_email: 'gm' + i + '@pub.com.au' }; });
@@ -323,6 +344,87 @@ function later(ms) { NOWMS += ms; }
   catch (e) { capRes = { status: e.status || 500, body: { error: e.message } }; }
   show('before 215: a bingo capture is still stored, without known_id', capRes.status === 200 && DB.vp_captures.length === nc + 1 && DB.vp_captures[nc].known_id === undefined, JSON.stringify([capRes, DB.vp_captures[nc]]));
   NO_KNOWN_COL = false;
+
+  print('10. REVIEW FIXES (fix-215-review-18nov.md): THE RETRY, THE PHONE\'S OWN known_id, A KNOWN ATTACKER, THE LOCK');
+  world(); on();
+  var M1 = '+61412555001';
+  var s10 = await open(VENUE), s10o = await open(OTHER);
+  var j10 = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), first_name: 'Sam', mobile: '0412 555 001', marketing_optin: true });
+  var seat10 = lastPlayer(), K10 = j10.body.known_key;
+  var known10 = DB.vp_known_players.filter(function (x) { return x.mobile === M1; })[0];
+  show('setup: Sam joins, the seat carries his known row', !!known10 && seat10.known_id === known10.id, JSON.stringify(seat10));
+  /* F-A: a timeout AFTER the seat was committed is not "no such column": never a second insert, never a second seat */
+  var np = DB.vp_players.length, pp = POSTS.vp_players || 0;
+  FAIL_MODE = { table: 'vp_players', how: 'after-commit-504' };
+  var jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: a timeout after the seat was stored is NOT tried again: one insert, one seat, the error answered as before 215', jt.status === 502 && (POSTS.vp_players || 0) === pp + 1 && DB.vp_players.length === np + 1 && lastPlayer().known_id === known10.id, JSON.stringify([jt, POSTS, DB.vp_players.length - np]));
+  np = DB.vp_players.length; pp = POSTS.vp_players || 0;
+  FAIL_MODE = { table: 'vp_players', how: 'throw' };
+  jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: a fetch that never answered is NOT tried again either (one insert, the error passed on)', jt.status !== 200 && (POSTS.vp_players || 0) === pp + 1 && DB.vp_players.length === np, JSON.stringify([jt, POSTS]));
+  show('F-A: neither failure wrote the "column missing" log line', WARNS.length === 0, JSON.stringify(WARNS));
+  /* F-A at the bingo capture: a 500 after the list row was stored is not tried again: the player is on the list once */
+  var sb10 = await open(VENUE);
+  DB.vp_players.push({ id: 'vvvvvvvv-0000-4000-8000-000000000010', session_id: sb10.id, token_hash: await sha256Hex('tok10'), display_name: 'Sam', kicked: false });
+  function cap10(body) {
+    BODY = body;
+    return handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tok10' : ''; } }, url: 'https://game.example/capture' }, ENV, json)
+      .catch(function (e) { return { status: e.status || 500, body: { error: e.message } }; });
+  }
+  var nc10 = DB.vp_captures.length, pc = POSTS.vp_captures || 0;
+  FAIL_MODE = { table: 'vp_captures', how: 'after-commit-500' };
+  var c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [K10], marketing_optin: true });
+  show('F-A: a server error after the bingo list row was stored is NOT tried again: Sam is on the list once', c10.status === 502 && (POSTS.vp_captures || 0) === pc + 1 && DB.vp_captures.length === nc10 + 1, JSON.stringify([c10, POSTS, DB.vp_captures.length - nc10]));
+  /* F-A: the one error that IS tried again, once, with one log line that holds no number, no name, no id or key */
+  NO_KNOWN_COL = true; WARNS.length = 0;
+  np = DB.vp_players.length; pp = POSTS.vp_players || 0;
+  jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: "no such column known_id" IS tried again, exactly once, and the seat lands without the link', jt.status === 200 && (POSTS.vp_players || 0) === pp + 2 && DB.vp_players.length === np + 1 && lastPlayer().known_id === undefined, JSON.stringify([jt.status, POSTS]));
+  nc10 = DB.vp_captures.length; pc = POSTS.vp_captures || 0;
+  c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [K10], marketing_optin: true });
+  show('F-A: the same for a bingo capture: tried again once, stored once, without the link', c10.status === 200 && (POSTS.vp_captures || 0) === pc + 2 && DB.vp_captures.length === nc10 + 1 && DB.vp_captures[nc10].known_id === undefined, JSON.stringify([c10, POSTS]));
+  var wtext = WARNS.join('\n');
+  show('F-A: each fallback logs one line, naming the table and migration 215', WARNS.length === 2 && /\[known_id\] column missing on vp_players/.test(WARNS[0]) && /\[known_id\] column missing on vp_captures/.test(WARNS[1]), JSON.stringify(WARNS));
+  show('F-A: the log line holds no personal data (no number, no name, no known id, no key)', wtext.indexOf('412') < 0 && wtext.indexOf('555') < 0 && wtext.indexOf('Sam') < 0 && wtext.indexOf(known10.id) < 0 && wtext.indexOf(K10) < 0, wtext);
+  NO_KNOWN_COL = false;
+  /* T1: a known_id the phone sends is never used: only the server's own known row goes on the seat or the list row */
+  var j11 = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), known_id: known10.id });
+  show('T1: a join that sends Sam\'s known_id (and no key) gets no link to Sam', j11.status === 200 && lastPlayer().known_id !== known10.id && lastPlayer().known_id === undefined, JSON.stringify(lastPlayer()));
+  j11 = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 222', known_id: known10.id });
+  var malKnown = DB.vp_known_players.filter(function (x) { return x.mobile === '+61412555222'; })[0];
+  show('T1: a join that sends Sam\'s known_id with its own details is linked to its OWN new known row, not Sam\'s', j11.status === 200 && !!malKnown && lastPlayer().known_id === malKnown.id, JSON.stringify(lastPlayer()));
+  nc10 = DB.vp_captures.length;
+  c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_id: known10.id, marketing_optin: true });
+  show('T1: a bingo capture that sends Sam\'s known_id (and no key) is stored without any link', c10.status === 200 && DB.vp_captures.length === nc10 + 1 && DB.vp_captures[nc10].known_id === undefined, JSON.stringify([c10, DB.vp_captures[nc10]]));
+  /* T2: an attacker who is ALREADY known (own number A) types Sam's number at this venue, then changes A to B */
+  var MA2 = '+61412555333', MB2 = '+61412555444';
+  var ja = await call(handleJoin, { code: s10o.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 333' });
+  var KA2 = ja.body.known_key, aSeatOther = lastPlayer();
+  var aKnown = DB.vp_known_players.filter(function (x) { return x.mobile === MA2; })[0];
+  ja = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), known_keys: [KA2], first_name: 'Mal', mobile: '0412 555 001' });
+  var aTyped = lastPlayer();
+  show('T2 setup: the known attacker\'s seat here holds Sam\'s typed number with the attacker\'s own known_id, and this venue is NOT on the attacker\'s shared list', ja.status === 200 && !!aKnown && aTyped.mobile === M1 && aTyped.known_id === aKnown.id && !sharedWith(aKnown, VENUE, 'mobile') && aKnown.mobile === MA2, JSON.stringify([aTyped, aKnown]));
+  later(31000);
+  st = await call(handleNumberStart, { keys: [KA2], mobile: '0412 555 444' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [KA2], change_id: st.body.change_id, sms_code: CODE });
+  show('T2 setup: the attacker\'s own change goes through', st.status === 200 && v.status === 200 && aKnown.mobile === MB2, JSON.stringify([st, v]));
+  show('T2 ATTACK: Sam\'s seat keeps Sam\'s number', seat10.mobile === M1, JSON.stringify(seat10));
+  show('T2 ATTACK: the attacker\'s seat with Sam\'s typed number keeps Sam\'s number (not moved to the attacker\'s)', aTyped.mobile === M1, JSON.stringify(aTyped));
+  show('T2 ATTACK: no row anywhere holds the attacker\'s new number except the attacker\'s own seat at the other venue', DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MB2; }).every(function (r) { return r === aSeatOther; }) && aSeatOther.mobile === MB2, JSON.stringify(DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MB2; })));
+  show('T2: Sam\'s known row is untouched', known10.mobile === M1);
+  /* F-B: the migration fails fast on a lock instead of queueing every join, and adds its foreign keys without a scan */
+  var RAW215 = readFile('venueplay-backend/supabase/venueplay-215-one-number-per-player.sql');
+  var after = RAW215.split('-- VP-STAGING-GUARD-END')[1] || '';
+  show('F-B: the first statement after the TEST guard is set lock_timeout = \'3s\'', /^\s*set lock_timeout = '3s';/.test(after), after.slice(0, 60));
+  var sql = after.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  show('F-B: the known_id columns are added with no inline foreign key (no scan under the add-column lock)', /alter table public\.vp_players add column if not exists known_id uuid;/.test(sql) && /alter table public\.vp_captures add column if not exists known_id uuid;/.test(sql) && !/add column if not exists known_id uuid references/.test(sql));
+  var fkOk = ['vp_players', 'vp_captures'].every(function (t) {
+    var guard = new RegExp("if not exists \\(select 1 from pg_constraint\\s+where conrelid = 'public\\." + t + "'::regclass and conname = '" + t + "_known_id_fkey'\\) then\\s+alter table public\\." + t + " add constraint " + t + "_known_id_fkey\\s+foreign key \\(known_id\\) references public\\.vp_known_players\\(id\\) on delete set null not valid;");
+    return guard.test(sql) && new RegExp('alter table public\\.' + t + ' validate constraint ' + t + '_known_id_fkey;').test(sql);
+  });
+  show('F-B: each foreign key is added NOT VALID only when pg_constraint lacks it (safe twice), then validated on its own', fkOk);
+  show('F-B: the lock timeout is reset after the last statement that takes a lock', /reset lock_timeout;\s*$/.test(sql));
 
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));

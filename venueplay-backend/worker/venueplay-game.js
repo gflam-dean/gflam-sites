@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '18 Nov 2026, 07:45 · 328203ef';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '18 Nov 2026, 07:59 · 1cde43b5';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2981,11 +2981,15 @@ async function handleCapture(request, env, json) {
   try {
     await sbInsert(env, 'vp_captures', row, false);
     return await capReply();
-  } catch (e) {
-    /* before migration 215 there is no known_id column: the row is stored without it (never moved by a change) */
-    if ('known_id' in row) {
+  } catch (e1) {
+    let e = e1;
+    /* before migration 215 there is no known_id column: the row is stored without it (never moved by a change). ONLY
+       that refusal is tried again (review F-A, 18 Nov 2026): a timeout or a 5xx may come after the row was committed,
+       and a second insert would put the player on the venue's list twice. Any other error goes on as before 215. */
+    if ('known_id' in row && knownIdColumnMissing(e)) {
+      knownIdMissingWarn('vp_captures');
       delete row.known_id;
-      try { await sbInsert(env, 'vp_captures', row, false); return await capReply(); } catch (e2) { /* the older fallbacks below */ }
+      try { await sbInsert(env, 'vp_captures', row, false); return await capReply(); } catch (e2) { e = e2; /* the older fallbacks below, as before 215 */ }
     }
     const msg = String((e && e.message) || e);
     if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 &&
@@ -3472,6 +3476,19 @@ let _coasterRows = null, _coasterRowsAt = 0;
    (no name, no board) rather than not at all. dbError keeps the detail in the log, never in the answer. */
 function coasterOff(json) { return json({ off: true, error: 'The coaster board is not switched on yet.' }, 503); }
 function coasterMissingTable(e) { return !!e && e.status === 502; }
+/* THE known_id COLUMN IS NOT THERE YET (migration 215 not run, or PostgREST's schema cache not reloaded). PostgREST
+   refuses a write naming a column the table does not have with a 400 that names the column: PGRST204 "Could not find
+   the 'known_id' column ... in the schema cache", or Postgres 42703 "column known_id ... does not exist". That is the
+   ONE refusal a join or a bingo capture tries again without the link (same test as withdrawnColumnMissing). A timeout,
+   a 5xx or a thrown fetch has no dbStatus 400 and is never tried again. */
+function knownIdColumnMissing(e) {
+  const t = String((e && e.dbDetail) || '');
+  return !!e && e.dbStatus === 400 && /known_id/.test(t) && /42703|PGRST204|does not exist|Could not find/.test(t);
+}
+/* One line per fallback, no personal data (no number, no name, no ids): the gap after a deploy shows in the logs. */
+function knownIdMissingWarn(table) {
+  console.warn('[known_id] column missing on ' + table + ': stored without the link (run migration 215, or reload the schema cache)');
+}
 /* A typed pub name with a word the TV's cleanName refuses, anywhere in it. */
 function coasterRude(name) {
   for (let k = 0; k < name.length; k += 10) {
@@ -5332,7 +5349,11 @@ async function handleJoin(request, env, json) {
   try {
     try { inserted = await sbInsert(env, 'vp_players', playerRow, true); }
     catch (e0) {
-      if (!('known_id' in playerRow) || (e0 && e0.status === 409)) throw e0;
+      /* ONLY "no such column known_id" is tried again (review F-A, 18 Nov 2026). A timeout or a 5xx may come AFTER the
+         seat was committed; a second insert then makes a second (billed) seat. Every other error goes on exactly as it
+         did before migration 215: the 409 take-back below, or the error itself. */
+      if (!('known_id' in playerRow) || !knownIdColumnMissing(e0)) throw e0;
+      knownIdMissingWarn('vp_players');
       delete playerRow.known_id;
       inserted = await sbInsert(env, 'vp_players', playerRow, true);
     }
@@ -14729,7 +14750,14 @@ async function sbInsert(env, table, obj, returnRep) {
     // Callers that already catch conflicts (join-code loop, player card/answer) are unaffected.
     throw httpError(409, 'That was already starting. Please try again.');
   }
-  if (!res.ok) throw dbError('insert', table, await res.text());   // M5: log detail, return generic + code
+  if (!res.ok) {
+    /* M5: log detail, return generic + code. The upstream status and text ride on the error for the CALLER only (the
+       router answers with the message alone), so a caller can tell "this column is not there yet" from a timeout. */
+    const text = await res.text();
+    const e = dbError('insert', table, text);
+    e.dbStatus = res.status; e.dbDetail = String(text || '');
+    throw e;
+  }
   if (returnRep) return await res.json();
   return null;
 }
