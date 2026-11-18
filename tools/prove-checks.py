@@ -27807,6 +27807,13 @@ UNPROVABLE = {
         'comparison itself was checked by hand on 22 Sep 2026: nine live pages compared equal '
         'to the repo through livenorm, and a page with a local edit compared unequal. Not yet '
         'seen red on a real push; when it is, record the date here.',
+    # 18 Nov 2026: a Chrome suite is a gate label when it runs on the Mac (billing range). No mutation row is keyed by
+    # this suite's name; what it draws is proven row by row under tools/test-signin-in-thread.js (the vp-prospects-hq.js
+    # draft, held-back Yes and chip rows, and the Worker's chip and draft rows).
+    'prospects-delivery-in-chrome.test.py':
+        'a Chrome suite: the chips, the DRAFT FOR DEAN block and the held-back Yes it checks in the real page are proven row by row '
+        'under the suite tools/test-signin-in-thread.js (vp-prospects-hq.js and the billing Worker). '
+        'Proving them again here would start Chrome once per mutation; this entry is its gate label only.',
 }
 
 MUTATIONS_LIVE = [
