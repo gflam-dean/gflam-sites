@@ -948,7 +948,7 @@ MUTATIONS = [
      '"prove": "no-such-suite.test.py"',
      'a never-again check nobody has broken on purpose'),
     ('never-again.test.py', 'tools/never-again-map.json',
-     '"gap_until": "2026-11-20"',
+     '"gap_until": "2026-12-04"',
      '"gap_until": "2026-01-01"',
      'a never-again gap left open past its date'),
     # ---- 12 Nov 2026 (INBOX 282.5, Dean's real night on The Mini Bar, FINDINGS T2-T7): trivia UX. tools/trivia-ux-in-chrome.test.py
