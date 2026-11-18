@@ -272,7 +272,10 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
     if (u === 7) { steps.push(['venue_search_none', { q: 'wobbly goat' }]); steps.push(['venue_search_none', { q: 'wobbly goat' }]); steps.push(['venue_search_none', { q: 'goat inn' }]); steps.push(['form_abandon', { field: 'venue', ms: 20000 }]); }
     await visit(s, steps);
   }
-  var admin = await call('/admin/journey-funnel', { days: 90 }, AS(ADMIN));
+  // Clock pinned to 17 Nov 2026 (the day after the fixtures at 16 Nov) so the real 7-day window never ages out; the funnel reads Date.now.
+  var FunnelRealNow = Date.now; var FUNNEL_ANCHOR = '2026-11-17T00:00:00.000Z'; Date.now = function () { return Date.parse(FUNNEL_ANCHOR); };
+  print('  (funnel clock pinned to ' + FUNNEL_ANCHOR + ')');
+  var admin = await call('/admin/journey-funnel', { days: 7 }, AS(ADMIN));
   check('HQ funnel answers ok for the owner', admin.status === 200 && admin.body.ok === true, admin);
   var st = {}; (admin.body.steps || []).forEach(function (x) { st[x.step] = x; });
   check('reached counts distinct sessions per step', st.page_opened.reached === 12 && st.button_tapped.reached === 12 && st.form_started.reached === 9 && st.form_sent.reached === 6 && st.account_made.reached === 4 && st.signed_in.reached === 2, admin.body.steps);
@@ -289,7 +292,8 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   // scanner sessions are not people
   await addLink({ code: 'SCAN33', id: 3, sent_at: '2026-11-16T00:00:00.000Z' });
   await track({ sid: 'a99999999999999999999999', code: 'SCAN33', events: [ev('link_hit'), ev('page_opened')] }, 'Mimecast Link Check');
-  var after = await call('/admin/journey-funnel', { days: 90 }, AS(ADMIN));
+  var after = await call('/admin/journey-funnel', { days: 7 }, AS(ADMIN));
+  Date.now = FunnelRealNow;
   check('a scanner session is not in the funnel, and is counted apart', after.body.steps[0].reached === 12 && after.body.scanner_hits === 1, [after.body.steps[0].reached, after.body.scanner_hits]);
 
   section('10. HQ: per campaign and email step');
