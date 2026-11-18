@@ -258,7 +258,7 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var L = await setupAt(NOV5, { name: 'Late In Month Hotel', offer_code: 'OFFER-NOV-2026' });
   await signInAt(L, bms(2026, 12, 3, 9, 0));
   var lq = await quote(L, bms(2026, 12, 10, 9, 0));
-  check('a late starter mid-month while December\'s offer is open to others: still $3.00 (never "whatever is open today")', lq.rate === 3 && vpaFoundingOpenNow(ENV), lq);
+  check('a late starter mid-month while December\'s offer is open to others: still $3.00 (never "whatever is open today")', lq.rate === 3 && vpaLiveCodes(ENV, bms(2026, 12, 10, 9, 0)).length > 0, lq);
 
   section('7. Prospects already signed in before this ships are never changed');
   fresh();

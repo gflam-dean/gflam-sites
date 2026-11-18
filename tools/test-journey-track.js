@@ -272,6 +272,13 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
     if (u === 7) { steps.push(['venue_search_none', { q: 'wobbly goat' }]); steps.push(['venue_search_none', { q: 'wobbly goat' }]); steps.push(['venue_search_none', { q: 'goat inn' }]); steps.push(['form_abandon', { field: 'venue', ms: 20000 }]); }
     await visit(s, steps);
   }
+  // Clock pinned to 17 Nov 2026 so the funnel's 7-day window starts 10 Nov and never ages out the fixtures. The fixtures here are two kinds:
+  // the section 9 visit() rows carry an age, so the Worker stamps them real-now minus that age (written before this pin; any run date works,
+  // the query has only a lower bound), and link and event rows with no age are dated 16 Nov 2026. Both sit inside the window. The funnel reads Date.now.
+  var FunnelRealNow = Date.now; var FUNNEL_ANCHOR = '2026-11-17T00:00:00.000Z'; Date.now = function () { return Date.parse(FUNNEL_ANCHOR); };
+  var after;
+  try {
+  print('  (funnel clock pinned to ' + FUNNEL_ANCHOR + ')');
   var admin = await call('/admin/journey-funnel', { days: 7 }, AS(ADMIN));
   check('HQ funnel answers ok for the owner', admin.status === 200 && admin.body.ok === true, admin);
   var st = {}; (admin.body.steps || []).forEach(function (x) { st[x.step] = x; });
@@ -289,7 +296,8 @@ function ofSid(s) { return rows().filter(function (r) { return r.sid === s; }); 
   // scanner sessions are not people
   await addLink({ code: 'SCAN33', id: 3, sent_at: '2026-11-16T00:00:00.000Z' });
   await track({ sid: 'a99999999999999999999999', code: 'SCAN33', events: [ev('link_hit'), ev('page_opened')] }, 'Mimecast Link Check');
-  var after = await call('/admin/journey-funnel', { days: 7 }, AS(ADMIN));
+  after = await call('/admin/journey-funnel', { days: 7 }, AS(ADMIN));
+  } finally { Date.now = FunnelRealNow; }
   check('a scanner session is not in the funnel, and is counted apart', after.body.steps[0].reached === 12 && after.body.scanner_hits === 1, [after.body.steps[0].reached, after.body.scanner_hits]);
 
   section('10. HQ: per campaign and email step');

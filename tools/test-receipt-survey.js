@@ -33,6 +33,8 @@ crypto = { subtle: { digest: function (a, b) { return Promise.resolve(fnv(new Ui
 
 var fails = 0, ran = 0;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { fails++; print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); } }
+// The welcome reads Date.now() against fixture code OFFER-NOV-2026 (sign-in-by 30 Nov 2026): hold the clock at 10 Nov 2026 so the suite never goes red when the real date passes it.
+function atFixtureClock(fn) { var real = Date.now; Date.now = function () { return Date.UTC(2026, 10, 9, 23, 0, 0); }; try { return fn(); } finally { Date.now = real; } }
 function drain() { if (typeof drainMicrotasks === 'function') for (var i = 0; i < 60; i++) drainMicrotasks(); }
 function visible(html) {
   return String(html || '').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&middot;/g, '·').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
@@ -182,7 +184,7 @@ async function main() {
   print('\n5. The 5-day keep is never said in an email (Dean, 7 Nov 2026)');
   check('there is no VPA_OFFER_GRACE_LIVE switch left in the Worker', (src.match(/VPA_OFFER_GRACE_LIVE/g) || []).length === 0);
   var W = { email: 'gm@pub.com', firstName: 'Sam', venueName: 'The Royal', seats: 10, offerCode: 'OFFER-NOV-2026' };
-  var off = '', RAW = ''; vpaRenderProspectWelcome(ENV, W).then(function (x) { RAW += x; off = visible(x); }); drain();
+  var off = '', RAW = ''; atFixtureClock(function () { vpaRenderProspectWelcome(ENV, W).then(function (x) { RAW += x; off = visible(x); }); drain(); });
   check('the welcome says the plan in numbers and the short no-card line, and never 5 days',
     /Your plan is set to 10 players ?, so that's \$25\.00 a month\. You can change it any time\./.test(off) && off.indexOf("There's no card on your account, so nothing can be charged. We'll remind you before your first month ends.") !== -1 && off.indexOf('5 days') === -1, off.slice(-900));
   var STD = Number((/const VPA_STANDARD_RATE = ([\d.]+)/.exec(src) || [])[1]);
@@ -255,7 +257,7 @@ async function main() {
   await vpaFireWelcome(ENV, { metadata: { tier: 'founding' } }, { contact_email: 'o@pub.com', plan: 'monthly' }, [{ name: 'A', seats: 30 }, { name: 'B', seats: 50 }], true); grab('welcome-group');
   await vpaFireHqWelcome(ENV, { email: 'o@pub.com', venueName: 'The Royal', seats: 24, foundingId: 'f1' }); grab('welcome-hq');
   await vpbFireVenueOnboarding(ENV, { email: 'o@pub.com', venueName: 'The Crown', loginVenues: 2 }); grab('onboarding');
-  var pw = ''; vpaRenderProspectWelcome(ENV, W).then(function (x) { pw = x; }); drain(); mails['welcome-prospect'] = pw;
+  var pw = ''; atFixtureClock(function () { vpaRenderProspectWelcome(ENV, W).then(function (x) { pw = x; }); drain(); }); mails['welcome-prospect'] = pw;
   mails['prospect-reminder'] = RAW.slice(0, 0) || ''; vpaRenderProspectReminder(ENV, R).then(function (x) { mails['prospect-reminder'] = x.html; }); drain();
   await vpaFireUpcomingEmail(ENV, clone(INV, { amount_paid: 0 })); grab('upcoming');
   await vpaFireInvoiceEmail(ENV, INV); grab('receipt');
