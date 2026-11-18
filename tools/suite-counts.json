@@ -1051,6 +1051,10 @@
   "checks": 129,
   "counted_by": "lines"
  },
+ "tools/test-monthly-sweep-skip.js": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
  "tools/test-multi-raffle.js": {
   "checks": 29,
   "counted_by": "lines"

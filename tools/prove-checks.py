@@ -26876,6 +26876,27 @@ MUTATIONS = [
     # The three Chrome rows for these faults (five-games-host-only-refresh and -refresh-2, proved on vp-tests-1 17 Nov) are NOT here:
     # those suites live on test/audit-five-games-16nov (dc80c914), red by design for the faults still open, and are not on this
     # branch. The jsc rows above prove the same three mutations. Add the Chrome rows back with dc80c914 (assembled-c, 17 Nov 2026).
+    # INBOX 650a (19 Nov 2026): the monthly email skips Do not contact, bounced and spam-complaint addresses, and holds when the bounce list cannot be read.
+    ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "else if (ncIds.has(v.id)) why = 'do not contact';",
+     "else if (false) why = 'do not contact';",
+     'a venue HQ marked Do not contact is still sent the monthly report'),
+    ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "else if (bad[to]) why = 'address bounced';",
+     "else if (false) why = 'address bounced';",
+     'an address that bounced or marked us as spam is still in the monthly send list'),
+    ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "'action=in.(email_bounced,email_marked_spam)&select=detail&order=id.asc'",
+     "'action=in.(email_bounced)&select=detail&order=id.asc'",
+     'an address that marked us as spam is still in the monthly send list'),
+    ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "} catch (e) { return { off: false, waiting: true, sent: 0, why: 'bounced addresses not readable' }; }",
+     '} catch (e) { /* swallowed */ }',
+     'a bounce list that cannot be read is treated as empty and the whole monthly send goes out blind'),
+    ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "const a = b && b.detail && String(b.detail.address || '').trim().toLowerCase();",
+     "const a = b && b.detail && String(b.detail.address || '').trim();",
+     'a bounced address typed in another case is mailed again'),
 ]
 
 

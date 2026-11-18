@@ -4139,6 +4139,12 @@ def local_checks(which):
              'runs nothing: reads migration 218 and RLS-BASELINE.json: the 17 tables no browser writes lose every FOR ALL policy (admin and host_write) and every write grant to public, anon and authenticated; each gets a SELECT-only admin policy with the same roles and predicate as before; host reads and SELECT grants stay; the TEST guard comes first; vp_venue_staff, vp_venue_groups, vp_venues and vp_venue_settings are not touched', 45,
              'A staff login taking money off an invoice, deleting the audit row that says so, or rewriting a QLD draw record '
              'from the browser console'),
+            # D479: the monthly venue email skips who must not be emailed (INBOX 650a, 19 Nov 2026), branch fix/monthly-sweep-skip-bounced-19nov.
+            ('D479. The monthly venue email skips Do not contact, bounced and spam-complaint addresses, and holds when the bounce list cannot be read',
+             'test-monthly-sweep-skip.js',
+             'runs the real sweep on the fake database: a venue marked Do not contact, an address with a prior email_bounced row and one with an email_marked_spam row (any case, any spacing) are skipped and recorded; test, unsubscribed and cancelled venues still skipped; a normal venue still mailed; the bounce read failing (503 or a throw) holds the tick, mails nobody and writes nothing',
+             'A bounced or complaining address mailed again on 1 Dec, a venue Dean said not to contact still getting the report, '
+             'or a failed bounce read sending the whole month out blind'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',
