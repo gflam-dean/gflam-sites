@@ -144,9 +144,9 @@ print('the contact lines say venueplay, not Gflam Group; the legal line stays (D
     check(x[0] + ': the opening line says "trading as venueplay", and no "VenuePlay" is left in what a reader sees',
           /\(ABN 35 679 383 049\), trading as venueplay \(/.test(x[1]) && !/VenuePlay/.test(x[1].replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/facebook\.com\/people\/VenuePlay\//g, '')));
   });
-  /* A NUMBER CHANGE (migration 215, fixed): the profile and the rows it created move; rows made before keep the old number until retention removes them. */
-  check('privacy: a number change updates the profile and the player and sign-up rows it created, and older rows keep the old number until removed under section 8',
-        /we update the number on that player's profile, and on the player and sign-up rows their profile created at the venues that already had the old number\. Rows created before this change keep the old number until they are removed under the normal retention in section 8\./.test(priv));
+  /* A NUMBER CHANGE (migration 215, fixed): the profile and the rows it created move; rows made before they were linked to the profile keep the old number until retention removes them. */
+  check('privacy: a number change updates the profile and the player and sign-up rows it created, and older rows keep the old number until removed under section 2',
+        /we update the number on that player's profile, and on the player and sign-up rows their profile created at the venues that already had the old number\. Entries made before we linked them to the player's profile are not changed\. They keep the old number until they are removed under the normal retention described in section 2\./.test(priv));
   /* PRIVACY QUESTIONS GO TO THE HELP PAGE FIRST (Dean, 4 Nov 2026), with a real email address kept beside it
      (the Privacy Act needs real contact details). hello@ forwards into the help desk; never a phone number. */
   var pc = contactBlock(priv), after = priv.slice(priv.indexOf(pc) + pc.length, priv.indexOf('</main>'));
