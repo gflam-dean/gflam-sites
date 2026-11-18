@@ -4142,7 +4142,7 @@ def local_checks(which):
             # D479: the monthly venue email skips who must not be emailed (INBOX 650a, 19 Nov 2026), branch fix/monthly-sweep-skip-bounced-19nov.
             ('D479. The monthly venue email skips Do not contact, bounced and spam-complaint addresses, and holds when the bounce list cannot be read',
              'test-monthly-sweep-skip.js',
-             'runs the real sweep on the fake database: a venue marked Do not contact, an address with a prior email_bounced row and one with an email_marked_spam row (any case, any spacing) are skipped and recorded; test, unsubscribed and cancelled venues still skipped; a normal venue still mailed; the bounce read failing (503 or a throw) holds the tick, mails nobody and writes nothing',
+             'runs the real sweep on the fake database: a venue marked Do not contact, an address with a prior email_bounced row and one with an email_marked_spam row (any case, any spacing) are skipped and recorded; test, unsubscribed and cancelled venues still skipped; a normal venue still mailed; the bounce read failing (503 or a throw) holds the tick, mails nobody and writes nothing', 24,
              'A bounced or complaining address mailed again on 1 Dec, a venue Dean said not to contact still getting the report, '
              'or a failed bounce read sending the whole month out blind'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.

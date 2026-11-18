@@ -26880,7 +26880,7 @@ MUTATIONS = [
     ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "else if (ncIds.has(v.id)) why = 'do not contact';",
      "else if (false) why = 'do not contact';",
-     'a venue HQ marked Do not contact is still sent the monthly report'),
+     'runs the real sweep on the fake database: a venue marked Do not contact'),
     ('test-monthly-sweep-skip.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "else if (bad[to]) why = 'address bounced';",
      "else if (false) why = 'address bounced';",
