@@ -27807,6 +27807,14 @@ UNPROVABLE = {
         'comparison itself was checked by hand on 22 Sep 2026: nine live pages compared equal '
         'to the repo through livenorm, and a page with a local edit compared unequal. Not yet '
         'seen red on a real push; when it is, record the date here.',
+    # 18 Nov 2026 (migration 217): the D477 gate line, proven row by row under its suite's name.
+    'runs POST /admin/staff-remove and /admin/staff on the billing Worker':
+        'its subject is the suite tools/test-platform-admins-no-browser-write.js itself, proven row by row under that suite\'s own name. '
+        'Proving it again by label would run the whole gate once per mutation.',
+    # 18 Nov 2026 (migration 218): the D478 gate line, proven row by row under its suite's name.
+    'runs nothing: reads migration 218 and RLS-BASELINE.json':
+        'its subject is the suite tools/test-admin-forall-lockdown.js itself, proven row by row under that suite\'s own name. '
+        'Proving it again by label would run the whole gate once per mutation.',
     # 18 Nov 2026: a Chrome suite is a gate label when it runs on the Mac (billing range). No mutation row is keyed by
     # this suite's name; what it draws is proven row by row under tools/test-signin-in-thread.js (the vp-prospects-hq.js
     # draft, held-back Yes and chip rows, and the Worker's chip and draft rows).
