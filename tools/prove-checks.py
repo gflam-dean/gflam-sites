@@ -414,7 +414,7 @@ MUTATIONS = [
      '"prove": "no-such-suite.test.py"',
      'a never-again check nobody has broken on purpose'),
     ('never-again.test.py', 'tools/never-again-map.json',
-     '"gap_until": "2026-11-20"',
+     '"gap_until": "2026-12-04"',
      '"gap_until": "2026-01-01"',
      'a never-again gap left open past its date'),
     # ---- 22 Nov 2026 (job list row 167): a phone night for the venue's own pattern, "Any 5 numbers", on the rig.
