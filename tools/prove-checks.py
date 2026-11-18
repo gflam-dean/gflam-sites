@@ -9823,8 +9823,8 @@ MUTATIONS = [
      'a player who shouted BINGO is dropped without a word when the host taps End game'),
 
     ('test-terms-put-compliance-on-the-venue.js', 'venueplay/privacy.html',
-     "Entries made before we linked them to the player's profile are not changed. They keep the old number until they are removed under the normal retention described in section 2.",
-     "Entries made before we linked them to the player's profile move to the new number as well.",
+     "Rows made before we linked them to the player's profile are not changed. They keep the old number until they are removed under the normal retention described in section 2.",
+     "Rows made before we linked them to the player's profile move to the new number as well.",
      'the privacy page says old rows are changed too, while they keep the old number'),
     ('every "address in section N" points at the section that is really Contact us', 'venueplay/privacy.html',
      "contact us at the address in section 14. We will remove", "contact us at the address in section 10. We will remove",
