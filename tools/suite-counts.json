@@ -992,7 +992,7 @@
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
-  "checks": 129,
+  "checks": 134,
   "counted_by": "lines"
  },
  "tools/test-multi-raffle.js": {
@@ -1196,7 +1196,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 97,
+  "checks": 103,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1972,7 +1972,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 93,
+  "checks": 108,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-hq.test.js": {
