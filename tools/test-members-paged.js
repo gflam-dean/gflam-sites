@@ -97,7 +97,8 @@ expect(1, 'one member')
     /* An empty club must not loop for ever. */
     return run(0).then(function (rows) {
       check('an empty members list returns empty, not a hang', rows.length === 0, rows.length);
-      check('and costs exactly one call', calls === 1, calls);
+      /* Two since migration 208 (Dean's open question 10): the table, then the names view an HQ View as reads. */
+      check('and costs exactly two calls (the table, then the names view)', calls === 2, calls);
     });
   })
   .then(function () {

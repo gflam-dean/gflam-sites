@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '19 Nov 2026, 18:38 · 0ac653e7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:09 · 7aa6d8d8';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -570,6 +570,8 @@ export default {
       // A yearly group's player cut or removed pub holds its value as credit on the GROUP (Dean, 16 Nov 2026, INBOX 419 add-on; migration 199).
       if (request.method === 'POST' && path === '/admin/group-release'   && typeof vpaHandleGroupRelease === 'function')   return await vpaHandleGroupRelease(request, env, json);
       if (request.method === 'POST' && path === '/admin/group-credits'   && typeof vpaHandleGroupCredits === 'function')   return await vpaHandleGroupCredits(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-rename'    && typeof vpaHandleVenueRename === 'function')    return await vpaHandleVenueRename(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-address'   && typeof vpaHandleVenueAddress === 'function')   return await vpaHandleVenueAddress(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/permit-register-check' && typeof vpaHandlePermitRegisterCheck === 'function') return await vpaHandlePermitRegisterCheck(request, env, json);
       if (request.method === 'POST' && path === '/admin/night-pass'      && typeof vpaHandleNightPass === 'function')      return await vpaHandleNightPass(request, env, json);
@@ -799,6 +801,12 @@ async function handleCheckout(request, env, json) {
   // by hand. This is effectively unlimited for any real group.
   if (totalSeats > 999000) {
     return json({ error: 'That is a huge group. Email us at hello@venueplay.com.au and we will set it up for you.' }, 400);
+  }
+  /* ONE VENUE SIGNING UP BY ITSELF has the same limit as Add a venue (Dean, 14 Nov 2026, INBOX 418): over PLAYER_CALL
+     players it is not self-serve, nothing is saved and Stripe is never asked. A group (two or more venues) has no limit.
+     This is a public page, so the words name sales@, not the phone (the phone lives behind sign-in). */
+  if (venueCount === 1 && venues[0].seats > VPB_PLAYER_CALL) {
+    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, email sales@venueplay.com.au and we will set it up with you.' }, 400);
   }
 
   // Founding is INVITE-ONLY via a state founding link (e.g. /qld), which sends a founding_code,
@@ -2244,7 +2252,14 @@ function vpTeamTally(boards) {
    Existing venues are untouched. This only decides the name a NEW venue gets. */
 async function vpaSlugTaken(env, slug) {
   const rows = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(slug) + '&select=id&limit=1');
-  return !!(rows && rows.length);
+  if (rows && rows.length) return true;
+  /* AN OLD ADDRESS IS TAKEN FOR EVER (migration 212, Dean's open question 32). A venue that moved its TV address keeps
+     the old one forwarding: printed table talkers, TV bookmarks and the TV apps carry it. A new venue handed that
+     address would get the old pub's printed QR codes. Before 212 runs the table is not there, vpaSelect answers [] and
+     nothing changes; after it, the database refuses the insert anyway (vp_venues_slug_alias_guard), and this keeps a
+     sign-up from ever reaching that refusal. */
+  const old = await vpaSelect(env, 'vp_venue_slug_aliases', 'slug=eq.' + encodeURIComponent(slug) + '&select=venue_id&limit=1');
+  return !!(old && old.length);
 }
 
 async function vpaUniqueSlug(env, base, seed, postcode) {
@@ -10410,6 +10425,146 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
            archived: archived, skipped: skipped };
 }
 
+/* POST /admin/venue-rename  {venue_id, name, confirm_same_name?}   (HQ OWNER ONLY)
+   HQ "Rename venue" (Jobs sheet "HQ Rename venue button", Dean 9 Nov 2026 after the Lunatic Hotel).
+   Changes the venue's DISPLAY NAME only: vp_venues.name, which every screen reads live (TV, phones,
+   consoles, paper cards, account page, emails, HQ). It NEVER touches the slug (the TV address) or
+   the join code, so no TV, QR, printed card or saved link stops working.
+   - HQ owner role only (not accounts, not support): a name is what a pub sees on its own TV.
+   - Another venue already called the same thing: refused until the caller confirms
+     (confirm_same_name), so two pubs are never made to look the same by accident.
+   - A one-venue account whose account name was the old venue name gets the new name too (the
+     card page and emails read venueplay_founding.venue_name). A multi-venue account's own name
+     is the owner's, not one pub's, and is left alone.
+   - AUDITED with the old and the new name. If the audit row cannot be written the rename is
+     put back and refused: a name change nobody can trace is not allowed. */
+function vpaCleanVenueName(raw) {
+  const s = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!s) return { error: 'Type the new venue name.' };
+  if (s.length > 120) return { error: 'That name is too long (120 characters at most).' };
+  if (/[<>]/.test(s)) return { error: 'A venue name cannot have < or > in it.' };
+  return { name: s };
+}
+async function vpaHandleVenueRename(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const c = vpaCleanVenueName(b.name);
+  if (c.error) return json({ error: c.error }, 400);
+  const name = c.name;
+
+  const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,join_code,founding_id&limit=1');
+  const v = rows && rows[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  const oldName = String(v.name || '');
+  if (oldName === name) return json({ error: 'That is already its name.' }, 400);
+
+  /* Same name as another venue (any letter case): ask first. ilike with the wildcards escaped,
+     so a name with % or _ in it matches only itself. */
+  const pat = name.replace(/[\\%_*]/g, function (ch) { return '\\' + ch; });
+  const same = ((await vpaSelect(env, 'vp_venues', 'name=ilike.' + encodeURIComponent(pat) + '&id=neq.' + encodeURIComponent(venueId) + '&select=id,name,slug&limit=5')) || [])
+    .filter(function (o) { return String(o.name || '').toLowerCase() === name.toLowerCase(); });
+  if (same.length && b.confirm_same_name !== true) {
+    return json({ needs_confirm: true, same_name: same.map(function (o) { return { id: o.id, name: o.name, slug: o.slug }; }) }, 409);
+  }
+
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { name: name });
+
+  let account = null;
+  if (v.founding_id) {
+    const acc = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,venue_name&limit=1')) || [])[0];
+    const sibs = (await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(v.founding_id) + '&select=id&limit=2')) || [];
+    if (acc && sibs.length === 1 && String(acc.venue_name || '').trim().toLowerCase() === oldName.trim().toLowerCase()) {
+      await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id), { venue_name: name });
+      account = { id: acc.id, from: acc.venue_name || '', to: name };
+    }
+  }
+
+  const audited = await vpaAudit(env, actor, 'venue_renamed', 'venue:' + venueId, {
+    from: oldName, to: name, slug: v.slug || null, account_renamed: !!account, same_name_confirmed: same.length > 0,
+  });
+  if (!audited) {
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { name: oldName });
+    if (account) await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(account.id), { venue_name: account.from });
+    return json({ error: 'The change could not be recorded, so the name was put back. Nothing changed. Try again.' }, 500);
+  }
+  return json({ ok: true, venue_id: venueId, from: oldName, name: name, slug: v.slug || null, account_renamed: !!account });
+}
+
+/* POST /admin/venue-address  {venue_id, preview?, slug?}   (Dean's open question 32, "yes, step 2", 16 Nov 2026)
+   HQ "Move TV address": the Lunatic Hotel fix. Rename venue (above) changes the name only; this moves the TV address
+   (the slug) to follow it, and the OLD ADDRESS KEEPS WORKING FOR EVER (migration 212, vp_venue_slug_aliases).
+   - preview: any HQ role. Answers the current address, the old addresses that still forward, and the address the
+     venue's current name would give (free of every current and old address). Changes nothing.
+   - move ({slug}): HQ OWNER ONLY. One database call, vp_venue_move_address, which in ONE transaction refuses a taken
+     address (current or old), a channel another venue already uses, and a venue with a game open; keeps the join code
+     (so the code on the wall and every printed code stay the same); records the old address; moves the TV's slides;
+     asks every TV at the venue to reload (it then follows the new address); and writes the audit row
+     (venue_address_moved, from, to). Nothing half done, and no move without its audit line.
+   Before migration 212 runs the function is not there: answered "not set up yet", nothing changed. */
+const VPA_ADDRESS_REFUSED = {
+  bad_slug: 'An address is lowercase letters, numbers and single hyphens, 2 to 80 characters.',
+  same: 'That is already its TV address.',
+  taken: 'Another venue already has that TV address.',
+  taken_old: 'That was another venue\'s TV address and still forwards to it, so it can never be used again.',
+  code_clash: 'That address would share a screen channel with another venue. Add the suburb or postcode to it.',
+  game_on: 'A game is open at this venue right now. Move the address once the night is over.',
+  no_code: 'This venue has no join code of its own, so its printed code would change. Ask for help before moving it.',
+  no_venue: 'That venue no longer exists.',
+  no_slug: 'This venue has no TV address yet.',
+};
+async function vpaVenueAddressRpc(env, args) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_venue_move_address', {
+    method: 'POST', headers: vpaHeaders(env), body: JSON.stringify(args),
+  });
+  if (res.status === 404) return { missing: true };
+  if (!res.ok) return { failed: true, status: res.status };
+  return { body: await res.json() };
+}
+async function vpaHandleVenueAddress(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts', 'support']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '');
+  if (!/^[0-9a-f-]{36}$/i.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const v = ((await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,join_code&limit=1')) || [])[0];
+  if (!v) return json({ error: 'That venue no longer exists.' }, 404);
+  const olds = ((await vpaSelect(env, 'vp_venue_slug_aliases', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slug,retired_at,retired_by&order=retired_at.asc&limit=50')) || [])
+    .map(function (a) { return { slug: a.slug, retired_at: a.retired_at || null, retired_by: a.retired_by || null }; });
+
+  if (b.preview === true) {
+    const stem = vpaSlugify(v.name);
+    let proposed = stem;
+    if (stem && stem !== v.slug && !olds.some(function (a) { return a.slug === stem; })) {
+      proposed = await vpaUniqueSlug(env, stem, venueId, v.postcode);
+    }
+    return json({ ok: true, venue_id: venueId, name: v.name || '', slug: v.slug || '', join_code: v.join_code || null,
+                  old_addresses: olds, proposed: proposed || '', matches_name: !stem || proposed === v.slug });
+  }
+
+  if (actor.role !== 'owner') return json({ error: 'Only an HQ Owner can move a TV address.' }, 403);
+  const want = String(b.slug == null ? '' : b.slug).trim().toLowerCase();
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(want) || want.length < 2 || want.length > 80) return json({ error: VPA_ADDRESS_REFUSED.bad_slug }, 400);
+  if (want === v.slug) return json({ error: VPA_ADDRESS_REFUSED.same }, 400);
+
+  const r = await vpaVenueAddressRpc(env, { p_venue_id: venueId, p_new_slug: want, p_actor_admin: actor.actorId || null, p_actor_label: actor.label || 'admin' });
+  if (r.missing) return json({ error: 'Moving a TV address is not set up yet (database change 212). Nothing changed.' }, 503);
+  if (r.failed || !r.body) return json({ error: 'The move could not be saved. Nothing changed. Try again.' }, 500);
+  const out = r.body;
+  if (out.ok !== true) {
+    const why = String(out.reason || '');
+    return json({ error: VPA_ADDRESS_REFUSED[why] || 'The move was refused. Nothing changed.', reason: why }, why === 'no_venue' ? 404 : 409);
+  }
+  return json({ ok: true, venue_id: venueId, from: out.from, to: out.to, join_code: out.join_code || null,
+                old_addresses: Array.isArray(out.old_addresses) ? out.old_addresses : [] });
+}
+
 async function vpaHandleVenueStatus(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
@@ -11377,6 +11532,10 @@ async function vpaProvisionFromCheckout(env, session) {
           stripe_subscription_id: session.subscription || null,
         },
       }, false);
+      /* OVER PLAYER_FLAG, SIGNED UP ON ITS OWN: one email to sales@ (INBOX 418, as Add a venue). Once per venue (the
+         audit row is the memory), best effort, never stops the sign-up. */
+      const signupSeats = parseInt(f.max_seats, 10) || 0;
+      if (signupSeats > VPB_PLAYER_FLAG) await vpbPlayerFlagAlert(env, { account: { contact_email: f.contact_email || null, id: foundingId } }, venue, venueName, signupSeats, 'signup').catch(() => false);
     } else if (stepsDone.length) {
       // A retry that finished a previously half-built venue.
       await vpaInsert(env, 'vp_admin_audit', {
@@ -15481,18 +15640,18 @@ function vpbNewVenueTag(venueId, players, periodEnd) {
 
 /* The sales@ email for a venue added over PLAYER_FLAG players (INBOX 418): venue, players, account, link to HQ. The same
    mail path every HQ alert uses (vpaSendEmail + vpaAlertSubject), once per venue (the audit row is the memory). */
-async function vpbPlayerFlagAlert(env, o, venue, name, players) {
+async function vpbPlayerFlagAlert(env, o, venue, name, players, how) {
   const vid = (venue && venue.id) || '';
   if (!vid) return false;
   const have = await vpaSelect(env, 'vp_admin_audit', 'action=eq.venue_player_flag&target=eq.' + encodeURIComponent('venue:' + vid) + '&select=id&limit=1');
   if (have && have.length) return false;
   const site = 'https://www.venueplay.com.au';
-  const html = '<p>' + vpaEsc(name) + ' was added by itself with ' + vpaEsc(String(players)) + ' players, more than ' + VPB_PLAYER_FLAG + '.</p>'
+  const html = '<p>' + vpaEsc(name) + (how === 'signup' ? ' signed up by itself with ' : ' was added by itself with ') + vpaEsc(String(players)) + ' players, more than ' + VPB_PLAYER_FLAG + '.</p>'
     + '<p>Account: ' + vpaEsc((o.account && (o.account.contact_email || o.account.id)) || '') + '</p>'
     + vpaEmailButton(site + '/app/hq.html', 'Open HQ');
   await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'venue_player_flag',
     target: 'venue:' + vid, detail: { name: name, players: players } }, false).catch(() => {});
-  return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', name + ' added with ' + players + ' players'), html);
+  return await vpaSendEmail(env, 'sales@venueplay.com.au', vpaAlertSubject('check', name + (how === 'signup' ? ' signed up with ' : ' added with ') + players + ' players'), html);
 }
 
 /* --- POST /account/add-venue : add a whole new venue to the account. --- */
@@ -15512,7 +15671,7 @@ async function vpbAddVenue(request, env, json) {
      An existing group (is_group, or already two or more venues) adds any size, no flag: the group total is what counts. */
   const addByItself = !o.account.is_group && (o.venues || []).length < 2;
   if (addByItself && players > VPB_PLAYER_CALL) {
-    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, call us on ' + VP_SUPPORT_PHONE }, 400);
+    return json({ error: 'For more than ' + VPB_PLAYER_CALL + ' players, call us on ' + VP_SUPPORT_PHONE.replace(/ /g, '\u00a0') }, 400);   // the number never breaks over two lines
   }
   // In-app venues are effectively unlimited for any real operator (larger than the biggest
   // Australian pub group). A high ceiling still guards against runaway/abuse.
@@ -18240,7 +18399,7 @@ async function vpbLogoSite(request, env, json) {
                   "I dont want a venue to be able to put it on our website we should choose".
                   Asked of the DATABASE, so if the column is missing the read is refused and the
                   strip shows nobody: it fails closed.
-     live         vp_venues.status 'active'
+     live         vp_venues.status 'active', or left within the last 90 days (closed_at, INBOX: logo drop-off)
      real         not one of Dean's test venues: no test-alpha/bravo/charlie or other "test"
                   slug or name, even if somebody switches one on
      ours         a logo URL this Worker wrote, in our own public storage for that venue
@@ -18258,8 +18417,13 @@ function vpbTrustedVenueIsReal(v) {
   return true;
 }
 async function vpbTrustedLogos(env) {
+  /* A venue that has left stays on the strip for VPB_RETENTION_DAYS (90) after vp_venues.closed_at, the clock every
+     way of leaving already stamps; then it comes off (Dean, 11 Nov 2026: "both come off at 90 days", single venue and
+     group alike: each group venue carries its own closed_at). Back on clears closed_at, so a returning venue is just
+     active again. Still HQ's switch, still real and ours. */
+  const cutoff = new Date(Date.now() - VPB_RETENTION_DAYS * 86400000).toISOString();
   const venues = await vpaSelectAll(env, 'vp_venues',
-    'status=eq.active&show_logo_on_site=eq.true'
+    'show_logo_on_site=eq.true&or=(status.eq.active,closed_at.gte.' + encodeURIComponent(cutoff) + ')'
     + '&select=id,name,slug&order=id.asc');
   const real = venues.filter(vpbTrustedVenueIsReal);
   if (!real.length) return [];

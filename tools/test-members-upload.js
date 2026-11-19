@@ -266,6 +266,7 @@ abuseIpHash = function () { return Promise.resolve(null); }; rateLimit = functio
 verifyPlayerToken = function () { return Promise.resolve(null); }; venueByCode = function () { return Promise.resolve(V1); };
 CFG = { collect_first_name: true, collect_mobile: true, collect_email: true, collect_marketing_optin: true };
 BODY = { code: 'ABCD', first_name: 'Jo', mobile: '0412 345 678' };
+if (typeof knownAtJoin === 'function') knownAtJoin = function () { return Promise.resolve({ knownId: null, key: null }); };   // Sunday's known phone has its own suite; jsc has no crypto
 var capOut = null; handleCapture({}, {}, json).then(function (x) { capOut = x; }); drainMicrotasks();
 var capRow = (DB.vp_captures || [])[0] || {};
 check('/capture: the sign-up row is linked to the member (member_id), and the reply says only stored', capRow.member_id === 'mem-1' && same(capOut.body, { ok: true, stored: true }), [capRow, capOut]);
@@ -284,7 +285,7 @@ check('/join/list: a sign-up with no game on, by a member\'s mobile, is linked t
 /* /join is the busiest path: the match is made before the insert, and only a found member names the column */
 var joinSrc = (src.split('async function handleJoin(')[1] || '').split('\nasync function ')[0];
 check('/join: the member match runs on the player\'s gated mobile at the session\'s venue, before the insert, never for the demo',
-      /if \(cap\.mobile && !isDemoSession\(session\)\) \{ const memberId = await memberIdByMobile\(env, session\.venue_id, cap\.mobile\); if \(memberId\) playerRow\.member_id = memberId; \}\s*let inserted;/.test(joinSrc), joinSrc.slice(0, 80));
+      /if \(cap\.mobile && !isDemoSession\(session\)\) \{ const memberId = await memberIdByMobile\(env, session\.venue_id, cap\.mobile\); if \(memberId\) playerRow\.member_id = memberId; \}\s*(?:\/\*[\s\S]*?\*\/\s*if \(knownRes\.knownId\) playerRow\.known_id = knownRes\.knownId;\s*)?let inserted;/.test(joinSrc), joinSrc.slice(0, 80));
 
 section('7. NEVER IN A LOG');
 errRef = function () { return 'E1'; };   // jsc has no crypto; the reference itself does not matter here
@@ -296,7 +297,7 @@ check('the error code is still there to look up', /23514/.test(LOGS[0]) && /chec
 
 section('8. NEVER ON A SCREEN, NEVER IN HQ');
 var HOST = readFile('venueplay/app/members/host.html');
-var hostSel = (/client\.from\("vp_members"\)\.select\("([^"]*)"\)/.exec(HOST) || [])[1] || '';
+var hostSel = (/client\.from\("vp_members"\)\.select\("([^"]*)"\)/.exec(HOST) || /rel = "vp_members", cols = "([^"]*)";/.exec(HOST) || [])[1] || '';
 check('the members console (beside the TV) names its columns: no "*", no email, mobile, postcode or consent', hostSel && hostSel !== '*' && !/email|mobile|postcode|marketing/.test(hostSel), hostSel);
 var hq = ['venueplay/app/hq.html', 'venueplay/app/vp-coaster-hq.js', 'venueplay/app/vp-helpdesk-hq.js', 'venueplay/app/vp-logins-hq.js', 'venueplay/app/vp-prospects-hq.js',
   'venueplay/app/vp-reports-hq.js', 'venueplay/app/vp-subscribers-hq.js', 'venueplay/tv.html', 'venueplay/play.html', 'venueplay/app/members/screen.html'];

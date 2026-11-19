@@ -58,6 +58,11 @@
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
   .psub{color:var(--muted);font-size:14px}
   .pnote{font-size:14px;color:var(--faint);margin-top:16px}
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): big enough for a host to read across a table. On the new-look
+     YOU WON it takes the place of "Show this screen to the host to claim", under the prize. */
+  .winpin{font-family:'Manrope',sans-serif;font-size:17px;line-height:1.45;color:var(--text);margin:14px auto 4px;max-width:22em}
+  .winpin b{font-size:22px;letter-spacing:.06em;color:var(--win);white-space:nowrap}
+  .stagewin .winpin{margin:8px auto 2px}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
@@ -488,7 +493,7 @@
   <!-- JOIN: your name, or your details when the venue collects more -->
   <div class="view hidden" id="vJoin">
     <div class="vp-step">
-      <div class="vp-h" id="joinHead">Your name</div>
+      <div class="vp-h" id="joinHead">Join the game</div>
       <p class="vp-sub hidden" id="joinVenue"></p>
       <p class="vp-sub">You are joining room <b class="mono" id="joinCode">------</b></p>
       <input type="text" class="vp-field" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name">
@@ -540,7 +545,8 @@
       <div class="vp-h">You won</div>
       <div class="yrule"></div>
       <div class="wprize" id="wonPrize">the prize</div>
-      <p class="vp-wait">Show this screen to the host to claim</p>
+      <p class="vp-wait" id="wonSub">Show this screen to the host to claim</p>
+      <div class="winpin hidden" id="wonPin"></div>   <!-- winner check: "Show this to the host: PIN 4821, card 332" (vp-winpin.js); never on a TV -->
       <div class="sharenote hidden" id="wonShare"></div>
       <div class="sharenote hidden" id="wonAlso"></div>
       <div class="wcard">Card <b id="wonCard">#000</b></div>
@@ -607,12 +613,14 @@
 <script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
+<script src="/app/vp-known.js"></script>   <!-- a known phone: never asked the same details twice at a venue (INBOX 416, 22 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared with the demo TV /tv?demo=1 (12 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>   <!-- the venue's ad under the lobby (6 Nov 2026) -->
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN on the winner's phone (5 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -997,7 +1005,7 @@
   // came back with no proof. Save it, restore it on reconnect, and clear it the moment a new round
   // starts. Two-hour expiry so last night's win never resurfaces.
   function winKey(room){ return "vp-win-"+(room||P.room||""); }
-  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
+  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, pattern:P.wonPattern||"", prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
   function loadWin(room){ try{ var raw=localStorage.getItem(winKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearWin(room); return null; } return w; }catch(e){ return null; } }
   function clearWin(room){ try{ localStorage.removeItem(winKey(room)); }catch(e){} }
   /* A stage win (a line while the game plays on to the house) is remembered the same way, so a
@@ -1154,6 +1162,8 @@
     if(P.won){
       $("wonPrize").textContent=P.prize;
       $("wonCard").textContent="#"+(P.wonCardNo||"");
+      paintPin($("wonPin"), P.wonCardNo);
+      var _ws=$("wonSub"); if(_ws) _ws.classList.toggle("hidden", !!P.pin);
       // A tie splits the prize. Say so on the phone, so nobody walks to the bar expecting the lot.
       var sw=$("wonShare");
       if(sw){
@@ -1554,6 +1564,22 @@
     return "Mark off your numbers as they are called. Hit BINGO when "+(many?"one of your tickets":"your ticket")+" completes <b>"+esc(pn)+"</b>."+one;
   }
   function nameList(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026). Asked of the Worker the moment this phone wins, for its
+     own session's newest bingo game, and written beside the card number. Never sent anywhere: the
+     channel reaches the TV, and the PIN must never be on a TV. No answer = the win screen as before. */
+  var _pinAsk=0;
+  /* EACH PRIZE HAS ITS OWN PIN (Dean, 5 Nov 2026): stage is the pattern this phone won (a line, then the
+     house on the same tickets, are two prizes and two PINs). */
+  function askPin(stage){
+    if(!P.token || !stage || !window.VPWinPin || /[?&]demo=1/.test(location.search)) return;
+    var mine=++_pinAsk; P.pin="";
+    VPWinPin.forPlayer(VP_GAME_API, P.token, { bingo:true, stage:String(stage) }).then(function(pin){
+      if(mine!==_pinAsk || !pin) return;
+      P.pin=pin;
+      if(P.won) route(); else if(P.stageWins.length){ if(P.cards.length) renderCards(); else renderStageWin(); }
+    });
+  }
+  function paintPin(el, cardNo){ if(el && window.VPWinPin) VPWinPin.paint(el, P.pin, cardNo ? "card "+cardNo : ""); }
   function renderStageWin(){
     var box=$("stageWin"); if(!box) return;
     if(P.stageWins.length){
@@ -1563,6 +1589,7 @@
       if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return patName(x.pattern, x.pattern); }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
       h+="<small>Keep playing for "+esc(patName(P.pattern, "the next prize"))+" on the same tickets.</small>";
       box.innerHTML=h; box.className="stagewin";
+      if(P.pin){ var _pl=document.createElement("div"); _pl.className="winpin"; paintPin(_pl, w.cardNo); box.insertBefore(_pl, box.children[1]||null); }
     } else if(P.stageNote){
       box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(patName(P.pattern, "the next prize"))+". Same tickets, keep marking.</span>";
       box.className="stagewin others";
@@ -1723,7 +1750,8 @@
     /* fresh:1 (31 Oct 2026): the Worker answers the lobby poll from a copy a few seconds old. This
        is the page's FIRST question, the one the paper notice and the age tick hang on, so it is
        asked of the database itself. The repeats below are the ones the copy is for. */
-    askJoinInfo(P.room, true).then(function(r){
+    /* with this phone's /join/known answer on it (r.known_info) while it is still to join: a known phone at this venue (INBOX 416, /app/vp-known.js) */
+    (typeof VPKnown==="object" && !P.joined ? VPKnown.withInfo(askJoinInfo(P.room, true), VP_GAME_API, P.room) : askJoinInfo(P.room, true)).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
@@ -1747,30 +1775,21 @@
       if(P.joined) return;
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
-      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
-      var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
-      box.innerHTML=h;
-      /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
-         shared by all three phones. Not ticking it changes nothing about playing. */
-      if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
-      /* Collection notice. Australian privacy law wants people told what is being collected and
-         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
-         screen asked for last name, postcode, email and mobile with no notice and no link to the
-         policy at all, while the policy itself said capturing more than a name was a future
-         feature. Venue name is filled in where we know it, so the player can see who is asking. */
-      if(h){
-        var vn=(P.venueName||"").trim();
-        var n=document.createElement("p");
-        n.className="collectnote";
-        n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
-        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
-          ", not to anyone else. You can play with just your name. ";
-        var a=document.createElement("a");
-        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
-        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
-        a.textContent="How your details are handled";
-        n.appendChild(a);
-        box.appendChild(n);
+      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them.
+         A KNOWN PHONE (/app/vp-known.js, INBOX 416): "Welcome back, Alan", the name box filled and out of the way, and only the
+         boxes still missing. The consent is the one tick, or the three boxes when the Worker says so. */
+      /* Collection notice, AT THE POINT they are asked (Australian privacy law). Since INBOX 416 the first name and mobile
+         are asked of everyone, so the line says who gets them and why: "Your details go to {account owner} to run
+         tonight's game and contact winners." */
+      /* REAL NIGHTS: no line saying the venue gets the details (Dean 16 Nov 2026); the first-game notice from /app/vp-known.js
+         says what venueplay keeps and that a ticked box shares details with that sender. */
+      var details=function(){};
+      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:r.known_info, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Join the game", after:details }); }
+      else {
+        var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
+        box.innerHTML=h;
+        if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
+        details(h, null);
       }
     }).catch(function(){});
   }
@@ -1792,12 +1811,14 @@
     show("vNoRoom");
   }
   function gatherCapture(nm){
-    var cap={ first_name:nm.slice(0,80) }, v;
+    /* the player's OWN first name (xFirst, INBOX 416), never a trivia team name, when the box is there */
+    var fn=$("xFirst"), cap={ first_name:((fn && fn.value.trim()) || nm).slice(0,80) }, v;
     if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
     if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers + 18+ tick ONLY, and only with a contact method (/app/vp-consent.js)
+    if(typeof VPKnown==="object") VPKnown.capture(cap);   // the three boxes' answers (INBOX 416)
     return cap;
   }
   // Fetch (or lazily be dealt) this player's ticket for the running game.
@@ -1932,13 +1953,17 @@
     try{
       if(!P.capture || !P.room) return;
       var body={ code:P.room }; for(var k in P.capture){ body[k]=P.capture[k]; }
+      if(typeof VPKnown==="object") VPKnown.addTo(body);   // the keys this phone holds, read now (INBOX 416)
       /* The token is the whole point of this endpoint changing. It is minted by /join against a
          SESSION code that exists only while this game runs, so presenting one is evidence of
          having been in the room. Without it the Worker stores the capture but marks it unverified
          and keeps it out of the list the venue mails. */
       var _h={ "Content-Type":"application/json" };
       if(P.token) _h["X-Player-Token"]=P.token;
-      fetch(VP_GAME_API+"/capture",{ method:"POST", headers:_h, body:JSON.stringify(body) }).catch(function(){});
+      fetch(VP_GAME_API+"/capture",{ method:"POST", headers:_h, body:JSON.stringify(body) })
+        .then(function(res){ return (res && res.ok && typeof res.json==="function") ? res.json() : null; })
+        .then(function(j){ if(typeof VPKnown==="object") VPKnown.keep(j); })   // a first capture hands back this venue's key
+        .catch(function(){});
     }catch(e){}
   }
   function pressBingo(){
@@ -2236,6 +2261,7 @@
         if(me){
           P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
           P.stageNote="";
+          askPin(m.pattern);   // winner check: this prize's own PIN (Dean, 5 Nov 2026)
           if(!_seen) celebrateStage();
         } else {
           P.stageNote=esc(list(names))+" won "+esc(pn)+".";
@@ -2244,7 +2270,7 @@
         if(P.cards.length){ renderCards(); show("vCard"); } else { renderStageWin(); }
       } else {
         P.doneAt=Date.now();   // the finished game's screen leaves by itself later (doneSweep)
-        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
+        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; P.wonPattern=m.pattern||""; saveWin(); askPin(P.wonPattern); route(); celebrate(); }
         else {
           var first=ws.filter(function(w){ return w.pid!==P.pid; })[0]||ws[0];
           P.lostBy=esc(list(names))+" won "+esc(pn)+(first && first.cardNo ? " on card #"+esc(String(first.cardNo)) : "")+".";
@@ -2317,9 +2343,9 @@
     // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
     // message (cards / started) clears it below, so it never lingers into the next game.
     var _w=loadWin(room);
-    if(_w && P.joined){ P.won=true; P.doneAt=_w.ts||Date.now(); P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
+    if(_w && P.joined){ P.won=true; P.doneAt=_w.ts||Date.now(); P.wonCardNo=_w.cardNo||0; P.wonPattern=_w.pattern||""; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; askPin(P.wonPattern); route(); }
     var _sw=loadStage(room);
-    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; }
+    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; if(P.stageWins.length && !P.won) askPin(P.stageWins[P.stageWins.length-1].pattern); }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }

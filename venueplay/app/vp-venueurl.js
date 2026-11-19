@@ -64,5 +64,22 @@
     try { root.console.warn("venueplay: no venue could be read from the address \"" + search + "\", so this screen is showing the venue this browser remembered: " + remembered + ". Open /tv?venue=<your-venue> to choose."); } catch (e) {}
     return true;
   }
-  root.VPVenueURL = { slug: slug, unread: unread, fellBack: fellBack };
+  /* THE SAME ADDRESS, AT THE VENUE'S NEW SLUG (migration 212, Dean's open question 32). The venue's TV address moved
+     after its name changed and the Worker said so (moved_from). Every way of naming the venue (venue=, slug=, a bare
+     ?slug, ?=slug) is taken out and venue=<new> goes first; every setting (?intro=0, ?probe=1, a tracking tag) is kept,
+     in order. Returns the new search string, "?venue=..." always. */
+  function moved(search, to) {
+    if (search == null) search = (root.location && root.location.search) || "";
+    to = clean(String(to == null ? "" : to));
+    var keep = [], parts = String(search).replace(/^\?/, "").split("&"), i, p, eq, named = false;
+    for (i = 0; i < parts.length; i++) {
+      p = parts[i]; if (!p) continue; eq = p.indexOf("=");
+      if (eq > 0 && /^(venue|slug)$/.test(dec(p.slice(0, eq)).toLowerCase())) continue;
+      var bare = eq === 0 ? p.slice(1) : (eq < 0 ? p : "");
+      if (bare && !named && clean(bare) && !SETTINGS.hasOwnProperty(clean(bare))) { named = true; continue; }
+      keep.push(p);
+    }
+    return "?venue=" + encodeURIComponent(to) + (keep.length ? "&" + keep.join("&") : "");
+  }
+  root.VPVenueURL = { slug: slug, unread: unread, fellBack: fellBack, moved: moved };
 })(window);

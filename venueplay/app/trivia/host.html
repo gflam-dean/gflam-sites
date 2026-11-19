@@ -54,6 +54,13 @@
 
   .wrap{max-width:1100px;margin:0 auto;padding:22px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  /* THE WINNER CHECK (Dean, 4 Nov 2026): "Round PIN 4821", this console and the winner's phone only. */
+  /* The PIN rides on its heading's own row, right-aligned, so it costs the console no line of its own (16 Nov 2026: the
+     consoles fit one phone screen, and a PIN on its own line pushed the first claim off a 375x667 phone). */
+  .pinrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .pinrow > .lbl{margin-bottom:0}
+  .roundpin{display:inline-block;margin:0;padding:1px 9px;border-radius:7px;border:0;background:var(--ink-3);white-space:nowrap;
+    font:700 16px/16px 'Hanken Grotesk',sans-serif;color:var(--text);letter-spacing:.04em}   /* no taller than its heading row */
   .note{font-size:12px;color:var(--faint);line-height:1.5}
 
   .connect{max-width:420px;margin:6vh auto 0;text-align:center}
@@ -138,6 +145,16 @@
   .tvprev-h{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin:0 0 6px}
   .tvprev-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#0A0A0B}
   .tvprev-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+  /* On a phone the main button comes first and the TV preview follows it (Dean, 15 Nov 2026: "you have to scroll down to do
+     anything"): at 375x667 the preview above the last answer pushed Reveal leaderboard below the fold. */
+  @media (max-width:600px){ #liveBlock{display:flex;flex-direction:column} #liveBlock .tvprev{order:2;margin:14px 0 0} }
+  /* THE PREVIEW MUST NOT PUSH THE BUTTONS OFF THE SCREEN (INBOX 426 item 5, 17 Nov 2026): after the last question,
+     "On the TV now" sat above Reveal leaderboard and took it below a 375x667 phone and a 1366x768 laptop. The picture
+     is only a glance at the wall, so it is a smaller picture, centred: a little over half the width on a phone, and
+     no taller than 20% of the window on a laptop. */
+  .tvprev-frame{margin-left:auto;margin-right:auto}
+  @media (max-width:640px){ .tvprev-frame{width:56%} }
+  @media (min-width:641px){ .tvprev-frame{width:min(100%,calc(20vh*16/9))} }
   .finline{font-size:13.5px;color:var(--muted);text-align:center;margin:8px 0 0}
   .btn.finskip{display:block;margin:12px auto 0;padding:8px 14px;min-height:0;font-size:13.5px}
   .btn.finpulse{animation:finpulse 1.6s ease-in-out infinite}
@@ -160,8 +177,8 @@
   .btnrow{display:flex;gap:10px;margin-top:12px}
   .btnrow .btn{flex:1}
 
-  /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
-     and while the host is scrolled down mid-round. hostError() is the ONLY error surface:
+  /* Host-visible error bar. hostError() moves it under the sticky header, in the page flow (placeErrBar),
+     and scrolls to the top so it is on screen in every view. hostError() is the ONLY error surface:
      the small status pill is for connection state only. */
   .errbar{display:none;background:rgba(255,45,85,.16);border-top:1px solid rgba(255,77,109,.55)}
   .errbar.show{display:block}
@@ -170,6 +187,7 @@
   .errbar .ex{flex:none;font-family:inherit;background:none;border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#FFD0DA;font-size:11.5px;font-weight:700;padding:5px 10px;cursor:pointer}
   .errbar .ex:hover{border-color:rgba(255,255,255,.5)}
   .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
+  @media (max-width:480px){ .einner{padding:9px 14px;gap:10px} .errbar .etxt{font-size:13.5px;line-height:1.4} }
 
   .hidden{display:none!important}
 
@@ -230,6 +248,7 @@
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
+<link rel="stylesheet" href="/app/vp-actionbar.css">
 </head>
 <body>
 <header>
@@ -385,7 +404,7 @@
             </div>
           </details>
           <div class="vp-week" id="weekBanner" style="display:none"></div>
-          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <div class="vp-actionbar" id="startBar"><button class="btn pink big" id="startBtn">Open lobby</button></div>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note vp-c" style="margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
         </div>
@@ -406,7 +425,8 @@
           <div class="players" id="playerList"></div>
         </div>
         <div class="panel">
-          <div class="lbl">Leaderboard</div>
+          <div class="pinrow"><div class="lbl">Leaderboard</div>
+          <div class="roundpin hidden" id="roundPin" aria-live="polite"></div></div>   <!-- winner check: never on a TV -->
           <div class="board-h" id="hostBoard"><div class="pempty">Scores appear once the round is under way.</div></div>
         </div>
       </div>
@@ -454,6 +474,7 @@
 <script src="/app/vp-loved.js"></script>
 <script src="/app/vp-paper-style.js"></script>   <!-- the printed look shared with the musical paper card (INBOX 384/385) -->
 <script src="/app/vp-print.js"></script>
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN, this console and the winner's phone only (5 Nov 2026) -->
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
 <script src="/app/vp-lobby.js"></script>
@@ -674,23 +695,29 @@
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
-    /* Lift it out of the header. The header is position:sticky with z-index 20, which creates a
-       stacking context, so nothing inside it can ever paint above the carry-on or overage modal
-       at z-index 60: a failure raised while a modal was open was hidden under the scrim and the
-       host saw a button that simply did nothing. Moved to <body>, it is above everything. */
-    if(b.parentNode !== document.body){
-      document.body.appendChild(b);
-      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
-      /* Sit BELOW the header, not on top of it. This bar's only background is a 16% pink tint: it
-         looked solid purely because the header behind it is opaque. At top:0 over <body> it drew
-         over the "Games" link and the status pill, and being fixed it swallowed the clicks too. */
-      var _hd=document.querySelector("header");
-      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
-      b.style.background="#2A0B14";
-      b.style.backdropFilter="blur(8px)";
-    }
+    placeErrBar(b);
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  /* WHERE THE RED BAR SITS. Lifted out of the header: the header is position:sticky with z-index 20, which makes a
+     stacking context, so nothing inside it can paint above the carry-on or overage modal (z-index 60), and a failure
+     raised while a modal was open was hidden under the scrim. So:
+       - no modal open: IN THE PAGE FLOW, straight under the header, pushing the page down (job "Trivia console: error
+         bar at 375px", 9 Nov 2026: fixed over the page, at 375 px it covered two labels until Dismiss);
+       - a modal open: fixed above everything, under the header, as before, so the host still reads it. */
+  function placeErrBar(b){
+    var _hd=document.querySelector("header");
+    var modal=[].some.call(document.querySelectorAll(".vp-modal"), function(m){ return !m.classList.contains("hidden") && m.getBoundingClientRect().height>0; });
+    if(_hd && _hd.parentNode===document.body && b.previousElementSibling!==_hd) document.body.insertBefore(b, _hd.nextSibling);
+    else if(!_hd && b.parentNode!==document.body) document.body.insertBefore(b, document.body.firstChild);
+    b.style.background="#2A0B14";
+    if(modal){
+      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
+      b.style.backdropFilter="blur(8px)";
+    } else {
+      b.style.position="relative"; b.style.left=""; b.style.right=""; b.style.top=""; b.style.zIndex="19"; b.style.backdropFilter="";
+    }
   }
   function clearHostError(){ _errSticky=false; var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
   /* AN ERROR COMES DOWN WHEN THE HOST DOES SOMETHING, NOT WHEN A BACKGROUND CALL WORKS (live play
@@ -775,7 +802,7 @@
       .then(function(snap){
         if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="trivia"){ clearTrivia(); return false; }
         var g=snap.game, q=g.question||null, phase=g.phase||"idle";
-        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id; (typeof showRoundPin==="function" && showRoundPin());
         if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
         if(typeof g.colour==="boolean") G.colour=g.colour;
         G.defer = g.paper===true; G.rs = g.round_size || 10; loadPaperRound();
@@ -903,7 +930,21 @@
     for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) html+='<span class="pchip">'+esc(p.name)+'</span>'; }
     elx.innerHTML=html;
   }
+  /* "Round PIN 4821" for this game, from the Worker (vp-winpin.js). Shown on THIS console only: it is
+     never put in a message, because every message reaches the TV. */
+  function showRoundPin(){
+    var el=$("roundPin"); if(!el) return;
+    var gid=G.gameId, st="final", key=gid+"|"+st;   // each prize has its own PIN (Dean, 5 Nov 2026)
+    if(!gid || !st || !window.VPWinPin){ el.classList.add("hidden"); el.textContent=""; el.removeAttribute("data-for"); return; }
+    if(el.getAttribute("data-for")===key && el.textContent) return;
+    VPWinPin.forHost({ game_id:gid, stage:st }).then(function(pin){
+      if(G.gameId!==gid || "final"!==st) return;
+      el.textContent=VPWinPin.hostLine(pin); el.setAttribute("data-for", key);
+      el.classList.toggle("hidden", !pin);
+    });
+  }
   function renderBoard(){
+    (typeof showRoundPin==="function" && showRoundPin());   // guarded: suites lift this function and run it alone
     var box=$("hostBoard");
     var B=(G.roundType==="pr" && G.pr) ? G.pr.rows() : G.board;   // a Punters Reckon night scores in its own referee
     if(!B.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
@@ -1014,16 +1055,19 @@
       // the podium never appears mid-round now.
       var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
       var brow=el("div","btnrow");
-      var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
-      main.addEventListener("click", isLast ? finTap : nextQuestion); brow.appendChild(main);
-      var endb=el("button","btn ghost big","End round");
+      /* Nobody joined (INBOX 426 item 4, 17 Nov 2026): the leaderboard has nothing to show, so a pink Reveal leaderboard
+         that does nothing is the wrong button. The host is given the one thing that is left: Start a new round
+         (endRound), on screen, and no second End round beside it. A phone that joins puts Reveal leaderboard back. */
+      var nobodyLeft = isLast && G.noPlayersNote && playerCount()===0;
+      var main=el("button","btn pink big", nobodyLeft ? "Start a new round" : (isLast ? "Reveal leaderboard" : "Next question"));
+      if(nobodyLeft) main.id="nobodyAgain";
+      main.addEventListener("click", nobodyLeft ? function(){ endRound(); } : (isLast ? finTap : nextQuestion)); brow.appendChild(main);
+      if(nobodyLeft){ body.appendChild(brow); return; }
       /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
          sits beside the control the host taps about nineteen times a night. endRound() clears the
          timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
          on the server, with no undo. */
-      endb.addEventListener("click", function(){
-        vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
-      }); brow.appendChild(endb);
+      brow.appendChild(endRoundBtn());
       body.appendChild(brow);
       if(isLast && G.finale){ var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite"); body.appendChild(fl); paintFinLine(); }   // "Final scores come up in 0:30"
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
@@ -1326,10 +1370,10 @@
         paper:paperThisRound()   // said for THIS round: printing once no longer makes every later round paper
       });
     }).then(function(r){
-      G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.gameId=r.game_id; (typeof showRoundPin==="function" && showRoundPin()); G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.doubleSeqs=Array.isArray(r.double_seqs)?r.double_seqs:[];
       // The Worker makes it a paper round from what was printed; the console mirrors that rule.
-      G.defer = (r.paper===true); G.rs = r.round_size || G.roundSize; G.round = 1; G.roundItems = []; savePaperRound();
+      G.defer = (r.paper===true); G.rs = r.round_size || (G.defer ? G.roundSize : 10); G.round = 1; G.roundItems = []; savePaperRound();   // a phone night: a round every 10 questions (Dean, 7 Nov 2026), as a reloaded console already counts; paper: its printed round
       G.paperRound = null;   // the next round decides again
       if(G.defer){ try{ var _pi=paperPrintedInfo(); _pi.usedBy=G.gameId; localStorage.setItem(paperKey(), JSON.stringify(_pi)); }catch(e){} }   // these sheets have now been played
       G.status="ready"; G.board=[]; G.current=null;
@@ -1374,7 +1418,7 @@
     }, 250);
   }
   function nextQuestion(){
-    if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
+    if(G.busy || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick(); clearTimeout(G.roundT); G.roundT=null;   // a round's board never lands on the next question
     apiPost("/host/question",{ game_id:G.gameId }).then(function(r){
       if(r && r.done){ finish(); return; }
       G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
@@ -1439,17 +1483,25 @@
       }
       // Safe to send correct_index now, the reveal has happened.
       if(G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal) armFinale();   // the last answer: the end of the night starts its clock
-      bcast(withFin({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
-        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board }));
+      /* THE SCORES AT THE END OF A ROUND, NOT AFTER EVERY ANSWER (Dean, 7 Nov 2026: "The leaderboard should show every
+         round only" and "They should do a podium every round"). A phone night has a round every 10 questions. After any
+         other answer the answer stays up until the next question (board:false tells the TV not to roll to the board by
+         itself, ever); at the end of a round that is not the last, the top three on the podium, then the whole leaderboard.
+         The last answer is the end of the night, as before. "Show the leaderboard after each round" off: neither. */
+      var qnow = (G.current && (G.current.qi||G.current.qseq)) || 0;
+      var isLast = G.qtotal && G.current && qnow >= G.qtotal;
+      var rEnd = !isLast && roundEnds(qnow) && G.roundBoard!==false, rn = roundOf(qnow);
+      var rv = withFin({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
+        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
+      rv.board=false;   // the console puts the round's podium and board up itself, so the TV never rolls to a board on its own
+      bcast(rv);
       renderConsole();
-      // Between-question leaderboard, but NOT after the last question - there the host reveals
-      // the leaderboard/podium manually with the button.
-      var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
-      if(!isLast && G.roundBoard!==false){ setTimeout(function(){ if(G.status==="reveal"){
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal" && G.current && (G.current.qi||G.current.qseq)===qnow){
         /* No players: never an empty board, and never "Thanks for playing" between questions (Dean, 15 Nov 2026):
-           between:true puts the join screen up with "Next question coming up". The real end sends it without. */
+           between:true puts the join screen up with "Next question coming up". The real end sends it without.
+           Unchanged by the round rule: an empty room still gets the join screen after every answer. */
         if(!G.board.length && playerCount()===0){ bcast({ t:"nobody", between:true }); }
-        else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
+        else if(rEnd && G.board.length){ roundShow(rn, "reveal"); }
       } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
@@ -1459,6 +1511,16 @@
      are kept in one small function so a suite can run it: a board with rows is the podium; an empty
      board that the server itself just answered, with nobody joined, is "nobody"; anything else
      (the fetch failed, or phones are in but no scores came back) is the real "could not be loaded". */
+  /* THE END OF A ROUND THAT IS NOT THE LAST (Dean, 7 Nov 2026: "They should do a podium every round"): the top three
+     on the TV, headed "Top three after round N", then the whole leaderboard ROUND_BOARD_MS later, which stays until the
+     host goes on. The TV only: a phone hearing a podium shows its end-of-night screen, and the night is not over. */
+  var ROUND_BOARD_MS=10000;
+  function roundShow(rn, st){
+    clearTimeout(G.roundT); G.roundT=null;
+    G.roundShown={ rn:rn, board:false };
+    send({ t:"podium", top:G.board.slice(0,3), rows:G.board, round:rn });
+    G.roundT=setTimeout(function(){ G.roundT=null; if(G.status===st){ G.roundShown={ rn:rn, board:true }; send({ t:"leaderboard", title:"Leaderboard after round "+rn, rows:G.board }); } }, ROUND_BOARD_MS);
+  }
   function finishOutcome(boardLen, players, fetchOk){
     if(boardLen>0) return "podium";
     if(players===0 && fetchOk===true) return "nobody";
@@ -1551,6 +1613,32 @@
     sendFinale(); finTicker(); finTick(); renderConsole();
   }
   function finTap(){ G.finAuto=false; finish(); }
+  function endRoundBtn(){
+    var endb=el("button","btn ghost big","End round");
+    endb.addEventListener("click", function(){
+      vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endEarly(); });
+    });
+    return endb;
+  }
+  /* A team joined after "nobody has joined" (INBOX 426 item 4): the calm line goes and Reveal leaderboard + End round come
+     back. Done IN PLACE on the one button row: a join must never rebuild the console (release-check "a join never rebuilds
+     a host console": it would replace the host's own controls mid-tap). */
+  function bringBackReveal(){
+    G.noPlayersNote=false;
+    var nn=document.getElementById("noPlayersNote"); if(nn && nn.parentNode) nn.parentNode.removeChild(nn);
+    var b=document.getElementById("nobodyAgain");
+    if(!b || !b.parentNode) return;
+    var row=b.parentNode;
+    var rv=el("button","btn pink big","Reveal leaderboard");
+    rv.addEventListener("click", finTap);
+    row.replaceChild(rv,b);
+    row.appendChild(endRoundBtn());
+    if(G.finale && !document.getElementById("finLine")){
+      var fl=el("div","finline"); fl.id="finLine"; fl.setAttribute("aria-live","polite");
+      if(row.parentNode) row.parentNode.insertBefore(fl,row.nextSibling);
+      paintFinLine();
+    }
+  }
   function autoFinish(){ G.finAuto=true; finish(); }
   /* "Show the whole leaderboard now": the show jumps forward to the leaderboard, never back. */
   function finSkip(){
@@ -1876,9 +1964,17 @@
       to({ t:"roundanswers", round:G.round, items:G.roundItems });
       if(G.status==="roundboard" && G.board.length) to({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     } else if(G.status==="reveal" && G.current){
-      to(withFin({ t:"reveal", qseq:G.current.qseq, qi:(G.current.qi||G.current.qseq), correctIndex:G.current.correctIndex,   // qi: a late phone says "You've joined at question 4" (293)
-           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") }));
-      if(G.board.length && !G.finale && G.roundBoard!==false) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });   // never over the last answer
+      var _rv=withFin({ t:"reveal", qseq:G.current.qseq, qi:(G.current.qi||G.current.qseq), correctIndex:G.current.correctIndex,   // qi: a late phone says "You've joined at question 4" (293)
+           options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
+      _rv.board=false;   // as reveal(): the TV never rolls to a board by itself; a round's board is replayed below
+      to(_rv);
+      /* A reloaded TV gets the board only where the room saw one: at the end of a round that is not the last (7 Nov 2026).
+         Mid-round it is the answer; after the last question it is the answer until the end of the night. */
+      var rq=G.current.qi||G.current.qseq, rLast=G.qtotal && rq>=G.qtotal;
+      if(!pid && G.board.length && !G.finale && G.roundBoard!==false && !rLast && roundEnds(rq) && G.roundShown && G.roundShown.rn===roundOf(rq)){   // the TV only: a phone hearing a podium ends its night
+        if(G.roundShown.board) to({ t:"leaderboard", title:"Leaderboard after round "+roundOf(rq), rows:G.board });
+        else to({ t:"podium", top:G.board.slice(0,3), rows:G.board, round:roundOf(rq) });
+      }
     } else if(G.status==="ended" && G.board.length){
       if(!G.finale) to({ t:"podium", top:G.board.slice(0,3), rows:G.board });
       else if(!pid){ if(!finPastAds()) to(finMsg()); }   // the TV lands where the show is; after it went back to the slides, nothing
@@ -1934,6 +2030,8 @@
       if(typeof m.prk==="string" && /^k1_[A-Za-z0-9_-]{8,64}$/.test(m.prk)){ (G.prAlias||(G.prAlias={}))[m.pid]=m.prk; }
       bcast({ t:"players", count:playerCount() });
       renderJoinCounts();     // NOT renderConsole: see above
+      /* Somebody arrived after "nobody has joined": the calm line goes and Reveal leaderboard comes back (INBOX 426 item 4). */
+      if(G.noPlayersNote && G.status==="reveal"){ bringBackReveal(); }   // in place: a join never rebuilds the console
       replayState(m.pid);     // they may have missed a live question; catch them up
     }
     else if(m.t==="pr_guess"){
@@ -2176,7 +2274,11 @@
   }
   function paperRoundDone(){
     G.status="roundboard"; savePaperRound();
-    bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
+    var last=G.qtotal && G.current && (G.current.qi||G.current.qseq)>=G.qtotal;
+    /* Every round but the last: the podium, then the board (7 Nov 2026). The last: its board, then "Reveal the
+       winners" puts up the podium and the final scores, as before. */
+    if(!last && G.board.length && G.roundBoard!==false) roundShow(G.round, "roundboard");
+    else bcast({ t:"leaderboard", title:"Leaderboard after round "+G.round, rows:G.board });
     renderConsole();
   }
   /* What is wrong with the typed paper scores, in words for the host, or "" when nothing is. */

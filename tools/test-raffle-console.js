@@ -115,6 +115,7 @@ eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
 eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle'));
 eval(lift('pickOrder')); eval(lift('prizeNext')); eval(lift('announcing')); eval(lift('sendAnnounce')); var ANNOUNCE_MS = 4000;   // Dean's two choices (9 Nov 2026)
 eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
+eval(lift('lookNow')); eval(lift('styleKey')); eval(lift('raffleById')); eval(lift('raffleTitle')); eval(lift('drawSecsNow')); eval(lift('addLookFields')); eval(lift('winnerMsg'));   // the winner message every send uses (tv-reload fix)
 
 function form(o) {
   $('rfPrize').value = ''; $('rfStart').value = '1'; $('rfEnd').value = '150'; $('rfTime').value = '180';

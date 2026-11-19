@@ -2003,6 +2003,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_venue_current_slug(p_slug text)": {
+   "anon": true,
+   "authenticated": true
+  },
   "vp_venue_month_rollup(p_venue uuid)": {
    "anon": false,
    "authenticated": false

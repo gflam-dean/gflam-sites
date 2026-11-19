@@ -2662,7 +2662,11 @@ def local_checks(which):
             wrong.append(rel + ' is missing'); continue
         li = _fn(src, 'function loadJoinInfo(){')
         if '<script src="/app/vp-details.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-details.js')
-        if 'VPDetails.html(c)' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        # INBOX 416 (22 Nov 2026): the boxes are drawn through /app/vp-known.js (a known phone sees only what is missing),
+        # which draws them with VPDetails.html; the page keeps VPDetails.html as the fallback when that file did not load.
+        if 'VPDetails.html(c' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        if '<script src="/app/vp-known.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-known.js')
+        if 'VPKnown.paint({ box:box, collect:c,' not in li: wrong.append(rel + ' loadJoinInfo does not draw the join screen with VPKnown.paint')
         if 'placeholder=' in li: wrong.append(rel + ' loadJoinInfo draws a box of its own')
         if 'VPDetails.wire({ join:join, kind:"%s" })' % kind not in src: wrong.append(rel + ' does not wire Join with VPDetails.wire kind ' + kind)
     ok('every player phone draws its details boxes as a form from vp-details.js', not wrong, why='; '.join(wrong[:3]))
@@ -4192,6 +4196,13 @@ def local_checks(which):
              'runs POST /admin/staff-remove and /admin/staff on the billing Worker: only an owner removes an HQ login, never their own, with an audit row; both write through vp_hq_team_change, which locks the owner rows, so two owners removing or demoting each other at once leave one owner and a demoted owner\'s in-flight request is refused; staff, accounts, a venue owner, a stranger and no login are refused and nothing changes; the database not answering changes nothing and a new sign-in login made for it is taken away; a login already gone is a 409 HQ shows and clears, never a 404; an owner can never change their own role, and a role change is audited with the role it was; no page writes vp_platform_admins; migration 217 (paste first) and RLS-BASELINE.json leave the browser SELECT only and the function service_role only', 52,
              'A staff login that makes itself owner from the browser console and then reads every venue contact mobile, '
              'changes billing, or removes Dean from HQ'),
+            # D478: 17 tables no browser writes are SELECT-only for HQ (review R2/R3 of the platform-admins fix, 18 Nov 2026;
+            # migration 218), branch fix/admin-forall-lockdown-18nov. The page scan is tools/admin-forall-no-browser-write.test.py.
+            ('D478. No HQ login can add a discount, forge or delete an audit row, or rewrite draws, invoices, screens or questions from the browser',
+             'test-admin-forall-lockdown.js',
+             'runs nothing: reads migration 218 and RLS-BASELINE.json: the 17 tables no browser writes lose every FOR ALL policy (admin and host_write) and every write grant to public, anon and authenticated; each gets a SELECT-only admin policy with the same roles and predicate as before; host reads and SELECT grants stay; the TEST guard comes first; vp_venue_staff, vp_venue_groups, vp_venues and vp_venue_settings are not touched', 45,
+             'A staff login taking money off an invoice, deleting the audit row that says so, or rewriting a QLD draw record '
+             'from the browser console'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',
@@ -4372,6 +4383,19 @@ def local_checks(which):
              'test-paper-scan-screens.js',
              'a win leads with Confirm winner, every refusal says not to pay out, the lock says why a playlist cannot be switched', 20,
              'A host is told to pay a card that cannot win, or switches the playlist under paper cards on the tables'),
+            # Jobs sheet "HQ Rename venue button" (16 Nov 2026), branch fix/cards-rename-sun22. No migration: vp_venues.name and vp_admin_audit exist.
+            ('D441. HQ Rename venue changes the display name only, is HQ Owner only, asks before copying another venue\'s name, and is audited or undone',
+             'test-venue-rename.js',
+             'runs POST /admin/venue-rename through the billing Worker: accounts, support, a venue login and no login are refused with nothing written; the patch is the name only (never the slug or join code); the audit row holds the old and new name, and a failed audit puts the name back; another venue\'s name needs a confirm; a one-venue account named after the pub follows it, a multi-venue account does not; HQ shows the button to an Owner only and Cancel or No sends nothing', 34,
+             'A support login renaming a pub, a rename that changes the TV address and blanks the TV, two venues made to look the same by accident, '
+             'or a name change nobody can trace'),
+            # Dean's open question 32 (16 Nov 2026, "yes, step 2"), branch feature/hq-rename-slug-q32. Migration 212 (vp_venue_slug_aliases,
+            # vp_venue_move_address, vp_venue_current_slug): run on TEST twice, NOT on live. Ships on Dean's yes.
+            ('D449. HQ Move TV address: the address follows the new name, the old one keeps opening the venue for ever, Owner only, never two venues on one address',
+             'test-venue-address.js',
+             'runs POST /admin/venue-address, the game Worker at an old address and the pages: Owner only moves (one database call), a preview never proposes a current or old address, every refusal is a plain sentence; /venue, /screen, the signing key and an old printed code all find the venue at its old address; the TV moves itself, its memory and its pairing to the new address; a console bookmarked on the old address finds its venue; HQ shows old and new addresses and Cancel or No sends nothing', 70,
+             'A renamed pub\'s TV, table talkers or TV app going blank, a new venue handed an old pub\'s printed QR codes, '
+             'a support login moving an address, or a move nobody can trace'),
             ('D215. Game sounds are per game and the host\'s switch: off until switched on, the three recorded sounds sit in their named slots, and the two paid picks have empty named slots',
              'test-game-sounds.js',
              'trivia, musical bingo and bingo each keep a Game sounds switch through the Worker (junk dropped, default Off), a slot plays nothing until its game is told ON, a phone needs a tap and the mute button, a demo page is silent', 34,

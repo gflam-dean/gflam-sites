@@ -1,0 +1,433 @@
+/* ONE PHONE NUMBER PER PLAYER, CHANGED ONLY WITH A TEXT CODE (Dean, 17 Nov 2026 ~23:15; migration 215).
+
+   RUNS the real venueplay-game.js on tools/rig-game-worker.js through the handlers a real night uses (/join, /join/known,
+   /join/number/start, /join/number/verify). The database function vp_number_change_apply is stood in for by FAKE_APPLY
+   below, which does what the SQL does (the SQL itself was run and read back on TEST, rolled back). The text provider is
+   stood in for: nothing leaves, and the code is read out of the would-be text.
+     1. the switch: off by default (no "Not my number", both routes 503, nothing texted); on needs the Mobile Message login
+     2. /join/known: "Playing as" is the first name and the MASKED number (last three digits), nothing more
+     3. start: a code texted to the NEW number only, never the old; the same number, a junk number, an unknown phone refused;
+        only a hash of the code is kept; the text names venueplay, the code, the expiry; no em dash
+     4. verify: a wrong code counts a try and says how many are left; five wrong and even the right code is refused;
+        an expired code refused; the right code swaps the number
+     5. the swap: the known row, and ONLY the venues that already had this player's number; a venue that did not have it
+        is untouched; consent rows are untouched (per player, not per number); the next game at a venue that had it
+        carries the NEW number
+     6. send again: 30 seconds apart, three texts at most, the old code stops working
+     7. abuse limits: five changes a day per player, three codes a day to any one new number
+     8. no "Different number" path left on the phone module; the outbox guard swallows fiction numbers on live
+     9. F1 (18 Nov 2026): a number TYPED at a join is not proof. An attacker who typed a regular's number and then changed
+        it to their own moves only their own seat; the regular's seats and list rows keep their number. The swap's two
+        WHERE clauses are read out of migration 215 itself (FAKE_APPLY), so the SQL that ships is the SQL tested
+    10. review fixes (fix-215-review-18nov.md): only "no such column known_id" is tried again (a timeout or a 5xx after
+        the row was committed is not: no second seat, no second list row) and that one fallback logs a line with no
+        personal data; a known_id sent by the phone is dropped; an already-known player who types a regular's number
+        and then changes their own cannot move the regular's rows; the migration fails fast on a lock (lock_timeout)
+        and adds its foreign keys NOT VALID, guarded, then validated
+   Run from the repo root:  jsc tools/test-one-number.js */
+load('tools/rig-game-worker.js');
+
+sha256Hex = async function (s) {
+  var out = '', h1 = 2166136261 >>> 0, h2 = 5381 >>> 0;
+  for (var r = 0; r < 8; r++) {
+    for (var i = 0; i < s.length; i++) { h1 ^= s.charCodeAt(i) + r; h1 = Math.imul(h1, 16777619) >>> 0; h2 = (Math.imul(h2, 33) + s.charCodeAt(i) + r) >>> 0; }
+    out += ('00000000' + ((h1 ^ h2) >>> 0).toString(16)).slice(-8);
+  }
+  return out;
+};
+var _uuid = 0;
+crypto.randomUUID = function () { _uuid++; return 'c0c0c0c0-0000-4000-8000-' + ('000000000000' + _uuid).slice(-12); };
+if (typeof btoa !== 'function') btoa = function (s) { return 'b64:' + s; };
+if (typeof AbortController !== 'function') AbortController = function () { this.signal = {}; this.abort = function () {}; };
+var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b', THIRD = '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c0c';
+var TEXTS = [], SMS_FAIL = false, MISSING = false, NO_KNOWN_COL = false;
+/* F-A (review 18 Nov 2026): FAIL_MODE makes the NEXT insert into one table fail in a way that is NOT a missing column.
+   'after-commit-504' / 'after-commit-500' store the row, then answer a gateway timeout / server error (the row IS in);
+   'throw' is a fetch that never got an answer. POSTS counts inserts per table; WARNS keeps console.warn lines. */
+var FAIL_MODE = null, POSTS = {}, WARNS = [];
+console.warn = function () { WARNS.push(Array.prototype.join.call(arguments, ' ')); };
+/* what migration 215's function does, in JS. THE TWO ROW REWRITES ARE READ OUT OF THE MIGRATION ITSELF (F1, 18 Nov
+   2026): each WHERE condition of its vp_players and vp_captures updates is applied here by name, and a condition this
+   stand-in does not know stops the suite. So dropping "known_id = k.id" from the SQL turns this suite red, and the SQL
+   the gate signs is the SQL these checks ran. */
+var SQL215 = readFile('venueplay-backend/supabase/venueplay-215-one-number-per-player.sql').replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+function sqlWhere(re) { var m = re.exec(SQL215); return m ? m[1].replace(/\s+/g, ' ').trim().split(/ and /i) : null; }
+var W_PLAYERS = sqlWhere(/update public\.vp_players p set mobile = c\.new_mobile\s+from public\.vp_sessions s\s+where ([^;]+);/);
+var W_CAPTURES = sqlWhere(/update public\.vp_captures set mobile = c\.new_mobile\s+where ([^;]+);/);
+function sqlHolds(cond, row, s, k, venues) {
+  switch (cond) {
+    case 'p.session_id = s.id': return !!s && row.session_id === s.id;
+    case 's.venue_id = any(venues)': return !!s && venues.indexOf(s.venue_id) >= 0;
+    case 'venue_id = any(venues)': return venues.indexOf(row.venue_id) >= 0;
+    case 'p.mobile = k.mobile': case 'mobile = k.mobile': return row.mobile != null && row.mobile === k.mobile;
+    case 'p.known_id = k.id': case 'known_id = k.id': return row.known_id != null && row.known_id === k.id;
+    default: throw new Error('FAKE_APPLY does not know the SQL condition "' + cond + '": teach it, do not skip it');
+  }
+}
+function FAKE_APPLY(id) {
+  if (!W_PLAYERS || !W_CAPTURES) throw new Error('the two updates in migration 215 were not found');
+  var c = (DB.vp_number_changes || []).filter(function (x) { return x.id === id; })[0];
+  if (!c) return { ok: false, why: 'none' };
+  if (c.done_at) return { ok: true, rows: c.rows_changed || 0, already: true };
+  if (Date.parse(c.expires_at) < Date.now()) return { ok: false, why: 'expired' };
+  var k = DB.vp_known_players.filter(function (x) { return x.id === c.known_id; })[0];
+  var venues = Object.keys(k.shared || {}).filter(function (v) { return Array.isArray(k.shared[v]) && k.shared[v].indexOf('mobile') >= 0; });
+  var n = 0;
+  if (k.mobile && k.mobile !== c.new_mobile && venues.length) {
+    var hitP = DB.vp_players.filter(function (p) {
+      var s = DB.vp_sessions.filter(function (x) { return x.id === p.session_id; })[0];
+      return W_PLAYERS.every(function (w) { return sqlHolds(w, p, s, k, venues); });
+    });
+    var hitC = (DB.vp_captures || []).filter(function (r) { return W_CAPTURES.every(function (w) { return sqlHolds(w, r, null, k, venues); }); });
+    hitP.forEach(function (p) { p.mobile = c.new_mobile; n++; });
+    hitC.forEach(function (r) { r.mobile = c.new_mobile; n++; });
+  }
+  k.mobile = c.new_mobile;
+  c.done_at = new Date().toISOString(); c.rows_changed = n;
+  DB.vp_number_changes.forEach(function (x) { if (x.known_id === k.id && x.id !== c.id && !x.done_at) x.attempts = 5; });
+  return { ok: true, rows: n };
+}
+var rigFetch = fetch;
+fetch = async function (url, opts) {
+  var u = String(url);
+  if (u.indexOf('https://api.mobilemessage.com.au/') === 0) {
+    var m = JSON.parse(opts.body).messages[0]; TEXTS.push(m);
+    if (SMS_FAIL) return resp(500, { status: 'error' });
+    return resp(200, { status: 'complete', results: [{ to: m.to, status: 'success', message_id: 'x', cost: 1 }] });
+  }
+  if (MISSING && /\/rest\/v1\/(vp_number_changes|rpc\/vp_number_change_apply)/.test(u)) return resp(404, { code: '42P01', message: 'relation does not exist' });
+  if (/\/rest\/v1\/rpc\/vp_number_change_apply$/.test(u)) return resp(200, FAKE_APPLY(JSON.parse(opts.body).p_change));
+  if (/\/rest\/v1\/vp_number_changes$/.test(u) && opts && opts.method === 'POST') {
+    var b = JSON.parse(opts.body); (Array.isArray(b) ? b : [b]).forEach(function (r) {
+      if (r.attempts === undefined) r.attempts = 0; if (r.sends === undefined) r.sends = 1; if (r.done_at === undefined) r.done_at = null;
+      if (!r.created_at) r.created_at = new Date().toISOString(); if (!r.last_sent_at) r.last_sent_at = r.created_at; });
+    opts = Object.assign({}, opts, { body: JSON.stringify(b) });
+  }
+  var pm = /\/rest\/v1\/(vp_players|vp_captures)$/.exec(u);
+  if (pm && opts && opts.method === 'POST') {
+    POSTS[pm[1]] = (POSTS[pm[1]] || 0) + 1;
+    if (FAIL_MODE && FAIL_MODE.table === pm[1]) {
+      var how = FAIL_MODE.how; FAIL_MODE = null;
+      if (how === 'throw') throw new Error('network connection lost');
+      await rigFetch(url, opts);   // committed
+      return how === 'after-commit-504' ? resp(504, { message: 'upstream request timeout' }) : resp(500, { message: 'internal error' });
+    }
+  }
+  if (NO_KNOWN_COL && /\/rest\/v1\/(vp_players|vp_captures)$/.test(u) && opts && opts.method === 'POST' && /"known_id"/.test(opts.body)) return resp(400, { code: 'PGRST204', message: "Could not find the 'known_id' column" });
+  if (/\/rest\/v1\/vp_players$/.test(u) && opts && opts.method === 'POST') {
+    var pb = JSON.parse(opts.body); (Array.isArray(pb) ? pb : [pb]).forEach(function (r) { if (r.kicked === undefined) r.kicked = false; });
+    opts = Object.assign({}, opts, { body: JSON.stringify(pb) });
+  }
+  return rigFetch(url, opts);
+};
+requireStaff = async function (env, uid, venueId) { return { id: 'staff-1', role: 'owner', venue_id: venueId, auth_user_id: uid }; };
+function world() {
+  DB = {}; LOG.length = 0; TEXTS.length = 0; SMS_FAIL = false; MISSING = false; NO_KNOWN_COL = false;
+  FAIL_MODE = null; POSTS = {}; WARNS.length = 0;
+  delete ENV.CONSENT_BLOCK; delete ENV.NUMBER_CHANGE_SMS_ON; delete ENV.MOBILEMESSAGE_USERNAME; delete ENV.MOBILEMESSAGE_PASSWORD;
+  DB.vp_venues = [VENUE, OTHER, THIRD].map(function (id, i) { return { id: id, name: ['The Royal', 'The Other Pub', 'The Third'][i], slug: 'v' + i, status: 'active', au_state: 'QLD', entity_type: 'for_profit', terms_required: false, max_players: 50, founding_id: 'f' + i, timezone: 'Australia/Brisbane', created_at: '2026-01-01T00:00:00Z' }; });
+  DB.venueplay_founding = [0, 1, 2].map(function (i) { return { id: 'f' + i, status: 'active', stripe_customer_id: 'cus_' + i, stripe_subscription_id: 'sub_' + i, first_signin_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', contact_email: 'gm' + i + '@pub.com.au' }; });
+  DB.vp_sessions = []; DB.vp_players = []; DB.vp_games = []; DB.vp_known_players = []; DB.vp_player_consents = []; DB.vp_number_changes = []; DB.vp_captures = [];
+  DB.vp_venue_settings = [VENUE, OTHER, THIRD].map(function (id) { return { venue_id: id, collect_first_name: true, collect_marketing_optin: true }; });
+  DB.vp_venue_staff = [];
+}
+function on() { ENV.NUMBER_CHANGE_SMS_ON = 'on'; ENV.MOBILEMESSAGE_USERNAME = 'u'; ENV.MOBILEMESSAGE_PASSWORD = 'p'; }
+async function call(fn, body) {
+  BODY = body;
+  try { return await fn({ headers: { get: function () { return ''; } }, url: 'https://game.example/x' }, ENV, json); }
+  catch (e) { return { status: e.status || 500, body: { error: e.message } }; }
+}
+async function open(venueId) {
+  var r = await call(handleCreateSession, { venue_id: venueId || VENUE, format: 'trivia', road: 'supabase' });
+  return DB.vp_sessions.filter(function (x) { return x.id === r.body.session_id; })[0];
+}
+function lastPlayer() { return DB.vp_players[DB.vp_players.length - 1]; }
+var PID = 0;
+function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
+function codeIn(t) { var m = /code is ([0-9]{6})/.exec(t && t.message || ''); return m ? m[1] : null; }
+function later(ms) { NOWMS += ms; }
+
+(async function () {
+  print('1. THE SWITCH: OFF BY DEFAULT');
+  world();
+  var s1 = await open(VENUE);
+  var j = await call(handleJoin, { code: s1.join_code, name: 'Sarah', pid: pid(), first_name: 'Sarah', mobile: '0412345123', marketing_optin: true });
+  var KEY = j.body.known_key;
+  var jk = await call(handleJoinKnown, { code: s1.join_code, keys: [KEY] });
+  show('off: no "Not my number" offered (change_number false)', jk.body.known && jk.body.known.change_number === false, JSON.stringify(jk.body.known));
+  var st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
+  show('off: start answers 503 and nothing is texted or written', st.status === 503 && st.body.off === true && TEXTS.length === 0 && DB.vp_number_changes.length === 0, JSON.stringify(st));
+  show('off: verify answers 503', (await call(handleNumberVerify, { keys: [KEY], change_id: 'c0c0c0c0-0000-4000-8000-000000000001', sms_code: '123456' })).status === 503);
+  ENV.NUMBER_CHANGE_SMS_ON = 'on';
+  show('on, but no Mobile Message login on this Worker: still off', (await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' })).status === 503 && TEXTS.length === 0);
+  ENV.NUMBER_CHANGE_SMS_ON = 'yes'; ENV.MOBILEMESSAGE_USERNAME = 'u'; ENV.MOBILEMESSAGE_PASSWORD = 'p';
+  show('only the word "on" switches it on', (await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' })).status === 503 && TEXTS.length === 0);
+
+  print('2. PLAYING AS SARAH, 04.. ... 123');
+  on();
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [KEY] });
+  show('the first name and the number masked to its last three digits; "Not my number" offered', jk.body.known.hello === 'Sarah' && jk.body.known.mobile_masked === '04•• ••• 123' && jk.body.known.change_number === true, JSON.stringify(jk.body.known));
+  show('...and never the whole number', JSON.stringify(jk.body).indexOf('412345123') < 0 && JSON.stringify(jk.body).indexOf('345') < 0);
+
+  print('3. START: A CODE TO THE NEW NUMBER ONLY');
+  show('an unknown phone is refused, nothing texted', (await call(handleNumberStart, { keys: ['f'.repeat(64)], mobile: '0412000456' })).status === 404 && TEXTS.length === 0);
+  show('a junk number is refused', (await call(handleNumberStart, { keys: [KEY], mobile: '12345' })).status === 400 && TEXTS.length === 0);
+  show('the number we already hold is refused', (await call(handleNumberStart, { keys: [KEY], mobile: '0412 345 123' })).status === 400 && TEXTS.length === 0);
+  MISSING = true;
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
+  show('before migration 215: 503, nothing texted', st.status === 503 && TEXTS.length === 0, JSON.stringify(st));
+  MISSING = false;
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412 000 456' });
+  show('a code is texted, once, to the NEW number in the one form', st.status === 200 && TEXTS.length === 1 && TEXTS[0].to === '+61412000456', JSON.stringify([st, TEXTS]));
+  show('...never to the old number', TEXTS.every(function (t) { return t.to !== '+61412345123'; }));
+  show('...from venueplay', TEXTS[0].sender === 'venueplay', TEXTS[0].sender);
+  var CODE = codeIn(TEXTS[0]);
+  show('the text: venueplay, a six-digit code, the expiry; one part; no em dash', /^Your venueplay code is [0-9]{6}\. It expires in 10 minutes\./.test(TEXTS[0].message) && TEXTS[0].message.length <= 160 && TEXTS[0].message.indexOf('\u2014') < 0, TEXTS[0].message);
+  var ch = DB.vp_number_changes[0];
+  show('the answer names the change and the new number masked, with the expiry and the resend wait', st.body.change_id === ch.id && st.body.to === '04•• ••• 456' && st.body.expires_in === 600 && st.body.resend_in === 30, JSON.stringify(st.body));
+  show('only a HASH of the code is kept, with the change id in it; the old number only as its last three digits', JSON.stringify(DB.vp_number_changes).indexOf(CODE) < 0 && ch.code_hash === (await sha256Hex('vpnc:' + ch.id + ':' + CODE)) && ch.old_last3 === '123', JSON.stringify(ch));
+  show('it lives ten minutes', Date.parse(ch.expires_at) - Date.now() === 600000, ch.expires_at);
+  show('nothing has changed yet', DB.vp_known_players[0].mobile === '+61412345123');
+  SMS_FAIL = true;
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000999' });
+  show('a text that fails to go: the player is told, no code to type', st.status === 502 && !st.body.change_id, JSON.stringify(st));
+  SMS_FAIL = false;
+
+  print('4. VERIFY: TRIES, EXPIRY, THE RIGHT CODE');
+  var wrong = CODE === '000000' ? '111111' : '000000';
+  var v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: wrong });
+  show('a wrong code: refused, the try counted, four left', v.status === 400 && v.body.tries_left === 4 && ch.attempts === 1 && DB.vp_known_players[0].mobile === '+61412345123', JSON.stringify(v));
+  show('another phone cannot use this change (the key must be the same player\'s)', (await call(handleNumberVerify, { keys: ['e'.repeat(64)], change_id: ch.id, sms_code: CODE })).status === 404);
+  show('a code that is not six numbers is refused before a try is spent', (await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: '12' })).status === 400 && ch.attempts === 1);
+  for (var t = 0; t < 4; t++) v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: wrong });
+  show('five wrong: no tries left', v.status === 429 && v.body.tries_left === 0 && ch.attempts === 5, JSON.stringify(v));
+  v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: CODE });
+  show('...and then even the RIGHT code is refused', v.status === 429 && DB.vp_known_players[0].mobile === '+61412345123', JSON.stringify(v));
+  later(61000);
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
+  ch = DB.vp_number_changes.filter(function (x) { return x.id === st.body.change_id; })[0];
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  later(601000);
+  v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: CODE });
+  show('a code after ten minutes: expired, nothing changed, and refused before a try is spent', v.status === 410 && v.body.expired === true && DB.vp_known_players[0].mobile === '+61412345123' && ch.attempts === 0, JSON.stringify([v, ch.attempts]));
+
+  print('5. THE SWAP: EVERY VENUE THAT HAD IT, AND ONLY THOSE');
+  /* Sarah plays at OTHER and gives it her number (Use this, box ticked); THIRD never gets it */
+  var so = await open(OTHER);
+  await call(handleJoin, { code: so.join_code, name: 'Sarah', pid: pid(), known_keys: [KEY], use_fields: ['mobile'], marketing_optin: true });
+  var atOther = lastPlayer();
+  var s3 = await open(THIRD);
+  await call(handleJoin, { code: s3.join_code, name: 'Sarah', pid: pid(), known_keys: [KEY] });
+  var atThird = lastPlayer();
+  DB.vp_players.push({ id: 'stranger-row', session_id: s3.id, first_name: 'Kim', mobile: '+61412345123' });   // the old number at a venue that never had it from Sarah
+  DB.vp_captures.push({ id: 'cap-other', venue_id: OTHER, first_name: 'Sarah', mobile: '+61412345123', known_id: DB.vp_known_players[0].id });   // her bingo capture (the Worker writes known_id: section 9)
+  DB.vp_captures.push({ id: 'cap-old', venue_id: OTHER, first_name: 'Sarah', mobile: '+61412345123' });   // a row from before migration 215: no known_id
+  DB.vp_player_consents.push({ id: 'cons-1', venue_id: OTHER, known_id: DB.vp_known_players[0].id, party: 'venue', granted: true, wording_version: 'vpc-4-22nov', source: 'trivia' });
+  var consBefore = JSON.stringify(DB.vp_player_consents);
+  show('before: OTHER had the old number from Sarah, THIRD had none', atOther.mobile === '+61412345123' && atThird.mobile === undefined, JSON.stringify([atOther, atThird]));
+  later(31000);
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
+  ch = DB.vp_number_changes.filter(function (x) { return x.id === st.body.change_id; })[0];
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: CODE });
+  show('the right code: ok, the new number masked', v.status === 200 && v.body.ok === true && v.body.masked === '04•• ••• 456', JSON.stringify(v));
+  show('the known row now holds the NEW number, and only it', DB.vp_known_players[0].mobile === '+61412000456' && JSON.stringify(DB.vp_known_players[0]).indexOf('412345123') < 0, JSON.stringify(DB.vp_known_players[0]));
+  show('every venue that had it from Sarah has the new one (the first venue\'s rows, the other venue\'s row and capture)', DB.vp_players.filter(function (p) { return p.first_name === 'Sarah'; }).every(function (p) { return p.mobile !== '+61412345123'; }) && atOther.mobile === '+61412000456' && DB.vp_captures[0].mobile === '+61412000456', JSON.stringify(DB.vp_players));
+  show('a row with no known_id (made before 215, so nobody can prove whose it is) keeps the old number: never moved by number alone', DB.vp_captures.filter(function (x) { return x.id === 'cap-old'; })[0].mobile === '+61412345123');
+  show('a venue that never had it from her is untouched (a stranger with the old number there keeps it)', DB.vp_players.filter(function (p) { return p.id === 'stranger-row'; })[0].mobile === '+61412345123' && atThird.mobile === undefined);
+  show('consent rows untouched: each venue\'s answer stays, per player', JSON.stringify(DB.vp_player_consents) === consBefore);
+  show('the change is marked done', !!ch.done_at, JSON.stringify(ch));
+  v = await call(handleNumberVerify, { keys: [KEY], change_id: ch.id, sms_code: CODE });
+  show('the same code again: ok, nothing changes twice', v.status === 200 && DB.vp_known_players[0].mobile === '+61412000456');
+  await call(handleJoin, { code: (await open(OTHER)).join_code, name: 'Sarah', pid: pid(), known_keys: [KEY] });
+  show('the next game at a venue that had her number carries the NEW one', lastPlayer().mobile === '+61412000456', JSON.stringify(lastPlayer()));
+  await call(handleJoin, { code: (await open(VENUE)).join_code, name: 'Sarah', pid: pid(), known_keys: [KEY] });
+  show('...at the first venue too: never the old number again', lastPlayer().mobile === '+61412000456', JSON.stringify(lastPlayer()));
+  jk = await call(handleJoinKnown, { code: s3.join_code, keys: [KEY] });
+  show('a venue that never had it still asks before it gets it (Playing as shows the NEW number)', jk.body.known.mobile_masked === '04•• ••• 456' && jk.body.known.confirm.some(function (x) { return x.field === 'mobile' && x.masked === '04•• ••• 456'; }), JSON.stringify(jk.body.known));
+
+  print('6. SEND AGAIN');
+  world(); on();
+  s1 = await open(VENUE);
+  j = await call(handleJoin, { code: s1.join_code, name: 'Sarah', pid: pid(), first_name: 'Sarah', mobile: '0412345123' });
+  KEY = j.body.known_key;
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456' });
+  var cid = st.body.change_id, first = codeIn(TEXTS[0]);
+  var again = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456', change_id: cid });
+  show('send again within 30 seconds: refused with the wait, nothing texted', again.status === 429 && again.body.resend_in > 0 && TEXTS.length === 1, JSON.stringify(again));
+  later(31000);
+  again = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456', change_id: cid });
+  show('after 30 seconds: a new code, same change, to the same new number', again.status === 200 && again.body.change_id === cid && TEXTS.length === 2 && TEXTS[1].to === '+61412000456' && again.body.sends_left === 1, JSON.stringify(again));
+  var second = codeIn(TEXTS[1]);
+  show('send again for a DIFFERENT number on the same change is refused', (await call(handleNumberStart, { keys: [KEY], mobile: '0412000777', change_id: cid })).status === 410 && TEXTS.length === 2);
+  if (first !== second) {
+    v = await call(handleNumberVerify, { keys: [KEY], change_id: cid, sms_code: first });
+    show('the first code stops working once a new one is sent', v.status === 400 && DB.vp_known_players[0].mobile === '+61412345123', JSON.stringify(v));
+  } else show('the first code stops working once a new one is sent (codes differ)', false, 'same code twice: ' + first);
+  later(31000);
+  again = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456', change_id: cid });
+  later(31000);
+  var fourth = await call(handleNumberStart, { keys: [KEY], mobile: '0412000456', change_id: cid });
+  show('three texts per change at most', again.status === 200 && fourth.status === 429 && TEXTS.length === 3, JSON.stringify(fourth));
+  show('the clock restarts on each text but never past 30 minutes from the start', Date.parse(DB.vp_number_changes[0].expires_at) <= Date.parse(DB.vp_number_changes[0].created_at) + 1800000);
+
+  print('7. ABUSE LIMITS');
+  world(); on();
+  s1 = await open(VENUE);
+  KEY = (await call(handleJoin, { code: s1.join_code, name: 'Sarah', pid: pid(), first_name: 'Sarah', mobile: '0412345123' })).body.known_key;
+  for (var n = 0; n < 5; n++) await call(handleNumberStart, { keys: [KEY], mobile: '04120004' + (10 + n) });
+  st = await call(handleNumberStart, { keys: [KEY], mobile: '0412000499' });
+  show('five changes a day per player, then refused, nothing texted', st.status === 429 && TEXTS.length === 5, JSON.stringify(st));
+  var keys = [];
+  for (n = 0; n < 4; n++) { var jj = await call(handleJoin, { code: s1.join_code, name: 'P' + n, pid: pid(), first_name: 'P' + n, mobile: '04129990' + (10 + n) }); keys.push(jj.body.known_key); }
+  TEXTS.length = 0;
+  for (n = 0; n < 3; n++) await call(handleNumberStart, { keys: [keys[n]], mobile: '0412777888' });
+  st = await call(handleNumberStart, { keys: [keys[3]], mobile: '0412777888' });
+  show('three codes a day to any one new number, whoever asks (nobody can text-bomb a stranger)', st.status === 429 && TEXTS.length === 3, JSON.stringify(st));
+
+  print('8. THE PHONE MODULE, AND THE OUTBOX GUARD');
+  var VK = readFile('venueplay/app/vp-known.js');
+  show('no "Different number" button left on the phone', VK.indexOf('Different number') < 0);
+  show('the phone says "Playing as" and offers "Not my number" only when the Worker says change_number', VK.indexOf('"Playing as "') >= 0 && /known\.change_number === true/.test(VK));
+  show('no em dash in the phone module', VK.indexOf('\u2014') < 0);
+  var GSRC = readFile('venueplay-backend/worker/vp-outbox-guard.js');
+  var G = (new Function('Response', 'URL', GSRC.slice(GSRC.indexOf('/* OUTBOX GUARD BEGIN'), GSRC.indexOf('/* OUTBOX GUARD END */')) + '\nreturn { vpgIsTestMobile: vpgIsTestMobile };'))(Response, URL);
+  show('the outbox guard treats 0491 570 xxx (and +61 491 570 xxx) as fiction: never delivered', G.vpgIsTestMobile('0491 570 001') && G.vpgIsTestMobile('+61491570123') && !G.vpgIsTestMobile('+61412000456'));
+
+  print('9. ONLY THE ROWS THIS PLAYER MADE (F1, 18 Nov 2026): A TYPED NUMBER IS NOT PROOF');
+  world(); on();
+  var MV = '+61412555001', MA = '+61412555999';
+  var sv = await open(VENUE);
+  var vj = await call(handleJoin, { code: sv.join_code, name: 'Sam', pid: pid(), first_name: 'Sam', mobile: '0412 555 001', marketing_optin: true });
+  var victimSeat = lastPlayer(), VKEY = vj.body.known_key;
+  var victimKnown = DB.vp_known_players.filter(function (x) { return x.mobile === MV; })[0];
+  show('the join writes the known row that made the seat onto the seat (known_id)', !!victimKnown && victimSeat.known_id === victimKnown.id, JSON.stringify(victimSeat));
+  var sbv = await open(VENUE);   // Sam's bingo night: the phone holds a seat token
+  DB.vp_players.push({ id: 'vvvvvvvv-0000-4000-8000-000000000002', session_id: sbv.id, token_hash: await sha256Hex('tokV2'), display_name: 'Sam', kicked: false });
+  BODY = { code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [VKEY], marketing_optin: true };
+  var capRes;
+  try { capRes = await handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tokV2' : ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+  catch (e) { capRes = { status: e.status || 500, body: { error: e.message } }; }
+  var victimCap = DB.vp_captures[DB.vp_captures.length - 1];
+  show('the bingo capture writes the known row too (known_id), with the number the row holds', capRes.status === 200 && victimCap && victimCap.known_id === victimKnown.id && victimCap.mobile === MV, JSON.stringify([capRes, victimCap]));
+  DB.vp_captures.push({ id: 'cap-victim-old', venue_id: VENUE, first_name: 'Sam', mobile: MV });   // Sam's list row from before 215
+  /* the attacker joins the same night and TYPES Sam's number (never verified), then "Not my number" to their own phone */
+  var aj = await call(handleJoin, { code: sv.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 001' });
+  var attackerSeat = lastPlayer(), AKEY = aj.body.known_key;
+  var attackerKnown = DB.vp_known_players.filter(function (x) { return x.id !== victimKnown.id && x.mobile === MV; })[0];
+  show('setup: the attacker has a known row of their own holding Sam\'s typed number, shared with this venue', !!AKEY && !!attackerKnown && attackerSeat.known_id === attackerKnown.id && sharedWith(attackerKnown, VENUE, 'mobile'), JSON.stringify(attackerKnown));
+  later(31000);
+  st = await call(handleNumberStart, { keys: [AKEY], mobile: '0412 555 999' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [AKEY], change_id: st.body.change_id, sms_code: CODE });
+  show('setup: the attacker\'s change goes through (the code went to their own phone)', st.status === 200 && v.status === 200 && attackerKnown.mobile === MA, JSON.stringify([st, v]));
+  show('ATTACK: Sam\'s seat keeps Sam\'s number (not moved to the attacker\'s)', victimSeat.mobile === MV, JSON.stringify(victimSeat));
+  show('ATTACK: Sam\'s bingo list row keeps Sam\'s number', victimCap.mobile === MV, JSON.stringify(victimCap));
+  show('ATTACK: Sam\'s list row from before 215 keeps Sam\'s number', DB.vp_captures.filter(function (x) { return x.id === 'cap-victim-old'; })[0].mobile === MV);
+  show('ATTACK: no row anywhere holds the attacker\'s number except the attacker\'s own seat', DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MA; }).every(function (r) { return r === attackerSeat; }), JSON.stringify(DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MA; })));
+  show('the attacker\'s OWN seat (made by their known row) does move: an own-number change still works', attackerSeat.mobile === MA, JSON.stringify(attackerSeat));
+  show('Sam\'s known row is untouched', victimKnown.mobile === MV);
+  /* Sam's own change, after the attack: Sam's seat and capture move, the old unlinked row does not */
+  later(31000);
+  st = await call(handleNumberStart, { keys: [VKEY], mobile: '0412 555 777' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [VKEY], change_id: st.body.change_id, sms_code: CODE });
+  show('Sam\'s own change: Sam\'s seat and bingo list row move to Sam\'s new number', v.status === 200 && victimSeat.mobile === '+61412555777' && victimCap.mobile === '+61412555777', JSON.stringify([v, victimSeat, victimCap]));
+  show('...and the attacker\'s seat is not touched by Sam\'s change', attackerSeat.mobile === MA);
+  /* before migration 215 runs there is no known_id column: a join and a bingo capture still land, without the link */
+  NO_KNOWN_COL = true;
+  var nb = DB.vp_players.length, nc = DB.vp_captures.length;
+  var jn = await call(handleJoin, { code: sv.join_code, name: 'Sam', pid: pid(), known_keys: [VKEY] });
+  show('before 215: a known phone still joins (the seat is stored without known_id, so no change ever moves it)', jn.status === 200 && !!jn.body.token && DB.vp_players.length === nb + 1 && lastPlayer().known_id === undefined, JSON.stringify([jn.status, lastPlayer()]));
+  BODY = { code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [VKEY], marketing_optin: true };
+  try { capRes = await handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tokV2' : ''; } }, url: 'https://game.example/capture' }, ENV, json); }
+  catch (e) { capRes = { status: e.status || 500, body: { error: e.message } }; }
+  show('before 215: a bingo capture is still stored, without known_id', capRes.status === 200 && DB.vp_captures.length === nc + 1 && DB.vp_captures[nc].known_id === undefined, JSON.stringify([capRes, DB.vp_captures[nc]]));
+  NO_KNOWN_COL = false;
+
+  print('10. REVIEW FIXES (fix-215-review-18nov.md): THE RETRY, THE PHONE\'S OWN known_id, A KNOWN ATTACKER, THE LOCK');
+  world(); on();
+  var M1 = '+61412555001';
+  var s10 = await open(VENUE), s10o = await open(OTHER);
+  var j10 = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), first_name: 'Sam', mobile: '0412 555 001', marketing_optin: true });
+  var seat10 = lastPlayer(), K10 = j10.body.known_key;
+  var known10 = DB.vp_known_players.filter(function (x) { return x.mobile === M1; })[0];
+  show('setup: Sam joins, the seat carries his known row', !!known10 && seat10.known_id === known10.id, JSON.stringify(seat10));
+  /* F-A: a timeout AFTER the seat was committed is not "no such column": never a second insert, never a second seat */
+  var np = DB.vp_players.length, pp = POSTS.vp_players || 0;
+  FAIL_MODE = { table: 'vp_players', how: 'after-commit-504' };
+  var jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: a timeout after the seat was stored is NOT tried again: one insert, one seat, the error answered as before 215', jt.status === 502 && (POSTS.vp_players || 0) === pp + 1 && DB.vp_players.length === np + 1 && lastPlayer().known_id === known10.id, JSON.stringify([jt, POSTS, DB.vp_players.length - np]));
+  np = DB.vp_players.length; pp = POSTS.vp_players || 0;
+  FAIL_MODE = { table: 'vp_players', how: 'throw' };
+  jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: a fetch that never answered is NOT tried again either (one insert, the error passed on)', jt.status !== 200 && (POSTS.vp_players || 0) === pp + 1 && DB.vp_players.length === np, JSON.stringify([jt, POSTS]));
+  show('F-A: neither failure wrote the "column missing" log line', WARNS.length === 0, JSON.stringify(WARNS));
+  /* F-A at the bingo capture: a 500 after the list row was stored is not tried again: the player is on the list once */
+  var sb10 = await open(VENUE);
+  DB.vp_players.push({ id: 'vvvvvvvv-0000-4000-8000-000000000010', session_id: sb10.id, token_hash: await sha256Hex('tok10'), display_name: 'Sam', kicked: false });
+  function cap10(body) {
+    BODY = body;
+    return handleCapture({ headers: { get: function (h) { return String(h).toLowerCase() === 'x-player-token' ? 'tok10' : ''; } }, url: 'https://game.example/capture' }, ENV, json)
+      .catch(function (e) { return { status: e.status || 500, body: { error: e.message } }; });
+  }
+  var nc10 = DB.vp_captures.length, pc = POSTS.vp_captures || 0;
+  FAIL_MODE = { table: 'vp_captures', how: 'after-commit-500' };
+  var c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [K10], marketing_optin: true });
+  show('F-A: a server error after the bingo list row was stored is NOT tried again: Sam is on the list once', c10.status === 502 && (POSTS.vp_captures || 0) === pc + 1 && DB.vp_captures.length === nc10 + 1, JSON.stringify([c10, POSTS, DB.vp_captures.length - nc10]));
+  /* F-A: the one error that IS tried again, once, with one log line that holds no number, no name, no id or key */
+  NO_KNOWN_COL = true; WARNS.length = 0;
+  np = DB.vp_players.length; pp = POSTS.vp_players || 0;
+  jt = await call(handleJoin, { code: s10.join_code, name: 'Sam', pid: pid(), known_keys: [K10] });
+  show('F-A: "no such column known_id" IS tried again, exactly once, and the seat lands without the link', jt.status === 200 && (POSTS.vp_players || 0) === pp + 2 && DB.vp_players.length === np + 1 && lastPlayer().known_id === undefined, JSON.stringify([jt.status, POSTS]));
+  nc10 = DB.vp_captures.length; pc = POSTS.vp_captures || 0;
+  c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_keys: [K10], marketing_optin: true });
+  show('F-A: the same for a bingo capture: tried again once, stored once, without the link', c10.status === 200 && (POSTS.vp_captures || 0) === pc + 2 && DB.vp_captures.length === nc10 + 1 && DB.vp_captures[nc10].known_id === undefined, JSON.stringify([c10, POSTS]));
+  var wtext = WARNS.join('\n');
+  show('F-A: each fallback logs one line, naming the table and migration 215', WARNS.length === 2 && /\[known_id\] column missing on vp_players/.test(WARNS[0]) && /\[known_id\] column missing on vp_captures/.test(WARNS[1]), JSON.stringify(WARNS));
+  show('F-A: the log line holds no personal data (no number, no name, no known id, no key)', wtext.indexOf('412') < 0 && wtext.indexOf('555') < 0 && wtext.indexOf('Sam') < 0 && wtext.indexOf(known10.id) < 0 && wtext.indexOf(K10) < 0, wtext);
+  NO_KNOWN_COL = false;
+  /* T1: a known_id the phone sends is never used: only the server's own known row goes on the seat or the list row */
+  var j11 = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), known_id: known10.id });
+  show('T1: a join that sends Sam\'s known_id (and no key) gets no link to Sam', j11.status === 200 && lastPlayer().known_id !== known10.id && lastPlayer().known_id === undefined, JSON.stringify(lastPlayer()));
+  j11 = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 222', known_id: known10.id });
+  var malKnown = DB.vp_known_players.filter(function (x) { return x.mobile === '+61412555222'; })[0];
+  show('T1: a join that sends Sam\'s known_id with its own details is linked to its OWN new known row, not Sam\'s', j11.status === 200 && !!malKnown && lastPlayer().known_id === malKnown.id, JSON.stringify(lastPlayer()));
+  nc10 = DB.vp_captures.length;
+  c10 = await cap10({ code: fnvVenueCode('v0'), first_name: 'Sam', known_id: known10.id, marketing_optin: true });
+  show('T1: a bingo capture that sends Sam\'s known_id (and no key) is stored without any link', c10.status === 200 && DB.vp_captures.length === nc10 + 1 && DB.vp_captures[nc10].known_id === undefined, JSON.stringify([c10, DB.vp_captures[nc10]]));
+  /* T2: an attacker who is ALREADY known (own number A) types Sam's number at this venue, then changes A to B */
+  var MA2 = '+61412555333', MB2 = '+61412555444';
+  var ja = await call(handleJoin, { code: s10o.join_code, name: 'Mal', pid: pid(), first_name: 'Mal', mobile: '0412 555 333' });
+  var KA2 = ja.body.known_key, aSeatOther = lastPlayer();
+  var aKnown = DB.vp_known_players.filter(function (x) { return x.mobile === MA2; })[0];
+  ja = await call(handleJoin, { code: s10.join_code, name: 'Mal', pid: pid(), known_keys: [KA2], first_name: 'Mal', mobile: '0412 555 001' });
+  var aTyped = lastPlayer();
+  show('T2 setup: the known attacker\'s seat here holds Sam\'s typed number with the attacker\'s own known_id, and this venue is NOT on the attacker\'s shared list', ja.status === 200 && !!aKnown && aTyped.mobile === M1 && aTyped.known_id === aKnown.id && !sharedWith(aKnown, VENUE, 'mobile') && aKnown.mobile === MA2, JSON.stringify([aTyped, aKnown]));
+  later(31000);
+  st = await call(handleNumberStart, { keys: [KA2], mobile: '0412 555 444' });
+  CODE = codeIn(TEXTS[TEXTS.length - 1]);
+  v = await call(handleNumberVerify, { keys: [KA2], change_id: st.body.change_id, sms_code: CODE });
+  show('T2 setup: the attacker\'s own change goes through', st.status === 200 && v.status === 200 && aKnown.mobile === MB2, JSON.stringify([st, v]));
+  show('T2 ATTACK: Sam\'s seat keeps Sam\'s number', seat10.mobile === M1, JSON.stringify(seat10));
+  show('T2 ATTACK: the attacker\'s seat with Sam\'s typed number keeps Sam\'s number (not moved to the attacker\'s)', aTyped.mobile === M1, JSON.stringify(aTyped));
+  show('T2 ATTACK: no row anywhere holds the attacker\'s new number except the attacker\'s own seat at the other venue', DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MB2; }).every(function (r) { return r === aSeatOther; }) && aSeatOther.mobile === MB2, JSON.stringify(DB.vp_players.concat(DB.vp_captures).filter(function (r) { return r.mobile === MB2; })));
+  show('T2: Sam\'s known row is untouched', known10.mobile === M1);
+  /* F-B: the migration fails fast on a lock instead of queueing every join, and adds its foreign keys without a scan */
+  var RAW215 = readFile('venueplay-backend/supabase/venueplay-215-one-number-per-player.sql');
+  var after = RAW215.split('-- VP-STAGING-GUARD-END')[1] || '';
+  show('F-B: the first statement after the TEST guard is set lock_timeout = \'3s\'', /^\s*set lock_timeout = '3s';/.test(after), after.slice(0, 60));
+  var sql = after.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  show('F-B: the known_id columns are added with no inline foreign key (no scan under the add-column lock)', /alter table public\.vp_players add column if not exists known_id uuid;/.test(sql) && /alter table public\.vp_captures add column if not exists known_id uuid;/.test(sql) && !/add column if not exists known_id uuid references/.test(sql));
+  var fkOk = ['vp_players', 'vp_captures'].every(function (t) {
+    var guard = new RegExp("if not exists \\(select 1 from pg_constraint\\s+where conrelid = 'public\\." + t + "'::regclass and conname = '" + t + "_known_id_fkey'\\) then\\s+alter table public\\." + t + " add constraint " + t + "_known_id_fkey\\s+foreign key \\(known_id\\) references public\\.vp_known_players\\(id\\) on delete set null not valid;");
+    return guard.test(sql) && new RegExp('alter table public\\.' + t + ' validate constraint ' + t + '_known_id_fkey;').test(sql);
+  });
+  show('F-B: each foreign key is added NOT VALID only when pg_constraint lacks it (safe twice), then validated on its own', fkOk);
+  show('F-B: the lock timeout is reset after the last statement that takes a lock', /reset lock_timeout;\s*$/.test(sql));
+
+  print('');
+  print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
+  if (bad) throw new Error('one number: ' + bad + ' failed');
+})().catch(function (e) { print('CRASH ' + e + '\n' + (e && e.stack)); bad++; print('FAILED'); });
+drainMicrotasks();

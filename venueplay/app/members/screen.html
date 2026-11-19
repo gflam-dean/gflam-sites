@@ -480,7 +480,7 @@
     state.drawnList=state.drawnList||[]; if(number!=null && state.drawnList[state.drawnList.length-1]!==String(number)) state.drawnList.push(String(number)); state.drawnList=state.drawnList.slice(-9);
     var secs=claimSecs|0, st=styleStage;
     if(styleClockTimer){ clearInterval(styleClockTimer); styleClockTimer=null; }
-    if(state.cdOn){ if(cdc()){ cdc().cancel(); if(secs>0) cdc().claim(secs, secs); } }   // the claim clock in the countdown band (13 Nov 2026)
+    if(state.cdOn){ if(cdc()){ cdc().cancel(); if(secs>0) cdc().claim(secs, Math.max(secs, state.winTotal||0)); } }   // the claim clock in the countdown band (13 Nov 2026)
     else if(secs>0){
       (function paint(){ st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); })();
       styleClockTimer=setInterval(function(){ secs--; st.setClock(secs>0 ? "Claim within "+mmss(secs) : "Time is up. Waiting on the host."); if(secs<=0){ clearInterval(styleClockTimer); styleClockTimer=null; } }, 1000);
@@ -570,7 +570,7 @@
     (function(){
       pr.classList.remove("hidden");
       if(secs>0){
-        var total=secs; cd.classList.remove("over"); $("tvWinStrip").classList.add("timed");
+        var total=Math.max(secs, state.winTotal||0); cd.classList.remove("over"); $("tvWinStrip").classList.add("timed");
         $("tvClaimLine").innerHTML='<span>Claim within</span> <b id="tvClaimT">0:00</b>'; cdT=$("tvClaimT");
         cdT.textContent=mmss(secs); claimBar(secs,total); cd.classList.remove("hidden");
         claimCdTimer=setInterval(function(){
@@ -911,7 +911,20 @@
     }
     else if(m.t==="pick"){ if(styleOn() && m.number!=null){ state.pick={ number:m.number, name:(typeof m.name==="string" ? m.name : "") }; if(styleStage) styleStage.setPick(state.pick); } }
     else if(m.t==="winner" && m.kind==="entries"){ state.phase="winner"; state.kind="entries"; showEntriesWinner(m); }
-    else if(m.t==="winner"){ state.phase="winner"; state.kind=""; if(styleOn()) showStyleWinner(m.number, m.name, m.claimSecs); else showWinner(m.number, m.name, m.claimSecs); }
+    else if(m.t==="winner"){
+      /* THE WINNER CARRIES WHAT "drawing" AND "state" SAID, for a TV that reloaded or opened mid-claim and never heard them (it used to
+         paint a plain winner screen and drop "Playing for $200"). A TV that did hear them is given the same values; a host on an older
+         build sends none of these and the screen behaves as it always did. */
+      if(typeof m.drawName==="string") state.drawName=m.drawName;
+      if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
+      if(m.style==="flip" || m.style==="race"){
+        if(state.styleKey!==m.style){ state.styleKey=m.style; destroyStyle(); }
+        if(typeof m.drawSecs==="number" && m.drawSecs>=2 && m.drawSecs<=12) state.styleSecs=m.drawSecs;
+        if(m.maxNumber>0){ state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0); }
+        if(window.VPEndShow && VPEndShow.enable) VPEndShow.enable();
+      }
+      state.winTotal=(typeof m.claimTotal==="number" && m.claimTotal>0) ? (m.claimTotal|0) : 0;
+      state.phase="winner"; state.kind=""; if(styleOn()) showStyleWinner(m.number, m.name, m.claimSecs); else showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }  // wx: the money is not the headline
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName, !!m.capped); }
   }

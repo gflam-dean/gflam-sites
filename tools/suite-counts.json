@@ -139,6 +139,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/any5-phone-claim-in-chrome.test.py": {
+  "checks": 86,
+  "counted_by": "lines"
+ },
  "tools/billing-words-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"
@@ -256,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
-  "checks": 158,
+  "checks": 178,
   "counted_by": "lines"
  },
  "tools/game-sounds-in-chrome.test.py": {
@@ -464,7 +468,7 @@
   "counted_by": "lines"
  },
  "tools/paper-cards-v2-in-chrome.test.py": {
-  "checks": 240,
+  "checks": 244,
   "counted_by": "lines"
  },
  "tools/paper-lock-in-chrome.test.py": {
@@ -600,7 +604,7 @@
   "counted_by": "lines"
  },
  "tools/settings-and-logos-in-chrome.test.py": {
-  "checks": 23,
+  "checks": 31,
   "counted_by": "lines"
  },
  "tools/setup-use-in-chrome.test.py": {
@@ -975,6 +979,10 @@
   "checks": 37,
   "counted_by": "lines"
  },
+ "tools/test-hq-no-member-contacts.js": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
  "tools/test-hq-resend-signin-text.js": {
   "checks": 31,
   "counted_by": "lines"
@@ -1044,7 +1052,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 47,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {
@@ -1120,7 +1128,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-tv-10nov.js": {
-  "checks": 23,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
@@ -1233,6 +1241,14 @@
  },
  "tools/test-platform-admins-no-browser-write.js": {
   "checks": 52,
+  "counted_by": "lines"
+ },
+ "tools/test-admin-forall-lockdown.js": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/admin-forall-no-browser-write.test.py": {
+  "checks": 10,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -1352,7 +1368,7 @@
   "counted_by": "lines"
  },
  "tools/test-retention-sweep.js": {
-  "checks": 52,
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
@@ -1424,7 +1440,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-seat-takeover.js": {
@@ -1519,6 +1535,10 @@
   "checks": 80,
   "counted_by": "lines"
  },
+ "tools/test-tv-reload-state-17nov.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-trial-cancel-alert.js": {
   "checks": 22,
   "counted_by": "lines"
@@ -1536,7 +1556,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-endnight.js": {
-  "checks": 140,
+  "checks": 143,
   "counted_by": "lines"
  },
  "tools/test-trivia-live-fixes-6nov.js": {
@@ -1548,7 +1568,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 41,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -1568,7 +1588,7 @@
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
-  "checks": 48,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-try-demo-billing.js": {
@@ -1724,7 +1744,7 @@
   "counted_by": "lines"
  },
  "tools/test-wizard-r10.js": {
-  "checks": 199,
+  "checks": 216,
   "counted_by": "lines"
  },
  "tools/touring-cards.test.py": {
@@ -1756,7 +1776,11 @@
   "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
-  "checks": 27,
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/trivia-errbar-flow-in-chrome.test.py": {
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/trivia-join-in-chrome.test.py": {
@@ -1904,7 +1928,7 @@
   "counted_by": "lines"
  },
  "tools/wizard-v2-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 38,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
@@ -2172,7 +2196,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/screen-endpoint.test.js": {
-  "checks": 19,
+  "checks": 23,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/screen-health.test.js": {
@@ -2349,6 +2373,74 @@
  },
  "tools/staging-findings-in-chrome.test.py": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/test-known-phone.js": {
+  "checks": 97,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-known.js": {
+  "checks": 80,
+  "counted_by": "lines"
+ },
+ "tools/known-phone-in-chrome.test.py": {
+  "checks": 525,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/winner-pin.test.js": {
+  "checks": 99,
+  "counted_by": "lines"
+ },
+ "tools/winner-pin-in-chrome.test.py": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/trivia-finale-in-chrome.test.py": {
+  "checks": 145,
+  "counted_by": "lines"
+ },
+ "tools/trivia-round-podium-in-chrome.test.py": {
+  "checks": 165,
+  "counted_by": "lines"
+ },
+ "tools/signup-player-limits-in-chrome.test.py": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
+ "tools/test-signup-player-limits.js": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-address.js": {
+  "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/test-venue-rename.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
+ "tools/members-name-console-in-chrome.test.py": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/bingo-tv-name-once-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/trivia-reopen-tv-in-chrome.test.py": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/console-start-buttons-in-chrome.test.py": {
+  "checks": 177,
+  "counted_by": "lines"
+ },
+ "tools/tv-flip-name-in-chrome.test.py": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
+ "tools/test-one-number.js": {
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/canary-night.test.py": {

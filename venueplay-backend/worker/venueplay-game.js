@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Nov 2026, 18:37 · 155207f5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:09 · 7f00b63b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -662,6 +662,9 @@ export default {
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
       if (method === 'POST' && path === '/join/list')          return await handleJoinList(request, env, json);
+      if (method === 'POST' && path === '/join/known')         return await handleJoinKnown(request, env, json);
+      if (method === 'POST' && path === '/join/number/start')  return await handleNumberStart(request, env, json);
+      if (method === 'POST' && path === '/join/number/verify') return await handleNumberVerify(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/feedback')           return await handleFeedback(request, env, json);
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
@@ -768,6 +771,8 @@ export default {
       if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
       if (method === 'GET'  && path === '/player/score')       return await handlePlayerScore(request, env, json);
       if (method === 'POST' && path === '/player/alive')       return await handlePlayerAlive(request, env, json);
+      if (method === 'POST' && path === '/player/winner-pin')  return await handlePlayerWinnerPin(request, env, json);   // winner check: the round PIN, never to a TV
+      if (method === 'POST' && path === '/host/winner-pin')    return await handleHostWinnerPin(request, env, json);
       if (method === 'POST' && path === '/host/claim/resolve') return await handleClaimResolve(request, env, json);
       if (method === 'POST' && path === '/host/paper/print')   return await handlePaperPrint(request, env, json);
       if (method === 'POST' && path === '/host/paper/check')   return await handlePaperCheck(request, env, json);
@@ -933,6 +938,10 @@ async function sweepRetention(env) {
       // Broadcast bingo keeps its captures against the venue directly, with no session.
       await sbPatch(env, 'vp_captures', 'venue_id=eq.' + enc(v.id), BLANK_CAPTURE);
       captures++;
+      /* THIS VENUE'S CONSENT BOXES (migration 202, INBOX 416) go with the rest: DELETED, nothing points at them. The known
+         phone's row is venueplay's (every venue's games), not this venue's, so it stays (its own keeping rule: Dean). Before
+         202 the table does not exist: a refusal is only forgiven when the table really is not there. */
+      await purgeKnownPlayers(env, v.id);
       /* THE MEMBERS LIST IS PERSONAL DATA TOO, and it was never touched: every club member's
          first and last name, kept for ever after the club had gone. BLANKED, NOT DELETED, on
          purpose: draw results point at member rows, how those keys cascade is not recorded in
@@ -965,6 +974,22 @@ async function sweepRetention(env) {
     return { venues: done, players: players, captures: captures };
   } catch (e) {
     return { error: String((e && e.message) || e) };
+  }
+}
+
+/* The 90-day purge of one venue's consent boxes (migration 202). Then it LOOKS: a row left is a failed purge, and the
+   venue is not stamped. A database without the table (before 202) is skipped. */
+async function purgeKnownPlayers(env, venueId) {
+  for (const t of ['vp_player_consents']) {
+    try { await sbDelete(env, t, 'venue_id=eq.' + enc(venueId)); }
+    catch (e) {
+      let has = true;
+      try { await sbGet(env, t, 'select=id&limit=1'); } catch (e2) { has = false; }
+      if (has) throw e;
+      continue;
+    }
+    const left = await sbCount(env, t, 'venue_id=eq.' + enc(venueId) + '&select=id');
+    if (left > 0) throw new Error('purge ' + venueId + ': ' + left + ' row(s) left in ' + t);
   }
 }
 
@@ -2034,12 +2059,17 @@ async function joinInfoLookup(env, code, fresh) {
     return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: false, paper_reason: '', age_gate: false,
       demo: true, demo_max: DEMO_MAX_PLAYERS, collect: { first_name: true, last_name: false, postcode: false, email: true, mobile: true, marketing_optin: true } }, venueId: venueId };
   }
+  /* FIRST NAME + MOBILE AT EVERY VENUE (INBOX 416 UPDATE 2, Dean 14 Nov 2026): asked of every player, whatever the
+     venue's switches. /join keeps both (joinCapture). mobile_required (as on Coaster Trivia) is OFF for the games until
+     Dean says so: a room that cannot join without a mobile is a night that stops (the phones honour it when it is on).
+     A known phone is told what is still missing by POST /join/known, never here: this answer is cached per code. */
   return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, paper_reason: paperReason, age_gate: ageGate, collect: {
-    first_name: cfg.collect_first_name !== false, // first name defaults on
+    first_name: true,
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
     email: !!cfg.collect_email,
-    mobile: !!cfg.collect_mobile,
+    mobile: true,
+    mobile_required: JOIN_MOBILE_REQUIRED,
     marketing_optin: !!cfg.collect_marketing_optin,
   }, ...joinNights(cfg.setup_answers) }, venueId: venueId };
 }
@@ -2285,6 +2315,17 @@ async function refreshVenueCodes(env) {
     }
     map[c] = v.id; seen[c] = v.slug;
   }
+  /* AN OLD ADDRESS'S CODE STILL NAMES ITS VENUE (migration 212, open question 32). A table talker printed before the
+     venue's TV address moved shows hash(old slug) and its QR is /play?venue=<old slug>, which the phone hashes. The
+     issued join_code is that same hash for almost every venue (migration 91) and never moves, so this is the floor
+     for the rest: a venue that pressed Change code AND then moved its address. A current slug's code always wins. */
+  let olds = [];
+  try { olds = await sbGetAll(env, 'vp_venue_slug_aliases', 'select=slug,venue_id&order=slug.asc'); } catch (e) { olds = []; }
+  for (const a of (olds || [])) {
+    if (!a || !a.slug || !a.venue_id) continue;
+    const h = fnvVenueCode(a.slug);
+    if (!hashMap[h]) { hashMap[h] = a.venue_id; hashSeen[h] = a.slug; }
+  }
   _vcMap = map; _vcAt = now; _vcDupes = dupes; _vcHashMap = hashMap; _vcMapAll = all; _vcSuspended = susp;
 }
 
@@ -2466,6 +2507,416 @@ function gatedCapture(cfg, b) {
   return out;
 }
 
+/* =====================================================================
+ * A KNOWN PHONE, AND ONE BOX PER SENDER (INBOX 416, Dean 14 Nov 2026, Sunday 22 Nov games release; migration 202)
+ *
+ * "If they have already given us their details via trivia they do not get asked the same details over a raffle or
+ * anything else." Rules, all Dean's:
+ *   - FIRST NAME + MOBILE ARE ASKED OF EVERY PLAYER at every venue, whatever the venue's collect switches say
+ *     (joinCapture). The collect gate (migration 82, the account approval) now controls ACCESS, not collection: the
+ *     export gate (billing Worker vpbOptinGate) still refuses an unapproved account, and no venue page reads
+ *     vp_players' contact columns (v_vp_host_players has none).
+ *   - A PHONE THAT GAVE ITS DETAILS IS REMEMBERED BY VENUEPLAY, for every game, night and venue (Dean 16 Nov 2026,
+ *     through main: "after that they are never asked for name, phone or any detail again"): the phone holds a random
+ *     256-bit key (localStorage, /app/vp-known.js); the database keeps only its SHA-256 (vp_known_players, venueplay's
+ *     own row, first_venue_id says where it began). The next join sends the keys it holds; the Worker finds the row and
+ *     fills the player's details from it SERVER SIDE, ONLY THE FIELDS THIS VENUE ASKS: venue B asking first name + mobile
+ *     never receives the email venue A collected (each venue's copy is its own vp_players / vp_captures row). The phone is told only a first name for the hello and WHICH fields are
+ *     still missing (field names, never a value): "never sound creepy", no "is this still alan@...", no masked mobile.
+ *   - A FIELD A VENUE ASKS THAT THE ROW DOES NOT HOLD (email, postcode) is asked once, alone; what it gets is added to the row.
+ *   - THE FIRST GAME A PLAYER EVER JOINS shows a one-line notice (JOIN_NOTICE: venueplay's terms, the record of games
+ *     played at any venue, the privacy policy), once per player: the version seen is kept on the row (notice_version), and
+ *     it shows again only when JOIN_NOTICE.version changes.
+ *   - THE DETAILS BELONG TO THE ACCOUNT OWNER of the venue (the Game Organiser). A host running a game on someone
+ *     else's account gets none of them: the row is the venue's, and no host route reads it.
+ *   - CONSENT LIKE MOSHTIX (UPDATE 4 and 7): "Yes! Send me news and offers by SMS and email from:" venueplay / the
+ *     venue / the host (only when a host with a brand card, not the account owner, runs the game). PRE-TICKED. Each box
+ *     is its own vp_player_consents row (who, when, source, wording version); each sender reads only its own. The
+ *     venue's box is ALSO the venue's own marketing_optin on vp_players, through gatedCapture as always, so the
+ *     venue's existing export reads exactly what it read before. SWITCHED BY env.CONSENT_BLOCK = 'three' (off until
+ *     Dean's lawyer has said yes to pre-ticked boxes: the Spam Act wants express consent). Off, the phones keep the
+ *     one unticked "Send me offers from {venue}" exactly as today.
+ *   - Service messages (a win, a change to a game) never need a box (UPDATE 5): nothing here gates them.
+ * Fails OPEN to today's behaviour: before migration 202 every read answers "not known" and nothing is written.
+ * ===================================================================== */
+/* Dean's call (INBOX 416 decision): true makes the games' mobile box required, as Coaster Trivia's is. */
+const JOIN_MOBILE_REQUIRED = false;
+/* THE FIRST-GAME NOTICE (Dean 16 Nov 2026, through main). ONE constant: the words are being drafted for the lawyer; swap the
+   text and bump the version and every player sees the new one once. The phone draws exactly this text, with the link. */
+const JOIN_NOTICE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
+JOIN_NOTICE.text = JOIN_NOTICE.before + JOIN_NOTICE.link + JOIN_NOTICE.after;   // the whole line as a person reads it
+const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
+const KNOWN_KEYS_MAX = 8;
+const CONSENT_THREE_VERSION = 'vpc-4-22nov';
+const CONSENT_PARTIES = ['venueplay', 'venue', 'host'];
+function consentMode(env) { return String((env && env.CONSENT_BLOCK) || '').trim().toLowerCase() === 'three' ? 'three' : 'single'; }
+/* The keys a phone says it holds: 64 hex characters each, eight at most, no repeats. */
+function knownKeysFrom(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const k of raw) {
+    const s = String(k == null ? '' : k).trim().toLowerCase();
+    if (/^[0-9a-f]{64}$/.test(s) && out.indexOf(s) === -1) out.push(s);
+    if (out.length >= KNOWN_KEYS_MAX) break;
+  }
+  return out;
+}
+/* FIRST NAME + MOBILE AT EVERY VENUE (UPDATE 2). gatedCapture for everything else, exactly as before; the first name
+   and the mobile are kept whatever collect_first_name / collect_mobile say. The mobile in the purchase raffle's one form
+   (praffleNormPhone: +614xxxxxxxx), so a member match by mobile (migration 200) and the known row read the same number;
+   a number that is not an Australian mobile is not kept. */
+function joinCapture(cfg, b) {
+  const out = gatedCapture(Object.assign({}, cfg, { collect_first_name: true, collect_mobile: true }), b);
+  if (out.mobile) { const m = praffleNormPhone(out.mobile); if (m) out.mobile = m; else delete out.mobile; }
+  if (out.marketing_optin && !(out.email || out.mobile)) { delete out.marketing_optin; delete out.marketing_optin_at; }
+  return out;
+}
+/* What this venue asks every player now: the always-two plus the venue's own switches. */
+function joinAsks(cfg) {
+  return { first_name: true, mobile: true, last_name: !!(cfg && cfg.collect_last_name), email: !!(cfg && cfg.collect_email), postcode: !!(cfg && cfg.collect_postcode) };
+}
+/* A CONTACT DETAIL WE HOLD IS NEVER PASSED TO A VENUE SILENTLY (Dean 16 Nov 2026, through main). Venue A asks the mobile
+   that the phone gave at venue B: the player decides with ONE tap, a row "Mobile for {venue}: 04•• ••• 246  [Use this]
+   [Different number]" (email the same way, "g•••@gmail.com"). A receives it only after Use this AND only when A's own
+   offers box is ticked. Details we hold that A does not ask are never shown or sent; details A asks that are not
+   contact details (first name, last name, postcode) fill silently. 'retype' instead asks the contact detail again as an
+   empty box (main's switch, if Dean prefers). vp_known_players.shared = { <venue id>: ["mobile", ...] } records which
+   contact details each venue already has from this phone (typed there, or Use this with its box ticked). */
+const CONTACT_FIELDS = ['email', 'mobile'];
+/* A ticked venue box with the contact detail only filled in by Use this: the venue's tick, by gatedCapture's own rule
+   (the venue collects the tick, and there is now a way to reach them). */
+function optinAfterFill(cfg, cap, yes, version) {
+  if (yes === true && cfg && cfg.collect_marketing_optin && !cap.marketing_optin && (cap.email || cap.mobile)) {
+    cap.marketing_optin = true; cap.marketing_optin_at = new Date().toISOString();
+    if (version) cap.consent_version = version;
+  }
+}
+const CONTACT_REUSE = 'confirm';   // 'confirm' | 'retype'
+function sharedWith(row, venueId, f) {
+  const sh = row && row.shared && typeof row.shared === 'object' ? row.shared[venueId] : null;
+  return Array.isArray(sh) && sh.indexOf(f) >= 0;
+}
+/* The masked form: the mobile's last three digits, the email's first letter and domain. Nothing else ever leaves. */
+function maskContact(f, v) {
+  const s = String(v || '');
+  if (f === 'mobile') { const d = s.replace(/[^0-9]/g, ''); return d.length >= 3 ? '04\u2022\u2022 \u2022\u2022\u2022 ' + d.slice(-3) : ''; }
+  const at = s.indexOf('@');
+  return at > 0 ? s.charAt(0) + '\u2022\u2022\u2022' + s.slice(at) : '';
+}
+/* What this venue asks of a known row: need (empty, ask as a box) and confirm (a contact detail held but not yet this
+   venue's: the one-tap row, masked). */
+function knownAsk(cfg, row, venueId) {
+  const asks = joinAsks(cfg), need = [], confirm = [];
+  for (const f of KNOWN_FIELDS) {
+    if (!asks[f]) continue;
+    if (!(row && row[f])) { need.push(f); continue; }
+    if (CONTACT_FIELDS.indexOf(f) >= 0 && !sharedWith(row, venueId, f)) {
+      if (CONTACT_REUSE === 'confirm') { const m = maskContact(f, row[f]); if (m) confirm.push({ field: f, masked: m }); else need.push(f); }
+      else need.push(f);
+    }
+  }
+  return { need: need, confirm: confirm };
+}
+/* The phone's row for one of its keys, or null. Never throws: a database without migration 202, or any read fault, is
+   "not known", and the phone shows the full form as it does today. venueplay's row, not a venue's: what a venue may
+   have of it is decided by the caller (only the fields that venue asks). */
+async function knownFor(env, venueId, keys) {
+  if (!keys || !keys.length) return null;
+  try {
+    const hashes = [];
+    for (const k of keys) hashes.push(await sha256Hex('vpk:' + k));
+    const rows = await sbGet(env, 'vp_known_players', 'key_hash=in.(' + hashes.join(',') +
+      ')&select=id,key_hash,first_name,last_name,email,mobile,postcode,notice_version,shared&order=last_seen_at.desc&limit=1');
+    const row = rows && rows[0];
+    if (!row) return null;
+    return { row: row, ix: hashes.indexOf(row.key_hash) };
+  } catch (e) { return null; }
+}
+/* The host box (UPDATE 3/4/7): only when the game was opened by a HOST login (not the account owner or a manager) whose
+   card this venue's owner switched on (vp_venue_staff.hosted_by, migration 181) and which has a brand name
+   (vp_host_brands). null otherwise, and on any read fault: no box is better than a wrong one. */
+async function sessionHostParty(env, session) {
+  try {
+    const sid = session && session.created_by;
+    if (!sid || !UUID_RE.test(String(sid))) return null;
+    const st = await sbGet(env, 'vp_venue_staff', 'id=eq.' + enc(sid) + '&venue_id=eq.' + enc(session.venue_id) + '&select=role,auth_user_id,hosted_by&limit=1');
+    const s = st && st[0];
+    if (!s || s.role !== 'host' || !s.auth_user_id) return null;
+    const sw = s.hosted_by;
+    if (!sw || typeof sw !== 'object' || !Object.keys(sw).some((k) => sw[k] === true)) return null;
+    const br = await sbGet(env, 'vp_host_brands', 'auth_user_id=eq.' + enc(s.auth_user_id) + '&select=name&limit=1');
+    const name = br && br[0] ? String(br[0].name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 32) : '';
+    return name ? { name: name, auth_user_id: s.auth_user_id } : null;
+  } catch (e) { return null; }
+}
+/* The boxes a phone shows in 'three' mode: venueplay, the venue, and the host when there is one. EVERY box shows (Dean
+   16 Nov 2026, through main): a sender this phone already answered shows its CURRENT answer (current: true/false, the
+   latest row for THAT sender: venueplay; THIS venue; THIS host login); a sender it never answered (a new venue, a new
+   host) is a fresh box, pre-ticked. The venue box of venue A is never venue B's answer. */
+async function consentParties(env, session, venueName, knownId, venueId) {
+  const host = session ? await sessionHostParty(env, session) : null;
+  const parties = [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: venueName || 'this venue' }];
+  if (host) parties.push({ party: 'host', name: host.name, auth_user_id: host.auth_user_id });
+  if (!knownId) return { parties: parties, host: host };
+  let had = [];
+  try { had = await sbGet(env, 'vp_player_consents', 'known_id=eq.' + enc(knownId) + '&select=party,venue_id,host_auth_user_id,granted,created_at&order=created_at.desc&limit=200'); }
+  catch (e) { had = []; }
+  const same = (p, h) => h.party === p.party && (p.party !== 'venue' || h.venue_id === venueId) && (p.party !== 'host' || h.host_auth_user_id === p.auth_user_id);
+  parties.forEach((p) => { const last = had.filter((h) => same(p, h))[0]; if (last) p.current = last.granted === true; });
+  return { parties: parties, host: host };
+}
+/* One row per box answered (true or false), never an edit. Fails open: a consent row that cannot be written never
+   costs a player their seat (the venue's own tick is on vp_players regardless). */
+async function writeConsents(env, o) {
+  const rows = [];
+  for (const p of o.parties) {
+    const v = o.answers && o.answers[p.party];
+    if (v !== true && v !== false) continue;
+    const r = { venue_id: o.venueId, party: p.party, party_name: String(p.name || '').slice(0, 80) || null, granted: v === true,
+                wording_version: o.version, source: o.source, known_id: o.knownId || null, player_id: o.playerId || null, session_id: o.sessionId || null };
+    r.host_auth_user_id = p.party === 'host' ? p.auth_user_id : null;
+    rows.push(r);
+  }
+  if (!rows.length) return 0;
+  /* An answer that is the sender's current one already is not a new answer: nothing written (a regular's boxes stay one
+     row each until they change one). */
+  let keep = rows.filter((r) => { const p = o.parties.filter((q) => q.party === r.party)[0]; return !(p && typeof p.current === 'boolean' && p.current === r.granted); });
+  /* (the bingo phone re-sending its details the same night is the same answer again: nothing written, above) */
+  if (!keep.length) return 0;
+  try { await sbInsert(env, 'vp_player_consents', keep, false); return keep.length; } catch (e) { return 0; }
+}
+/* THE KNOWN ROW AT JOIN. Fills the capture's empty fields from this venue's row (only fields this venue asks), adds
+   what the player just gave to the row (never overwriting), or makes the row for a first join that gave a first name
+   and a mobile. Returns { knownId, key } (key only when a NEW row was made: the phone keeps it). Never throws. */
+async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen, use, venueYes) {
+  const asks = joinAsks(cfg);
+  const k = await knownFor(env, venueId, keys);
+  const sawNotice = noticeSeen === JOIN_NOTICE.version;   // the phone drew the current notice on this join
+  const useList = Array.isArray(use) ? use.map(String) : [];
+  if (k) {
+    const add = {};
+    const shared = Object.assign({}, (k.row.shared && typeof k.row.shared === 'object') ? k.row.shared : {});
+    const mine = Array.isArray(shared[venueId]) ? shared[venueId].slice() : [];
+    const share = (f) => { if (mine.indexOf(f) < 0) mine.push(f); };
+    const unshare = (f) => { const i = mine.indexOf(f); if (i >= 0) mine.splice(i, 1); };
+    for (const f of KNOWN_FIELDS) {
+      if (!asks[f]) continue;
+      const contact = CONTACT_FIELDS.indexOf(f) >= 0;
+      if (cap[f] == null && k.row[f] != null) {
+        if (!contact || sharedWith(k.row, venueId, f)) cap[f] = k.row[f];                        // silent: not contact, or this venue's already
+        else if (useList.indexOf(f) >= 0 && venueYes === true) { cap[f] = k.row[f]; share(f); }   // Use this, and this venue's box ticked
+      } else if (cap[f] != null) {
+        if (k.row[f] == null) add[f] = cap[f];
+        /* typed here: this venue has it, but ONLY when it is the detail the row holds. A DIFFERENT number (or email)
+           typed here is that night's row only and never marks the venue as having the row's detail: before this, the
+           next game at this venue was silently filled with the OLD number the player had just replaced (17 Nov 2026). */
+        if (contact) { if (k.row[f] == null || k.row[f] === cap[f]) share(f); else unshare(f); }
+      }
+    }
+    if (JSON.stringify(mine) !== JSON.stringify(shared[venueId] || [])) { if (mine.length) shared[venueId] = mine; else delete shared[venueId]; add.shared = shared; }
+    add.last_seen_at = new Date().toISOString();
+    if (sawNotice && k.row.notice_version !== JOIN_NOTICE.version) { add.notice_version = JOIN_NOTICE.version; add.notice_at = add.last_seen_at; }
+    try { await sbPatch(env, 'vp_known_players', 'id=eq.' + enc(k.row.id), add); } catch (e) { /* the join goes on */ }
+    return { knownId: k.row.id, key: null };
+  }
+  if (!cap.first_name || !cap.mobile) return { knownId: null, key: null };
+  const key = randomTokenHex(32);
+  const row = { first_venue_id: venueId, key_hash: await sha256Hex('vpk:' + key) };
+  for (const f of KNOWN_FIELDS) if (cap[f] != null && asks[f]) row[f] = cap[f];
+  const typed = CONTACT_FIELDS.filter((f) => row[f] != null);
+  if (typed.length) { row.shared = {}; row.shared[venueId] = typed; }
+  if (sawNotice) { row.notice_version = JOIN_NOTICE.version; row.notice_at = new Date().toISOString(); }
+  try {
+    const ins = await sbInsert(env, 'vp_known_players', row, true);
+    const made = Array.isArray(ins) ? ins[0] : ins;
+    return { knownId: (made && made.id) || null, key: key };
+  } catch (e) { return { knownId: null, key: null }; }
+}
+
+/* ------------------------------ POST /join/known ------------------------------
+ * body { code, keys:[...] } -> { known: { hello, need:[field names], ix } | null,
+ *                               consent: { mode:'single' } | { mode:'three', version, parties:[{party,name}] },
+ *                               organiser }
+ * Asked by the phone beside /join/info (which is cached per code and so can say nothing about one phone). hello is the
+ * first name and nothing else; need names the fields still to ask; ix says which of the phone's keys matched, so "Not
+ * me" can forget it. organiser is the venue's name for the join line ("Your details go to {organiser} ..."). */
+async function handleJoinKnown(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'known:ip:' + ipHash, JOIN_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many requests from this network right now' }, 429);
+  }
+  const code = String(b.code || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) return json({ error: 'Missing code' }, 400);
+  let session = null, venueId = null;
+  const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id,created_by,is_demo&order=created_at.desc&limit=1');
+  if (ss.length) { session = ss[0]; venueId = session.venue_id; }
+  else {
+    venueId = await venueByCode(env, code);
+    if (venueId) {
+      const live = await sbGet(env, 'vp_sessions', 'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,venue_id,created_by,is_demo&order=created_at.desc&limit=1');
+      if (live.length) session = live[0];
+    }
+  }
+  if (!venueId) return json({ known: null, consent: { mode: 'single' }, organiser: '' });
+  if (isDemoSession(session)) return json({ known: null, consent: { mode: 'single' }, organiser: '' });   // the demo keeps its own screen (DEMO_COLLECT)
+  const [cfg, vrows] = await Promise.all([venueCollectCfg(env, venueId),
+    sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1').catch(function () { return []; })]);
+  const venueName = (vrows && vrows[0] && String(vrows[0].name || '')) || '';
+  const k = await knownFor(env, venueId, knownKeysFrom(b.keys));
+  const ka = k ? knownAsk(cfg, k.row, venueId) : null;
+  const known = k ? { hello: String(k.row.first_name || '').trim().split(/\s+/)[0].slice(0, 20), need: ka.need, confirm: ka.confirm, ix: k.ix } : null;
+  /* ONE NUMBER PER PLAYER (Dean 17 Nov 2026): "Playing as Sarah, 04.. ... 123", masked to its last three digits, and
+     whether "Not my number" is offered (only while texts can be sent: numberChangeOn) */
+  if (known) { const mm = maskContact('mobile', k.row.mobile); if (mm) known.mobile_masked = mm; known.change_number = !!(mm && numberChangeOn(env)); }
+  /* the first-game notice: until this phone's row says it saw the current version */
+  const notice = (k && k.row.notice_version === JOIN_NOTICE.version) ? null : JOIN_NOTICE;
+  let consent = { mode: 'single' };
+  if (consentMode(env) === 'three') {
+    const cp = await consentParties(env, session, venueName, k && k.row.id, venueId);
+    consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => (typeof p.current === 'boolean' ? { party: p.party, name: p.name, current: p.current } : { party: p.party, name: p.name })) };
+  }
+  return json({ known: known, consent: consent, organiser: venueName, notice: notice });
+}
+
+/* ------------------------------ ONE NUMBER PER PLAYER ------------------------------
+ * Dean, 17 Nov 2026 (~23:15): each venueplay player has ONE mobile, the same at every venue. It replaces the "keep both
+ * numbers" idea (question 28, shelved) and the "Different number" box that gave one venue a number of its own. The flow
+ * is the one WhatsApp, Uber and the banks use:
+ *   1. a known phone's join screen shows "Playing as Sarah, 04.. ... 123" (masked) and a small "Not my number"
+ *   2. the player types the new number: POST /join/number/start { keys, mobile }  -> { ok, change_id, to (masked),
+ *      expires_in, resend_in, sends_left }; a six-digit code is texted to the NEW number. The same call with change_id
+ *      is "Send again" (NUMBER_CHANGE.resendSecs apart, NUMBER_CHANGE.maxSends texts per change)
+ *   3. the player types the code: POST /join/number/verify { keys, change_id, sms_code } -> { ok, masked }. Each try is
+ *      counted BEFORE the code is compared (NUMBER_CHANGE.maxTries); the code lives NUMBER_CHANGE.codeMins minutes; only
+ *      its SHA-256 (with the change id) is kept
+ *   4. right code: vp_number_change_apply (migration 215) swaps it in ONE transaction: the known row's mobile, and the
+ *      contact lists of every venue that already had this player's mobile (shared). Consent is per player (known_id),
+ *      never per number, so every venue's answer stays as given
+ * THE SWITCH: env.NUMBER_CHANGE_SMS_ON = "on" AND the Mobile Message login on this Worker. Off (the default), /join/known
+ * says change_number:false, the phone shows no "Not my number", and both routes answer 503. Texts go through
+ * gameSendSms: Mobile Message, sender "venueplay" (SMS_SENDER overrides). The outbox guard answers a text to a fiction
+ * number (+61 491 57x xxx) as sent and never delivers it, on live as well as staging; staging sends nothing at all.
+ * Abuse: per network (rateLimit), per player (perPlayerPerDay) and per NEW number (perNumberPerDay, so nobody can use
+ * venueplay to text-bomb a stranger). Before migration 215 both routes answer 503 and nothing is texted. */
+const NUMBER_CHANGE = { codeMins: 10, maxTries: 5, maxSends: 3, resendSecs: 30, perPlayerPerDay: 5, perNumberPerDay: 3, perIpPerHour: 20 };
+function numberChangeOn(env) {
+  return String((env && env.NUMBER_CHANGE_SMS_ON) || '').trim().toLowerCase() === 'on' && !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD);
+}
+/* Six digits, every value equally likely (crypto, never Math.random). */
+function numberChangeCode() {
+  const a = new Uint32Array(1);
+  for (;;) { crypto.getRandomValues(a); if (a[0] < 4294000000) return String(a[0] % 1000000).padStart(6, '0'); }
+}
+async function numberChangeHash(id, code) { return await sha256Hex('vpnc:' + id + ':' + code); }
+function numberChangeText(code) {
+  return 'Your venueplay code is ' + code + '. It expires in ' + NUMBER_CHANGE.codeMins + " minutes. Didn't ask for it? Ignore this text.";
+}
+/* One text through Mobile Message. { ok } or { ok:false, status }. Never throws. */
+async function gameSendSms(env, toE164, body, ref) {
+  if (!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD)) return { ok: false, status: 'no provider' };
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 10000);
+  try {
+    const res = await fetch('https://api.mobilemessage.com.au/v1/messages', { method: 'POST', signal: abort.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD) },
+      body: JSON.stringify({ messages: [{ to: toE164, message: body, sender: String(env.SMS_SENDER || 'venueplay').slice(0, 11), custom_ref: String(ref || 'number-change').slice(0, 64) }] }) });
+    const j = await res.json().catch(() => null);
+    const m = j && Array.isArray(j.results) && j.results[0];
+    const st = String((m && m.status) || '').toLowerCase();
+    return res.ok && st === 'success' ? { ok: true } : { ok: false, status: res.status + (st ? ' ' + st : '') };
+  } catch (e) { return { ok: false, status: 'unreachable' }; }
+  finally { clearTimeout(timer); }
+}
+async function handleNumberStart(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'numchg:ip:' + ipHash, NUMBER_CHANGE.perIpPerHour, 3600);
+    if (!rl.ok) return json({ error: 'Too many tries from this network. Please try again later.' }, 429);
+  }
+  if (!numberChangeOn(env)) return json({ error: 'Changing your number is not available right now.', off: true }, 503);
+  const k = await knownFor(env, null, knownKeysFrom(b.keys));
+  if (!k) return json({ error: 'We could not find your details on this phone.' }, 404);
+  const to = praffleNormPhone(b.mobile);
+  if (!to) return json({ error: 'Please check the mobile number.' }, 400);
+  if (to === k.row.mobile) return json({ error: 'That is the number we already have.' }, 400);
+  const now = Date.now();
+  const code = numberChangeCode();
+  let id = null, sends = 1;
+  try {
+    const cid = String(b.change_id || '');
+    if (cid) {
+      /* SEND AGAIN: the same change, a new code (the old one stops working), the clock restarted within the row's cap */
+      if (!UUID_RE.test(cid)) return json({ error: 'Please start again.' }, 400);
+      const rows = await sbGet(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&known_id=eq.' + enc(k.row.id) + '&done_at=is.null&select=id,new_mobile,attempts,sends,created_at,last_sent_at,expires_at&limit=1');
+      const c = rows && rows[0];
+      if (!c || c.new_mobile !== to || c.attempts >= NUMBER_CHANGE.maxTries) return json({ error: 'Please start again.' }, 410);
+      if (c.sends >= NUMBER_CHANGE.maxSends) return json({ error: 'That is the most codes we can send. Please try again later.' }, 429);
+      const wait = Math.ceil((Date.parse(c.last_sent_at) + NUMBER_CHANGE.resendSecs * 1000 - now) / 1000);
+      if (wait > 0) return json({ error: 'Please wait ' + wait + ' seconds before asking again.', resend_in: wait }, 429);
+      const cap = Date.parse(c.created_at) + 30 * 60000, had = Number(c.sends);
+      const upd = await sbPatchReturning(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&sends=eq.' + had + '&done_at=is.null',
+        { code_hash: await numberChangeHash(cid, code), sends: had + 1, last_sent_at: new Date(now).toISOString(),
+          expires_at: new Date(Math.min(now + NUMBER_CHANGE.codeMins * 60000, cap)).toISOString() });
+      if (!upd || !upd.length) return json({ error: 'Please try again.' }, 409);
+      id = cid; sends = had + 1;
+    } else {
+      const since = new Date(now - 86400000).toISOString();
+      const mine = await sbGet(env, 'vp_number_changes', 'known_id=eq.' + enc(k.row.id) + '&created_at=gte.' + enc(since) + '&select=id&limit=' + (NUMBER_CHANGE.perPlayerPerDay + 1));
+      if (mine.length >= NUMBER_CHANGE.perPlayerPerDay) return json({ error: 'That is the most changes we can do today. Please try again tomorrow.' }, 429);
+      const theirs = await sbGet(env, 'vp_number_changes', 'new_mobile=eq.' + enc(to) + '&created_at=gte.' + enc(since) + '&select=id&limit=' + (NUMBER_CHANGE.perNumberPerDay + 1));
+      if (theirs.length >= NUMBER_CHANGE.perNumberPerDay) return json({ error: 'That number has had too many codes today. Please try again tomorrow.' }, 429);
+      id = crypto.randomUUID();
+      const old3 = String(k.row.mobile || '').replace(/[^0-9]/g, '').slice(-3);
+      await sbInsert(env, 'vp_number_changes', { id: id, known_id: k.row.id, new_mobile: to, old_last3: /^[0-9]{3}$/.test(old3) ? old3 : null,
+        code_hash: await numberChangeHash(id, code), ip_hash: ipHash || null, expires_at: new Date(now + NUMBER_CHANGE.codeMins * 60000).toISOString() }, false);
+    }
+  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }   // before migration 215
+  const sent = await gameSendSms(env, to, numberChangeText(code), 'number-change');
+  if (!sent.ok) return json({ error: 'We could not send a text just now. Please try again.' }, 502);
+  return json({ ok: true, change_id: id, to: maskContact('mobile', to), expires_in: NUMBER_CHANGE.codeMins * 60,
+    resend_in: NUMBER_CHANGE.resendSecs, sends_left: NUMBER_CHANGE.maxSends - sends });
+}
+async function handleNumberVerify(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'numok:ip:' + ipHash, NUMBER_CHANGE.perIpPerHour * NUMBER_CHANGE.maxTries, 3600);
+    if (!rl.ok) return json({ error: 'Too many tries from this network. Please try again later.' }, 429);
+  }
+  if (!numberChangeOn(env)) return json({ error: 'Changing your number is not available right now.', off: true }, 503);
+  const k = await knownFor(env, null, knownKeysFrom(b.keys));
+  if (!k) return json({ error: 'We could not find your details on this phone.' }, 404);
+  const cid = String(b.change_id || ''), code = String(b.sms_code || '').replace(/\s+/g, '');
+  if (!UUID_RE.test(cid)) return json({ error: 'Please start again.' }, 400);
+  if (!/^[0-9]{6}$/.test(code)) return json({ error: 'The code is the six numbers in the text.' }, 400);
+  let c;
+  try {
+    const rows = await sbGet(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&known_id=eq.' + enc(k.row.id) + '&select=id,new_mobile,code_hash,attempts,expires_at,done_at&limit=1');
+    c = rows && rows[0];
+  } catch (e) { return json({ error: 'Changing your number is not available right now.', off: true }, 503); }
+  if (!c) return json({ error: 'Please start again.' }, 410);
+  if (c.done_at) return json({ ok: true, masked: maskContact('mobile', c.new_mobile) });
+  if (c.attempts >= NUMBER_CHANGE.maxTries) return json({ error: 'Too many tries. Ask for a new number change.', tries_left: 0 }, 429);
+  if (Date.parse(c.expires_at) < Date.now()) return json({ error: 'That code has expired. Tap Resend.', expired: true }, 410);
+  /* the try is counted BEFORE the code is compared, by compare-and-set: two taps at once cannot both get a free try */
+  const tried = Number(c.attempts) + 1, held = String(c.code_hash || ''), newMobile = c.new_mobile;
+  const upd = await sbPatchReturning(env, 'vp_number_changes', 'id=eq.' + enc(cid) + '&attempts=eq.' + (tried - 1) + '&done_at=is.null', { attempts: tried });
+  if (!upd || !upd.length) return json({ error: 'Please try again.' }, 409);
+  const left = NUMBER_CHANGE.maxTries - tried;
+  const h = await numberChangeHash(cid, code);
+  let diff = h.length ^ held.length;
+  for (let i = 0; i < h.length; i++) diff |= h.charCodeAt(i) ^ held.charCodeAt(i);
+  if (diff !== 0) return json({ error: left > 0 ? 'That code is not right. ' + left + (left === 1 ? ' try' : ' tries') + ' left.' : 'Too many tries. Ask for a new number change.', tries_left: left }, left > 0 ? 400 : 429);
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_number_change_apply', { method: 'POST', headers: sbHeaders(env), body: JSON.stringify({ p_change: cid }) });
+  if (!res.ok) return json({ error: 'We could not change your number just now. Please try again.' }, 502);
+  const out = await res.json().catch(() => null);
+  if (!out || out.ok !== true) return json({ error: out && out.why === 'expired' ? 'That code has expired. Tap Resend.' : 'Please start again.', expired: !!(out && out.why === 'expired') }, 410);
+  return json({ ok: true, masked: maskContact('mobile', newMobile) });
+}
+
 /* ------------------------------ POST /join/list ------------------------------
  * "GET A HEADS UP BY EMAIL" ON THE PHONE WITH NO GAME ON (Dean, 6 Nov 2026, round 5): one email, the venue's own optional
  * "Send me offers from {venue}. I'm 18 or over." tick (/app/vp-consent.js), and the consent words' version.
@@ -2564,7 +3015,17 @@ async function handleCapture(request, env, json) {
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false, stored: false });
   const cfg = await venueCollectCfg(env, venueId);
-  const row = Object.assign({ venue_id: venueId, source: 'bingo' }, gatedCapture(cfg, b));
+  /* THE BINGO PHONE'S DETAILS (INBOX 416): first name + mobile at every venue (joinCapture), the venue box of the three
+     as the venue's own tick, and the known row for this venue, exactly as /join does for trivia and musical bingo. */
+  const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
+  const capIn = joinCapture(cfg, b);
+  if (consentAns && capIn.marketing_optin) capIn.consent_version = CONSENT_THREE_VERSION;
+  const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
+  const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
+  optinAfterFill(cfg, capIn, venueYes, consentAns ? CONSENT_THREE_VERSION : '');
+  const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
+  /* the known row that made this list row: a number change moves only these (migration 215, F1 18 Nov 2026) */
+  if (knownRes.knownId) row.known_id = knownRes.knownId;
   /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
      Broadcast bingo has no session and no player token, so there is genuinely nothing to check
      beyond a venue code derived from a public slug: anyone can post a forged capture, including a
@@ -2597,10 +3058,34 @@ async function handleCapture(request, env, json) {
      mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
      the only thing wrong, store the capture without it. Order of deploy and migration then does
      not matter, which is the lesson from the empty HQ venue list. */
+  /* EACH BOX ITS OWN ROW (UPDATE 4), the host box only for a host who opened THIS night (the token's session). */
+  const capReply = async function () {
+    if (consentAns) {
+      let sess = null;
+      if (player && player.session_id) {
+        try { const sr = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&venue_id=eq.' + enc(venueId) + '&select=id,venue_id,created_by&limit=1'); sess = sr[0] || null; } catch (e) { sess = null; }
+      }
+      let vName = '';
+      try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
+      const cp = await consentParties(env, sess, vName, knownRes.knownId, venueId);
+      await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: 'bingo',
+        venueId: venueId, knownId: knownRes.knownId, playerId: player && player.id, sessionId: sess && sess.id });
+    }
+    return json(knownRes.key ? { ok: true, stored: true, known_key: knownRes.key } : { ok: true, stored: true });
+  };
   try {
     await sbInsert(env, 'vp_captures', row, false);
-    return json({ ok: true, stored: true });
-  } catch (e) {
+    return await capReply();
+  } catch (e1) {
+    let e = e1;
+    /* before migration 215 there is no known_id column: the row is stored without it (never moved by a change). ONLY
+       that refusal is tried again (review F-A, 18 Nov 2026): a timeout or a 5xx may come after the row was committed,
+       and a second insert would put the player on the venue's list twice. Any other error goes on as before 215. */
+    if ('known_id' in row && knownIdColumnMissing(e)) {
+      knownIdMissingWarn('vp_captures');
+      delete row.known_id;
+      try { await sbInsert(env, 'vp_captures', row, false); return await capReply(); } catch (e2) { e = e2; /* the older fallbacks below, as before 215 */ }
+    }
     const msg = String((e && e.message) || e);
     if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 &&
         msg.indexOf('player_id') === -1 && msg.indexOf('42703') === -1) throw e;
@@ -2612,7 +3097,7 @@ async function handleCapture(request, env, json) {
   }
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);
-  return json({ ok: true, stored: true });
+  return await capReply();
 }
 
 /* Does this screen code map to a real venue? Lets the TV warn a venue that mistyped its
@@ -2670,7 +3155,11 @@ async function signingVenueForReceiver(env, url) {
   if (venue) {
     if (!/^[a-z0-9-]+$/.test(venue)) return null;
     const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(venue) + '&select=id,broadcast_enforce&limit=1');
-    return (rows && rows[0]) || null;
+    if (rows && rows[0]) return rows[0];
+    const now = await venueSlugMoved(env, venue);   // an old address (migration 212): the venue's own key
+    if (!now) return null;
+    const moved = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(now) + '&select=id,broadcast_enforce&limit=1');
+    return (moved && moved[0]) || null;
   }
   const code = String(url.searchParams.get('code') || '').trim();
   if (code) return await venueRowByCode(env, code, 'broadcast_enforce');   // one read, not two (31 Oct 2026)
@@ -3082,6 +3571,19 @@ let _coasterRows = null, _coasterRowsAt = 0;
    (no name, no board) rather than not at all. dbError keeps the detail in the log, never in the answer. */
 function coasterOff(json) { return json({ off: true, error: 'The coaster board is not switched on yet.' }, 503); }
 function coasterMissingTable(e) { return !!e && e.status === 502; }
+/* THE known_id COLUMN IS NOT THERE YET (migration 215 not run, or PostgREST's schema cache not reloaded). PostgREST
+   refuses a write naming a column the table does not have with a 400 that names the column: PGRST204 "Could not find
+   the 'known_id' column ... in the schema cache", or Postgres 42703 "column known_id ... does not exist". That is the
+   ONE refusal a join or a bingo capture tries again without the link (same test as withdrawnColumnMissing). A timeout,
+   a 5xx or a thrown fetch has no dbStatus 400 and is never tried again. */
+function knownIdColumnMissing(e) {
+  const t = String((e && e.dbDetail) || '');
+  return !!e && e.dbStatus === 400 && /known_id/.test(t) && /42703|PGRST204|does not exist|Could not find/.test(t);
+}
+/* One line per fallback, no personal data (no number, no name, no ids): the gap after a deploy shows in the logs. */
+function knownIdMissingWarn(table) {
+  console.warn('[known_id] column missing on ' + table + ': stored without the link (run migration 215, or reload the schema cache)');
+}
 /* A typed pub name with a word the TV's cleanName refuses, anywhere in it. */
 function coasterRude(name) {
   for (let k = 0; k < name.length; k += 10) {
@@ -3920,8 +4422,30 @@ async function handleVenueLookup(request, env, json) {
     }
   }
   if (v === null) v = await venueLookupThreeTrips(env, url, slugOk ? slug : '', ver);
+  /* AN OLD TV ADDRESS (migration 212, open question 32). The venue's address moved after its name changed; a bookmark,
+     a TV app or a paired browser still opens the old one. Asked only when the address did not answer as itself, so the
+     ordinary poll pays nothing. The reply names the new address and moved_from, and the TV sends itself there. */
+  let movedFrom = '';
+  if (slugOk && (v === null || (v.slug && v.slug !== slug))) {
+    const now = await venueSlugMoved(env, slug);
+    if (now && v === null) v = await venueLookupThreeTrips(env, url, now, ver);
+    if (now && v && v.slug === now) movedFrom = slug;
+  }
   if (v === null) return json({ exists: false });
-  return venueLookupReply(json, v);
+  return venueLookupReply(json, v, movedFrom);
+}
+
+/* THE VENUE'S CURRENT ADDRESS FOR ONE OF ITS OLD ADDRESSES, or '' (migration 212). Two indexed reads. Before 212 runs the
+   table is not there: '' and nothing changes. Never throws: an old address that cannot be looked up is just not found. */
+async function venueSlugMoved(env, slug) {
+  slug = String(slug || '').trim().toLowerCase();
+  if (!slug || !/^[a-z0-9-]{1,80}$/.test(slug)) return '';
+  try {
+    const a = await sbGet(env, 'vp_venue_slug_aliases', 'slug=eq.' + enc(slug) + '&select=venue_id&limit=1');
+    if (!a || !a[0] || !a[0].venue_id) return '';
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(a[0].venue_id) + '&select=slug&limit=1');
+    return (v && v[0] && v[0].slug) || '';
+  } catch (e) { return ''; }
 }
 
 /* The pre-72 path, kept as the fallback above. Returns the venue row (the fields the
@@ -3994,9 +4518,12 @@ async function venueLookupThreeTrips(env, url, slug, ver) {
    reload delivered here reaches a screen whose websocket has died - which is
    precisely the screen that needs reloading, and the one a broadcast can never
    reach. Costs no extra request and no extra query. */
-function venueLookupReply(json, v) {
+function venueLookupReply(json, v, movedFrom) {
   return json({
     exists: true,
+    /* Present only when the screen asked by an OLD address of this venue (migration 212): the screen moves itself to
+       slug, and remembers that instead. */
+    moved_from: movedFrom || undefined,
     /* Which formats are on the room, from the Worker's own constant (no database). A screen that
        decided its roads before a format's flip sees this change and reloads between games. */
     room_formats: (typeof roomFormatsKey === 'function') ? roomFormatsKey() : '',
@@ -4494,6 +5021,16 @@ async function handleScreen(request, env, json) {
     draws = (d || []).filter((x) => x && x.draw_day);
   } catch (e) { /* the board is a nicety; never fail the whole screen for it */ }
 
+  /* AN OLD ADDRESS (migration 212): answered as the venue's current one, naming it, once. */
+  if (!venueIsReal && url.searchParams.get('moved') !== '1') {
+    const now = await venueSlugMoved(env, slug);
+    if (now && now !== slug) {
+      const u2 = new URL(request.url);
+      u2.searchParams.set('venue', now); u2.searchParams.set('moved', '1');
+      return await handleScreen(new Request(u2.toString(), { method: 'GET' }), env,
+        function (body, status) { if (body && body.exists) { body.slug = now; body.moved_from = slug; } return json(body, status); });
+    }
+  }
   return json({
     exists: venueIsReal,
     name: name,
@@ -4784,7 +5321,12 @@ async function handleJoin(request, env, json) {
      venue has enabled, so it looked right, but a crafted POST wrote an email, a mobile, a
      postcode and a marketing_optin with a consent timestamp for a venue that collects none of it.
      Same rules as /capture now, out of one function, so the two cannot drift apart again. */
-  const cap = isDemoSession(session) ? demoCapture(b) : gatedCapture(cfgRow, b);
+  /* THE THREE BOXES (INBOX 416 UPDATE 4, env.CONSENT_BLOCK 'three'): the venue's own box is the venue's marketing tick,
+     kept on the player row through gatedCapture exactly as the single tick always was. */
+  const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
+  /* FIRST NAME + MOBILE AT EVERY VENUE (INBOX 416 UPDATE 2): joinCapture, never for the demo (DEMO_COLLECT). */
+  const cap = isDemoSession(session) ? demoCapture(b) : joinCapture(cfgRow, b);
+  if (consentAns && cap.marketing_optin) cap.consent_version = CONSENT_THREE_VERSION;
 
   // Soft dedup (LIVE only with env.RL): a rapid re-join from the same network +
   // device hint reuses that device's existing player row instead of minting a new
@@ -4873,6 +5415,15 @@ async function handleJoin(request, env, json) {
     if (countPlayers(inDemo) >= DEMO_MAX_PLAYERS) return json({ error: DEMO_FULL_MSG, code: 'demo_full' }, 403);
   }
 
+  /* A KNOWN PHONE AT THIS VENUE (INBOX 416): its details filled in from this venue's row, server side, or a row made
+     for it now. Never for the demo. Never stops a join (knownAtJoin cannot throw). */
+  let knownRes = { knownId: null, key: null };
+  if (!isDemoSession(session)) {
+    const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
+    knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
+    optinAfterFill(cfgRow, cap, venueYes, consentAns ? CONSENT_THREE_VERSION : String(b.consent_version || '').slice(0, 20));
+  }
+
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
   const tokenHash = await sha256Hex(token);    // only the hash is stored
 
@@ -4891,9 +5442,22 @@ async function handleJoin(request, env, json) {
      the response below carries the token and the room, not this row. Only when a match is found is the column named at all,
      so a database before migration 200 never sees it. */
   if (cap.mobile && !isDemoSession(session)) { const memberId = await memberIdByMobile(env, session.venue_id, cap.mobile); if (memberId) playerRow.member_id = memberId; }
+  /* WHICH KNOWN PLAYER MADE THIS SEAT (migration 215, F1 18 Nov 2026): a number change moves only the seats its own
+     known row made, never every seat that happens to hold the number. Before 215 runs the column is not there, so a
+     refused insert is tried once more without it (the seat is then never moved by a change: the safe side). */
+  if (knownRes.knownId) playerRow.known_id = knownRes.knownId;
   let inserted;
   try {
-    inserted = await sbInsert(env, 'vp_players', playerRow, true);
+    try { inserted = await sbInsert(env, 'vp_players', playerRow, true); }
+    catch (e0) {
+      /* ONLY "no such column known_id" is tried again (review F-A, 18 Nov 2026). A timeout or a 5xx may come AFTER the
+         seat was committed; a second insert then makes a second (billed) seat. Every other error goes on exactly as it
+         did before migration 215: the 409 take-back below, or the error itself. */
+      if (!('known_id' in playerRow) || !knownIdColumnMissing(e0)) throw e0;
+      knownIdMissingWarn('vp_players');
+      delete playerRow.known_id;
+      inserted = await sbInsert(env, 'vp_players', playerRow, true);
+    }
   } catch (e) {
     /* THE UNIQUE INDEX SAYS THIS PHONE IS ALREADY IN (migration 192). sbInsert turns PostgREST's 409 (23505) into a
        409 of its own; for a phone that sent a device id that is "already joined", not a fault: the other join won the
@@ -4939,7 +5503,16 @@ async function handleJoin(request, env, json) {
   if (name) payload.display_name = name;       // name on TV only if the player gave one
   await emitEvent(env, session, 'player.joined', payload, 'system');
   const snapshot = await getPublicSnapshot(env, session.id, { session: session, players: players, slug: venueRow && venueRow.slug, running: running });
-  return json({ token, snapshot });
+  /* EACH BOX ITS OWN ROW (UPDATE 4): only the boxes this game shows, only those answered. */
+  if (consentAns && !isDemoSession(session)) {
+    let vName = '';
+    try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(session.venue_id) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
+    const cp = await consentParties(env, session, vName, knownRes.knownId, session.venue_id);
+    const src = { trivia: 'trivia', musical_bingo: 'musical' }[String(session.lobby_format || '')] || String(b.fmt || '').slice(0, 20) || 'game';
+    await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: src,
+      venueId: session.venue_id, knownId: knownRes.knownId, playerId: newPlayer && newPlayer.id, sessionId: session.id });
+  }
+  return json(knownRes.key ? { token, snapshot, known_key: knownRes.key } : { token, snapshot });
 }
 
 /* ------------------------------ POST /host/game ------------------------------
@@ -10495,6 +11068,167 @@ function triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, ans
   return pts;
 }
 
+/* =====================================================================
+ * WINNER CHECK PIN (Dean, 4 Nov 2026: "just don't overcomplicate it")
+ * ---------------------------------------------------------------------
+ * A 4-digit PIN for each round, the same for every player in it and new every round. The winner's
+ * phone shows it beside their card or ticket number and the host console shows "Round PIN 4821", so
+ * a host running two games at once, or handed a screenshot from last round, can tell in a glance.
+ *
+ * NOTHING IS STORED. The PIN is an HMAC of the round's own id under a secret only this Worker holds,
+ * so the same round always gives the same PIN, the next round gives another, and nobody without the
+ * secret can work one out from anything a screen can see. No table, no column, no migration.
+ *
+ * NEVER ON A TV (Dean, 4 Nov 2026 evening). The PIN leaves this Worker in exactly two answers: to a
+ * host who is staff at the round's venue (/host/winner-pin) and to a player whose token is in the
+ * round's session AND whom the Worker's own record shows won it (/player/winner-pin, winPinPlayerWon).
+ * It never goes into an event, a room message or a broadcast,
+ * because every one of those reaches the TV. winner-pin.test.js holds both of these to account.
+ *
+ * A round is a vp_games row (trivia, musical) or a vp_bingo_draws row (number bingo: one draw is one
+ * game, line to house), and EACH PRIZE IN IT HAS ITS OWN PIN (Dean, 5 Nov 2026): the stage is the pattern
+ * being played (one line, two lines, full house...), so a game that carries on to the next prize gets a
+ * new PIN. Trivia has one prize, the final board (stage 'final'), and only 1st place gets it (Dean, 5 Nov).
+ * Raffles and members draws have no phone winner screen, so no PIN (Dean confirmed, 5 Nov).
+ * ===================================================================== */
+function winPinDigits(bytes) {
+  const n = ((bytes[0] << 24) >>> 0) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3];   // unsigned 32 bit
+  return String(n % 10000).padStart(4, '0');   // 2^32 over 10,000: the bias is under one in 400,000
+}
+/* The prize within the round. A console's own custom pattern ('c:<id>') is recorded on a bingo claim as
+   'custom', so both sides say 'custom'. Anything else is refused, never folded into another prize. */
+// 'any' is musical bingo's "Any line" (across, down or diagonal), the default for new venues since 11 Nov 2026.
+const WIN_PIN_STAGES = ['one', 'two', 'three', 'full', 'top', 'middle', 'bottom', 'corners', 'any', 'custom', 'final'];
+function winPinStage(s) {
+  let st = String(s == null ? '' : s).trim();
+  if (/^c:/.test(st)) st = 'custom';
+  if (WIN_PIN_STAGES.indexOf(st) < 0) throw httpError(400, 'Bad prize');
+  return st;
+}
+async function winnerPin(env, kind, roundId, stage) {
+  if (kind !== 'game' && kind !== 'bingo') throw httpError(400, 'Bad round');
+  assertUuid(roundId, 'round');
+  const st = winPinStage(stage);
+  const secret = env.SUPABASE_JWT_SECRET;
+  if (!secret) throw httpError(503, 'The round PIN is not available');
+  const te = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', te.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, te.encode('vp-winner-pin|' + kind + '|' + roundId + '|' + st));
+  return winPinDigits(new Uint8Array(sig));
+}
+// Which round and prize the caller means: {game_id, stage} for trivia and musical, {draw_id, stage} for bingo.
+function winPinRoundOf(b) {
+  const g = String((b && b.game_id) || '').trim(), d = String((b && b.draw_id) || '').trim();
+  const stage = winPinStage(b && b.stage);
+  if (g) { assertUuid(g, 'game_id'); return { kind: 'game', id: g, stage: stage }; }
+  if (d) { assertUuid(d, 'draw_id'); return { kind: 'bingo', id: d, stage: stage }; }
+  throw httpError(400, 'Missing game_id or draw_id');
+}
+
+async function handleHostWinnerPin(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const round = winPinRoundOf(await readJson(request));
+  if (round.kind === 'bingo') {
+    await bingoDrawForStaff(env, authUserId, round.id);          // ENFORCED: staff at the draw's venue
+  } else {
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(round.id) + '&select=id,session_id&limit=1');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    const session = await getSession(env, games[0].session_id);
+    await requireStaff(env, authUserId, session.venue_id);        // ENFORCED: staff at the game's venue
+  }
+  return json({ pin: await winnerPin(env, round.kind, round.id, round.stage) });
+}
+
+/* ONLY A WINNER IS GIVEN THE PIN (security review, 5 Nov 2026). The PIN is the same for everybody in
+   the round (Dean's rule), so handing it to any phone in the room would let a non-winner dress up a
+   screen. The phone asks the moment it wins, and this answers only once the Worker's OWN record says
+   it did: number bingo, a claim the host confirmed on this draw, for this prize's pattern, from this
+   phone; musical, a valid claim on this game for this player whose verified cells are exactly that
+   prize's shape (winPinMusicCellsAre); trivia, 1st on this game's board
+   once the last question is revealed. Anything else is 403 and the phone shows its win screen as before. */
+// The cells checkMusicPattern returns for each prize: one row; two whole rows; the four corners; all 25.
+function winPinMusicCellsAre(stage, cells) {
+  if (!Array.isArray(cells)) return false;
+  const c = cells.map((x) => parseInt(x, 10)).filter((x) => x >= 0 && x < 25).sort((a, b) => a - b);
+  if (new Set(c).size !== cells.length) return false;
+  const isRow = (a) => a.length === 5 && a[0] % 5 === 0 && a.every((x, i) => x === a[0] + i);
+  if (stage === 'one') return isRow(c);
+  if (stage === 'any') return c.length === 5 && MUSIC_ANY_LINES.some((l) => l.slice().sort((x, y) => x - y).join(',') === c.join(','));   // a row, column or diagonal
+  if (stage === 'two') return c.length === 10 && isRow(c.slice(0, 5)) && isRow(c.slice(5));
+  if (stage === 'corners') return c.join(',') === '0,4,20,24';
+  if (stage === 'full') return c.length === 25;
+  return false;
+}
+
+async function winPinPlayerWon(env, player, kind, roundId, game, stage) {
+  if (kind === 'bingo') {
+    const me = await sbGet(env, 'vp_players', 'id=eq.' + enc(player.id) + '&select=device_id&limit=1');
+    const dev = me.length ? me[0].device_id : null;
+    if (!dev) return false;
+    // THIS prize: a confirmed claim on this pattern. A line won earlier does not open the house's PIN.
+    const won = await sbGet(env, 'vp_bingo_claims', 'draw_id=eq.' + enc(roundId) + '&device_id=eq.' + enc(dev) +
+      '&pattern=eq.' + enc(stage) + '&status=eq.confirmed&select=id&limit=1');
+    return won.length > 0;
+  }
+  if (game.format === 'musical_bingo') {
+    if (stage === 'final') return false;   // trivia's stage, never a musical prize
+    /* THIS prize, from the server's own record (security review, 5 Nov 2026): a musical claim keeps the
+       cells this Worker verified (checkMusicPattern), and they are exactly the prize's shape. The phone
+       naming a prize is never enough on its own: a line winner cannot open the two-lines or house PIN. */
+    const won = await sbGet(env, 'vp_claims', 'game_id=eq.' + enc(roundId) + '&player_id=eq.' + enc(player.id) +
+      '&auto_verdict=eq.valid&status=in.(pending,confirmed)&select=winning_cells&limit=20');
+    return won.some((c) => winPinMusicCellsAre(stage, c.winning_cells));
+  }
+  if (game.format === 'trivia') {
+    if (stage !== 'final') return false;   // trivia has one prize, the final board
+    const cfg = game.config || {};
+    const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(roundId) + '&select=current_seq,phase&limit=1');
+    const cur = tg.length ? tg[0] : null;
+    const seqs = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : null;
+    const pos = cur ? (seqs ? seqs.indexOf(cur.current_seq) + 1 : Number(cur.current_seq) || 0) : 0;
+    const total = seqs ? seqs.length : Number(cfg.question_count) || 0;
+    const over = game.status !== 'running' || (!!cur && cur.phase === 'revealed' && total > 0 && pos >= total);
+    if (!over) return false;
+    const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+      'game_id=eq.' + enc(roundId) + '&select=player_id,points&order=points.desc&limit=1000');
+    for (let i = 0; i < board.length; i++) {
+      if (board[i].player_id !== player.id) continue;
+      let rank = i + 1;   // equal points share a place, as on the wall and in /player/score
+      for (let j = i - 1; j >= 0 && (board[j].points || 0) === (board[i].points || 0); j--) rank = j + 1;
+      // 1st place only, ties included (Dean, 5 Nov 2026), and never on 0 points: a night where nobody scored has
+      // no winner (live play, 15 Nov 2026), so no PIN either.
+      return rank === 1 && (Number(board[i].points) || 0) > 0;
+    }
+    return false;
+  }
+  return false;   // raffles and members draws have no phone winner
+}
+
+async function handlePlayerWinnerPin(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  const b = await readJson(request);
+  let round, game = null;
+  if (b && b.bingo === true) {
+    /* A bingo phone does not hold the draw id (its tickets come from the host over the channel), so it
+       asks for its own session's newest draw. Only a draw in the player's session can answer. */
+    const draws = await sbGet(env, 'vp_bingo_draws',
+      'session_id=eq.' + enc(player.session_id) + '&select=id&order=created_at.desc&limit=1');
+    if (!draws.length) return json({ error: 'No bingo game here yet' }, 404);
+    round = { kind: 'bingo', id: draws[0].id, stage: winPinStage(b.stage) };
+  } else {
+    round = winPinRoundOf(b);
+    if (round.kind !== 'game') return json({ error: 'Bad round' }, 400);
+    const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(round.id) + '&select=id,session_id,status,format,config&limit=1');
+    if (!games.length) return json({ error: 'Game not found' }, 404);
+    game = games[0];
+    if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);   // membership first
+  }
+  if (!(await winPinPlayerWon(env, player, round.kind, round.id, game, round.stage))) {
+    return json({ error: 'The PIN is for the winner of this round' }, 403);
+  }
+  return json({ pin: await winnerPin(env, round.kind, round.id, round.stage) });
+}
+
 async function handlePlayerScore(request, env, json) {
   const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
   const url = new URL(request.url);
@@ -14266,7 +15000,14 @@ async function sbInsert(env, table, obj, returnRep) {
     // Callers that already catch conflicts (join-code loop, player card/answer) are unaffected.
     throw httpError(409, 'That was already starting. Please try again.');
   }
-  if (!res.ok) throw dbError('insert', table, await res.text());   // M5: log detail, return generic + code
+  if (!res.ok) {
+    /* M5: log detail, return generic + code. The upstream status and text ride on the error for the CALLER only (the
+       router answers with the message alone), so a caller can tell "this column is not there yet" from a timeout. */
+    const text = await res.text();
+    const e = dbError('insert', table, text);
+    e.dbStatus = res.status; e.dbDetail = String(text || '');
+    throw e;
+  }
   if (returnRep) return await res.json();
   return null;
 }

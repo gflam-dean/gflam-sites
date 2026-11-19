@@ -110,7 +110,7 @@ function rowsOf(t) { return (DB[t] || []).length; }
   delete DB.venueplay_founding[0].contact_email;
   var oreal = (await call(handleCreateSession, { venue_id: OTHER, format: 'trivia', road: 'supabase' })).body;
   var jr = await call(handleJoinInfo, { code: OCODE, fresh: 1 });
-  show('CONTROL: a real night at a venue that collects nothing asks only the name', jr.body.demo !== true && jr.body.collect && !jr.body.collect.email && !jr.body.collect.mobile && !jr.body.collect.marketing_optin, JSON.stringify(jr.body.collect));
+  show('CONTROL: a real night at a venue that collects nothing asks only the first name and mobile (INBOX 416: asked at every venue)', jr.body.demo !== true && jr.body.collect && !jr.body.collect.email && jr.body.collect.first_name === true && jr.body.collect.mobile === true && !jr.body.collect.marketing_optin, JSON.stringify(jr.body.collect));
 
   print('');
   print('3. Fifty phones: up to 10 for the demo');

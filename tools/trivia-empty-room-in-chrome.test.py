@@ -14,6 +14,8 @@ quiz with no phones, and checks what the host reads and what the wall paints:
   - Reveal leaderboard with nobody joined: the console says, plainly, "Nobody has joined this game yet, so
     there are no scores to show. Players join with the code on the TV.", the red error bar stays down, and
     the TV shows the same calm end state with no error word on it
+  - with nobody joined the pink button becomes Start a new round (the Reveal leaderboard that did nothing is gone, INBOX 426 item 4);
+    a team arriving puts Reveal leaderboard back
   - the REAL "could not be loaded" message is kept for a real fetch failure with players present
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
@@ -134,7 +136,9 @@ def play():
         ok('the host console says it plainly, word for word', h.get('note') == NOBODY, h)
         ok('the line is on screen', h.get('noteShown') is True, h)
         ok('there is NO error: the red bar is down and nothing says "could not be loaded"', h.get('errUp') is False and 'could not be loaded' not in (h.get('errText') or ''), h)
-        ok('the host still has Reveal leaderboard to tap (nothing is ended)', 'Reveal leaderboard' in (h.get('btns') or []), h)
+        # INBOX 426 item 4 (17 Nov 2026): the pink Reveal leaderboard did nothing a second time and sat under the screen. With nobody
+        # joined the one thing left to do is begin again, so that is the button, and it is on screen (tools/console-start-buttons-in-chrome).
+        ok('the pink button is now Start a new round, not a Reveal leaderboard that does nothing', 'Start a new round' in (h.get('btns') or []) and 'Reveal leaderboard' not in (h.get('btns') or []), h)
         r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var t=d&&d.getElementById("tvBoardTitle"); return !!t && /Thanks for playing/.test(t.textContent);})()', 15)
         w = r.json(tv, TV)
         ok('the TV shows "Thanks for playing" with the join code for next time', w.get('layer') == 'tvBoard' and 'Thanks for playing' in (w.get('title') or '') and w.get('join') is True
@@ -152,6 +156,8 @@ def play():
         r.ask(host, SAY + '(%s,%s)' % (json.dumps(code), json.dumps({'t': 'join', 'fmt': 'trivia', 'pid': 'dddddddd-dddd-4ddd-8ddd-000000000001', 'name': 'Quiz Kids'})))
         ok('a team joins on the phones\' channel: the console counts 1 player', r.until(host, 'document.getElementById("playerCount").textContent==="1"', 10) is True,
            r.ask(host, 'document.getElementById("playerCount").textContent'))
+        ok('the team arriving brings Reveal leaderboard back and the "nobody" line goes', r.until(host, '(function(){ return !document.getElementById("noPlayersNote") && ![].every.call(document.querySelectorAll("#runBody button"),function(x){ return x.textContent.trim()!=="Reveal leaderboard"; }); })()', 10) is True,
+           r.json(host, HOSTP))
         r.ask(host, 'window.__realFetch=window.fetch; window.fetch=function(u,o){ return /host\\/reveal/.test(String(u)) ? Promise.reject(new TypeError("Failed to fetch")) : window.__realFetch.apply(window,arguments); }; true')
         click_btn(r, host, 'Reveal leaderboard')
         r.until(host, 'document.getElementById("hostErrBar").classList.contains("show")', 15)

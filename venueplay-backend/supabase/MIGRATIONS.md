@@ -937,3 +937,73 @@ plus `vp_venue_groups.billing_term` ('monthly' default or 'yearly') and `term_re
 (RLS on, no policies, no grants). Additive, safe to run twice, existing groups stay monthly. Any order with the billing Worker: until it has run the
 Worker logs and carries on (the Stripe balance still holds the money; only the record and the HQ group credit are missing). Thursday 19 Nov admin/billing
 release. NOT RUN. Rollback: in the file.
+Branch `feature/journey-413-15nov`. NOT RUN. Rollback: `drop table public.vp_journey_events; drop table public.vp_track_links;`.
+
+`venueplay-208-hq-no-member-contacts.sql` (Dean's open question 10, 16 Nov 2026: "Block HQ admin database reads of members'
+email/mobile?", suggested yes; scope set by Dean 17 Nov: ONLY a club's uploaded members list, never players, the player profile or
+subscribers, which HQ keeps seeing). Drops policy vp_members_admin_all (HQ admin FOR ALL on every club's members list) and adds view
+v_vp_members_list (id, roster_id, member_number, first_name, last_name, status, updated_at: no email, mobile, postcode, consent or
+note; own venues for staff, every venue for an HQ admin; owner rights, security_barrier, select to authenticated only). The members
+console and the account page count read the table, then the view when the table answers nobody (HQ View as). vp_members_host_select,
+every grant on vp_members and every player table are untouched. Branch `feature/hq-no-member-contacts-q10`. RUN on TEST only, twice
+(17 Nov 2026 ~22:40, the second run "policy does not exist, skipping"), read back and proven with a rolled-back HQ-admin and venue-owner
+session. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-GUARD block; the live run is the statements after
+its END marker. Either order with the pages. After the live run dump RLS-BASELINE.json (this branch already carries the post-208
+state). Rollback: in the file. NUMBER: 195 to 207 taken on other branches/worktrees (checked 17 Nov 2026), so 208.
+
+`venueplay-212-venue-old-addresses.sql` (Dean's open question 32, 16 Nov 2026, "yes, step 2": HQ Move TV address, the Lunatic
+Hotel fix). Additive: `vp_venue_slug_aliases` (one row per OLD TV address: slug primary key, venue_id, retired_at, retired_by; RLS on,
+no policies, everything revoked from public / anon / authenticated, service role only); two triggers so no two venues can ever hold
+one address, current or old, whatever path writes (each takes an advisory lock on the slug); `vp_venue_move_address(venue, new slug,
+actor id, actor label)`, service role only, the ONE way an address moves: in one transaction it refuses a taken address, a channel
+hash another venue uses, or a venue with a game open, keeps the join code (fills a null one with hash(old slug)), moves vp_venues.slug
+and vp_venue_screen.slug, sets screen_reload_at, records the alias and writes the vp_admin_audit row `venue_address_moved`; and
+`vp_venue_current_slug(slug)` (anon + authenticated may call it: slugs are public) for a console bookmarked on an old address.
+Run BEFORE the billing Worker that offers the button (until then it answers "not set up yet"); the game Worker and pages are safe
+either side. Needs 15, 63, 68, 91. Branch `feature/hq-rename-slug-q32`. RUN on TEST only, twice (17 Nov 2026), and exercised there in
+rolled-back transactions. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-GUARD block; the live run is the
+statements after its END marker. After the live run, dump RLS-BASELINE.json / COLUMNS-BASELINE.json. NUMBER: 210 is claimed twice
+(replay/sun29-no-contact and the q28 worktree), so 211 is left for the loser; checked every branch and worktree 17 Nov 2026.
+Rollback (only while no address has moved): in the file.
+
+`venueplay-215-one-number-per-player.sql` (Dean, 17 Nov 2026 ~23:15: ONE phone number per venueplay player, the same at every
+venue; replaces question 28's "keep both", whose migration 210 on feature/known-phone-keep-both-q28 is SHELVED and never ran on live).
+Needs 202. Adds: a nullable `known_id` column (foreign key to vp_known_players, on delete set null, partial index where set) on
+`vp_players` and `vp_captures`, written by the game Worker at the join or bingo capture that made the row; table
+`vp_number_changes` (one row per "Not my number": the known row, the NEW number, the SHA-256 of the texted code, 10-minute expiry
+capped at 30 minutes, 5 tries, 3 texts, the old number only as its last three digits) and the definer function
+`vp_number_change_apply(uuid)` (one transaction: the known row's mobile, then ONLY at venues whose `shared` list had this player's
+mobile, and there ONLY the vp_players (through vp_sessions) and vp_captures rows that carry THIS known row's id (known_id) and still
+hold the old number; never a row by number alone, so rows from before 215 (known_id null) keep the old number; other open changes
+closed). Locks: `set lock_timeout = '3s'` is the first statement after the guard (a busy table fails the paste in 3 seconds instead
+of queueing every join; paste again), the two foreign keys are added NOT VALID inside a pg_constraint guard and then validated as
+their own statements, `reset lock_timeout` at the end. Safe to run twice. RLS on vp_number_changes, no policies, nothing granted to
+anon/authenticated; EXECUTE for service_role only. known_id is not readable by venue staff: RLS-BASELINE.json (live) has NO grants
+on vp_players to anon or authenticated, so vp_players_host_select never applies through PostgREST; vp_captures has table grants but
+RLS on and no policies (0 rows); no Worker read selects known_id. Never add it to a host or HQ select or export. Run AFTER 202 and
+BEFORE (or with) the game Worker that writes known_id (the Worker before 215 is also safe: on "no such column known_id" alone it
+stores the row once more without the link and logs one line; before 215, /join/number/* answer 503 and the phone shows no "Not my
+number"; the switch NUMBER_CHANGE_SMS_ON is also off by default). TEST: the FIRST body (table + function only) ran on TEST twice
+under number 213 (17 Nov 2026 ~23:22). THE EDITED FILE (18 Nov: known_id columns, own-rows WHERE, lock timeout, NOT VALID keys;
+branch fix/215-review-fixes-18nov on fix/215-number-change-own-rows-18nov) HAS NOT BEEN RUN ON TEST: run it there twice, and read
+back, before live. NOT RUN ON LIVE: ships on Dean's yes. The file carries the VP-STAGING-GUARD block; the live run is the
+statements after its END marker. After the live run: `notify pgrst, 'reload schema';`, dump RLS-BASELINE.json and
+COLUMNS-BASELINE.json (one table, one definer function, two columns). Rollback (after the Worker is rolled back or the switch is
+off): `drop function if exists public.vp_number_change_apply(uuid); drop table if exists public.vp_number_changes;` and, only after
+the Worker that writes it is rolled back, `alter table public.vp_players drop column if exists known_id; alter table
+public.vp_captures drop column if exists known_id;`. NUMBER: 210 twice, 211 held for the loser of that clash, 212
+venue-old-addresses; no 213 anywhere (it went to q9) (checked every branch and worktree 17 Nov 2026 23:20); RENUMBERED 214 the same
+night, then 215 on 18 Nov (main claimed 214 for feature/hq-coaster-leads) because q9 (feature/members-upload-more-fields-q9) claimed
+213 first.
+
+`venueplay-202-known-phone-consents.sql` (Dean, 14 Nov 2026, INBOX 416 known phone + Moshtix-style consent; Sunday 22 Nov games
+release; 200 is the members upload, 201 the retention sweep): two new tables, nothing existing is touched. `vp_known_players` (one row
+per PHONE, held by venueplay: first name, mobile in +614 form, and what venues asked; each venue receives only the fields it asks;
+found ONLY by the SHA-256 of a random 256-bit key the phone holds, never the key; first_venue_id; notice_version/notice_at for the
+first-game notice) and `vp_player_consents` (one row per consent box answer: party venueplay / venue / host, granted, wording
+version, source game, session, the host login for a host box). Both: RLS on, no policies, everything revoked from public / anon /
+authenticated (service role only), so RLS-BASELINE.json gains two tables after it is run: dump it then; COLUMNS-BASELINE.json too.
+The game Worker's 90-day sweep deletes a gone venue's consent rows (purgeKnownPlayers); the known row is venueplay's and stays (keeping rule: Dean). Safe in either order with the game Worker:
+before it runs every lookup answers "not known" and nothing is written (tools/test-known-phone.js section 6). Run on TEST first
+(tools/staging/run-on-test.py), then Dean pastes on live EARLY. Branch `feature/known-phone-416-sun22`. NOT RUN.
+Rollback: `drop table public.vp_player_consents; drop table public.vp_known_players;`.

@@ -65,6 +65,9 @@ def play(RIG, width, height, label):
         ok('trivia and raffles ticked: next is "Which nights do you run them?"', r.until(c, '(document.getElementById("vpGsTitle")||{}).textContent==="Which nights do you run them?"', 10) is True,
            r.ask(c, '(document.getElementById("vpGsTitle")||{}).textContent'))
         click(r, c, 'vpGsWeekSkip')
+        ok('the nights step is followed by "What do you want to collect from your customers?"', r.until(c, '(document.getElementById("vpGsTitle")||{}).textContent==="What do you want to collect from your customers?"', 10) is True,
+           r.ask(c, '(document.getElementById("vpGsTitle")||{}).textContent'))
+        click(r, c, 'vpGsCollectNext')
         ok('skipping the nights asks "set them all up today?"', r.until(c, '!!document.getElementById("vpGsAllNo")', 10) is True, r.ask(c, '(document.getElementById("vpGsTitle")||{}).textContent'))
         click(r, c, 'vpGsAllNo')
         ok('"Not today" says no worries and that each game asks the first time it is opened',

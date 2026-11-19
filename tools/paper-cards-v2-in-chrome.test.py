@@ -65,11 +65,11 @@ def cards_list(titles=None):
     return cards
 
 
-def cards_js(logo='null', titles=None, playlist='Pub Classics'):
-    """logo: a JS expression for the logo object (window.__lg after MAKE_LOGO), or null."""
+def cards_js(logo='null', titles=None, playlist='Pub Classics', layout=None):
+    """logo: a JS expression for the logo object (window.__lg after MAKE_LOGO), or null. layout: None (landscape) or 'portrait'."""
     return ('(function(){var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};'
-            'window.__ok=VPPrint.musical(w,%s,{venue:"The Mini Bar",playlist:%s,printedLabel:"Mon 16 Nov",logo:%s});return window.__ok;})()'
-            % (json.dumps(cards_list(titles)), json.dumps(playlist), logo))
+            'window.__ok=VPPrint.musical(w,%s,{venue:"The Mini Bar",playlist:%s,printedLabel:"Mon 16 Nov",logo:%s%s});return window.__ok;})()'
+            % (json.dumps(cards_list(titles)), json.dumps(playlist), logo, (',layout:%s' % json.dumps(layout)) if layout else ''))
 
 
 # A venue logo of a given shape, drawn as a PNG in the page and put through the REAL VPPaperStyle.prepLogo (measure + ink rule).
@@ -241,7 +241,7 @@ try:
         S.shot(sid, os.path.join(A.shots, 'cards-none.png'), full=False)
     S.close_tab(tid)
 
-    def pdf_of(logo_kind=None, titles=None, playlist='Pub Classics', name='none'):
+    def pdf_of(logo_kind=None, titles=None, playlist='Pub Classics', name='none', portrait=False):
         """The cards written straight into a window of their own, as the console's print window is, printed to PDF."""
         t2, s2 = S.open('/__paper-harness', 1123, 920, False)
         S.until(s2, 'typeof VPPrint!=="undefined" && typeof VPPaperStyle!=="undefined"', 20)
@@ -249,7 +249,7 @@ try:
         if logo_kind:
             S.js(s2, MAKE_LOGO % (logo_kind[0], logo_kind[1], json.dumps(logo_kind[2])), wait=True, secs=15)
             lg = 'window.__lg'
-        S.js(s2, cards_js(lg, titles, playlist).replace('var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};', 'var w=window;w.print=function(){};'))
+        S.js(s2, cards_js(lg, titles, playlist, 'portrait' if portrait else None).replace('var f=document.getElementById("pw");var w=f.contentWindow;w.print=function(){};', 'var w=window;w.print=function(){};'))
         S.until(s2, 'document.querySelectorAll(".pcc").length===2', 15)
         S.js(s2, 'document.fonts.ready.then(function(){return true})', wait=True, secs=15)
         time.sleep(1.2)
@@ -264,6 +264,36 @@ try:
 
     (n, box), size = pdf_of()
     ok('printed to PDF: ONE A4 landscape page (842 x 595 pt) holds both cards, no second page', n == 1 and box is not None and abs(box[0] - 841.9) < 2 and abs(box[1] - 595.3) < 2, (n, box, size))
+
+    # ---------------------------------------------------------------- portrait, one card to a page (16 Nov 2026)
+    print('\nportrait: one card to an A4 portrait page, nothing cut off')
+    (n, box), size = pdf_of(name='portrait', portrait=True)
+    ok('portrait: TWO A4 portrait pages (595 x 842 pt), one card each, no blank third page',
+       n == 2 and box is not None and abs(box[0] - 595.3) < 2 and abs(box[1] - 841.9) < 2, (n, box, size))
+    t3, s3 = S.open('/__paper-harness', 1123, 920, False)
+    S.until(s3, 'typeof VPPrint!=="undefined" && typeof VPPaperStyle!=="undefined"', 20)
+    S.js(s3, cards_js('null', layout='portrait'))
+    S.until(s3, 'document.getElementById("pw").contentDocument.querySelectorAll(".pcc").length===2', 15)
+    S.js(s3, 'document.getElementById("pw").contentDocument.fonts.ready.then(function(){return true})', wait=True, secs=15)
+    time.sleep(1.2)
+    pm = S.json(s3, '(function(){var d=document.getElementById("pw").contentDocument;var MM=96/25.4;'
+                    'var out=[].map.call(d.querySelectorAll(".pcs"),function(sh){var s=sh.getBoundingClientRect(),c=sh.querySelector(".pcc").getBoundingClientRect();'
+                    'var f=sh.querySelector(".frame").getBoundingClientRect(),ft=sh.querySelector(".foot").getBoundingClientRect();'
+                    'var over=[].filter.call(sh.querySelectorAll(".cell:not(.free) .t"),function(t){return t.scrollWidth>t.clientWidth+0.5||t.offsetHeight>t.parentNode.clientHeight+0.5;}).length;'
+                    'return {sw:s.width/MM,sh:s.height/MM,cw:c.width/MM,ch:c.height/MM,fr:(f.right-s.left)/MM,fb:(ft.bottom-s.top)/MM,cards:sh.querySelectorAll(".pcc").length,over:over,'
+                    'text:sh.innerText};});'
+                    'return JSON.stringify({sheets:out,cut:d.querySelectorAll(".pccut").length});})()', {})
+    ps = pm.get('sheets', [])
+    ok('portrait: one card per sheet, each sheet A4 portrait (210 x 297 mm) and the card fills it (+-1 mm)',
+       len(ps) == 2 and all(p['cards'] == 1 and abs(p['sw'] - 210) < 1 and abs(p['sh'] - 297) < 1 and abs(p['cw'] - 210) < 1 and abs(p['ch'] - 297) < 1 for p in ps), ps)
+    ok('portrait: the frame and the footer are inside the page (nothing cut off the right or the bottom)',
+       len(ps) == 2 and all(p['fr'] <= 210 + 0.5 and p['fb'] <= 297 + 0.5 for p in ps), ps)
+    ok('portrait: every title fits its square, no cut line, and each card still carries its number, playlist and FREE PLAY',
+       pm.get('cut') == 0 and len(ps) == 2 and all(p['over'] == 0 and 'Pub Classics' in p['text'] and 'FREE PLAY' in p['text'] for p in ps)
+       and '07' in ps[0]['text'] and '08' in ps[1]['text'], pm)
+    if A.shots:
+        S.shot(s3, os.path.join(A.shots, 'cards-portrait-screen.png'), full=False)
+    S.close_tab(t3)
 
     # ---------------------------------------------------------------- INBOX 385 (2): every shape of venue logo
     print('\nthe pub\'s logo box: square, tall, wide, light ink (INBOX 385)')
@@ -399,7 +429,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 240
+EXPECTED = 244
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -150,6 +150,9 @@
      bold right under them, never the small grey line it was. */
   .finalwrap .rankline{color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.25;margin-top:6px}
   .finalwrap .rankline:empty{display:none}
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): big enough for a host to read across a table. */
+  .finalwrap .winpin{font-size:17px;line-height:1.45;color:#fff;margin:12px 0 0;max-width:22em}
+  .finalwrap .winpin b{font-size:22px;letter-spacing:.06em;color:#FFD93D;white-space:nowrap}
   /* win celebration (shared with bingo/musical) */
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
@@ -399,6 +402,7 @@
     <div class="psub" id="finalSub">Thanks for playing tonight</div>
     <div class="scorebox" id="finalScore">0 points</div>
     <div class="rankline" id="finalRank"></div>
+    <div class="winpin hidden" id="finalPin"></div>   <!-- winner check: "Show this to the host: PIN 4821, Quiz Wizards, 1st" (vp-winpin.js); never on a TV -->
     <div class="pnote">The winners are up on the big screen.</div>
   </div>
   <!-- THE VENUE'S AD: one place on every screen that shows one, just above our logo (/app/vp-phonead.js) -->
@@ -425,6 +429,7 @@
 <script src="/app/vp-waitwatch.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>
+<script src="/app/vp-known.js"></script>   <!-- a known phone: never asked the same details twice at a venue (INBOX 416, 22 Nov 2026) -->
 <script src="/app/vp-demo.js"></script>   <!-- the try-it demo: their own name, email and mobile from sign-up, never the tick (INBOX 82) -->   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
@@ -434,6 +439,7 @@
 <script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
+<script src="/app/vp-winpin.js"></script>   <!-- the winner check PIN on the 1st place phone (5 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonekey.js"></script>
@@ -1174,6 +1180,7 @@
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
       $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
+    (typeof paintPin==="function" && paintPin(r));   // guarded: suites lift this function and run it alone. winner check: 1st place only, and never on 0 points (r is 0 then)
     /* The winner is asked after the claim, not during it (Dean, 12 Nov 2026, INBOX 287.5): when the host ends the game,
        or after a minute; everyone else at once. */
     if(r===1){ if(!P.claimAskT) P.claimAskT=setTimeout(function(){ P.claimAskT=null; try{ if(!$("vFinal").classList.contains("hidden")) askHowItWent(); }catch(e){} }, 60000); }
@@ -1189,6 +1196,22 @@
       VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:"vFinal",
                        gameId:P.gameId, format:"trivia" });
     }catch(e){}
+  }
+  /* THE WINNER CHECK PIN (Dean, 4 Nov 2026): 1ST PLACE ONLY (Dean, 5 Nov 2026: 2nd and 3rd get no PIN
+     and nothing that says they won) shows this game's PIN with the team name and place, asked of the Worker. Never sent anywhere: the channel
+     reaches the TV, and the PIN must never be on a TV. No answer = the final screen as before. */
+  var _pinFor="";
+  function paintPin(rr){
+    var el=$("finalPin"), r=(typeof rr==="number") ? rr : (P.rank||0);
+    if(!el || !window.VPWinPin) return;
+    if(r!==1 || !P.token || !P.gameId || /[?&]demo=1/.test(location.search)){ VPWinPin.paint(el, "", ""); return; }
+    var gid=P.gameId, what=(P.name ? P.name+", " : "")+ordinal(r);
+    if(P.pin && _pinFor===gid){ VPWinPin.paint(el, P.pin, what); return; }
+    VPWinPin.paint(el, "", "");
+    VPWinPin.forPlayer(VP_GAME_API, P.token, { game_id:gid, stage:"final" }).then(function(pin){
+      if(!pin || gid!==P.gameId) return;
+      P.pin=pin; _pinFor=gid; VPWinPin.paint(el, pin, what);
+    });
   }
   /* showFinal(quiet): quiet puts the final-score screen up WITHOUT the celebration, the fanfare, the buzz or the
      rating prompt, and without saying where the player came. Used while the host has the podium up but has not yet
@@ -1220,6 +1243,7 @@
   }
   function quietFinal(note){
     var wrap=$("vFinal"); if(wrap) wrap.classList.remove("winner");
+    (typeof paintPin==="function" && paintPin(0));   // guarded, as above: no winner PIN while the podium is still to be announced, or when the host ended the game
     $("finalScore").textContent=P.total+" points";
     $("finalEmoji").innerHTML="&#127881;";
     $("finalBig").textContent="That's a wrap";
@@ -1508,7 +1532,9 @@
     if(/[?&]demo=1/.test(window.location.search||"")){ return Promise.resolve(); }
     var body={ code:P.room, name:P.name, pid:deviceId(), tokens:vpHeldTokens(P.room) };   // pid = billing/rejoin device key, see deviceId(); tokens prove a seat it already has (A1)
     if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
+    if(typeof VPKnown==="object") VPKnown.addTo(body);   // the keys this phone holds (INBOX 416)
     return playerPost("/join", body).then(function(r){
+      if(typeof VPKnown==="object") VPKnown.keep(r);    // a first join hands back this venue's key
       P.token=r.token; saveToken(P.room, P.token);
       AR.hash=""; ansHash();   // a new token is a new fingerprint in the answers room
       applySnap(r.snapshot);
@@ -1519,7 +1545,8 @@
   function headerVenue(logo, name){ try{ VPVenueLogo.headerName($("hdrVenueName"), logo, name); }catch(e){} }   /* one copy, in /app/vp-venuelogo.js (4 Nov 2026) */
   function loadJoinInfo(){
     if(!P.room) return;
-    playerPost("/join/info",{ code:P.room, ad:1 }).then(function(r){   // ad:1: the venue's slides too, for its ad
+    /* with this phone's /join/known answer on it (r.known_info): a known phone at this venue (INBOX 416, /app/vp-known.js) */
+    (typeof VPKnown==="object" ? VPKnown.withInfo(playerPost("/join/info",{ code:P.room, ad:1 }), VP_GAME_API, P.room) : playerPost("/join/info",{ code:P.room, ad:1 })).then(function(r){   // ad:1: the venue's slides too, for its ad
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       headerVenue(r&&r.logo_url, r&&r.venue_name);
@@ -1534,44 +1561,51 @@
       }
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
-      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
-      var h=(typeof VPDetails==="object")?VPDetails.html(c):"";
-      box.innerHTML=h;
-      /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
-         shared by all three phones. Not ticking it changes nothing about playing. */
-      if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
-      /* THE TRY-IT DEMO (INBOX 82): their own details from sign-up, carried in the address's #fragment by
-         /app/try.html and read once (VPDemo.takePrefill), go into the boxes. The offers tick stays theirs to tap. */
-      if(typeof VPDemo==="object") VPDemo.applyPrefill(document);
-      if(r && r.demo){ var dn=document.createElement("p"); dn.id="demoNote"; dn.setAttribute("style","font-size:14px;line-height:1.5;color:#B9B9C6;margin:8px 0 0");
-        dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo."+(c.marketing_optin ? " Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list." : ""); box.appendChild(dn); }   /* no tick on the quick game's demo (no email on the account): nothing to tick, and nothing is kept */
-      /* Collection notice. Australian privacy law wants people told what is being collected and
-         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
-         screen asked for last name, postcode, email and mobile with no notice and no link to the
-         policy at all, while the policy itself said capturing more than a name was a future
-         feature. */
-      if(h && !(r && r.demo && !c.marketing_optin)){   // a demo with no tick keeps nothing: no notice about where details go
-        var vn=(P.venueName||"").trim();
-        var n=document.createElement("p");
-        n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
-        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
-          ", not to anyone else. You can play with just your name. ";
-        var a=document.createElement("a");
-        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
-        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
-        a.textContent="How your details are handled";
-        n.appendChild(a);
-        box.appendChild(n);
+      /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them.
+         A KNOWN PHONE (/app/vp-known.js, INBOX 416): "Welcome back, Alan" and only the boxes still missing; the team name is
+         still asked (it is tonight's, not a detail). The consent is the one tick, or the three boxes when the Worker says so. */
+      var details=function(h, info){
+        /* THE TRY-IT DEMO (INBOX 82): their own details from sign-up, carried in the address's #fragment by
+           /app/try.html and read once (VPDemo.takePrefill), go into the boxes. The offers tick stays theirs to tap. */
+        if(typeof VPDemo==="object") VPDemo.applyPrefill(document);
+        if(r && r.demo){ var dn=document.createElement("p"); dn.id="demoNote"; dn.setAttribute("style","font-size:14px;line-height:1.5;color:#B9B9C6;margin:8px 0 0");
+          dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo."+(c.marketing_optin ? " Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list." : ""); box.appendChild(dn); }   /* no tick on the quick game's demo (no email on the account): nothing to tick, and nothing is kept */
+        /* Collection notice, AT THE POINT they are asked (Australian privacy law). Since INBOX 416 the first name and mobile
+           are asked of everyone, so the line says who gets them and why: "Your details go to {account owner} to run
+           tonight's game and contact winners." The demo keeps its own words (its boxes stay optional). */
+        /* REAL NIGHTS SAY NOTHING HERE (Dean 16 Nov 2026): the first-game notice (/app/vp-known.js, the Worker's one constant)
+           says what venueplay keeps and that a TICKED box shares details with that sender; never that the venue gets them. */
+        if(h && r && r.demo && c.marketing_optin){   // the demo keeps its own words (its boxes stay optional)
+          var vn=((info && info.organiser) || P.venueName || "").trim();
+          var n=document.createElement("p"); n.className="collectnote";
+          n.setAttribute("style","font-size:14px;line-height:1.5;color:#8A8A94;margin-top:10px");
+          n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+", not to anyone else. You can play with just your name. ";   // the demo only
+          var a=document.createElement("a");
+          a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+          a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
+          a.textContent="How your details are handled";
+          n.appendChild(a);
+          box.appendChild(n);
+        }
+      };
+      if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:(r && !r.demo) ? r.known_info : null, kind:"team", venueName:P.venueName, nameIn:$("nameIn"), after:details }); }
+      else {
+        var h=(typeof VPDetails==="object")?VPDetails.html(c, { firstBox:true }):"";
+        box.innerHTML=h;
+        if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
+        details(h, null);
       }
     }).catch(function(){});
   }
   function gatherCapture(nm){
-    var cap={ first_name:nm.slice(0,80) }, v;
+    /* the player's OWN first name (xFirst, INBOX 416), never a trivia team name, when the box is there */
+    var fn=$("xFirst"), cap={ first_name:((fn && fn.value.trim()) || nm).slice(0,80) }, v;
     if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
     if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers + 18+ tick ONLY, and only with a contact method (/app/vp-consent.js)
+    if(typeof VPKnown==="object") VPKnown.capture(cap);   // the three boxes' answers (INBOX 416)
     return cap;
   }
   function join(){

@@ -53,6 +53,13 @@
     try { ls.setItem(KEY, JSON.stringify({ slug: s, at: Date.now() })); return true; } catch (e) { return false; }
   }
   function clear() { var ls = store(); if (ls) { try { ls.removeItem(KEY); } catch (e) {} } }
+  /* The venue's TV address moved (migration 212) and the Worker said so: a screen paired to the OLD address stays
+     paired to the same venue, at its new one. Only ever the venue it was paired to; the pairing time is kept. */
+  function move(from, to) {
+    var o = read(), ls = store(); to = clean(to);
+    if (!o || !ls || !to || o.slug !== clean(from)) return false;
+    try { ls.setItem(KEY, JSON.stringify({ slug: to, at: o.at })); return true; } catch (e) { return false; }
+  }
   /* Two strikes against <s>: forget the pairing only if it is THAT venue. A screen opened at a mistyped
      /tv?venue=the-grand-hotel must not lose the real venue it was paired to. */
   function forget(s) { var p = slug(); if (p && p === clean(s)) clear(); }
@@ -263,7 +270,7 @@
     return { open: open, close: close, changeVenue: changeVenue };
   }
 
-  root.VPTvPaired = { KEY: KEY, HOLD_MS: HOLD_MS, read: read, slug: slug, save: save, clear: clear, forget: forget,
+  root.VPTvPaired = { KEY: KEY, HOLD_MS: HOLD_MS, read: read, slug: slug, save: save, clear: clear, forget: forget, move: move,
                       target: target, go: go, openedPaired: openedPaired, appStore: appStore, appPrompt: appPrompt,
                       APP_MS: APP_MS, staff: staff };
 })(window);

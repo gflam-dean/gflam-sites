@@ -121,7 +121,7 @@ def panel(RIG):
                 time.sleep(0.6)
                 r.ask(sid, 'document.getElementById("vpGsGo").click(); true'); time.sleep(0.5)
                 r.ask(sid, 'document.querySelector("#vpGsGames [data-game=%s]").click(); document.getElementById("vpGsNext").click(); true' % key); time.sleep(0.6)
-                r.ask(sid, '(document.getElementById("vpGsWeekSkip")||{click:function(){}}).click(); true'); time.sleep(0.5)
+                r.ask(sid, '(document.getElementById("vpGsWeekSkip")||{click:function(){}}).click(); (document.getElementById("vpGsCollectNext")||{click:function(){}}).click(); true'); time.sleep(0.5)
                 r.ask(sid, 'document.getElementById("vpGsAllYes").click(); true'); time.sleep(0.8)
                 if key != 'bingo':
                     r.ask(sid, 'document.getElementById("vpGsAdvToggle").click(); true'); time.sleep(0.4)

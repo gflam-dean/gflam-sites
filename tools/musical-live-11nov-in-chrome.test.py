@@ -169,7 +169,11 @@ def console_scene():
         # tapped from the bottom of the page, as on the night
         r.ask(h, 'window.__asked=0; new MutationObserver(function(){ if(!document.getElementById("paperModal").classList.contains("hidden")) window.__asked++; }).observe(document.getElementById("paperModal"),{attributes:true}); true')
         r.ask(h, 'document.getElementById("startBtn").scrollIntoView({block:"end"}); true'); time.sleep(0.4)
-        ok('CONTROL: Start game is tapped from well down the page', (r.ask(h, 'window.scrollY') or 0) > 200, r.ask(h, 'window.scrollY'))
+        # 17 Nov 2026 (INBOX 426 item 1): Start game now rides the bottom edge of the screen, so "from the bottom of the page" is
+        # the button sitting on the last pixels of the window, whether or not the page had to scroll to put it there.
+        ok('CONTROL: Start game is tapped from well down the page (or from the bottom edge of the screen)',
+           (r.ask(h, 'window.scrollY') or 0) > 200 or r.ask(h, '(function(b){ var q=b.getBoundingClientRect(); return q.bottom<=innerHeight && q.bottom>innerHeight-130; })(document.getElementById("startBtn"))') is True,
+           [r.ask(h, 'window.scrollY'), r.ask(h, 'document.getElementById("startBtn").getBoundingClientRect().bottom'), r.ask(h, 'innerHeight')])
         r.ask(h, 'document.getElementById("startBtn").click(); true')
         ok('CONTROL: the game is running', r.until(h, RUNNING, 25) is True, r.ask(h, '(document.getElementById("hostErrText")||{}).textContent'))
         time.sleep(0.8)

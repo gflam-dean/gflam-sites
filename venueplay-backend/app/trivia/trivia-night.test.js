@@ -338,7 +338,8 @@ print("15. A REFUSAL STAYS UP UNTIL THE HOST ACTS (live audit, 19 Oct 2026: 'Tri
   function confirmOverage(){ return Promise.resolve(true); }
   function fetch(){ return Promise.resolve({ ok: true, status: 200, json: function(){ return Promise.resolve({ ok: true }); } }); }
   function setTimeout(){ return 1; } function clearTimeout(){}
-  var src = "var _errSticky=false;" + grab("hostError", host) + grab("clearHostError", host) + (grab("clearErrForAction", host) || "") + grab("apiPost", host) +
+  var document = { body: { appendChild: function(){}, insertBefore: function(){}, firstChild: null }, querySelector: function(){ return null; }, querySelectorAll: function(){ return []; } };
+  var src = "var _errSticky=false;" + grab("hostError", host) + (grab("placeErrBar", host) || "") + grab("clearHostError", host) + (grab("clearErrForAction", host) || "") + grab("apiPost", host) +
             " return { hostError: hostError, clearHostError: clearHostError, apiPost: apiPost, act: (typeof clearErrForAction==='function') ? clearErrForAction : function(){} };";
   var f = (new Function("$", "document", "window", "gLostShown", "VP_GAME_API", "VPWeekly", "friendlyMsg", "getToken", "confirmOverage", "fetch", "setTimeout", "clearTimeout", src))(
     $, document, window, gLostShown, VP_GAME_API, VPWeekly, friendlyMsg, getToken, confirmOverage, fetch, setTimeout, clearTimeout);

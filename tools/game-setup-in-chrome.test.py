@@ -132,7 +132,13 @@ def every_screen(RIG):
                     r.ask(sid, 'document.querySelector("#vpGsWeek [data-game=trivia] [data-day=wed]").click(); true'); time.sleep(0.3)
                     fits(tag + ' which nights', r.json(sid, FIT))
                     if SHOTS: r.shot(sid, os.path.join(SHOTS, 'screen-%s-week.jpg' % tag))
-                    r.ask(sid, 'document.getElementById("vpGsWeekSkip").click(); true')
+                    r.ask(sid, 'document.getElementById("vpGsWeekSkip").click(); true'); time.sleep(0.5)
+                    ok(tag + ' collect screen: First name and Mobile ticked and locked, the other three unticked',
+                       r.json(sid, 'JSON.stringify(["collect_first_name","collect_mobile","collect_email","collect_last_name","collect_postcode"].map(function(k){var b=document.getElementById("vpGsCol_"+k); return b ? b.getAttribute("aria-checked")+"/"+(b.getAttribute("aria-disabled")||"") : "none";}))') == ['true/true', 'true/true', 'false/', 'false/', 'false/'],
+                       r.json(sid, 'JSON.stringify((document.getElementById("vpGsBody")||{}).innerText)'))
+                    fits(tag + ' collect screen', r.json(sid, FIT))
+                    if SHOTS: r.shot(sid, os.path.join(SHOTS, 'screen-%s-collect.jpg' % tag))
+                    r.ask(sid, 'document.getElementById("vpGsCollectNext").click(); true')
                 elif click:
                     r.ask(sid, 'document.getElementById("%s").click(); true' % click)
                 time.sleep(0.6)

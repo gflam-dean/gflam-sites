@@ -579,9 +579,9 @@
       if(!S.stage || S.stage.style!==S.styleKey){ showLayer("tvStyle"); makeStage().showWin({ number:nums[0] }); }
       else { showLayer("tvStyle"); if(!S.stage.isPicked()) S.stage.setPick({ number:nums[0] }); }
     } else spawnBurst(36);
-    if(S.cdOn && styleOn() && !multi && allowRedraw && time>0 && cdc()){ cdc().claim(time, time); }   // the claim clock in the countdown band, big (13 Nov 2026)
+    if(S.cdOn && styleOn() && !multi && allowRedraw && time>0 && cdc()){ cdc().claim(time, Math.max(time, S.winTotal||0)); }   // the claim clock in the countdown band, big (13 Nov 2026)
     if(allowRedraw && time>0){
-      S.remaining=time; S.claimTotal=time;
+      S.remaining=time; S.claimTotal=Math.max(time, S.winTotal||0);
       $("tvPresent").textContent="Bring your ticket to the host."; $("tvPresent").classList.remove("hidden");
       $("tvClaim").classList.remove("hidden","over"); $("tvWinStrip").classList.add("timed");
       $("tvClaimT").innerHTML='<span>Claim within</span> <b id="tvCd">'+secsToClock(S.remaining)+'</b>'; updateCd();
@@ -796,7 +796,19 @@
       renderDrawing();
     }
     else if(m.t==="pick"){ if(styleOn() && Array.isArray(m.numbers) && m.numbers.length===1){ S.pick=m.numbers[0]; if(S.stage) S.stage.setPick({ number:S.pick }); } }
-    else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); S.endPend={ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }; }
+    else if(m.t==="winner"){
+      /* A winner carries the draw look and the claim window's full length too, so a TV that reloaded (or opened) mid-claim, and so never heard
+         "drawing", paints the same ticket roll / race plate with the same clock as one that watched the draw. A TV that did hear it is unchanged
+         (the same values), and a host on an older build sends none of these, which leaves the plain winner screen it always had. */
+      if(m.style==="ticket" || m.style==="race"){
+        if(S.styleKey!==m.style){ S.styleKey=m.style; destroyStyle(); }
+        if(typeof m.raffle==="string") S.styleName=m.raffle.replace(/\s+/g," ").trim().slice(0,60);
+        S.prizeNo=(typeof m.prizeNo==="number") ? (m.prizeNo|0) : 0; S.prizeOf=(typeof m.prizeOf==="number") ? (m.prizeOf|0) : 0;
+        if(typeof m.drawSecs==="number" && m.drawSecs>=2 && m.drawSecs<=12) S.styleSecs=m.drawSecs;
+        if(window.VPEndShow && VPEndShow.enable) VPEndShow.enable();
+      }
+      S.winTotal=(typeof m.total==="number" && m.total>0) ? m.total : 0;
+      S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); S.endPend={ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }; }
     else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); S.endPend=null; S.endDrawn.push({ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }); }
     else if(m.t==="redraw"){ S.endPend=null; S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }
   }
