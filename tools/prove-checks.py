@@ -21260,6 +21260,9 @@ MUTATIONS = [
     ('test-vp-known.js', 'venueplay/app/vp-phone.css',
      'body.light #vJoin .vp-sub .mono{color:var(--text,#191420)}', '#vJoin .vp-sub .mono{color:var(--text,#191420)}',
      'a light-screen rule drops body.light and turns the bingo room code dark on the DARK screen'),
+    ('test-vp-known.js', 'venueplay/app/vp-phone.css',
+     '  body #vJoin #vpKnownHi{margin-top:2px!important}', '  body #vJoin #vpKnownHi{margin-top:2px}',
+     'the "Playing as" line keeps vp-known.js inline 10px gap on a short phone (320x568 number-change rows 3 to 6 px over; main INBOX 753)'),
     # the whole tick row is the tap (M2, INBOX 747, 19 Nov 2026)
     ('test-vp-known.js', 'venueplay/app/vp-consent.js',
      'l.appendChild(i); l.appendChild(document.createTextNode(" ")); l.appendChild(s);', 'l.appendChild(document.createTextNode(" ")); l.appendChild(s); l.parentNode;',

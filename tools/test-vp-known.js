@@ -360,6 +360,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('5c no text under 14px in either block (main\'s rule, INBOX 740)', small.length > 0 && small.every(function (s) { return parseFloat(s.replace(/[^0-9.]/g, '')) >= 14; }), small);
   var mins = (B7 + B6).match(/min-height:\s*([0-9.]+)px/g) || [];
   show('5c no tap target set under 44px: every min-height on a box, the tick row, Join or Help is 44px or more', M7.concat(M6).filter(function (r) { return /input\[|\.optin\b(?! input)|\.vp-cta|\.btn|\.vph-link/.test(r.sel) && !/\.optin input/.test(r.sel); }).every(function (r) { var v = px(r.body, 'min-height'); return isNaN(v) || v >= 44; }), mins);
+  show('5c known-phone: the "Playing as" line (vpKnownHi) closes up to 2px under 700px, !important over vp-known.js inline 10px (the 320x568 number-change rows were 3 to 6 px over; main INBOX 753)', /margin-top:2px!important/.test(ruleFor(M7, 'body #vJoin #vpKnownHi')) && /g\.id = "vpKnownHi"/.test(readFile('venueplay/app/vp-known.js')), ruleFor(M7, 'body #vJoin #vpKnownHi'));
   show('5c the notice the blocks style is the one vp-known.js draws (class vp-joinnote)', /np\.className = "vp-joinnote"/.test(readFile('venueplay/app/vp-known.js')));
   show('5c all three player phones load /app/vp-phone.css', ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html'].every(function (f) { return /<link rel="stylesheet" href="\/app\/vp-phone\.css(\?[^"]*)?">/.test(readFile(f)); }));
 
