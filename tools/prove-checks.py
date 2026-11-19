@@ -27862,10 +27862,16 @@ MUTATIONS = [
      "function memberMobile(raw) { return praffleNormPhone(String(raw == null ? '' : raw).replace(/\\(0\\)/g, '')); }",
      'function memberMobile(raw) { return praffleNormPhone(raw); }',
      'the Worker reads "+61 (0)412 345 678" differently to the page'),
+    # Re-pointed 19 Nov 2026 (migration 226, review 2 M1): the console reads the names view first through var NAMES; the
+    # old literal select("id,roster_id,...") on vp_members is gone, so the row had rotted to NEVER.
     ('test-members-upload.js', 'venueplay/app/members/host.html',
-     'rel = "vp_members", cols = "id,roster_id,member_number,first_name,last_name,status,updated_at";',
-     'rel = "vp_members", cols = "*";',
+     'var NAMES = "id,roster_id,member_number,first_name,last_name,status,updated_at";',
+     'var NAMES = "*";',
      "the members console beside the TV reads every member's email and mobile"),
+    ('test-members-upload.js', 'venueplay/app/members/host.html',
+     'return client.from(rel).select(NAMES).in("roster_id", ids)',
+     'return client.from(rel).select("*").in("roster_id", ids)',
+     "the members console asks for every column, whatever NAMES says"),
     ('test-retention-sweep.js', 'venueplay-backend/worker/venueplay-game.js',
      'const MEMBERS_BLANK = { first_name: null, last_name: null, note: null, email: null, mobile: null, postcode: null,',
      'const MEMBERS_BLANK = { first_name: null, last_name: null, note: null, postcode: null,',
