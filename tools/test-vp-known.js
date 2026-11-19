@@ -376,6 +376,34 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   var lsel = LR.map(function (r) { return r.sel; }).join(',').split(',').map(function (x) { return x.trim(); });
   show('5d every light-screen rule needs body.light (the dark screen is untouched)', lsel.length >= 6 && lsel.every(function (x) { return /^body\.light /.test(x); }), lsel.filter(function (x) { return !/^body\.light /.test(x); }));
 
+  /* 5e. THE WHOLE TICK ROW IS THE TAP (M2 phone check 3, INBOX 747, 19 Nov 2026). The box itself is 18 to 26px; the 44px row
+     is what a thumb hits, so a tap on the words (or on the padding right of them) must toggle the box. In a browser that
+     holds only when the <input type=checkbox> sits INSIDE the <label> and the row's 44px (min-height) is on that label itself,
+     with nothing over it (no pointer-events:none, no absolutely placed or hidden box). DOM half: the tick vp-consent.js builds
+     (the one tick, and each of the three boxes), tapped on its words the way a browser does (the nearest label toggles its
+     box). CSS half: the three player phones and vp-phone.css. Real taps in headless Chrome: builds/m2-tick-row-19nov.md. */
+  function tapAsBrowser(t) { var l = t.closest('LABEL'); if (!l) return false; var c = l.querySelector('input'); if (c && c.type === 'checkbox') { c.checked = !c.checked; return true; } return false; }
+  LSD = {};
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
+  var one = labels(P.box)[0], oneIn = document.getElementById('xOptin'), oneSp = one && one.querySelector('span');
+  show('5e the one tick: the box is inside a <label class="optin"> with its words (a tap on the words reaches the box)', !!one && one.className === 'optin' && oneIn.parentNode === one && !!oneSp && oneSp.textContent.length > 10);
+  var was = oneIn.checked; tapAsBrowser(oneSp);
+  show('5e ...tapping the words toggles the box, and again toggles it back', oneIn.checked === !was && (tapAsBrowser(oneSp), oneIn.checked === was));
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: THREE, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
+  var L3 = labels(P.box);
+  show('5e the three boxes: each box is inside its own <label class="optin"> with its words', L3.length === 3 && L3.every(function (l) { var i = l.querySelector('input'); return l.className === 'optin' && i && i.parentNode === l && l.querySelector('span') && l.querySelector('span').textContent.length > 0; }));
+  show('5e ...tapping each one\'s words toggles that box only', L3.every(function (l, ix) { var before = L3.map(function (x) { return x.querySelector('input').checked; }); tapAsBrowser(l.querySelector('span')); var after = L3.map(function (x) { return x.querySelector('input').checked; }); return after.every(function (v, j) { return j === ix ? v === !before[j] : v === before[j]; }); }));
+  var GAMES = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html'];
+  var CSS_ALL = (GAMES.map(function (f) { return readFile(f); }).join('\n') + '\n' + readFile('venueplay/app/vp-phone.css')).replace(/\/\*[\s\S]*?\*\//g, '');
+  var optRules = rulesOf(CSS_ALL).filter(function (r) { return /\.optin\b/.test(r.sel); });
+  show('5e the tick row is styled in all three phones and vp-phone.css (the rules are found)', optRules.length >= 8, optRules.length);
+  show('5e nothing on the tick row or its box takes the tap away or covers it (no pointer-events, no position:absolute/fixed, no opacity:0, no visibility/display none on the box)', optRules.every(function (r) { return !/pointer-events|position:\s*(absolute|fixed)|opacity:\s*0\b|visibility:\s*hidden/.test(r.body) && !(/\.optin input/.test(r.sel) && /display:\s*none/.test(r.body)); }), optRules.filter(function (r) { return /pointer-events|position:\s*(absolute|fixed)|opacity:\s*0\b|visibility:\s*hidden/.test(r.body); }).map(function (r) { return r.sel; }));
+  show('5e the 44px is the LABEL\'s own min-height (not a wrapper\'s), in the 700px block: "body #vJoin .optin"', px(ruleFor(M7, 'body #vJoin .optin'), 'min-height') >= 44 && /align-items:\s*center/.test(ruleFor(M7, 'body #vJoin .optin')));
+  show('5e the tick is built as a <label> in vp-consent.js (not a div with a click handler), the box appended into it', /document\.createElement\("label"\)/.test(readFile('venueplay/app/vp-consent.js')) && /l\.appendChild\(i\);/.test(readFile('venueplay/app/vp-consent.js')));
+  show('5e no page keeps its own tick row outside a label: every <input type="checkbox" id="x...Optin"> in the three phones is built by vp-consent.js only', GAMES.every(function (f) { return !/<input[^>]*id="xOptin"/.test(readFile(f)); }));
+
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('vp-known: ' + bad + ' failed');
