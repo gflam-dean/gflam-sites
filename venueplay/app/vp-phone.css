@@ -233,6 +233,9 @@ body.light #vJoin .psub #joinCode{color:#8a6100!important}             /* the tr
    of the bingo and musical phones, in game too (white on pale, 1.14 to 1.38:1, before); trivia's page already had this
    rule. No page draws a dark band behind .pfoot. The one light rule here outside #vJoin. */
 body.light .pfoot svg{color:#191420}
+/* Help beside it, the same way and on purpose unscoped (M2 extras review SHOULD 2, 19 Nov 2026): vp-help.js #9A9AA4
+   measured 2.02:1 (bingo) and 2.45:1 (trivia, musical) on every in-game light screen; the join step had its own rule. */
+body.light .pfoot .vph-link{color:var(--muted,#5c5666)}
 body.light #vJoin .vp-joinnote{color:var(--muted,#5c5666)!important}   /* the notice (vp-known.js writes #9A9AA4 inline) */
 body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--muted,#5c5666)}   /* "You are joining room" (not the pink venue line) and the line under Join */
 /* The error line and Help on the light screen's join step (independent review SHOULD 1, 19 Nov 2026): the error line
