@@ -864,7 +864,7 @@
   "counted_by": "lines"
  },
  "tools/test-draw-moments.js": {
-  "checks": 45,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-draws-keep-an-honest-record.js": {

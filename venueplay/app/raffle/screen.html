@@ -202,7 +202,10 @@
 
   <!-- THE NEW DRAW LOOKS (10 Nov 2026): ticket roll / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look
        with the draw; every venue that has not chosen one keeps the drawing and winner cards above and below. -->
-  <div class="layer hidden vpds-layer" id="tvStyle" style="padding:0">
+  <!-- data-fit-self (Jobs 516, 19 Nov 2026: "the draw jumps between sizes" on the sales pages' demo TV): the draw look lays itself out at 1920 x 1080
+       and scales to the screen on its own (vp-drawstyle.js fit()). Fitted around the venue logo by /app/vp-fit.js as well, the whole draw was
+       shrunk to 82% and re-solved every time a ticket's number or the title line moved: scale 0.82 to 0.829 and up and down 0 to 69px, mid-draw. -->
+  <div class="layer hidden vpds-layer" id="tvStyle" style="padding:0" data-fit-self>
     <div class="vpds-host" id="tvStyleHost" style="position:absolute;inset:0"></div>
     <div class="toplbl"><span class="tl-night" id="tvStyleTitle">Raffle</span></div>   <!-- the raffle's own name while a look is up; after the stage, so the stage never covers it -->
   </div>

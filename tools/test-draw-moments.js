@@ -88,5 +88,48 @@ print('\n== 6. older TVs and house rules ==');
   show(f[0] + ' is ES5 (no let/const/arrow/template strings/classes)', !/(^|[^\w.$])(let|const)\s|=>|`|\bclass\s+\w/.test(code));
   show(f[0] + ' has no em dash, roster, or capital-V VenuePlay', f[1].indexOf('—') < 0 && !/roster/i.test(f[1]) && !/VenuePlay/.test(f[1].replace(/VPDrawStyle|VPDrawCount/g, '')));
 });
+print('\n== 7. the draw holds ONE size (Jobs 516, 19 Nov 2026: "the draw jumps between sizes" on the sales pages\' demo TV) ==');
+/* RUNS the real /app/vp-fit.js in a small pretend page: the draw layer as each TV screen marks it (its full-screen stage, the title line),
+   the venue logo as the keep-out, at 1920 x 1080 with the 5% TV safe box. The title line is then moved the way the screen's alignTitle()
+   moves it every second, and vp-fit runs again each time. Measured in Chrome before the fix (builds/draw-faults-515-516-19nov.md): the
+   draw was shrunk to 0.82, then 0.828, 0.82, 0.823, 0.829 and moved down 0, 68, 5, 0 and 69px within one draw. */
+(function () {
+  var FIT = readFile('venueplay/app/vp-fit.js');
+  function tagOf(src, id) { var i = src.indexOf('id="' + id + '"'); var a = src.lastIndexOf('<', i), b = src.indexOf('>', i); return src.slice(a, b + 1); }
+  function fake(rect, attrs, cls) {
+    return { r: rect, attrs: attrs || {}, cls: cls || [], style: {}, children: [], offsetParent: {}, offsetHeight: 0, id: (attrs || {}).id || '',
+      classList: { contains: function (c) { return this.o.cls.indexOf(c) >= 0; } },
+      hasAttribute: function (k) { return Object.prototype.hasOwnProperty.call(this.attrs, k); },
+      getAttribute: function (k) { return this.hasAttribute(k) ? this.attrs[k] : null; },
+      getBoundingClientRect: function () { var r = this.r; return { left: r[0], top: r[1], width: r[2], height: r[3], right: r[0] + r[2], bottom: r[1] + r[3] }; } };
+  }
+  /* one screen's draw layer through vp-fit, run after each of the title line's positions; returns every transform it wrote */
+  function play(tag) {
+    var attrs = { id: 'tvStyle' };
+    if (/\sdata-fit-self[\s>=]/.test(tag)) attrs['data-fit-self'] = '';
+    var layer = fake([96, 54, 1728, 972], attrs, ['layer']); layer.classList.o = layer;
+    var host = fake([96, 54, 1728, 972]); host.classList.o = host;
+    var title = fake([441.6, 109, 1036.8, 51.7]); title.classList.o = title;
+    layer.children = [host, title];
+    var logo = fake([116.7, 75, 121, 121], { 'data-fit-avoid': '' }); logo.classList.o = logo;
+    var d = { readyState: 'complete', hidden: false, addEventListener: function () {}, querySelector: function () { return null; },
+      querySelectorAll: function (s) { return s === '.layer' ? [layer] : (s === '[data-fit-avoid]' ? [logo] : []); } };
+    var w = { location: { search: '' }, innerWidth: 1920, innerHeight: 1080, VPVenueLogo: { safeShare: function () { return 0.05; } },
+      requestAnimationFrame: function (f) { f(0); return 1; }, setTimeout: function () { return 0; }, clearTimeout: function () {}, setInterval: function () {}, addEventListener: function () {} };
+    new Function('window', 'document', 'getComputedStyle', 'MutationObserver', FIT)(w, d,
+      function () { return { display: 'block', visibility: 'visible', position: 'absolute' }; }, function () { this.observe = function () {}; });
+    var out = [];
+    [109, 67.8, 179.1, 126.1, 116.1, 180.4].forEach(function (y) { title.r = [title.r[0], y, title.r[2], title.r[3]]; w.VP_FIT(); out.push(layer.style.transform || ''); });
+    return out;
+  }
+  [['the raffle', RS], ['the members', MS]].forEach(function (s) {
+    var tag = tagOf(s[1], 'tvStyle'), seen = play(tag);
+    show(s[0] + ' draw layer is marked data-fit-self (the draw look fits itself to the screen)', /\sdata-fit-self[\s>]/.test(tag), tag);
+    show(s[0] + ' draw is never shrunk or moved by vp-fit, however the title line moves (one size for the whole draw)', seen.every(function (t) { return t === ''; }), seen);
+    var old = play(tag.replace(/\sdata-fit-self/, ''));
+    show('this pretend page can see the fault: the same layer WITHOUT data-fit-self is shrunk to about 82% round the logo', old.length === 6 && old.every(function (t) { return /scale\(0\.8\d*\)/.test(t); }), old);
+  });
+})();
+
 print('\n' + (bad ? bad + ' OF ' + ran + ' CHECKS FAILED' : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error('draw moments rules failed');

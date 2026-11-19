@@ -236,7 +236,8 @@
 
   <!-- THE NEW DRAW LOOKS (10 Nov 2026): flip board / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look with
        the draw; a venue that has not chosen one keeps the drawing and winner cards. -->
-  <div id="tvStyle" class="layer hidden" style="padding:0">
+  <!-- data-fit-self (Jobs 516, 19 Nov 2026): the draw look fits itself; /app/vp-fit.js fitting it around the venue logo made it jump between sizes mid-draw -->
+  <div id="tvStyle" class="layer hidden" style="padding:0" data-fit-self>
     <div id="tvStyleHost" style="position:absolute;inset:0"></div>
     <div class="toplbl"><span class="tl-night" id="styleTitle">Members draw</span></div>   <!-- after the stage, so the stage never covers it -->
   </div>
