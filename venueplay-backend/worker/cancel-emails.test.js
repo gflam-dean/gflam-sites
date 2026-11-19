@@ -637,9 +637,21 @@ var monEnd=Date.UTC(2026,8,21,13,59,59)/1000, tueEnd=Date.UTC(2026,8,22,13,59,59
 var friEve=Date.UTC(2026,8,18,8,0,0), friMorn=Date.UTC(2026,8,18,0,0,0);                  // 6pm / 10am Fri 18 Sep, Brisbane
 var nw1=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,friEve), nw2=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,friMorn),
     nw3=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",tueEnd,friEve);
+/* Review 2 SHOULD 1: the sweep looks at the top of each UTC hour, so the last open hour on Friday counts as no window left. */
+var adlEnd=Date.UTC(2026,11,7,13,29,59)/1000;                                                     // 11:59:59pm Mon 7 Dec, Adelaide (+10:30)
+var nw4=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,Date.UTC(2026,8,18,6,30,0)),     // 4:30pm Fri Brisbane: next tick 5pm, shut
+    nw5=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,Date.UTC(2026,8,18,5,30,0)),     // 3:30pm Fri: the 4pm tick is still open
+    nw6=vpaNoWindowBeforeLastDay("SA","Australia/Adelaide",adlEnd,Date.UTC(2026,11,4,6,5,0)),       // 4:35pm Fri Adelaide: its next tick is 5:30pm
+    nw7=vpaNoWindowBeforeLastDay("SA","Australia/Adelaide",adlEnd,Date.UTC(2026,11,4,5,25,0));      // 3:55pm Fri Adelaide: the 4:30pm tick is open
 vpaLocalDate=SAVE_LD;
 pass("no window left: a Monday last day at 6pm Friday yes; at 10am Friday no; a Tuesday last day at 6pm Friday no (Monday's window)",
      nw1===true && nw2===false && nw3===false, [nw1,nw2,nw3].join());
+pass("the last open hour counts from the sweep's next tick: 4:30pm Friday Brisbane yes, 3:30pm no; Adelaide 4:35pm yes, 3:55pm no",
+     nw4===true && nw5===false && nw6===true && nw7===false, [nw4,nw5,nw6,nw7].join());
+/* Review 2 SHOULD 2: the cancel reads the venue row the owner session selects; it must carry au_state, the sweep's clock. */
+var ownerSel=(BILL.match(/'&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode[^']*'/g)||[]);
+pass("both owner-session venue reads carry au_state, so the cancel and the sweep use the same state clock",
+     ownerSel.length===2 && ownerSel.every(function(x){ return /,au_state,/.test(x); }), ownerSel.join(" | "));
 
 /* --- the last night is kept, and only for a real cancellation ------------- */
 SENT=[]; AUDIT=[];

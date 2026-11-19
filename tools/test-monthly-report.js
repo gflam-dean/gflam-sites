@@ -484,6 +484,17 @@ function world() {
   check('the look again fails: no report goes, and the tick says it held', sent.length === 0 && lk.held >= 1 && !DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent'; }), [sent.length, lk.held]);
   await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
   check('the next tick, the database back: each venue once', sent.length === 4, sent.length);
+  /* Review 2 SHOULD 3: the scheduler keeps what was held, so the monthly check can find a venue that never got a row. */
+  world();
+  LOOK_FAILS = 99;
+  var lk2 = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  check('the sweep names the venues it held', (lk2.held_ids || []).length === lk2.held && lk2.held >= 4 && lk2.held_ids.indexOf(VA) !== -1, lk2);
+  var NOWS = Date.now; Date.now = function () { return Date.parse('2026-11-02T00:00:00Z'); };
+  try { await _d.scheduled({ cron: '0 * * * *', scheduledTime: Date.now() }, ENVON2, { waitUntil: function () {} }); } catch (e) {} finally { Date.now = NOWS; }
+  LOOK_FAILS = 0;
+  var heldRow = DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_held'; })[0];
+  check('the hourly scheduler records the held venues in one audit row (monthly_report_held), and sends no report', !!heldRow && heldRow.target === 'month-report:2026-10' && (heldRow.detail.venues || []).indexOf(VA) !== -1 && heldRow.detail.held >= 4
+        && !sent.some(function (m) { return /Your October at/.test(m.subject || ''); }), heldRow);
   world();
   CLAIM_FAIL_ONE = 1;
   var one = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));

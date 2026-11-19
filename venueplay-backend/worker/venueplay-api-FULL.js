@@ -548,7 +548,16 @@ export default {
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts in the first 7 days of a month, Monday to Friday, 9 to 12 and
        2 to 5 Brisbane (vprInSendWindow), each venue's sent row claimed before its email. */
-    try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
+    try {
+      /* A venue whose look or claim failed this tick is held (review 2 SHOULD 3): said in the log and in one audit row
+         per tick that held any, so the monthly check can find venues that never got a sent or skipped row. */
+      const mr = await vprMonthlySweep(env, Date.now());
+      if (mr && mr.held) {
+        console.log('[monthly] held ' + mr.held + ' venue(s): ' + (mr.held_ids || []).join(','));
+        await vpaAudit(env, { actorId: null, label: 'automatic (monthly report)' }, 'monthly_report_held', 'month-report:' + (mr.month || ''),
+          { held: mr.held, venues: (mr.held_ids || []).slice(0, 50) });
+      }
+    } catch (e5) { /* the next tick looks again */ }
     /* The weekly members list reminder EMAIL a venue asked for in its game setup (Dean, 10 Nov 2026): Dean's send window, never to a Do not contact venue, once a week. */
     try { await vpaMembersReminderSweep(env, Date.now()); } catch (e5b) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
@@ -12929,7 +12938,7 @@ async function vpbRequireOwner(request, env) {
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
     '&order=founding_id.asc,created_at.asc' +
-    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
+    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,au_state,closed_at');
   if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
 
   /* WHICH ACCOUNT. A login with venues on two accounts (a publican who signed up two pubs
@@ -12966,7 +12975,7 @@ async function vpbRequireOwner(request, env) {
     const all = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) +
       '&order=created_at.asc' +
-      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
+      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,au_state,closed_at');
     if (all && all.length) accountVenues = all;
   }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
@@ -15634,10 +15643,12 @@ async function vpaLastDayRecord(env, claim, delivered, refused, detail) {
 /* NO WINDOW LEFT BEFORE THE LAST DAY (review 1 SHOULD 6). True when the next moment Dean's send window opens at this
    venue (vpaSendAllowedAt, its state's clock) is already on its last day or after: a Monday last day cancelled after
    5pm on the Friday. The cancel then sends the goodbye at once instead of the plain confirmation, because the sweep
-   would never get a window to send it in. */
+   would never get a window to send it in. Asked from the sweep's NEXT TICK, not from now (review 2 SHOULD 1): the
+   sweep runs at the top of each UTC hour, so a cancel in the last open hour (Friday 4 to 5pm; 4:30 to 5pm in SA and
+   NT) is inside the window now but the sweep's next look is already shut. */
 function vpaNoWindowBeforeLastDay(state, tz, endTs, nowMs) {
   try {
-    const next = vpaSendAllowedAt(state, nowMs);
+    const next = vpaSendAllowedAt(state, Math.ceil((Number(nowMs) + 1) / 3600000) * 3600000);
     const d = vpaDaysBetween(vpaLocalDate(Math.floor(next / 1000), tz), vpaLocalDate(endTs, tz));
     return d !== null && d < 1;
   } catch (e) { return false; }
@@ -19956,13 +19967,13 @@ async function vprMonthlySweep(env, nowMs, opts) {
        and one row that can never be written must not hold up every venue after it. The next tick tries it again. */
     const unsubHeaders = await vpUnsubHeaders(env, to, 'monthly-report');   // before the claim: nothing after the claim but the send
     const look = await vpaMrGet(env, 'vp_admin_audit', 'action=in.(monthly_report_sent,monthly_report_skipped)&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1').catch(() => ({ ok: false, rows: [] }));
-    if (!look.ok) { out.held = (out.held || 0) + 1; continue; }
+    if (!look.ok) { out.held = (out.held || 0) + 1; (out.held_ids = out.held_ids || []).push(v.id); continue; }
     if (look.rows.length) continue;
     const detail = { month: month, accepted: null, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length };
     let claim = null;
     try { claim = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target, detail: detail }); }
     catch (e) { claim = null; }
-    if (!claim) { out.held = (out.held || 0) + 1; continue; }
+    if (!claim) { out.held = (out.held || 0) + 1; (out.held_ids = out.held_ids || []).push(v.id); continue; }
     const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, unsubHeaders).catch(() => false);
     if (claim.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
     out.sent++;
