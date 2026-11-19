@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '20 Nov 2026, 08:09 · 7aa6d8d8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:14 · c7e63637';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -5016,6 +5016,7 @@ async function vpaProspectsData(env, dopts) {
       called: r.called_at ? { at: r.called_at, by: r.called_label || '', note: r.call_note || '' } : null,
       call_requested: r.call_requested === true,
       lead_source: r.lead_source || null,   // 'cold_email' for a per-lead link (INBOX 412)
+      no_contact: vpaQuietNoContact(r),     // HQ Do not contact: true / false, null when not readable (INBOX 726)
       /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
          phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
          and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
@@ -5526,6 +5527,14 @@ const VPA_NUDGE_TEXT_MAX = 4000;
 function vpaQuietProspect(p) {
   return !!(p && p.status === 'not_signed_in' && p.sign_in_known !== false && !p.last_sign_in_at && p.email);
 }
+/* HQ "DO NOT CONTACT" ON THE QUIET LIST (Dean 19 Nov 2026, INBOX 726 / 767): the Mac lets a day-3 or expiry reminder
+   go by itself ONLY when the row says no_contact exactly false; true stops it; anything else waits for Dean's tap.
+   So this is FAIL CLOSED: true only for a stored true, false only for a stored false, and null (a tap, never a send)
+   when the column is not there or holds anything else. vp_prospects.no_contact is boolean not null default false. */
+function vpaQuietNoContact(r) {
+  if (!r || typeof r !== 'object' || !('no_contact' in r)) return null;
+  return (r.no_contact === true || r.no_contact === false) ? r.no_contact : null;
+}
 /* AT SEND TIME, NOT ONLY AT DRAFT TIME (Dean, 4 Nov 2026): if they have acted on the email, nothing more goes.
    Signing in, adding a card and cancelling all take them off the quiet list (vpaQuietProspect: free_month,
    card_added, cancelled). A TAP on the link that never became a sign-in is the one thing the list cannot
@@ -5545,6 +5554,7 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
     venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!(p.phone || p.mobile),
+    no_contact: vpaQuietNoContact(p),   // INBOX 726: true / false, else null = wait for Dean's tap
     /* For the text (3 Nov 2026). Read fresh on every run, so a mobile HQ adds with Edit details (4 Nov 2026) is here
        on the Mac's next run with nothing else to do. */
     mobile: p.mobile || (vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null),

@@ -237,6 +237,31 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var qBad = await call('/autopilot/prospects/quiet', undefined, { 'X-Autopilot-Key': 'wrong-key-wrong-key-wrong-key-wrong' }, 'GET');
   var qNone = await call('/autopilot/prospects/quiet', undefined, {}, 'GET');
   check('without the autopilot key: refused, nothing listed', qBad.status === 401 && qNone.status === 401 && !qBad.body.prospects, [qBad.status, qNone.status]);
+
+  /* HQ "DO NOT CONTACT" ON THE QUIET LIST (Dean 19 Nov 2026, INBOX 726 / 767): the Mac sends a day-3 or expiry reminder
+     by itself only when the row says no_contact exactly false. FAIL CLOSED: anything the Worker cannot read as a stored
+     true or false is null (a tap), never false. */
+  var ngRow = row('Nothing Given Arms');
+  async function ncOnQuiet() { var r = await call('/autopilot/prospects/quiet', undefined, AP, 'GET');
+    var hit = ((r.body && r.body.prospects) || []).filter(function (x) { return x.name === 'Nothing Given Arms'; })[0];
+    return { status: r.status, on: !!hit, has: !!hit && ('no_contact' in hit), nc: hit ? hit.no_contact : 'not listed' }; }
+  ngRow.no_contact = false;
+  var nc0 = await ncOnQuiet();
+  check('726: a venue HQ has NOT marked Do not contact (stored false): its quiet row says no_contact false, so its reminder may go by itself', nc0.status === 200 && nc0.on && nc0.nc === false, nc0);
+  ngRow.no_contact = true;
+  var nc1 = await ncOnQuiet();
+  check('726: a venue marked Do not contact (stored true): its quiet row says no_contact true, so the Mac stops it', nc1.on && nc1.nc === true, nc1);
+  delete ngRow.no_contact;
+  var nc2 = await ncOnQuiet();
+  check('726: the flag cannot be read (no no_contact on the row): the quiet row says null, never false, so it waits for Dean\'s tap', nc2.on && nc2.has && nc2.nc === null, nc2);
+  ngRow.no_contact = null;
+  var nc3 = await ncOnQuiet();
+  ngRow.no_contact = 'false';
+  var nc4 = await ncOnQuiet();
+  check('726: a stored null or an odd value ("false"): null, never false (a tap, not a send)', nc3.on && nc3.nc === null && nc4.on && nc4.nc === null, [nc3, nc4]);
+  var hqNc = find(await list(), 'Nothing Given Arms') || {};
+  check('726: HQ\'s own list reads the same answer as the quiet list (one place: vpaQuietNoContact)', hqNc.no_contact === null, hqNc.no_contact);
+  ngRow.no_contact = false;
   var ngVenue = DB.vp_venues.filter(function (x) { return x.name === 'Nothing Given Arms'; })[0];
   var before = sent.length;
   var WORDS = 'Hi there,\n\nJust checking your venueplay account reached you. It is all set up for Nothing Given Arms.\n\nCheers,\nDean';
