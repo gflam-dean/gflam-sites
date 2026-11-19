@@ -21262,8 +21262,8 @@ MUTATIONS = [
      'a light-screen rule drops body.light and turns the bingo room code dark on the DARK screen'),
     # the whole tick row is the tap (M2, INBOX 747, 19 Nov 2026)
     ('test-vp-known.js', 'venueplay/app/vp-consent.js',
-     'l.appendChild(i); l.appendChild(document.createTextNode(" ")); l.appendChild(s);', 'l.appendChild(document.createTextNode(" ")); l.appendChild(s); l.parentNode;',
-     'the offers box is no longer inside its label (a tap on the words does nothing)'),
+     'l.appendChild(i); l.appendChild(document.createTextNode(" ")); l.appendChild(s);', 'var w = document.createElement("div"); w.className = "optin"; w.appendChild(i); l.className = ""; l.appendChild(document.createTextNode(" ")); l.appendChild(s); w.appendChild(l); l = w;',
+     'the offers box sits BESIDE its label in a div, not inside it (a tap on the words does nothing; the box still exists, so the checks fail rather than jsc crashing)'),
     ('test-vp-known.js', 'venueplay/app/vp-phone.css',
      '  body #vJoin .optin{margin-top:2px;font-size:15px;gap:10px}', '  body #vJoin .optin{margin-top:2px;font-size:15px;gap:10px;pointer-events:none}',
      'the tick row takes no taps on a 320x568 phone'),
