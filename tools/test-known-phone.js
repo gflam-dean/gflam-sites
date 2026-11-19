@@ -256,21 +256,28 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   world();
   s1 = await open();
   jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
-  show('a new phone: the notice, one constant with its version and the privacy link', jk.body.notice && jk.body.notice.version === 'vpn-3-16nov' && jk.body.notice.text === "By playing you agree to venueplay's terms and privacy policy. A ticked box shares your details with that sender for news and offers." && jk.body.notice.link === "venueplay's terms and privacy policy" && jk.body.notice.href === '/privacy', JSON.stringify(jk.body.notice));
-  show('...no em dash in it', jk.body.notice.text.indexOf('\u2014') < 0);
-  j = await call(handleJoin, { code: s1.join_code, name: 'Alan', pid: pid(), first_name: 'Alan', mobile: '0412345678', notice_version: 'vpn-3-16nov' });
+  show('a new phone: the notice, one constant with its version and the privacy link', jk.body.notice && jk.body.notice.version === 'vpn-1-19nov' && jk.body.notice.text === "By playing you agree to venueplay's terms and privacy policy. If you give a first name and mobile, venueplay keeps them so you are not asked again." && jk.body.notice.link === "venueplay's terms and privacy policy" && jk.body.notice.href === '/privacy', JSON.stringify(jk.body.notice));
+  /* M2 (19 Nov 2026, INBOX 677): one box ships, so the notice never speaks of "a ticked box" or "that sender". The offers
+     sentence is its own part (box), drawn by the phone ONLY when the offers tick is on the screen (tools/test-vp-known.js 5b). */
+  show('...the offers sentence is its own part, for the phone to add only beside the offers tick', jk.body.notice.box === ' Tick the offers box and this venue can send you offers.' && jk.body.notice.text.indexOf('tick') < 0, JSON.stringify(jk.body.notice));
+  show('...never the three-box words ("a ticked box", "that sender")', !/ticked box|that sender/i.test(jk.body.notice.text + jk.body.notice.box), JSON.stringify(jk.body.notice));
+  show('...no em dash in it', (jk.body.notice.text + jk.body.notice.box).indexOf('\u2014') < 0);
+  show('...the version fits the column (notice_version, 20 characters at most, migration 202)', jk.body.notice.version.length <= 20);
+  j = await call(handleJoin, { code: s1.join_code, name: 'Alan', pid: pid(), first_name: 'Alan', mobile: '0412345678', notice_version: 'vpn-1-19nov' });
   var NK = j.body.known_key;
-  show('the join that showed it records the version seen on the row', DB.vp_known_players[0].notice_version === 'vpn-3-16nov' && !!DB.vp_known_players[0].notice_at, JSON.stringify(DB.vp_known_players[0]));
+  show('the join that showed it records the version seen on the row', DB.vp_known_players[0].notice_version === 'vpn-1-19nov' && !!DB.vp_known_players[0].notice_at, JSON.stringify(DB.vp_known_players[0]));
   jk = await call(handleJoinKnown, { code: s1.join_code, keys: [NK] });
   show('the next game: no notice', jk.body.notice === null, JSON.stringify(jk.body.notice));
   var so2 = await open(OTHER);
   jk = await call(handleJoinKnown, { code: so2.join_code, keys: [NK] });
   show('...and not at another venue either', jk.body.notice === null, JSON.stringify(jk.body.notice));
-  DB.vp_known_players[0].notice_version = 'vpn-0-old';
+  DB.vp_known_players[0].notice_version = 'vpn-3-16nov';   // saw the 16 Nov three-box words
   jk = await call(handleJoinKnown, { code: so2.join_code, keys: [NK] });
-  show('a NEW notice version: shown again, once', jk.body.notice && jk.body.notice.version === 'vpn-3-16nov');
+  show('a NEW notice version: shown again, once (a player who saw the 16 Nov words sees the 19 Nov ones)', jk.body.notice && jk.body.notice.version === 'vpn-1-19nov');
   await call(handleJoin, { code: so2.join_code, name: 'Alan', pid: pid(), known_keys: [NK], notice_version: 'vpn-3-16nov' });
-  show('...and recorded again when seen', DB.vp_known_players[0].notice_version === 'vpn-3-16nov');
+  show('...a phone still on the old words does not record the new version as seen', DB.vp_known_players[0].notice_version === 'vpn-3-16nov');
+  await call(handleJoin, { code: so2.join_code, name: 'Alan', pid: pid(), known_keys: [NK], notice_version: 'vpn-1-19nov' });
+  show('...and recorded again when seen', DB.vp_known_players[0].notice_version === 'vpn-1-19nov');
   world(); s1 = await open();
   j = await call(handleJoin, { code: s1.join_code, name: 'Zed', pid: pid(), first_name: 'Zed', mobile: '0412000222' });
   show('a join that never showed the notice records no version (it is shown next time)', DB.vp_known_players[0] && !DB.vp_known_players[0].notice_version, JSON.stringify(DB.vp_known_players[0]));

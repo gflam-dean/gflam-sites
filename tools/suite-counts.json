@@ -2324,11 +2324,11 @@
   "counted_by": "lines"
  },
  "tools/test-known-phone.js": {
-  "checks": 97,
+  "checks": 101,
   "counted_by": "lines"
  },
  "tools/test-vp-known.js": {
-  "checks": 80,
+  "checks": 84,
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {

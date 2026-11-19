@@ -148,12 +148,15 @@
     return !!(onPage(o) && o.checked === true && cap && (cap.email || cap.mobile));
   }
 
+  /* Is the one offers tick on the screen now? The first-game notice speaks of "the offers box" only then (M2, 19 Nov 2026). */
+  function tickOn() { return onPage(_optEl); }
+
   /* Kept so a page cached from before 6 Nov, paired with this file, still works: there is no 18+ gate
      on this step any more, so nobody is ever held at Join by it. */
   function ageOk() { return true; }
   function age18Done() {}
 
-  root.VPConsent = { render: render, optedIn: optedIn, offered: offered, optinText: optinText, answers: answers, renderThree: renderThree,
+  root.VPConsent = { render: render, optedIn: optedIn, tickOn: tickOn, offered: offered, optinText: optinText, answers: answers, renderThree: renderThree,
                      THREE_VERSION: THREE_VERSION, THREE_HEAD: THREE_HEAD, THREE_NOTE: THREE_NOTE,
                      VERSION: VERSION, PREVIOUS: PREVIOUS, OPTIN_HEAD: OPTIN_HEAD, OPTIN_TAIL: OPTIN_TAIL, NO_NAME: NO_NAME,
                      ageOk: ageOk, age18Done: age18Done, AGE_NEEDED: "" };

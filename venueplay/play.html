@@ -1782,7 +1782,7 @@
          are asked of everyone, so the line says who gets them and why: "Your details go to {account owner} to run
          tonight's game and contact winners." */
       /* REAL NIGHTS: no line saying the venue gets the details (Dean 16 Nov 2026); the first-game notice from /app/vp-known.js
-         says what venueplay keeps and that a ticked box shares details with that sender. */
+         says what venueplay keeps and, beside the offers tick only, what the tick does. */
       var details=function(){};
       if(typeof VPKnown==="object"){ VPKnown.paint({ box:box, collect:c, info:r.known_info, kind:"person", venueName:P.venueName, nameIn:$("nameIn"), head:$("joinHead"), headWords:"Join the game", after:details }); }
       else {

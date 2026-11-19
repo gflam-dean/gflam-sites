@@ -254,15 +254,35 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('Different email: the row becomes the normal empty email box', !document.getElementById('vpkUse_email') && ids(P.box).indexOf('xEmail') >= 0);
 
   print('5b. THE FIRST-GAME NOTICE');
-  var NOTE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
+  /* M2 (19 Nov 2026, INBOX 677): ONE box ships, so the offers sentence (box) is drawn ONLY when the offers tick is on the
+     screen: never for a known phone (no tick again), a venue with the offers tick off, or the three boxes (their own note). */
+  var NOTE = { version: 'vpn-1-19nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. If you give a first name and mobile, venueplay keeps them so you are not asked again.', box: ' Tick the offers box and this venue can send you offers.', href: '/privacy' };
+  var NOTE_BASE = "By playing you agree to venueplay's terms and privacy policy. If you give a first name and mobile, venueplay keeps them so you are not asked again.";
+  var NOTE_BOX = NOTE_BASE + " Tick the offers box and this venue can send you offers.";
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
   var np = document.getElementById('vpJoinNotice');
-  show('the notice reads, word for word: "By playing you agree to venueplay\'s terms and privacy policy. A ticked box shares your details with that sender for news and offers."', np && np.textContent === "By playing you agree to venueplay's terms and privacy policy. A ticked box shares your details with that sender for news and offers.", np && np.textContent);
+  show('a new phone, the offers tick on screen: the notice reads, word for word: "' + NOTE_BOX + '"', np && np.textContent === NOTE_BOX && !!document.getElementById('xOptin'), np && np.textContent);
   show('...with "venueplay\'s terms and privacy policy" as the link, to the privacy page', np && np.querySelector('a').textContent === "venueplay's terms and privacy policy" && np.querySelector('a').href === '/privacy');
   show('...a quiet link: the line\'s own colour and weight, no underline (Dean 16 Nov)', np && /color:inherit/.test(np.querySelector('a').getAttribute('style')) && /font-weight:inherit/.test(np.querySelector('a').getAttribute('style')) && /text-decoration:none/.test(np.querySelector('a').getAttribute('style')));
   cap = VPKnown.capture({ first_name: 'Sam' });
-  show('the join says which notice it showed', cap.notice_version === 'vpn-3-16nov', cap);
+  show('the join says which notice it showed', cap.notice_version === 'vpn-1-19nov', cap);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
+  np = document.getElementById('vpJoinNotice');
+  show('a known phone shown the new notice (no offers tick again): no sentence about a box that is not there', np && np.textContent === NOTE_BASE && !document.getElementById('xOptin'), np && np.textContent);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: { first_name: true, last_name: false, postcode: false, email: false, mobile: true, mobile_required: false, marketing_optin: false }, info: { known: null, consent: { mode: 'single' }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
+  np = document.getElementById('vpJoinNotice');
+  show('a venue with the offers tick off: no sentence about a box that is not there', np && np.textContent === NOTE_BASE && !document.getElementById('xOptin'), np && np.textContent);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: 'The Royal' }] }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
+  np = document.getElementById('vpJoinNotice');
+  show('the three boxes (their own note): no one-box sentence', np && np.textContent === NOTE_BASE && !document.getElementById('xOptin'), np && np.textContent);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'single' }, notice: { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. Old words.', href: '/privacy' } }, kind: 'person', nameIn: P.nameIn });
+  np = document.getElementById('vpJoinNotice');
+  show('a notice with no box part (an older Worker): drawn as sent, nothing added', np && np.textContent === "By playing you agree to venueplay's terms and privacy policy. Old words.", np && np.textContent);
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: { mode: 'single' }, notice: null }, kind: 'person', nameIn: P.nameIn });
   show('no notice from the Worker (seen already): none drawn, none claimed', !document.getElementById('vpJoinNotice') && !('notice_version' in VPKnown.capture({})));

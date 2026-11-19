@@ -46,7 +46,7 @@ EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': 
 THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
 # The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
-NOTICE = {'version': 'vpn-3-16nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. A ticked box shares your details with that sender for news and offers.', 'href': '/privacy'}
+NOTICE = {'version': 'vpn-1-19nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. If you give a first name and mobile, venueplay keeps them so you are not asked again.', 'box': ' Tick the offers box and this venue can send you offers.', 'href': '/privacy'}
 NOTICE['text'] = NOTICE['before'] + NOTICE['link'] + NOTICE['after']
 PRIV = os.path.expanduser('~/venue-enrich/reports/privacy-update-16nov/returning')
 try: os.makedirs(PRIV, exist_ok=True)
@@ -227,7 +227,7 @@ def phone(game, path, w, h):
         ask(sid, 'document.getElementById("joinBtn").click(); true')
         got = joins(c)
         ok('J %s %s: the join sends the first name and mobile' % (game, size), bool(got) and got[0].get('first_name') == 'Alan' and got[0].get('mobile') == '0412 345 678', got)
-        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-3-16nov', got)
+        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-1-19nov', got)
         ok('J %s %s: the key the Worker hands back is kept on the phone' % (game, size), until(sid, 'localStorage.getItem("vpKnownKeys")===%s' % json.dumps(json.dumps([KEY])), 6), ask(sid, 'localStorage.getItem("vpKnownKeys")'))
     finally:
         B.close_tab(tid)
@@ -241,7 +241,7 @@ def phone(game, path, w, h):
         kb = knowns(c)
         ok('K %s %s: /join/known was asked with the key' % (game, size), bool(kb) and KEY in (kb[-1].get('keys') or []), kb)
         ok('K %s %s: no name, no hello, only a small "Not my details" link' % (game, size), 'Not my details' in L.get('text', '') and L.get('notme') and 'alan' not in L.get('text', '').lower() and 'welcome' not in L.get('text', '').lower(), [L.get('head'), L.get('text')])
-        ok('K %s %s: the notice does not show again' % (game, size), 'A ticked box shares' not in L.get('text', ''), L.get('text'))
+        ok('K %s %s: the notice does not show again' % (game, size), NOTICE['after'].strip('. ') not in L.get('text', ''), L.get('text'))
         ok('K %s %s: no box for anything held (%s)' % (game, size, 'the team name only' if team else 'none at all'), L.get('ids') == (['nameIn'] if team else []), L.get('ids'))
         ok('K %s %s: no detail we hold anywhere on the screen (no number, no @)' % (game, size), '0412' not in L.get('text', '') and '@' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: one screen, no scroll' % (game, size), fits(L), L)
@@ -311,7 +311,7 @@ def returning(game, path, w, h):
                 ok('R %s %s %s: the same venue already has it: the same line, no mobile row' % (game, size, tag), 'Mobile for' not in t and ('Playing as Grace, ' + MASK) in t and 'Not my number' not in t, t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
             ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
-            ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'A ticked box shares' not in t, t)
+            ok('R %s %s %s: no first-game notice again' % (game, size, tag), NOTICE['after'].strip('. ') not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RSM':
                 if PRIV:
