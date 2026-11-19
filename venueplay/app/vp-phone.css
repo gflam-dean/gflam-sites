@@ -152,7 +152,6 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
    page's own "#vJoin .x" rules; the header and our logo's foot are outside #vJoin, so they close up only while the join
    screen shows (":has", as the musical phone's own .pfoot rule). */
 @media (max-height:700px){
-  body #vJoin #vpKnownHi{margin-top:2px!important}   /* the "Playing as" line closes up to the box above (inline 10px; known-phone-in-chrome 320x568 number-change rows 3 to 6 px over; main INBOX 753) */
   body:has(#vJoin:not(.hidden)) .ptop{padding-top:calc(9px + env(safe-area-inset-top, 0px));padding-bottom:3px}   /* the venue's name or logo 44px tall, level with the menu button (top 9, 44px) */
   body:has(#vJoin:not(.hidden)) .ptop .brand .word{min-height:44px}
   body:has(#vJoin:not(.hidden)) .ptop .vlogo{max-height:44px}
