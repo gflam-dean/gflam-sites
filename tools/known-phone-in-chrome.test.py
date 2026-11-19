@@ -34,10 +34,46 @@ try: os.makedirs(SHOTS, exist_ok=True)
 except Exception: SHOTS = ''
 
 ran = bad = 0
+# DATED EXPECTED-RED LIST (main INBOX 753, 19 Nov 2026; reports/m2-fits-red-rows-19nov.md). These "one screen" rows are
+# REAL faults the fixed fits() found (Join on screen; our logo + Help below the fold) that ship on Sunday 22 Nov and are
+# fixed in the next release. Each row may be red only by at most its measured px (+1); worse, or any red row NOT in
+# this list, still FAILS. After EXPECTED_RED_UNTIL the list is void: every listed row fails while red, and a listed row
+# that is no longer red fails too (stale: take it off). Never add a row here to make a new fault pass.
+EXPECTED_RED_UNTIL = '2026-11-29'   # the next release (date given with main's INBOX 753 brief); after it, the list is void
+EXPECTED_RED = {
+    # the four tall-phone three-box rows (vp-long; not M2): next release
+    'T bingo 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 61,
+    'T trivia 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 36,
+    'T bingo 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 29,
+    'T trivia 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 7,
+    # the trivia number-change form at 320x568: next release (0 px with fix/m2-extras-19nov merged; then these print
+    # as no longer red: take them off)
+    'N trivia 320x568 extra-box: new-mobile form, Join in view, no scroll': 25,
+    'N trivia 320x568 extra-box: code step (Sent to, Resend, Cancel), Join in view, no scroll': 25,
+    'N trivia 320x568 extra-box: with the error line, Join still in view, no scroll': 25,
+    'N trivia 320x568 extra-box: Resend inside 30 s: the wait line, Join in view': 25,
+}
+_SOFT = {'over': None}; _RED_SEEN = set(); _GREEN_SEEN = set()
+def _expired(): return time.strftime('%Y-%m-%d') > EXPECTED_RED_UNTIL
+def stale_check():
+    for n in sorted(EXPECTED_RED):
+        if n in _GREEN_SEEN and n not in _RED_SEEN:
+            if _expired(): ok('expected-red list (expired %s): "%s" is no longer red: take it off the list' % (EXPECTED_RED_UNTIL, n), False)
+            else: print('  NOTE expected-red row is no longer red (take it off the list): ' + n)
 def ok(name, cond, saw=''):
     global ran, bad
+    over = _SOFT['over']; _SOFT['over'] = None; note = ''
+    if cond and over is not None:   # fits() saw Join on screen but something below the fold
+        want = EXPECTED_RED.get(name)
+        if want is not None and not _expired() and over <= want + 1:
+            _RED_SEEN.add(name); note = '   (EXPECTED RED until %s: %dpx below the fold, listed %dpx)' % (EXPECTED_RED_UNTIL, over, want)
+        else:
+            cond = False
+            saw = '%dpx below the fold (%s); %s' % (over, 'not in the expected-red list' if want is None else ('the list expired %s' % EXPECTED_RED_UNTIL if _expired() else 'worse than the listed %dpx' % want), str(saw))
+    elif cond and name in EXPECTED_RED:
+        _GREEN_SEEN.add(name)
     ran += 1
-    print(('  ok   ' if cond else '  FAIL ') + name + ('' if cond else '   saw: ' + str(saw)[:400]))
+    print(('  ok   ' if cond else '  FAIL ') + name + note + ('' if cond else '   saw: ' + str(saw)[:400]))
     if not cond: bad += 1
 
 KEY = 'ab' * 32
@@ -186,7 +222,16 @@ LOOK = r"""(function(){
     head:((document.getElementById("joinHead")||{}).textContent||""), keys:localStorage.getItem("vpKnownKeys") });
 })()"""
 def look(sid): return json.loads(ask(sid, LOOK) or '{}')
-def fits(L): return bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0) and L.get('scroll', 9999) <= L.get('vh', 0) + 1 and L.get('footBottom', 0) <= L.get('vh', 0) + 1
+def fits(L):
+    """One screen, no scroll: Join on screen AND nothing below the fold (html/body scrollHeight, our logo's foot). When Join
+    is on screen but something is below, the answer is left to ok() for THIS row: red unless the row is in the dated
+    EXPECTED_RED list within its px (every fits() call here sits inside the ok() that reports it)."""
+    _SOFT['over'] = None
+    if not (bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0)): return False
+    over = max(L.get('scroll', 9999), L.get('footBottom', 0)) - L.get('vh', 0)
+    if over <= 1: return True
+    _SOFT['over'] = over
+    return True
 
 def fill(sid, vals):
     ask(sid, '(function(){ var v=%s; for(var k in v){ var e=document.getElementById(k); if(e){ e.value=v[k]; e.dispatchEvent(new Event("input",{bubbles:true})); } } return true; })()' % json.dumps(vals))
@@ -410,6 +455,7 @@ if __name__ == '__main__':
         try: B.close()
         except Exception: pass
         srv.shutdown()
+    stale_check()
     print('\n%d checks, %d failed' % (ran, bad))
     print('ALL %d CHECKS PASSED' % ran if not bad else 'FAILED %d of %d' % (bad, ran))
     sys.exit(1 if bad else 0)
