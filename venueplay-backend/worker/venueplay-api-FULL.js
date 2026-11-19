@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '20 Nov 2026, 08:14 · c7e63637';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:15 · 8a51186f';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -6549,7 +6549,8 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     try {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',
         headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: [email], from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+        body: JSON.stringify({ to: [email], from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
+          headers: await vpUnsubHeaders(env, email, 'trial-end-note') }) });   // automatic, honours the list above: the mail app's own Unsubscribe button too (INBOX 414/771)
     } catch (_) { res = null; }
     const ok = !!(res && res.ok);
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,

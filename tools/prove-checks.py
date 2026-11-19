@@ -15771,6 +15771,15 @@ MUTATIONS = [
      "  try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }",
      "  try { rows = await vpaSelectAll(env, 'vp_prospects', 'paused_at=is.null&select=*&order=venue_id.asc'); }",
      'the hourly reminder sweep emails a venue that has cancelled its free month (Bodalla, INBOX 301)'),
+    # ---- 19 Nov 2026 (INBOX 414/771, fix/welcome-inbox-19nov): the cancelled-month note gets the one-click header too
+    ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "          headers: await vpUnsubHeaders(env, email, 'trial-end-note') }) });",
+     "          }) });",
+     'the cancelled-month note goes without List-Unsubscribe, so no mail app shows its own Unsubscribe button'),
+    ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "          headers: await vpUnsubHeaders(env, email, 'trial-end-note') }) });",
+     "          headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });",
+     'the cancelled-month note is labelled as a card reminder in the unsubscribe record'),
     # ONE FRIENDLY EMAIL FOR A FREE MONTH CANCELLED PART WAY (Dean, 11 Nov 2026, INBOX 239.1/258.1), branch
     # fix/email-footer-12nov (Dean, 12 Nov 2026, INBOX 276.A): the free month end words and subject, and the foot of every email.
     ('test-trial-end-note.js', 'venueplay-backend/worker/venueplay-api-FULL.js',

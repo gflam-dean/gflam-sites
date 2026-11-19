@@ -216,6 +216,12 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   check('the footer lines the other venueplay emails carry: 07 5228 3667 and press 2, Terms, Privacy, Unsubscribe from product emails', /call 07 5228 3667 and press 2/.test(txt) && /Terms · Privacy Unsubscribe from product emails/.test(txt) && /href="tel:\+61752283667"/.test(m.html), txt.slice(-400));
   check('lowercase venueplay, no dashes, no workers.dev link', !/VenuePlay|VENUEPLAY/.test(m.subject + txt) && !/[—–]/.test(m.subject + txt) && !/workers\.dev/.test(m.html));
   check('a plain-text part goes with it', typeof m.text === 'string' && /Keep it going/.test(m.text) && m.text.length > 200);
+  /* INBOX 414 / 771 (19 Nov 2026): the cancelled-month note is an automatic prospect mail that already honours the
+     unsubscribe list and carries a footer Unsubscribe link, so it gets the mail app's own one-click button too, like
+     the welcome, the nudge and the card reminders. */
+  var hh = m.headers || {}, luRe = new RegExp('^<https://api\\.venueplay\\.com\\.au/unsubscribe\\?e=' + encodeURIComponent(String(A.row().email).toLowerCase()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '&t=[0-9a-f]{32}&c=trial-end-note>, <mailto:hello@venueplay\\.com\\.au\\?subject=unsubscribe>$');
+  check('List-Unsubscribe: the one-click address on api.venueplay.com.au for this address with c=trial-end-note, then the mailto', luRe.test(hh['List-Unsubscribe'] || ''), hh);
+  check('List-Unsubscribe-Post: List-Unsubscribe=One-Click, and no other extra header rides along', hh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click' && Object.keys(hh).sort().join(',') === 'List-Unsubscribe,List-Unsubscribe-Post', hh);
 
   section('2. The same with no first sign-in recorded (the month set by hand): still one email, still switched off');
   var A2 = await bodalla(false);
