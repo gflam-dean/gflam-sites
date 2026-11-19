@@ -194,6 +194,10 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin .pnote{margin-top:4px;line-height:1.3}
   body #vJoin.center > .pnote{margin-left:-8px;margin-right:-8px}   /* the trivia line under Join: two lines, not three ("starts." alone), at 14px */
   body #vJoin:not(.hidden) ~ .pfoot svg{width:96px}
+  /* A COPY DECISION FOR MAIN (its own commit, M2 review (6), 19 Nov 2026): under 660px tall the "No app and no account"
+     line under Join goes (trivia and bingo; musical has none). The one line a player does not need to join; every
+     remaining over-the-fold case measured 0 with it gone. Never bingo's "Waiting for the host" line (#joinHostNote). */
+  body #vJoin .pnote:not(#joinHostNote){display:none}
 }
 /* Placeholders on the join step (M2 review SHOULD 4): the browser's #757575 measured 3.88:1 dark and 3.89:1 light; the
    page's muted colour in either theme (each page sets --muted for dark and light). The new-mobile box is drawn dark in

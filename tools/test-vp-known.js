@@ -354,8 +354,10 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('5c the trivia heading is one line under 660px (its <br> goes) and smaller in both (30px, 26px)', /display:none/.test(ruleFor(M6, 'body #vJoin .pbig br')) && px(ruleFor(M7, 'body #vJoin .pbig'), 'font-size') === 30 && px(ruleFor(M6, 'body #vJoin .pbig'), 'font-size') === 26, [ruleFor(M6, 'body #vJoin .pbig br'), ruleFor(M6, 'body #vJoin .pbig')]);
   show('5c ...and the trivia heading keeps a space before its <br>, so the one line reads "JOIN THE TRIVIA", never "THETRIVIA"', /<div class="pbig">Join the <br>trivia<\/div>/.test(readFile('venueplay/app/trivia/play.html')));
   show('5c the bingo and musical heading is smaller in both (36px, 30px)', px(ruleFor(M7, 'body #vJoin .vp-h'), 'font-size') === 36 && px(ruleFor(M6, 'body #vJoin .vp-h'), 'font-size') === 30, [ruleFor(M7, 'body #vJoin .vp-h'), ruleFor(M6, 'body #vJoin .vp-h')]);
-  var hides = M7.concat(M6).filter(function (r) { return /display:\s*none|visibility:\s*hidden|(^|;)\s*height:\s*0|opacity:\s*0/.test(r.body) && r.sel !== 'body #vJoin .pbig br'; });
-  show('5c nothing is hidden on a short phone: not the notice, the tick, the error line, Join, the line under it or our logo (only the heading\'s line break)', hides.length === 0, hides);
+  var NOAPP = 'body #vJoin .pnote:not(#joinHostNote)';
+  var hides = M7.concat(M6).filter(function (r) { return /display:\s*none|visibility:\s*hidden|(^|;)\s*height:\s*0|opacity:\s*0/.test(r.body) && r.sel !== 'body #vJoin .pbig br' && r.sel !== NOAPP; });
+  show('5c nothing else is hidden on a short phone: not the notice, the tick, the error line, Join or our logo (only the heading\'s line break and, under 660px, the "No app" line)', hides.length === 0, hides);
+  show('5c under 660px tall the "No app and no account" line under Join goes (a copy decision for main, review (6)), never bingo\'s "Waiting for the host" line, and only in the 660 block', /display:none/.test(ruleFor(M6, NOAPP)) && ruleFor(M7, NOAPP) === '' && !/joinHostNote/.test(B6.replace(NOAPP, '')) && /class="pnote hidden" id="joinHostNote"/.test(readFile('venueplay/play.html')), ruleFor(M6, NOAPP));
   var small = (B7 + B6).match(/font-size:\s*([0-9.]+)px/g) || [];
   show('5c no text under 14px in either block (main\'s rule, INBOX 740)', small.length > 0 && small.every(function (s) { return parseFloat(s.replace(/[^0-9.]/g, '')) >= 14; }), small);
   var mins = (B7 + B6).match(/min-height:\s*([0-9.]+)px/g) || [];
