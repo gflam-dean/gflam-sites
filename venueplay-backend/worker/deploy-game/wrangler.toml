@@ -22,3 +22,12 @@ id = "PASTE_THE_RL_KV_NAMESPACE_ID_HERE"
 # No [vars] block on purpose. Every setting this Worker reads should be an
 # ENCRYPTED variable in the dashboard, because encrypted values survive a deploy
 # and plain-text ones do not. See DEPLOY-SETUP.md.
+
+# THE CRON TRIGGER, WRITTEN DOWN (19 Nov 2026, ~/venue-enrich/reports/hourly-cron-audit-19nov.md). The Cloudflare
+# dashboard runs this Worker "Every hour"; this says the same, so the repo matches what is live.
+# Deploys go through tools/deploy-worker.py over the API, which does not read this file and does not
+# touch schedules. If wrangler is ever used from this folder, this line keeps the trigger as it is
+# instead of leaving it to whatever the dashboard last held. Every job the trigger runs keeps its own
+# hour or send-window gate and once-only record, so hourly never means 24 emails a day.
+[triggers]
+crons = ["0 * * * *"]

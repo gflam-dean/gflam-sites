@@ -502,15 +502,16 @@ export default {
     await helpInboundEmail(message, env);
   },
 
-  /* THE 30-DAY ARCHIVE, unattended.
+  /* THE HOURLY TRIGGER (19 Nov 2026, ~/venue-enrich/reports/hourly-cron-audit-19nov.md): this Worker's Cron Trigger is "Every hour"
+     in the Cloudflare dashboard, the same as venueplay-game's, and deploy-api/wrangler.toml [triggers] now says so.
+     It runs every job below, each in its own try, once an hour. None of them may send, charge or alert on every
+     tick: each keeps its own hour or send-window gate and its own once-only record (an audit row or a stored
+     marker), written BEFORE the email where there is one. Add a job here only with both.
 
-     Needs a Cron Trigger on this Worker. Without one this never runs and the
-     archive stays a button somebody has to press, which is exactly where it
-     was before. Suggested schedule: "30 17 * * *", once a day, well away from
-     any venue's trading hours.
-
-     It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows
-     precisely what the nightly job will do. No separate code path to drift. */
+     THE 30-DAY ARCHIVE, unattended, is the first of them. It used to say "Needs a Cron Trigger... Suggested
+     schedule: "30 17 * * *", once a day"; at hourly it can archive at any hour, which moves no money (comment at
+     vpaAutoArchiveSweep). It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows precisely what
+     the job will do. No separate code path to drift. */
   async scheduled(event, env, ctx) {
     vpgInstall(env); if (vpgStagingProblem(env)) { console.log("[outbox-guard] scheduled run refused: " + vpgStagingProblem(env)); return; }   // OUTBOX GUARD (INBOX 357B)
     const actor = { actorId: null, label: 'automatic (30-day archive)' };
