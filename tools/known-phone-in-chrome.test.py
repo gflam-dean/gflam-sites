@@ -177,13 +177,16 @@ LOOK = r"""(function(){
   var v=document.getElementById("vJoin"), b=document.getElementById("joinBtn"), r=b.getBoundingClientRect();
   var ids=[].slice.call(document.querySelectorAll("#vJoin input")).filter(function(e){ return e.offsetParent!==null; }).map(function(e){ return e.id; });
   var labs=[].slice.call(document.querySelectorAll("#joinExtra label")).map(function(l){ var i=l.querySelector("input"); return [l.textContent.trim(), !!(i&&i.checked)]; });
-  var se=document.scrollingElement||document.documentElement;
+  /* BODY is the scroller on these pages (html and body are height:100%, body overflow-x:hidden), so
+     document.scrollingElement.scrollHeight always reads the screen height: take the larger of html and body, and our
+     logo's foot, or a foot logo below the fold passes as "one screen" (M2 phone review, 19 Nov 2026) */
+  var de=document.documentElement, bd=document.body, ft=document.querySelector(".pfoot"), fr=(ft&&ft.offsetParent!==null)?ft.getBoundingClientRect():null;
   return JSON.stringify({ ids:ids, labs:labs, text:(v?v.innerText:""), btnBottom:Math.round(r.bottom), btnTop:Math.round(r.top), vh:innerHeight,
-    scroll:Math.round(se.scrollHeight), notme:!!document.getElementById("vpKnownNotMe"),
+    scroll:Math.round(Math.max(de.scrollHeight, bd.scrollHeight)), footBottom:(fr?Math.round(fr.bottom):0), notme:!!document.getElementById("vpKnownNotMe"),
     head:((document.getElementById("joinHead")||{}).textContent||""), keys:localStorage.getItem("vpKnownKeys") });
 })()"""
 def look(sid): return json.loads(ask(sid, LOOK) or '{}')
-def fits(L): return bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0) and L.get('scroll', 9999) <= L.get('vh', 0) + 1
+def fits(L): return bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0) and L.get('scroll', 9999) <= L.get('vh', 0) + 1 and L.get('footBottom', 0) <= L.get('vh', 0) + 1
 
 def fill(sid, vals):
     ask(sid, '(function(){ var v=%s; for(var k in v){ var e=document.getElementById(k); if(e){ e.value=v[k]; e.dispatchEvent(new Event("input",{bubbles:true})); } } return true; })()' % json.dumps(vals))
