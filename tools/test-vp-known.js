@@ -150,13 +150,13 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   P = page();
   var CUR = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay', current: true }, { party: 'venue', name: 'The Royal', current: false }, { party: 'host', name: 'Quiz Masters Co' }] };
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: CUR, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Join the game', venueName: 'The Royal' });
-  var cur = labels(P.box).map(function (l) { return l.querySelector('input').checked; });
+  var cur = labels(P.box).map(function (l) { return (l.querySelector('input') || {}).checked; });
   show('known: every box shows THAT sender\'s current answer; a new sender (the host) is a fresh, ticked box', cur.join() === 'true,false,true', cur);
   document.getElementById('vpKnownNotMe').click();
   show('the key at that place is forgotten, the other kept', VPKnown.keys().join() === k('b'), VPKnown.keys());
   show('the name box is back, empty; the heading is the page\'s own', P.nameIn.style.display === '' && P.nameIn.value === '' && P.head.textContent === 'Join the game', [P.nameIn.style.display, P.nameIn.value, P.head.textContent]);
   show('the full form: email and mobile', ids(P.box).indexOf('xEmail') >= 0 && ids(P.box).indexOf('xMobile') >= 0, ids(P.box));
-  show('every consent box fresh and ticked (the normal empty form)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return l.querySelector('input').checked === true; }));
+  show('every consent box fresh and ticked (the normal empty form)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return (l.querySelector('input') || {}).checked === true; }));
   show('no hello left', !document.getElementById('vpKnownHi'));
 
   print('5. THE THREE BOXES (MOSHTIX STYLE)');
@@ -164,7 +164,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: THREE, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
   var L = labels(P.box);
   show('three boxes: venueplay, the venue, the host, by the Worker\'s names', L.map(function (l) { return l.textContent.trim(); }).join('|') === 'venueplay|The Royal|Quiz Masters Co', L.map(function (l) { return l.textContent; }));
-  show('all PRE-TICKED', L.every(function (l) { return l.querySelector('input').checked === true; }));
+  show('all PRE-TICKED', L.every(function (l) { return (l.querySelector('input') || {}).checked === true; }));
   show('no one tick beside them', !document.getElementById('xOptin'));
   var all = ''; P.box.walk(function (e) { if (e._text) all += e._text + '\n'; });
   show('the heading words exact', all.indexOf('Yes! Send me news and offers by SMS and email from:') >= 0, all);
@@ -394,7 +394,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: THREE, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
   var L3 = labels(P.box);
   show('5e the three boxes: each box is inside its own <label class="optin"> with its words', L3.length === 3 && L3.every(function (l) { var i = l.querySelector('input'); return l.className === 'optin' && i && i.parentNode === l && l.querySelector('span') && l.querySelector('span').textContent.length > 0; }));
-  show('5e ...tapping each one\'s words toggles that box only', L3.every(function (l, ix) { var before = L3.map(function (x) { return x.querySelector('input').checked; }); tapAsBrowser(l.querySelector('span')); var after = L3.map(function (x) { return x.querySelector('input').checked; }); return after.every(function (v, j) { return j === ix ? v === !before[j] : v === before[j]; }); }));
+  show('5e ...tapping each one\'s words toggles that box only', L3.every(function (l, ix) { var before = L3.map(function (x) { return (x.querySelector('input') || {}).checked; }); tapAsBrowser(l.querySelector('span')); var after = L3.map(function (x) { return (x.querySelector('input') || {}).checked; }); return after.every(function (v, j) { return j === ix ? v === !before[j] : v === before[j]; }); }));
   var GAMES = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html'];
   var CSS_ALL = (GAMES.map(function (f) { return readFile(f); }).join('\n') + '\n' + readFile('venueplay/app/vp-phone.css')).replace(/\/\*[\s\S]*?\*\//g, '');
   var optRules = rulesOf(CSS_ALL).filter(function (r) { return /\.optin\b/.test(r.sel); });
