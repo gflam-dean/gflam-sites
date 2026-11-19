@@ -268,7 +268,7 @@
           <span class="flab">1. What are you giving away tonight?<small>Tap each prize, in the order you will draw them.</small></span>
           <div class="chips"><div class="presets" id="prizePresets" style="display:contents"></div><button type="button" class="add" id="typePrizeChip">+ Type a prize</button></div>
           <div class="addrow hidden" id="addRow">
-            <input type="text" id="rfPrize" placeholder="e.g. Meat tray" aria-label="Type a prize">
+            <input type="text" id="rfPrize" maxlength="80" placeholder="e.g. Meat tray" aria-label="Type a prize">
             <button type="button" class="addbtn" id="addPrizeBtn">Add</button>
           </div>
           <!-- THE DRAW ORDER (Dean, 9 Nov 2026): a raffle with 20 prizes is put in order here, before the first draw,
@@ -1321,13 +1321,16 @@
        "Next prize: Seafood platter" (the card it already shows between prizes) for ANNOUNCE_MS, then spins.
        Off, the spin starts at once, as it always has. */
     var ann=announcing() ? ANNOUNCE_MS : 0;
-    if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); }, ann); } else { sendDrawing(); }
+    /* THE PICK GOES AFTER THE DRAWING (review 2 of Jobs 515, R2-S1, 19 Nov 2026): the server usually answers in well under a second,
+       while "drawing" waits for the announce card. A pick sent first was thrown away by the TV ("drawing" starts a new draw, S.pick=null),
+       so the reel waited blank to the end. drawSent resolves the moment "drawing" has gone; the pick follows it. The winner is the same r. */
+    var drawSent=new Promise(function(res){ if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); res(); }, ann); } else { sendDrawing(); res(); } });
     startLocalSpin();
 
     var wait=new Promise(function(res){ setTimeout(res, ann + drawMs()); });
     ensureRaffleGame()
       .then(function(){ return apiPost("/host/draw", drawBody()); })
-      .then(function(r){ sendPick(r); return wait.then(function(){ return r; }); })
+      .then(function(r){ return drawSent.then(function(){ sendPick(r); return wait.then(function(){ return r; }); }); })
       .then(function(r){ revealServer(r); })
       .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
   }
@@ -1466,11 +1469,11 @@
     send({ t:"redraw", numbers:voided, pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel(), noticeMs:REDRAW_NOTICE_MS });
 
     G.busy=true; drawBtnBusy(); startLocalSpin();
-    setTimeout(function(){ if(G.busy) sendDrawing(); }, REDRAW_NOTICE_MS);
+    var drawSent=new Promise(function(res){ setTimeout(function(){ if(G.busy) sendDrawing(); res(); }, REDRAW_NOTICE_MS); });   // the pick follows "drawing" (R2-S1, see startDraw)
     var wait=new Promise(function(res){ setTimeout(res, REDRAW_NOTICE_MS + drawMs()); });
     var body=drawBody(); body.redraw_of_seq=seq;
     apiPost("/host/draw", body)
-      .then(function(r){ sendPick(r); return wait.then(function(){ return r; }); })
+      .then(function(r){ return drawSent.then(function(){ sendPick(r); return wait.then(function(){ return r; }); }); })
       .then(function(r){ revealServer(r); })
       .catch(function(e){ stopSpin(); G.busy=false; drawBtnNext(); hostError(e.message||"Redraw failed"); sendIdle(); });
   }

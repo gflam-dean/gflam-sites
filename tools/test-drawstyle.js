@@ -6,6 +6,7 @@
      1. the draw time: short 6 s, normal 9 s, long 12 s; anything else is normal
      2. the build-up: the roll starts at the first item, passes the near misses one at a time, and ends exactly on the winner, never
         going backwards
+     2e. the console sends the pick AFTER "drawing" (review 2, R2-S1): RUNS startDraw() and onRedraw() from the raffle console on a pretend clock
      2d. a prize of any length keeps one line's box (review 1, S4): RUNS fitLine() on a model of the prize box
      2c. a late pick glides too (review 1, S1): RUNS lateClock() frame by frame with the pick at many moments
      2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026): run frame by frame at 60, 30 and 25 frames a second, the reel never
@@ -150,7 +151,79 @@ print('\n== 2d. a prize of any length fits its one-line box (review 1, S4: a 73-
   show('a 70-letter prize steps down until it fits inside one line\'s height', two.f < 120 && two.f >= 36 && two.m.h <= 121, two);
   show('the longest prize the Worker keeps (120 letters) fits too, at a size still read across a room (36 px or more)', max.f >= 36 && max.m.h <= 121 && max.m.w <= 1761, max);
   var mod3 = MOD.replace(/\/\*[\s\S]*?\*\//g, '');
-  show('every look fits its prize when the stage is made and again once the fonts are in; the race plate on its one line', /fit\(\);\s+function fitPrize\(\)/.test(mod3) && /fitPrize\(\);\s+if \(root\.document && root\.document\.fonts && root\.document\.fonts\.ready\) root\.document\.fonts\.ready\.then\(function \(\) \{ if \(!st\.dead\) fitPrize\(\); \}\);/.test(mod3) && /fitLine\(prizeEl, 1290, 1e9, s0, 30,/.test(mod3) && /fitLine\(prizeEl, prizeEl\.clientWidth, s0, s0, 36,/.test(mod3) && /\.vpds-prize\{position:absolute;left:0;right:0;padding:0 80px;/.test(mod3) && /display:inline;padding:0;font:400 76px/.test(mod3));
+  show('every look fits its prize when the stage is made, on the first frame it has a layout, after a resize and once the fonts are in; the race plate on its one line', /var prizeOk = false;\s+function fitPrize\(\)/.test(mod3) && /if \(!\(prizeEl\.offsetWidth > 0\)\) return false;/.test(mod3) && /prizeOk = fitPrize\(\);\s+if \(root\.document && root\.document\.fonts && root\.document\.fonts\.ready\) root\.document\.fonts\.ready\.then\(function \(\) \{ if \(!st\.dead\) fitPrize\(\); \}\);/.test(mod3) && /st\.t = t;\s+if \(!prizeOk\) prizeOk = fitPrize\(\);/.test(mod3) && /scale\(" \+ s \+ "\)";\s+prizeOk = false;/.test(mod3) && /fitLine\(prizeEl, 1290, 1e9, s0, 30,/.test(mod3) && /fitLine\(prizeEl, prizeEl\.clientWidth, s0, s0, 36,/.test(mod3) && /\.vpds-prize\{position:absolute;left:0;right:0;padding:0 80px;/.test(mod3) && /display:inline;padding:0;font:400 76px/.test(mod3));
+  show('the console\'s prize box takes at most 80 letters (review 2, R2-S3), and the Worker still keeps a typed prize up to 120 (fitted above)', /<input type="text" id="rfPrize" maxlength="80"/.test(RH) && /prize:\s+\(v\) => \(typeof v === 'string' && v\.trim\(\)\) \? v\.trim\(\)\.slice\(0, 120\) : undefined,/.test(WK));
+})();
+
+print('\n== 2e. the console sends the pick AFTER "drawing" (review 2 of Jobs 515, R2-S1: on a redraw or an announced prize the TV threw the pick away) ==');
+/* RUNS the real startDraw() and onRedraw() lifted out of /app/raffle/host.html, with a pretend clock, a pretend server that answers
+   when it is told to, and every message the console sends written down in order. The TV starts a new draw on "drawing" and forgets
+   any pick it had (raffle/screen.html: S.pick=null), so a pick must come after it to be kept. */
+(function () {
+  function lift(src, name) {
+    var i = src.indexOf('function ' + name + '('), d = 0, j, started = false;
+    for (j = i; j < src.length; j++) { if (src[j] === '{') { d++; started = true; } else if (src[j] === '}') { d--; if (started && !d) return src.slice(i, j + 1); } }
+    throw new Error(name + ' not found');
+  }
+  var CODE = lift(RH, 'startDraw') + '\n' + lift(RH, 'onRedraw');
+  function rig(o) {
+    var now = 0, timers = [], sent = [], revealed = [], answer = { tickets: [87], pad: 3 }, pending = null;
+    var env = {
+      setTimeout: function (f, ms) { timers.push({ at: now + (ms || 0), f: f }); return timers.length; },
+      send: function (m) { sent.push({ at: now, t: m.t, m: m }); },
+      sendDrawing: function () { sent.push({ at: now, t: 'drawing' }); },
+      sendAnnounce: function () { sent.push({ at: now, t: 'announce' }); },
+      sendPick: function (r) { sent.push({ at: now, t: 'pick', n: r.tickets[0] }); },
+      revealServer: function (r) { revealed.push({ at: now, r: r }); },
+      apiPost: function () { return new Promise(function (res) { pending = res; env.setTimeout(function () { res(answer); }, o.server); }); },
+      ensureRaffleGame: function () { return Promise.resolve(); },
+      announcing: function () { return !!o.announce; }, ANNOUNCE_MS: 4000, REDRAW_NOTICE_MS: 3000, drawMs: function () { return 10200; },
+      G: { busy: false, prizeIdx: 0, prizes: ['Meat tray'], jackOn: false, time: 30, round: o.redraw ? { resolved: false, numbers: [12], seq: 4 } : null, drawn: {}, min: 1, max: 150 },
+      $: function () { return { value: '', classList: { remove: function () {}, add: function () {} }, disabled: false, textContent: '' }; }
+    };
+    var stubs = 'readInputs validRange renderJackWarn clearHostErrorIf addPrize hostError liquorBlocked clearTimers drawBtnBusy drawBtnIdle drawBtnNext startLocalSpin stopSpin sendIdle rulesAgain disarmRedraw logResults renderRange'.split(' ');
+    var names = Object.keys(env).concat(stubs, ['skipsProblem', 'parseSkips', 'drawingPrize', 'remainingCount', 'drawBody', 'padWidth', 'prizeLabel']);
+    var vals = names.map(function (k) {
+      if (env.hasOwnProperty(k)) return env[k];
+      if (k === 'validRange') return function () { return true; };
+      if (k === 'drawingPrize') return function () { return 'Meat tray'; };
+      if (k === 'remainingCount') return function () { return 100; };
+      if (k === 'drawBody' ) return function () { return {}; };
+      if (k === 'padWidth') return function () { return 3; };
+      if (k === 'prizeLabel') return function () { return 'Meat tray'; };
+      if (k === 'liquorBlocked') return function () { return false; };
+      return function () { return null; };
+    });
+    var api = new Function(names.join(','), 'var TVC, CD;\n' + CODE + '\nreturn { startDraw: startDraw, onRedraw: onRedraw };').apply(null, vals);
+    function run(until) {
+      for (;;) {
+        drainMicrotasks();
+        timers.sort(function (a, b) { return a.at - b.at; });
+        if (!timers.length || timers[0].at > until) break;
+        var t = timers.shift(); now = t.at; t.f(); drainMicrotasks();
+      }
+    }
+    return { api: api, run: run, sent: sent, revealed: revealed, answer: answer };
+  }
+  function order(r) { return r.sent.map(function (x) { return x.t; }).filter(function (t) { return t === 'drawing' || t === 'pick' || t === 'announce' || t === 'redraw'; }).join(','); }
+  function at(r, t) { for (var i = 0; i < r.sent.length; i++) if (r.sent[i].t === t) return r.sent[i].at; return -1; }
+  var cases = [
+    ['a first draw, the server answers in 0.3 s', { server: 300 }, 'drawing,pick'],
+    ['a first draw with "show each prize first", server in 0.3 s', { server: 300, announce: true }, 'announce,drawing,pick'],
+    ['a first draw with "show each prize first", a slow server (6 s)', { server: 6000, announce: true }, 'announce,drawing,pick'],
+    ['a redraw, the server answers in 0.2 s', { server: 200, redraw: true }, 'redraw,drawing,pick'],
+    ['a redraw, a slow server (5 s)', { server: 5000, redraw: true }, 'redraw,drawing,pick']
+  ];
+  cases.forEach(function (c) {
+    var o = c[1], r = rig(o);
+    if (o.redraw) { r.api.onRedraw(false); } else r.api.startDraw();
+    r.run(60000);
+    var dAt = at(r, 'drawing'), pAt = at(r, 'pick'), pick = r.sent.filter(function (x) { return x.t === 'pick'; })[0];
+    var want = o.redraw ? 3000 : (o.announce ? 4000 : 0);
+    show(c[0] + ': the TV hears ' + c[2] + ', in that order', order(r) === c[2], order(r));
+    show(c[0] + ': "drawing" goes when it always did, and the pick as soon as both it and the server answer are there', dAt === want && pAt === Math.max(want, o.server), [dAt, pAt]);
+    show(c[0] + ': the winner is the server\'s, the same answer on the TV and the console, revealed when it always was', r.revealed.length === 1 && r.revealed[0].r === r.answer && pick && pick.n === 87 && r.revealed[0].at === Math.max(want + 10200, o.server), [r.revealed.length && r.revealed[0].at, pick && pick.n]);
+  });
 })();
 
 print('\n== 3. one winner line ==');

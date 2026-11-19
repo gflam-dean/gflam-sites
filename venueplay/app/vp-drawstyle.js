@@ -341,6 +341,7 @@
     function fit() {
       var w = host.clientWidth || 1280, h = host.clientHeight || 720, s = Math.min(w / 1920, h / 1080);
       stage.style.transform = "translate(" + Math.round((w - 1920 * s) / 2) + "px," + Math.round((h - 1080 * s) / 2) + "px) scale(" + s + ")";
+      prizeOk = false;   // the prize is fitted again on the next frame (R2-S2)
     }
 
     prizeEl.textContent = o.prize || (members ? "Members jackpot" : "");
@@ -348,14 +349,19 @@
     view = views[style](C);
     fit();
     /* the prize keeps one line's box (fitLine); again once the real fonts are in, they are wider than the stand-in */
+    /* ...and again on the first frame the stage has a layout, after a resize (review 2, R2-S2: a sales-page frame hidden at create() has
+       none, and fonts.ready has usually fired by then) */
+    var prizeOk = false;
     function fitPrize() {
-      if (!prizeEl.textContent) return;
+      if (!prizeEl.textContent) return true;
+      if (!(prizeEl.offsetWidth > 0)) return false;               // no layout yet: render() asks again
       if (prizeEl.__fs0 == null) prizeEl.__fs0 = parseFloat(prizeEl.style.fontSize) || (style === "race" ? 76 : 120);
       var s0 = prizeEl.__fs0;
       if (style === "race") fitLine(prizeEl, 1290, 1e9, s0, 30, function (e) { return { w: e.offsetWidth, h: 0 }; });   // one line in the top band
       else fitLine(prizeEl, prizeEl.clientWidth, s0, s0, 36, function (e) { return { w: e.scrollWidth, h: e.offsetHeight }; });
+      return true;
     }
-    fitPrize();
+    prizeOk = fitPrize();
     if (root.document && root.document.fonts && root.document.fonts.ready) root.document.fonts.ready.then(function () { if (!st.dead) fitPrize(); });
 
     function winText() { return st.winNo; }
@@ -367,6 +373,7 @@
 
     function render(t) {
       st.t = t;
+      if (!prizeOk) prizeOk = fitPrize();
       view.render(t);
       prizeEl.style.opacity = ease.out(seg(t, 0.2, 0.8)) * (view.prizeK ? view.prizeK(t) : 1);
       clockEl.style.opacity = (st.clockText && !o.noClock && t >= R + 1.5) ? ease.out(seg(t, R + 1.5, R + 2.1)) : 0;
