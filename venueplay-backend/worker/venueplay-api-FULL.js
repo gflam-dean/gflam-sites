@@ -6359,12 +6359,12 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!msg) continue;
     /* MARKED SENT BEFORE IT GOES (INBOX 720, 19 Nov 2026 hourly cron audit). It used to send, then save reminders_sent
        and ignore whether the save landed, so a failed save sent the same reminder again every hour in the window (up
-       to 6 a day). Now the save is the claim: a claim that does not land sends nothing and stops this sweep (the
-       database is not answering; the next hour looks again). Resend refusing puts the claim back, so the reminder
+       to 6 a day). Now the save is the claim: a claim that does not land sends nothing to that venue this hour (the
+       next hour looks again) and the sweep goes on, so the venues after it still get their reminders and their pause. Resend refusing puts the claim back, so the reminder
        stays due as before; if putting it back fails too, that reminder is missed rather than sent twice. */
     const before = sent.slice();
     due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
-    if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent }).catch(() => false))) { out.save_failed = v.id; break; }
+    if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent }).catch(() => false))) { out.save_failed = v.id; continue; }
     let res = null;
     try {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',

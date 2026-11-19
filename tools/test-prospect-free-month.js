@@ -425,7 +425,28 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('the next hour day 23 goes, once', REM().length === 2 && K.row().reminders_sent.indexOf(23) !== -1, [REM().length, K.row().reminders_sent]);
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 11, 0));
   check('and not again', REM().length === 2);
+  /* Resend THROWING (a network fault) is a refusal too: the claim is put back (review 1 SHOULD 3). */
+  globalThis.fetch = function (url, opts) {
+    if (String(url).indexOf('api.resend.com') !== -1 && REFUSE > 0) { REFUSE--; return Promise.reject(new Error('network down')); }
+    return RS0(url, opts);
+  };
+  REFUSE = 1;
+  var thr = null; try { thr = await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 9, 0)); } catch (e) { thr = { threw: String(e) }; }
+  check('the last reminder, Resend throws: the sweep carries on, nothing recorded as sent', !thr.threw && REM().length === 2 && K.row().reminders_sent.indexOf(30) === -1, [thr, K.row().reminders_sent]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 10, 0));
+  check('the next hour it goes, once', REM().length === 3 && K.row().reminders_sent.indexOf(30) !== -1, [REM().length, K.row().reminders_sent]);
   globalThis.fetch = RS0;
+  /* One venue whose save fails does not hold up the next (review 1 SHOULD 4): both due this hour. */
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var K1 = await prospect({}), K2 = await prospect({});
+  [K1, K2].forEach(function (k) { AUTH.filter(function (u) { return u.id === k.login; })[0].last_sign_in_at = new Date(ks).toISOString(); });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 2, 11, 0));
+  FAIL['vp_prospects:PATCH'] = 1;
+  var both = await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 0));
+  check('two venues due, the first one\'s save fails: the second still gets its reminder this hour', REM().length === 1 && !!both.save_failed
+        && JSON.stringify(DB.vp_prospects.filter(function (x) { return x.venue_id !== both.save_failed; })[0].reminders_sent) === '[3]', [REM().length, both.save_failed]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('and the first gets its own the next hour; each once', REM().length === 2 && JSON.stringify(K1.row().reminders_sent) === '[3]' && JSON.stringify(K2.row().reminders_sent) === '[3]', REM().length);
 
   section('8. The pause screen says what happened (the console\'s own holdWords)');
   var SES = readFile('venueplay/app/vp-session.js');
