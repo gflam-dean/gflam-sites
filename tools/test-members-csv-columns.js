@@ -28,6 +28,13 @@ check('COLUMNS-BASELINE.json lists vp_members with member_number, first_name, la
 check('vp_members has no column called "number" (the name that shipped)', (COLS.vp_members || []).indexOf('number') < 0, COLS.vp_members);
 
 /* A PostgREST stand-in: every column named must be in COLS[table], or the read is an error. */
+/* The baseline is dumped from the live database, and migration 200 is now live, so it already carries 200's contact columns.
+   Sections 2 to 5 test the download on a database that REFUSES those columns (the page's number-and-names fallback), so they
+   take the migration's own columns off the stand-in first; section 6 puts them back (the database as it is after 200). */
+var M200 = readFile('venueplay-backend/supabase/venueplay-200-members-upload-contacts.sql');
+var added = []; (M200.split('alter table public.vp_members')[1] || '').split(';')[0].replace(/add column if not exists\s+(\w+)/g, function (m, c) { added.push(c); });
+var COLS_AFTER_200 = (COLS.vp_members || []).slice();
+COLS.vp_members = (COLS.vp_members || []).filter(function (c) { return added.indexOf(c) < 0; });
 var DB = {}, NAMED = [], ERRORS = [];
 function colErr(t, c) { var e = { code: '42703', message: 'column ' + t + '.' + c + ' does not exist' }; ERRORS.push(e.message); return e; }
 function Q(t) { this.t = t; this.sel = null; this.f = []; this.ord = []; this.r = null; }
@@ -133,12 +140,11 @@ check('no file is made and the venue is told "There is nobody on your members li
 
 print('');
 print('6. after migration 200: the email, mobile, postcode and offers columns go into the venue\'s own download (Jobs row 445)');
-/* the columns migration 200 adds, read from the file itself, laid over the live baseline */
-var M200 = readFile('venueplay-backend/supabase/venueplay-200-members-upload-contacts.sql');
-var added = []; (M200.split('alter table public.vp_members')[1] || '').split(';')[0].replace(/add column if not exists\s+(\w+)/g, function (m, c) { added.push(c); });
+/* the columns migration 200 adds, read from the file itself (above), laid back over the stand-in */
 check('migration 200 adds email, mobile, postcode, marketing_optin, marketing_optin_at, marketing_optin_source to vp_members',
       ['email', 'mobile', 'postcode', 'marketing_optin', 'marketing_optin_at', 'marketing_optin_source'].every(function (c) { return added.indexOf(c) >= 0; }), added);
-COLS.vp_members = COLS.vp_members.concat(added);
+COLS.vp_members = COLS.vp_members.concat(added.filter(function (c) { return COLS.vp_members.indexOf(c) < 0; }));
+check('the live baseline already carries migration 200\'s columns (migration 200 is live)', added.every(function (c) { return COLS_AFTER_200.indexOf(c) >= 0; }), COLS_AFTER_200);
 DB.vp_members = [
   { id: 'm3', roster_id: 'r1', member_number: '1010', first_name: 'Ann', last_name: 'Lee', email: 'ann@example.com', mobile: '+61412345678', postcode: '4220', marketing_optin: true, marketing_optin_source: 'members list import, 2026-11-19' },
   { id: 'm1', roster_id: 'r2', member_number: '1001', first_name: 'Bob, Jr', last_name: 'O"Neil', email: null, mobile: null, postcode: null, marketing_optin: false, marketing_optin_source: 'members list import, 2026-11-19' },

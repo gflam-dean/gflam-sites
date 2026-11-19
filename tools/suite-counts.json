@@ -1048,7 +1048,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {
-  "checks": 17,
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/test-members-csv.js": {
