@@ -201,3 +201,8 @@ body.light #vJoin .psub #joinCode{color:#8a6100!important}             /* the tr
 body.light .pfoot svg{color:#191420}                                   /* our logo (trivia already had this) */
 body.light #vJoin .vp-joinnote{color:var(--muted,#5c5666)!important}   /* the notice (vp-known.js writes #9A9AA4 inline) */
 body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--muted,#5c5666)}   /* "You are joining room" (not the pink venue line) and the line under Join */
+/* The error line and Help on the light screen's join step (independent review SHOULD 1, 19 Nov 2026): the error line
+   ("That mobile number doesn't look right", the pages' amber #F5A524) measured 1.48 to 1.80:1 and Help (#9A9AA4 from
+   vp-help.js) 2.02 to 2.45:1 on the pale background. Dark amber and the page's muted colour; dark screen untouched. */
+body.light #vJoin .cerr,body.light #vJoin .vp-err{color:#7a4f00}
+body.light #vJoin:not(.hidden) ~ .pfoot .vph-link{color:var(--muted,#5c5666)}

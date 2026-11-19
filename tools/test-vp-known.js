@@ -373,6 +373,8 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('5d light screen: the join notice is the page\'s muted colour, !important (vp-known.js writes #9A9AA4 inline)', /color:var\(--muted,#5c5666\)!important/.test(lightRule('body.light #vJoin .vp-joinnote')), lightRule('body.light #vJoin .vp-joinnote'));
   show('5d light screen: the room code is dark (bingo) and dark gold (trivia, beats the inline gold)', /color:var\(--text,#191420\)/.test(lightRule('body.light #vJoin .vp-sub .mono')) && /color:#8a6100!important/.test(lightRule('body.light #vJoin .psub #joinCode')));
   show('5d light screen: our foot logo is dark', /color:#191420/.test(lightRule('body.light .pfoot svg')), lightRule('body.light .pfoot svg'));
+  show('5d light screen: the error line on the join step is dark amber #7a4f00 (the pages\' #F5A524 measured 1.48 to 1.80:1), trivia .cerr and bingo/musical .vp-err', /color:#7a4f00/.test(lightRule('body.light #vJoin .cerr')) && lightRule('body.light #vJoin .cerr') === lightRule('body.light #vJoin .vp-err'), lightRule('body.light #vJoin .cerr'));
+  show('5d light screen: Help at our logo\'s foot is the page\'s muted colour while the join step shows (vp-help.js #9A9AA4 measured 2.02 to 2.45:1)', /color:var\(--muted,#5c5666\)/.test(lightRule('body.light #vJoin:not(.hidden) ~ .pfoot .vph-link')), lightRule('body.light #vJoin:not(.hidden) ~ .pfoot .vph-link'));
   var lsel = LR.map(function (r) { return r.sel; }).join(',').split(',').map(function (x) { return x.trim(); });
   show('5d every light-screen rule needs body.light (the dark screen is untouched)', lsel.length >= 6 && lsel.every(function (x) { return /^body\.light /.test(x); }), lsel.filter(function (x) { return !/^body\.light /.test(x); }));
 
