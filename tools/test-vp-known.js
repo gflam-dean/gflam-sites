@@ -316,6 +316,42 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('not required: empty is fine, a wrong one is still refused', VPDetails.mobileError() === '' && (document.getElementById('xMobile').value = '12', VPDetails.mobileError() === VPDetails.MOBILE_WRONG));
   show('no first-name box unless asked for (firstBox)', VPDetails.html({ first_name: true }, {}) === '' && /id="xFirst"/.test(VPDetails.html({ first_name: true }, { firstBox: true })));
 
+  /* 5c. A SHORT PHONE (M2 phone check, INBOX 727, 19 Nov 2026). STATIC: the CSS text of /app/vp-phone.css is read here, not
+     painted (the paint was measured in headless Chrome on the real pages: builds/m2-phone-fix-19nov.md). With the offers
+     tick on, the notice is 4 to 5 lines and the join screen ran past a 375x667 and a 320x568 phone. The two blocks that close
+     it up must exist, be scoped to the join screen only, beat the notice's inline style, and never hide a word or the tick. */
+  var CSS = readFile('venueplay/app/vp-phone.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  function mediaBlock(q) {
+    var at = CSS.indexOf('@media (' + q + '){body #vJoin'), i, depth = 0;
+    if (at < 0) { at = CSS.search(new RegExp('@media \\(' + q.replace(/[()]/g, '\\$&') + '\\)\\{\\s*body #vJoin')); }
+    if (at < 0) return null;
+    var open = CSS.indexOf('{', at);
+    for (i = open; i < CSS.length; i++) { if (CSS[i] === '{') depth++; else if (CSS[i] === '}' && --depth === 0) break; }
+    return CSS.slice(open + 1, i);
+  }
+  function rulesOf(block) { var out = [], m, re = /([^{}]+)\{([^{}]*)\}/g; while ((m = re.exec(block || ''))) out.push({ sel: m[1].trim(), body: m[2] }); return out; }
+  function ruleFor(rules, sel) { for (var i = 0; i < rules.length; i++) if (rules[i].sel.split(',').map(function (s) { return s.trim(); }).indexOf(sel) >= 0) return rules[i].body; return ''; }
+  function px(body, prop) { var m = new RegExp('(?:^|;)\\s*' + prop + ':\\s*([0-9.]+)px').exec(body || ''); return m ? parseFloat(m[1]) : NaN; }
+  var M7 = rulesOf(mediaBlock('max-height:700px')), M6 = rulesOf(mediaBlock('max-height:600px'));
+  show('5c a short phone (under 700px tall): a join-screen block in vp-phone.css', M7.length >= 5, M7.length);
+  show('5c ...and a smaller one (under 600px tall, a 320x568 phone)', M6.length >= 5, M6.length);
+  var allSel = M7.concat(M6).map(function (r) { return r.sel; }).join(',').split(',').map(function (s) { return s.trim(); });
+  show('5c every rule in both blocks is the join screen only (body #vJoin ...): no other screen moves', allSel.length > 0 && allSel.every(function (s) { return /^body #vJoin\b/.test(s); }), allSel.filter(function (s) { return !/^body #vJoin\b/.test(s); }));
+  var nb7 = ruleFor(M7, 'body #vJoin .vp-joinnote'), nb6 = ruleFor(M6, 'body #vJoin .vp-joinnote');
+  show('5c the notice closes up under 700px: 12.5px, line 1.35, !important (it beats the inline style vp-known.js writes)', /font-size:12\.5px!important/.test(nb7) && /line-height:1\.35!important/.test(nb7) && /margin-top:8px!important/.test(nb7), nb7);
+  show('5c ...and under 600px: 12px, line 1.3, !important', /font-size:12px!important/.test(nb6) && /line-height:1\.3!important/.test(nb6), nb6);
+  var in7 = ruleFor(M7, 'body #vJoin input[type=tel]'), in6 = ruleFor(M6, 'body #vJoin input[type=tel]');
+  show('5c the boxes are shorter under 700px (12px top and bottom) and under 600px (9px), the mobile box included', px(in7, 'padding-top') === 12 && px(in7, 'padding-bottom') === 12 && px(in6, 'padding-top') === 9 && px(in6, 'padding-bottom') === 9, [in7, in6]);
+  show('5c the trivia heading is one line under 600px (its <br> goes) and smaller in both', /display:none/.test(ruleFor(M6, 'body #vJoin .pbig br')) && px(ruleFor(M7, 'body #vJoin .pbig'), 'font-size') === 30 && px(ruleFor(M6, 'body #vJoin .pbig'), 'font-size') === 26, [ruleFor(M6, 'body #vJoin .pbig br'), ruleFor(M6, 'body #vJoin .pbig')]);
+  show('5c ...and the trivia heading keeps a space before its <br>, so the one line reads "JOIN THE TRIVIA", never "THETRIVIA"', /<div class="pbig">Join the <br>trivia<\/div>/.test(readFile('venueplay/app/trivia/play.html')));
+  show('5c the bingo and musical heading is smaller in both (38px, 30px)', px(ruleFor(M7, 'body #vJoin .vp-h'), 'font-size') === 38 && px(ruleFor(M6, 'body #vJoin .vp-h'), 'font-size') === 30, [ruleFor(M7, 'body #vJoin .vp-h'), ruleFor(M6, 'body #vJoin .vp-h')]);
+  var hides = M7.concat(M6).filter(function (r) { return /display:\s*none|visibility:\s*hidden|height:\s*0|opacity:\s*0/.test(r.body) && r.sel !== 'body #vJoin .pbig br'; });
+  show('5c nothing is hidden on a short phone: not the notice, the tick, the error line or Join (only the heading\'s line break)', hides.length === 0, hides);
+  var small = (mediaBlock('max-height:700px') + mediaBlock('max-height:600px')).match(/font-size:\s*([0-9.]+)px/g) || [];
+  show('5c no text under 12px in either block', small.length > 0 && small.every(function (s) { return parseFloat(s.replace(/[^0-9.]/g, '')) >= 12; }), small);
+  show('5c the notice the blocks style is the one vp-known.js draws (class vp-joinnote)', /np\.className = "vp-joinnote"/.test(readFile('venueplay/app/vp-known.js')));
+  show('5c all three player phones load /app/vp-phone.css', ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html'].every(function (f) { return /<link rel="stylesheet" href="\/app\/vp-phone\.css(\?[^"]*)?">/.test(readFile(f)); }));
+
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('vp-known: ' + bad + ' failed');

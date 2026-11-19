@@ -143,3 +143,35 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
 #vJoin.vp-long .vpc3-head{font-size:14px!important;margin-top:8px!important}
 #vJoin.vp-long .vpc3 .optin{font-size:15px!important;margin-top:6px!important}
 #vJoin.vp-long .vpc3 .optin input{width:22px!important;height:22px!important}
+/* A SHORT PHONE (M2 phone check, INBOX 727, 19 Nov 2026; Dean's rule: one screen, no scrolling): with the offers tick on,
+   the join notice is 4 lines at 375 and 5 at 320, and the join screen ran past the screen: our logo 50px below on trivia at
+   375x667, Join itself below the fold on all three games at 320x568. Measured in headless Chrome on the real pages. Under
+   700px tall, and more under 600px, the heading, the boxes and the gaps close up so Join, the notice and our logo fit.
+   Words, order and colours stay; a taller phone is untouched. "body #vJoin" outranks each page's own "#vJoin .x" rules. */
+@media (max-height:700px){
+  body #vJoin .pbig{font-size:30px;margin-bottom:6px}
+  body #vJoin .vp-h{font-size:38px;margin-bottom:6px}
+  body #vJoin .field,body #vJoin .vp-field{margin-top:10px}
+  body #vJoin input[type=text],body #vJoin input[type=email],body #vJoin input[type=tel]{padding-top:12px;padding-bottom:12px}
+  body #vJoin .optin{margin-top:10px}
+  body #vJoin .vp-joinnote{font-size:12.5px!important;line-height:1.35!important;margin-top:8px!important}
+}
+@media (max-height:600px){
+  body #vJoin .pbig{font-size:26px;margin-bottom:2px}
+  body #vJoin .pbig br{display:none}
+  body #vJoin .vp-h{font-size:30px;margin-bottom:4px}
+  body #vJoin .vp-step{padding-top:10px;padding-bottom:8px}
+  body #vJoin.center{padding-top:4px;padding-bottom:4px}   /* the trivia join view (bingo and musical use .vp-step) */
+  body #vJoin .field,body #vJoin .vp-field{margin-top:6px}
+  body #vJoin input[type=text],body #vJoin input[type=email],body #vJoin input[type=tel]{padding-top:9px;padding-bottom:9px}
+  body #vJoin .optin{margin-top:8px;font-size:15px;gap:8px}
+  body #vJoin .optin input{width:22px;height:22px}
+  body #vJoin .vp-joinnote{font-size:12px!important;line-height:1.3!important;margin-top:6px!important}
+  body #vJoin .cerr{margin-top:2px;min-height:16px}
+  body #vJoin .vp-grow{min-height:6px}
+  body #vJoin .vp-cta{min-height:50px;padding-top:13px;padding-bottom:13px}
+  body #vJoin .btn{padding-top:13px;padding-bottom:13px}
+  body #vJoin .pnote{margin-top:6px}
+  body #vJoin.center > .pnote{font-size:13px;line-height:1.35}   /* the trivia line under Join (the bingo one stays 15px) */
+  body #vJoin:not(.hidden) ~ .pfoot{padding-top:6px}
+}
