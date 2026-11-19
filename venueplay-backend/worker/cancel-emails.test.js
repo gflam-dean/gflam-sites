@@ -74,6 +74,9 @@ eval(lift(BILL,"vpaLastDaySweep"));
 eval(lift(BILL,"vpaAddDays"));
 eval(lift(BILL,"vpaWeekday"));
 eval(lift(BILL,"vpaLastDayDue"));
+eval(lift(BILL,"vpaLastDayClaim"));
+eval(lift(BILL,"vpaLastDayRecord"));
+eval(lift(BILL,"vpaNoWindowBeforeLastDay"));
 eval("var VPA_SEND_TZ=" + (/const VPA_SEND_TZ = (\{[\s\S]*?\});/.exec(BILL)||[,"{}"])[1] + ";");
 eval("var VPA_SEND_HOURS=" + (/const VPA_SEND_HOURS = (\[[^\]]*\]);/.exec(BILL)||[,"[]"])[1] + ";");
 var VPA_SEND_FMT={};
@@ -110,7 +113,11 @@ pass("the four new functions are all in the Worker",
    ---------------------------------------------------------------------- */
 var SENT=[], AUDIT=[], SELECTS=[], STRIPE={};
 async function vpaSendEmail(env,to,subject,html){ SENT.push({to:to,subject:subject,html:html}); return true; }
-async function vpaInsert(env,table,row){ AUDIT.push(row); return {}; }
+/* The audit lock is claimed (a row with an id) and then updated by that id (review 1 of INBOX 720, 19 Nov 2026).
+   INSERT_FAILS: the next N inserts fail, as a PostgREST error makes the real vpaInsert throw. */
+var AUDIT_ID=0, INSERT_FAILS=0;
+async function vpaInsert(env,table,row){ if(INSERT_FAILS>0){ INSERT_FAILS--; throw new Error(table+" insert failed: blip"); }
+  row=Object.assign({id:"au"+(++AUDIT_ID)},row); AUDIT.push(row); return row; }
 async function vpaAuthGetUser(env,id){ return USERS[id]||null; }
 async function vpbStripeGet(env,path){ var id=path.split("/")[1]; return STRIPE[id]||{}; }
 var USERS={}, TABLES={};
@@ -169,7 +176,10 @@ vpaLastDayWindowOpen=function(v){
 /* The audit read: vpaMrGet's shape. A failed read is { ok:false }, as the real one gives on a non-2xx. */
 vpaMrGet=async function(env,table,q){ if(AUDIT_READ_FAILS && table==="vp_admin_audit") return { ok:false, rows:[] }; return { ok:true, rows: await vpaSelect(env,table,q) }; };
 var PATCHED=[];
-async function vpaPatch(env,table,filter,obj){ PATCHED.push({filter:filter,obj:obj}); return {}; }
+async function vpaPatch(env,table,filter,obj){ PATCHED.push({filter:filter,obj:obj});
+  var idm=/^id=eq\.(.+)$/.exec(filter);
+  if(table==="vp_admin_audit" && idm) AUDIT.filter(function(a){ return a.id===decodeURIComponent(idm[1]); }).forEach(function(a){ for(var k in obj) a[k]=obj[k]; });
+  return {}; }
 async function vpaVenuesForCustomer(env,cust){
   return [[{id:"vA",name:"Cancelled",status:"active",cancel_at_period_end:true},
            {id:"vB",name:"Chargeback",status:"active",cancel_at_period_end:false}],{id:"f1"}];
@@ -565,6 +575,71 @@ SENT=[]; AUDIT=[];
 var again = await vpaLastDaySweep(env);
 pass("a refused venue is not retried every hour", again.sent===0 && SENT.length===0);
 vpaSendEmail = REALSEND;
+
+/* THE LOCK IS CLAIMED BEFORE THE SEND (review 1 of INBOX 720, 19 Nov 2026). It used to be written after the send
+   with its error swallowed, so a write that failed meant the same email every hour in the window. */
+INSERT_FAILS=1;
+var noLock = await sweepWith("2026-09-18",10,false);
+INSERT_FAILS=0;
+pass("the sweep: a lock that cannot be written sends nothing", noLock.sent===0 && SENT.length===0, "sent "+SENT.length);
+pass("and says it held", (noLock.why||[]).join().indexOf("the lock could not be written")!==-1, JSON.stringify(noLock.why));
+var lockFirst=true, SEND2=vpaSendEmail;
+vpaSendEmail = async function(env,to,subject,html){ if(!AUDIT.some(function(a){ return a.target==="venue:v1" && /^venue_last_day_/.test(a.action); })) lockFirst=false; return SEND2(env,to,subject,html); };
+var withLock = await sweepWith("2026-09-18",10,false);
+vpaSendEmail = SEND2;
+pass("the sweep: every last-day email goes only after its lock row is in", withLock.sent===1 && lockFirst && SENT.length===2);
+pass("ONE row: the claim, then updated with what Resend accepted", AUDIT.length===1 && AUDIT[0].action==="venue_last_day_emailed"
+     && (AUDIT[0].detail.accepted||[]).length===2 && AUDIT[0].detail.day==="Friday", JSON.stringify(AUDIT));
+/* The cancel's own goodbye (inside two days) claims the same lock first. A claim that fails sends the plain
+   confirmation instead, and the sweep tells them in a later window. */
+function cancelNear(extra){
+  SENT=[]; AUDIT=[];
+  TABLES={ venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",contact_name:"Dean Tindale"}],
+           vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}], vp_admin_audit:[] };
+  return vpaFireCancelConfirm(env, Object.assign({venueId:"v1", name:"The Pub", ends:"18 September 2026",
+    account:{id:"f1",contact_email:"accounts@thepub.com.au",contact_name:"Dean Tindale"},
+    endTs:END_TS, timezone:"Australia/Brisbane", createdAt:new Date(END_TS*1000 - 305*86400000).toISOString(),
+    players:20, rateCents:250, rate:"$2.50", founding:true, contactName:"Dean Tindale"}, extra||{}));
+}
+LASTDAY="2026-09-17"; TODAY="2026-09-16";
+var lockFirst2=true;
+vpaSendEmail = async function(env,to,subject,html){ if(/last day on venueplay/.test(subject) && !AUDIT.some(function(a){ return a.action==="venue_last_day_emailed"; })) lockFirst2=false; return SEND2(env,to,subject,html); };
+await cancelNear();
+vpaSendEmail = SEND2;
+pass("the cancel's goodbye: its lock is claimed before it goes, and updated after",
+     lockFirst2 && SENT.length===2 && SENT.every(function(m){ return /last day on venueplay/.test(m.subject); })
+     && AUDIT.filter(function(a){ return a.action==="venue_last_day_emailed"; }).length===1 && (AUDIT.filter(function(a){ return a.action==="venue_last_day_emailed"; })[0].detail.accepted||[]).length===2,
+     JSON.stringify(AUDIT.map(function(a){ return [a.action,a.detail&&a.detail.accepted]; })));
+INSERT_FAILS=1;
+await cancelNear();
+INSERT_FAILS=0;
+pass("the cancel's goodbye: a lock that cannot be written sends the plain confirmation instead, never an unlocked goodbye",
+     SENT.length===2 && SENT.every(function(m){ return /cancellation is confirmed/.test(m.subject); }), SENT.map(function(m){ return m.subject; }).join(" | "));
+/* NO WINDOW LEFT BEFORE THE LAST DAY (review 1 SHOULD 6): three days out, but the window will not open again
+   before the last day (a Monday last day cancelled on a Friday evening): the goodbye goes now. */
+LASTDAY="2026-09-19"; TODAY="2026-09-16";
+var SAVE_NW=vpaNoWindowBeforeLastDay, NW_ARGS=null;
+vpaNoWindowBeforeLastDay=function(state,tz,endTs,now){ NW_ARGS=[state,tz,endTs]; return true; };
+await cancelNear({sendState:"WA"});
+pass("three days out with no window left: the goodbye goes at once, locked",
+     SENT.length===2 && SENT.every(function(m){ return /last day on venueplay/.test(m.subject); })
+     && AUDIT.some(function(a){ return a.action==="venue_last_day_emailed" && /no send window left/.test(a.detail.why||""); }), SENT.map(function(m){ return m.subject; }).join(" | "));
+pass("and the window is asked on the venue's own state clock", NW_ARGS && NW_ARGS[0]==="WA" && NW_ARGS[1]==="Australia/Brisbane" && NW_ARGS[2]===END_TS, JSON.stringify(NW_ARGS));
+vpaNoWindowBeforeLastDay=function(){ return false; };
+await cancelNear();
+pass("three days out with a window still to come: the plain confirmation, as before",
+     SENT.length===2 && SENT.every(function(m){ return /cancellation is confirmed/.test(m.subject); }));
+vpaNoWindowBeforeLastDay=SAVE_NW;
+LASTDAY="2026-09-18"; TODAY="2026-09-16";
+/* The rule read alone, on real clocks and real dates (Brisbane, no daylight saving): */
+var SAVE_LD=vpaLocalDate; vpaLocalDate=REAL_date;
+var monEnd=Date.UTC(2026,8,21,13,59,59)/1000, tueEnd=Date.UTC(2026,8,22,13,59,59)/1000;   // 11:59:59pm Mon 21 / Tue 22 Sep, Brisbane
+var friEve=Date.UTC(2026,8,18,8,0,0), friMorn=Date.UTC(2026,8,18,0,0,0);                  // 6pm / 10am Fri 18 Sep, Brisbane
+var nw1=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,friEve), nw2=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",monEnd,friMorn),
+    nw3=vpaNoWindowBeforeLastDay("QLD","Australia/Brisbane",tueEnd,friEve);
+vpaLocalDate=SAVE_LD;
+pass("no window left: a Monday last day at 6pm Friday yes; at 10am Friday no; a Tuesday last day at 6pm Friday no (Monday's window)",
+     nw1===true && nw2===false && nw3===false, [nw1,nw2,nw3].join());
 
 /* --- the last night is kept, and only for a real cancellation ------------- */
 SENT=[]; AUDIT=[];

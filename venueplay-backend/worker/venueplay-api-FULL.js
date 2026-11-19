@@ -15488,7 +15488,17 @@ async function vpaFireCancelConfirm(env, opts) {
                               vpaLocalDate(opts.endTs, opts.timezone));
       } catch (e) { away = null; }
     }
-    if (away !== null && away <= 2) {
+    /* Also when no send window opens before the last day (review 1 SHOULD 6, 19 Nov 2026): the sweep keeps Dean's
+       window, so a Monday last day cancelled after 5pm on the Friday would otherwise never be told. And only once its
+       lock is claimed (vpaLastDayClaim): a claim that fails gets the plain confirmation below instead, and the sweep
+       tells them in a later window. */
+    const noWindow = away !== null && away > 2 && opts.endTs
+      && vpaNoWindowBeforeLastDay(opts.sendState || null, opts.timezone, opts.endTs, Date.now());
+    const lockDetail = (away !== null && (away <= 2 || noWindow)) ? { ends: ends, day: day, name: opts.name || null,
+      why: noWindow ? 'cancelled with no send window left before the last day, so the goodbye went instead of the confirmation'
+                    : 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' } : null;
+    const claim = lockDetail ? await vpaLastDayClaim(env, opts.venueId, 'system', lockDetail) : null;
+    if (claim) {
       const stats = await vpaVenueStats(env, opts.venueId, opts.timezone).catch(() => null);
       const months = vpaTenureMonths(opts.createdAt, opts.endTs * 1000);
       const html2 = vpaGoodbyeHtml(env, {
@@ -15509,15 +15519,9 @@ async function vpaFireCancelConfirm(env, opts) {
         await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: opts.venueId,
           name: opts.name, ends: whenPhrase, refused: ref });
       }
-      /* Written under the SWEEP's action on purpose: that row is what stops the hourly sweep
+      /* Claimed under the SWEEP's action on purpose: that row is what stops the hourly sweep
          sending a second one a few minutes later to a venue cancelling at exactly two days. */
-      await vpaInsert(env, 'vp_admin_audit', {
-        actor_admin: null, actor_label: 'system',
-        action: (ref.length && !del.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
-        target: 'venue:' + opts.venueId,
-        detail: { accepted: del, refused: ref, ends: ends, day: day, name: opts.name || null,
-                  why: 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' },
-      }, false).catch(() => {});
+      await vpaLastDayRecord(env, claim, del, ref, lockDetail);
       return;
     }
     const rows = [['Venue', opts.name || 'your venue']];
@@ -15605,6 +15609,37 @@ function vpaLastDayDue(lastYmd) {
   let d = vpaAddDays(lastYmd, -2);
   while (vpaWeekday(d) === 0 || vpaWeekday(d) === 6) d = vpaAddDays(d, -1);
   return d;
+}
+/* THE LAST-DAY LOCK IS CLAIMED BEFORE THE SEND (review 1 of INBOX 720, 19 Nov 2026). The audit row that stops a
+   second last-day email used to be written AFTER the send with its error swallowed, so a row that failed to write
+   meant a resend every hour in the window (and the catch-up below widens that window to two weekdays). Now the row
+   goes in first as venue_last_day_emailed with accepted: null; a claim that fails sends nothing. After the send the
+   SAME row is updated: what Resend accepted and refused, and venue_last_day_NOT_emailed when it refused every address
+   (both actions are "already tried" to the lock read). If that update fails the row still says emailed, with
+   accepted: null: never a second email. */
+async function vpaLastDayClaim(env, venueId, label, detail) {
+  try {
+    const row = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: label, action: 'venue_last_day_emailed',
+      target: 'venue:' + venueId, detail: Object.assign({}, detail, { accepted: null }) });
+    return row || null;
+  } catch (e) { return null; }
+}
+async function vpaLastDayRecord(env, claim, delivered, refused, detail) {
+  if (!claim || claim.id == null) return;
+  await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), {
+    action: (refused.length && !delivered.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
+    detail: Object.assign({}, detail, { accepted: delivered, refused: refused }) }).catch(() => {});
+}
+/* NO WINDOW LEFT BEFORE THE LAST DAY (review 1 SHOULD 6). True when the next moment Dean's send window opens at this
+   venue (vpaSendAllowedAt, its state's clock) is already on its last day or after: a Monday last day cancelled after
+   5pm on the Friday. The cancel then sends the goodbye at once instead of the plain confirmation, because the sweep
+   would never get a window to send it in. */
+function vpaNoWindowBeforeLastDay(state, tz, endTs, nowMs) {
+  try {
+    const next = vpaSendAllowedAt(state, nowMs);
+    const d = vpaDaysBetween(vpaLocalDate(Math.floor(next / 1000), tz), vpaLocalDate(endTs, tz));
+    return d !== null && d < 1;
+  } catch (e) { return false; }
 }
 /* Inside Dean's send window at this venue right now (its state's clock, vpaSendState). Its own function so a suite can
    hold the clock. */
@@ -15744,27 +15779,23 @@ async function vpaLastDaySweep(env) {
         rate: rate, founding: founding,
         hello: vpaHello(tz, acct && acct.contact_name, v.name),
       });
+      const lockDetail = { ends: dated, day: day, name: v.name || null, end_ts: endTs };
+      const claim = await vpaLastDayClaim(env, v.id, 'automatic (last day email)', lockDetail);
+      if (!claim) { why.push(v.name + ': the lock could not be written, held'); continue; }
       const delivered = [], refused = [];
       for (const addr of to) {
         const ok = await vpaSendEmail(env, addr, day + ' is your last day on venueplay', html)
           .catch(() => false);
         (ok ? delivered : refused).push(addr);
       }
-      /* The audit row is also the lock that stops this being sent twice, so it is written
-         either way. But if NOT ONE address was accepted, it is written under a different
-         action: a venue that was never told must not be filed alongside the ones that were,
-         and it must be findable. */
+      /* The claimed row is the lock that stops this being sent twice, so it stays either way.
+         But if NOT ONE address was accepted, it is moved to a different action: a venue that
+         was never told must not be filed alongside the ones that were, and it must be findable. */
       if (refused.length && !delivered.length) {
         await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: v.id,
           name: v.name, ends: day + ', ' + dated, refused: refused });
       }
-      await vpaInsert(env, 'vp_admin_audit', {
-        action: (refused.length && !delivered.length)
-          ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
-        target: 'venue:' + v.id,
-        detail: { accepted: delivered, refused: refused, ends: dated, day: day,
-                  name: v.name || null, end_ts: endTs },
-      }, false).catch(() => {});
+      await vpaLastDayRecord(env, claim, delivered, refused, lockDetail);
       if (refused.length) why.push(v.name + ': Resend refused ' + refused.length + ' address(es)');
       if (delivered.length) sent++;
     }
@@ -15923,6 +15954,7 @@ async function vpbCancelVenue(request, env, json) {
          timezone, the same fallback the session sweep uses. */
       endTs: (info && info.periodEnd) || null,
       timezone: venue.timezone || vpaTimezoneFromPostcode(venue.postcode),
+      sendState: vpaSendState(venue),   // its send window's clock (review 1 SHOULD 6): au_state, else postcode
       /* Everything the goodbye needs, in case this turns out to be one. */
       createdAt: venue.created_at || null,
       players: venue.max_players || 0,
