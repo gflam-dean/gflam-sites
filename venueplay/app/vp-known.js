@@ -321,6 +321,8 @@
       na.textContent = String(nt.link || "Privacy policy");
       np.appendChild(na);
       if (split) np.appendChild(d.createTextNode(nt.after));
+      /* the offers sentence only beside the offers tick (M2, 19 Nov 2026): never a box that is not on the screen */
+      if (split && typeof nt.box === "string" && nt.box && VC && typeof VC.tickOn === "function" && VC.tickOn()) np.appendChild(d.createTextNode(nt.box));
       o.box.appendChild(np);
       _notice = String(nt.version || "");
     }

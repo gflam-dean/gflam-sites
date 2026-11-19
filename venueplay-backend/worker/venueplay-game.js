@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Nov 2026, 08:16 · 821a9006';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:17 · f0ee2b70';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2544,9 +2544,13 @@ function gatedCapture(cfg, b) {
 /* Dean's call (INBOX 416 decision): true makes the games' mobile box required, as Coaster Trivia's is. */
 const JOIN_MOBILE_REQUIRED = false;
 /* THE FIRST-GAME NOTICE (Dean 16 Nov 2026, through main). ONE constant: the words are being drafted for the lawyer; swap the
-   text and bump the version and every player sees the new one once. The phone draws exactly this text, with the link. */
-const JOIN_NOTICE = { version: 'vpn-3-16nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. A ticked box shares your details with that sender for news and offers.', href: '/privacy' };
-JOIN_NOTICE.text = JOIN_NOTICE.before + JOIN_NOTICE.link + JOIN_NOTICE.after;   // the whole line as a person reads it
+   text and bump the version and every player sees the new one once. The phone draws exactly this text, with the link.
+   ONE BOX (M2, 19 Nov 2026, INBOX 677): vpn-3-16nov said "A ticked box shares your details with that sender", words for the
+   three boxes, while one box ships. Now the offers sentence is its own part (box), and the phone adds it ONLY when the
+   offers tick is on the screen (VPConsent.tickOn, /app/vp-known.js): never for a known phone (no tick again), a venue with
+   the offers tick off, or the three boxes (which carry their own note). The new version shows the new words once to all. */
+const JOIN_NOTICE = { version: 'vpn-1-19nov', before: 'By playing you agree to ', link: "venueplay's terms and privacy policy", after: '. If you give a first name and mobile, venueplay keeps them so you are not asked again.', box: ' Tick the offers box and this venue can send you offers.', href: '/privacy' };
+JOIN_NOTICE.text = JOIN_NOTICE.before + JOIN_NOTICE.link + JOIN_NOTICE.after;   // the line as every player reads it (box added only beside the tick)
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
 const CONSENT_THREE_VERSION = 'vpc-4-22nov';

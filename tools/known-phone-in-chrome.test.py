@@ -34,10 +34,40 @@ try: os.makedirs(SHOTS, exist_ok=True)
 except Exception: SHOTS = ''
 
 ran = bad = 0
+# DATED EXPECTED-RED LIST (main INBOX 753, 19 Nov 2026; reports/m2-fits-red-rows-19nov.md). These "one screen" rows are
+# REAL faults the fixed fits() found (Join on screen; our logo + Help below the fold) that ship on Sunday 22 Nov and are
+# fixed in the next release. Each row may be red only by at most its measured px (+1); worse, or any red row NOT in
+# this list, still FAILS. From EXPECTED_RED_UNTIL (that day included) the list is void: every listed row fails while red, and a listed row
+# that is no longer red fails too (stale: take it off). Never add a row here to make a new fault pass.
+EXPECTED_RED_UNTIL = '2026-11-29'   # the next release (date given with main's INBOX 753 brief); ON and after it, the list is void
+EXPECTED_RED = {
+    # the four tall-phone three-box rows (vp-long; not M2): next release
+    'T bingo 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 61,
+    'T trivia 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 36,
+    'T bingo 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 29,
+    'T trivia 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 7,
+}
+_SOFT = {'over': None}; _RED_SEEN = set(); _GREEN_SEEN = set()
+def _expired(): return time.strftime('%Y-%m-%d') >= EXPECTED_RED_UNTIL   # void ON 29 Nov: the next release's own gate run must not pass with these rows red
+def stale_check():
+    for n in sorted(EXPECTED_RED):
+        if n in _GREEN_SEEN and n not in _RED_SEEN:
+            if _expired(): ok('expected-red list (expired %s): "%s" is no longer red: take it off the list' % (EXPECTED_RED_UNTIL, n), False)
+            else: print('  NOTE expected-red row is no longer red (take it off the list): ' + n)
 def ok(name, cond, saw=''):
     global ran, bad
+    over = _SOFT['over']; _SOFT['over'] = None; note = ''
+    if cond and over is not None:   # fits() saw Join on screen but something below the fold
+        want = EXPECTED_RED.get(name)
+        if want is not None and not _expired() and over <= want + 1:
+            _RED_SEEN.add(name); note = '   (EXPECTED RED until %s: %dpx below the fold, listed %dpx)' % (EXPECTED_RED_UNTIL, over, want)
+        else:
+            cond = False
+            saw = '%dpx below the fold (%s); %s' % (over, 'not in the expected-red list' if want is None else ('the list expired %s' % EXPECTED_RED_UNTIL if _expired() else 'worse than the listed %dpx' % want), str(saw))
+    elif cond and name in EXPECTED_RED:
+        _GREEN_SEEN.add(name)
     ran += 1
-    print(('  ok   ' if cond else '  FAIL ') + name + ('' if cond else '   saw: ' + str(saw)[:400]))
+    print(('  ok   ' if cond else '  FAIL ') + name + note + ('' if cond else '   saw: ' + str(saw)[:400]))
     if not cond: bad += 1
 
 KEY = 'ab' * 32
@@ -46,7 +76,7 @@ EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': 
 THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
 # The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
-NOTICE = {'version': 'vpn-3-16nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. A ticked box shares your details with that sender for news and offers.', 'href': '/privacy'}
+NOTICE = {'version': 'vpn-1-19nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. If you give a first name and mobile, venueplay keeps them so you are not asked again.', 'box': ' Tick the offers box and this venue can send you offers.', 'href': '/privacy'}
 NOTICE['text'] = NOTICE['before'] + NOTICE['link'] + NOTICE['after']
 PRIV = os.path.expanduser('~/venue-enrich/reports/privacy-update-16nov/returning')
 try: os.makedirs(PRIV, exist_ok=True)
@@ -177,13 +207,25 @@ LOOK = r"""(function(){
   var v=document.getElementById("vJoin"), b=document.getElementById("joinBtn"), r=b.getBoundingClientRect();
   var ids=[].slice.call(document.querySelectorAll("#vJoin input")).filter(function(e){ return e.offsetParent!==null; }).map(function(e){ return e.id; });
   var labs=[].slice.call(document.querySelectorAll("#joinExtra label")).map(function(l){ var i=l.querySelector("input"); return [l.textContent.trim(), !!(i&&i.checked)]; });
-  var se=document.scrollingElement||document.documentElement;
+  /* BODY is the scroller on these pages (html and body are height:100%, body overflow-x:hidden), so
+     document.scrollingElement.scrollHeight always reads the screen height: take the larger of html and body, and our
+     logo's foot, or a foot logo below the fold passes as "one screen" (M2 phone review, 19 Nov 2026) */
+  var de=document.documentElement, bd=document.body, ft=document.querySelector(".pfoot"), fr=(ft&&ft.offsetParent!==null)?ft.getBoundingClientRect():null;
   return JSON.stringify({ ids:ids, labs:labs, text:(v?v.innerText:""), btnBottom:Math.round(r.bottom), btnTop:Math.round(r.top), vh:innerHeight,
-    scroll:Math.round(se.scrollHeight), notme:!!document.getElementById("vpKnownNotMe"),
+    scroll:Math.round(Math.max(de.scrollHeight, bd.scrollHeight)), footBottom:(fr?Math.round(fr.bottom):0), notme:!!document.getElementById("vpKnownNotMe"),
     head:((document.getElementById("joinHead")||{}).textContent||""), keys:localStorage.getItem("vpKnownKeys") });
 })()"""
 def look(sid): return json.loads(ask(sid, LOOK) or '{}')
-def fits(L): return bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0) and L.get('scroll', 9999) <= L.get('vh', 0) + 1
+def fits(L):
+    """One screen, no scroll: Join on screen AND nothing below the fold (html/body scrollHeight, our logo's foot). When Join
+    is on screen but something is below, the answer is left to ok() for THIS row: red unless the row is in the dated
+    EXPECTED_RED list within its px (every fits() call here sits inside the ok() that reports it)."""
+    _SOFT['over'] = None
+    if not (bool(L) and L.get('btnBottom', 9999) <= L.get('vh', 0)): return False
+    over = max(L.get('scroll', 9999), L.get('footBottom', 0)) - L.get('vh', 0)
+    if over <= 1: return True
+    _SOFT['over'] = over
+    return True
 
 def fill(sid, vals):
     ask(sid, '(function(){ var v=%s; for(var k in v){ var e=document.getElementById(k); if(e){ e.value=v[k]; e.dispatchEvent(new Event("input",{bubbles:true})); } } return true; })()' % json.dumps(vals))
@@ -227,7 +269,7 @@ def phone(game, path, w, h):
         ask(sid, 'document.getElementById("joinBtn").click(); true')
         got = joins(c)
         ok('J %s %s: the join sends the first name and mobile' % (game, size), bool(got) and got[0].get('first_name') == 'Alan' and got[0].get('mobile') == '0412 345 678', got)
-        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-3-16nov', got)
+        ok('J %s %s: and says which notice it showed' % (game, size), bool(got) and got[0].get('notice_version') == 'vpn-1-19nov', got)
         ok('J %s %s: the key the Worker hands back is kept on the phone' % (game, size), until(sid, 'localStorage.getItem("vpKnownKeys")===%s' % json.dumps(json.dumps([KEY])), 6), ask(sid, 'localStorage.getItem("vpKnownKeys")'))
     finally:
         B.close_tab(tid)
@@ -241,7 +283,7 @@ def phone(game, path, w, h):
         kb = knowns(c)
         ok('K %s %s: /join/known was asked with the key' % (game, size), bool(kb) and KEY in (kb[-1].get('keys') or []), kb)
         ok('K %s %s: no name, no hello, only a small "Not my details" link' % (game, size), 'Not my details' in L.get('text', '') and L.get('notme') and 'alan' not in L.get('text', '').lower() and 'welcome' not in L.get('text', '').lower(), [L.get('head'), L.get('text')])
-        ok('K %s %s: the notice does not show again' % (game, size), 'A ticked box shares' not in L.get('text', ''), L.get('text'))
+        ok('K %s %s: the notice does not show again' % (game, size), NOTICE['after'].strip('. ') not in L.get('text', ''), L.get('text'))
         ok('K %s %s: no box for anything held (%s)' % (game, size, 'the team name only' if team else 'none at all'), L.get('ids') == (['nameIn'] if team else []), L.get('ids'))
         ok('K %s %s: no detail we hold anywhere on the screen (no number, no @)' % (game, size), '0412' not in L.get('text', '') and '@' not in L.get('text', ''), L.get('text'))
         ok('K %s %s: one screen, no scroll' % (game, size), fits(L), L)
@@ -311,7 +353,7 @@ def returning(game, path, w, h):
                 ok('R %s %s %s: the same venue already has it: the same line, no mobile row' % (game, size, tag), 'Mobile for' not in t and ('Playing as Grace, ' + MASK) in t and 'Not my number' not in t, t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
             ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
-            ok('R %s %s %s: no first-game notice again' % (game, size, tag), 'A ticked box shares' not in t, t)
+            ok('R %s %s %s: no first-game notice again' % (game, size, tag), NOTICE['after'].strip('. ') not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RSM':
                 if PRIV:
@@ -407,6 +449,7 @@ if __name__ == '__main__':
         try: B.close()
         except Exception: pass
         srv.shutdown()
+    stale_check()
     print('\n%d checks, %d failed' % (ran, bad))
     print('ALL %d CHECKS PASSED' % ran if not bad else 'FAILED %d of %d' % (bad, ran))
     sys.exit(1 if bad else 0)

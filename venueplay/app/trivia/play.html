@@ -285,7 +285,7 @@
 
   <!-- JOIN -->
   <div class="view center hidden" id="vJoin">
-    <div class="pbig">Join the<br>trivia</div>
+    <div class="pbig">Join the <br>trivia</div>
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
     <div class="field"><input type="text" id="nameIn" placeholder="Team name" maxlength="20" autocomplete="off"></div>
     <div id="joinExtra"></div>
@@ -1574,7 +1574,7 @@
            are asked of everyone, so the line says who gets them and why: "Your details go to {account owner} to run
            tonight's game and contact winners." The demo keeps its own words (its boxes stay optional). */
         /* REAL NIGHTS SAY NOTHING HERE (Dean 16 Nov 2026): the first-game notice (/app/vp-known.js, the Worker's one constant)
-           says what venueplay keeps and that a TICKED box shares details with that sender; never that the venue gets them. */
+           says what venueplay keeps and, beside the offers tick only, what the tick does; never that the venue gets them. */
         if(h && r && r.demo && c.marketing_optin){   // the demo keeps its own words (its boxes stay optional)
           var vn=((info && info.organiser) || P.venueName || "").trim();
           var n=document.createElement("p"); n.className="collectnote";
