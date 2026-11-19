@@ -88,6 +88,12 @@
 --     4 h host sign-out has closed every such tab; if any host is still mid-session anyway, tell them: reload the members
 --     console.
 --   * A host opening the account page's members download gets "nobody" (that download is the owner's and managers').
+--   * INTO THE SUNDAY TREE BY CHERRY-PICK ONLY, NEVER BY MERGE AT W1 (main review 2 S1, INBOX 734; trial 19 Nov):
+--     Sunday's W1 merges the Sunday candidate fbfba3d96 into post-Friday main and runs sun-resolve.py, which knows
+--     11 conflicted files. Merging (or fast-forwarding the candidate to) this branch there adds a 12th,
+--     RLS-BASELINE.json, and sun-resolve.py REFUSES ("conflicted files outside the expected 11"). So: W1 to W3 exactly
+--     as the RUNSHEET says (fbfba3d96, never this branch), commit; THEN cherry-pick this branch's commits in order and
+--     apply the Friday-merge patch (recipe: builds/members-access-19nov.md, "THE MERGE RECIPE FOR MAIN").
 --   PASTE ORDER: after 208 (and after 200; 213 may come before or after) AND after the 208 pages are live, Saturday 21
 --   Nov daytime, 4 h or more after Friday went live (INBOX 725, 730). Dean pastes
 --   the statements after the guard's END marker into the live SQL editor, then runs the READ-BACK queries at the end,
@@ -206,22 +212,35 @@ notify pgrst, 'reload schema';
 --   f) BEHAVIOUR, not just definitions (review 2 S4 + main review S3, INBOX 730: ONE block; NOT RUN anywhere yet). Reads as a real OWNER and a real HOST through
 --      row security, exactly as their signed-in pages would, and WRITES NOTHING: the block runs as one statement and
 --      always ends in its own raise, which rolls the whole statement back (set local role and the claims go with it).
---      Its result is the error text "READ-BACK f (nothing changed): ...". Find two ids first (read only):
---        select s.auth_user_id, s.venue_id, s.role from public.vp_venue_staff s
---         where s.role in ('owner', 'host') and s.auth_user_id is not null order by s.venue_id, s.role;
---      pick an owner and a host AT A VENUE WITH MEMBERS, put their auth_user_id in the two lines below, run it.
---      (A test venue such as the Mini Bar is fine.) It prints a VERDICT first:
+--      Its result is the error text "READ-BACK f (nothing changed): ...". Find two ids first (read only). The HOST
+--      must be a login that is NOT an owner or manager at ANY venue (main review 2 S5, INBOX 734): a person who owns
+--      venue A and hosts at venue B rightly reads venue A's full rows, so as "the host" it would say WRONG for nothing.
+--      This lookup lists only such hosts, and every venue's members count:
+--        select s.auth_user_id, s.venue_id, s.role,
+--               (select count(*) from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
+--                 where r.venue_id = s.venue_id) as members
+--          from public.vp_venue_staff s
+--         where s.auth_user_id is not null
+--           and (s.role = 'owner'
+--                or (s.role = 'host' and not exists (select 1 from public.vp_venue_staff o
+--                                                     where o.auth_user_id = s.auth_user_id
+--                                                       and o.role in ('owner', 'manager'))))
+--         order by s.venue_id, s.role;
+--      pick an owner and a host AT A VENUE WITH MEMBERS (members > 0), put their auth_user_id in the two lines below,
+--      run it. (A test venue such as the Mini Bar is fine.) The block checks the host again itself. It prints a
+--      VERDICT first:
 --        OK                      owner: table = view = the full count; host: table 0, view = the names count.
 --        WRONG                   a host reads the table, a host's view is short, or the owner lost rows: run the
 --                                ROLLBACK below STRAIGHT AWAY, then tell main (hosts or owners would be locked out).
---        NOT A TEST              the chosen venue has no members: pick another and run it again.
+--        NOT A TEST              the chosen venue has no members, or the "host" is an owner or manager somewhere:
+--                                pick another and run it again. Nothing to roll back.
 --      Any other error (for example the ids were not filled in): nothing changed; fix and run again. After OK, open the
 --      host console at that venue and see the members list.
 --   do $rb$
 --   declare
 --     owner_id text := '<OWNER auth_user_id>';
 --     host_id  text := '<HOST auth_user_id>';
---     owner_expected bigint; owner_view_expected bigint; host_expected bigint;
+--     owner_expected bigint; owner_view_expected bigint; host_expected bigint; host_owner_rows bigint;
 --     owner_table bigint; owner_view bigint; host_table bigint; host_view bigint; verdict text;
 --   begin
 --     select count(*) into owner_expected from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
@@ -231,6 +250,8 @@ notify pgrst, 'reload schema';
 --      where r.venue_id in (select s.venue_id from public.vp_venue_staff s where s.auth_user_id = owner_id::uuid);
 --     select count(*) into host_expected from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
 --      where r.venue_id in (select s.venue_id from public.vp_venue_staff s where s.auth_user_id = host_id::uuid);
+--     select count(*) into host_owner_rows from public.vp_venue_staff s
+--      where s.auth_user_id = host_id::uuid and s.role in ('owner', 'manager');
 --     perform set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
 --     perform set_config('request.jwt.claim.sub', owner_id, true);
 --     execute 'set local role authenticated';
@@ -242,6 +263,7 @@ notify pgrst, 'reload schema';
 --     execute 'select count(*) from public.v_vp_members_list' into host_view;
 --     verdict := case
 --       when owner_expected = 0 or host_expected = 0 then 'NOT A TEST'
+--       when host_owner_rows > 0 then 'NOT A TEST: that host is an owner or manager somewhere, pick another host'
 --       when owner_table = owner_expected and owner_view = owner_view_expected and host_table = 0
 --            and host_view = host_expected then 'OK'
 --       else 'WRONG: run the ROLLBACK now' end;

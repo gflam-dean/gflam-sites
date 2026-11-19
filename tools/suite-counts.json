@@ -1056,7 +1056,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-owner-manager-only.js": {
-  "checks": 70,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {

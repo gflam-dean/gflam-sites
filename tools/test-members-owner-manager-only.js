@@ -155,6 +155,48 @@ check('read-back f: the owner counts the view too, and the verdict is OK only fo
       && /when owner_table = owner_expected and owner_view = owner_view_expected and host_table = 0\s+and host_view = host_expected then 'OK'/.test(rbBody)
       && /else 'WRONG: run the ROLLBACK now' end;/.test(rbBody) && /when owner_expected = 0 or host_expected = 0 then 'NOT A TEST'/.test(rbBody)
       && /raise exception 'READ-BACK f \(nothing changed\): %\./.test(rbBody), rbBody.slice(-500));
+/* Main review 2 S5 (INBOX 734): the "host" in read-back f must not be an owner or manager ANYWHERE (a person who owns
+   venue A and hosts at venue B rightly reads A's full rows, and would make the verdict WRONG for nothing). The lookup
+   query is read out of the file and RUN as a model over staff rows; the block checks the host again itself. */
+var rbLook = (/(select s\.auth_user_id, s\.venue_id, s\.role,[\s\S]*?order by s\.venue_id, s\.role;)/.exec(rbfSql) || [])[1] || '';
+var lookNorm = rbLook.replace(/\s+/g, ' ');
+var lookHost = /or \(s\.role = '(\w+)' and not exists \(select 1 from public\.vp_venue_staff o where o\.(\w+) = s\.(\w+) and o\.role in \(([^)]*)\)\)\)\)/.exec(lookNorm);
+var lookOwner = /and \(s\.role = '(\w+)' or \(/.exec(lookNorm);
+function lookupPicks(rows) {   // the lookup's WHERE, as parsed from the file, over a list of staff rows
+  if (!lookHost || !lookOwner) return null;
+  var bad = lookHost[4].split(',').map(function (x) { return x.trim().replace(/'/g, ''); });
+  return rows.filter(function (s) {
+    if (s.auth_user_id == null) return false;
+    if (s.role === lookOwner[1]) return true;
+    return s.role === lookHost[1] && !rows.some(function (o) { return o[lookHost[2]] === s[lookHost[3]] && bad.indexOf(o.role) >= 0; });
+  }).map(function (s) { return s.role + ':' + s.auth_user_id + '@' + s.venue_id; });
+}
+var LOOK_ROWS = [
+  { auth_user_id: 'P', venue_id: 'A', role: 'owner' }, { auth_user_id: 'P', venue_id: 'B', role: 'host' },
+  { auth_user_id: 'M', venue_id: 'C', role: 'manager' }, { auth_user_id: 'M', venue_id: 'B', role: 'host' },
+  { auth_user_id: 'Q', venue_id: 'B', role: 'host' }, { auth_user_id: 'K', venue_id: 'A', role: 'marketing' },
+  { auth_user_id: 'K', venue_id: 'B', role: 'host' }, { auth_user_id: null, venue_id: 'B', role: 'host' },
+  { auth_user_id: 'O', venue_id: 'B', role: 'owner' }];
+var picks = lookupPicks(LOOK_ROWS);
+check('read-back f id lookup: hosts who are owner or manager at ANY other venue are never offered; plain hosts and owners are',
+      !!picks && picks.join(' ') === 'owner:P@A host:Q@B host:K@B owner:O@B'
+      && /\(select count\(\*\) from public\.vp_members m join public\.vp_member_rosters r on r\.id = m\.roster_id where r\.venue_id = s\.venue_id\) as members/.test(lookNorm),
+      [picks, lookNorm.slice(0, 160)]);
+check('read-back f checks the host itself: an owner or manager row anywhere = NOT A TEST, decided BEFORE the OK test',
+      /select count\(\*\) into host_owner_rows from public\.vp_venue_staff s\s+where s\.auth_user_id = host_id::uuid and s\.role in \('owner', 'manager'\);/.test(rbBody)
+      && /when host_owner_rows > 0 then 'NOT A TEST/.test(rbBody)
+      && rbBody.indexOf('when host_owner_rows > 0') > 0 && rbBody.indexOf('when host_owner_rows > 0') < rbBody.indexOf("then 'OK'"),
+      rbBody.slice(rbBody.indexOf('verdict :='), rbBody.indexOf('verdict :=') + 300));
+/* Main review 2 N1 + N2: every dynamic statement in the block is a count or the role switch (a quoted write would pass
+   the no-write check, which strips string literals), and the owner's view count covers EVERY staff row of the owner. */
+var rbExecs = rbBody.match(/execute '[^']*'/g) || [];
+check('read-back f: every execute is "set local role authenticated" or a select count(*) (no write hidden in a string)',
+      rbExecs.length === 5 && rbExecs.every(function (x) {
+        return x === "execute 'set local role authenticated'" || /^execute 'select count\(\*\) from public\.(vp_members|v_vp_members_list)'$/.test(x); }),
+      rbExecs);
+check('read-back f: the owner\'s expected VIEW count is every venue the owner is staff at, any role',
+      /select count\(\*\) into owner_view_expected from public\.vp_members m join public\.vp_member_rosters r on r\.id = m\.roster_id\s+where r\.venue_id in \(select s\.venue_id from public\.vp_venue_staff s where s\.auth_user_id = owner_id::uuid\);/.test(rbBody),
+      rbBody.slice(rbBody.indexOf('owner_view_expected from'), rbBody.indexOf('owner_view_expected from') + 220));
 check('the read-back asks for the live staff helper body and the role counts (read only)',
       /select pg_get_functiondef\('public\.vp_staff_venue_ids\(\)'::regprocedure\);/.test(SQL)
       && /select role, count\(\*\) from public\.vp_venue_staff group by role/.test(SQL));
@@ -186,6 +228,21 @@ reg226 = reg226.slice(0, (reg226.indexOf('\n\n') + 1 || reg226.length + 1) - 1);
 check('MIGRATIONS.md\'s 226 entry: no "either order with the pages"; the live-pages rule, INBOX 725, Saturday 4 h after Friday',
       reg226.length > 100 && !/either order with the pages/.test(reg226) && /contains\s+v_vp_members_list/.test(reg226)
       && /INBOX 725/.test(reg226) && /4 h or more after Friday went live/.test(reg226), reg226.slice(0, 300));
+/* Main review 2 S2 (INBOX 734): the register is what the Saturday paste page is built from, and these mutants were blind:
+   "AFTER Friday is LIVE and BEFORE Sunday's push" -> "in any order with Friday", "do not roll back" -> "roll back",
+   the live-page check sentence dropped. Pin each sentence, and the daytime + 4 h rule, in the 226 entry itself. */
+var reg226n = reg226.replace(/\s+/g, ' ');
+check('MIGRATIONS.md\'s 226 entry: AFTER Friday is LIVE and BEFORE Sunday\'s push, after the live host.html check; DAYTIME, 4 h after Friday',
+      /pasted in Saturday 21 Nov's paste sitting AFTER Friday is LIVE and BEFORE Sunday's push, after the read-only check that the live members\/host\.html contains v_vp_members_list; in DAYTIME and 4 h or more after Friday went live/.test(reg226n)
+      && !/in any order/i.test(reg226n), reg226n.slice(reg226n.indexOf('RULING'), reg226n.indexOf('RULING') + 330));
+check('MIGRATIONS.md\'s 226 entry: the red locks line between the paste and Sunday\'s push is expected: do not roll back',
+      /Between the paste and Sunday's push a live gate run is RED on the locks line: expected, do not roll back/.test(reg226n)
+      && (reg226n.match(/roll back/g) || []).length === 1, reg226n.slice(reg226n.indexOf('Between the paste'), reg226n.indexOf('Between the paste') + 140));
+/* Main review 2 S1 (INBOX 734): merging this branch at Sunday's W1 adds RLS-BASELINE.json to sun-resolve.py's 11
+   expected files and it refuses (trial 19 Nov). The header says cherry-pick only, after W1 to W3. */
+check('the header: into the Sunday tree by CHERRY-PICK ONLY after W1 to W3, never merged (or fast-forwarded) at W1',
+      /INTO THE SUNDAY TREE BY CHERRY-PICK ONLY, NEVER BY MERGE AT W1/.test(hdr) && /sun-resolve\.py REFUSES/.test(hdr)
+      && /W1 to W3 exactly\s*--\s*as the RUNSHEET says \(fbfba3d96, never this branch\), commit; THEN cherry-pick/.test(hdr), '');
 check('says WRITTEN, NOT RUN, and carries a rollback-safe line', /WRITTEN, NOT RUN/.test(SQL) && /^\s*--\s*rollback-safe:\s*\S/m.test(SQL));
 
 /* ---------------------------------------------------------------- 2. a row-security model built from the SQL */
