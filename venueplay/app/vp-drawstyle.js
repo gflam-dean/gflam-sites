@@ -94,6 +94,47 @@
     return { pos: pos, vel: vel, steps: steps, Tc: Tc };
   }
 
+  /* THE ROLL GLIDES (Dean, 19 Nov 2026, Jobs 515: the raffle draw ran "back to front" and "jumped from ticket to ticket"). The ticket roll and
+     the race plate move on this schedule, not on schedule() above (the flip board keeps that one: a split-flap does step).
+     Two faults, both measured (builds/draw-faults-515-516-19nov.md):
+       BACK TO FRONT: the reel ran at up to 0.37 of a ticket a frame at 60 frames a second and 0.73 at 30 (a TV stick). The tickets look
+       alike, so past half a ticket a frame the eye pairs each one with its neighbour and sees the reel run BACKWARDS (the wagon-wheel
+       effect). So the speed is capped at VMAX tickets a second: under a third of a ticket a frame at 25 frames a second.
+       JUMPS: the last four near misses each stood still, then snapped on in 0.26 s (37% of the draw stood still). Now one smooth glide: a
+       soft start, a steady run, then one long slow-down that ends exactly on the winner with no stop on the way.
+     pos(td) is item N - 1 (the last near miss) in the middle at `freeze`, where a stage with no pick yet holds; the winner lands at D, as before.
+     Presentation only: N is how many tickets pass, never who wins. */
+  var VMAX = 8, VMAX_CALM = 2.5;
+  /* the three parts of the glide: a soft start (Tu), a steady run to Tb, then the slow-down over the last 55% of the draw (Td) */
+  function phases(D) { var Tu = Math.min(0.6, 0.12 * D), Td = 0.55 * D; return { Tu: Tu, Td: Td, Tb: D - Td }; }
+  function glideN(D, vmax) {
+    var P = phases(D);
+    return Math.max(K + 2, Math.floor(vmax * (0.5 * P.Tu + (P.Tb - P.Tu) + 0.5 * P.Td)));
+  }
+  function glide(N, D, vmax) {
+    var P = phases(D), Tu = P.Tu, Td = P.Td, Tb = P.Tb;
+    var A = vmax * (0.5 * Tu + (Tb - Tu) + 0.5 * Td), k = N / A, V = vmax * k;   // k <= 1: the cap is never passed
+    function pos(td) {
+      if (td <= 0) return 0;
+      if (td >= D) return N;
+      var x;
+      if (td < Tu) { x = td / Tu; return V * Tu * (x * x * x - x * x * x * x / 2); }
+      if (td < Tb) return V * (0.5 * Tu + (td - Tu));
+      x = (td - Tb) / Td;
+      return V * (0.5 * Tu + (Tb - Tu)) + V * Td * (x - x * x * x + x * x * x * x / 2);
+    }
+    function vel(td) {
+      if (td <= 0 || td >= D) return 0;
+      var x;
+      if (td < Tu) { x = td / Tu; return V * (3 * x * x - 2 * x * x * x); }
+      if (td < Tb) return V;
+      x = (td - Tb) / Td; return V * (1 - 3 * x * x + 2 * x * x * x);
+    }
+    var a = Tb, b = D, i;   // the moment the last near miss is in the middle
+    for (i = 0; i < 60; i++) { var m = (a + b) / 2; if (pos(m) < N - 1) a = m; else b = m; }
+    return { pos: pos, vel: vel, steps: [], Tc: Tb, freeze: b, vmax: V };
+  }
+
   /* the claim line: ONE winner line everywhere (Dean, 10 Nov). Raffle: "Bring ticket 0472 to the host."; members: the card. */
   function claimLine(mode, numStr) { return mode === "members" ? "Bring your member card to the host." : "Bring ticket " + numStr + " to the host."; }
 
@@ -202,7 +243,9 @@
     if (o.prizeOf > 1 && o.prizeNo > 0) pnoEl.textContent = "Prize " + (o.prizeNo | 0) + " of " + (o.prizeOf | 0); else pnoEl.style.display = "none";
     var bigWin = style === "flip" && members && !!o.winnerBig;   // the winner takes the screen (off unless the venue switched it on)
     var drawnEl = (style === "flip" && !bigWin && !o.noClock) ? el("div", "vpds-drawn", stage) : null;   // the numbers-drawn strip goes with the new winner moment (INBOX 285a)
-    var C = { big: bigWin, members: members, n: n, DRAW: DRAW, R: R, st: st, world: world, prizeEl: prizeEl, claimEl: claimEl, o: o };
+    /* a viewer who asked for less motion (prefers-reduced-motion) gets a slower roll: fewer tickets pass, the same winner lands at the same time */
+    var calm = false; try { calm = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
+    var C = { big: bigWin, members: members, n: n, DRAW: DRAW, R: R, st: st, world: world, prizeEl: prizeEl, claimEl: claimEl, o: o, vmax: calm ? VMAX_CALM : VMAX };
     var view = null;
 
     function randNo() { return pad(lo + Math.floor(r() * span), n, members ? " " : "0"); }
@@ -312,8 +355,8 @@
     var built = false;
     function buildItemsOnce() {
       if (built) return; built = true;
-      var N = view.N; buildItems(N); st.S = schedule(N, K, DRAW, view.moveDur); view.S = st.S;
-      view.freezeT = INTRO + st.S.steps[K - 1].move - 0.02; view.after();
+      var N = view.N; buildItems(N); st.S = view.glide ? glide(N, DRAW, view.glide) : schedule(N, K, DRAW, view.moveDur); view.S = st.S;
+      view.freezeT = INTRO + (view.glide ? st.S.freeze : st.S.steps[K - 1].move - 0.02); view.after();
     }
     view.freezeT = 1e9;
     /* the item count depends on the style (how many fit per second), known before the build */
@@ -332,7 +375,7 @@
     }
     function ticketView(c) {
       var POOL = 9, pitch = members ? 608 : 636, W = members ? 560 : 600, H = members ? 353 : 320;
-      var v = { N: Math.round(c.DRAW * 5.2), moveDur: 0.26, freezeT: 1e9, S: null }, strip = el("div", "vpds-strip", c.world), els = [], k;
+      var v = { N: glideN(c.DRAW, c.vmax), glide: c.vmax, moveDur: 0.26, freezeT: 1e9, S: null }, strip = el("div", "vpds-strip", c.world), els = [], k;
       var logo = o.logo || "", vname = o.venueName || "";
       var numFs = Math.min(150, Math.round(150 * 4 / Math.max(4, n)));
       for (k = 0; k < POOL; k++) {
@@ -379,7 +422,7 @@
           }
           e.d.style.opacity = op;
           e.d.style.transform = "translate(" + (960 - W / 2 + x) + "px," + (470 - H / 2 + y) + "px) rotate(" + rot + "deg) scale(" + sc + ")";
-          e.card.style.boxShadow = "0 " + (18 + 30 * (sh - .35)) + "px " + (40 + 60 * (sh - .35)) + "px rgba(0,0,0," + sh + ")";
+          if (e.sh !== sh) { e.sh = sh; e.card.style.boxShadow = "0 " + (18 + 30 * (sh - .35)) + "px " + (40 + 60 * (sh - .35)) + "px rgba(0,0,0," + sh + ")"; }   // a soft shadow repainted on every card every frame cost a slow TV its frames (515): only when it changes
         }
         var b = ease.brand(seg(t, R + 1.1, R + 1.7)); claimEl.style.opacity = b; claimEl.style.transform = "translateY(" + ((1 - b) * 18) + "px)";
       };
@@ -508,7 +551,7 @@
 
     /* ------------------------------------------------------------------------------------------------ RACE PLATE */
     function raceView(c) {
-      var PITCH = 380, POOL = 5, v = { N: Math.round(c.DRAW * 4.6), moveDur: 0.2, freezeT: 1e9, S: null }, els = [];
+      var PITCH = 380, POOL = 5, v = { N: glideN(c.DRAW, c.vmax), glide: c.vmax, moveDur: 0.2, freezeT: 1e9, S: null }, els = [];
       var grp = el("div", "vpds-grp", c.world);
       /* ONE SLANT for the whole plate (Dean, 11 Nov: the bands did not line up). Every tier is cut from the same two slanted lines,
          so the top band, the pink rule, the white plate and the bottom band share left and right edges. The group is 646 tall;
@@ -563,5 +606,5 @@
     }
   }
 
-  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
+  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, glide: glide, glideN: glideN, VMAX: VMAX, VMAX_CALM: VMAX_CALM, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
 })(typeof window !== "undefined" ? window : this);

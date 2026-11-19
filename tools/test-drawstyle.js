@@ -6,6 +6,9 @@
      1. the draw time: short 6 s, normal 9 s, long 12 s; anything else is normal
      2. the build-up: the roll starts at the first item, passes the near misses one at a time, and ends exactly on the winner, never
         going backwards
+     2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026): run frame by frame at 60, 30 and 25 frames a second, the reel never
+        stops on the way, never moves more than a third of a ticket a frame (so it is never seen running backwards), changes speed smoothly,
+        lands exactly on the server's winner, and is calmer for a viewer who asked for less motion
      3. ONE winner line: "Bring ticket 0472 to the host." (the number once) and "Bring your member card to the host."
      4. SILENT: no sound of any kind in the draw looks
      5. the winner is only ever the server's: the stage holds until a pick arrives; the screens take it from t:"pick"
@@ -40,6 +43,41 @@ print('\n== 2. the build-up ==');
   show(k + ': stops on each of the ' + DS.K + ' near misses before the winner', holds === DS.K, holds);
   show(k + ': the last move onto the winner ends at the draw time', Math.abs(S.steps[DS.K - 1].end - D) < 1e-9, S.steps[DS.K - 1].end);
 });
+
+print('\n== 2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026: "back to front" and "jumps from ticket to ticket") ==');
+/* The roll is run frame by frame at the rates a pub TV draws: 60, 30 and 25 frames a second. Tickets look alike, so a reel that moves
+   more than half a ticket between two frames is SEEN running backwards; the old roll moved 0.73 of a ticket a frame at 30 frames a second.
+   The old roll also stood still on each of the last four near misses and snapped on (37% of the draw stood still). */
+(function () {
+  function frames(S, D, fps) {
+    var prev = 0, step = 0, maxStep = 0, maxChange = 0, stops = 0, back = 0, f, n = Math.round(D * fps);
+    for (f = 1; f <= n; f++) {
+      var p = S.pos(f / fps), d = p - prev;
+      if (d > maxStep) maxStep = d;
+      if (f > 1 && Math.abs(d - step) > maxChange) maxChange = Math.abs(d - step);
+      if (d < -1e-12) back++;
+      if (d < 1e-4 && f / fps > 0.1 && f / fps < D - 0.35) stops++;   // standing still between the soft start and the landing
+      step = d; prev = p;
+    }
+    return { maxStep: maxStep, maxChange: maxChange, stops: stops, back: back };
+  }
+  [['fast', DS.VMAX], ['short', DS.VMAX], ['normal', DS.VMAX], ['long', DS.VMAX], ['normal', DS.VMAX_CALM]].forEach(function (c) {
+    var k = c[0], vm = c[1], D = DS.secs(k), N = DS.glideN(D, vm), S = DS.glide(N, D, vm), name = k + (vm === DS.VMAX_CALM ? ' (less motion)' : '');
+    var f60 = frames(S, D, 60), f30 = frames(S, D, 30), f25 = frames(S, D, 25);
+    show(name + ': starts on item 0 and lands exactly on the winner (item ' + N + ') at the draw time', S.pos(0) === 0 && S.pos(D) === N && Math.abs(S.pos(D - 1e-9) - N) < 1e-6, [S.pos(0), S.pos(D), N]);
+    show(name + ': never goes backwards, at any frame rate', f60.back === 0 && f30.back === 0 && f25.back === 0, [f60.back, f30.back, f25.back]);
+    show(name + ': never stops on the way (no near-miss stop and snap)', f60.stops === 0 && f30.stops === 0, [f60.stops, f30.stops]);
+    show(name + ': never more than a third of a ticket a frame at 25 frames a second (so never seen running backwards)', f25.maxStep < 0.34 && f30.maxStep < 0.3, [f25.maxStep, f30.maxStep]);
+    show(name + ': the speed changes smoothly (at 60 frames a second no frame moves 0.01 of a ticket more or less than the one before; the old roll, 0.043)', f60.maxChange < 0.01, f60.maxChange);
+    show(name + ': the last near miss is in the middle at the hold point, before the draw time', Math.abs(S.pos(S.freeze) - (N - 1)) < 1e-6 && S.freeze < D - 0.2 && S.freeze > D * 0.5, [S.pos(S.freeze), S.freeze, D]);
+  });
+  var mod = MOD.replace(/\/\*[\s\S]*?\*\//g, '');
+  show('the ticket roll and the race plate run on the glide; the flip board keeps its flap steps', (mod.match(/N: glideN\(c\.DRAW, c\.vmax\), glide: c\.vmax/g) || []).length === 2 && /v = \{ N: Math\.round\(c\.DRAW \* 3\.6\), moveDur: 0\.13/.test(mod) && /st\.S = view\.glide \? glide\(N, DRAW, view\.glide\) : schedule\(N, K, DRAW, view\.moveDur\)/.test(mod));
+  show('the stage with no pick yet holds where the glide puts the last near miss in the middle', /view\.freezeT = INTRO \+ \(view\.glide \? st\.S\.freeze : st\.S\.steps\[K - 1\]\.move - 0\.02\)/.test(mod));
+  show('a viewer who asked for less motion gets the calm roll', /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/.test(mod) && /vmax: calm \? VMAX_CALM : VMAX/.test(mod) && DS.VMAX_CALM < DS.VMAX / 2);
+  show('the WINNER IS THE SERVER\'S, unchanged: setPick puts the server\'s number on item N, and every glide ends on item N', /st\.items\[st\.N\] = \{ no: st\.winNo, nm: st\.winName \}; st\.picked = true; clearWinFromReel\(\);/.test(mod) && ['fast', 'short', 'normal', 'long'].every(function (k) { var D = DS.secs(k), N = DS.glideN(D, DS.VMAX); return DS.glide(N, D, DS.VMAX).pos(D) === N && DS.glide(DS.glideN(D, DS.VMAX_CALM), D, DS.VMAX_CALM).pos(D) === DS.glideN(D, DS.VMAX_CALM); }));
+  show('a card\'s shadow is written only when it changes (a slow TV lost frames repainting it every frame)', /if \(e\.sh !== sh\) \{ e\.sh = sh; e\.card\.style\.boxShadow/.test(mod));
+})();
 
 print('\n== 3. one winner line ==');
 show('raffle: Bring ticket 0472 to the host.', DS.claimLine('raffle', '0472') === 'Bring ticket 0472 to the host.', DS.claimLine('raffle', '0472'));
