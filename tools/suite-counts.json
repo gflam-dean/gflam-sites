@@ -324,11 +324,11 @@
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
-  "checks": 20,
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/hq-tabs-in-chrome.test.py": {
-  "checks": 85,
+  "checks": 88,
   "counted_by": "lines"
  },
  "tools/leave-behinds-in-chrome.test.py": {
