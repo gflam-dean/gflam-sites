@@ -171,6 +171,11 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin:not(.hidden) ~ .pfoot.vph-has{padding-bottom:max(2px, env(safe-area-inset-bottom, 0px))!important}
   body #vJoin:not(.hidden) ~ .pfoot svg{width:104px}
   body #vJoin:not(.hidden) ~ .pfoot .vph-link{display:inline-flex;align-items:center;justify-content:center;font-size:14px;min-height:44px;min-width:44px;padding-top:0;padding-bottom:0}
+  /* known-phone states (M2 review SHOULD 3): "Each one uses your details under its own privacy policy..." was 13px
+     (vp-consent.js inline) and 12.5px (vp-long), the notice 12.5px in vp-long, the "Your new mobile" box and its button
+     40px (vp-known.js inline): 14px words and 44px taps, as the rest of the join screen */
+  body #vJoin .vpc3-note,body #vJoin.vp-long .vpc3-note,body #vJoin.vp-long .vp-joinnote{font-size:14px!important}
+  body #vJoin #vpNumIn,body #vJoin #vpNumGo{min-height:44px!important}
 }
 @media (max-height:660px){
   body #vJoin .pbig{font-size:26px;margin-bottom:0}
@@ -189,7 +194,26 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin .pnote{margin-top:4px;line-height:1.3}
   body #vJoin.center > .pnote{margin-left:-8px;margin-right:-8px}   /* the trivia line under Join: two lines, not three ("starts." alone), at 14px */
   body #vJoin:not(.hidden) ~ .pfoot svg{width:96px}
+  /* A COPY DECISION FOR MAIN (its own commit, M2 review (6), 19 Nov 2026): under 660px tall the "No app and no account"
+     line under Join goes (trivia and bingo; musical has none). The one line a player does not need to join; every
+     remaining over-the-fold case measured 0 with it gone. Never bingo's "Waiting for the host" line (#joinHostNote). */
+  body #vJoin .pnote:not(#joinHostNote){display:none}
 }
+/* The Join button label on bingo and musical (main INBOX 755, 19 Nov 2026): white on our pink #FF1F8E is 3.6:1 in both
+   themes. Near-black label, as trivia's Join already is (5.5:1); the pink fill stays. While pressed the fill goes deep
+   pink #C70F69, so the label is white there (5.7:1). The disabled "Loading..." grey button is unchanged. */
+body #vJoin #joinBtn.vp-cta:not(:disabled){color:#0A0A0B}
+body #vJoin #joinBtn.vp-cta:active:not(:disabled){color:#fff}
+/* Placeholders on the join step (M2 review SHOULD 4): the browser's #757575 measured 3.88:1 dark and 3.89:1 light; the
+   page's muted colour in either theme (each page sets --muted for dark and light). The new-mobile box is drawn dark in
+   both themes (vp-known.js inline #17171A), so its placeholder keeps the dark muted grey. */
+body #vJoin input::placeholder{color:var(--muted,#9A9AA4);opacity:1}
+body #vJoin #vpNumIn::placeholder{color:#9A9AA4}
+/* "Use this" / "Different email" (an email we hold, not yet this venue's) were 38px taps (vp-known.js inline). 44px from
+   600px tall (extras review SHOULD 3, 19 Nov 2026): measured no change to the fit at 360x640 and taller; on 320x568 and
+   375x548 the 6px more would push our logo and Help further below the screen (musical 2 -> 8px, trivia 27 -> 33px), so
+   those stay 38px until the trivia "Use this" screen fits there (next release). */
+@media (min-height:600px){body #vJoin .vpk-use button{min-height:44px!important}}
 /* THE LIGHT SCREEN ON THE JOIN STEP (M2 phone review, 19 Nov 2026): the pages set white or pale grey words for the dark
    screen, and on the light screen ("Light screen" in the player's menu, kept on the phone) the consent words were close to
    unreadable: the offers tick label 1.14:1 (musical) and 1.38:1 (bingo), the join notice 2.0 to 2.5:1, the room code 1.4:1,
@@ -198,6 +222,25 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
 body.light #vJoin .optin{color:var(--text,#191420)}                   /* beats bingo/musical "#vJoin .optin{color:#fff}" */
 body.light #vJoin .vp-sub .mono{color:var(--text,#191420)}            /* the bingo room code */
 body.light #vJoin .psub #joinCode{color:#8a6100!important}             /* the trivia room code (inline color:var(--gold)) */
-body.light .pfoot svg{color:#191420}                                   /* our logo (trivia already had this) */
+/* Our foot logo: ON PURPOSE NOT scoped to the join step (M2 review SHOULD 6). It darkens our logo on EVERY light screen
+   of the bingo and musical phones, in game too (white on pale, 1.14 to 1.38:1, before); trivia's page already had this
+   rule. No page draws a dark band behind .pfoot. The one light rule here outside #vJoin. */
+body.light .pfoot svg{color:#191420}
+/* Help beside it, the same way and on purpose unscoped (M2 extras review SHOULD 2, 19 Nov 2026): vp-help.js #9A9AA4
+   measured 2.02:1 (bingo) and 2.45:1 (trivia, musical) on every in-game light screen; the join step had its own rule. */
+body.light .pfoot .vph-link{color:var(--muted,#5c5666)}
 body.light #vJoin .vp-joinnote{color:var(--muted,#5c5666)!important}   /* the notice (vp-known.js writes #9A9AA4 inline) */
 body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--muted,#5c5666)}   /* "You are joining room" (not the pink venue line) and the line under Join */
+/* The error line and Help on the light screen's join step (independent review SHOULD 1, 19 Nov 2026): the error line
+   ("That mobile number doesn't look right", the pages' amber #F5A524) measured 1.48 to 1.80:1 and Help (#9A9AA4 from
+   vp-help.js) 2.02 to 2.45:1 on the pale background. Dark amber and the page's muted colour; dark screen untouched. */
+body.light #vJoin .cerr,body.light #vJoin .vp-err{color:#7a4f00}
+body.light #vJoin:not(.hidden) ~ .pfoot .vph-link{color:var(--muted,#5c5666)}
+/* The known-phone states on the light screen (main's rule 744: consent words >= 4.5:1; found 19 Nov 2026): vp-known.js
+   and vp-consent.js write dark-screen colours inline (#fff, #E7E7EC, #C9C9D1, #9A9AA4, #FF8FA3), which beat the page's
+   light colours: "Playing as" 1.06 to 1.12:1, the consent heading 1.14 to 1.38, "Each one uses your details..." 2.02 to
+   2.45, Not me / Not my number / Not my details / Cancel 1.16 to 1.45. !important beats the inline style; light only.
+   The new-mobile box and the Use this buttons keep their own dark fill, so their words stay as they are. */
+body.light #vJoin #vpPlayingAs,body.light #vJoin #vpNumSay,body.light #vJoin .vpk-use > div:first-child,body.light #vJoin .vpc3-head{color:var(--text,#191420)!important}
+body.light #vJoin #vpKnownHi,body.light #vJoin .vpc3-note,body.light #vJoin #vpKnownNotMe,body.light #vJoin #vpKnownNotNum,body.light #vJoin #vpNumAgain,body.light #vJoin #vpNumCancel{color:var(--muted,#5c5666)!important}
+body.light #vJoin #vpNumErr{color:#a3123a!important}
