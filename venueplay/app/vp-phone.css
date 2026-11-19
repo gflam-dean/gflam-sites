@@ -219,3 +219,11 @@ body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--mu
    vp-help.js) 2.02 to 2.45:1 on the pale background. Dark amber and the page's muted colour; dark screen untouched. */
 body.light #vJoin .cerr,body.light #vJoin .vp-err{color:#7a4f00}
 body.light #vJoin:not(.hidden) ~ .pfoot .vph-link{color:var(--muted,#5c5666)}
+/* The known-phone states on the light screen (main's rule 744: consent words >= 4.5:1; found 19 Nov 2026): vp-known.js
+   and vp-consent.js write dark-screen colours inline (#fff, #E7E7EC, #C9C9D1, #9A9AA4, #FF8FA3), which beat the page's
+   light colours: "Playing as" 1.06 to 1.12:1, the consent heading 1.14 to 1.38, "Each one uses your details..." 2.02 to
+   2.45, Not me / Not my number / Not my details / Cancel 1.16 to 1.45. !important beats the inline style; light only.
+   The new-mobile box and the Use this buttons keep their own dark fill, so their words stay as they are. */
+body.light #vJoin #vpPlayingAs,body.light #vJoin #vpNumSay,body.light #vJoin .vpk-use > div:first-child,body.light #vJoin .vpc3-head{color:var(--text,#191420)!important}
+body.light #vJoin #vpKnownHi,body.light #vJoin .vpc3-note,body.light #vJoin #vpKnownNotMe,body.light #vJoin #vpKnownNotNum,body.light #vJoin #vpNumAgain,body.light #vJoin #vpNumCancel{color:var(--muted,#5c5666)!important}
+body.light #vJoin #vpNumErr{color:#a3123a!important}
