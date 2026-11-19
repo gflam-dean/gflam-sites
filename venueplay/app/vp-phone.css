@@ -203,14 +203,6 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
    (vp-known.js inline padding 0 / 6px). Padding on the button itself makes each a 44px tap; the equal negative margin
    keeps the line where it was, so nothing moves and no screen gets taller. Words and font unchanged. Every height. */
 body #vJoin #vpKnownNotMe,body #vJoin #vpKnownNotNum{display:inline-block;min-height:44px;padding-top:12px!important;padding-bottom:12px!important;margin-top:-12px!important;margin-bottom:-12px!important}
-/* ...and the tap is really theirs, but never a box's (M2 extras review MUST 1 + 3, 19 Nov 2026). Without a stacking order
-   the next block in the page (#joinExtra, the empty #joinErr) won the lower 10 to 12px of every link, and where the box
-   reached the Team name box above, the link won (a tap there forgot the player). So: the links sit over plain space and
-   empty blocks (z-index 1), and every box, tick row, Use this button and Join on a known-phone join step sits over the
-   links (z-index 2). Each link's tap is then its 44px box less only what a real control needs, whatever the game, size
-   or state: the padding reaches as deep as the gap and no further. Nothing moves; no screen gets taller. */
-body #vJoin #vpKnownNotMe,body #vJoin #vpKnownNotNum{position:relative;z-index:1}
-body #vJoin:has(#vpKnownHi) input:not([type=checkbox]):not([type=radio]):not([type=hidden]),body #vJoin:has(#vpKnownHi) .optin,body #vJoin:has(#vpKnownHi) .vpk-use button,body #vJoin:has(#vpKnownHi) #joinBtn{position:relative;z-index:2}
 /* The Join button label on bingo and musical (main INBOX 755, 19 Nov 2026): white on our pink #FF1F8E is 3.6:1 in both
    themes. Near-black label, as trivia's Join already is (5.5:1); the pink fill stays. While pressed the fill goes deep
    pink #C70F69, so the label is white there (5.7:1). The disabled "Loading..." grey button is unchanged. */
