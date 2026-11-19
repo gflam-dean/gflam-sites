@@ -17,6 +17,13 @@
      4. reads RLS-BASELINE.json and COLUMNS-BASELINE.json (hand-written from the SQL; the live dump wins);
      5. reads REFERENCE-vp-staff-venue-ids-READ-ONLY.sql: the staff helper written down, nothing runnable.
 
+   WHAT THE MODEL DOES NOT DO (review 1 S2). It models ONE policy on vp_members (tableRead takes one using text); it
+   does not model several permissive policies OR-ing together. So "the old any-staff policy was kept beside the new
+   one" is caught by the text checks in part 1 (drop policy if exists vp_members_host_select; exactly one create
+   policy), not by the model, and on live by main's read-only check 4 (pg_policies on vp_members: exactly one row).
+   The helper body is pinned word for word (whitespace-normalised) because the model always ANDs uid and role: an
+   AND turned to OR, or a UNION added, would not change what the model lets through (review 1 S1).
+
    Run:  jsc tools/test-members-owner-manager-only.js
 */
 var PASS = 0, FAIL = 0;
@@ -48,13 +55,29 @@ var pre = /do \$pre\$([\s\S]*?)\$pre\$;/.exec(live);
 check('a refusal block runs before any change', !!pre && live.indexOf(pre[0]) < live.indexOf('create or replace function'));
 check('it refuses when the names view (208) is missing',
       !!pre && /to_regclass\('public\.v_vp_members_list'\) is null then\s*raise exception 'REFUSED/.test(pre[1]));
-var allowed = pre && /column_name not in \(([^)]*)\)/.exec(pre[1]);
+var allowed = pre && /a\.attname::text not in \(([^)]*)\)/.exec(pre[1]);
 var allowedList = allowed ? allowed[1].split(',').map(function (c) { return c.trim().replace(/'/g, ''); }) : [];
 check('it refuses when the view names any column but the seven names columns',
       allowedList.slice().sort().join(',') === NAMES.slice().sort().join(',') && /if extra is not null then\s*raise exception 'REFUSED/.test(pre[1]), allowedList);
+/* Review 1 S5: information_schema.columns shows only the columns the running role may read; pg_attribute shows all. */
+check('it reads the view\'s columns from pg_attribute (every live column), not information_schema',
+      !!pre && /from pg_attribute a\s+where a\.attrelid = 'public\.v_vp_members_list'::regclass and a\.attnum > 0 and not a\.attisdropped\s/.test(pre[1])
+      && !/information_schema\.columns[^;]*v_vp_members_list/.test(pre[1]), pre && pre[1]);
+/* ...and refuses a names column COMPUTED from a contact or birth column, by reading the view's definition. The pattern
+   is RUN here (Postgres word marks \m and \M read as \b): 208's view must pass, a view naming any contact, consent,
+   note or birth column must not. */
+var vdef = pre && /if pg_get_viewdef\('public\.v_vp_members_list'::regclass\) ~\* '([^']*)' then\s*raise exception 'REFUSED/.exec(pre[1]);
+var vdefRe = null;
+try { vdefRe = vdef ? new RegExp(vdef[1].replace(/\\[mM]/g, '\\b'), 'i') : null; } catch (e) { vdefRe = null; }
+var view208 = /create or replace view public\.v_vp_members_list[^;]*;/i.exec(strip(SQL208));
+check('it refuses when the view\'s definition reads email, mobile, postcode, consent, note or a birth column (208\'s passes)',
+      !!vdefRe && !!view208 && !vdefRe.test(view208[0])
+      && ['m.email', 'm.mobile', 'm.postcode', 'm.marketing_optin', 'm.marketing_optin_at', 'm.birth_year', 'm.birth_month',
+          'm.date_of_birth', 'm.note', 'left(m.email, 3) as first_name'].every(function (c) { return vdefRe.test('select ' + c + ' from x'); }),
+      vdef && vdef[1]);
 
-var fn = /create or replace function public\.vp_owner_manager_venue_ids\(\)\s*returns setof uuid\s*language sql\s*stable\s*security definer\s*set search_path = public\s*as \$fn\$([\s\S]*?)\$fn\$;/.exec(live);
-check('the helper: returns setof uuid, sql, stable, SECURITY DEFINER, search_path pinned', !!fn);
+var fn = /create or replace function public\.vp_owner_manager_venue_ids\(\)\s*returns setof uuid\s*language sql\s*stable\s*security definer\s*set search_path = ''\s*as \$fn\$([\s\S]*?)\$fn\$;/.exec(live);
+check('the helper: returns setof uuid, sql, stable, SECURITY DEFINER, search_path pinned to \'\' (review 1 S6)', !!fn);
 var fnBody = fn ? fn[1] : '';
 var roleM = /\bs\.role in \(([^)]*)\)/.exec(fnBody);
 var ROLES = roleM ? roleM[1].split(',').map(function (x) { return x.trim().replace(/'/g, ''); }) : [];
@@ -62,6 +85,11 @@ check('the helper reads vp_venue_staff for the CALLER only (auth.uid())',
       /from public\.vp_venue_staff s\b/.test(fnBody) && /s\.auth_user_id = auth\.uid\(\)/.test(fnBody) && /select s\.venue_id\b/.test(fnBody));
 check('the helper names exactly owner and manager (no host, no marketing)',
       ROLES.slice().sort().join(',') === 'manager,owner', ROLES);
+/* Review 1 S1: the WHOLE body, word for word. An "or s.role in" or a "union select v.id from vp_venues" passed every
+   fragment check above and the model (which always ANDs uid and role). */
+var HELPER_BODY = "select s.venue_id from public.vp_venue_staff s where s.auth_user_id = auth.uid() and s.role in ('owner', 'manager')";
+check('the helper body is exactly: the caller\'s own staff rows AND role owner or manager, nothing else',
+      fnBody.replace(/\s+/g, ' ').trim() === HELPER_BODY, fnBody.replace(/\s+/g, ' ').trim());
 var fgr = live.match(/(grant|revoke)[^;]*vp_owner_manager_venue_ids[^;]*;/g) || [];
 check('the helper: everything revoked first, then execute to authenticated and service_role only, never anon',
       fgr.length === 3 && /^revoke all on function public\.vp_owner_manager_venue_ids\(\) from public, anon, authenticated;$/.test(fgr[0])
@@ -94,6 +122,13 @@ check('the rollback puts the any-staff policy back and drops the helper',
 check('the read-back asks for the live staff helper body and the role counts (read only)',
       /select pg_get_functiondef\('public\.vp_staff_venue_ids\(\)'::regprocedure\);/.test(SQL)
       && /select role, count\(\*\) from public\.vp_venue_staff group by role/.test(SQL));
+/* Review 1 M1: the pages live on 19 Nov read the TABLE only; after 226 a host's list is empty and the draw refuses. The
+   header must carry the order rule and the page check, and must not repeat the false "older pages fall through". */
+var hdr = SQL.slice(0, g0);
+check('the header: 226 only AFTER a live members/host.html contains v_vp_members_list, NEVER before Friday ships the 208 pages',
+      /226 is pasted ONLY AFTER a members\/host\.html containing v_vp_members_list is live, and NEVER before Friday\s*--\s*ships the 208 pages/.test(hdr)
+      && /GET the live members\/host\.html and confirm it contains\s*--\s*v_vp_members_list/.test(hdr)
+      && !/Older pages \(live today/.test(hdr) && !/either order with the pages is safe/.test(hdr), hdr.slice(hdr.indexOf('-- ORDER'), hdr.indexOf('-- ORDER') + 300));
 check('says WRITTEN, NOT RUN, and carries a rollback-safe line', /WRITTEN, NOT RUN/.test(SQL) && /^\s*--\s*rollback-safe:\s*\S/m.test(SQL));
 
 /* ---------------------------------------------------------------- 2. a row-security model built from the SQL */

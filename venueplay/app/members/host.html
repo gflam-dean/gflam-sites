@@ -1203,18 +1203,25 @@
        is missing (a database before 208), and then with NAMED COLUMNS, never "*". A venue with nobody on its list gets
        nobody from either. */
     var NAMES = "id,roster_id,member_number,first_name,last_name,status,updated_at";
-    var PAGE = 1000, out = [], from = 0, rel = "v_vp_members_list";
+    var PAGE = 1000, out = [], from = 0, rel = "v_vp_members_list", viewErr = null;
     function nextPage(){
       return client.from(rel).select(NAMES).in("roster_id", ids)
         .order("member_number",{ascending:true}).order("id",{ascending:true})
         .range(from, from + PAGE - 1)
         .then(function(r){
-          if(rel === "v_vp_members_list" && from === 0 && r && r.error){ rel = "vp_members"; return nextPage(); }
+          if(rel === "v_vp_members_list" && from === 0 && r && r.error){
+            /* No view at all (a database before 208) is a plain fallback. Any OTHER view error is kept: after 226 a
+               host reads nobody from the table, so an empty table answer after it is "could not load", never an
+               empty list (review 1 S3). */
+            if(!/^(PGRST205|42P01)$/.test(String(r.error.code || ""))) viewErr = r;
+            rel = "vp_members"; return nextPage();
+          }
           /* A FAILED page is not an empty one. Read as empty, it ends the loop and hands back a
              short list with no error, which is the exact truncation this loop exists to stop. */
           if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your members list", r);
           var rows = r.data;
           if(!rows.length && from === 0 && rel === "v_vp_members_list"){ rel = "vp_members"; return nextPage(); }
+          if(!rows.length && from === 0 && viewErr) throw loadFail("your members list", viewErr);
           if(!rows.length) return out;            // empty page: that is the end
           out = out.concat(rows);
           from += rows.length;

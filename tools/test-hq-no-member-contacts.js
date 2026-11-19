@@ -91,7 +91,8 @@ function fakeClient(who, viewMissing, tableFails, log) {
               res = head ? { count: rows.length, data: null } : { data: rows.slice(lo, hi + 1) };
             }
           } else if (rel === 'v_vp_members_list') {
-            if (viewMissing) res = { error: { code: 'PGRST205', message: 'relation does not exist' } };
+            if (viewMissing === 'transient') res = { error: { code: '57014', message: 'canceling statement due to statement timeout' } };
+            else if (viewMissing) res = { error: { code: 'PGRST205', message: 'relation does not exist' } };
             else {
               var want = cols === '*' ? null : cols.split(',');
               if (want && want.some(function (c) { return ['id', 'roster_id', 'member_number', 'first_name', 'last_name', 'status', 'updated_at'].indexOf(c) < 0; }))
@@ -145,6 +146,16 @@ var chain = Promise.resolve()
   })
   .then(function () { return runHost('staff', true, true); }).then(function (r) {
     check('no view and a FAILED table read still throws (never read as an empty list)', !!r.error, r);
+  })
+  /* Review 1 S3: a view that ERRORS (not missing) and a table that answers nobody (a host after 226, HQ) is "could not
+     load", never an empty list; the venue's owner still gets the list from the table. */
+  .then(function () { return runHost('admin', 'transient'); }).then(function (r) {
+    check('a view ERROR then an empty table answer shows "could not load", not an empty list',
+          !!r.error && /could not load/.test(String(r.error.message)) && r.log[1] === 'vp_members id,roster_id,member_number,first_name,last_name,status,updated_at', r);
+  })
+  .then(function () { return runHost('staff', 'transient'); }).then(function (r) {
+    check('a view ERROR: the owner and managers still get the list by name from the table', r.rows && r.rows.length === 5 && !r.error
+          && r.log[1] === 'vp_members id,roster_id,member_number,first_name,last_name,status,updated_at', r.log);
   });
 
 /* ---------------------------------------------------------------- 3. the account page's count */

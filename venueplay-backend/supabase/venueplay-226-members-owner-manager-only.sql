@@ -25,7 +25,8 @@
 -- the SAME database role, authenticated, so a column-level grant cannot tell a host from an owner. Row security can, so:
 --   1. new helper public.vp_owner_manager_venue_ids(): the caller's venues where its staff row is owner or manager.
 --      SECURITY DEFINER (vp_venue_staff's own read policy calls vp_staff_venue_ids(), and a plain function here would
---      run under that policy), STABLE, search_path pinned, EXECUTE for authenticated and service_role only.
+--      run under that policy), STABLE, search_path pinned to '' (every name in it is schema-qualified; review 1 S6),
+--      EXECUTE for authenticated and service_role only.
 --   2. vp_members_host_select is DROPPED and replaced by vp_members_owner_manager_select: FOR SELECT to authenticated,
 --      rows of rosters at vp_owner_manager_venue_ids(). The only other policy on vp_members after 208 is none (208
 --      dropped vp_members_admin_all), so the full row (every contact and birth column, now and later) is the owner's
@@ -49,17 +50,29 @@
 --   anon                           nothing / nothing             (as before)
 --   service_role (Workers)         every column / every row      (bypasses row security, as before)
 --
--- ORDER (read this). NEEDS 208 FIRST (the view). Then either order with the pages is safe:
---   * Pages that ship WITH this branch (members/host.html reads the view first) work before and after 226.
---   * Older pages (live today, Friday b0f40422 and the Sunday candidate) read the TABLE first and, when its first page
---     is empty, read v_vp_members_list. After 226 a host's table read is empty, so those pages fall through to the
---     view and show the same names. billing.html's count does the same (table, then the view on 0).
+-- ORDER (read this; review 1, 19 Nov: the earlier "older pages fall through to the view" line was FALSE for live).
+--   * NEEDS 208 FIRST (the view). 226 refuses without it.
+--   * NEEDS THE 208 PAGES LIVE FIRST. Only a members/host.html that contains v_vp_members_list reads names through the
+--     view. Checked 19 Nov: the page live today (origin/main efc35a343, host.html:1172 `select("*")` on vp_members) and
+--     the Friday BASE b0f404229 (host.html:1182, named columns) read the TABLE ONLY, with no view anywhere in host.html
+--     or billing.html. On those pages, after 226 a host's table read returns nobody, the list is empty and the draw
+--     refuses ("No active members to draw from", efc35a343 host.html:914): hosts CANNOT run a members draw. That is a
+--     game break. Pages that DO fall through to the view: Friday HEAD b292c86e1, the Sunday candidate fbfba3d96, and
+--     this branch (view first). billing.html's members count on efc35a343 has no view fallback either (a host would
+--     see 0 there; cosmetic).
+--   * RULE: 226 is pasted ONLY AFTER a members/host.html containing v_vp_members_list is live, and NEVER before Friday
+--     ships the 208 pages. Pre-paste check (main, read only): GET the live members/host.html and confirm it contains
+--     v_vp_members_list (this file cannot read a web page, so the check is main's, item 10 in the build note).
+--   * If Friday slips, or ships without the 208 pages, 226 waits until AFTER Sunday's push. That clashes with the
+--     "migrations before the push" rule and the release tool's refusal: a decision for main and Dean, made before
+--     the night (options in ~/venue-enrich/builds/members-access-19nov.md).
 --   * A host opening the account page's members download gets "nobody" (that download is the owner's and managers').
---   PASTE ORDER: after 208 (and after 200; 213 may come before or after). Dean pastes the statements after the guard's
---   END marker into the live SQL editor, then runs the READ-BACK queries at the end, then main re-dumps
---   RLS-BASELINE.json (one policy swapped, one definer function added).
--- rollback-safe: every build since 208's pages (17 Nov) keeps working after this runs: the host console and the account
---   count fall through to v_vp_members_list when the table answers nobody; the Workers use the service key.
+--   PASTE ORDER: after 208 (and after 200; 213 may come before or after) AND after the 208 pages are live. Dean pastes
+--   the statements after the guard's END marker into the live SQL editor, then runs the READ-BACK queries at the end,
+--   then main re-dumps RLS-BASELINE.json (one policy swapped, one definer function added).
+-- rollback-safe: rolling 226 back (ROLLBACK below) restores the any-staff read, so every page build works after a
+--   rollback. Going FORWARD is not page-safe on every build: only pages containing v_vp_members_list (Friday head
+--   b292c86e1 or later) keep hosts' names after 226; the Workers use the service key and are unaffected.
 -- =====================================================================
 -- VP-STAGING-GUARD-BEGIN
 do $guard$
@@ -94,12 +107,18 @@ begin
   if to_regclass('public.v_vp_members_list') is null then
     raise exception 'REFUSED: v_vp_members_list (migration 208) is missing. Run 208 first, or hosts lose the members names. Nothing was changed.';
   end if;
-  select string_agg(column_name, ', ' order by column_name) into extra
-    from information_schema.columns
-   where table_schema = 'public' and table_name = 'v_vp_members_list'
-     and column_name not in ('id', 'roster_id', 'member_number', 'first_name', 'last_name', 'status', 'updated_at');
+  -- pg_attribute, not information_schema.columns: information_schema shows only the columns the running role holds a
+  -- privilege on, pg_attribute shows every column the view has.
+  select string_agg(a.attname::text, ', ' order by a.attname::text) into extra
+    from pg_attribute a
+   where a.attrelid = 'public.v_vp_members_list'::regclass and a.attnum > 0 and not a.attisdropped
+     and a.attname::text not in ('id', 'roster_id', 'member_number', 'first_name', 'last_name', 'status', 'updated_at');
   if extra is not null then
     raise exception 'REFUSED: v_vp_members_list names more than the names columns (%). Hosts read it after this. Nothing was changed.', extra;
+  end if;
+  -- A names column COMPUTED from a contact or birth column would pass the name test, so the definition is read too.
+  if pg_get_viewdef('public.v_vp_members_list'::regclass) ~* '\m(email|mobile|postcode|note|marketing_optin\w*|birth\w*|date_of_birth)\M' then
+    raise exception 'REFUSED: v_vp_members_list''s definition reads a contact, consent, note or birth column. Hosts read it after this. Nothing was changed.';
   end if;
   if not exists (select 1 from information_schema.columns
                   where table_schema = 'public' and table_name = 'vp_venue_staff' and column_name = 'role') then
@@ -114,7 +133,7 @@ returns setof uuid
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $fn$
   select s.venue_id
     from public.vp_venue_staff s
