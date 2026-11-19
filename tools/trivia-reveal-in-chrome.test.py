@@ -2,7 +2,8 @@
 """THE TRIVIA REVEAL MOMENT, AS CHROME PAINTS IT (Dean, 5 Nov 2026, INBOX items 26 to 28).
 
 On the TV reveal the timer's spot becomes a solid green disc with the right answer's letter and a tick; the right
-card glows and pulses 3 times, then stays lit; the wrong cards KEEP THEIR OWN COLOURS, softened to about 40 to 45%
+card glows ONCE, then stays lit (3 pulses until INBOX 778(a), 19 Nov 2026: the room saw it go green again and
+again); the wrong cards KEEP THEIR OWN COLOURS, softened to about 40 to 45%
 and still readable, never grey; nothing moves; picture questions get the same disc; motion under 3 flashes a second,
 and none at all under prefers-reduced-motion.
 
@@ -207,7 +208,7 @@ def wall(B, base, w, h):
     CA, GK = A.get('card') or {}, A.get('glowKf') or {}
     ok(tag + ': the right card glows: Chrome runs vpGlow on it, and its keyframes parse (3 steps, the green glow)',
        CA.get('name') == 'vpGlow' and GK.get('frames') == 3 and 'box-shadow' in (GK.get('text') or ''), [CA, GK.get('frames')])
-    ok(tag + ': it pulses 3 times, then holds lit (not for ever)', CA.get('iters') == '3', CA)
+    ok(tag + ': it glows once, then holds lit (not 3 pulses, not for ever; INBOX 778(a))', CA.get('iters') == '1', CA)
     d = float((CA.get('dur') or '0s').rstrip('s') or 0)
     ok(tag + ': under 3 flashes a second', d > 0 and 1.0 / d < 3, CA.get('dur'))
     MA, TA = A.get('mark') or {}, A.get('tick') or {}

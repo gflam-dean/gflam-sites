@@ -1,7 +1,7 @@
 /* THE TRIVIA REVEAL MOMENT (Dean, 5 Nov 2026, INBOX items 26 to 28).
 
    On the TV reveal: the timer's spot becomes a solid green disc with the right answer's letter (as big and bold as
-   idea 3's) and a tick; the right card glows and pulses 3 times, then stays lit; the wrong cards KEEP THEIR OWN
+   idea 3's) and a tick; the right card glows once, then stays lit (was 3 pulses until INBOX 778(a), 19 Nov 2026); the wrong cards KEEP THEIR OWN
    COLOURS and stay readable, softened to about 40 to 45%, never grey; nothing moves; picture questions get the same
    disc; motion under 3 flashes a second, silent, and none at all under prefers-reduced-motion.
 
@@ -10,7 +10,10 @@
      1. the disc carries the right answer's letter for A, B, C and D, and no disc for a reveal without a valid answer
      2. the wrong cards: softened to 40 to 45%, their own colour classes kept, no grey filter anywhere on them
      3. the disc: green, in the ring's exact spot (and the picture ring's), the letter at least idea 3's 9.5cqw
-     4. the motion: 3 pulses, under 3 a second, nothing infinite, all of it off under prefers-reduced-motion
+     4. the motion: ONE glow, then held lit (INBOX 778(a), 19 Nov 2026: it pulsed 3 times and the room saw the answer
+        go green, then again, then again), nothing infinite, all of it off under prefers-reduced-motion
+     5. once per reveal: a replay of the answer already up (a TV that loaded on the answer, the console back from
+        sleep, the answer replayed over a round's podium) is not played again; a new question's answer is
 
    The painted result is measured in Chrome by tools/trivia-reveal-in-chrome.test.py.
    Run: jsc tools/test-trivia-reveal.js   (from the repo root) */
@@ -69,7 +72,7 @@ function rig() {
     'function show(){} function applyColour(){} function setTimeout(){ return 0; } function clearTimeout(){} function renderBoardPaged(){}\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function stopBoardPaging(){} function unlockAudio(){} function celebrate(){} function timesUp(){}\n' +
     liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderReveal', 'renderRows', 'sharedRanks'], 'trivia/screen.html') +
-    '; return { rev: function(q, m){ curQ=q; renderReveal(m); } };';
+    '; return { rev: function(q, m){ curQ=q; renderReveal(m); }, again: function(m){ renderReveal(m); }, cur: function(){ return curQ; } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
   api.dom = dom;
@@ -131,12 +134,55 @@ show('a picture question gets the same disc, in its smaller ring\'s spot', PMK['
 print('4. the motion');
 var GL = rule('#tvRevAnswers .ans.correct');
 var g = /vpGlow\s+([0-9.]+)s\s+\S+\s+(\d+)/.exec(GL['animation'] || '');
-show('the right card pulses 3 times, then holds lit (not infinite)', !!g && g[2] === '3' && !/infinite/.test(GL['animation']), GL['animation']);
+show('the right card glows ONCE, then holds lit (not 3 pulses, not infinite; INBOX 778(a))', !!g && g[2] === '1' && !/infinite/.test(GL['animation']), GL['animation']);
 show('under 3 flashes a second', !!g && 1 / Number(g[1]) < 3, g && g[1]);
 show('and holds its glow after the pulses (the lit shadow is the card\'s own)', /6cqw 1cqw/.test(GL['box-shadow'] || ''), GL['box-shadow']);
 show('nothing on the reveal pulses for ever', !/vpGlow[^;}]*infinite|vpRevIn[^;}]*infinite|vpTickIn[^;}]*infinite/.test(CSS));
 var RM = /@media \(prefers-reduced-motion:reduce\)\{\.vp-revmark,\.vp-revtick,#tvRevAnswers \.ans\.correct\{animation:none\}\}/.test(CSS);
 show('prefers-reduced-motion: the disc, the tick and the glow do not move at all', RM);
+
+/* ======================================================================================= 5 */
+print('5. once per reveal (INBOX 778(a), 19 Nov 2026)');
+/* The replay guard at the top of onMsg's reveal branch, lifted as written and run as a function of (m, curQ, state). */
+var GUARD = (function () {
+  var i = SCREEN.indexOf('else if(m.t==="reveal"){');
+  if (i < 0) throw new Error('cannot find the reveal branch of onMsg in screen.html');
+  var mm = /\n\s*if\((!m\.fin[^\n]*)\) return;/.exec(SCREEN.slice(i, i + 1600));
+  if (!mm) throw new Error('cannot find the replay guard in the reveal branch - a test that cannot find its subject cannot fail');
+  return new Function('m', 'curQ', 'state', 'return !!(' + mm[1] + ');');
+})();
+function R(q, ci, fin) { var m = { t: 'reveal', qseq: q, correctIndex: ci, options: OPTS, split: [1, 1, 1, 1], leaderboard: [] }; if (fin) m.fin = true; return m; }
+(function () {
+  var a = rig(); a.rev(null, R(5, 2));   // a TV that loaded while the answer was up: the replay is its first sight
+  var c = a.cur();
+  show('a TV that first sees the answer (no question before it) remembers which question it is', !!c && c.qseq === 5, c && c.qseq);
+  show('so the same answer replayed to it is NOT played again (no second glow, no second disc)', GUARD(R(5, 2), c, { phase: 'reveal' }));
+  show('nor after its board rolled up', GUARD(R(5, 2), c, { phase: 'leaderboard' }));
+})();
+(function () {
+  var a = rig(); a.rev({ text: 'A question sent without its number', options: OPTS }, R(6, 1));   // a question message with no qseq
+  var c = a.cur();
+  show('a question that came without its number takes the answer\'s number, so its replay is not played again either',
+    !!c && c.qseq === 6 && c.text === 'A question sent without its number' && GUARD(R(6, 1), c, { phase: 'reveal' }), c && c.qseq);
+})();
+(function () {
+  var a = rig(); reveal(a, 1); var c = a.cur();
+  show('the live TV: the same answer replayed (polls, the console back from sleep) is not played again', GUARD(R(1, 1), c, { phase: 'reveal' }));
+  show('the same answer replayed over the round\'s podium leaves the podium up', GUARD(R(1, 1), c, { phase: 'podium' }));
+  show('a qseq that arrives as text is still the same question', GUARD(R('1', 1), c, { phase: 'reveal' }));
+  show('the NEXT question\'s answer IS played', !GUARD(R(2, 1), c, { phase: 'reveal' }) && !GUARD(R(2, 1), c, { phase: 'podium' }));
+  show('a corrected answer for the same question IS played', !GUARD(R(1, 3), c, { phase: 'reveal' }));
+  show('the answer while the question is still on the wall IS played (the reveal itself)', !GUARD(R(1, 1), c, { phase: 'question' }));
+  show('the night\'s last answer (fin) is left to the finale, as before', !GUARD(R(1, 1, true), c, { phase: 'reveal' }));
+})();
+(function () {
+  var a = rig();
+  a.rev({ qseq: 4, text: 'An older question', options: ['W', 'X', 'Y', 'Z'], label: 'Question 4 of 20' }, R(5, 0));
+  var cards = a.dom.$('tvRevAnswers').children, c = a.cur();
+  show('an answer for a question this wall never saw shows ITS options, not the last question\'s cards',
+    cards.length === 4 && cards[0].children.some(function (k) { return k.textContent === 'AC/DC'; }) && c.qseq === 5,
+    cards.map(function (k) { return k.children.map(function (x) { return x.textContent; }).join('/'); }).join(' | '));
+})();
 
 print('\n' + (bad ? ((ran - bad) + ' of ' + ran + ' checks passed') : ('ALL ' + ran + ' CHECKS PASSED')));
 if (bad) throw new Error(bad + ' failed');

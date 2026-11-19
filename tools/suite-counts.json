@@ -1588,7 +1588,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-reveal.js": {
-  "checks": 28,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
