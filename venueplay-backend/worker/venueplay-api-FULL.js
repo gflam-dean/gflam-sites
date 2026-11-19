@@ -19878,9 +19878,23 @@ async function vprMonthlySweep(env, nowMs, opts) {
     }
     const to = String(acct.contact_email).trim().toLowerCase();
     const mail = await vprEmailHtml(env, v, r, { to: to, contactName: acct.contact_name, news: news });
+    /* CLAIM, THEN SEND (INBOX 720, 19 Nov 2026 hourly cron audit). The 'sent' row used to be written AFTER the email,
+       so a row that failed to write left the venue looking unsent and the next hourly tick in the window emailed it
+       again, up to 6 a day for 5 days. Now: look again for this one venue (another run may have claimed it since
+       the list above was read), then write the row FIRST as the claim. A look or a claim that fails sends nothing
+       and stops this tick (the database is not answering); a claim that went in but whose email then fails stays
+       claimed, so that venue misses this month's email rather than getting two. The row is then updated with
+       whether Resend accepted it, the same as the games email above. */
+    const look = await vpaMrGet(env, 'vp_admin_audit', 'action=in.(monthly_report_sent,monthly_report_skipped)&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1');
+    if (!look.ok) { out.held = 'audit not readable'; break; }
+    if (look.rows.length) continue;
+    const detail = { month: month, accepted: null, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length };
+    let claim = null;
+    try { claim = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target, detail: detail }); }
+    catch (e) { claim = null; }
+    if (!claim) { out.held = 'sent row not written'; break; }
     const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, await vpUnsubHeaders(env, to, 'monthly-report')).catch(() => false);
-    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target,
-      detail: { month: month, accepted: !!accepted, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length } }, false);
+    if (claim.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
     out.sent++;
   }
   return out;
