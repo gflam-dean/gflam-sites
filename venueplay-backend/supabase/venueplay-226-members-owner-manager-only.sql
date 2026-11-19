@@ -63,11 +63,33 @@
 --   * RULE: 226 is pasted ONLY AFTER a members/host.html containing v_vp_members_list is live, and NEVER before Friday
 --     ships the 208 pages. Pre-paste check (main, read only): GET the live members/host.html and confirm it contains
 --     v_vp_members_list (this file cannot read a web page, so the check is main's, item 10 in the build note).
---   * If Friday slips, or ships without the 208 pages, 226 waits until AFTER Sunday's push. That clashes with the
---     "migrations before the push" rule and the release tool's refusal: a decision for main and Dean, made before
---     the night (options in ~/venue-enrich/builds/members-access-19nov.md).
+--   * RULING (main, INBOX 725, 19 Nov; settled, not an open decision): 226 is a SUNDAY migration pasted in SATURDAY
+--     21 Nov's paste sitting, AFTER Friday is LIVE and BEFORE Sunday's push, after check 10 is green. Paste in DAYTIME
+--     and at least 4 HOURS after Friday went live, so every host console opened before Friday's push has hit the 4 h
+--     sign-out (INBOX 730). Both release tools agree with that order.
+--   * If Friday slips, or ships without the 208 pages (725): 226 WAITS for the release that carries those pages. Facts
+--     for that release (review 2 S1, 19 Nov): it CANNOT ride in the same push as the pages.
+--     tools/check-migrations-live.py judges every migration FILE the push adds (not a list): this file creates
+--     vp_owner_manager_venue_ids, which is not live until pasted, so release.py stops BEFORE the push while this file is in it. And after a push the full gate compares live with
+--     RLS-BASELINE.json, which (on this branch) already names vp_members_owner_manager_select: pushed before the paste,
+--     the locks line goes RED. So the only way is to SPLIT the branch: push the pages (members/host.html and its test
+--     changes) WITHOUT this .sql file, without the suite parts and prove rows that read it, and without the
+--     RLS-BASELINE.json change; check 10 green; paste 226; then push the rest. Or hold 226 whole to the next release. Which of the two
+--     is Dean's call on the day Friday slips (main review S1); 725 itself is settled.
+--   * GATE WINDOW (review 2 S2): from the Saturday paste until Sunday's push lands, main's committed RLS-BASELINE.json
+--     (Friday's) still says vp_members_host_select, so ANY live gate run in that window is RED on the line "The
+--     database locks match the baseline". That is EXPECTED. Do NOT roll 226 back to make it green; Sunday's push
+--     carries the new baseline.
+--   * PASTE IN DAYTIME (review 2 S3), never during a members draw night. The drop and create policy take a short
+--     exclusive lock on vp_members; the paste sets lock_timeout 5s first, so if a read holds the table it fails
+--     cleanly with nothing changed (paste again a minute later) instead of making every members read queue behind it.
+--   * OPEN CONSOLE TABS (review 2 S5): a members console opened BEFORE Friday's push and still open after the paste
+--     runs the old table-only code: empty list, the draw refuses. Pasting 4 h or more after Friday went live means the
+--     4 h host sign-out has closed every such tab; if any host is still mid-session anyway, tell them: reload the members
+--     console.
 --   * A host opening the account page's members download gets "nobody" (that download is the owner's and managers').
---   PASTE ORDER: after 208 (and after 200; 213 may come before or after) AND after the 208 pages are live. Dean pastes
+--   PASTE ORDER: after 208 (and after 200; 213 may come before or after) AND after the 208 pages are live, Saturday 21
+--   Nov daytime, 4 h or more after Friday went live (INBOX 725, 730). Dean pastes
 --   the statements after the guard's END marker into the live SQL editor, then runs the READ-BACK queries at the end,
 --   then main re-dumps RLS-BASELINE.json (one policy swapped, one definer function added).
 -- rollback-safe: rolling 226 back (ROLLBACK below) restores the any-staff read, so every page build works after a
@@ -97,6 +119,9 @@ $guard$;
 
 begin;
 
+-- A lock wait must not queue every members read behind this paste: give up after 5s, nothing changed (review 2 S3).
+set local lock_timeout = '5s';
+
 -- 0. Refuse unless the names view from 208 is there and names ONLY the seven names columns (hosts read it after this).
 do $pre$
 declare extra text;
@@ -117,7 +142,7 @@ begin
     raise exception 'REFUSED: v_vp_members_list names more than the names columns (%). Hosts read it after this. Nothing was changed.', extra;
   end if;
   -- A names column COMPUTED from a contact or birth column would pass the name test, so the definition is read too.
-  if pg_get_viewdef('public.v_vp_members_list'::regclass) ~* '\m(email|mobile|postcode|note|marketing_optin\w*|birth\w*|date_of_birth)\M' then
+  if pg_get_viewdef('public.v_vp_members_list'::regclass) ~* '\m(email|mobile|postcode|note|marketing_optin\w*|birth\w*|date_of_birth|sex|suburb|state)\M' then
     raise exception 'REFUSED: v_vp_members_list''s definition reads a contact, consent, note or birth column. Hosts read it after this. Nothing was changed.';
   end if;
   if not exists (select 1 from information_schema.columns
@@ -178,6 +203,52 @@ notify pgrst, 'reload schema';
 --   e) the staff helper this view still uses (read it; compare with REFERENCE-vp-staff-venue-ids-READ-ONLY.sql):
 --   select pg_get_functiondef('public.vp_staff_venue_ids()'::regprocedure);
 --   select role, count(*) from public.vp_venue_staff group by role order by role;
+--   f) BEHAVIOUR, not just definitions (review 2 S4 + main review S3, INBOX 730: ONE block; NOT RUN anywhere yet). Reads as a real OWNER and a real HOST through
+--      row security, exactly as their signed-in pages would, and WRITES NOTHING: the block runs as one statement and
+--      always ends in its own raise, which rolls the whole statement back (set local role and the claims go with it).
+--      Its result is the error text "READ-BACK f (nothing changed): ...". Find two ids first (read only):
+--        select s.auth_user_id, s.venue_id, s.role from public.vp_venue_staff s
+--         where s.role in ('owner', 'host') and s.auth_user_id is not null order by s.venue_id, s.role;
+--      pick an owner and a host AT A VENUE WITH MEMBERS, put their auth_user_id in the two lines below, run it.
+--      (A test venue such as the Mini Bar is fine.) It prints a VERDICT first:
+--        OK                      owner: table = view = the full count; host: table 0, view = the names count.
+--        WRONG                   a host reads the table, a host's view is short, or the owner lost rows: run the
+--                                ROLLBACK below STRAIGHT AWAY, then tell main (hosts or owners would be locked out).
+--        NOT A TEST              the chosen venue has no members: pick another and run it again.
+--      Any other error (for example the ids were not filled in): nothing changed; fix and run again. After OK, open the
+--      host console at that venue and see the members list.
+--   do $rb$
+--   declare
+--     owner_id text := '<OWNER auth_user_id>';
+--     host_id  text := '<HOST auth_user_id>';
+--     owner_expected bigint; owner_view_expected bigint; host_expected bigint;
+--     owner_table bigint; owner_view bigint; host_table bigint; host_view bigint; verdict text;
+--   begin
+--     select count(*) into owner_expected from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
+--      where r.venue_id in (select s.venue_id from public.vp_venue_staff s
+--                            where s.auth_user_id = owner_id::uuid and s.role in ('owner', 'manager'));
+--     select count(*) into owner_view_expected from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
+--      where r.venue_id in (select s.venue_id from public.vp_venue_staff s where s.auth_user_id = owner_id::uuid);
+--     select count(*) into host_expected from public.vp_members m join public.vp_member_rosters r on r.id = m.roster_id
+--      where r.venue_id in (select s.venue_id from public.vp_venue_staff s where s.auth_user_id = host_id::uuid);
+--     perform set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
+--     perform set_config('request.jwt.claim.sub', owner_id, true);
+--     execute 'set local role authenticated';
+--     execute 'select count(*) from public.vp_members' into owner_table;
+--     execute 'select count(*) from public.v_vp_members_list' into owner_view;
+--     perform set_config('request.jwt.claims', json_build_object('sub', host_id, 'role', 'authenticated')::text, true);
+--     perform set_config('request.jwt.claim.sub', host_id, true);
+--     execute 'select count(*) from public.vp_members' into host_table;
+--     execute 'select count(*) from public.v_vp_members_list' into host_view;
+--     verdict := case
+--       when owner_expected = 0 or host_expected = 0 then 'NOT A TEST'
+--       when owner_table = owner_expected and owner_view = owner_view_expected and host_table = 0
+--            and host_view = host_expected then 'OK'
+--       else 'WRONG: run the ROLLBACK now' end;
+--     raise exception 'READ-BACK f (nothing changed): %. owner_table=% (expect %) owner_view=% (expect %) host_table=% (expect 0) host_view=% (expect %)',
+--       verdict, owner_table, owner_expected, owner_view, owner_view_expected, host_table, host_view, host_expected;
+--   end
+--   $rb$;
 --
 -- ROLLBACK (puts back exactly what RLS-BASELINE.json had before this branch; this RE-OPENS the host read of contacts):
 --   begin;

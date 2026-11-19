@@ -1016,8 +1016,17 @@ role test, so a host or marketing login could read member contacts from the API)
 'manager'); EXECUTE authenticated + service_role, never anon). Hosts, marketing and HQ read number and names through 208's
 `v_vp_members_list` (unchanged; 226 REFUSES if it is missing or names any other column). No column grant: every login is the
 one database role authenticated, so only row security can tell a host from an owner. members/host.html now reads the view
-first (named columns; the table only as a fallback). NEEDS 208 FIRST; then either order with the pages (older pages fall
-through to the view when the table answers nobody). The guard block refuses on live: the live run is the statements after
+first (named columns; the table only as a fallback). NEEDS 208 FIRST, AND a live members/host.html that contains
+v_vp_members_list (Friday head b292c86e1 or later): the page live on 19 Nov (efc35a343) and Friday's base b0f404229 read the table
+only, so after 226 a host's list is empty and members draws refuse (review 1 M1). RULING (main, INBOX 725): a Sunday migration
+pasted in Saturday 21 Nov's paste sitting AFTER Friday is LIVE and BEFORE Sunday's push, after the read-only check that the live
+members/host.html contains v_vp_members_list; in DAYTIME and 4 h or more after Friday went live, so host tabs opened before Friday
+have signed out (INBOX 730; lock_timeout 5s is set). If Friday slips or ships without those pages, 226 waits for the release that
+carries them; it cannot ride in the same push as the pages (check-migrations-live.py refuses an added migration file whose
+function is not live, and the post-push gate compares live with this branch's RLS-BASELINE.json), so that release is SPLIT (pages
+first without this file, its tests and the baseline) or 226 is held whole: Dean's call. Between the paste and Sunday's push a live
+gate run is RED on the locks line: expected, do not roll back (review 2 S1, S2). After the paste: read-back f in the file (owner
+and host through row security, rolled back; WRONG = run the ROLLBACK). The guard block refuses on live: the live run is the statements after
 its END marker. RLS-BASELINE.json on this branch is HAND-WRITTEN from the SQL (one policy swapped, one definer function
 added): the live dump after the paste wins. `vp_staff_venue_ids()` has no CREATE in the repo: its expected body is in
 `REFERENCE-vp-staff-venue-ids-READ-ONLY.sql` (comments + read-only selects), to be checked against live with

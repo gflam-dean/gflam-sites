@@ -51,6 +51,9 @@ check('the TEST guard block comes before any statement, and names the TEST proje
 var live = body.slice(body.indexOf('$guard$;') + 8).trim();
 check('the pasted part is one transaction (begin first, commit before the schema reload)',
       /^begin;/.test(live) && /commit;\s*notify pgrst, 'reload schema';\s*$/.test(live), live.slice(-80));
+/* Review 2 S3: drop/create policy lock vp_members; a lock wait would queue every members read behind the paste. */
+check('the first statement after begin is set local lock_timeout = \'5s\' (a lock wait fails cleanly, nothing changed)',
+      /^begin;\s*set local lock_timeout = '5s';\s*do \$pre\$/.test(live), live.slice(0, 80));
 var pre = /do \$pre\$([\s\S]*?)\$pre\$;/.exec(live);
 check('a refusal block runs before any change', !!pre && live.indexOf(pre[0]) < live.indexOf('create or replace function'));
 check('it refuses when the names view (208) is missing',
@@ -74,6 +77,15 @@ check('it refuses when the view\'s definition reads email, mobile, postcode, con
       !!vdefRe && !!view208 && !vdefRe.test(view208[0])
       && ['m.email', 'm.mobile', 'm.postcode', 'm.marketing_optin', 'm.marketing_optin_at', 'm.birth_year', 'm.birth_month',
           'm.date_of_birth', 'm.note', 'left(m.email, 3) as first_name'].every(function (c) { return vdefRe.test('select ' + c + ' from x'); }),
+      vdef && vdef[1]);
+/* Review 2 S7: the other person columns of 213 (sex, suburb, state) are refused too, and the pattern must not
+   false-refuse 208's view as pg_get_viewdef PRINTS it (reviewer 2's printed shape; "status" must not hit "state"). */
+var VIEWDEF_208_PRINTED = ' SELECT m.id, m.roster_id, m.member_number, m.first_name, m.last_name, m.status, m.updated_at FROM (vp_members m'
+  + ' JOIN vp_member_rosters r ON ((r.id = m.roster_id))) WHERE ((r.venue_id IN ( SELECT vp_staff_venue_ids() AS'
+  + ' vp_staff_venue_ids)) OR vp_is_platform_admin());';
+check('it also refuses a view reading sex, suburb or state; 208\'s view as pg_get_viewdef prints it still passes',
+      !!vdefRe && !vdefRe.test(VIEWDEF_208_PRINTED) && !vdefRe.test(VIEWDEF_208_PRINTED.replace(/ SELECT /, ' SELECT public.vp_members.status, '))
+      && ['m.sex', 'm.suburb', 'm.state', 'upper(m.suburb) as last_name', 'm."State"'].every(function (c) { return vdefRe.test('select ' + c + ' from x'); }),
       vdef && vdef[1]);
 
 var fn = /create or replace function public\.vp_owner_manager_venue_ids\(\)\s*returns setof uuid\s*language sql\s*stable\s*security definer\s*set search_path = ''\s*as \$fn\$([\s\S]*?)\$fn\$;/.exec(live);
@@ -119,6 +131,30 @@ check('the rollback puts the any-staff policy back and drops the helper',
       /drop policy if exists vp_members_owner_manager_select on public\.vp_members;/.test(rb)
       && /create policy vp_members_host_select on public\.vp_members for select to authenticated/.test(rb)
       && /select public\.vp_staff_venue_ids\(\)/.test(rb) && /drop function if exists public\.vp_owner_manager_venue_ids\(\);/.test(rb));
+/* Review 2 S4: the read-back proves BEHAVIOUR as a real owner and host, and writes nothing (it ends in its own raise). */
+var rbf = SQL.slice(SQL.indexOf('--   f) BEHAVIOUR'), SQL.indexOf('-- ROLLBACK'));
+var rbfSql = rbf.split('\n').map(function (l) { return l.replace(/^--\s?/, ''); }).join('\n');
+var rbBlock = /do \$rb\$([\s\S]*?)\$rb\$;/.exec(rbfSql);
+var rbBody = rbBlock ? rbBlock[1] : '';
+check('read-back f: as authenticated with a real OWNER\'s claims it counts vp_members, then as a HOST counts vp_members and the names view',
+      !!rbBlock && /execute 'set local role authenticated';/.test(rbBody)
+      && /set_config\('request\.jwt\.claims', json_build_object\('sub', owner_id, 'role', 'authenticated'\)::text, true\)/.test(rbBody)
+      && /set_config\('request\.jwt\.claims', json_build_object\('sub', host_id, 'role', 'authenticated'\)::text, true\)/.test(rbBody)
+      && /execute 'select count\(\*\) from public\.vp_members' into owner_table;/.test(rbBody)
+      && /execute 'select count\(\*\) from public\.vp_members' into host_table;/.test(rbBody)
+      && /execute 'select count\(\*\) from public\.v_vp_members_list' into host_view;/.test(rbBody)
+      && rbBody.indexOf('into owner_table') < rbBody.indexOf('host_id, \'role\'') && rbBody.indexOf('host_id, \'role\'') < rbBody.indexOf('into host_table'), rbBody.slice(0, 200));
+check('read-back f writes nothing: every count, then it ENDS in its own raise exception (the statement rolls back); no write, no commit',
+      !!rbBlock && /raise exception 'READ-BACK f \(nothing changed\)[^;]*;\s*end\s*$/.test(rbBody)
+      && !/\b(insert|update|delete|truncate|drop|create|alter|grant|revoke|commit)\b/i.test(rbBody.replace(/'[^']*'/g, "''"))
+      && /NOT RUN/.test(rbf), rbBody.slice(-200));
+/* Main review S3 (INBOX 730): one block; the owner reads table AND view in full, the host reads 0 from the table and the
+   full names count from the view, and anything else says WRONG and points at the ROLLBACK. */
+check('read-back f: the owner counts the view too, and the verdict is OK only for owner table+view in full, host table 0, host view in full',
+      !!rbBlock && rbBody.indexOf("into owner_view;") > 0 && rbBody.indexOf("into owner_view;") < rbBody.indexOf("host_id, 'role'")
+      && /when owner_table = owner_expected and owner_view = owner_view_expected and host_table = 0\s+and host_view = host_expected then 'OK'/.test(rbBody)
+      && /else 'WRONG: run the ROLLBACK now' end;/.test(rbBody) && /when owner_expected = 0 or host_expected = 0 then 'NOT A TEST'/.test(rbBody)
+      && /raise exception 'READ-BACK f \(nothing changed\): %\./.test(rbBody), rbBody.slice(-500));
 check('the read-back asks for the live staff helper body and the role counts (read only)',
       /select pg_get_functiondef\('public\.vp_staff_venue_ids\(\)'::regprocedure\);/.test(SQL)
       && /select role, count\(\*\) from public\.vp_venue_staff group by role/.test(SQL));
@@ -129,6 +165,27 @@ check('the header: 226 only AFTER a live members/host.html contains v_vp_members
       /226 is pasted ONLY AFTER a members\/host\.html containing v_vp_members_list is live, and NEVER before Friday\s*--\s*ships the 208 pages/.test(hdr)
       && /GET the live members\/host\.html and confirm it contains\s*--\s*v_vp_members_list/.test(hdr)
       && !/Older pages \(live today/.test(hdr) && !/either order with the pages is safe/.test(hdr), hdr.slice(hdr.indexOf('-- ORDER'), hdr.indexOf('-- ORDER') + 300));
+/* Review 2 S1, S2, S3, S5: the fallback is a SPLIT (both release tools refuse anything else), the gate window is
+   expected red, paste in daytime, reload old console tabs. */
+check('the header: if Friday slips, 226 cannot ride in the same push; the branch is SPLIT (pages first, without this file and the baseline)',
+      /it CANNOT ride in the same push/.test(hdr) && /check-migrations-live\.py judges every migration FILE/.test(hdr)
+      && /SPLIT the branch: push the pages/.test(hdr) && /without the\s*--\s*RLS-BASELINE\.json change/.test(hdr)
+      && !/outside release\.py/.test(hdr), hdr.slice(hdr.indexOf('If Friday slips'), hdr.indexOf('If Friday slips') + 200));
+check('the header: a live gate run between the Saturday paste and Sunday\'s push is RED on the locks line, EXPECTED, do not roll back',
+      /ANY live gate run in that window is RED on the line "The\s*--\s*database locks match the baseline"\. That is EXPECTED\. Do NOT roll 226 back/.test(hdr));
+check('the header: paste in daytime, never on a members draw night; reload members console tabs opened before Friday',
+      /PASTE IN DAYTIME/.test(hdr) && /never during a members draw night/.test(hdr) && /reload the members\s*--\s*console/.test(hdr));
+/* Main review M1 + S1 (INBOX 725, 730): the RULING is cited (settled), the paste is Saturday daytime and 4 h or more after
+   Friday went live, and the register (MIGRATIONS.md, what a paste page reads) no longer says "either order". */
+check('the header cites INBOX 725 as the settled ruling: Saturday, after Friday LIVE, before Sunday\'s push, daytime, 4 h after Friday',
+      /RULING \(main, INBOX 725, 19 Nov; settled, not an open decision\)/.test(hdr) && /AFTER Friday is LIVE and BEFORE Sunday's push/.test(hdr)
+      && /at least 4 HOURS after Friday went live/.test(hdr) && !/a decision for main and Dean, made before/.test(hdr));
+var REG = readFile('venueplay-backend/supabase/MIGRATIONS.md');
+var reg226 = REG.slice(REG.indexOf('`venueplay-226-members-owner-manager-only.sql`'));
+reg226 = reg226.slice(0, (reg226.indexOf('\n\n') + 1 || reg226.length + 1) - 1);
+check('MIGRATIONS.md\'s 226 entry: no "either order with the pages"; the live-pages rule, INBOX 725, Saturday 4 h after Friday',
+      reg226.length > 100 && !/either order with the pages/.test(reg226) && /contains\s+v_vp_members_list/.test(reg226)
+      && /INBOX 725/.test(reg226) && /4 h or more after Friday went live/.test(reg226), reg226.slice(0, 300));
 check('says WRITTEN, NOT RUN, and carries a rollback-safe line', /WRITTEN, NOT RUN/.test(SQL) && /^\s*--\s*rollback-safe:\s*\S/m.test(SQL));
 
 /* ---------------------------------------------------------------- 2. a row-security model built from the SQL */
