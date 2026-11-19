@@ -72,6 +72,7 @@ function rig() {
     'function show(){} function applyColour(){} function setTimeout(){ return 0; } function clearTimeout(){} function renderBoardPaged(){}\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function stopBoardPaging(){} function unlockAudio(){} function celebrate(){} function timesUp(){}\n' +
     liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderReveal', 'renderRows', 'sharedRanks'], 'trivia/screen.html') +
+    liftAll(SCREEN, ['sameReveal'], 'trivia/screen.html') +
     '; return { rev: function(q, m){ curQ=q; renderReveal(m); }, again: function(m){ renderReveal(m); }, cur: function(){ return curQ; } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
@@ -149,7 +150,14 @@ var GUARD = (function () {
   if (i < 0) throw new Error('cannot find the reveal branch of onMsg in screen.html');
   var mm = /\n\s*if\((!m\.fin[^\n]*)\) return;/.exec(SCREEN.slice(i, i + 1600));
   if (!mm) throw new Error('cannot find the replay guard in the reveal branch - a test that cannot find its subject cannot fail');
-  return new Function('m', 'curQ', 'state', 'return !!(' + mm[1] + ');');
+  return new Function('m', 'curQ', 'state', lift(SCREEN, 'sameReveal', 'trivia/screen.html') + 'return !!(' + mm[1] + ');');
+})();
+/* The last answer (fin) replayed during the finale's wait: the line that takes only the finale's clock, lifted as written. */
+var FINWAIT = (function () {
+  var i = SCREEN.indexOf('else if(m.t==="reveal"){');
+  var mm = /\n\s*if\((m\.fin && \(!FIN \|\| FIN\.painted==="wait"\)[^\n]*?)\)\{ finaleFrom\(m, true\); \}\n\s*else if\(/.exec(SCREEN.slice(i, i + 2400));
+  if (!mm) throw new Error('cannot find the last-answer replay line in the reveal branch - a test that cannot find its subject cannot fail');
+  return new Function('m', 'curQ', 'state', 'FIN', lift(SCREEN, 'sameReveal', 'trivia/screen.html') + 'return !!(' + mm[1] + ');');
 })();
 function R(q, ci, fin) { var m = { t: 'reveal', qseq: q, correctIndex: ci, options: OPTS, split: [1, 1, 1, 1], leaderboard: [] }; if (fin) m.fin = true; return m; }
 (function () {
@@ -174,6 +182,33 @@ function R(q, ci, fin) { var m = { t: 'reveal', qseq: q, correctIndex: ci, optio
   show('a corrected answer for the same question IS played', !GUARD(R(1, 3), c, { phase: 'reveal' }));
   show('the answer while the question is still on the wall IS played (the reveal itself)', !GUARD(R(1, 1), c, { phase: 'question' }));
   show('the night\'s last answer (fin) is left to the finale, as before', !GUARD(R(1, 1, true), c, { phase: 'reveal' }));
+})();
+(function () {
+  /* A new game: its question numbers start at 1 again and a reveal carries no game. */
+  var a = rig(); reveal(a, 1);
+  var g2 = ['Red', 'Green', 'Blue', 'Gold'];
+  var c2 = { qseq: 1, text: 'Game 2, question 1', options: g2, correct: null };   // what renderQuestion makes for game 2's Q1
+  var m2 = { t: 'reveal', qseq: 1, correctIndex: 1, options: g2, split: [1, 1, 1, 1], leaderboard: [] };
+  show('a new game\'s first answer after the last game\'s first answer IS played (its question came first)', !GUARD(m2, c2, { phase: 'reveal' }));
+  show('and IS played even if this wall missed game 2\'s question (same number, same letter, other cards), over a podium too',
+    !GUARD(m2, a.cur(), { phase: 'podium' }) && !GUARD(m2, a.cur(), { phase: 'reveal' }));
+  a.again(m2);
+  show('so game 2\'s answer shows game 2\'s cards, not game 1\'s', a.dom.$('tvRevAnswers').children[1].children.some(function (k) { return k.textContent === 'Green'; }));
+})();
+(function () {
+  var a = rig(); var lastM = R(10, 2, true); a.rev({ qseq: 10, text: 'The last one', options: OPTS }, lastM); var c = a.cur();
+  var wait = { painted: 'wait' };
+  show('the night\'s last answer replayed during the finale\'s wait only moves the finale clock (not played again)', FINWAIT(R(10, 2, true), c, { phase: 'reveal' }, wait));
+  show('a corrected last answer IS played', !FINWAIT(R(10, 3, true), c, { phase: 'reveal' }, wait));
+  show('nobody on the board (no finale): the same last answer replayed is not played again either', FINWAIT(R(10, 2, true), c, { phase: 'reveal' }, null));
+  show('once the finale has moved past its wait, this line leaves it to the finale (as before)', !FINWAIT(R(10, 2, true), c, { phase: 'reveal' }, { painted: 'podium' }) && !FINWAIT(R(10, 2, true), c, { phase: 'podium' }, wait));
+  show('a last answer for another question IS played', !FINWAIT(R(9, 2, true), c, { phase: 'reveal' }, wait));
+})();
+(function () {
+  var a = rig();
+  a.rev({ qseq: 4, text: 'An older question with the same cards', options: OPTS, label: 'Question 4 of 20' }, R(5, 0));
+  show('an answer for a question this wall never saw (same cards) is not hung on the older question\'s text or number',
+    a.cur().qseq === 5 && a.dom.$('tvRevQText').textContent !== 'An older question with the same cards', [a.cur().qseq, a.dom.$('tvRevQText').textContent]);
 })();
 (function () {
   var a = rig();

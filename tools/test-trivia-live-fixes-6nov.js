@@ -174,7 +174,7 @@ var w2 = makeWall(true, true, 0); w2.up();
 ok('the clock already reached 0: nothing (that is the time\'s-up buzzer\'s moment)', w2.played.length === 0, JSON.stringify(w2.played));
 var w3 = makeWall(false, true, 12000); w3.up();
 ok('the sounds set to play on the host\'s device: nothing on the wall', w3.played.length === 0);
-ok('the TV asks for it on a reveal of the question it is showing, before drawing the answer', /if\(state\.phase==="question" && curQ && m\.qseq!=null && curQ\.qseq===m\.qseq\) answerUp\(\);/.test(SCREEN));
+ok('the TV asks for it on a reveal of the question it is showing, before drawing the answer', /if\(state\.phase==="question" && curQ && m\.qseq!=null && String\(curQ\.qseq\)===String\(m\.qseq\)\) answerUp\(\);/.test(SCREEN));
 ok('and the console plays the same slot when the buzzer plays on the host\'s device', /if\(early && !G\.defer\) hostAnswerUp\(\);/.test(HOST) && /VPCelebrate\.sound\("answerup", \{ wall:true \}\)/.test(liftFrom(HOST, 'hostAnswerUp')) && HOST.indexOf('<script src="/app/vp-celebrate.js"></script>') > 0);
 function makeHost(sounds, where) {
   var played = [], G = { sounds: sounds, buzzWhere: where };

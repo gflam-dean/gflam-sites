@@ -731,13 +731,22 @@
     ringTimer=setInterval(tickRing, 300); tickRing();
   }
 
+  /* THE ANSWER ALREADY UP, AGAIN (INBOX 778(a)): the same question number, the same right answer and the same cards.
+     A question number starts again at 1 every game and a reveal carries no game, so the cards are compared too: a new
+     game's first answer that happens to share the number and the letter is still played. A reveal without options
+     (never sent by the console) is judged on the number and the answer alone. */
+  function sameReveal(m){
+    return !!(curQ && m && m.qseq!=null && String(curQ.qseq)===String(m.qseq) && curQ.correct===m.correctIndex &&
+      (!Array.isArray(m.options) || String(curQ.options||[])===String(m.options)));
+  }
   function renderReveal(m){
     stopRing();
     /* WHICH QUESTION THIS ANSWER IS (INBOX 778(a), 19 Nov 2026). A TV that (re)loaded while the answer was up had no
        question to hang it on, so curQ had no qseq and the replay guard in onMsg never matched: every replay of the same
        answer (the console coming back from sleep, another hello) threw the cards away and the green glowed again. A
        reveal for a question this wall never saw starts from the reveal itself, not the last question's cards. */
-    if(!curQ || (m.qseq!=null && curQ.qseq!=null && String(curQ.qseq)!==String(m.qseq))) curQ={ qseq:m.qseq, options:m.options||[] };
+    if(!curQ || (m.qseq!=null && curQ.qseq!=null && String(curQ.qseq)!==String(m.qseq)) ||
+       (Array.isArray(m.options) && m.options.length && String(curQ.options||[])!==String(m.options))) curQ={ qseq:m.qseq, options:m.options||[] };   // another question's cards (a new game's Q1 too)
     if(curQ.qseq==null && m.qseq!=null) curQ.qseq=m.qseq;
     curQ.correct=m.correctIndex;
     curQ.buzzed=true;                 // the host revealed: a lock arriving after this never sounds
@@ -1224,7 +1233,7 @@
          A TV that reconnects says hello and the console replays what is on, so the question it is already showing
          arrived a second time: the cards were thrown away and drawn again and the clock ring jumped back to full.
          The wall keeps what it has; only a moved deadline (the host added time) is taken. */
-      if(state.phase==="question" && curQ && m.qseq!=null && curQ.qseq===m.qseq){
+      if(state.phase==="question" && curQ && m.qseq!=null && String(curQ.qseq)===String(m.qseq)){
         var _ends=Number(m.endsAt)||0;
         if(_ends && _ends!==curQ.endsAt){ curQ.endsAt=_ends; if(!ringTimer) ringTimer=setInterval(tickRing, 300); tickRing(); }
         if(typeof m.buzzer==="boolean") BUZZ.on=m.buzzer;
@@ -1238,7 +1247,7 @@
     /* "answer" and the host's "answered" tally are not painted: the wall never says how many answered (Dean, 4 Nov 2026). */
     else if(m.t==="time"){
       // The host added time. Stretch the ring to the new deadline rather than leaving it at zero.
-      if(!curQ || m.qseq!==curQ.qseq) return;
+      if(!curQ || String(m.qseq)!==String(curQ.qseq)) return;
       var ends=Number(m.endsAt)||0; if(!ends || ends<=curQ.endsAt) return;
       curQ.dur=Math.max(1, Math.round((ends-hostNow())/1000));
       curQ.endsAt=ends;
@@ -1257,9 +1266,14 @@
          again (its disc grew in and its card pulsed a second time, then the board jumped straight up). */
       /* The same answer replayed while a round's podium is up (the console back from sleep re-sends what is on) is not
          played again either: the wall stays on the podium (INBOX 778(a)). */
-      if(!m.fin && curQ && m.qseq!=null && String(curQ.qseq)===String(m.qseq) && curQ.correct===m.correctIndex && (state.phase==="reveal" || state.phase==="leaderboard" || state.phase==="podium")) return;
-      if(state.phase==="question" && curQ && m.qseq!=null && curQ.qseq===m.qseq) answerUp();   // the answer goes up before the clock reached 0
-      if(m.fin && FIN && FIN.painted && FIN.painted!=="wait"){ finaleFrom(m, true); }   // the show has moved on: a replayed last answer does not go back over it
+      if(!m.fin && sameReveal(m) && (state.phase==="reveal" || state.phase==="leaderboard" || state.phase==="podium")) return;
+      if(state.phase==="question" && curQ && m.qseq!=null && String(curQ.qseq)===String(m.qseq)) answerUp();   // the answer goes up before the clock reached 0
+      /* THE NIGHT'S LAST ANSWER replayed while it is still up (the finale's 30 s wait): only the finale's clock is taken,
+         nothing is painted again, so its card does not glow a second time (INBOX 778(a) review 1, M1). With nobody on the
+         board there is no finale (FIN stays empty) and the replay is simply not painted again. A corrected last answer
+         is still played. */
+      if(m.fin && (!FIN || FIN.painted==="wait") && state.phase==="reveal" && sameReveal(m)){ finaleFrom(m, true); }
+      else if(m.fin && FIN && FIN.painted && FIN.painted!=="wait"){ finaleFrom(m, true); }   // the show has moved on: a replayed last answer does not go back over it
       else {
         state.phase="reveal";
         renderReveal(m);
