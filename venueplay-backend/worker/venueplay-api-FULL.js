@@ -6355,12 +6355,24 @@ async function vpaProspectReminderSweep(env, nowMs) {
       /* Their own free month in numbers, for the last reminder only (Dean, 5 Nov 2026 round 7). Never stops the email. */
       stats: kind !== 'early' ? await vpaVenueStats(env, v.id, v.timezone || 'Australia/Brisbane').catch(() => null) : null });
     if (!msg) continue;
-    const res = await fetch('https://api.resend.com/emails', { method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
-    if (!res || !res.ok) continue;
+    /* MARKED SENT BEFORE IT GOES (INBOX 720, 19 Nov 2026 hourly cron audit). It used to send, then save reminders_sent
+       and ignore whether the save landed, so a failed save sent the same reminder again every hour in the window (up
+       to 6 a day). Now the save is the claim: a claim that does not land sends nothing and stops this sweep (the
+       database is not answering; the next hour looks again). Resend refusing puts the claim back, so the reminder
+       stays due as before; if putting it back fails too, that reminder is missed rather than sent twice. */
+    const before = sent.slice();
     due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
-    await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
+    if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent }).catch(() => false))) { out.save_failed = v.id; break; }
+    let res = null;
+    try {
+      res = await fetch('https://api.resend.com/emails', { method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+    } catch (_) { res = null; }
+    if (!res || !res.ok) {
+      if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: before }).catch(() => false))) (out.unclaim_failed = out.unclaim_failed || []).push(v.id);
+      continue;
+    }
     await vpaAudit(env, { actorId: null, label: 'automatic (card reminder)' }, 'prospect_reminder_sent', 'venue:' + v.id, { day: r.day, kind: kind, skipped: due.length - 1 });
     out.sent.push({ venue: v.id, day: r.day, kind: kind });
   }
