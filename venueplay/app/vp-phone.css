@@ -198,7 +198,10 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
 body.light #vJoin .optin{color:var(--text,#191420)}                   /* beats bingo/musical "#vJoin .optin{color:#fff}" */
 body.light #vJoin .vp-sub .mono{color:var(--text,#191420)}            /* the bingo room code */
 body.light #vJoin .psub #joinCode{color:#8a6100!important}             /* the trivia room code (inline color:var(--gold)) */
-body.light .pfoot svg{color:#191420}                                   /* our logo (trivia already had this) */
+/* Our foot logo: ON PURPOSE NOT scoped to the join step (M2 review SHOULD 6). It darkens our logo on EVERY light screen
+   of the bingo and musical phones, in game too (white on pale, 1.14 to 1.38:1, before); trivia's page already had this
+   rule. No page draws a dark band behind .pfoot. The one light rule here outside #vJoin. */
+body.light .pfoot svg{color:#191420}
 body.light #vJoin .vp-joinnote{color:var(--muted,#5c5666)!important}   /* the notice (vp-known.js writes #9A9AA4 inline) */
 body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--muted,#5c5666)}   /* "You are joining room" (not the pink venue line) and the line under Join */
 /* The error line and Help on the light screen's join step (independent review SHOULD 1, 19 Nov 2026): the error line

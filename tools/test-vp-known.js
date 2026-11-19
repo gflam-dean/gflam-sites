@@ -376,6 +376,8 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('5d light screen: the error line on the join step is dark amber #7a4f00 (the pages\' #F5A524 measured 1.48 to 1.80:1), trivia .cerr and bingo/musical .vp-err', /color:#7a4f00/.test(lightRule('body.light #vJoin .cerr')) && lightRule('body.light #vJoin .cerr') === lightRule('body.light #vJoin .vp-err'), lightRule('body.light #vJoin .cerr'));
   show('5d light screen: Help at our logo\'s foot is the page\'s muted colour while the join step shows (vp-help.js #9A9AA4 measured 2.02 to 2.45:1)', /color:var\(--muted,#5c5666\)/.test(lightRule('body.light #vJoin:not(.hidden) ~ .pfoot .vph-link')), lightRule('body.light #vJoin:not(.hidden) ~ .pfoot .vph-link'));
   var lsel = LR.map(function (r) { return r.sel; }).join(',').split(',').map(function (x) { return x.trim(); });
+  var outside = lsel.filter(function (x) { return !/^body\.light #vJoin\b/.test(x); });
+  show('5d the ONE light rule outside the join step is our foot logo (on purpose: every bingo and musical light screen, in game too; review SHOULD 6); anything else must be #vJoin', outside.length === 1 && outside[0] === 'body.light .pfoot svg', outside);
   show('5d every light-screen rule needs body.light (the dark screen is untouched)', lsel.length >= 6 && lsel.every(function (x) { return /^body\.light /.test(x); }), lsel.filter(function (x) { return !/^body\.light /.test(x); }));
 
   print('');

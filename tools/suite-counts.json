@@ -2328,7 +2328,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-known.js": {
-  "checks": 109,
+  "checks": 110,
   "counted_by": "lines"
  },
  "tools/known-phone-in-chrome.test.py": {
