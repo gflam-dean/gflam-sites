@@ -221,6 +221,11 @@ body #vJoin #joinBtn.vp-cta:active:not(:disabled){color:#fff}
    both themes (vp-known.js inline #17171A), so its placeholder keeps the dark muted grey. */
 body #vJoin input::placeholder{color:var(--muted,#9A9AA4);opacity:1}
 body #vJoin #vpNumIn::placeholder{color:#9A9AA4}
+/* "Use this" / "Different email" (an email we hold, not yet this venue's) were 38px taps (vp-known.js inline). 44px from
+   600px tall (extras review SHOULD 3, 19 Nov 2026): measured no change to the fit at 360x640 and taller; on 320x568 and
+   375x548 the 6px more would push our logo and Help further below the screen (musical 2 -> 8px, trivia 27 -> 33px), so
+   those stay 38px until the trivia "Use this" screen fits there (next release). */
+@media (min-height:600px){body #vJoin .vpk-use button{min-height:44px!important}}
 /* THE LIGHT SCREEN ON THE JOIN STEP (M2 phone review, 19 Nov 2026): the pages set white or pale grey words for the dark
    screen, and on the light screen ("Light screen" in the player's menu, kept on the phone) the consent words were close to
    unreadable: the offers tick label 1.14:1 (musical) and 1.38:1 (bingo), the join notice 2.0 to 2.5:1, the room code 1.4:1,
