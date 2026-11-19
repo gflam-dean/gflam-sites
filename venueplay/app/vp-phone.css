@@ -203,6 +203,11 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
    (vp-known.js inline padding 0 / 6px). Padding on the button itself makes each a 44px tap; the equal negative margin
    keeps the line where it was, so nothing moves and no screen gets taller. Words and font unchanged. Every height. */
 body #vJoin #vpKnownNotMe,body #vJoin #vpKnownNotNum{display:inline-block;min-height:44px;padding-top:12px!important;padding-bottom:12px!important;margin-top:-12px!important;margin-bottom:-12px!important}
+/* The Join button label on bingo and musical (main INBOX 755, 19 Nov 2026): white on our pink #FF1F8E is 3.6:1 in both
+   themes. Near-black label, as trivia's Join already is (5.5:1); the pink fill stays. While pressed the fill goes deep
+   pink #C70F69, so the label is white there (5.7:1). The disabled "Loading..." grey button is unchanged. */
+body #vJoin #joinBtn.vp-cta:not(:disabled){color:#0A0A0B}
+body #vJoin #joinBtn.vp-cta:active:not(:disabled){color:#fff}
 /* Placeholders on the join step (M2 review SHOULD 4): the browser's #757575 measured 3.88:1 dark and 3.89:1 light; the
    page's muted colour in either theme (each page sets --muted for dark and light). The new-mobile box is drawn dark in
    both themes (vp-known.js inline #17171A), so its placeholder keeps the dark muted grey. */
