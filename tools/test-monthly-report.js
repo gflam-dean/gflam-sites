@@ -465,6 +465,33 @@ function world() {
   vpaSelectAll = ORIG_SEL;
   check('a venue another run claimed after this run read the list is not sent twice', raced && sent.filter(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }).length === 0 && sent.length === 3,
         sent.map(function (m) { return m.to[0]; }));
+  /* Review 1 (SHOULD 2 and 4): a look that fails sends nothing to that venue; one venue's failure does not hold up the rest. */
+  var LOOK_FAILS = 0, CLAIM_FAIL_ONE = 0, ONE_LOOK = globalThis.fetch;
+  globalThis.fetch = function (url, opts) {
+    var u = String(url), o = opts || {};
+    if (LOOK_FAILS > 0 && u.indexOf('/rest/v1/vp_admin_audit') !== -1 && (o.method || 'GET') === 'GET' && u.indexOf('target=eq.') !== -1 && u.indexOf('month-report') !== -1) {
+      LOOK_FAILS--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+    }
+    if (CLAIM_FAIL_ONE > 0 && u.indexOf('/rest/v1/vp_admin_audit') !== -1 && o.method === 'POST' && /"monthly_report_sent"/.test(String(o.body || ''))) {
+      CLAIM_FAIL_ONE--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+    }
+    return ONE_LOOK(url, opts);
+  };
+  world();
+  LOOK_FAILS = 99;
+  var lk = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  LOOK_FAILS = 0;
+  check('the look again fails: no report goes, and the tick says it held', sent.length === 0 && lk.held >= 1 && !DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent'; }), [sent.length, lk.held]);
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
+  check('the next tick, the database back: each venue once', sent.length === 4, sent.length);
+  world();
+  CLAIM_FAIL_ONE = 1;
+  var one = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  check('one venue\'s claim fails: that venue waits, the other three still get theirs this tick', sent.length === 3 && one.held === 1, [sent.length, one.held]);
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
+  var per2 = {}; sent.forEach(function (m) { per2[m.to[0]] = (per2[m.to[0]] || 0) + 1; });
+  check('and gets it the next tick, once; nobody twice', sent.length === 4 && Object.keys(per2).every(function (k) { return per2[k] === 1; }), per2);
+  globalThis.fetch = ONE_LOOK;
   globalThis.fetch = BEFORE_CLAIM;
   Date.now = REAL_NOW;
   print(fails ? (fails + ' of ' + ran + ' checks FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));

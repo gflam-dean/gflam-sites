@@ -546,7 +546,8 @@ export default {
        and remembers what it sent. */
     try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
-       MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
+       MONTHLY_REPORTS is 'on', and then only acts in the first 7 days of a month, Monday to Friday, 9 to 12 and
+       2 to 5 Brisbane (vprInSendWindow), each venue's sent row claimed before its email. */
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
     /* The weekly members list reminder EMAIL a venue asked for in its game setup (Dean, 10 Nov 2026): Dean's send window, never to a Do not contact venue, once a week. */
     try { await vpaMembersReminderSweep(env, Date.now()); } catch (e5b) { /* the next tick looks again */ }
@@ -19882,8 +19883,9 @@ async function vprGamesSend(env, month, venues, tests) {
 }
 
 /* THE SENDER, OFF UNTIL DEAN SAYS. env.MONTHLY_REPORTS must be exactly 'on'. Even then it only
-   acts on the 1st to the 3rd of a month, 2am to 7am Brisbane, a batch a tick, and each venue once
-   a month (the audit row is the record, written before the next venue is started). It reads
+   acts in the first 7 days of a month, Monday to Friday, 9 to 12 and 2 to 5 Brisbane (vprInSendWindow,
+   since 9 Nov 2026), a batch a tick, and each venue once a month (the audit row is the record, and
+   since 19 Nov 2026 the claim: written BEFORE that venue's email, see the loop). It reads
    nothing at all while the switch is off, so turning the feature on costs a variable, not a deploy.
    Skips: a test venue, a venue that ran nothing in either month, a contact who unsubscribed. */
 function vprInSendWindow(ms) {
@@ -19947,18 +19949,21 @@ async function vprMonthlySweep(env, nowMs, opts) {
        so a row that failed to write left the venue looking unsent and the next hourly tick in the window emailed it
        again, up to 6 a day for 5 days. Now: look again for this one venue (another run may have claimed it since
        the list above was read), then write the row FIRST as the claim. A look or a claim that fails sends nothing
-       and stops this tick (the database is not answering); a claim that went in but whose email then fails stays
+       to that venue this tick; a claim that went in but whose email then fails stays
        claimed, so that venue misses this month's email rather than getting two. The row is then updated with
        whether Resend accepted it, the same as the games email above. */
-    const look = await vpaMrGet(env, 'vp_admin_audit', 'action=in.(monthly_report_sent,monthly_report_skipped)&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1');
-    if (!look.ok) { out.held = 'audit not readable'; break; }
+    /* A failed look or claim skips THIS venue for this tick (continue, review 1 SHOULD 4): it sends nothing either way,
+       and one row that can never be written must not hold up every venue after it. The next tick tries it again. */
+    const unsubHeaders = await vpUnsubHeaders(env, to, 'monthly-report');   // before the claim: nothing after the claim but the send
+    const look = await vpaMrGet(env, 'vp_admin_audit', 'action=in.(monthly_report_sent,monthly_report_skipped)&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1').catch(() => ({ ok: false, rows: [] }));
+    if (!look.ok) { out.held = (out.held || 0) + 1; continue; }
     if (look.rows.length) continue;
     const detail = { month: month, accepted: null, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length };
     let claim = null;
     try { claim = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target, detail: detail }); }
     catch (e) { claim = null; }
-    if (!claim) { out.held = 'sent row not written'; break; }
-    const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, await vpUnsubHeaders(env, to, 'monthly-report')).catch(() => false);
+    if (!claim) { out.held = (out.held || 0) + 1; continue; }
+    const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, unsubHeaders).catch(() => false);
     if (claim.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
     out.sent++;
   }
