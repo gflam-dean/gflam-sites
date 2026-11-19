@@ -171,6 +171,11 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin:not(.hidden) ~ .pfoot.vph-has{padding-bottom:max(2px, env(safe-area-inset-bottom, 0px))!important}
   body #vJoin:not(.hidden) ~ .pfoot svg{width:104px}
   body #vJoin:not(.hidden) ~ .pfoot .vph-link{display:inline-flex;align-items:center;justify-content:center;font-size:14px;min-height:44px;min-width:44px;padding-top:0;padding-bottom:0}
+  /* known-phone states (M2 review SHOULD 3): "Each one uses your details under its own privacy policy..." was 13px
+     (vp-consent.js inline) and 12.5px (vp-long), the notice 12.5px in vp-long, the "Your new mobile" box and its button
+     40px (vp-known.js inline): 14px words and 44px taps, as the rest of the join screen */
+  body #vJoin .vpc3-note,body #vJoin.vp-long .vpc3-note,body #vJoin.vp-long .vp-joinnote{font-size:14px!important}
+  body #vJoin #vpNumIn,body #vJoin #vpNumGo{min-height:44px!important}
 }
 @media (max-height:660px){
   body #vJoin .pbig{font-size:26px;margin-bottom:0}
@@ -190,6 +195,11 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin.center > .pnote{margin-left:-8px;margin-right:-8px}   /* the trivia line under Join: two lines, not three ("starts." alone), at 14px */
   body #vJoin:not(.hidden) ~ .pfoot svg{width:96px}
 }
+/* Placeholders on the join step (M2 review SHOULD 4): the browser's #757575 measured 3.88:1 dark and 3.89:1 light; the
+   page's muted colour in either theme (each page sets --muted for dark and light). The new-mobile box is drawn dark in
+   both themes (vp-known.js inline #17171A), so its placeholder keeps the dark muted grey. */
+body #vJoin input::placeholder{color:var(--muted,#9A9AA4);opacity:1}
+body #vJoin #vpNumIn::placeholder{color:#9A9AA4}
 /* THE LIGHT SCREEN ON THE JOIN STEP (M2 phone review, 19 Nov 2026): the pages set white or pale grey words for the dark
    screen, and on the light screen ("Light screen" in the player's menu, kept on the phone) the consent words were close to
    unreadable: the offers tick label 1.14:1 (musical) and 1.38:1 (bingo), the join notice 2.0 to 2.5:1, the room code 1.4:1,
