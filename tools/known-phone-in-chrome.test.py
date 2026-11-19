@@ -46,12 +46,6 @@ EXPECTED_RED = {
     'T trivia 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 36,
     'T bingo 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 29,
     'T trivia 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 7,
-    # the trivia number-change form at 320x568: next release (0 px with fix/m2-extras-19nov merged; then these print
-    # as no longer red: take them off)
-    'N trivia 320x568 extra-box: new-mobile form, Join in view, no scroll': 25,
-    'N trivia 320x568 extra-box: code step (Sent to, Resend, Cancel), Join in view, no scroll': 25,
-    'N trivia 320x568 extra-box: with the error line, Join still in view, no scroll': 25,
-    'N trivia 320x568 extra-box: Resend inside 30 s: the wait line, Join in view': 25,
 }
 _SOFT = {'over': None}; _RED_SEEN = set(); _GREEN_SEEN = set()
 def _expired(): return time.strftime('%Y-%m-%d') >= EXPECTED_RED_UNTIL   # void ON 29 Nov: the next release's own gate run must not pass with these rows red
