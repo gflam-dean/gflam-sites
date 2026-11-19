@@ -190,3 +190,14 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
   body #vJoin.center > .pnote{margin-left:-8px;margin-right:-8px}   /* the trivia line under Join: two lines, not three ("starts." alone), at 14px */
   body #vJoin:not(.hidden) ~ .pfoot svg{width:96px}
 }
+/* THE LIGHT SCREEN ON THE JOIN STEP (M2 phone review, 19 Nov 2026): the pages set white or pale grey words for the dark
+   screen, and on the light screen ("Light screen" in the player's menu, kept on the phone) the consent words were close to
+   unreadable: the offers tick label 1.14:1 (musical) and 1.38:1 (bingo), the join notice 2.0 to 2.5:1, the room code 1.4:1,
+   our foot logo 1.14 to 1.38:1. Dark words on the pale background, each page's own light colours. Every rule needs
+   body.light, so the dark screen is untouched. */
+body.light #vJoin .optin{color:var(--text,#191420)}                   /* beats bingo/musical "#vJoin .optin{color:#fff}" */
+body.light #vJoin .vp-sub .mono{color:var(--text,#191420)}            /* the bingo room code */
+body.light #vJoin .psub #joinCode{color:#8a6100!important}             /* the trivia room code (inline color:var(--gold)) */
+body.light .pfoot svg{color:#191420}                                   /* our logo (trivia already had this) */
+body.light #vJoin .vp-joinnote{color:var(--muted,#5c5666)!important}   /* the notice (vp-known.js writes #9A9AA4 inline) */
+body.light #vJoin .vp-sub:not(.venue-on),body.light #vJoin .pnote{color:var(--muted,#5c5666)}   /* "You are joining room" (not the pink venue line) and the line under Join */

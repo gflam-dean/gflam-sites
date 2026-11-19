@@ -363,6 +363,19 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   show('5c the notice the blocks style is the one vp-known.js draws (class vp-joinnote)', /np\.className = "vp-joinnote"/.test(readFile('venueplay/app/vp-known.js')));
   show('5c all three player phones load /app/vp-phone.css', ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html'].every(function (f) { return /<link rel="stylesheet" href="\/app\/vp-phone\.css(\?[^"]*)?">/.test(readFile(f)); }));
 
+  /* 5d. THE LIGHT SCREEN ON THE JOIN STEP (M2 phone review, 19 Nov 2026). STATIC: dark words on the pale background for the
+     offers tick label, the notice, the room code and our foot logo (measured 1.1 to 2.5:1 before; builds/m2-phone-fix2-19nov.md
+     has the ratios measured in headless Chrome). Every rule must need body.light, so the dark screen cannot change. */
+  var CSSL = CSS.slice(CSS.indexOf('body.light #vJoin .optin{'));
+  var LR = rulesOf(CSS.indexOf('body.light #vJoin .optin{') >= 0 ? CSSL : '');
+  function lightRule(sel) { return ruleFor(LR, sel); }
+  show('5d light screen: the offers tick label is the page\'s dark text colour', /color:var\(--text,#191420\)/.test(lightRule('body.light #vJoin .optin')), lightRule('body.light #vJoin .optin'));
+  show('5d light screen: the join notice is the page\'s muted colour, !important (vp-known.js writes #9A9AA4 inline)', /color:var\(--muted,#5c5666\)!important/.test(lightRule('body.light #vJoin .vp-joinnote')), lightRule('body.light #vJoin .vp-joinnote'));
+  show('5d light screen: the room code is dark (bingo) and dark gold (trivia, beats the inline gold)', /color:var\(--text,#191420\)/.test(lightRule('body.light #vJoin .vp-sub .mono')) && /color:#8a6100!important/.test(lightRule('body.light #vJoin .psub #joinCode')));
+  show('5d light screen: our foot logo is dark', /color:#191420/.test(lightRule('body.light .pfoot svg')), lightRule('body.light .pfoot svg'));
+  var lsel = LR.map(function (r) { return r.sel; }).join(',').split(',').map(function (x) { return x.trim(); });
+  show('5d every light-screen rule needs body.light (the dark screen is untouched)', lsel.length >= 6 && lsel.every(function (x) { return /^body\.light /.test(x); }), lsel.filter(function (x) { return !/^body\.light /.test(x); }));
+
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('vp-known: ' + bad + ' failed');
