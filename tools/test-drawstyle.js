@@ -6,6 +6,7 @@
      1. the draw time: short 6 s, normal 9 s, long 12 s; anything else is normal
      2. the build-up: the roll starts at the first item, passes the near misses one at a time, and ends exactly on the winner, never
         going backwards
+     2d. a prize of any length keeps one line's box (review 1, S4): RUNS fitLine() on a model of the prize box
      2c. a late pick glides too (review 1, S1): RUNS lateClock() frame by frame with the pick at many moments
      2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026): run frame by frame at 60, 30 and 25 frames a second, the reel never
         stops on the way, never moves more than a third of a ticket a frame (so it is never seen running backwards), changes speed smoothly,
@@ -125,6 +126,31 @@ print('\n== 2c. a LATE pick glides too (review 1 of Jobs 515, S1: the reel stopp
   var mod2 = MOD.replace(/\/\*[\s\S]*?\*\//g, '');
   show('the stage\'s tick runs every gliding look on lateClock (and the reel paints its position)', /if \(view\.glide && st\.S\) \{ lateTick\(raw\); st\.raf = root\.requestAnimationFrame\(tick\); return; \}/.test(mod2) && /if \(!st\.lc\) st\.lc = lateClock\(st\.S, st\.N, DRAW\);/.test(mod2) && (mod2.match(/p = st\.pOv != null \? st\.pOv : S\.pos\(clamp\(td, 0, DRAW\)\)/g) || []).length === 2);
   show('the wait takes over at the glide\'s own position and speed', Math.abs(DS.lateWait(3, 2, 1.5).pos(0) - 3) < 1e-12 && Math.abs(DS.lateWait(3, 2, 1.5).vel(0) - 2) < 1e-12 && Math.abs(S9.freeze - DS.WAIT_LEAD - (W.Tw - DS.INTRO)) < 1e-9);
+})();
+
+print('\n== 2d. a prize of any length fits its one-line box (review 1, S4: a 73-letter prize ran off the bottom of a 1920 TV) ==');
+/* RUNS the shipped fitLine() on a model of the prize box: Anton letters about 0.45 of the size wide, whole words wrapped into the box's
+   width (1760 = 1920 less 80 each side), line height 1. The Worker keeps up to 120 letters of a prize. */
+(function () {
+  function model(text, width) {
+    return function (e) {
+      var f = parseFloat(e.style.fontSize), words = text.split(' '), lines = 1, cur = 0, widest = 0, i;
+      for (i = 0; i < words.length; i++) {
+        var w = words[i].length * 0.45 * f, sp = 0.25 * f;
+        widest = Math.max(widest, w);
+        if (cur && cur + sp + w > width) { lines++; cur = w; } else cur += (cur ? sp : 0) + w;
+      }
+      return { w: Math.max(width, widest), h: lines * f };
+    };
+  }
+  function fitted(text, start, floor) { var e = { style: {} }, f = DS.fitLine(e, 1760, start, start, floor, model(text, 1760)); return { f: f, m: model(text, 1760)(e) }; }
+  var short = fitted('Meat tray', 120, 36), two = fitted('Seafood platter for two from Tweed Heads Fish Co plus a bottle of red', 120, 36);
+  var max = fitted('Seafood platter for two from the Tweed Heads Fish Co and a bottle of Hunter Valley red and a fifty dollar bar card for you xx'.slice(0, 120), 120, 36);
+  show('a short prize keeps its full size (120 px, one line)', short.f === 120 && short.m.h === 120, short);
+  show('a 70-letter prize steps down until it fits inside one line\'s height', two.f < 120 && two.f >= 36 && two.m.h <= 121, two);
+  show('the longest prize the Worker keeps (120 letters) fits too, at a size still read across a room (36 px or more)', max.f >= 36 && max.m.h <= 121 && max.m.w <= 1761, max);
+  var mod3 = MOD.replace(/\/\*[\s\S]*?\*\//g, '');
+  show('every look fits its prize when the stage is made and again once the fonts are in; the race plate on its one line', /fit\(\);\s+function fitPrize\(\)/.test(mod3) && /fitPrize\(\);\s+if \(root\.document && root\.document\.fonts && root\.document\.fonts\.ready\) root\.document\.fonts\.ready\.then\(function \(\) \{ if \(!st\.dead\) fitPrize\(\); \}\);/.test(mod3) && /fitLine\(prizeEl, 1290, 1e9, s0, 30,/.test(mod3) && /fitLine\(prizeEl, prizeEl\.clientWidth, s0, s0, 36,/.test(mod3) && /\.vpds-prize\{position:absolute;left:0;right:0;padding:0 80px;/.test(mod3) && /display:inline;padding:0;font:400 76px/.test(mod3));
 })();
 
 print('\n== 3. one winner line ==');

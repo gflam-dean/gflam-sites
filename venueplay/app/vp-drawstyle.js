@@ -189,7 +189,7 @@
     ".vpds *,.vpds *:before,.vpds *:after{box-sizing:border-box;margin:0;padding:0}",
     ".vpds-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;color:#fff;font-family:'Hanken Grotesk','Manrope',sans-serif;text-align:left;line-height:normal;letter-spacing:normal;text-transform:none;font-style:normal;font-weight:400;white-space:normal}",
     ".vpds-world{position:absolute;inset:0;transform-origin:960px 520px}",
-    ".vpds-prize{position:absolute;left:0;right:0;text-align:center;font:400 120px/1 Anton,sans-serif;color:#fff}",
+    ".vpds-prize{position:absolute;left:0;right:0;padding:0 80px;text-align:center;font:400 120px/1 Anton,sans-serif;color:#fff;overflow-wrap:normal;word-break:normal}",
     ".vpds-claim{position:absolute;left:0;right:0;opacity:0;text-align:center;font:700 100px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;color:#fff}",
     ".vpds-pno{position:absolute;left:0;right:0;top:118px;text-align:center;font:700 40px/1 'Hanken Grotesk',sans-serif;color:#C9C9D1;z-index:2}",
     ".vpds-drawn{position:absolute;left:0;right:0;bottom:14px;text-align:center;white-space:nowrap;font:700 30px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
@@ -257,6 +257,22 @@
     var s = d.createElement("style"); s.id = "vpdsCss"; s.appendChild(d.createTextNode(CSS)); (d.head || d.documentElement).appendChild(s);
   }
   function el(tag, cls, parent) { var e = root.document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
+
+  /* A PRIZE OF ANY LENGTH FITS (review 1 of Jobs 515/516, S4, 19 Nov 2026: a 73-letter prize wrapped to three lines at 120 px and ran off
+     the bottom of a 1920 TV, over the claim line). The prize keeps the box of ONE line at its look's own size: a longer name wraps onto
+     a second line and steps down 2 px at a time until every whole word fits inside that width and height (never cut, never an
+     ellipsis), down to `floor`. The longest prize the Worker keeps is 120 letters (venueplay-game.js, .slice(0, 120)): two lines of
+     about 58 px. measure(el) gives { w: how wide it ran, h: how tall }; pure apart from that, so the suite runs it on a model. */
+  function fitLine(el, maxW, maxH, start, floor, measure) {
+    var f;
+    for (f = start; f >= floor; f -= 2) {
+      el.style.fontSize = f + "px";
+      var m = measure(el);
+      if (!m.w) return f;                                          // not laid out yet: the next call measures again
+      if (m.w <= maxW + 1 && m.h <= maxH + 1) return f;
+    }
+    el.style.fontSize = floor + "px"; return floor;
+  }
 
   /* shrink a one-line text until it fits its width (never cut) */
   function fitText(node, maxw, start, floor) {
@@ -331,6 +347,16 @@
     var views = { ticket: ticketView, flip: flipView, race: raceView };
     view = views[style](C);
     fit();
+    /* the prize keeps one line's box (fitLine); again once the real fonts are in, they are wider than the stand-in */
+    function fitPrize() {
+      if (!prizeEl.textContent) return;
+      if (prizeEl.__fs0 == null) prizeEl.__fs0 = parseFloat(prizeEl.style.fontSize) || (style === "race" ? 76 : 120);
+      var s0 = prizeEl.__fs0;
+      if (style === "race") fitLine(prizeEl, 1290, 1e9, s0, 30, function (e) { return { w: e.offsetWidth, h: 0 }; });   // one line in the top band
+      else fitLine(prizeEl, prizeEl.clientWidth, s0, s0, 36, function (e) { return { w: e.scrollWidth, h: e.offsetHeight }; });
+    }
+    fitPrize();
+    if (root.document && root.document.fonts && root.document.fonts.ready) root.document.fonts.ready.then(function () { if (!st.dead) fitPrize(); });
 
     function winText() { return st.winNo; }
     function applyClaim() {
@@ -622,7 +648,7 @@
       [[top, 0, 100], [stripe, 100, 16], [plate, 116, 380], [bot, 496, 150]].forEach(function (q) { q[0].style.webkitClipPath = q[0].style.clipPath = clip(q[1], q[2], 1); });
       claimEl.parentNode && claimEl.parentNode.removeChild(claimEl); bot.appendChild(claimEl); claimEl.setAttribute("data-maxw", "1190");
       prizeEl.parentNode.removeChild(prizeEl); tspan.appendChild(prizeEl);
-      prizeEl.style.cssText = "position:static;display:inline;font:400 76px/100px Anton,sans-serif;text-align:left";
+      prizeEl.style.cssText = "position:static;display:inline;padding:0;font:400 76px/100px Anton,sans-serif;text-align:left";
       var numFs = members ? Math.min(320, Math.floor(700 / (n * 0.47))) : Math.min(320, Math.floor(1300 / (n * 0.47)));
       for (var k = 0; k < POOL; k++) {
         var d = el("div", "vpds-ri", reel), no = el("div", "vpds-no", d); no.style.fontSize = numFs + "px";
@@ -657,5 +683,5 @@
     }
   }
 
-  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, glide: glide, glideN: glideN, lateWait: lateWait, lateLand: lateLand, lateClock: lateClock, WAIT_LEAD: WAIT_LEAD, VMAX: VMAX, VMAX_CALM: VMAX_CALM, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
+  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, glide: glide, glideN: glideN, lateWait: lateWait, lateLand: lateLand, lateClock: lateClock, WAIT_LEAD: WAIT_LEAD, fitLine: fitLine, VMAX: VMAX, VMAX_CALM: VMAX_CALM, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
 })(typeof window !== "undefined" ? window : this);
