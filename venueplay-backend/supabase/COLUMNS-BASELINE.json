@@ -421,6 +421,15 @@
   "kicked",
   "is_test"
  ],
+ "v_vp_members_list": [
+  "id",
+  "roster_id",
+  "member_number",
+  "first_name",
+  "last_name",
+  "status",
+  "updated_at"
+ ],
  "v_vp_monthly_metering": [
   "venue_id",
   "period_month",
@@ -521,7 +530,9 @@
   "invoice_reference",
   "invoice_set_at",
   "billing_street",
-  "billing_suburb"
+  "billing_suburb",
+  "unverified_email",
+  "unverified_email_at"
  ],
  "venues": [
   "id",
@@ -583,6 +594,47 @@
   "had_row",
   "game_prefs",
   "taken_at"
+ ],
+ "vp_backup_192_duplicate_players": [
+  "id",
+  "session_id",
+  "token_hash",
+  "display_name",
+  "device_hint",
+  "ip_hash",
+  "joined_at",
+  "last_seen_at",
+  "kicked",
+  "is_test",
+  "first_name",
+  "last_name",
+  "email",
+  "mobile",
+  "postcode",
+  "marketing_optin",
+  "marketing_optin_at",
+  "device_id",
+  "played_at",
+  "consent_version"
+ ],
+ "vp_billing_credits": [
+  "id",
+  "payer_type",
+  "payer_id",
+  "venue_id",
+  "venue_name",
+  "reason",
+  "players_released",
+  "rate_cents",
+  "months_left",
+  "cents",
+  "status",
+  "idem_key",
+  "term_end",
+  "applied_at",
+  "applied_invoice",
+  "note",
+  "created_at"
  ],
  "vp_billing_usage": [
   "id",
@@ -700,7 +752,8 @@
   "source_ip_hash",
   "during_game",
   "player_id",
-  "consent_version"
+  "consent_version",
+  "member_id"
  ],
  "vp_cards": [
   "id",
@@ -721,6 +774,15 @@
   "status",
   "resolved_by",
   "resolved_at"
+ ],
+ "vp_coaster_contacts": [
+  "id",
+  "board",
+  "coaster_venue_id",
+  "play_id",
+  "first_name",
+  "mobile",
+  "created_at"
  ],
  "vp_coaster_optin_venues": [
   "venue_id",
@@ -764,7 +826,11 @@
   "guard_note",
   "review",
   "reviewed_at",
-  "reviewed_label"
+  "reviewed_label",
+  "lead_status",
+  "board_until",
+  "checked_at",
+  "checked_by"
  ],
  "vp_discounts": [
   "id",
@@ -1067,6 +1133,21 @@
   "turned_at",
   "turned_by"
  ],
+ "vp_journey_events": [
+  "id",
+  "sid",
+  "link_id",
+  "event",
+  "props",
+  "src",
+  "path",
+  "ref_source",
+  "region",
+  "device",
+  "scanner",
+  "venue_id",
+  "at"
+ ],
  "vp_licensed_venues": [
   "id",
   "name",
@@ -1125,7 +1206,8 @@
   "id",
   "venue_id",
   "name",
-  "created_at"
+  "created_at",
+  "import_map"
  ],
  "vp_members": [
   "id",
@@ -1135,7 +1217,13 @@
   "last_name",
   "status",
   "note",
-  "updated_at"
+  "updated_at",
+  "email",
+  "mobile",
+  "postcode",
+  "marketing_optin",
+  "marketing_optin_at",
+  "marketing_optin_source"
  ],
  "vp_month_reports": [
   "month",
@@ -1177,6 +1265,15 @@
   "role",
   "label"
  ],
+ "vp_platform_notice": [
+  "id",
+  "is_on",
+  "text",
+  "start_at",
+  "end_at",
+  "updated_at",
+  "updated_by"
+ ],
  "vp_players": [
   "id",
   "session_id",
@@ -1197,7 +1294,8 @@
   "marketing_optin_at",
   "device_id",
   "played_at",
-  "consent_version"
+  "consent_version",
+  "member_id"
  ],
  "vp_playlist_songs": [
   "id",
@@ -1269,7 +1367,8 @@
   "no_contact",
   "no_contact_at",
   "no_contact_by",
-  "no_contact_reason"
+  "no_contact_reason",
+  "lead_source"
  ],
  "vp_purchase_raffle_draws": [
   "id",
@@ -1305,7 +1404,9 @@
   "opted_in_at",
   "age_confirmed_at",
   "created_at",
-  "created_by"
+  "created_by",
+  "postcode",
+  "member_capture_id"
  ],
  "vp_purchase_raffle_entries": [
   "id",
@@ -1385,6 +1486,30 @@
   "parked_at",
   "improved_at",
   "from_library"
+ ],
+ "vp_quick_events": [
+  "id",
+  "sid",
+  "step",
+  "src",
+  "taps",
+  "last_step",
+  "venue_id",
+  "at"
+ ],
+ "vp_quick_leads": [
+  "id",
+  "code_hash",
+  "first_name",
+  "venue_name",
+  "postcode",
+  "suburb",
+  "source",
+  "created_at",
+  "expires_at",
+  "revoked_at",
+  "claimed_venue_id",
+  "claimed_at"
  ],
  "vp_raffle_entries": [
   "id",
@@ -1555,7 +1680,8 @@
   "licensed_match",
   "decided_at",
   "decided_label",
-  "entity_type"
+  "entity_type",
+  "lead_id"
  ],
  "vp_song_flags": [
   "skey",
@@ -1594,6 +1720,26 @@
   "postcode",
   "au_state"
  ],
+ "vp_track_links": [
+  "id",
+  "code_hash",
+  "lead_ref",
+  "venue_name",
+  "first_name",
+  "state",
+  "postcode",
+  "suburb",
+  "likely_games",
+  "campaign",
+  "email_step",
+  "link_label",
+  "page",
+  "sent_at",
+  "created_at",
+  "expires_at",
+  "revoked_at",
+  "venue_id"
+ ],
  "vp_trivia_answers": [
   "id",
   "game_id",
@@ -1630,7 +1776,16 @@
   "negotiated_rate_cents",
   "rack_rate_cents",
   "status",
-  "created_at"
+  "created_at",
+  "billing_term",
+  "term_renewal"
+ ],
+ "vp_venue_month_counts": [
+  "venue_id",
+  "month",
+  "metric",
+  "n",
+  "made_at"
  ],
  "vp_venue_ratings": [
   "id",
