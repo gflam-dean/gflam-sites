@@ -113,7 +113,7 @@
   }
   function glide(N, D, vmax) {
     var P = phases(D), Tu = P.Tu, Td = P.Td, Tb = P.Tb;
-    var A = vmax * (0.5 * Tu + (Tb - Tu) + 0.5 * Td), k = N / A, V = vmax * k;   // k <= 1: the cap is never passed
+    var A = vmax * (0.5 * Tu + (Tb - Tu) + 0.5 * Td), k = N / A, V = vmax * k;   // k <= 1 (the cap holds) unless glideN's floor of K + 2 tickets wins: the calm roll at 3 s or less, up to 3 tickets a second, still slow
     function pos(td) {
       if (td <= 0) return 0;
       if (td >= D) return N;
@@ -133,6 +133,50 @@
     var a = Tb, b = D, i;   // the moment the last near miss is in the middle
     for (i = 0; i < 60; i++) { var m = (a + b) / 2; if (pos(m) < N - 1) a = m; else b = m; }
     return { pos: pos, vel: vel, steps: [], Tc: Tb, freeze: b, vmax: V };
+  }
+
+  /* A LATE PICK GLIDES TOO (review 1 of Jobs 515, S1, 19 Nov 2026). With no pick yet the reel may not reach the winner, so it used to stop
+     DEAD in one frame from about 1.8 tickets a second (the last near miss in the middle), hold, then jump straight back to speed when the
+     pick came. Now, from WAIT_LEAD seconds before that point, a stage still waiting leaves the glide for a crawl that can never reach the
+     last near miss (it closes in on it ever more slowly, speed v / (1 + v t / A)^2, the same speed at the hand-over), and when the pick
+     arrives the rest is planned from where the reel IS and how fast it is going, onto the winner, ending at rest (a cubic: same position
+     and speed at the hand-over, never past the winner, so never backwards). Pure, so the suite runs them frame by frame. */
+  var WAIT_LEAD = 1.0;
+  function lateWait(pT, v, A) {
+    return { pos: function (tau) { var x = v * tau / A; return pT + A * x / (1 + x); }, vel: function (tau) { var y = 1 + v * tau / A; return v / (y * y); } };
+  }
+  function lateLand(p0, v0, N, Tmax) {
+    var Dist = N - p0, T = Tmax;
+    if (v0 > 1e-9 && 2.9 * Dist / v0 < T) T = 2.9 * Dist / v0;   // v0 * T < 3 * Dist: the cubic never runs past the winner
+    return { T: T, pos: function (u) {
+      u = clamp(u, 0, 1); var u2 = u * u, u3 = u2 * u;
+      return (2 * u3 - 3 * u2 + 1) * p0 + (u3 - 2 * u2 + u) * T * v0 + (3 * u2 - 2 * u3) * N;
+    } };
+  }
+
+  /* THE CLOCK OF ONE GLIDING DRAW: step(raw, picked) for each frame's raw time gives the draw time t to paint, the reel's position p
+     (null = the glide's own), and `lost`, time to take off the raw clock from then on. With the pick in time it is the glide unchanged.
+     Waiting: t holds at Tw (WAIT_LEAD before the last near miss would be centred) and the reel crawls on lateWait(). Pick: t runs from Tw
+     to the win R while the reel lands on lateLand(); then the clock carries on from R. */
+  function lateClock(S, N, D) {
+    var R = INTRO + D, Tw = INTRO + Math.max(0, S.freeze - WAIT_LEAD), wait = null, waiting = false, land = null;
+    return { Tw: Tw, step: function (raw, picked) {
+      if (land) {
+        var u = (raw - land.at) / land.T;
+        if (u < 1) return { t: Tw + (R - Tw) * u, p: land.plan.pos(u), lost: 0 };
+        var add = (land.at + land.T) - R; land = null; waiting = false;
+        return { t: R, p: null, lost: add };
+      }
+      if (waiting || (!picked && raw > Tw)) {
+        if (!wait) { var tdw = Tw - INTRO, pT = S.pos(tdw); wait = lateWait(pT, Math.max(S.vel(tdw), 0.05), (N - 1) - pT); }
+        waiting = true;
+        var tau = raw - Tw, p0 = wait.pos(tau);
+        if (!picked) return { t: Tw, p: p0, lost: 0 };
+        var plan = lateLand(p0, wait.vel(tau), N, R - Tw); land = { at: raw, T: plan.T, plan: plan };
+        return { t: Tw, p: p0, lost: 0 };
+      }
+      return { t: raw, p: null, lost: 0 };
+    } };
   }
 
   /* the claim line: ONE winner line everywhere (Dean, 10 Nov). Raffle: "Bring ticket 0472 to the host."; members: the card. */
@@ -320,10 +364,17 @@
     function tick(now) {
       if (st.dead) return;
       var raw = (now - st.t0) / 1000 - st.lost;
+      if (view.glide && st.S) { lateTick(raw); st.raf = root.requestAnimationFrame(tick); return; }
       var freeze = view.freezeT;
       if (!st.picked && raw > freeze) { st.lost += raw - freeze; raw = freeze; }
       render(Math.min(raw, TOTAL));
       st.raf = root.requestAnimationFrame(tick);
+    }
+    /* the glide's clock, with a late pick handled by lateClock() (one pure function, run frame by frame by tools/test-drawstyle.js) */
+    function lateTick(raw) {
+      if (!st.lc) st.lc = lateClock(st.S, st.N, DRAW);
+      var r = st.lc.step(raw, st.picked);
+      st.lost += r.lost; st.pOv = r.p; render(Math.min(r.t, TOTAL));
     }
     var ctl = {
       total: TOTAL, win: R, style: style,
@@ -341,7 +392,7 @@
         view.refresh(); applyClaim(); render(st.t);
       },
       showWin: function (p) {
-        buildItemsOnce(); this.setPick(p);
+        buildItemsOnce(); this.setPick(p); st.pOv = null; st.lc = null;
         if (st.raf) root.cancelAnimationFrame(st.raf); st.started = true; render(TOTAL);
         root.addEventListener("resize", fit);
       },
@@ -403,7 +454,7 @@
       if (!members && root.document && root.document.fonts && root.document.fonts.ready) root.document.fonts.ready.then(function () { if (!st.dead) v.refresh(); });   // the real font is wider than the stand-in
       v.render = function (t) {
         var S = v.S, items = st.items, N = st.N; if (!S) return;
-        var td = t - INTRO, p = S.pos(clamp(td, 0, DRAW));
+        var td = t - INTRO, p = st.pOv != null ? st.pOv : S.pos(clamp(td, 0, DRAW));
         var z = 0.80 + 0.20 * ease.inOut(seg(t, INTRO, R));
         var wl = seg(t, R + 0.15, R + 1.1), wle = ease.brand(wl), lift = (members ? 4 : -15) * wle;
         c.world.style.transform = "scale(" + z + ")"; c.world.style.opacity = ease.out(seg(t, 0, 0.5));
@@ -581,7 +632,7 @@
       v.refresh = function () { for (var i = 0; i < els.length; i++) els[i].key = ""; wnm.textContent = st.winName; if (st.winName) fitText(wnm, 520, 180, 90); };
       v.render = function (t) {
         var S = v.S, items = st.items, N = st.N; if (!S) return;
-        var td = t - INTRO, p = S.pos(clamp(td, 0, DRAW));
+        var td = t - INTRO, p = st.pOv != null ? st.pOv : S.pos(clamp(td, 0, DRAW));
         var punch = t < R ? 0 : (t < R + 0.12 ? ease.out(seg(t, R, R + 0.12)) * 0.05 : 0.05 - 0.012 * ease.brand(seg(t, R + 0.12, R + 0.8)));
         var z = 0.82 + 0.18 * ease.inOut(seg(t, INTRO, R)) + punch; c.world.style.transform = "scale(" + z + ")";
         var a1 = ease.brand(seg(t, 0, 0.45)), a2 = ease.brand(seg(t, 0.15, 0.65));
@@ -606,5 +657,5 @@
     }
   }
 
-  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, glide: glide, glideN: glideN, VMAX: VMAX, VMAX_CALM: VMAX_CALM, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
+  root.VPDrawStyle = { create: create, secs: secs, schedule: schedule, glide: glide, glideN: glideN, lateWait: lateWait, lateLand: lateLand, lateClock: lateClock, WAIT_LEAD: WAIT_LEAD, VMAX: VMAX, VMAX_CALM: VMAX_CALM, claimLine: claimLine, pad: pad, usual: usual, lookFor: lookFor, niceName: niceName, nameLines: nameLines, SOUND: SOUND, DEFAULT_LOOK: DEFAULT_LOOK, STYLES: STYLES, LEN: LEN, INTRO: INTRO, WIN: WIN, K: K };
 })(typeof window !== "undefined" ? window : this);

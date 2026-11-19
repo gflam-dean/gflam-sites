@@ -6,6 +6,7 @@
      1. the draw time: short 6 s, normal 9 s, long 12 s; anything else is normal
      2. the build-up: the roll starts at the first item, passes the near misses one at a time, and ends exactly on the winner, never
         going backwards
+     2c. a late pick glides too (review 1, S1): RUNS lateClock() frame by frame with the pick at many moments
      2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026): run frame by frame at 60, 30 and 25 frames a second, the reel never
         stops on the way, never moves more than a third of a ticket a frame (so it is never seen running backwards), changes speed smoothly,
         lands exactly on the server's winner, and is calmer for a viewer who asked for less motion
@@ -77,6 +78,53 @@ print('\n== 2b. the ticket roll and race plate GLIDE (Jobs 515, 19 Nov 2026: "ba
   show('a viewer who asked for less motion gets the calm roll', /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/.test(mod) && /vmax: calm \? VMAX_CALM : VMAX/.test(mod) && DS.VMAX_CALM < DS.VMAX / 2);
   show('the WINNER IS THE SERVER\'S, unchanged: setPick puts the server\'s number on item N, and every glide ends on item N', /st\.items\[st\.N\] = \{ no: st\.winNo, nm: st\.winName \}; st\.picked = true; clearWinFromReel\(\);/.test(mod) && ['fast', 'short', 'normal', 'long'].every(function (k) { var D = DS.secs(k), N = DS.glideN(D, DS.VMAX); return DS.glide(N, D, DS.VMAX).pos(D) === N && DS.glide(DS.glideN(D, DS.VMAX_CALM), D, DS.VMAX_CALM).pos(D) === DS.glideN(D, DS.VMAX_CALM); }));
   show('a card\'s shadow is written only when it changes (a slow TV lost frames repainting it every frame)', /if \(e\.sh !== sh\) \{ e\.sh = sh; e\.card\.style\.boxShadow/.test(mod));
+})();
+
+print('\n== 2c. a LATE pick glides too (review 1 of Jobs 515, S1: the reel stopped dead for 79 frames, then lurched back to speed) ==');
+/* RUNS the shipped lateClock(), the clock the stage's tick() uses for the ticket roll and race plate, frame by frame, with the server's
+   pick arriving at different moments: in time, just before, during and long after the point where the reel waits for it. */
+(function () {
+  function play(D, vm, fps, pickTd, extra) {
+    var N = DS.glideN(D, vm), S = DS.glide(N, D, vm), lc = DS.lateClock(S, N, D), R = DS.INTRO + D, lost = 0, rows = [], f, n = Math.round((R + pickTd + (extra || 3)) * fps), own = 0;
+    for (f = 0; f <= n; f++) {
+      var raw = f / fps - lost, r = lc.step(raw, f / fps >= DS.INTRO + pickTd);
+      lost += r.lost; if (r.p != null) own++;
+      rows.push({ t: r.t, p: r.p != null ? r.p : S.pos(Math.min(Math.max(r.t - DS.INTRO, 0), D)) });
+    }
+    return { N: N, R: R, Tw: lc.Tw, rows: rows, own: own };
+  }
+  function judge(g, fps) {
+    var back = 0, still = 0, maxChange = 0, prevD = null, landedAt = -1, maxStep = 0, i;
+    for (i = 1; i < g.rows.length; i++) {
+      var a = g.rows[i - 1], b = g.rows[i], d = b.p - a.p;
+      if (d < -1e-12) back++;
+      if (d > maxStep) maxStep = d;
+      if (b.p < g.N - 0.02 && b.t > DS.INTRO + 0.1 && d < 1e-5) still++;   // standing still on the way to the winner
+      if (prevD !== null && b.p < g.N - 1e-6 && Math.abs(d - prevD) > maxChange) maxChange = Math.abs(d - prevD);
+      prevD = d; if (landedAt < 0 && b.t >= g.R) landedAt = i;
+    }
+    var last = g.rows[g.rows.length - 1];
+    return { back: back, still: still, maxChange: maxChange, lands: landedAt > 0 && g.rows[landedAt].p === g.N && last.p === g.N && last.t > g.R && maxStep < 8 / fps };   // and no hop onto it: never more than the glide's cap in a frame
+  }
+  ['fast', 'short', 'normal', 'long'].forEach(function (k) {
+    var D = DS.secs(k), N = DS.glideN(D, DS.VMAX), S = DS.glide(N, D, DS.VMAX), Tw = DS.INTRO + Math.max(0, S.freeze - DS.WAIT_LEAD) - DS.INTRO;
+    var picks = [0.5, Tw - 0.05, Tw + 0.1, S.freeze, S.freeze + 0.3, D - 0.2, D + 0.5, D + 3, D + 10];
+    var res = picks.map(function (pk) { var a = judge(play(D, DS.VMAX, 60, pk), 60), b = judge(play(D, DS.VMAX, 30, pk), 30); return [pk, a, b]; });
+    show(k + ': the reel lands exactly on the server\'s winner and stays there, whenever the pick comes', res.every(function (x) { return x[1].lands && x[2].lands; }), JSON.stringify(res.filter(function (x) { return !(x[1].lands && x[2].lands); })));
+    show(k + ': never backwards, whenever the pick comes (60 and 30 frames a second)', res.every(function (x) { return x[1].back === 0 && x[2].back === 0; }), JSON.stringify(res.map(function (x) { return [x[0], x[1].back, x[2].back]; })));
+    show(k + ': never stands still on the way to the winner, even while it waits for a late pick', res.every(function (x) { return x[1].still === 0 && x[2].still === 0; }), JSON.stringify(res.map(function (x) { return [x[0], x[1].still, x[2].still]; })));
+    show(k + ': no jump in speed when the reel starts waiting or when the late pick lands (under 0.01 of a ticket a frame at 60 frames a second)', res.every(function (x) { return x[1].maxChange < 0.01; }), JSON.stringify(res.map(function (x) { return [x[0], +x[1].maxChange.toFixed(4)]; })));
+  });
+  var g = play(9, DS.VMAX, 60, 0.3), W = play(9, DS.VMAX, 60, 1e6, 30 - 1e6), S9 = DS.glide(DS.glideN(9, DS.VMAX), 9, DS.VMAX);
+  show('a pick in time leaves the glide exactly as it was (the clock never takes the reel over)', g.own === 0);
+  var hold = W.rows.slice(-600), maxP = Math.max.apply(null, W.rows.map(function (r) { return r.p; }));
+  show('no pick for 30 s: the draw clock holds before the win and the reel never reaches the last near miss (the winner is never invented)', hold.every(function (r) { return r.t === W.Tw && r.t < W.R; }) && maxP < W.N - 1, [hold[0].t, W.Tw, maxP, W.N]);
+  var fast = DS.lateLand(0, 10, 1, 5), fastBack = 0, fp = 0, u;
+  for (u = 1; u <= 400; u++) { var q = fast.pos(u / 400); if (q < fp - 1e-12 || q > 1 + 1e-9) fastBack++; fp = q; }
+  show('a late pick that finds the reel still quick and close to the winner never runs past it (the landing is shortened instead)', fastBack === 0 && Math.abs(fast.pos(1) - 1) < 1e-12 && fast.T < 5, [fastBack, fast.T]);
+  var mod2 = MOD.replace(/\/\*[\s\S]*?\*\//g, '');
+  show('the stage\'s tick runs every gliding look on lateClock (and the reel paints its position)', /if \(view\.glide && st\.S\) \{ lateTick\(raw\); st\.raf = root\.requestAnimationFrame\(tick\); return; \}/.test(mod2) && /if \(!st\.lc\) st\.lc = lateClock\(st\.S, st\.N, DRAW\);/.test(mod2) && (mod2.match(/p = st\.pOv != null \? st\.pOv : S\.pos\(clamp\(td, 0, DRAW\)\)/g) || []).length === 2);
+  show('the wait takes over at the glide\'s own position and speed', Math.abs(DS.lateWait(3, 2, 1.5).pos(0) - 3) < 1e-12 && Math.abs(DS.lateWait(3, 2, 1.5).vel(0) - 2) < 1e-12 && Math.abs(S9.freeze - DS.WAIT_LEAD - (W.Tw - DS.INTRO)) < 1e-9);
 })();
 
 print('\n== 3. one winner line ==');
