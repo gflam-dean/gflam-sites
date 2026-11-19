@@ -398,6 +398,35 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('a last day that falls on a Saturday goes Friday as a "days left" one, never "Today is the last day"',
     km.length === 1 && !/Today is the last day/.test(km[0].text || '') && /2 days left of your first month/.test(km[0].text || '') && JSON.stringify(K.row().reminders_sent) === '[3,23,30]', [km.length, km[0] && km[0].subject, K.row().reminders_sent]);
 
+  section('7b. A reminder is marked sent BEFORE it goes: a save that fails sends nothing (INBOX 720, 19 Nov 2026 hourly cron audit)');
+  /* It used to send, then save reminders_sent and ignore whether the save landed, so a failed save sent the same
+     reminder again every hour in the window, up to 6 a day. */
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var K = await prospect({});
+  var ks = bne(2026, 11, 2, 10, 0);
+  AUTH.filter(function (u) { return u.id === K.login; })[0].last_sign_in_at = new Date(ks).toISOString();
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 2, 11, 0));
+  check('(setup) the month started, nothing due yet', !!K.row().first_signin_at && REM().length === 0, [K.row().first_signin_at, REM().length]);
+  FAIL['vp_prospects:PATCH'] = 1;
+  var kr = await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 0));
+  check('day 3 is due but the save fails: no email goes, and the sweep says so', REM().length === 0 && kr.save_failed === K.v.id, [REM().length, kr.save_failed]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 11, 0));
+  check('the next hours, with the database back: day 3 goes once, and is recorded', REM().length === 1 && JSON.stringify(K.row().reminders_sent) === '[3]', [REM().length, K.row().reminders_sent]);
+  /* Resend refusing is not a send: the claim is put back, so the reminder stays due and goes in a later hour. */
+  var RS0 = globalThis.fetch, REFUSE = 1;
+  globalThis.fetch = function (url, opts) {
+    if (String(url).indexOf('api.resend.com') !== -1 && REFUSE > 0) { REFUSE--; return Promise.resolve({ ok: false, status: 500, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('refused'); } }); }
+    return RS0(url, opts);
+  };
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 0));
+  check('day 23 refused by Resend: not recorded as sent, so it stays due', REM().length === 1 && JSON.stringify(K.row().reminders_sent) === '[3]', [REM().length, K.row().reminders_sent]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 10, 0));
+  check('the next hour day 23 goes, once', REM().length === 2 && K.row().reminders_sent.indexOf(23) !== -1, [REM().length, K.row().reminders_sent]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 11, 0));
+  check('and not again', REM().length === 2);
+  globalThis.fetch = RS0;
+
   section('8. The pause screen says what happened (the console\'s own holdWords)');
   var SES = readFile('venueplay/app/vp-session.js');
   function liftFn(src, name) { var i = src.indexOf('function ' + name + '('); var d = 0, k = src.indexOf('{', i); do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0); return src.slice(i, k); }
@@ -506,35 +535,6 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
     at('NSW', utc(2027, 4, 1, 20)) === utc(2027, 4, 1, 22) && at('NSW', utc(2027, 4, 4, 20)) === utc(2027, 4, 4, 23) && at('QLD', utc(2027, 4, 4, 20)) === utc(2027, 4, 4, 23));
   check('a state we do not know (or none) keeps Brisbane\'s clock', at(null, bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0) && at('XX', bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0));
   check('the venue\'s state comes from au_state, else its postcode', vpaSendState({ au_state: 'wa' }) === 'WA' && vpaSendState({ postcode: '2000' }) === 'NSW' && vpaSendState({}) === null);
-
-  section('10. A reminder is marked sent BEFORE it goes: a save that fails sends nothing (INBOX 720, 19 Nov 2026 hourly cron audit)');
-  /* It used to send, then save reminders_sent and ignore whether the save landed, so a failed save sent the same
-     reminder again every hour in the window, up to 6 a day. */
-  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
-  var K = await prospect({});
-  var ks = bne(2026, 11, 2, 10, 0);
-  AUTH.filter(function (u) { return u.id === K.login; })[0].last_sign_in_at = new Date(ks).toISOString();
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 2, 11, 0));
-  check('(setup) the month started, nothing due yet', !!K.row().first_signin_at && REM().length === 0, [K.row().first_signin_at, REM().length]);
-  FAIL['vp_prospects:PATCH'] = 1;
-  var kr = await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 0));
-  check('day 3 is due but the save fails: no email goes, and the sweep says so', REM().length === 0 && kr.save_failed === K.v.id, [REM().length, kr.save_failed]);
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 11, 0));
-  check('the next hours, with the database back: day 3 goes once, and is recorded', REM().length === 1 && JSON.stringify(K.row().reminders_sent) === '[3]', [REM().length, K.row().reminders_sent]);
-  /* Resend refusing is not a send: the claim is put back, so the reminder stays due and goes in a later hour. */
-  var RS0 = globalThis.fetch, REFUSE = 1;
-  globalThis.fetch = function (url, opts) {
-    if (String(url).indexOf('api.resend.com') !== -1 && REFUSE > 0) { REFUSE--; return Promise.resolve({ ok: false, status: 500, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('refused'); } }); }
-    return RS0(url, opts);
-  };
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 0));
-  check('day 23 refused by Resend: not recorded as sent, so it stays due', REM().length === 1 && JSON.stringify(K.row().reminders_sent) === '[3]', [REM().length, K.row().reminders_sent]);
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 10, 0));
-  check('the next hour day 23 goes, once', REM().length === 2 && K.row().reminders_sent.indexOf(23) !== -1, [REM().length, K.row().reminders_sent]);
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 11, 0));
-  check('and not again', REM().length === 2);
-  globalThis.fetch = RS0;
 
   if (badCount()) throw new Error('prospect free month: ' + badCount() + ' of ' + ran + ' failed');
   print(''); print('ALL ' + ran + ' CHECKS PASSED');
