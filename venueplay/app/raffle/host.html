@@ -1324,7 +1324,7 @@
     /* THE PICK GOES AFTER THE DRAWING (review 2 of Jobs 515, R2-S1, 19 Nov 2026): the server usually answers in well under a second,
        while "drawing" waits for the announce card. A pick sent first was thrown away by the TV ("drawing" starts a new draw, S.pick=null),
        so the reel waited blank to the end. drawSent resolves the moment "drawing" has gone; the pick follows it. The winner is the same r. */
-    var drawSent=new Promise(function(res){ if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); res(); }, ann); } else { sendDrawing(); res(); } });
+    var drawSent=new Promise(function(res){ if(ann){ sendAnnounce(); setTimeout(function(){ try{ if(G.busy) sendDrawing(); } finally { res(); } }, ann); } else { try{ sendDrawing(); } finally { res(); } } });   // finally (review 3, R3-S1): a throw in sendDrawing must never hold the pick and the winner back
     startLocalSpin();
 
     var wait=new Promise(function(res){ setTimeout(res, ann + drawMs()); });
@@ -1469,7 +1469,7 @@
     send({ t:"redraw", numbers:voided, pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel(), noticeMs:REDRAW_NOTICE_MS });
 
     G.busy=true; drawBtnBusy(); startLocalSpin();
-    var drawSent=new Promise(function(res){ setTimeout(function(){ if(G.busy) sendDrawing(); res(); }, REDRAW_NOTICE_MS); });   // the pick follows "drawing" (R2-S1, see startDraw)
+    var drawSent=new Promise(function(res){ setTimeout(function(){ try{ if(G.busy) sendDrawing(); } finally { res(); } }, REDRAW_NOTICE_MS); });   // the pick follows "drawing" (R2-S1, see startDraw)
     var wait=new Promise(function(res){ setTimeout(res, REDRAW_NOTICE_MS + drawMs()); });
     var body=drawBody(); body.redraw_of_seq=seq;
     apiPost("/host/draw", body)

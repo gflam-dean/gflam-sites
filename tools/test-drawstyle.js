@@ -155,6 +155,7 @@ print('\n== 2d. a prize of any length fits its one-line box (review 1, S4: a 73-
   show('the console\'s prize box takes at most 80 letters (review 2, R2-S3), and the Worker still keeps a typed prize up to 120 (fitted above)', /<input type="text" id="rfPrize" maxlength="80"/.test(RH) && /prize:\s+\(v\) => \(typeof v === 'string' && v\.trim\(\)\) \? v\.trim\(\)\.slice\(0, 120\) : undefined,/.test(WK));
 })();
 
+var drawRig;
 print('\n== 2e. the console sends the pick AFTER "drawing" (review 2 of Jobs 515, R2-S1: on a redraw or an announced prize the TV threw the pick away) ==');
 /* RUNS the real startDraw() and onRedraw() lifted out of /app/raffle/host.html, with a pretend clock, a pretend server that answers
    when it is told to, and every message the console sends written down in order. The TV starts a new draw on "drawing" and forgets
@@ -171,17 +172,19 @@ print('\n== 2e. the console sends the pick AFTER "drawing" (review 2 of Jobs 515
     var env = {
       setTimeout: function (f, ms) { timers.push({ at: now + (ms || 0), f: f }); return timers.length; },
       send: function (m) { sent.push({ at: now, t: m.t, m: m }); },
-      sendDrawing: function () { sent.push({ at: now, t: 'drawing' }); },
+      sendDrawing: function () { if (o.throwDrawing) throw new Error('sendDrawing broke'); sent.push({ at: now, t: 'drawing' }); },
+      sendIdle: function () { sent.push({ at: now, t: 'idle' }); },
+      hostError: function () { sent.push({ at: now, t: 'hosterror' }); },
       sendAnnounce: function () { sent.push({ at: now, t: 'announce' }); },
       sendPick: function (r) { sent.push({ at: now, t: 'pick', n: r.tickets[0] }); },
-      revealServer: function (r) { revealed.push({ at: now, r: r }); },
-      apiPost: function () { return new Promise(function (res) { pending = res; env.setTimeout(function () { res(answer); }, o.server); }); },
+      revealServer: function (r) { revealed.push({ at: now, r: r }); env.G.busy = false; },   // the real one frees the console (G.busy=false) first
+      apiPost: function () { return new Promise(function (res, rej) { pending = res; if (o.server >= 0) env.setTimeout(function () { if (o.fail) rej(new Error(o.fail)); else res(answer); }, o.server); }); },
       ensureRaffleGame: function () { return Promise.resolve(); },
       announcing: function () { return !!o.announce; }, ANNOUNCE_MS: 4000, REDRAW_NOTICE_MS: 3000, drawMs: function () { return 10200; },
       G: { busy: false, prizeIdx: 0, prizes: ['Meat tray'], jackOn: false, time: 30, round: o.redraw ? { resolved: false, numbers: [12], seq: 4 } : null, drawn: {}, min: 1, max: 150 },
       $: function () { return { value: '', classList: { remove: function () {}, add: function () {} }, disabled: false, textContent: '' }; }
     };
-    var stubs = 'readInputs validRange renderJackWarn clearHostErrorIf addPrize hostError liquorBlocked clearTimers drawBtnBusy drawBtnIdle drawBtnNext startLocalSpin stopSpin sendIdle rulesAgain disarmRedraw logResults renderRange'.split(' ');
+    var stubs = 'readInputs validRange renderJackWarn clearHostErrorIf addPrize liquorBlocked clearTimers drawBtnBusy drawBtnIdle drawBtnNext startLocalSpin stopSpin rulesAgain disarmRedraw logResults renderRange'.split(' ');
     var names = Object.keys(env).concat(stubs, ['skipsProblem', 'parseSkips', 'drawingPrize', 'remainingCount', 'drawBody', 'padWidth', 'prizeLabel']);
     var vals = names.map(function (k) {
       if (env.hasOwnProperty(k)) return env[k];
@@ -200,11 +203,12 @@ print('\n== 2e. the console sends the pick AFTER "drawing" (review 2 of Jobs 515
         drainMicrotasks();
         timers.sort(function (a, b) { return a.at - b.at; });
         if (!timers.length || timers[0].at > until) break;
-        var t = timers.shift(); now = t.at; t.f(); drainMicrotasks();
+        var t = timers.shift(); now = t.at; try { t.f(); } catch (e) { /* a browser reports a throw in a timer and carries on */ } drainMicrotasks();
       }
     }
-    return { api: api, run: run, sent: sent, revealed: revealed, answer: answer };
+    return { api: api, run: run, sent: sent, revealed: revealed, answer: answer, G: env.G };
   }
+  drawRig = { rig: rig };
   function order(r) { return r.sent.map(function (x) { return x.t; }).filter(function (t) { return t === 'drawing' || t === 'pick' || t === 'announce' || t === 'redraw'; }).join(','); }
   function at(r, t) { for (var i = 0; i < r.sent.length; i++) if (r.sent[i].t === t) return r.sent[i].at; return -1; }
   var cases = [
@@ -224,6 +228,39 @@ print('\n== 2e. the console sends the pick AFTER "drawing" (review 2 of Jobs 515
     show(c[0] + ': "drawing" goes when it always did, and the pick as soon as both it and the server answer are there', dAt === want && pAt === Math.max(want, o.server), [dAt, pAt]);
     show(c[0] + ': the winner is the server\'s, the same answer on the TV and the console, revealed when it always was', r.revealed.length === 1 && r.revealed[0].r === r.answer && pick && pick.n === 87 && r.revealed[0].at === Math.max(want + 10200, o.server), [r.revealed.length && r.revealed[0].at, pick && pick.n]);
   });
+})();
+
+(function () {
+  /* review 3 (R3-S1, R3-S3): the same lifted startDraw()/onRedraw(), when things go wrong. A throw in sendDrawing() must not hold back
+     the pick and the winner (it did not before this branch: only the TV's "drawing" was lost); a server that fails, before or after the
+     card, or never answers in time, must leave the console free and the TV told (idle), with no pick ever sent. */
+  var R = drawRig;
+  [['announced draw, sendDrawing() throws inside the card timer', { server: 300, announce: true, throwDrawing: true }, 14200],
+   ['redraw, sendDrawing() throws inside the card timer', { server: 200, redraw: true, throwDrawing: true }, 13200],
+   ['plain draw, sendDrawing() throws at once', { server: 300, throwDrawing: true }, 10200]].forEach(function (c) {
+    var r = R.rig(c[1]); if (c[1].redraw) r.api.onRedraw(false); else { try { r.api.startDraw(); } catch (e) {} } r.run(60000);
+    var pick = r.sent.filter(function (x) { return x.t === 'pick'; });
+    show(c[0] + ': the pick and the winner still come, on time, and the console is free again', pick.length === 1 && pick[0].n === 87 && r.revealed.length === 1 && r.revealed[0].at === c[2] && r.revealed[0].r === r.answer && r.G.busy === false, [pick.length, r.revealed.length && r.revealed[0].at, r.G.busy]);
+  });
+  [['announced draw, the server fails before the card ends', { server: 300, announce: true, fail: '500' }, 'announce,idle'],
+   ['announced draw, the server fails after the card', { server: 6000, announce: true, fail: '500' }, 'announce,drawing,idle'],
+   ['redraw, the server times out after the card', { server: 15000, redraw: true, fail: 'timeout' }, 'redraw,drawing,idle'],
+   ['plain draw, the server fails', { server: 300, fail: '500' }, 'drawing,idle']].forEach(function (c) {
+    var r = R.rig(c[1]); if (c[1].redraw) r.api.onRedraw(false); else r.api.startDraw(); r.run(60000);
+    var seen = r.sent.map(function (x) { return x.t; }).filter(function (t) { return t === 'announce' || t === 'redraw' || t === 'drawing' || t === 'pick' || t === 'idle'; }).join(',');
+    show(c[0] + ': no pick, no winner, the TV is told (' + c[2] + ') and the console is free again', seen === c[2] && r.revealed.length === 0 && r.G.busy === false, [seen, r.revealed.length, r.G.busy]);
+  });
+})();
+
+(function () {
+  /* review 3 (R3-S2): RUNS the raffle TV's own t:"redraw" branch (lifted from onMsg in raffle/screen.html). The voided ticket's pick
+     must be gone, so the redraw's reel (started by the host's "drawing", or by the redraw card's own fallback if that is lost) can only
+     ever take the redraw's own pick. */
+  var at0 = RS.indexOf('else if(m.t==="redraw"){'), i = RS.indexOf('{', at0), d = 0, j;
+  for (j = i; j < RS.length; j++) { if (RS[j] === '{') d++; else if (RS[j] === '}') { d--; if (!d) break; } }
+  var body = RS.slice(i + 1, j), S = { pick: 12, phase: 'winner', endPend: {} }, shown = null;
+  new Function('m', 'S', 'renderRedraw', body)({ t: 'redraw', numbers: [12] }, S, function (n) { shown = n; });
+  show('a redraw on the TV forgets the voided ticket\'s pick (it can never land the redraw on ticket 12)', S.pick === null && S.phase === 'redraw' && shown && shown[0] === 12, JSON.stringify(S));
 })();
 
 print('\n== 3. one winner line ==');

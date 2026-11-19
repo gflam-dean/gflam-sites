@@ -872,7 +872,7 @@
   "counted_by": "lines"
  },
  "tools/test-drawstyle.js": {
-  "checks": 144,
+  "checks": 152,
   "counted_by": "lines"
  },
  "tools/test-early-bingo-restore.js": {

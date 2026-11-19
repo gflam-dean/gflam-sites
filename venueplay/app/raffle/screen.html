@@ -813,7 +813,7 @@
       S.winTotal=(typeof m.total==="number" && m.total>0) ? m.total : 0;
       S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); S.endPend={ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }; }
     else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); S.endPend=null; S.endDrawn.push({ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }); }
-    else if(m.t==="redraw"){ S.endPend=null; S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }
+    else if(m.t==="redraw"){ S.endPend=null; S.pick=null; S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }   // S.pick=null (review 3, R3-S2): the voided ticket's pick can never seed the redraw's reel
   }
 
   /* THE END-OF-GAME SHOW (2 Nov 2026). When the last prize is drawn: every winning ticket this screen saw
