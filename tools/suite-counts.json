@@ -980,7 +980,7 @@
   "counted_by": "lines"
  },
  "tools/test-hq-no-member-contacts.js": {
-  "checks": 31,
+  "checks": 32,
   "counted_by": "lines"
  },
  "tools/test-hq-resend-signin-text.js": {
@@ -1053,6 +1053,10 @@
  },
  "tools/test-members-console.js": {
   "checks": 51,
+  "counted_by": "lines"
+ },
+ "tools/test-members-owner-manager-only.js": {
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/test-members-csv-columns.js": {

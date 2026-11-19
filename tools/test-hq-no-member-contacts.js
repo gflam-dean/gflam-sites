@@ -125,20 +125,26 @@ var chain = Promise.resolve()
   .then(function () { return runHost('admin'); }).then(function (r) {
     check('HQ View as: every member comes back by name', r.rows && r.rows.length === 5 && r.rows[4].first_name === 'F5', r.rows && r.rows.length);
     check('HQ View as: no row carries an email, a mobile or a postcode', r.rows && !hasContact(r.rows));
-    check('HQ View as: the table first, then the names view with named columns',
-          r.log.length >= 2 && r.log[0] === 'vp_members id,roster_id,member_number,first_name,last_name,status,updated_at' && /^v_vp_members_list id,roster_id,member_number,first_name,last_name,status,updated_at$/.test(r.log[1]), r.log);
+    /* Since migration 226 the console reads the names view FIRST for every login (hosts read nobody from the table). */
+    check('HQ View as: the names view, with named columns, and never the table',
+          r.log.length >= 1 && /^v_vp_members_list id,roster_id,member_number,first_name,last_name,status,updated_at$/.test(r.log[0])
+          && r.log.every(function (l) { return l.indexOf('vp_members ') !== 0; }), r.log);
   })
   .then(function () { return runHost('staff'); }).then(function (r) {
-    check("the venue's own staff still get their list from the table, contacts and all (as today)",
-          r.rows && r.rows.length === 5 && r.rows[0].email === 'p1@example.invalid', r.log);
-    check("the venue's own staff never ask the view when the table answers",
-          r.log.every(function (l) { return l.indexOf('v_vp_members_list') < 0; }), r.log);
+    check("the venue's own staff get every member by name from the view, no contact column (migration 226)",
+          r.rows && r.rows.length === 5 && r.rows[4].first_name === 'F5' && !hasContact(r.rows), r.log);
+    check("the venue's own staff never ask the table when the view answers",
+          r.log.every(function (l) { return l.indexOf('vp_members ') !== 0; }), r.log);
+  })
+  .then(function () { return runHost('staff', true); }).then(function (r) {
+    check('before 208 (no view) the venue\'s staff read the table, NAMED columns, never "*"',
+          r.rows && r.rows.length === 5 && r.log[1] === 'vp_members id,roster_id,member_number,first_name,last_name,status,updated_at', r.log);
   })
   .then(function () { return runHost('admin', true); }).then(function (r) {
     check('before 208 (no view) HQ View as gets nobody, no error and nothing leaks', r.rows && r.rows.length === 0 && !r.error, r);
   })
-  .then(function () { return runHost('staff', false, true); }).then(function (r) {
-    check('a FAILED table read still throws (never read as an empty list)', !!r.error, r);
+  .then(function () { return runHost('staff', true, true); }).then(function (r) {
+    check('no view and a FAILED table read still throws (never read as an empty list)', !!r.error, r);
   });
 
 /* ---------------------------------------------------------------- 3. the account page's count */
@@ -172,7 +178,8 @@ chain = chain.then(function () {
   print('');
   print('4. RLS-BASELINE.json and COLUMNS-BASELINE.json after 208');
   check('vp_members_admin_all is not in the baseline', !BASE.policies['vp_members.vp_members_admin_all']);
-  check("vp_members_host_select is (the venue's own read)", !!BASE.policies['vp_members.vp_members_host_select']);
+  /* Migration 226 replaced the any-staff read (vp_members_host_select) with the owner's and managers' read. */
+  check("the venue's own read is there (vp_members_owner_manager_select, migration 226)", !!BASE.policies['vp_members.vp_members_owner_manager_select']);
   check('v_vp_members_list is a view in the baseline', BASE.views.indexOf('v_vp_members_list') >= 0);
   var vg = BASE.grants.filter(function (g) { return g.indexOf('v_vp_members_list ') === 0; });
   check('its only grant: authenticated SELECT', vg.length === 1 && vg[0] === 'v_vp_members_list authenticated SELECT', vg);

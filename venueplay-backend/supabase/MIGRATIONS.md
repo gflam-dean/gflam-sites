@@ -1007,3 +1007,18 @@ The game Worker's 90-day sweep deletes a gone venue's consent rows (purgeKnownPl
 before it runs every lookup answers "not known" and nothing is written (tools/test-known-phone.js section 6). Run on TEST first
 (tools/staging/run-on-test.py), then Dean pastes on live EARLY. Branch `feature/known-phone-416-sun22`. NOT RUN.
 Rollback: `drop table public.vp_player_consents; drop table public.vp_known_players;`.
+
+`venueplay-226-members-owner-manager-only.sql` (INBOX 707 + 710, one fix per 712k, 19 Nov 2026; target Sunday 22 Nov, two
+independent reviews): a members list's FULL rows (email, mobile, postcode, offers consent from 200; birth year and month from 213)
+are read by the venue's OWNER and MANAGERS only. Drops `vp_members_host_select` (any staff row via `vp_staff_venue_ids()`, no
+role test, so a host or marketing login could read member contacts from the API) and creates `vp_members_owner_manager_select`
+(FOR SELECT to authenticated, rosters at the new SECURITY DEFINER helper `vp_owner_manager_venue_ids()`: role in ('owner',
+'manager'); EXECUTE authenticated + service_role, never anon). Hosts, marketing and HQ read number and names through 208's
+`v_vp_members_list` (unchanged; 226 REFUSES if it is missing or names any other column). No column grant: every login is the
+one database role authenticated, so only row security can tell a host from an owner. members/host.html now reads the view
+first (named columns; the table only as a fallback). NEEDS 208 FIRST; then either order with the pages (older pages fall
+through to the view when the table answers nobody). The guard block refuses on live: the live run is the statements after
+its END marker. RLS-BASELINE.json on this branch is HAND-WRITTEN from the SQL (one policy swapped, one definer function
+added): the live dump after the paste wins. `vp_staff_venue_ids()` has no CREATE in the repo: its expected body is in
+`REFERENCE-vp-staff-venue-ids-READ-ONLY.sql` (comments + read-only selects), to be checked against live with
+pg_get_functiondef. Rollback: in the file. NUMBER: 224 held for the venue-staff lockdown, 225 is 204b, so 226. NOT RUN.
