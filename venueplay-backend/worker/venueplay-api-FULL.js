@@ -15585,6 +15585,17 @@ function vpaLocalWeekday(ts, tz) {       // "Friday"
       { timeZone: tz || 'Australia/Brisbane', weekday: 'long' }).format(new Date(ts * 1000));
   } catch (e) { return ''; }
 }
+/* THE LAST-DAY EMAIL'S DUE DATE (INBOX 722, 19 Nov 2026): two days before the last day, moved back to the Friday when
+   that is a Saturday or Sunday. Plain dates (YYYY-MM-DD, the venue's own calendar), so no clock and no timezone here. */
+function vpaLastDayDue(lastYmd) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(lastYmd || ''))) return '';
+  let d = vpaAddDays(lastYmd, -2);
+  while (vpaWeekday(d) === 0 || vpaWeekday(d) === 6) d = vpaAddDays(d, -1);
+  return d;
+}
+/* Inside Dean's send window at this venue right now (its state's clock, vpaSendState). Its own function so a suite can
+   hold the clock. */
+function vpaLastDayWindowOpen(v) { return vpaInSendWindow(Date.now(), vpaSendState(v)); }
 function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM-DD
   if (!aYmd || !bYmd) return null;
   const a = Date.UTC(+aYmd.slice(0, 4), +aYmd.slice(5, 7) - 1, +aYmd.slice(8, 10));
@@ -15592,7 +15603,11 @@ function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM
   return Math.round((b - a) / 86400000);
 }
 
-/* TWO DAYS OUT, AT 8AM WHERE THEY ARE.
+/* TWO DAYS OUT, IN DEAN'S SEND WINDOW WHERE THEY ARE.
+
+   19 Nov 2026 (INBOX 720 and 722): no longer "from 8am any day". It goes Monday to Friday, 9 to 12 and 2 to 5,
+   venue local time, on the weekday two days before the last day, or the Friday before when that is a weekend
+   (vpaLastDayDue, vpaLastDayWindowOpen, notes in the sweep below). The history that follows is kept as written.
 
    Dean, 16 Sep 2026: "lets tell them that <<DAY>> is their last day on VenuePlay and lets
    do that 48 hours prior i think at like 8am that day so they have 2 full days to think of
@@ -15631,7 +15646,7 @@ async function vpaLastDaySweep(env) {
        they have been with us, and what a night worked out at. Selected here rather than
        fetched per venue, because this runs hourly over every cancelling venue. */
     'status=eq.active&cancel_at_period_end=is.true'
-    + '&select=id,name,founding_id,timezone,created_at,max_players') || [];
+    + '&select=id,name,founding_id,timezone,created_at,max_players,au_state,postcode') || [];
   let sent = 0;
   const byAccount = {};
   for (const v of venues) (byAccount[v.founding_id] = byAccount[v.founding_id] || []).push(v);
@@ -15675,26 +15690,31 @@ async function vpaLastDaySweep(env) {
       const today = vpaLocalDate(Math.floor(Date.now() / 1000), tz);
       const lastDay = vpaLocalDate(endTs, tz);
       const away = vpaDaysBetween(today, lastDay);
-      if (away !== 2) {
-        why.push(v.name + ': ' + away + ' day(s) out, not 2 (today ' + today + ', last day ' + lastDay + ')');
+      /* DEAN'S SEND WINDOW (INBOX 720 and 722, 19 Nov 2026; DEAN-OPEN-QUESTIONS row 136, settled): this is an
+         automatic email, so it goes only Monday to Friday, 9 to 12 and 2 to 5, venue local time, like every other
+         one (vpaSendAllowedAt). It used to go from 8am on any day, weekends included. The day it is due is two days
+         before the last day, moved back to the Friday when that falls on a weekend (a Monday or Tuesday last day
+         is told on the Friday before), the way a card reminder's weekend last day is. A venue not yet told on its
+         due day (the window closed before a cancel, or a missed run) is told in the next window up to the day
+         before its last day: late inside the window beats never. Never on the last day itself (a cancel that
+         close gets this email at once from the cancel, vpaFireCancelConfirm). */
+      const due = vpaLastDayDue(lastDay);
+      if (!due || away === null || today < due || away < 1) {
+        why.push(v.name + ': ' + away + ' day(s) out, not due (today ' + today + ', last day ' + lastDay + ', due ' + due + ')');
         continue;
       }
-      /* FROM 8am, not AT 8am. An exact hour means one missed run loses the message
-         entirely, because tomorrow the venue is one day out and no longer matches. That
-         is not hypothetical: this shipped at 10:13 on the morning Wellshot was 47.9 hours
-         from cancelling, so an exact-8 test would have skipped it at 11:00 and every hour
-         after, and the only venue ever to cancel would have gone dark with no warning.
-         The audit row below is what stops the hourly cron then sending it sixteen times. */
-      const hr = vpaLocalHour(tz);
-      if (hr < 8) { why.push(v.name + ': local time is ' + hr + ':00, waiting for 8am'); continue; }
+      if (!vpaLastDayWindowOpen(v)) { why.push(v.name + ': due, waiting for the send window (Mon to Fri, 9 to 12 and 2 to 5 local)'); continue; }
 
       /* Either action counts as "already tried". A venue Resend refused is not re-sent
          every hour for the rest of the day; it is left in the log under its own action so
-         somebody can see it and act. */
-      const already = await vpaSelect(env, 'vp_admin_audit',
+         somebody can see it and act. A look that FAILS sends nothing (INBOX 720, 19 Nov 2026):
+         it used to read a database blip as "not told yet" and send again; it is the next
+         hour's job now. */
+      const already = await vpaMrGet(env, 'vp_admin_audit',
         'action=in.(venue_last_day_emailed,venue_last_day_NOT_emailed)&target=eq.'
-        + encodeURIComponent('venue:' + v.id) + '&select=id&limit=1').catch(() => []);
-      if (already && already.length) { why.push(v.name + ': already told'); continue; }
+        + encodeURIComponent('venue:' + v.id) + '&select=id&limit=1').catch(() => null);
+      if (!already || !already.ok) { why.push(v.name + ': could not read whether already told, held'); continue; }
+      if (already.rows.length) { why.push(v.name + ': already told'); continue; }
       const to = await vpaAccountContacts(env, acct, v.id);
       if (!to.length) { why.push(v.name + ': no email address on the account'); continue; }
 

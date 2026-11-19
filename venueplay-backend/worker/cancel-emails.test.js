@@ -70,6 +70,22 @@ eval(lift(BILL,"vpaLocalDate"));
 eval(lift(BILL,"vpaLocalWeekday"));
 eval(lift(BILL,"vpaDaysBetween"));
 eval(lift(BILL,"vpaLastDaySweep"));
+/* DEAN'S SEND WINDOW (INBOX 720 and 722, 19 Nov 2026): the due day and the window, lifted from the Worker. */
+eval(lift(BILL,"vpaAddDays"));
+eval(lift(BILL,"vpaWeekday"));
+eval(lift(BILL,"vpaLastDayDue"));
+eval("var VPA_SEND_TZ=" + (/const VPA_SEND_TZ = (\{[\s\S]*?\});/.exec(BILL)||[,"{}"])[1] + ";");
+eval("var VPA_SEND_HOURS=" + (/const VPA_SEND_HOURS = (\[[^\]]*\]);/.exec(BILL)||[,"[]"])[1] + ";");
+var VPA_SEND_FMT={};
+eval(lift(BILL,"vpaSendTz"));
+eval(lift(BILL,"vpaSendLocal"));
+eval(lift(BILL,"vpaSendOpen"));
+eval(lift(BILL,"vpaSendAllowedAt"));
+eval(lift(BILL,"vpaSendState"));
+eval(lift(BILL,"vpaInSendWindow"));
+eval(lift(BILL,"vpaLastDayWindowOpen"));
+eval(lift(BILL,"vpaMrGet"));
+function vpaHeaders(){ return {}; }   // vpaMrGet sends these; the fake fetch below ignores them
 eval(lift(BILL,"vpaEndAfterLastNight"));
 
 /* THE REAL ONES, KEPT. Everything lifted above lives at TOP LEVEL, so a stub declared
@@ -79,6 +95,7 @@ eval(lift(BILL,"vpaEndAfterLastNight"));
    assigned over the real bindings out here, and the originals are kept so the date
    arithmetic can still be tested for real. */
 var REAL_hour=vpaLocalHour, REAL_date=vpaLocalDate, REAL_weekday=vpaLocalWeekday;
+var REAL_window=typeof vpaLastDayWindowOpen==="function" ? vpaLastDayWindowOpen : null, REAL_mrget=typeof vpaMrGet==="function" ? vpaMrGet : null;
 pass("the four new functions are all in the Worker",
      typeof vpaAccountContacts==="function" && typeof vpaLeavingHtml==="function"
      && typeof vpaFireCancelConfirm==="function" && typeof vpaLastDaySweep==="function");
@@ -97,8 +114,10 @@ async function vpaInsert(env,table,row){ AUDIT.push(row); return {}; }
 async function vpaAuthGetUser(env,id){ return USERS[id]||null; }
 async function vpbStripeGet(env,path){ var id=path.split("/")[1]; return STRIPE[id]||{}; }
 var USERS={}, TABLES={};
+var AUDIT_READ_FAILS=false;
 async function vpaSelect(env,table,q){
   SELECTS.push(table+"?"+q);
+  if(AUDIT_READ_FAILS && table==="vp_admin_audit") return [];   // the real vpaSelect answers [] on any non-2xx
   var rows=TABLES[table]||[];
   return rows.filter(function(r){
     /* THE FAKE HONOURS THE ACTUAL FILTER, action by action. The first version matched any
@@ -141,6 +160,14 @@ vpaLocalDate=function(ts,tz){
   return tz==="Australia/Perth" ? TODAY_PERTH : TODAY;
 };
 vpaLocalWeekday=function(ts,tz){ return "Friday"; };
+/* THE WINDOW, HELD (19 Nov 2026). Open on a weekday, 9 to 12 and 2 to 5, by the same fake hour and date as above,
+   per venue (Perth has its own). The real vpaLastDayWindowOpen is tested on its own further down with a pinned clock. */
+vpaLastDayWindowOpen=function(v){
+  var perth=v && v.timezone==="Australia/Perth", h=perth?PERTH_HOUR:FAKE_HOUR, d=perth?TODAY_PERTH:TODAY, wd=vpaWeekday(d);
+  return wd>=1 && wd<=5 && [9,10,11,14,15,16].indexOf(h)!==-1;
+};
+/* The audit read: vpaMrGet's shape. A failed read is { ok:false }, as the real one gives on a non-2xx. */
+vpaMrGet=async function(env,table,q){ if(AUDIT_READ_FAILS && table==="vp_admin_audit") return { ok:false, rows:[] }; return { ok:true, rows: await vpaSelect(env,table,q) }; };
 var PATCHED=[];
 async function vpaPatch(env,table,filter,obj){ PATCHED.push({filter:filter,obj:obj}); return {}; }
 async function vpaVenuesForCustomer(env,cust){
@@ -310,8 +337,8 @@ async function sweepWith(lastDay, hour, alreadySent){
   return vpaLastDaySweep(env);
 }
 
-var r1=await sweepWith("2026-09-18",8,false);
-pass("two days out at 8am, they are told", r1.sent===1 && SENT.length===2, "sent "+SENT.length+" email(s)");
+var r1=await sweepWith("2026-09-18",10,false);
+pass("two days out, a Wednesday at 10am, they are told", r1.sent===1 && SENT.length===2, "sent "+SENT.length+" email(s)");
 var d=SENT[0]||{subject:"",html:""};
 pass("the subject NAMES THE DAY, which is what a publican plans around",
      d.subject==="Friday is your last day on venueplay", d.subject);
@@ -383,7 +410,7 @@ TABLES={
   venueplay_founding:[{id:"f1",contact_email:"accounts@thepub.com.au",stripe_subscription_id:"sub_1"}],
   vp_venue_staff:[{venue_id:"v1",auth_user_id:"u1"}], vp_admin_audit: [],
 };
-LASTDAY="2026-09-18"; FAKE_HOUR=8;
+LASTDAY="2026-09-18"; FAKE_HOUR=10;
 STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_founding_m",unit_amount:250}}]} } };
 var rF=await vpaLastDaySweep(env);
 var f=SENT[0]||{html:""};
@@ -392,35 +419,93 @@ pass("a founding venue gets the same plain goodbye: no rate promise and no price
 
 /* A QUIET RUN MUST SAY WHY IT WAS QUIET. The first hour this was live was spent unable
    to tell "the cron has not fired" from "it fired and decided not to send". */
-var quiet = await sweepWith("2026-09-19",8,false);
+var quiet = await sweepWith("2026-09-19",10,false);
 pass("three days out, nothing yet", quiet.sent===0);
 pass("and it says WHY it sent nothing, rather than looking like a cron that never ran",
-     (quiet.why||[]).length===1 && quiet.why[0].indexOf("3 day(s) out, not 2")!==-1,
+     (quiet.why||[]).length===1 && quiet.why[0].indexOf("3 day(s) out, not due")!==-1 && quiet.why[0].indexOf("due 2026-09-17")!==-1,
      JSON.stringify(quiet.why));
 pass("the reason names the dates it compared, so a timezone fault is visible",
      (quiet.why[0]||"").indexOf("today 2026-09-16")!==-1 && (quiet.why[0]||"").indexOf("last day 2026-09-19")!==-1);
 var early = await sweepWith("2026-09-18",6,false);
-pass("waiting for 8am says so, with the local hour it saw",
-     (early.why||[]).length===1 && early.why[0].indexOf("local time is 6:00, waiting for 8am")!==-1,
+pass("waiting for the send window says so",
+     (early.why||[]).length===1 && early.why[0].indexOf("waiting for the send window")!==-1,
      JSON.stringify(early.why));
-var told = await sweepWith("2026-09-18",8,true);
+var told = await sweepWith("2026-09-18",10,true);
 pass("already told says so too", (told.why||[]).join().indexOf("already told")!==-1, JSON.stringify(told.why));
 pass("the scheduled handler records EVERY run, not only the ones that send",
      /await vpaAudit\(env, actor, 'last_day_sweep_ran'/.test(BILL));
-pass("one day out, the moment has passed and it is not sent late",
-     (await sweepWith("2026-09-17",8,false)).sent===0);
-pass("the last day itself, nothing", (await sweepWith("2026-09-16",8,false)).sent===0);
-pass("two days out but 7am, it waits for 8", (await sweepWith("2026-09-18",7,false)).sent===0);
-/* FROM 8am, not AT 8am. An exact hour means a single missed cron run loses the message,
-   because the next day the venue is one day out and no longer matches at all. Wellshot
-   was 47.9 hours from cancelling when this shipped at 10:13, so an exact test would have
-   skipped it for good. Late is fine; never is not. */
-pass("two days out at 9am, a missed 8am run still sends it",
-     (await sweepWith("2026-09-18",9,false)).sent===1);
-pass("two days out at 11pm, it still goes rather than being lost",
-     (await sweepWith("2026-09-18",23,false)).sent===1);
-pass("but it never fires before 8am, so nobody is woken at 4",
+/* INSIDE THE WINDOW, LATE BEATS NEVER (19 Nov 2026). The window shuts at 5pm, so a venue whose due day closed
+   before it was told (a cancel after 5pm, a missed run) is told in the next window, up to the day before its last
+   day. It used to be "one day out, the moment has passed"; with the window that would lose it. */
+pass("one day out and never told: it goes in the next window",
+     (await sweepWith("2026-09-17",10,false)).sent===1);
+pass("one day out at 8am: still waits for 9", (await sweepWith("2026-09-17",8,false)).sent===0);
+pass("the last day itself, nothing", (await sweepWith("2026-09-16",10,false)).sent===0);
+pass("two days out but 8am (the old send time), it waits for 9", (await sweepWith("2026-09-18",8,false)).sent===0);
+/* IN THE WINDOW, not AT one hour. An exact hour means a single missed cron run loses the message.
+   Wellshot was 47.9 hours from cancelling when this shipped at 10:13. Late is fine; never is not. */
+pass("two days out at 10am, a missed 9am run still sends it",
+     (await sweepWith("2026-09-18",10,false)).sent===1);
+pass("two days out at 4pm, the last hour of the window, it goes",
+     (await sweepWith("2026-09-18",16,false)).sent===1);
+pass("the lunch gap (12 to 2) and 5pm on: nothing",
+     (await sweepWith("2026-09-18",12,false)).sent===0 && (await sweepWith("2026-09-18",13,false)).sent===0
+     && (await sweepWith("2026-09-18",17,false)).sent===0);
+pass("two days out at 11pm, nothing any more (it used to go)",
+     (await sweepWith("2026-09-18",23,false)).sent===0);
+pass("and never before 9am, so nobody is woken at 4",
      (await sweepWith("2026-09-18",4,false)).sent===0);
+/* A LAST DAY AFTER A WEEKEND IS TOLD ON THE FRIDAY (INBOX 722). Wed 16 Sep 2026 is the fake today. */
+pass("the due day, read alone: two days before, or the Friday before when that is a weekend",
+     vpaLastDayDue("2026-09-18")==="2026-09-16" && vpaLastDayDue("2026-09-20")==="2026-09-18"
+     && vpaLastDayDue("2026-09-21")==="2026-09-18" && vpaLastDayDue("2026-09-22")==="2026-09-18"
+     && vpaLastDayDue("2026-09-23")==="2026-09-21" && vpaLastDayDue("")==="",
+     [vpaLastDayDue("2026-09-20"),vpaLastDayDue("2026-09-21"),vpaLastDayDue("2026-09-22"),vpaLastDayDue("2026-09-23")].join());
+var SAVE_TODAY=TODAY;
+TODAY="2026-09-18";
+pass("a Monday last day: told on the Friday at 10am",
+     (await sweepWith("2026-09-21",10,false)).sent===1);
+var tue = await sweepWith("2026-09-22",10,false);
+pass("a Tuesday last day: told on the Friday too, not left to a Sunday", tue.sent===1, JSON.stringify(tue.why));
+TODAY="2026-09-19";
+var sat = await sweepWith("2026-09-21",10,false);
+pass("never on a Saturday, even at 10am", sat.sent===0 && (sat.why||[]).join().indexOf("waiting for the send window")!==-1, JSON.stringify(sat.why));
+TODAY="2026-09-20";
+pass("never on a Sunday either", (await sweepWith("2026-09-22",10,false)).sent===0);
+TODAY="2026-09-17";
+pass("a Monday last day is not told on the Thursday (it is due Friday)", (await sweepWith("2026-09-21",10,false)).sent===0);
+TODAY=SAVE_TODAY;
+/* FAIL CLOSED (INBOX 720 item 2). The "already told" look used to be vpaSelect(...).catch(() => []), and vpaSelect
+   answers [] on any non-2xx, so a database blip read as "not told yet" and the venue got the email again. */
+AUDIT_READ_FAILS=true;
+var blip = await sweepWith("2026-09-18",10,true);
+AUDIT_READ_FAILS=false;
+pass("a look at the audit that fails sends nothing, even to a venue already told",
+     blip.sent===0 && SENT.length===0 && AUDIT.length===0, "sent "+SENT.length);
+pass("and says it held", (blip.why||[]).join().indexOf("could not read whether already told")!==-1, JSON.stringify(blip.why));
+/* The real window helper, on a pinned clock: the venue's STATE clock, Dean's hours, weekdays only. */
+var REAL_NOW_FN=Date.now, AT=function(iso){ Date.now=function(){ return Date.parse(iso); }; };
+if(REAL_window){
+  AT("2026-09-16T00:00:00Z");   // Wed 10am Brisbane, 8am Perth
+  var qOpen=REAL_window({au_state:"QLD"}), waShut=!REAL_window({au_state:"WA"}), noState=REAL_window({});
+  AT("2026-09-16T02:30:00Z");   // Wed 12:30pm Brisbane
+  var lunch=!REAL_window({au_state:"QLD"});
+  AT("2026-09-19T00:00:00Z");   // Sat 10am Brisbane
+  var satShut=!REAL_window({au_state:"QLD"});
+  AT("2026-09-16T02:00:00Z");   // Wed 12 noon Brisbane, 10am Perth
+  var waOpen=REAL_window({au_state:"WA"});
+  Date.now=REAL_NOW_FN;
+  pass("the real window: Wed 10am QLD open, a state unknown is Brisbane's clock", qOpen && noState);
+  pass("the real window: each venue's own state clock (Perth at 8am shut, at 10am open)", waShut && waOpen);
+  pass("the real window: the lunch gap and a Saturday are shut", lunch && satShut);
+} else pass("the real window helper is in the Worker", false);
+if(REAL_mrget){
+  var SAVE_FETCH=globalThis.fetch;
+  globalThis.fetch=async function(){ return { ok:false, status:503, json:async function(){ return []; } }; };
+  var bad503=await REAL_mrget(env,"vp_admin_audit","x");
+  globalThis.fetch=SAVE_FETCH;
+  pass("the real look answers ok:false on a database error, which is what holds the email", bad503.ok===false);
+} else pass("vpaMrGet is in the Worker", false);
 /* TWO VENUES, TWO CLOCKS, AND THE TWO CASES HAVE TO BE SEPARATED.
 
    A single mixed case cannot tell you which clock is wrong. If Perth differs in BOTH the
@@ -442,7 +527,7 @@ function twoVenues(){
   STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_standard_m",unit_amount:300}}]} } };
 }
 /* Same hour in both, different DATE: Brisbane has two days to go, Perth three. */
-LASTDAY="2026-09-18"; FAKE_HOUR=8; PERTH_HOUR=8; TODAY="2026-09-16"; TODAY_PERTH="2026-09-15";
+LASTDAY="2026-09-18"; FAKE_HOUR=10; PERTH_HOUR=10; TODAY="2026-09-16"; TODAY_PERTH="2026-09-15";
 twoVenues();
 var rDate=await vpaLastDaySweep(env);
 pass("the DAY is counted on each venue's own calendar, not one national one",
@@ -452,12 +537,12 @@ pass("the DAY is counted on each venue's own calendar, not one national one",
 TODAY_PERTH="2026-09-16"; PERTH_HOUR=6;
 twoVenues();
 var rHour=await vpaLastDaySweep(env);
-pass("8am is counted on each venue's own clock, not one national one",
+pass("the send window is counted on each venue's own clock, not one national one",
      rHour.sent===1 && AUDIT.length===1 && AUDIT[0].target==="venue:v1",
      "emailed "+rHour.sent+" venue(s): "+(AUDIT.map(function(a){return a.target;}).join(", ")||"none"));
 TODAY_PERTH="2026-09-15";
 
-var r4=await sweepWith("2026-09-18",8,true);
+var r4=await sweepWith("2026-09-18",10,true);
 pass("a venue already warned is never warned twice", r4.sent===0 && SENT.length===0,
      "this is what stops the hourly cron sending it every hour of that morning");
 
@@ -466,7 +551,7 @@ pass("a venue already warned is never warned twice", r4.sent===0 && SENT.length=
    is not a record. */
 var REALSEND = vpaSendEmail;
 vpaSendEmail = async function(env,to,subject,html){ SENT.push({to:to,subject:subject,html:html}); return false; };
-var refused = await sweepWith("2026-09-18",8,false);
+var refused = await sweepWith("2026-09-18",10,false);
 pass("a venue Resend refused is NOT counted as sent", refused.sent===0, "sent="+refused.sent);
 pass("it is filed under its own action so it can be found",
      AUDIT.length===1 && AUDIT[0].action==="venue_last_day_NOT_emailed", AUDIT.length?AUDIT[0].action:"nothing");
