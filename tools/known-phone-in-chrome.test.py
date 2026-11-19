@@ -37,9 +37,9 @@ ran = bad = 0
 # DATED EXPECTED-RED LIST (main INBOX 753, 19 Nov 2026; reports/m2-fits-red-rows-19nov.md). These "one screen" rows are
 # REAL faults the fixed fits() found (Join on screen; our logo + Help below the fold) that ship on Sunday 22 Nov and are
 # fixed in the next release. Each row may be red only by at most its measured px (+1); worse, or any red row NOT in
-# this list, still FAILS. After EXPECTED_RED_UNTIL the list is void: every listed row fails while red, and a listed row
+# this list, still FAILS. From EXPECTED_RED_UNTIL (that day included) the list is void: every listed row fails while red, and a listed row
 # that is no longer red fails too (stale: take it off). Never add a row here to make a new fault pass.
-EXPECTED_RED_UNTIL = '2026-11-29'   # the next release (date given with main's INBOX 753 brief); after it, the list is void
+EXPECTED_RED_UNTIL = '2026-11-29'   # the next release (date given with main's INBOX 753 brief); ON and after it, the list is void
 EXPECTED_RED = {
     # the four tall-phone three-box rows (vp-long; not M2): next release
     'T bingo 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 61,
@@ -54,7 +54,7 @@ EXPECTED_RED = {
     'N trivia 320x568 extra-box: Resend inside 30 s: the wait line, Join in view': 25,
 }
 _SOFT = {'over': None}; _RED_SEEN = set(); _GREEN_SEEN = set()
-def _expired(): return time.strftime('%Y-%m-%d') > EXPECTED_RED_UNTIL
+def _expired(): return time.strftime('%Y-%m-%d') >= EXPECTED_RED_UNTIL   # void ON 29 Nov: the next release's own gate run must not pass with these rows red
 def stale_check():
     for n in sorted(EXPECTED_RED):
         if n in _GREEN_SEEN and n not in _RED_SEEN:
