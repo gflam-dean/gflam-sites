@@ -217,13 +217,21 @@ try:
         'vp_member_rosters': [{'id': 'r1', 'venue_id': V1, 'name': 'Members', 'created_at': '2099-01-01T00:00:00Z'},
                               {'id': 'r2', 'venue_id': V1, 'name': 'Life members', 'created_at': '2099-01-02T00:00:00Z'},
                               {'id': 'r9', 'venue_id': V9, 'name': 'Another venue', 'created_at': '2099-01-03T00:00:00Z'}],
-        'vp_members': [{'id': 'm3', 'roster_id': 'r1', 'member_number': '1010', 'first_name': 'Ann', 'last_name': 'Lee', 'status': 'active', 'note': None, 'updated_at': None},
-                       {'id': 'm1', 'roster_id': 'r2', 'member_number': '1001', 'first_name': 'Bob, Jr', 'last_name': 'O"Neil', 'status': 'active', 'note': None, 'updated_at': None},
-                       {'id': 'm2', 'roster_id': 'r1', 'member_number': '1002', 'first_name': 'Cat', 'last_name': 'Ng', 'status': 'active', 'note': None, 'updated_at': None},
-                       {'id': 'm9', 'roster_id': 'r9', 'member_number': '1000', 'first_name': 'Not', 'last_name': 'Ours', 'status': 'active', 'note': None, 'updated_at': None}],
+        'vp_members': [{'id': 'm3', 'roster_id': 'r1', 'member_number': '1010', 'first_name': 'Ann', 'last_name': 'Lee', 'status': 'active', 'note': None, 'updated_at': None,
+                        'email': 'ann@example.test', 'mobile': None, 'postcode': '4224', 'marketing_optin': True, 'marketing_optin_source': 'club form'},
+                       {'id': 'm1', 'roster_id': 'r2', 'member_number': '1001', 'first_name': 'Bob, Jr', 'last_name': 'O"Neil', 'status': 'active', 'note': None, 'updated_at': None,
+                        'email': 'bob@example.test', 'mobile': None, 'postcode': None, 'marketing_optin': False, 'marketing_optin_source': None},
+                       {'id': 'm2', 'roster_id': 'r1', 'member_number': '1002', 'first_name': 'Cat', 'last_name': 'Ng', 'status': 'active', 'note': None, 'updated_at': None,
+                        'email': None, 'mobile': None, 'postcode': None, 'marketing_optin': None, 'marketing_optin_source': None},
+                       {'id': 'm9', 'roster_id': 'r9', 'member_number': '1000', 'first_name': 'Not', 'last_name': 'Ours', 'status': 'active', 'note': None, 'updated_at': None,
+                        'email': 'otherclub@example.test', 'mobile': None, 'postcode': '9999', 'marketing_optin': True, 'marketing_optin_source': 'other club form'}],
     }
     world(venue={'status': 'suspended', 'suspended_reason': 'cancelled', 'closed_at': '2099-12-11T00:00:00Z'})
-    WANT = 'Member number,First name,Surname\n1001,"Bob, Jr","O""Neil"\n1002,Cat,Ng\n1010,Ann,Lee\n'
+    # Migration 200 is live: the venue's own members list now carries email, mobile, postcode and the offers choice the venue
+    # itself collected (Jobs row 445), so the leaving venue's OWN download has those columns, read with its own login.
+    HEAD = 'Member number,First name,Surname,Email,Mobile,Postcode,Offers from your venue,Offers recorded from'
+    WANT = (HEAD + '\n1001,"Bob, Jr","O""Neil",bob@example.test,,,No,\n1002,Cat,Ng,,,,,\n'
+            '1010,Ann,Lee,ann@example.test,,4224,Yes,club form\n')
     HOOK = r'''(function(){ window.__csv = null; window.__csvName = null; window.__csvMsg = null;
       var make = URL.createObjectURL; URL.createObjectURL = function(b){ b.text().then(function(t){ window.__csv = t; }); return make.call(URL, b); };
       HTMLAnchorElement.prototype.click = function(){ if (this.download) window.__csvName = this.download; };
@@ -252,8 +260,10 @@ try:
         msg = S.js(sid, '(document.getElementById("msg")||{}).textContent || ""') or ''
         ok('%s: a file is made, members-list.csv, no "Could not download" message' % where,
            got is True and S.js(sid, 'window.__csvName') == 'members-list.csv' and 'Could not download' not in msg, [got, msg[:160]])
-        ok('%s: the header is "Member number,First name,Surname"' % where, csv.split('\n')[0] == 'Member number,First name,Surname', csv[:120])
+        ok('%s: the header is the members list as the venue holds it (number, names, email, mobile, postcode, offers)' % where, csv.split('\n')[0] == HEAD, csv[:160])
         ok('%s: this venue\'s three members in member number order, a comma and a quote kept, another venue\'s left out' % where, csv == WANT, csv[:300])
+        ok('%s: nothing of another venue\'s members leaks in (not its email, postcode or offers source)' % where,
+           'otherclub@example.test' not in csv and '9999' not in csv and 'other club form' not in csv and 'Ours' not in csv, csv[:300])
         S.close_tab(tid)
     S.schema_tables = []
     S.extra_db = {}
