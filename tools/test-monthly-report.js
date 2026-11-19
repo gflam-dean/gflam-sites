@@ -458,6 +458,98 @@ function world() {
   await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
   check('before migration 133 the reports still go, without news', sent.length === 4 && sent.every(function (m) { return m.html.indexOf('What\'s new') === -1; }));
   NEWS_TABLE_MISSING = false;
+
+  /* CLAIM, THEN SEND (INBOX 720, 19 Nov 2026 hourly cron audit). The 'sent' row used to be written AFTER the email,
+     so a row that failed to write left the venue looking unsent and the next hourly tick in the window emailed it
+     again. Now the row is the claim, written first; a claim that cannot be written sends nothing. */
+  print('the monthly report: the record is the claim, written before the email');
+  var BEFORE_CLAIM = globalThis.fetch, CLAIM_FAILS = 0, CLAIMS_SEEN = 0;
+  globalThis.fetch = function (url, opts) {
+    var u = String(url), o = opts || {};
+    if (u.indexOf('/rest/v1/vp_admin_audit') !== -1 && o.method === 'POST' && /"monthly_report_sent"/.test(String(o.body || ''))) {
+      CLAIMS_SEEN++;
+      if (CLAIM_FAILS > 0) { CLAIM_FAILS--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('upstream blip'); } }); }
+    }
+    return BEFORE_CLAIM(url, opts);
+  };
+  world();
+  CLAIM_FAILS = 99;
+  var c1 = null; try { c1 = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z')); } catch (e) { c1 = { threw: String(e) }; }
+  check('a sent row that cannot be written: no report goes at all', sent.length === 0, [c1, sent.map(function (m) { return m.to[0]; })]);
+  CLAIM_FAILS = 0;
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T02:00:00Z'));
+  var per = {}; sent.forEach(function (m) { per[m.to[0]] = (per[m.to[0]] || 0) + 1; });
+  check('the next ticks, once the database answers: every venue once, nobody twice', Object.keys(per).length === 4 && Object.keys(per).every(function (k) { return per[k] === 1; }), per);
+  world();
+  var claimedFirst = true, RS = globalThis.fetch;
+  globalThis.fetch = function (url, opts) {
+    if (String(url).indexOf('api.resend.com') !== -1) {
+      var to = JSON.parse(opts.body).to[0], v = DB.vp_venues.filter(function (x) { return (DB.venueplay_founding.filter(function (f) { return f.id === x.founding_id; })[0] || {}).contact_email === to; })[0];
+      if (!v || !DB.vp_admin_audit || !DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent' && a.target === 'month-report:' + v.id + ':2026-10'; })) claimedFirst = false;
+    }
+    return RS(url, opts);
+  };
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  globalThis.fetch = RS;
+  check('every report goes only after its sent row is written', sent.length === 4 && claimedFirst, [sent.length, claimedFirst]);
+  check('the row says the email was accepted, after the send', DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_sent' && a.detail.accepted === true && a.detail.nights >= 0; }).length === 4,
+        DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_sent'; }).map(function (a) { return a.detail; }));
+  /* A claim already there (another run got it first) is never sent again, even if this run read the list before it. */
+  world();
+  var ORIG_SEL = vpaSelectAll, raced = false;
+  vpaSelectAll = async function (env, table, q) {
+    var r = await ORIG_SEL(env, table, q);
+    if (!raced && table === 'vp_admin_audit' && /monthly_report_sent/.test(q)) {
+      raced = true;
+      DB.vp_admin_audit = DB.vp_admin_audit || [];
+      DB.vp_admin_audit.push({ id: 'other-run', action: 'monthly_report_sent', target: 'month-report:' + VA + ':2026-10', detail: { month: '2026-10', accepted: null } });
+    }
+    return r;
+  };
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  vpaSelectAll = ORIG_SEL;
+  check('a venue another run claimed after this run read the list is not sent twice', raced && sent.filter(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }).length === 0 && sent.length === 3,
+        sent.map(function (m) { return m.to[0]; }));
+  /* Review 1 (SHOULD 2 and 4): a look that fails sends nothing to that venue; one venue's failure does not hold up the rest. */
+  var LOOK_FAILS = 0, CLAIM_FAIL_ONE = 0, ONE_LOOK = globalThis.fetch;
+  globalThis.fetch = function (url, opts) {
+    var u = String(url), o = opts || {};
+    if (LOOK_FAILS > 0 && u.indexOf('/rest/v1/vp_admin_audit') !== -1 && (o.method || 'GET') === 'GET' && u.indexOf('target=eq.') !== -1 && u.indexOf('month-report') !== -1) {
+      LOOK_FAILS--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+    }
+    if (CLAIM_FAIL_ONE > 0 && u.indexOf('/rest/v1/vp_admin_audit') !== -1 && o.method === 'POST' && /"monthly_report_sent"/.test(String(o.body || ''))) {
+      CLAIM_FAIL_ONE--; return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+    }
+    return ONE_LOOK(url, opts);
+  };
+  world();
+  LOOK_FAILS = 99;
+  var lk = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  LOOK_FAILS = 0;
+  check('the look again fails: no report goes, and the tick says it held', sent.length === 0 && lk.held >= 1 && !DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent'; }), [sent.length, lk.held]);
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
+  check('the next tick, the database back: each venue once', sent.length === 4, sent.length);
+  /* Review 2 SHOULD 3: the scheduler keeps what was held, so the monthly check can find a venue that never got a row. */
+  world();
+  LOOK_FAILS = 99;
+  var lk2 = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  check('the sweep names the venues it held', (lk2.held_ids || []).length === lk2.held && lk2.held >= 4 && lk2.held_ids.indexOf(VA) !== -1, lk2);
+  var NOWS = Date.now; Date.now = function () { return Date.parse('2026-11-02T00:00:00Z'); };
+  try { await _d.scheduled({ cron: '0 * * * *', scheduledTime: Date.now() }, ENVON2, { waitUntil: function () {} }); } catch (e) {} finally { Date.now = NOWS; }
+  LOOK_FAILS = 0;
+  var heldRow = DB.vp_admin_audit.filter(function (a) { return a.action === 'monthly_report_held'; })[0];
+  check('the hourly scheduler records the held venues in one audit row (monthly_report_held), and sends no report', !!heldRow && heldRow.target === 'month-report:2026-10' && (heldRow.detail.venues || []).indexOf(VA) !== -1 && heldRow.detail.held >= 4
+        && !sent.some(function (m) { return /Your October at/.test(m.subject || ''); }), heldRow);
+  world();
+  CLAIM_FAIL_ONE = 1;
+  var one = await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T00:00:00Z'));
+  check('one venue\'s claim fails: that venue waits, the other three still get theirs this tick', sent.length === 3 && one.held === 1, [sent.length, one.held]);
+  await vprMonthlySweep(ENVON2, Date.parse('2026-11-02T01:00:00Z'));
+  var per2 = {}; sent.forEach(function (m) { per2[m.to[0]] = (per2[m.to[0]] || 0) + 1; });
+  check('and gets it the next tick, once; nobody twice', sent.length === 4 && Object.keys(per2).every(function (k) { return per2[k] === 1; }), per2);
+  globalThis.fetch = ONE_LOOK;
+  globalThis.fetch = BEFORE_CLAIM;
   Date.now = REAL_NOW;
   print(fails ? (fails + ' of ' + ran + ' checks FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));
 })().catch(function (e) { print('  FAIL the suite threw: ' + e + '\n' + (e && e.stack)); print('1 of 1 checks FAILED'); });

@@ -809,7 +809,9 @@ export default {
      as it would have been, with the same Stripe idempotency key per session. Sessions younger
      than the cutoff are left alone: a long night is not an abandoned one.
 
-     THE TRIGGER IS SET AND IT WORKS. "0 17 * * *", 3am Brisbane, confirmed live on
+     THE TRIGGER IS HOURLY NOW (19 Nov 2026, ~/venue-enrich/reports/hourly-cron-audit-19nov.md): "Every hour" in the Cloudflare
+     dashboard, written into deploy-game/wrangler.toml [triggers]. The 3am work is gated by each venue's own local
+     hour (venueLocalHour), so the history below still holds per venue. It was "0 17 * * *", 3am Brisbane, confirmed live on
      5 Sep 2026: session 9206e83c opened 6 Aug, collected 12 players across two separate
      occasions because nothing closed it, and this sweep ended it at 17:00:42 UTC on
      28 Aug, which is 03:00:42 Brisbane. Forty-two seconds after the cron fired.
@@ -830,8 +832,8 @@ export default {
       if (r.closed) console.log('[idle] closed ' + r.closed + ' of ' + r.found + ' idle rounds');
     }));
     /* The last night of a cancelled venue ends on the SAME CLOCK as the sessions above,
-       and it rides this trigger because this is the Worker whose trigger actually runs.
-       venueplay-api has no Cron Trigger at all. Its own separate waitUntil so a failure
+       and it rides this trigger. (This used to say venueplay-api has no Cron Trigger at all;
+       the dashboard showed it hourly on 19 Nov 2026.) Its own separate waitUntil so a failure
        in the session sweep cannot leave a cancelled venue playing for free. */
     ctx.waitUntil(sweepEndingVenues(env).then(function (r) {
       if (r.error) { console.log('[ending] FAILED: ' + r.error); return; }

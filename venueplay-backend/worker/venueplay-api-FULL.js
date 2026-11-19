@@ -624,15 +624,16 @@ export default {
     await helpInboundEmail(message, env);
   },
 
-  /* THE 30-DAY ARCHIVE, unattended.
+  /* THE HOURLY TRIGGER (19 Nov 2026, ~/venue-enrich/reports/hourly-cron-audit-19nov.md): this Worker's Cron Trigger is "Every hour"
+     in the Cloudflare dashboard, the same as venueplay-game's, and deploy-api/wrangler.toml [triggers] now says so.
+     It runs every job below, each in its own try, once an hour. None of them may send, charge or alert on every
+     tick: each keeps its own hour or send-window gate and its own once-only record (an audit row or a stored
+     marker), written BEFORE the email where there is one. Add a job here only with both.
 
-     Needs a Cron Trigger on this Worker. Without one this never runs and the
-     archive stays a button somebody has to press, which is exactly where it
-     was before. Suggested schedule: "30 17 * * *", once a day, well away from
-     any venue's trading hours.
-
-     It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows
-     precisely what the nightly job will do. No separate code path to drift. */
+     THE 30-DAY ARCHIVE, unattended, is the first of them. It used to say "Needs a Cron Trigger... Suggested
+     schedule: "30 17 * * *", once a day"; at hourly it can archive at any hour, which moves no money (comment at
+     vpaAutoArchiveSweep). It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows precisely what
+     the job will do. No separate code path to drift. */
   async scheduled(event, env, ctx) {
     vpgInstall(env); if (vpgStagingProblem(env)) { console.log("[outbox-guard] scheduled run refused: " + vpgStagingProblem(env)); return; }   // OUTBOX GUARD (INBOX 357B)
     const actor = { actorId: null, label: 'automatic (30-day archive)' };
@@ -667,8 +668,18 @@ export default {
        and remembers what it sent. */
     try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
-       MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
-    try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
+       MONTHLY_REPORTS is 'on', and then only acts in the first 7 days of a month, Monday to Friday, 9 to 12 and
+       2 to 5 Brisbane (vprInSendWindow), each venue's sent row claimed before its email. */
+    try {
+      /* A venue whose look or claim failed this tick is held (review 2 SHOULD 3): said in the log and in one audit row
+         per tick that held any, so the monthly check can find venues that never got a sent or skipped row. */
+      const mr = await vprMonthlySweep(env, Date.now());
+      if (mr && mr.held) {
+        console.log('[monthly] held ' + mr.held + ' venue(s): ' + (mr.held_ids || []).join(','));
+        await vpaAudit(env, { actorId: null, label: 'automatic (monthly report)' }, 'monthly_report_held', 'month-report:' + (mr.month || ''),
+          { held: mr.held, venues: (mr.held_ids || []).slice(0, 50) });
+      }
+    } catch (e5) { /* the next tick looks again */ }
     /* The weekly members list reminder EMAIL a venue asked for in its game setup (Dean, 10 Nov 2026): Dean's send window, never to a Do not contact venue, once a week. */
     try { await vpaMembersReminderSweep(env, Date.now()); } catch (e5b) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
@@ -14346,7 +14357,7 @@ async function vpbRequireOwner(request, env) {
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
     '&order=founding_id.asc,created_at.asc' +
-    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
+    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,au_state,closed_at');
   if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
 
   /* WHICH ACCOUNT. A login with venues on two accounts (a publican who signed up two pubs
@@ -14383,7 +14394,7 @@ async function vpbRequireOwner(request, env) {
     const all = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) +
       '&order=created_at.asc' +
-      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
+      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,au_state,closed_at');
     if (all && all.length) accountVenues = all;
   }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
@@ -17069,7 +17080,17 @@ async function vpaFireCancelConfirm(env, opts) {
                               vpaLocalDate(opts.endTs, opts.timezone));
       } catch (e) { away = null; }
     }
-    if (away !== null && away <= 2) {
+    /* Also when no send window opens before the last day (review 1 SHOULD 6, 19 Nov 2026): the sweep keeps Dean's
+       window, so a Monday last day cancelled after 5pm on the Friday would otherwise never be told. And only once its
+       lock is claimed (vpaLastDayClaim): a claim that fails gets the plain confirmation below instead, and the sweep
+       tells them in a later window. */
+    const noWindow = away !== null && away > 2 && opts.endTs
+      && vpaNoWindowBeforeLastDay(opts.sendState || null, opts.timezone, opts.endTs, Date.now());
+    const lockDetail = (away !== null && (away <= 2 || noWindow)) ? { ends: ends, day: day, name: opts.name || null,
+      why: noWindow ? 'cancelled with no send window left before the last day, so the goodbye went instead of the confirmation'
+                    : 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' } : null;
+    const claim = lockDetail ? await vpaLastDayClaim(env, opts.venueId, 'system', lockDetail) : null;
+    if (claim) {
       const stats = await vpaVenueStats(env, opts.venueId, opts.timezone).catch(() => null);
       const months = vpaTenureMonths(opts.createdAt, opts.endTs * 1000);
       const html2 = vpaGoodbyeHtml(env, {
@@ -17090,15 +17111,9 @@ async function vpaFireCancelConfirm(env, opts) {
         await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: opts.venueId,
           name: opts.name, ends: whenPhrase, refused: ref });
       }
-      /* Written under the SWEEP's action on purpose: that row is what stops the hourly sweep
+      /* Claimed under the SWEEP's action on purpose: that row is what stops the hourly sweep
          sending a second one a few minutes later to a venue cancelling at exactly two days. */
-      await vpaInsert(env, 'vp_admin_audit', {
-        actor_admin: null, actor_label: 'system',
-        action: (ref.length && !del.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
-        target: 'venue:' + opts.venueId,
-        detail: { accepted: del, refused: ref, ends: ends, day: day, name: opts.name || null,
-                  why: 'cancelled with ' + away + ' day(s) left, so the goodbye went instead of the confirmation' },
-      }, false).catch(() => {});
+      await vpaLastDayRecord(env, claim, del, ref, lockDetail);
       return;
     }
     const rows = [['Venue', opts.name || 'your venue']];
@@ -17179,6 +17194,50 @@ function vpaLocalWeekday(ts, tz) {       // "Friday"
       { timeZone: tz || 'Australia/Brisbane', weekday: 'long' }).format(new Date(ts * 1000));
   } catch (e) { return ''; }
 }
+/* THE LAST-DAY EMAIL'S DUE DATE (INBOX 722, 19 Nov 2026): two days before the last day, moved back to the Friday when
+   that is a Saturday or Sunday. Plain dates (YYYY-MM-DD, the venue's own calendar), so no clock and no timezone here. */
+function vpaLastDayDue(lastYmd) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(lastYmd || ''))) return '';
+  let d = vpaAddDays(lastYmd, -2);
+  while (vpaWeekday(d) === 0 || vpaWeekday(d) === 6) d = vpaAddDays(d, -1);
+  return d;
+}
+/* THE LAST-DAY LOCK IS CLAIMED BEFORE THE SEND (review 1 of INBOX 720, 19 Nov 2026). The audit row that stops a
+   second last-day email used to be written AFTER the send with its error swallowed, so a row that failed to write
+   meant a resend every hour in the window (and the catch-up below widens that window to two weekdays). Now the row
+   goes in first as venue_last_day_emailed with accepted: null; a claim that fails sends nothing. After the send the
+   SAME row is updated: what Resend accepted and refused, and venue_last_day_NOT_emailed when it refused every address
+   (both actions are "already tried" to the lock read). If that update fails the row still says emailed, with
+   accepted: null: never a second email. */
+async function vpaLastDayClaim(env, venueId, label, detail) {
+  try {
+    const row = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: label, action: 'venue_last_day_emailed',
+      target: 'venue:' + venueId, detail: Object.assign({}, detail, { accepted: null }) });
+    return row || null;
+  } catch (e) { return null; }
+}
+async function vpaLastDayRecord(env, claim, delivered, refused, detail) {
+  if (!claim || claim.id == null) return;
+  await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), {
+    action: (refused.length && !delivered.length) ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
+    detail: Object.assign({}, detail, { accepted: delivered, refused: refused }) }).catch(() => {});
+}
+/* NO WINDOW LEFT BEFORE THE LAST DAY (review 1 SHOULD 6). True when the next moment Dean's send window opens at this
+   venue (vpaSendAllowedAt, its state's clock) is already on its last day or after: a Monday last day cancelled after
+   5pm on the Friday. The cancel then sends the goodbye at once instead of the plain confirmation, because the sweep
+   would never get a window to send it in. Asked from the sweep's NEXT TICK, not from now (review 2 SHOULD 1): the
+   sweep runs at the top of each UTC hour, so a cancel in the last open hour (Friday 4 to 5pm; 4:30 to 5pm in SA and
+   NT) is inside the window now but the sweep's next look is already shut. */
+function vpaNoWindowBeforeLastDay(state, tz, endTs, nowMs) {
+  try {
+    const next = vpaSendAllowedAt(state, Math.ceil((Number(nowMs) + 1) / 3600000) * 3600000);
+    const d = vpaDaysBetween(vpaLocalDate(Math.floor(next / 1000), tz), vpaLocalDate(endTs, tz));
+    return d !== null && d < 1;
+  } catch (e) { return false; }
+}
+/* Inside Dean's send window at this venue right now (its state's clock, vpaSendState). Its own function so a suite can
+   hold the clock. */
+function vpaLastDayWindowOpen(v) { return vpaInSendWindow(Date.now(), vpaSendState(v)); }
 function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM-DD
   if (!aYmd || !bYmd) return null;
   const a = Date.UTC(+aYmd.slice(0, 4), +aYmd.slice(5, 7) - 1, +aYmd.slice(8, 10));
@@ -17186,7 +17245,11 @@ function vpaDaysBetween(aYmd, bYmd) {    // whole days from a to b, both YYYY-MM
   return Math.round((b - a) / 86400000);
 }
 
-/* TWO DAYS OUT, AT 8AM WHERE THEY ARE.
+/* TWO DAYS OUT, IN DEAN'S SEND WINDOW WHERE THEY ARE.
+
+   19 Nov 2026 (INBOX 720 and 722): no longer "from 8am any day". It goes Monday to Friday, 9 to 12 and 2 to 5,
+   venue local time, on the weekday two days before the last day, or the Friday before when that is a weekend
+   (vpaLastDayDue, vpaLastDayWindowOpen, notes in the sweep below). The history that follows is kept as written.
 
    Dean, 16 Sep 2026: "lets tell them that <<DAY>> is their last day on VenuePlay and lets
    do that 48 hours prior i think at like 8am that day so they have 2 full days to think of
@@ -17225,7 +17288,7 @@ async function vpaLastDaySweep(env) {
        they have been with us, and what a night worked out at. Selected here rather than
        fetched per venue, because this runs hourly over every cancelling venue. */
     'status=eq.active&cancel_at_period_end=is.true'
-    + '&select=id,name,founding_id,timezone,created_at,max_players') || [];
+    + '&select=id,name,founding_id,timezone,created_at,max_players,au_state,postcode') || [];
   let sent = 0;
   const byAccount = {};
   for (const v of venues) (byAccount[v.founding_id] = byAccount[v.founding_id] || []).push(v);
@@ -17269,26 +17332,31 @@ async function vpaLastDaySweep(env) {
       const today = vpaLocalDate(Math.floor(Date.now() / 1000), tz);
       const lastDay = vpaLocalDate(endTs, tz);
       const away = vpaDaysBetween(today, lastDay);
-      if (away !== 2) {
-        why.push(v.name + ': ' + away + ' day(s) out, not 2 (today ' + today + ', last day ' + lastDay + ')');
+      /* DEAN'S SEND WINDOW (INBOX 720 and 722, 19 Nov 2026; DEAN-OPEN-QUESTIONS row 136, settled): this is an
+         automatic email, so it goes only Monday to Friday, 9 to 12 and 2 to 5, venue local time, like every other
+         one (vpaSendAllowedAt). It used to go from 8am on any day, weekends included. The day it is due is two days
+         before the last day, moved back to the Friday when that falls on a weekend (a Monday or Tuesday last day
+         is told on the Friday before), the way a card reminder's weekend last day is. A venue not yet told on its
+         due day (the window closed before a cancel, or a missed run) is told in the next window up to the day
+         before its last day: late inside the window beats never. Never on the last day itself (a cancel that
+         close gets this email at once from the cancel, vpaFireCancelConfirm). */
+      const due = vpaLastDayDue(lastDay);
+      if (!due || away === null || today < due || away < 1) {
+        why.push(v.name + ': ' + away + ' day(s) out, not due (today ' + today + ', last day ' + lastDay + ', due ' + due + ')');
         continue;
       }
-      /* FROM 8am, not AT 8am. An exact hour means one missed run loses the message
-         entirely, because tomorrow the venue is one day out and no longer matches. That
-         is not hypothetical: this shipped at 10:13 on the morning Wellshot was 47.9 hours
-         from cancelling, so an exact-8 test would have skipped it at 11:00 and every hour
-         after, and the only venue ever to cancel would have gone dark with no warning.
-         The audit row below is what stops the hourly cron then sending it sixteen times. */
-      const hr = vpaLocalHour(tz);
-      if (hr < 8) { why.push(v.name + ': local time is ' + hr + ':00, waiting for 8am'); continue; }
+      if (!vpaLastDayWindowOpen(v)) { why.push(v.name + ': due, waiting for the send window (Mon to Fri, 9 to 12 and 2 to 5 local)'); continue; }
 
       /* Either action counts as "already tried". A venue Resend refused is not re-sent
          every hour for the rest of the day; it is left in the log under its own action so
-         somebody can see it and act. */
-      const already = await vpaSelect(env, 'vp_admin_audit',
+         somebody can see it and act. A look that FAILS sends nothing (INBOX 720, 19 Nov 2026):
+         it used to read a database blip as "not told yet" and send again; it is the next
+         hour's job now. */
+      const already = await vpaMrGet(env, 'vp_admin_audit',
         'action=in.(venue_last_day_emailed,venue_last_day_NOT_emailed)&target=eq.'
-        + encodeURIComponent('venue:' + v.id) + '&select=id&limit=1').catch(() => []);
-      if (already && already.length) { why.push(v.name + ': already told'); continue; }
+        + encodeURIComponent('venue:' + v.id) + '&select=id&limit=1').catch(() => null);
+      if (!already || !already.ok) { why.push(v.name + ': could not read whether already told, held'); continue; }
+      if (already.rows.length) { why.push(v.name + ': already told'); continue; }
       const to = await vpaAccountContacts(env, acct, v.id);
       if (!to.length) { why.push(v.name + ': no email address on the account'); continue; }
 
@@ -17305,27 +17373,23 @@ async function vpaLastDaySweep(env) {
         rate: rate, founding: founding,
         hello: vpaHello(tz, acct && acct.contact_name, v.name),
       });
+      const lockDetail = { ends: dated, day: day, name: v.name || null, end_ts: endTs };
+      const claim = await vpaLastDayClaim(env, v.id, 'automatic (last day email)', lockDetail);
+      if (!claim) { why.push(v.name + ': the lock could not be written, held'); continue; }
       const delivered = [], refused = [];
       for (const addr of to) {
         const ok = await vpaSendEmail(env, addr, day + ' is your last day on venueplay', html)
           .catch(() => false);
         (ok ? delivered : refused).push(addr);
       }
-      /* The audit row is also the lock that stops this being sent twice, so it is written
-         either way. But if NOT ONE address was accepted, it is written under a different
-         action: a venue that was never told must not be filed alongside the ones that were,
-         and it must be findable. */
+      /* The claimed row is the lock that stops this being sent twice, so it stays either way.
+         But if NOT ONE address was accepted, it is moved to a different action: a venue that
+         was never told must not be filed alongside the ones that were, and it must be findable. */
       if (refused.length && !delivered.length) {
         await vpaFireDeliveryFailure(env, { kind: 'last_day', venueId: v.id,
           name: v.name, ends: day + ', ' + dated, refused: refused });
       }
-      await vpaInsert(env, 'vp_admin_audit', {
-        action: (refused.length && !delivered.length)
-          ? 'venue_last_day_NOT_emailed' : 'venue_last_day_emailed',
-        target: 'venue:' + v.id,
-        detail: { accepted: delivered, refused: refused, ends: dated, day: day,
-                  name: v.name || null, end_ts: endTs },
-      }, false).catch(() => {});
+      await vpaLastDayRecord(env, claim, delivered, refused, lockDetail);
       if (refused.length) why.push(v.name + ': Resend refused ' + refused.length + ' address(es)');
       if (delivered.length) sent++;
     }
@@ -17484,6 +17548,7 @@ async function vpbCancelVenue(request, env, json) {
          timezone, the same fallback the session sweep uses. */
       endTs: (info && info.periodEnd) || null,
       timezone: venue.timezone || vpaTimezoneFromPostcode(venue.postcode),
+      sendState: vpaSendState(venue),   // its send window's clock (review 1 SHOULD 6): au_state, else postcode
       /* Everything the goodbye needs, in case this turns out to be one. */
       createdAt: venue.created_at || null,
       players: venue.max_players || 0,
@@ -21667,8 +21732,9 @@ async function vprGamesSend(env, month, venues, tests) {
 }
 
 /* THE SENDER, OFF UNTIL DEAN SAYS. env.MONTHLY_REPORTS must be exactly 'on'. Even then it only
-   acts on the 1st to the 3rd of a month, 2am to 7am Brisbane, a batch a tick, and each venue once
-   a month (the audit row is the record, written before the next venue is started). It reads
+   acts in the first 7 days of a month, Monday to Friday, 9 to 12 and 2 to 5 Brisbane (vprInSendWindow,
+   since 9 Nov 2026), a batch a tick, and each venue once a month (the audit row is the record, and
+   since 19 Nov 2026 the claim: written BEFORE that venue's email, see the loop). It reads
    nothing at all while the switch is off, so turning the feature on costs a variable, not a deploy.
    Skips: a test venue, a venue that ran nothing in either month, a contact who unsubscribed. */
 function vprInSendWindow(ms) {
@@ -21728,9 +21794,26 @@ async function vprMonthlySweep(env, nowMs, opts) {
     }
     const to = String(acct.contact_email).trim().toLowerCase();
     const mail = await vprEmailHtml(env, v, r, { to: to, contactName: acct.contact_name, news: news });
-    const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, await vpUnsubHeaders(env, to, 'monthly-report')).catch(() => false);
-    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target,
-      detail: { month: month, accepted: !!accepted, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length } }, false);
+    /* CLAIM, THEN SEND (INBOX 720, 19 Nov 2026 hourly cron audit). The 'sent' row used to be written AFTER the email,
+       so a row that failed to write left the venue looking unsent and the next hourly tick in the window emailed it
+       again, up to 6 a day for 5 days. Now: look again for this one venue (another run may have claimed it since
+       the list above was read), then write the row FIRST as the claim. A look or a claim that fails sends nothing
+       to that venue this tick; a claim that went in but whose email then fails stays
+       claimed, so that venue misses this month's email rather than getting two. The row is then updated with
+       whether Resend accepted it, the same as the games email above. */
+    /* A failed look or claim skips THIS venue for this tick (continue, review 1 SHOULD 4): it sends nothing either way,
+       and one row that can never be written must not hold up every venue after it. The next tick tries it again. */
+    const unsubHeaders = await vpUnsubHeaders(env, to, 'monthly-report');   // before the claim: nothing after the claim but the send
+    const look = await vpaMrGet(env, 'vp_admin_audit', 'action=in.(monthly_report_sent,monthly_report_skipped)&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1').catch(() => ({ ok: false, rows: [] }));
+    if (!look.ok) { out.held = (out.held || 0) + 1; (out.held_ids = out.held_ids || []).push(v.id); continue; }
+    if (look.rows.length) continue;
+    const detail = { month: month, accepted: null, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length };
+    let claim = null;
+    try { claim = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target, detail: detail }); }
+    catch (e) { claim = null; }
+    if (!claim) { out.held = (out.held || 0) + 1; (out.held_ids = out.held_ids || []).push(v.id); continue; }
+    const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, unsubHeaders).catch(() => false);
+    if (claim.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(claim.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
     out.sent++;
   }
   return out;
