@@ -329,6 +329,72 @@ async function main() {
   await vpaProspectReminderSweep(ENV, AFTER);
   check('...so at the end it is held for HQ, not paused', O.v.status === 'active' && heldTickets(O.v).length === 1);
 
+  section('4b. A claimed reminder is not a warning (review 1 of INBOX 720, 19 Nov 2026): claimed before it goes, confirmed after');
+  /* Card reminders are now saved as a CLAIM (the negative day) before they go, and confirmed (the positive day) after.
+     A claim left behind (an undo that failed, a Worker that died mid-send) must never count as "warned", or the venue
+     is paused unwarned; and a venue that can never be texted must never be claimed at all. */
+  var W0 = globalThis.fetch, RPATCH = [], MM_DOWN = false, UNDO_FAILS = false, CONFIRM_FAILS = false;
+  globalThis.fetch = function (url, opts) {
+    var u = String(url), method = (opts && opts.method) || 'GET';
+    if (method === 'PATCH' && /\/rest\/v1\/vp_prospects\?/.test(u) && /reminders_sent/.test(String(opts.body || ''))) {
+      RPATCH.push({ u: u, body: JSON.parse(opts.body) });
+      if (UNDO_FAILS && !JSON.parse(opts.body).reminders_sent.some(function (d) { return d < 0; })) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+      if (CONFIRM_FAILS && JSON.parse(opts.body).reminders_sent.indexOf(23) !== -1) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('blip'); } });
+    }
+    if (MM_DOWN && u.indexOf('api.mobilemessage.com.au') !== -1) return Promise.resolve({ ok: false, status: 500, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('down'); } });
+    return W0(url, opts);
+  };
+  world(); listed();
+  var NC = await quickSignedIn({ mobile: '0412 345 674', venue: 'Royal Hotel', postcode: '4000' });
+  NC.p().source = 'hq'; NC.p().phone = '0412 345 674';   // no email, cannot be texted (not a self sign-up)
+  RPATCH = [];
+  await walk(bne(2026, 11, 25, 9, 0), bne(2026, 12, 2, 17, 0));
+  check('a venue that can never be texted is never claimed: not one reminders_sent save in days 23 to 30', RPATCH.length === 0 && JSON.stringify(NC.p().reminders_sent) === '[]', RPATCH.length);
+  await vpaProspectReminderSweep(ENV, AFTER);
+  check('...and at the end it is held for HQ, not paused (the 18 Nov guard still works)', NC.v.status === 'active' && heldTickets(NC.v).length === 1, [NC.v.status, heldTickets(NC.v).length]);
+  /* The text path: a save that fails sends nothing; the next hour it goes, once. */
+  world(); listed();
+  var TF = await quickSignedIn({});
+  MMS = [];
+  FAIL['vp_prospects:PATCH'] = 1;
+  var tf1 = await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 30));
+  check('the text path: day 3\'s claim cannot be saved, no text goes', MMS.length === 0 && tf1.save_failed === TF.v.id && JSON.stringify(TF.p().reminders_sent) === '[]', [MMS.length, tf1.save_failed, TF.p().reminders_sent]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 30));
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 11, 30));
+  check('...the next hour it goes, once, and is confirmed', MMS.length === 1 && JSON.stringify(TF.p().reminders_sent) === '[3]', [MMS.length, TF.p().reminders_sent]);
+  /* The text does not go AND taking the claim back fails: the claim stays, is never sent again, and is not "warned". */
+  MM_DOWN = true; UNDO_FAILS = true; MMS = [];
+  var tf2 = await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 30));
+  MM_DOWN = false; UNDO_FAILS = false;
+  check('day 23 does not go and the undo fails: the claim is left as -23 and the sweep says so', JSON.stringify(TF.p().reminders_sent) === '[3,-23]' && (tf2.unclaim_failed || []).indexOf(TF.v.id) !== -1, [TF.p().reminders_sent, tf2.unclaim_failed]);
+  var mmBefore = MMS.length;
+  await walk(bne(2026, 11, 25, 10, 0), bne(2026, 12, 1, 17, 0));
+  check('...and is never sent again (a claim is taken), nor counted as warned', MMS.length === mmBefore && !vpaProspectWarned(TF.p()), [MMS.length - mmBefore, TF.p().reminders_sent]);
+  /* A Worker that died mid-send leaves the same thing: claims for day 23 and the last day, never confirmed. */
+  TF.p().reminders_sent = [3, -23, -30];
+  await vpaProspectReminderSweep(ENV, AFTER);
+  check('claims never confirmed at the month\'s end: NOT paused, held for HQ with one ticket', TF.v.status === 'active' && !TF.p().paused_at && heldTickets(TF.v).length === 1, [TF.v.status, heldTickets(TF.v).length]);
+  var tkt = heldTickets(TF.v)[0] || {};
+  check('the HQ ticket says it may be a reminder that was started and never confirmed, not only "no way to reach them"', /never confirmed as sent/.test(tkt.message || '') && /no way to reach them/.test(tkt.message || ''), (tkt.message || '').slice(0, 300));
+  /* Review 2 SHOULD 4: the send went, then the CONFIRM fails: never a second reminder, and the venue is not "warned". */
+  world(); listed();
+  var CFX = await quickSignedIn({});
+  MMS = [];
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 30));
+  CONFIRM_FAILS = true;
+  var cfx = await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 30));
+  CONFIRM_FAILS = false;
+  check('day 23 went by text, then its confirm failed: it stays -23 and the sweep says so', MMS.length === 2 && JSON.stringify(CFX.p().reminders_sent) === '[3,-23]' && (cfx.confirm_failed || []).indexOf(CFX.v.id) !== -1, [MMS.length, CFX.p().reminders_sent, cfx.confirm_failed]);
+  await walk(bne(2026, 11, 25, 10, 0), bne(2026, 12, 1, 17, 0));
+  check('...and no second day-23 text, ever; not warned', MMS.filter(function (m) { return /^Hi Sam, your first month of venueplay at /.test(m.message); }).length === 1 && !vpaProspectWarned(CFX.p()), [MMS.length, CFX.p().reminders_sent]);
+  /* A confirmed one is a warning, as before. */
+  world(); listed();
+  var CF = await quickSignedIn({});
+  CF.p().reminders_sent = [3, 23, 30];
+  await vpaProspectReminderSweep(ENV, AFTER);
+  check('confirmed (positive) days are a warning: paused on time, no ticket', CF.v.status === 'suspended' && heldTickets(CF.v).length === 0, CF.v.status);
+  globalThis.fetch = W0;
+
   section('5. HQ approves a held sign-up: the same account-ready message');
   world(); listed();
   var first = await qstart({});

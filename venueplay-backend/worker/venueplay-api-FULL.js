@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '20 Nov 2026, 08:15 · 8a51186f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '20 Nov 2026, 08:16 · 9f27daa1';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -7027,19 +7027,29 @@ async function vpaProspectVerifiedMobile(env, p, v) {
 }
 /* One reminder as a text. { ok } or { ok:false, why }. The sweep calls it only inside the send window (vpaInSendWindow:
    Monday to Friday, 9 to 12 and 2 to 5, the venue's own time). */
-async function vpaProspectReminderText(env, p, v, kind, endsWhen) {
+/* CAN WE TEXT THEM AT ALL? Writes nothing (review 1 of INBOX 720, 19 Nov 2026): the sweep asks this BEFORE it claims
+   a reminder, so a venue that can never be texted is never claimed and unclaimed every hour. { ok, to } or { ok:false, why }. */
+async function vpaProspectTextReady(env, p, v) {
   if (!p || p.source !== 'self') return { ok: false, why: 'not a self sign-up' };
   if (!(vpaHasMobileMessage(env) || vpaHasClickSend(env))) return { ok: false, why: 'no text provider' };
   const to = await vpaProspectVerifiedMobile(env, p, v);
   if (!to) return { ok: false, why: 'no mobile' };
   if (await vpaSmsOptedOut(env, to)) return { ok: false, why: 'opted out of texts' };
+  return { ok: true, to: to };
+}
+async function vpaProspectReminderText(env, p, v, kind, endsWhen, ready) {
+  const rd = ready && ready.ok ? ready : await vpaProspectTextReady(env, p, v);
+  if (!rd.ok) return rd;
+  const to = rd.to;
   let r;
   try { r = await vpaSendSms(env, to, vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen }), 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
   catch (e) { r = { ok: false }; }
   if (r && r.blocked) await vpaSmsRecordOptOut(env, to, v.id);
   return r && r.ok ? { ok: true } : { ok: false, why: r && r.blocked ? 'opted out of texts' : 'text not sent' };
 }
-/* Warned = the "one week left" (23) or "last day" (30) reminder went, by email or text. */
+/* Warned = the "one week left" (23) or "last day" (30) reminder went, by email or text. A CLAIMED reminder whose send
+   was never confirmed is kept as its NEGATIVE day (-23, -30: review 1 of INBOX 720, 19 Nov 2026) and is NOT warned, so
+   a claim left behind by a failed undo or a Worker that died mid-send holds the pause for HQ, never pauses unwarned. */
 function vpaProspectWarned(p) {
   const s = Array.isArray(p && p.reminders_sent) ? p.reminders_sent : [];
   return s.some((d) => Number(d) >= VPA_LAST_REMINDER_FROM);
@@ -7066,7 +7076,10 @@ async function vpaPauseHeldForHq(env, p, v, endMs) {
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'manual', priority: 'urgent',
       title: 'Not paused, could not warn: ' + (v.name || 'a venue'),
       message: ['The first month at ' + (v.name || 'this venue') + ' ended ' + vpaBneDateWords(endMs) + ' with no card, but we could not warn them first:',
-        'no "one week left" or "last day" reminder went (no email on the account, and no text went).', '',
+        /* Accurate for both ways here (review 2 SHOULD 5, 20 Nov 2026): no way to reach them, or a reminder that was started
+           (claimed) and never confirmed as sent, so it may or may not have reached them. */
+        'no "one week left" or "last day" reminder is on record as sent. Either there was no way to reach them (no email on the account and no text could go),',
+        'or a reminder was started but never confirmed as sent (the save after sending failed, or the send was cut off), so it may not have reached them.', '',
         'The venue has NOT been paused.', '',
         'Name: ' + (p.contact_name || ''), 'Mobile: ' + (mobile ? vpaProspectPhone(mobile) : '(none)'), 'Venue: ' + (v.name || '') + (v.postcode ? ' (' + v.postcode + ')' : ''), '',
         'Call or text them. When you close this ticket the venue pauses at the next hourly check. A card added before then keeps it on.'].join('\n'),
@@ -7136,14 +7149,36 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!vpaInSendWindow(nowMs, vpaSendState(v))) continue;
     const sent =Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
     const today = vpaBneDay(nowMs);
-    const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && sent.indexOf(r.day) === -1);
+    /* A day is taken when it went (23) or is claimed and unconfirmed (-23): either way it is never sent again. */
+    const taken = (day) => sent.some((x) => Math.abs(Number(x)) === day);
+    const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && !taken(r.day));
     if (!due.length) continue;
     const r = due[due.length - 1];
     /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
     const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
+    /* CLAIMED BEFORE IT GOES, CONFIRMED AFTER (INBOX 720 and its review 1, 19 Nov 2026). It used to send, then save
+       reminders_sent and ignore whether the save landed, so a failed save sent the same reminder again every hour in
+       the window (up to 6 a day). Now:
+         claim    the due days are saved as NEGATIVE days first (-23): a claim that does not land sends nothing to
+                  this venue this hour (the next hour looks again) and the sweep goes on to the next venue
+         send     only once we know it CAN go (an email address, or vpaProspectTextReady for a text)
+         confirm  after it went, the days are saved as positive (23): only that makes the venue "warned"
+         undo     it did not go: the claim is taken back, so it stays due
+       A claim left behind (an undo that fails, a Worker that dies mid-send) is never sent again and never counts as
+       warned, so the pause at the month's end is held for HQ (vpaPauseHeldForHq). A confirm that fails after a real
+       send: the same, a ticket HQ did not strictly need, never a second reminder. */
+    const before = sent.slice();
+    const claim = async function () {
+      due.forEach((d) => { if (!taken(d.day)) sent.push(-d.day); });
+      return !!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent }).catch(() => false));
+    };
+    const unclaim = async function () {
+      if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: before }).catch(() => false))) (out.unclaim_failed = out.unclaim_failed || []).push(v.id);
+    };
     const markSent = async function (via) {
-      due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
-      await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
+      const days = due.map((d) => d.day);
+      for (let i = 0; i < sent.length; i++) if (Number(sent[i]) < 0 && days.indexOf(-Number(sent[i])) !== -1) sent[i] = -Number(sent[i]);
+      if (!(await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent }).catch(() => false))) (out.confirm_failed = out.confirm_failed || []).push(v.id);
       await vpaAudit(env, { actorId: null, label: 'automatic (card reminder)' }, 'prospect_reminder_sent', 'venue:' + v.id, { day: r.day, kind: kind, skipped: due.length - 1, via: via });
       out.sent.push({ venue: v.id, day: r.day, kind: kind, via: via });
     };
@@ -7151,8 +7186,11 @@ async function vpaProspectReminderSweep(env, nowMs) {
        same day, same send window. A text that does not go stays due (nothing marked sent), like an email. */
     const email = vpqRealEmail(p.email);
     if (!email) {
-      const t = await vpaProspectReminderText(env, p, v, kind, vpaEndsWhen(endMs, today) || 'on ' + vpaBneDateWords(endMs));
-      if (!t.ok) { (out.text_not_sent = out.text_not_sent || []).push({ venue: v.id, why: t.why }); continue; }
+      const ready = await vpaProspectTextReady(env, p, v);   // can a text go at all? Asked before any claim
+      if (!ready.ok) { (out.text_not_sent = out.text_not_sent || []).push({ venue: v.id, why: ready.why }); continue; }
+      if (!(await claim())) { out.save_failed = v.id; continue; }
+      const t = await vpaProspectReminderText(env, p, v, kind, vpaEndsWhen(endMs, today) || 'on ' + vpaBneDateWords(endMs), ready);
+      if (!t.ok) { await unclaim(); (out.text_not_sent = out.text_not_sent || []).push({ venue: v.id, why: t.why }); continue; }
       await markSent('text');
       continue;
     }
@@ -7172,11 +7210,14 @@ async function vpaProspectReminderSweep(env, nowMs) {
       /* Their own free month in numbers, for the last reminder only (Dean, 5 Nov 2026 round 7). Never stops the email. */
       stats: kind !== 'early' ? await vpaVenueStats(env, v.id, v.timezone || 'Australia/Brisbane').catch(() => null) : null });
     if (!msg) continue;
-    const res = await fetch('https://api.resend.com/emails', { method: 'POST',
+    if (!(await claim())) { out.save_failed = v.id; continue; }
+    let res = null;
+    try { res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
         headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
-    if (!res || !res.ok) continue;
+    } catch (_) { res = null; }
+    if (!res || !res.ok) { await unclaim(); continue; }
     await markSent('email');
   }
   // A paused venue whose card has since come in, if the webhook's own switch-on did not land.

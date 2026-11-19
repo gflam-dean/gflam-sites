@@ -1080,7 +1080,7 @@
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
-  "checks": 137,
+  "checks": 148,
   "counted_by": "lines"
  },
  "tools/test-multi-raffle.js": {
@@ -1300,7 +1300,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 109,
+  "checks": 119,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1336,7 +1336,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-signup-warnings.js": {
-  "checks": 58,
+  "checks": 69,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
@@ -2100,7 +2100,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 93,
+  "checks": 120,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-hq.test.js": {
