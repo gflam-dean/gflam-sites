@@ -1608,7 +1608,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-follows-finished-game.js": {
-  "checks": 18,
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/test-tv-hold.js": {

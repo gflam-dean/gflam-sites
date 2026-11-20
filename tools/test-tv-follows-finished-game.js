@@ -105,10 +105,11 @@ print('\n== 3. leaving the finished console must not bring a question back ==');
   ok('CONTROL: a reveal during a live quiz is taken as always', live.stale({ t: 'reveal', qseq: 2 }) === false);
 })();
 (function () {
-  ok('the screen sets "done" at the podium, the final board, the finale stages and the nobody-joined end',
-     /t==="podium"\)\{\s*state\.phase="podium"; state\.done=true;/.test(TS) && /state\.done=\/\^final\/i/.test(TS) &&
-     /stage==="board"\)\{ state\.phase="leaderboard"; state\.done=true;/.test(TS) && /state\.phase="podium"; state\.done=true;/.test(TS) &&
-     /state\.phase="leaderboard"; state\.done=true;\s*\n\s*if\(boardRollTimer\)/.test(TS));
+  ok('the screen sets "done" at the final board, the finale board stage, the finale podium stage and the nobody-joined end',
+     /state\.done=\/\^final\/i/.test(TS) &&
+     /stage==="board"\)\{ state\.phase="leaderboard"; state\.done=true; show\("tvBoard"\); renderBoardPaged\("Final scores"/.test(TS) &&
+     /state\.phase="podium"; state\.done=true; renderPodium\(FIN\.rows/.test(TS) &&
+     /state\.phase="leaderboard"; state\.done=true;\s*\n\s*if\(boardRollTimer\)[^\n]*\n\s*show\("tvBoard"\);\s*\n\s*renderBoardPaged\("Thanks for playing"/.test(TS));
   ok('and clears it for a new game (started, idle, lobby state, a new question)',
      /t==="started"\)\{ state\.done=false;/.test(TS) && /t==="idle"\)\{ state\.done=false;/.test(TS) &&
      /m\.phase==="lobby"\)\{ state\.done=false;/.test(TS) && /state\.phase="question"; state\.done=false;/.test(TS));
@@ -116,6 +117,65 @@ print('\n== 3. leaving the finished console must not bring a question back ==');
      /t==="question"\)\{\s*\n\s*if\(staleAfterEnd\(m\)\) return;/.test(TS) && /t==="reveal"\)\{\s*\n\s*if\(staleAfterEnd\(m\)\) return;/.test(TS) &&
      /t==="leaderboard"\)\{\s*\n\s*if\(staleAfterEnd\(m\)\) return;/.test(TS));
 })();
+
+function block(text, startMarker) {   // the {...} that follows startMarker
+  var i = text.indexOf(startMarker);
+  if (i < 0) throw new Error('cannot find ' + startMarker);
+  var d = 0, k = text.indexOf('{', i);
+  do { if (text[k] === '{') d++; else if (text[k] === '}') d--; k++; } while (d > 0 && k < text.length);
+  return text.slice(text.indexOf('{', i) + 1, k - 1);
+}
+function podiumMsg(state, m) {   // the screen's real t:"podium" handler
+  var body = block(TS, 'else if(m.t==="podium"){');
+  new Function('state', 'm', '$', 'renderPodium', 'podiumTitle', 'triviaEndShow',
+    body)(state, m, function () { return {}; }, function () {}, function () { return ''; }, function () {});
+}
+
+print('\n== 4. a ROUND podium is mid quiz (rehearsal puts a podium at the end of every round, 1631e082e) ==');
+(function () {
+  var state = { phase: 'reveal' }, curQ = { qseq: 5 };
+  var t = triviaScreen(state, curQ);
+  podiumMsg(state, { t: 'podium', round: 2, top: [{}], rows: [{}] });
+  ok('after round 2\'s podium the screen is still live', t.busy() === true, state);
+  ok('so the board after round 2 is still painted (not thrown away)', t.stale({ t: 'leaderboard', title: 'Leaderboard after round 2', rows: [{}] }) === false);
+  var say = screen('trivia', t.busy);
+  say('trivia', { t: 'podium', round: 2 });
+  say('musical', { t: 'mode', mode: 'musical' });
+  ok('another console cannot take the wall between rounds', navigatedTo === null, navigatedTo);
+  podiumMsg(state, { t: 'podium', top: [{}], rows: [{}] });   // the night's own podium: no round number
+  ok('the night\'s FINAL podium (no round) ends the quiz', t.busy() === false && state.done === true, state);
+  var s2 = { phase: 'podium', done: false };
+  podiumMsg(s2, { t: 'podium', round: '3' });
+  ok('a round number sent as text ("3") is still a round', s2.done === false, s2);
+  podiumMsg(s2, { t: 'podium', round: 0 });
+  ok('round 0 / none is the final podium', s2.done === true, s2);
+})();
+
+print('\n== 5. states that are still the quiz stay live ==');
+(function () {
+  // 0 phones, between questions: the join screen with "Next question coming up" (betweenJoin)
+  var state = { phase: 'reveal' };
+  var bj = new Function('state', 'boardRollTimer', 'celebrateTimer', 'clearTimeout', 'clearInterval', 'show', 'renderLobby', '$',
+    'var boardRollTimer=null, celebrateTimer=null;' + block(TS, 'function betweenJoin(){'));
+  var el = { textContent: '', classList: { add: function () {} } };
+  bj(state, null, null, function () {}, function () {}, function () {}, function () {}, function () { return el; });
+  ok('0 phones between questions (betweenJoin): the quiz is still live', triviaScreen(state, { qseq: 1 }).busy() === true && !state.done, state);
+  // the finale: the last answer still up ("wait") is live; the board stage is over
+  function paint(stage) {
+    var st = { phase: 'reveal' };
+    new Function('state', 'FIN', 'window', 'boardRollTimer', 'clearTimeout', 'show', 'renderBoardPaged', 'renderPodium', 'finaleClear', 'endShowThen', 'VENUE_SLUG', '$',
+      'celebrate', 'triviaEndShow', 'esc', block(TS, 'function finalePaint(stage){').replace(/^/, 'var stage = "' + stage + '";'))
+      (st, { rows: [{}], built: false }, { VPTriviaFinale: { podiumEntries: function () { return []; }, title: function () { return { text: '' }; }, shown: function () { return {}; } } },
+       null, function () {}, function () {}, function () {}, function () {}, function () {}, function () {}, '', function () { return { children: [], innerHTML: '' }; },
+       function () {}, function () {}, function (x) { return x; });
+    return st;
+  }
+  var w = paint('wait');
+  ok('finale "last answer still up" (wait): still live', triviaScreen(w, { qseq: 2 }).busy() === true && !w.done, w);
+  var b = paint('board');
+  ok('finale final board: over', triviaScreen(b, { qseq: 2 }).busy() === false && b.done === true, b);
+})();
+print('NOTE (kept as built): the finale\'s FIRST podium stage counts as over, so the wall may leave during the winner countdown if the next lobby is opened then.');
 
 print('\n== 2. a finished raffle, "Put the draws board on the TV": the TV follows ==');
 function raffleScreen(phase) {

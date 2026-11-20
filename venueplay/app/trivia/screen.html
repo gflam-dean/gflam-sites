@@ -1336,7 +1336,8 @@
       $("tvBoardRows").innerHTML='<div style="text-align:center;font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;font-size:2.4cqw;color:#fff;margin-top:6cqw">Scan the code to join next time</div>';
     }
     else if(m.t==="podium"){
-      state.phase="podium"; state.done=true;
+      state.phase="podium";
+      state.done=!(parseInt(m.round,10)>0);   // only the night's FINAL podium ends the quiz; a round's podium (round:N) is mid-quiz (rehearsal 1631e082e)
       renderPodium(m.top||[], m.rows);   // a paper night, or a console without the finale module: the whole podium at once
       /* EVERY ROUND ENDS ON THE PODIUM, THEN THE LEADERBOARD (Dean, 7 Nov 2026). A round's podium carries its round
          number and says so; only the end of the night says "Winners tonight" and plays the end-of-game show. */
