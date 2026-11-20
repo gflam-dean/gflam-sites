@@ -187,7 +187,7 @@ class Ops:
             return False, 'the checkout is dirty: ' + dirty[:200], {}, ''
         digest, paths = gs.manifest(root)
         nonce = secrets.token_hex(16)
-        results, red, run = gs.collect(root, gs.remote_runner(root), suites, nonce, paths, say=say)
+        results, red, run, _rerun = gs.collect(root, gs.remote_runner(root), suites, nonce, paths, say=say)   # collect returns 4 since gate v3 (re-runs)
         tree2, _, _ = gs.current_tree(root)
         if tree2 != tree:
             return False, 'the checkout changed while the suites ran', results, tree
