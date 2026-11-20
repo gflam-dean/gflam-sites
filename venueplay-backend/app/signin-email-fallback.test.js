@@ -82,7 +82,7 @@ function fetch(url, opts) {
   return Promise.resolve({ status: r.status, json: function () { return Promise.resolve(r.body); } });
 }
 var client = { auth: {
-  signInWithOtp: function (a) { OTP_CALLS.push(a); var r = NEXT_OTP; return Promise.resolve(r || {}); },
+  signInWithOtp: function (a) { OTP_CALLS.push(a); var r = NEXT_OTP; if (r && r.reject) return Promise.reject(r.reject); return Promise.resolve(r || {}); },
   verifyOtp: function (a) { VERIFY_CALLS.push(a); var r = NEXT_VERIFY; return Promise.resolve(r || { data: { session: {} } }); }
 } };
 
@@ -114,6 +114,29 @@ var SMS_DOWN = { error: { status: 422, code: "sms_send_failed", message: "Error 
   NEXT_OTP = { error: { status: 400, code: "validation_failed", message: "Invalid phone number format" } };
   el("sendCodeBtn").click(); await settle();
   pass("a mistyped number is told to check it, and is not pushed to email", /did not look right/.test(el("mobileErr").textContent) && !shown("emailAlt"));
+
+  /* ---- 1b. THE REPLY WAS LOST, NOT THE TEXT (Dean, live, 20 Nov 2026 14:44) ---- */
+  var LOST = [
+    ["a lost reply (supabase-js AuthRetryableFetchError, status 0, Safari)", { error: { name: "AuthRetryableFetchError", status: 0, message: "Load failed" } }],
+    ["a lost reply (Chrome words)", { error: { name: "AuthRetryableFetchError", status: 0, message: "Failed to fetch" } }],
+    ["a thrown fetch failure", { reject: new TypeError("Failed to fetch") }]
+  ];
+  for (var li = 0; li < LOST.length; li++) {
+    reset(); el("mobileIn").value = "0497 605 423"; NEXT_OTP = LOST[li][1];
+    el("sendCodeBtn").click(); await settle();
+    pass(LOST[li][0] + " opens the code box", shown("stepCode") && !shown("stepMobile"));
+    pass(LOST[li][0] + " never says the text failed", el("mobileErr").textContent === "" && !/could not send a text/i.test(el("otpErr").textContent), el("mobileErr").textContent + " | " + el("otpErr").textContent);
+    pass(LOST[li][0] + " says a code may arrive, and offers email", el("otpErr").textContent.indexOf("If a code arrives, enter it here.") === 0 && shown("emailAlt"), el("otpErr").textContent);
+    pass(LOST[li][0] + " shows the number and focuses the code", el("sentTo").textContent === "+61497605423" && el("otpIn").focused > 0);
+  }
+  el("otpIn").value = "111222"; el("verifyBtn").click(); await settle();
+  var lv = VERIFY_CALLS[VERIFY_CALLS.length - 1] || {};
+  pass("a code typed after a lost reply verifies against the same phone and signs in", lv.phone === "+61497605423" && lv.type === "sms" && ROUTED === 1, JSON.stringify(lv));
+  pass("the lost-reply words carry no em dash", !/[—–]/.test(el("otpErr").textContent));
+  reset(); el("mobileIn").value = "0497 605 423";
+  NEXT_OTP = { error: { name: "AuthRetryableFetchError", status: 503, message: "Service Unavailable" } };
+  el("sendCodeBtn").click(); await settle();
+  pass("a 503 from Auth is still OURS: number step, text failed, email offered", shown("stepMobile") && !shown("stepCode") && /could not send a text/.test(el("mobileErr").textContent) && shown("emailAlt"), el("mobileErr").textContent);
 
   /* ---- 2. THE TEXT IS ACCEPTED BUT MAY NEVER ARRIVE ---- */
   reset();
@@ -191,6 +214,23 @@ var SMS_DOWN = { error: { status: 422, code: "sms_send_failed", message: "Error 
   pass("a failed resend says the text failed and points at the email option, not 'give it a moment'",
        /could not send a text right now/.test(el("otpErr").textContent) && shown("emailAlt"), el("otpErr").textContent);
   pass("Resend always sends a TEXT to the same number", OTP_CALLS.every(function (c) { return c.phone === "+61497605423" && !c.email; }), JSON.stringify(OTP_CALLS));
+
+  /* resend on a lost reply: same note as the first send, not "could not send a text" */
+  reset(); el("mobileIn").value = "0497 605 423";
+  el("sendCodeBtn").click(); await settle();
+  NEXT_OTP = { error: { name: "AuthRetryableFetchError", status: 0, message: "Load failed" } };
+  el("resendBtn").click(); await settle();
+  pass("a resend whose reply is lost says a code may arrive, not that the text failed",
+       el("otpErr").textContent.indexOf("If a code arrives, enter it here.") === 0 && !/could not send a text/i.test(el("otpErr").textContent) && shown("emailAlt"), el("otpErr").textContent);
+  pass("and the resend button goes back to Resend code", el("resendBtn").textContent === "Resend code");
+  NEXT_OTP = { error: { name: "AuthRetryableFetchError", status: 503, message: "Service Unavailable" } };
+  el("resendBtn").click(); await settle();
+  pass("a resend failing with a status is still a real failure", /could not send a text right now/.test(el("otpErr").textContent), el("otpErr").textContent);
+  /* a lost-looking error that carries a code is not a lost reply */
+  reset(); el("mobileIn").value = "0497 605 423";
+  NEXT_OTP = { error: { name: "AuthRetryableFetchError", status: 0, code: "sms_send_failed", message: "Load failed" } };
+  el("sendCodeBtn").click(); await settle();
+  pass("a lost-sounding error that carries an error code stays OURS (number step, text failed)", shown("stepMobile") && !shown("stepCode") && /could not send a text/.test(el("mobileErr").textContent), el("mobileErr").textContent);
 
   print("");
   print(bad ? (bad + " OF " + ran + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
