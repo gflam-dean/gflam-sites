@@ -220,10 +220,10 @@ pass("it says the service runs until the last day", c.html.indexOf("keep playing
 pass("and that the screens keep earning until close",
      c.html.indexOf("TVs keep showing your advertising")!==-1);
 pass("it says there is no further charge", c.html.indexOf("no further charge")!==-1);
-/* 90 DAYS, not "three months". Same promise, in the words the privacy page uses, so a venue
-   checking one against the other does not have to convert. Change this and you must change
-   venueplay/privacy.html too: that is what this check is for. */
-pass("it promises 90 days, matching the privacy page", c.html.indexOf("90 days")!==-1);
+/* 90 DAYS, not "three months": the number the code waits (RETENTION_DAYS in venueplay-game.js).
+   Since the 21 Nov privacy trim the privacy page gives players no day count (Dean: "the player
+   doesn't really need to know that"); the venue is still told the number here. */
+pass("it promises 90 days, the number the code waits", c.html.indexOf("90 days")!==-1);
 pass("and links to the privacy page it is quoting", c.html.indexOf("/privacy")!==-1);
 pass("it tells them how to undo it", c.html.indexOf("Undo this cancellation")!==-1);
 pass("the confirmation has no Gflam Group or ABN either",

@@ -100,7 +100,7 @@ check('non-payment is not in that list', !/nonpayment|manual/.test(q), q);
 check('asks only for SUSPENDED venues', /status=eq\.suspended/.test(q), q);
 check('skips venues already purged', /player_data_purged_at=is\.null/.test(q), q);
 var days = /const RETENTION_DAYS = (\d+);/.exec(src);
-check('the promise in privacy.html is 90 days and so is the code', days && days[1] === '90', days && days[1]);
+check('the code waits 90 days after a venue closes, as the cancellation email says (the privacy page gives no day count since 21 Nov)', days && days[1] === '90', days && days[1]);
 
 /* 3. A due venue: the people go, the metering stays. */
 var r1 = run({ venues: [{ id: 'v1', name: 'The Old Pub', closed_at: '2026-01-01T00:00:00Z' }],
