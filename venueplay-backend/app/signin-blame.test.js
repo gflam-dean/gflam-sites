@@ -47,6 +47,9 @@ pass("the sign-in still decides who to blame in one place", !!body);
 // The only DOM it touches is the error line.
 var shown = "";
 function $(id) { return { set textContent(v) { shown = v; }, get textContent() { return shown; } }; }
+var lostBody = fnbody(APP, "lostReply");
+pass("a lost reply is decided in one place beside it", !!lostBody);
+eval(lostBody);
 eval(body);
 /* The "ours" sentence lives in one variable beside the function, because the resend link says
    it too (21 Oct 2026). Lift that, not a copy of it. */
@@ -102,6 +105,17 @@ pass("and an unparseable number too",
    can read our own logs, the host in a noisy pub cannot. */
 pass("an unknown failure defaults to ours", blamesUs(say({})), say({}));
 pass("so does a network error with no shape at all", blamesUs(say(null)));
+/* THE REPLY WAS LOST (20 Nov 2026): no status + a fetch failure is "maybe", never blame. A status always wins. */
+function kind(err) { shown = ""; return otpSendError(err); }
+pass("a lost reply (AuthRetryableFetchError, status 0) is maybe, and says nothing",
+     kind({ name: "AuthRetryableFetchError", status: 0, message: "Load failed" }) === "maybe" && shown === "");
+pass("a bare TypeError 'Failed to fetch' is maybe", kind(new TypeError("Failed to fetch")) === "maybe");
+pass("a 502/503 from Auth is ours, not maybe", kind({ name: "AuthRetryableFetchError", status: 503, message: "Service Unavailable" }) === "ours");
+pass("a hook timeout WITH a status is ours even though it says timeout", kind({ status: 500, code: "hook_timeout", message: "Failed to reach hook within maximum time: timeout" }) === "ours");
+pass("a provider 'connection' failure with a status is ours", kind({ status: 422, code: "sms_send_failed", message: "Error sending confirmation OTP to provider: connection refused" }) === "ours");
+pass("a bad number that mentions a timeout is still theirs", kind({ status: 400, code: "validation_failed", message: "Invalid phone number format (timeout)" }) === "theirs");
+pass("a non-JSON reply (AuthUnknownError, no status) is ours, not maybe", kind({ name: "AuthUnknownError", message: "Unexpected token '<', \"<html>\" is not valid JSON" }) === "ours");
+pass("a lost-sounding error that still carries an error code is ours, not maybe", kind({ status: 0, code: "sms_send_failed", name: "AuthRetryableFetchError", message: "Load failed" }) === "ours");
 
 /* IT MUST STILL BE ABLE TO SAY BOTH THINGS. A function that answers "ours" to everything
    would pass most of the above and be useless. */

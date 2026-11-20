@@ -1094,6 +1094,13 @@
 
      So the code is the question and the words are only a fallback. A provider or
      configuration failure is OURS and says so, with a way to reach a person. */
+  /* a reply that never came back: no status, no error code, and fetch/network words or a fetch-shaped error name */
+  function lostReply(err){
+    var msg=(err&&err.message)?String(err.message).toLowerCase():"";
+    var code=String((err&&(err.code||err.error_code))||"");
+    var status=Number((err&&err.status)||0);
+    return !status && !code && (/fetch|network|load failed|timed? ?out|abort|connection/.test(msg) || /retryablefetch|typeerror/i.test(String((err&&err.name)||"")));
+  }
   function otpSendError(err){
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
     var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
@@ -1101,7 +1108,7 @@
     /* THE REPLY WAS LOST, NOT THE TEXT (Dean, live, 20 Nov 2026 14:44): the server sent the code (auth log 200, hook ran)
        but the phone never got the answer, so the page said "could not send a text" while the code arrived, and hid the
        code box. No status, or a fetch / network failure, means we do not know: open the code box and say so. */
-    var lost = !status && (/fetch|network|load failed|timed? ?out|abort|connection/.test(msg) || /retryablefetch|typeerror/i.test(String((err&&err.name)||"")));
+    var lost = lostReply(err);
     if(lost){ $("mobileErr").textContent=""; return "maybe"; }
     /* Ours: the send itself failed, or phone sign-in is off, or the provider refused US.
        Every one of these is a thing only we can fix. */
@@ -1321,7 +1328,11 @@
     if(!E164){ return; }
     var el=this; el.textContent="Sending..."; $("otpErr").textContent="";
     client.auth.signInWithOtp({ phone:E164 }).then(function(res){
-      if(res && res.error){ el.textContent="Resend code"; $("otpErr").textContent=TEXT_FAILED; showEmailAlt(); return; }
+      if(res && res.error){
+        el.textContent="Resend code";
+        if(lostReply(res.error)){ $("otpErr").textContent="If a code arrives, enter it here. No code after a minute? Get it by email below."; showEmailAlt(); return; }
+        $("otpErr").textContent=TEXT_FAILED; showEmailAlt(); return;
+      }
       el.textContent="Code sent"; setTimeout(function(){ el.textContent="Resend code"; }, 3000);
     }).catch(function(){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; });
   });

@@ -2012,11 +2012,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/signin-blame.test.js": {
-  "checks": 18,
+  "checks": 27,
   "counted_by": "lines"
  },
  "venueplay-backend/app/signin-email-fallback.test.js": {
-  "checks": 38,
+  "checks": 57,
   "counted_by": "lines"
  },
  "venueplay-backend/app/song-excluded-acts.test.js": {
