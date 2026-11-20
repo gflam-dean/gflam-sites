@@ -5649,8 +5649,8 @@ MUTATIONS = [
 
     ('signin-email-fallback.test.js',
      'venueplay/app/index.html',
-     '        if(otpSendError(res.error)==="ours") showEmailAlt(); return;',
-     '        otpSendError(res.error); return;',
+     '        var k=otpSendError(res.error); if(k==="maybe") showCodeStepMaybe(e164); else if(k==="ours") showEmailAlt(); return;',
+     '        var k=otpSendError(res.error); if(k==="maybe") showCodeStepMaybe(e164); return;',
      'the text fails and the email way in is never offered'),
 
     ('signin-email-fallback.test.js',
