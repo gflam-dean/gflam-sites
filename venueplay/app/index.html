@@ -1098,6 +1098,11 @@
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
     var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
     var status=Number((err&&err.status)||0);
+    /* THE REPLY WAS LOST, NOT THE TEXT (Dean, live, 20 Nov 2026 14:44): the server sent the code (auth log 200, hook ran)
+       but the phone never got the answer, so the page said "could not send a text" while the code arrived, and hid the
+       code box. No status, or a fetch / network failure, means we do not know: open the code box and say so. */
+    var lost = !status && (/fetch|network|load failed|timed? ?out|abort|connection/.test(msg) || /retryablefetch|typeerror/i.test(String((err&&err.name)||"")));
+    if(lost){ $("mobileErr").textContent=""; return "maybe"; }
     /* Ours: the send itself failed, or phone sign-in is off, or the provider refused US.
        Every one of these is a thing only we can fix. */
     var ours = code.indexOf("sms_send_failed")>=0
@@ -1133,6 +1138,13 @@
      the email already saved on the login that owns that mobile, and never to anything typed on this page. */
   var EMAIL_BACKUP_SAID="If there's an email saved on your profile, we've sent a sign-in link to it. It can take a minute, so check your junk folder too. No email saved? Ask your manager to send you a new sign-in.";
   function showEmailAlt(){ $("emailAlt").classList.remove("hidden"); }
+  /* the code box after a lost reply (20 Nov 2026): the code may well be on its way */
+  function showCodeStepMaybe(e164){
+    E164=e164; $("sentTo").textContent=e164;
+    $("stepMobile").classList.add("hidden"); $("stepCode").classList.remove("hidden");
+    $("otpErr").textContent="If a code arrives, enter it here. No code after a minute? Get it by email below.";
+    showEmailAlt(); try{ $("otpIn").focus(); }catch(e){}
+  }
   /* A DIFFERENT NUMBER IN OUR PRE-FILLED BOX SENDS NO CODE (Dean, 12 Nov 2026). Our link fills in the mobile we
      hold for their venue. A different number typed over it made a brand new login for that number (phone codes
      create a login when there is none), which signs in to "This login is not linked to a venue yet": a stray
@@ -1213,14 +1225,14 @@
       btn.disabled=false; btn.textContent="Send code";
       if(res && res.error){
         if(existingOnly && noSuchLogin(res.error)){ $("mobileErr").textContent=SHORT_ATTACH_WORDS[existingOnly]||SHORT_ATTACH_WORDS.used; return; }
-        if(otpSendError(res.error)==="ours") showEmailAlt(); return;
+        var k=otpSendError(res.error); if(k==="maybe") showCodeStepMaybe(e164); else if(k==="ours") showEmailAlt(); return;
       }
       $("sentTo").textContent=e164;
       $("stepMobile").classList.add("hidden");
       $("stepCode").classList.remove("hidden");
       showEmailAlt();   // a text can be accepted and still never arrive
       $("otpIn").focus();
-    }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; if(otpSendError(err)==="ours") showEmailAlt(); });
+    }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; var k=otpSendError(err); if(k==="maybe") showCodeStepMaybe(e164); else if(k==="ours") showEmailAlt(); });
   });
   /* ALWAYS THE MOBILE FIRST (Dean, 29 Oct 2026: "When you go to venueplay.com.au/app it says email address
      for your VenuePlay login... we don't actually get the email addresses of the host so it's got to be
