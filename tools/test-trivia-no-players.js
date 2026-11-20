@@ -183,7 +183,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
       renderRows:function(){}, stopRing:function(){}, triviaEndShow:function(){},
       renderBoardPaged:function(t, rows){ painted.push([t, (rows || []).length]); },
       setTimeout:function(f){ timers.push(f); return timers.length; }, clearTimeout:function(){}, clearInterval:function(){} };
-    var src = 'var curQ={ options:["a","b","c","d"], label:"Question 1", text:"Q?" }, boardRollTimer=null, rollRows=null, celebrateTimer=null;\n' +
+    var src = 'function staleAfterEnd(){ return false; }   /* the finished-quiz guard: tools/test-tv-follows-finished-game.js */\nvar curQ={ options:["a","b","c","d"], label:"Question 1", text:"Q?" }, boardRollTimer=null, rollRows=null, celebrateTimer=null;\n' +
       fnB + '\n' + (function(){ var i=SCREEN.indexOf('function renderReveal('), dd=0, k=SCREEN.indexOf('{',i); do{ if(SCREEN[k]==='{')dd++; else if(SCREEN[k]==='}')dd--; k++; }while(dd>0); return SCREEN.slice(i,k); })() +
       '\n' + LBSRC + '\n; return { rev: renderReveal, lb: onLb, roll: function(){ var f=__t.pop(); if(f) f(); } };';
     var names = Object.keys(env).concat(['__t', 'renderLobby']);

@@ -549,6 +549,10 @@
      renderClaimed still stands, so with a silent host the wall still drifts back to the venue's
      advertising and is never left dark or stuck. */
   function clearHold(){ if(S.holdTimer){ clearTimeout(S.holdTimer); S.holdTimer=null; } S.holdUntil=0; S.pendingIdle=null; }
+  /* A FINISHED DRAW IS NOT A GAME TO PROTECT (20 Nov 2026, real night, Job 522). "result" is the prize collected: the draw is over, the
+     winner is only being celebrated. "Put the draws board on the TV" then sends a mode that must be obeyed; the screen used to
+     count the winner as live and the wall stayed on TICKET 061 WINS. A draw still rolling or waiting to be claimed stays live. */
+  function raffleLive(){ return !!(S.phase && S.phase !== "idle" && S.phase !== "result"); }
   function holding(){ return S.phase==="result" && S.holdUntil>0 && Date.now()<S.holdUntil; }
   function holdResult(ms){
     clearHold(); S.holdUntil=Date.now()+ms;
@@ -664,7 +668,7 @@
       channel: function(name, game){ var make=function(){ return client.channel(name, { config:{ broadcast:{ self:false } } }); };
         try{ if(window.VPRoom && VPRoom.venue && !VP_DEMO) return VPRoom.venue(VP_GAME_API, VENUE_SLUG).channel(name, "tv", make, { fmt:(game==="bingo" ? null : game), mark:false }); }catch(e){}
         return make(); },
-      busy: function(){ return S.phase && S.phase !== "idle"; }
+      busy: raffleLive
     });
   }
   /* A CHANNEL THAT COMES BACK BY ITSELF. client.channel() on its own said Reconnecting after a

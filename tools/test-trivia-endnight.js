@@ -159,7 +159,7 @@ function tvRig(opts) {
     'function renderLobby(){} function renderPaper(){} function drawLobbyQR(){} function paintLobbyName(){} function paintAnsOf(){} function countKeys(){ return 0; }\n' +
     'function renderQuestion(m){ curQ={ qseq:m.qseq, options:m.options||[], text:m.text||"" }; show("tvQ"); }\n' +
     liftAll(SCREEN, ['show', 'stopBoardPaging', 'qClass', 'ansLenClass', 'sameReveal', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries',
-                     'podiumTitle', 'renderPodium', 'finaleClear', 'finaleFrom', 'finaleTick', 'finalePaint', 'endShowThen', 'onMsg'], 'trivia/screen.html') +
+                     'podiumTitle', 'renderPodium', 'staleAfterEnd', 'finaleClear', 'finaleFrom', 'finaleTick', 'finalePaint', 'endShowThen', 'onMsg'], 'trivia/screen.html') +
     lift(SCREEN, 'playFanfare', 'trivia/screen.html').replace('VPCelebrate.fanfare(', 'soundHook(') +
     '; return { msg: onMsg, fin: function(){ return FIN; }, fanfare: playFanfare, roll: function(){ return boardRollTimer; } };';
   var names = Object.keys(env);
