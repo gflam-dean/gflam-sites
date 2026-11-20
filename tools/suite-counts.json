@@ -872,7 +872,7 @@
   "counted_by": "lines"
  },
  "tools/test-drawstyle.js": {
-  "checks": 152,
+  "checks": 157,
   "counted_by": "lines"
  },
  "tools/test-early-bingo-restore.js": {
@@ -2428,7 +2428,7 @@
   "counted_by": "lines"
  },
  "tools/members-name-console-in-chrome.test.py": {
-  "checks": 16,
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/bingo-tv-name-once-in-chrome.test.py": {

@@ -197,7 +197,11 @@
     ".vpds-drawn span.vpds-new{border-color:#FF1F8E}",
     ".vpds-clock{position:absolute;left:0;right:0;bottom:34px;text-align:center;font:700 44px/1 'Hanken Grotesk',sans-serif;color:#FFD93D;opacity:0}",
     /* ticket roll */
-    ".vpds-strip{position:absolute;left:0;top:0;width:1920px;height:1080px}",
+    /* THE ROLL FADES OUT AT ITS EDGES (Sunday 22 Nov gate, after Jobs 516). The tickets run on past the stage's sides and the stage clips them.
+       Since the draw keeps its own size (data-fit-self) that clip IS the 5% safe line, so the roll stopped dead there in a hard edge: a frame
+       round the floor on a TV that does not crop (INBOX 375; tools/tv-fullbleed-in-chrome.test.py). Fading the strip out over its last 14%
+       each side (clear for the first 2%, so not a trace of paper reaches the line at any size) ends the roll softly inside the safe box; the winner, in the middle, is never in the fade. Same fade as vp-trusted.js's logos. */
+    ".vpds-strip{position:absolute;left:0;top:0;width:1920px;height:1080px;-webkit-mask-image:linear-gradient(90deg,transparent 2%,#000 14%,#000 86%,transparent 98%);mask-image:linear-gradient(90deg,transparent 2%,#000 14%,#000 86%,transparent 98%)}",
     ".vpds-it{position:absolute;top:0;left:0;will-change:transform}",
     ".vpds-tk{width:600px;height:320px;background:#F1EDE6;box-sizing:border-box;display:flex;color:#0A0A0B}",
     ".vpds-tk .vpds-ticket-body{position:relative;flex:1;padding:26px 38px 0 34px;box-sizing:border-box;min-width:0}",
@@ -564,9 +568,14 @@
         var nr = el("div", "vpds-row", bd); nr.style.left = (W - rowW) / 2 + "px"; nr.style.top = (pad0 + mh + 26) + "px";
         nmods.push(makeMod(nr, rowW, nh, 88, false, 0));
       }
-      var bottom = (members ? 160 : 168) + H;
-      prizeEl.style.top = (bottom + 16) + "px"; prizeEl.style.fontSize = (members ? 76 : 90) + "px";
-      claimEl.style.top = (bottom + (members ? 16 + 76 + 12 : 16 + 90 + 12)) + "px"; claimEl.style.fontSize = "64px"; claimEl.setAttribute("data-maxw", "1700");
+      var bottom = (members ? 160 : 168) + H, pFs = members ? 76 : 90, pGap = 16, cGap = 12;
+      /* THE COUNTDOWN BAND OWNS THE BOTTOM (o.noClock: the claim clock is in /app/vp-drawcount.js's band, top 924px on this same 1920 x 1080
+         stage). With the name flap on the board, the claim line (64px at line-height 1.1, 71px) ended at 926: 2px under the band. vp-fit.js
+         used to shrink the whole layer to ~82% and hid it; since the draw keeps its own size (Jobs 516) it shows. So the two gaps close up
+         (never under 4px) until the claim line ends 10px above the band. Without the band nothing moves. */
+      if (o.noClock) { var room = 924 - 10 - (bottom + pFs + 71); if (room < pGap + cGap) pGap = cGap = Math.max(4, Math.floor(room / 2)); }
+      prizeEl.style.top = (bottom + pGap) + "px"; prizeEl.style.fontSize = pFs + "px";
+      claimEl.style.top = (bottom + pGap + pFs + cGap) + "px"; claimEl.style.fontSize = "64px"; claimEl.setAttribute("data-maxw", "1700");
       clockEl.style.bottom = "88px"; clockEl.style.fontSize = "38px";
       v.after = function () {};
       /* THE WINNER TAKES THE SCREEN: after the number lands the board shrinks to the top and the name flips in on giant tiles, one letter
