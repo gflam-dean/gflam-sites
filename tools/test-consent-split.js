@@ -128,5 +128,39 @@ PAGES.forEach(function (p) {
 });
 show('the three pages\' gatherCapture are the same text', bodies.length === 3 && bodies[0] === bodies[1] && bodies[1] === bodies[2]);
 
+/* THE 18+ CLAIM STAYS GONE (18 Nov 2026). Since vpc-3-14nov the offers tick has no age words, but the
+   privacy page went on saying it "also confirms they are 18 or over". While vp-consent.js's tick asks
+   no age, no page, phone or email the Worker sends may put "offers" and "18 or over" (or "18+", "over
+   18") on the same line: that line is the old claim coming back. Whole-line comments in .js files are
+   skipped (nobody outside reads them); HTML comments are not, as they are served. The separate state
+   18+ screen on the bingo phone never mentions offers, so it never trips this. */
+print('\nno page or email says the offers tick confirms 18 or over');
+var TICK_WORDS = VPConsent.OPTIN_HEAD + VPConsent.OPTIN_TAIL + VPConsent.NO_NAME;
+var TICK_ASKS_AGE = /18|\bage\b|adult/i.test(TICK_WORDS);
+show('vp-consent.js\'s tick asks no age (the condition for the check below)', !TICK_ASKS_AGE, TICK_WORDS);
+var CLAIM_FILES = ['venueplay/privacy.html', 'venueplay/terms.html', 'venueplay/index.html', 'venueplay/help.html', 'venueplay/nsw.html',
+  'venueplay/play.html', 'venueplay/app/play-quick.html', 'venueplay/app/trivia/play.html', 'venueplay/app/musical/play.html',
+  'venueplay/app/purchase-raffle/index.html', 'venueplay/app/vp-tonight.js', 'venueplay/app/vp-details.js', 'venueplay/app/vp-about-you.js',
+  'venueplay-backend/worker/venueplay-api-FULL.js', 'venueplay-backend/worker/venueplay-game.js'];
+var claimHits = [], claimRead = 0;
+CLAIM_FILES.forEach(function (f) {
+  var s; try { s = readFile(f); } catch (e) { return; }
+  claimRead++;
+  var isJs = /\.js$/.test(f);
+  s.split('\n').forEach(function (line, i) {
+    if (isJs && /^\s*(\*|\/\*|\/\/)/.test(line)) return;   // a code comment in a .js file is read by nobody outside
+    if (/\boffers?\b/i.test(line) && /18 or over|18\+|over 18|18 and over/i.test(line)) claimHits.push(f + ':' + (i + 1));
+  });
+});
+show('the files it reads are there (privacy, terms, the three phones, the Worker emails)', claimRead >= 10, claimRead);
+show('the privacy page names the offers tick with no age words', /Whether they want offers from that venue \(one tick box, off by default\)/.test(readFile('venueplay/privacy.html')));
+show('no line ties the offers tick to 18 or over' + (TICK_ASKS_AGE ? ' (skipped: the tick asks age again)' : ''), TICK_ASKS_AGE || claimHits.length === 0, claimHits.slice(0, 5));
+var muBad = (readFile('venueplay/privacy.html').match(/<(p|li)[^>]*>[\s\S]*?<\/\1>/g) || []).filter(function (blk) {
+  if (!/18 or over|18\+|over 18/i.test(blk)) return false;
+  var all = (blk.match(/musical bingo/gi) || []).length, never = (blk.match(/never for trivia or musical bingo/gi) || []).length;
+  return all !== never;   // in a paragraph about 18+, musical bingo may only appear as "never for trivia or musical bingo"
+});
+show('musical bingo is never called 18+ on the privacy page (it is not bingo)', muBad.length === 0, muBad.map(function (b) { return b.slice(0, 120); }));
+
 if (bad) throw new Error('consent one tick: ' + bad + ' of ' + ran + ' failed');
 print('ALL ' + ran + ' CHECKS PASSED');

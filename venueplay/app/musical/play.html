@@ -453,7 +453,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-waitwatch.js"></script>
-<script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
+<script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}" (14 Nov 2026, no age words) -->
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-known.js"></script>   <!-- a known phone: never asked the same details twice at a venue (INBOX 416, 22 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
@@ -1335,7 +1335,7 @@ var PATTERN_NAMES={any:"Any line",one:"One line across",two:"Two lines across",c
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
-    if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers + 18+ tick ONLY, and only with a contact method (/app/vp-consent.js)
+    if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers tick ONLY, and only with a contact method (/app/vp-consent.js)
     if(typeof VPKnown==="object") VPKnown.capture(cap);   // the three boxes' answers (INBOX 416)
     return cap;
   }

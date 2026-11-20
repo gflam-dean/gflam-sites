@@ -301,7 +301,7 @@
 
   /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026): a player who said no at the join screen can change their mind
      later, on every game's phone. One row in the menu; tapped, it opens the fields the venue collects (email, mobile),
-     the same approved tick "Send me offers from {venue}. I'm 18 or over.", and "Join the list". The tick is what joining
+     the same approved tick "Send me offers from {venue}" (no age words since 14 Nov), and "Join the list". The tick is what joining
      the list means, so the button sends only with it ticked. After a confirmed send the row goes for good (the page
      keeps that on the phone and does not draw it again).
        o = { venue, collect:{ email, mobile }, send(fields) -> Promise, done() }   fields = { email, mobile, optin:true } */
