@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '21 Nov 2026, 10:30 · 6ac6dcf5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 15:53 · 64a22f54';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -21804,8 +21804,14 @@ async function vprMonthlySweep(env, nowMs, opts) {
   const tests = await vprTestVenueIds(env, venues);
   /* ALL THEIR EMAILS STOP AT THE CANCEL (INBOX 258.1): a free month cancelled part way is still active to its end date.
      A list that cannot be read holds this tick (no report goes blind to a venue that said stop). */
-  let cxIds;
-  try { cxIds = new Set((await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&select=venue_id&order=venue_id.asc')).map((r) => r.venue_id)); }
+  let cxIds, ncIds;
+  try {
+    /* DO NOT CONTACT (INBOX 650a, 19 Nov 2026): the same read also picks up vp_prospects.no_contact = true, HQ's
+       Do not contact, which the report never looked at (the members reminder and the trial-end note always did). */
+    const pr = await vpaSelectAll(env, 'vp_prospects', 'or=(cancelled_at.not.is.null,no_contact.eq.true)&select=venue_id,cancelled_at,no_contact&order=venue_id.asc');
+    cxIds = new Set(pr.filter((r) => r.cancelled_at != null).map((r) => r.venue_id));
+    ncIds = new Set(pr.filter((r) => r.no_contact === true).map((r) => r.venue_id));
+  }
   catch (e) { return { off: false, waiting: true, sent: 0, why: 'cancelled prospects not readable' }; }
   /* What venues play, to Dean only, once a month. Never throws, so it cannot hold up a venue's report. */
   const games = await vprGamesSend(env, month, venues, tests);
@@ -21816,6 +21822,18 @@ async function vprMonthlySweep(env, nowMs, opts) {
   const out = { month: month, games: games, sent: 0, skipped: 0, left: Math.max(0, venues.filter((v) => !done.has(v.id)).length - todo.length) };
   if (!todo.length) return out;
   const unsub = await vpaUnsubscribedSet(env);
+  /* BOUNCES AND SPAM COMPLAINTS (INBOX 650a, 19 Nov 2026): the Resend webhook writes vp_admin_audit rows
+     email_bounced / email_marked_spam with detail.address. A bounced or complaining address is never mailed again.
+     A read that cannot be made holds this tick, like the cancelled list above: nobody is emailed blind, nothing is
+     written, and the next tick looks again. */
+  let bad;
+  try {
+    bad = Object.create(null);
+    for (const b of await vpaSelectAll(env, 'vp_admin_audit', 'action=in.(email_bounced,email_marked_spam)&select=detail&order=id.asc')) {
+      const a = b && b.detail && String(b.detail.address || '').trim().toLowerCase();
+      if (a) bad[a] = true;
+    }
+  } catch (e) { return { off: false, waiting: true, sent: 0, why: 'bounced addresses not readable' }; }
   const reps = await vprMonth(env, todo, month, now);
   /* The news HQ wrote for this month, only once it is marked ready. Not ready, or not readable: the
      report goes without it rather than waiting (the email is the report first). */
@@ -21829,12 +21847,14 @@ async function vprMonthlySweep(env, nowMs, opts) {
     let acct = null;
     if (tests.has(v.id)) why = 'test venue';
     else if (cxIds.has(v.id)) why = 'cancelled their free month';
+    else if (ncIds.has(v.id)) why = 'do not contact';
     else if (!r.this_month.nights && !r.last_month.nights) why = 'no nights in either month';
     else {
       acct = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1')) || [])[0] || null;
       const to = acct && String(acct.contact_email || '').trim().toLowerCase();
       if (!to) why = 'no contact email';
       else if (unsub[to]) why = 'unsubscribed';
+      else if (bad[to]) why = 'address bounced';
     }
     if (why) {
       await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_skipped', target: target, detail: { month: month, why: why } }, false);
