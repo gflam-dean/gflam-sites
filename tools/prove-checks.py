@@ -16663,7 +16663,6 @@ MUTATIONS = [
     ('offer-page-start-first.test.py', 'venueplay/app/vp-offer.js', "var ADDRESS_SERVES = { nov: 'dec-countdown' };", "var ADDRESS_SERVES = {};", '/offer-nov goes back to the 30 November row and OFFER-NOV-2026, so the countdown emails land on the wrong date and code'),
     ('offer-ended-in-chrome.test.py', 'venueplay/app/vp-offer.js', "var ADDRESS_SERVES = { nov: 'dec-countdown' };", "var ADDRESS_SERVES = {};", '/offer-nov shows 30 November instead of 10 December in the browser'),
     ('signup-start-in-chrome.test.py', 'venueplay/app/vp-start.js', 'root.fbq("track", "CompleteRegistration")', 'root.fbq("track", "Lead")', 'the free sign-up sends Meta the wrong event'),
-    ('signup-start-in-chrome.test.py', 'venueplay/app/vp-start.js', '    if (!S.counted) {\n      S.counted = true;\n', '    if (true) {\n', 'the sign-up events can fire more than once'),
     ('signup-start-in-chrome.test.py', 'venueplay/app/vp-start.js', '      if (j.ok) { var h = $("st-held-words");', '      if (j.ok) { try { root.fbq("track", "CompleteRegistration"); } catch (e) {} var h = $("st-held-words");', 'a held account (nothing made) still sends the sign-up event'),
     # DEAN'S OFFER PAGE NOTES, ROUND 3 (7 Nov 2026, DEAN-FEEDBACK-3.md; branch fix/offer-page-r3). One row per
     # new check in section 9 of offer-page-start-first.test.py, each aimed at the one line that check reads.

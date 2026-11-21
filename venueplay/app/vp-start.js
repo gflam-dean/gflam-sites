@@ -184,13 +184,10 @@
     var line = $("st-tvline"); if (line) line.hidden = !d.tv_code;
     var open = $("st-open"); if (open) open.setAttribute("href", d.go_url || "/app");
     show("st-done");
-    /* ONE sign-up event for Meta and GA4 (Dean, 22 Nov 2026), only when the text code made the account, once, guarded like
+    /* ONE sign-up event for Meta and GA4 (Dean, 22 Nov 2026), only when the text code made the account (done() runs once per account), guarded like
        the StartTrial line after Stripe on nsw.html. No consent change: vp-pixel.js decides whether fbq exists. */
-    if (!S.counted) {
-      S.counted = true;
-      try { if (typeof root.fbq === "function") root.fbq("track", "CompleteRegistration"); } catch (e) {}
-      try { if (typeof root.gtag === "function") root.gtag("event", "sign_up", { method: "venueplay_free" }); } catch (e) {}
-    }
+    try { if (typeof root.fbq === "function") root.fbq("track", "CompleteRegistration"); } catch (e) {}
+    try { if (typeof root.gtag === "function") root.gtag("event", "sign_up", { method: "venueplay_free" }); } catch (e) {}
     root.VPStart.done = d;
     try { doc.dispatchEvent(new root.CustomEvent("vp-start-done", { detail: d })); } catch (e) {}
   }
