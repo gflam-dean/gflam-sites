@@ -620,7 +620,7 @@
   "counted_by": "lines"
  },
  "tools/signup-start-in-chrome.test.py": {
-  "checks": 46,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/signup-tick-in-chrome.test.py": {

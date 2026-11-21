@@ -177,10 +177,14 @@ try:
     tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
     S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
     nf = len(S.W.table('venueplay_founding'))
+    S.js(sid, 'window.__ev=[];window.fbq=function(){window.__ev.push([].slice.call(arguments));};window.gtag=function(){window.__ev.push([].slice.call(arguments));}; true')
     fill(sid, 'Totally Made Up Tavern', '4225', 'Pat Faker', '0412 555 009', 'pat@madeup.example')
     S.until(sid, '!document.getElementById("st-code").hidden', 15)
     type_code(sid, last_code('+61412555009'))
     S.until(sid, '!document.getElementById("st-done").hidden', 20)
+    ev = S.json(sid, 'window.__ev', [])
+    ok('the sign-up events fire once each when the code makes the account: Meta CompleteRegistration, GA4 sign_up (venueplay_free)',
+       ev.count(['track', 'CompleteRegistration']) == 1 and ev.count(['event', 'sign_up', {'method': 'venueplay_free'}]) == 1, ev)
     ok('the account is made straight away and the done screen shows', len(S.W.table('venueplay_founding')) == nf + 1 and
        S.json(sid, '[].map.call(document.querySelectorAll("#st-done > .st-h,#st-done > .st-p"),function(x){return x.textContent.trim();})', []) == DONE)
     S.close_tab(tid)
@@ -189,10 +193,13 @@ try:
     tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
     S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
     nf = len(S.W.table('venueplay_founding'))
+    S.js(sid, 'window.__ev=[];window.fbq=function(){window.__ev.push([].slice.call(arguments));};window.gtag=function(){window.__ev.push([].slice.call(arguments));}; true')
     fill(sid, 'Second Venue Hotel', '4225', 'Pat Faker', '0412 555 009', 'pat.second@madeup.example', kind='club')
     S.until(sid, '!document.getElementById("st-code").hidden', 15)
     type_code(sid, last_code('+61412555009'))
     S.until(sid, '!document.getElementById("st-held").hidden', 20)
+    ev = S.json(sid, 'window.__ev', [])
+    ok('no sign-up event fires when nothing was made (the held account)', not [e for e in ev if e[:2] in (['track', 'CompleteRegistration'], ['event', 'sign_up'])], ev)
     shot(sid, 'start-held-390px.png')
     words = S.js(sid, 'document.getElementById("st-held-words").textContent.trim()')
     ok('the page says Dean\'s words, word for word', words == HELD, words)
@@ -249,7 +256,7 @@ ok('the home page has no start form (no offers on the home page)', 'id="st-form"
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 46
+EXPECTED = 48
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
