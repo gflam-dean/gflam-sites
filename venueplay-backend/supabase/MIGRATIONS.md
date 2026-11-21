@@ -1007,3 +1007,13 @@ The game Worker's 90-day sweep deletes a gone venue's consent rows (purgeKnownPl
 before it runs every lookup answers "not known" and nothing is written (tools/test-known-phone.js section 6). Run on TEST first
 (tools/staging/run-on-test.py), then Dean pastes on live EARLY. Branch `feature/known-phone-416-sun22`. NOT RUN.
 Rollback: `drop table public.vp_player_consents; drop table public.vp_known_players;`.
+
+`venueplay-227-music-set-own-questions.sql` (jobs 525, real night 20 Nov 2026 at The Mini Bar; branch `sun22/faults-523-525-526`
+05189c048, in Sunday 22 Nov's tree): the library set "Music" holds only music questions. Moves three misfiled fine categories'
+rows (train robberies and bandits to History, rock climbers to Sport, canyons and rock formations to Geography) out of the
+library Music set; each question keeps its id, words, answers and fine category (new set_id, seq after the last in its new set),
+so the twelve-month "already asked" memory and past results are untouched; question_count on the four sets moves by the number
+moved. Library sets only, found by title exactly once (refuses otherwise); refuses while a trivia round on the Music set is
+running. DATA-ONLY: no table, column, policy or grant, so check-migrations-live.py says "(data change only)" and the code does
+not depend on it. DEAN PASTES IT AFTER SUNDAY IS LIVE, WHEN NO TRIVIA RUNS (daytime). Safe to run twice (the second run moves
+nothing). Rollback: in the file. NOT RUN (not on TEST, not on LIVE).
