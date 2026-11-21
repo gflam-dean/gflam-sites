@@ -753,7 +753,8 @@
   "during_game",
   "player_id",
   "consent_version",
-  "member_id"
+  "member_id",
+  "known_id"
  ],
  "vp_cards": [
   "id",
@@ -1148,6 +1149,21 @@
   "venue_id",
   "at"
  ],
+ "vp_known_players": [
+  "id",
+  "first_venue_id",
+  "key_hash",
+  "first_name",
+  "last_name",
+  "email",
+  "mobile",
+  "postcode",
+  "notice_version",
+  "notice_at",
+  "shared",
+  "created_at",
+  "last_seen_at"
+ ],
  "vp_licensed_venues": [
   "id",
   "name",
@@ -1252,6 +1268,21 @@
   "played_at",
   "revealed_at"
  ],
+ "vp_number_changes": [
+  "id",
+  "known_id",
+  "new_mobile",
+  "old_last3",
+  "code_hash",
+  "attempts",
+  "sends",
+  "ip_hash",
+  "created_at",
+  "last_sent_at",
+  "expires_at",
+  "done_at",
+  "rows_changed"
+ ],
  "vp_optin_exports": [
   "id",
   "venue_id",
@@ -1274,6 +1305,20 @@
   "updated_at",
   "updated_by"
  ],
+ "vp_player_consents": [
+  "id",
+  "venue_id",
+  "known_id",
+  "player_id",
+  "session_id",
+  "party",
+  "party_name",
+  "host_auth_user_id",
+  "granted",
+  "wording_version",
+  "source",
+  "created_at"
+ ],
  "vp_players": [
   "id",
   "session_id",
@@ -1295,7 +1340,8 @@
   "device_id",
   "played_at",
   "consent_version",
-  "member_id"
+  "member_id",
+  "known_id"
  ],
  "vp_playlist_songs": [
   "id",
@@ -1855,6 +1901,12 @@
   "public_jwk",
   "private_jwk",
   "created_at"
+ ],
+ "vp_venue_slug_aliases": [
+  "slug",
+  "venue_id",
+  "retired_at",
+  "retired_by"
  ],
  "vp_venue_staff": [
   "id",

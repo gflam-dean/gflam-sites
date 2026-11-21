@@ -1621,6 +1621,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_known_players": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_licensed_venues": {
    "enabled": true,
    "forced": false
@@ -1661,6 +1665,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_number_changes": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_optin_exports": {
    "enabled": true,
    "forced": false
@@ -1670,6 +1678,10 @@
    "forced": false
   },
   "vp_platform_notice": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_player_consents": {
    "enabled": true,
    "forced": false
   },
@@ -1845,6 +1857,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_venue_slug_aliases": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_venue_staff": {
    "enabled": true,
    "forced": false
@@ -1959,6 +1975,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_number_change_apply(p_change uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_park_flagged(min_venues integer)": {
    "anon": false,
    "authenticated": false
@@ -2008,6 +2028,10 @@
    "authenticated": true
   },
   "vp_venue_month_rollup(p_venue uuid)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_venue_move_address(p_venue_id uuid, p_new_slug text, p_actor_admin uuid, p_actor_label text)": {
    "anon": false,
    "authenticated": false
   },
