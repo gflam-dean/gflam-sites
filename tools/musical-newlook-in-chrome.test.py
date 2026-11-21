@@ -227,7 +227,11 @@ TV_PROBE = r'''(function(){
     o.artist=vis(document.getElementById("tvNowArtist"))?R(document.getElementById("tvNowArtist")):null;
     var wn=document.getElementById("tvWins"); o.wins=vis(wn)?{ r:R(wn), text:wn.textContent }:null;
     var sn=document.getElementById("tvSongNo"); o.songno=vis(sn)?{ r:R(sn), text:sn.textContent }:null;
-    o.tiles=[].map.call(document.querySelectorAll("#tvBoard .ptok"),function(x){ var s=getComputedStyle(x); return { r:R(x), text:x.textContent, cur:x.classList.contains("new"), bc:s.borderTopColor, img:!!x.querySelector("img"), fit:x.scrollHeight<=x.clientHeight+1 && x.scrollWidth<=x.clientWidth+1 }; });
+    /* the tiles ON the wall: fitStrip steps the oldest out (display:none) when the row is wider than the strip (21 Nov 2026) */
+    o.tiles=[].filter.call(document.querySelectorAll("#tvBoard .ptok"),function(x){ return getComputedStyle(x).display!=="none"; }).map(function(x){ var s=getComputedStyle(x), tn=x.lastChild, lh=0;
+      try{ var rg=document.createRange(); rg.selectNodeContents(tn.nodeType===3?tn:x.querySelector(".ptt")||x); var rs=rg.getClientRects(), tops={}; for(var k=0;k<rs.length;k++) if(rs[k].width>0) tops[Math.round(rs[k].top)]=1; lh=Object.keys(tops).length; }catch(e){}
+      return { r:R(x), text:x.textContent, cur:x.classList.contains("new"), bc:s.borderTopColor, img:!!x.querySelector("img"), fs:parseFloat(s.fontSize), lines:lh, cut:x.classList.contains("cut"), fit:x.scrollHeight<=x.clientHeight+1 && x.scrollWidth<=x.clientWidth+1 }; });
+    o.tilesAll=document.querySelectorAll("#tvBoard .ptok").length;
     var mm=document.getElementById("tvBoardMore"); o.more=vis(mm)?{ r:R(mm), text:mm.textContent }:null;
     var nx=document.getElementById("tvBoardNext"); o.next=vis(nx)?{ r:R(nx), text:nx.textContent, bs:getComputedStyle(nx).borderTopStyle }:null;
     o.wallText=(lay.innerText||"").replace(/\s+/g," ");
@@ -325,8 +329,13 @@ def tv(B, base, w, h, logo, tag, shots):
         sn = n.get('songno') or {}
         ok(tagn + ' now playing: "14 songs played" bottom left, over the strip', sn.get('text') == '14 songs played' and bool(sn.get('r') and A) and abs(sn['r'][0] - A[0]) <= 1 and sn['r'][1] > A[3], sn)
         T = n.get('tiles') or []
-        ok(tagn + ' now playing: the strip is the last five, with their artwork, the current one outlined in pink',
-           [t['text'] for t in T] == played[-5:] and all(t['img'] for t in T) and [t['cur'] for t in T] == [False] * 4 + [True] and T[-1]['bc'] == 'rgb(255, 31, 142)', [(t['text'], t['cur'], t['bc'], t['img']) for t in T])
+        # jobs 518/524 (21 Nov 2026): as many of the latest as fit at full size, oldest out first, newest always on, outlined
+        k = len(T)
+        ok(tagn + ' now playing: the strip is the latest songs that fit at full size (3 to 5 of the last five), in order, with their artwork, the current one outlined in pink',
+           3 <= k <= 5 and n.get('tilesAll') == 5 and [t['text'] for t in T] == played[-k:] and all(t['img'] for t in T) and [t['cur'] for t in T] == [False] * (k - 1) + [True] and T[-1]['bc'] == 'rgb(255, 31, 142)', [(t['text'], t['cur'], t['bc'], t['img']) for t in T])
+        ok(tagn + ' now playing: every strip title on ONE line, at 2.4% of the safe width (reads from the back), none faded',
+           bool(T) and all(t.get('lines') == 1 and abs(t.get('fs', 0) - 0.024 * SW) <= 0.6 and not t.get('cut') for t in T), [(t['text'], t.get('lines'), t.get('fs'), t.get('cut')) for t in T])
+        ok(tagn + ' now playing: "N songs played" sits clear of the art (at least 1% of the safe width under it)', bool(sn.get('r') and A) and sn['r'][1] - A[3] >= 0.01 * SW - 0.5, [A, sn.get('r')])
         ok(tagn + ' now playing: no "+9" chip, the only count is bottom left (Dean, 6 Nov 13:10)', n.get('more') is None, n.get('more'))
         ok(tagn + ' now playing: every tile on the screen, in one row, under "Song 14", the strip within the art\'s margins', bool(T) and all(t['r'] and t['r'][2] <= w - 0.0625 * w + 1 and abs(t['r'][1] - T[0]['r'][1]) <= 1 for t in T) and T[0]['r'][1] >= sn['r'][3], [t['r'] for t in T] + [sn.get('r')])
         ok(tagn + ' now playing: every title whole inside its tile (a long one steps down, never cut)', all(t.get('fit') for t in T), [(t['text'], t.get('fit')) for t in T])
@@ -390,7 +399,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: LISTEN, then "Name that tune." for a host who reveals by hand', (L.get('listen') or {}).get('text', '').replace('\n', ' ').strip().lower().startswith('listen'), L.get('listen'))
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
-        ok(tagn + ' listen: no dashed slot for it (Dean, 11 Nov 2026: the song said twice), the last five played on the strip', L.get('next') is None and len(L.get('tiles') or []) == 5, [L.get('next'), len(L.get('tiles') or [])])
+        ok(tagn + ' listen: no dashed slot for it (Dean, 11 Nov 2026: the song said twice), the last five played on the strip', L.get('next') is None and L.get('tilesAll') == 5 and 3 <= len(L.get('tiles') or []) <= 5, [L.get('next'), L.get('tilesAll'), len(L.get('tiles') or [])])
         ok(tagn + ' listen: "15 songs played" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == '15 songs played' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
         # the listen line as most hosts run it
         P.js(say(chan, [{'t': 'played', 'title': 'Sweet Caroline', 'artist': 'Neil Diamond', 'artworkUrl': '/__fixture/art-305080.svg', 'played': allp + ['Sweet Caroline'], 'reveal': 'end', 'replay': True}]))
