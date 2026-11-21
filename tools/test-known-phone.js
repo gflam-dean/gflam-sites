@@ -15,7 +15,9 @@
         the row's number, so its next game is never filled with a number it was not given (INBOX 445; migration 210
         later keeps each venue's own number so it can be pre-filled)
      7. before migration 202 (the tables missing) every join works exactly as today
-     8. consent: 'single' unless env.CONSENT_BLOCK is 'three'; then venueplay + the venue, plus the host only when a
+     8. consent: THREE BOXES ON (21 Nov 2026) unless env.CONSENT_BLOCK is 'single'; each new sender's box UNTICKED
+        (ticked:false, version vpc-5-22nov) unless env.CONSENT_PRETICK is exactly 'on' (ticked:true, vpc-4-22nov, the
+        one setting kept for the lawyer); venueplay + the venue, plus the host only when a
         HOST login with a brand card opened the game (never the owner); each box its own row with its answer, version,
         source; the venue box is the venue's own marketing tick on the player row (only where the venue collects it);
         a known phone is not asked a box it already answered; a new host's box is still asked
@@ -33,6 +35,8 @@ sha256Hex = async function (s) {
   }
   return out;
 };
+var LOGGED = [];
+(function () { var c = (typeof console === 'object' && console) || (globalThis.console = {}); var was = c.log; c.log = function () { LOGGED.push([].slice.call(arguments).join(' ')); }; void was; })();
 var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b';
 var rigFetch = fetch, MISSING = false;
 fetch = async function (url, opts) {
@@ -47,7 +51,7 @@ fetch = async function (url, opts) {
 var STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' };
 requireStaff = async function (env, uid, venueId) { return { id: STAFF.id, role: STAFF.role, venue_id: venueId, auth_user_id: uid }; };
 function world(cfg) {
-  DB = {}; LOG.length = 0; MISSING = false; STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' }; delete ENV.CONSENT_BLOCK;
+  DB = {}; LOG.length = 0; MISSING = false; STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000001', role: 'owner' }; delete ENV.CONSENT_BLOCK; delete ENV.CONSENT_PRETICK;
   DB.vp_venues = [
     { id: VENUE, name: 'The Royal', slug: 'royal', status: 'active', au_state: 'QLD', entity_type: 'for_profit', terms_required: false, max_players: 50, founding_id: 'f1', timezone: 'Australia/Brisbane', created_at: '2026-01-01T00:00:00Z' },
     { id: OTHER, name: 'The Other Pub', slug: 'other', status: 'active', au_state: 'QLD', entity_type: 'for_profit', terms_required: false, max_players: 50, founding_id: 'f2', timezone: 'Australia/Brisbane', created_at: '2026-01-01T00:00:00Z' }];
@@ -298,12 +302,32 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   world({ collect_first_name: true, collect_marketing_optin: true });
   s1 = await open();
   jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
-  show('switch off (no CONSENT_BLOCK): the single tick, as today', jk.body.consent && jk.body.consent.mode === 'single', JSON.stringify(jk.body.consent));
-  ENV.CONSENT_BLOCK = 'three';
-  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
   var parties = (jk.body.consent && jk.body.consent.parties) || [];
-  show('switch on, the owner opened the game: venueplay and the venue, no host box', jk.body.consent.mode === 'three' && parties.length === 2 && parties[0].party === 'venueplay' && parties[1].party === 'venue' && parties[1].name === 'The Royal', JSON.stringify(jk.body.consent));
-  show('...with the wording version', jk.body.consent.version === 'vpc-4-22nov');
+  show('ON by default (no CONSENT_BLOCK), the owner opened the game: venueplay and the venue, no host box', jk.body.consent.mode === 'three' && parties.length === 2 && parties[0].party === 'venueplay' && parties[1].party === 'venue' && parties[1].name === 'The Royal', JSON.stringify(jk.body.consent));
+  show('...each new box starts UNTICKED (ticked false), with the unticked wording version vpc-5-22nov', jk.body.consent.ticked === false && jk.body.consent.version === 'vpc-5-22nov' && parties.every(function (p) { return !('current' in p); }), JSON.stringify(jk.body.consent));
+  ENV.CONSENT_PRETICK = 'yes';
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('CONSENT_PRETICK anything but exactly "on" (here "yes"): still unticked, vpc-5-22nov', jk.body.consent.ticked === false && jk.body.consent.version === 'vpc-5-22nov', JSON.stringify(jk.body.consent));
+  var loose = [];
+  for (var lv of ['ON', ' on', 'on ', 'on\n', 'On']) {
+    ENV.CONSENT_PRETICK = lv;
+    jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+    if (!(jk.body.consent.ticked === false && jk.body.consent.version === 'vpc-5-22nov')) loose.push(JSON.stringify(lv));
+  }
+  show('CONSENT_PRETICK must be EXACTLY "on": "ON", " on", "on ", "on\\n" and "On" all stay unticked, vpc-5-22nov', loose.length === 0, loose.join());
+  var logs0 = LOGGED.length;
+  delete ENV.CONSENT_PRETICK; ENV.CONSENT_BLOCK = 'off';
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('CONSENT_BLOCK "off" (a near miss) leaves the boxes on and says so in the Worker log', jk.body.consent.mode === 'three' && LOGGED.slice(logs0).some(function (l) { return l.indexOf('CONSENT_BLOCK: unknown value') >= 0; }), LOGGED.slice(logs0));
+  delete ENV.CONSENT_BLOCK;
+  ENV.CONSENT_PRETICK = 'on';
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('the ONE setting CONSENT_PRETICK "on" (only after the lawyer): ticked true, the pre-ticked version vpc-4-22nov', jk.body.consent.ticked === true && jk.body.consent.version === 'vpc-4-22nov', JSON.stringify(jk.body.consent));
+  delete ENV.CONSENT_PRETICK;
+  ENV.CONSENT_BLOCK = 'single';
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('the way back without a release: CONSENT_BLOCK "single" gives the one tick, as before', jk.body.consent && jk.body.consent.mode === 'single', JSON.stringify(jk.body.consent));
+  delete ENV.CONSENT_BLOCK;
   close(s1);
   STAFF = { id: '5a5a5a5a-0000-4000-8000-000000000011', role: 'host' };
   var sh = await open();
@@ -324,7 +348,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var rows = DB.vp_player_consents;
   var by = function (pt) { return rows.filter(function (r) { return r.party === pt; })[0]; };
   show('three rows, one per box, each with its own answer', rows.length === 3 && by('venueplay').granted === true && by('venue').granted === false && by('host').granted === true, JSON.stringify(rows));
-  show('...each with the wording version, the source game and the session', rows.every(function (r) { return r.wording_version === 'vpc-4-22nov' && r.source === 'trivia' && r.session_id === sh.id && r.venue_id === VENUE; }), JSON.stringify(rows));
+  show('...each with the UNTICKED wording version, the source game and the session', rows.every(function (r) { return r.wording_version === 'vpc-5-22nov' && r.source === 'trivia' && r.session_id === sh.id && r.venue_id === VENUE; }), JSON.stringify(rows));
   show('...the host box names the host login and the brand shown; the others carry no host', by('host').host_auth_user_id === 'u-host' && by('host').party_name === 'Quiz Masters Co' && by('venue').host_auth_user_id === null && by('venueplay').host_auth_user_id === null);
   show('...tied to the known row', rows.every(function (r) { return r.known_id === DB.vp_known_players[0].id; }));
   show('the venue box unticked: the venue\'s own marketing tick is NOT on the player row', lastPlayer().marketing_optin !== true, JSON.stringify(lastPlayer()));
@@ -340,7 +364,7 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   var sh2 = await open(VENUE, 'musical_bingo');
   jk = await call(handleJoinKnown, { code: sh2.join_code, keys: [KEY] });
   cps = jk.body.consent.parties;
-  show('a NEW host at the same venue: its box is fresh (no answer yet, so pre-ticked), the others keep their answers', cps.length === 3 && cps[2].party === 'host' && cps[2].name === 'Bingo Belles' && !('current' in cps[2]) && cps[0].current === true && cps[1].current === false, JSON.stringify(jk.body.consent));
+  show('a NEW host at the same venue: its box is fresh (no answer yet, so unticked), the others keep their answers', cps.length === 3 && cps[2].party === 'host' && cps[2].name === 'Bingo Belles' && !('current' in cps[2]) && cps[0].current === true && cps[1].current === false, JSON.stringify(jk.body.consent));
   var nOther = await open(OTHER);
   jk = await call(handleJoinKnown, { code: nOther.join_code, keys: [KEY] });
   cps = jk.body.consent.parties;
@@ -360,15 +384,25 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   s1 = await open();
   rows.length = 0;
   j = await call(handleJoin, { code: s1.join_code, name: 'Bo', pid: pid(), first_name: 'Bo', mobile: '0412555666', consent: { venueplay: false, venue: true, host: true } });
-  show('the venue box ticked: the venue\'s marketing tick is on the player row, as the single tick always was', lastPlayer().marketing_optin === true && !!lastPlayer().marketing_optin_at && lastPlayer().consent_version === 'vpc-4-22nov', JSON.stringify(lastPlayer()));
+  show('the venue box ticked: the venue\'s marketing tick is on the player row, as the single tick always was', lastPlayer().marketing_optin === true && !!lastPlayer().marketing_optin_at && lastPlayer().consent_version === 'vpc-5-22nov', JSON.stringify(lastPlayer()));
   show('no host on this game: a host answer sent anyway is not kept', DB.vp_player_consents.length === 2 && !DB.vp_player_consents.some(function (r) { return r.party === 'host'; }), JSON.stringify(DB.vp_player_consents));
   DB.vp_venue_settings[0].collect_marketing_optin = false;
   j = await call(handleJoin, { code: s1.join_code, name: 'Cy', pid: pid(), first_name: 'Cy', mobile: '0412777888', consent: { venueplay: true, venue: true } });
   show('a venue not approved to collect the tick: its box is kept as a consent row, never as the venue\'s marketing tick', lastPlayer().marketing_optin !== true && DB.vp_player_consents.some(function (r) { return r.party === 'venue' && r.granted === true && r.player_id === lastPlayer().id; }), JSON.stringify(lastPlayer()));
-  delete ENV.CONSENT_BLOCK;
+  DB.vp_venue_settings[0].collect_marketing_optin = true;
+  ENV.CONSENT_PRETICK = 'on';
+  rows.length = 0;
+  await call(handleJoin, { code: s1.join_code, name: 'Pe', pid: pid(), first_name: 'Pe', mobile: '0412000555', consent: { venueplay: true, venue: true } });
+  show('with CONSENT_PRETICK "on" each row carries the PRE-TICKED version vpc-4-22nov (the record says what was shown)', rows.length === 2 && rows.every(function (r) { return r.wording_version === 'vpc-4-22nov'; }) && lastPlayer().consent_version === 'vpc-4-22nov', JSON.stringify(rows));
+  delete ENV.CONSENT_PRETICK;
+  rows.length = 0;
+  await call(handleJoin, { code: s1.join_code, name: 'Ul', pid: pid(), first_name: 'Ul', mobile: '0412000444', consent: { venueplay: false, venue: false } });
+  show('a new player who leaves every box unticked: one granted:false row per sender shown, the venue tick NOT on the player row', rows.length === 2 && rows.every(function (r) { return r.granted === false && r.wording_version === 'vpc-5-22nov'; }) && lastPlayer().marketing_optin !== true, JSON.stringify(rows));
+  ENV.CONSENT_BLOCK = 'single';
   var n0 = DB.vp_player_consents.length;
   await call(handleJoin, { code: s1.join_code, name: 'Di', pid: pid(), first_name: 'Di', mobile: '0412000999', consent: { venueplay: true, venue: true } });
-  show('switch off: a consent object sent by a page is ignored, nothing written', DB.vp_player_consents.length === n0);
+  show('switched back (CONSENT_BLOCK single): a consent object sent by a page is ignored, nothing written', DB.vp_player_consents.length === n0);
+  delete ENV.CONSENT_BLOCK;
 
   print('8. THE DEMO KEEPS ITS OWN SCREEN');
   world();
@@ -397,13 +431,11 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   cr = await cap({ code: VC, first_name: 'Bo', known_keys: [BK] }, 'tokB');
   cc = DB.vp_captures[DB.vp_captures.length - 1];
   show('next time the key alone fills the mobile, server side; no new row, no new key', cc.mobile === '+61412333444' && DB.vp_known_players.length === 1 && !cr.body.known_key, JSON.stringify(cr.body));
-  ENV.CONSENT_BLOCK = 'three';
   await cap({ code: VC, first_name: 'Bo', known_keys: [BK], consent: { venueplay: true, venue: true } }, 'tokB');
   await cap({ code: VC, first_name: 'Bo', known_keys: [BK], consent: { venueplay: true, venue: true } }, 'tokB');
   var bc = DB.vp_player_consents;
   show('three mode: one row per box, source bingo, the session from the token; sent twice the same night, kept once', bc.length === 2 && bc.every(function (r) { return r.source === 'bingo' && r.session_id === sb.id && r.known_id === DB.vp_known_players[0].id; }), JSON.stringify(bc));
-  delete ENV.CONSENT_BLOCK;
-
+  
   print('10. NOBODY ELSE READS IT: no host route, no venue page (Dean 16 Nov 2026: hosts see counts only, from their own nights)');
   /* every place the shipped Worker names the two tables, by the function it sits in */
   function where(table) {

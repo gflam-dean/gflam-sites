@@ -242,10 +242,10 @@
         forget(known.ix);
         if (nameIn) { nameIn.value = ""; }
         var o2 = {}; for (var k in _last) o2[k] = _last[k];
-        /* the normal empty form: every box, every consent box fresh (pre-ticked), as a new player sees it; the notice
-           too when the Worker sent one */
+        /* the normal empty form: every box, every consent box fresh (unticked unless the Worker says ticked), as a new
+           player sees it; the notice too when the Worker sent one */
         o2.info = info ? { known: null, consent: info.consent, organiser: info.organiser, notice: info.notice } : null;
-        if (o2.info && info.consent && info.consent.mode === "three") o2.info.consent = { mode: "three", version: info.consent.version,
+        if (o2.info && info.consent && info.consent.mode === "three") o2.info.consent = { mode: "three", version: info.consent.version, ticked: info.consent.ticked === true,
           parties: (info.consent.parties || []).map(function (p) { return { party: p.party, name: p.name }; }) };
         paint(o2);
         try { if (nameIn && !team) nameIn.focus(); } catch (e) {}

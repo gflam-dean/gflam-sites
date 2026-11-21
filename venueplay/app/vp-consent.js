@@ -80,19 +80,23 @@
   }
 
   /* ONE BOX PER SENDER, LIKE MOSHTIX (Dean, 14 Nov 2026, INBOX 416 UPDATES 4 and 7; Sunday 22 Nov). Drawn only when the
-     game Worker says so (POST /join/known answers consent.mode "three", which it does only with env.CONSENT_BLOCK set,
-     after Dean's lawyer has said yes to boxes that start ticked). Then, in place of the one tick:
+     game Worker says so (POST /join/known answers consent.mode "three": ON from 21 Nov 2026, Dean). Then, in place of
+     the one tick:
 
        Yes! Send me news and offers by SMS and email from:
-       [x] venueplay   [x] {venue}   [x] {host brand, only when a host who is not the account owner runs the game}
+       [ ] venueplay   [ ] {venue}   [ ] {host brand, only when a host who is not the account owner runs the game}
        Each one uses your details under its own privacy policy. Unsubscribe any time.
 
-     PRE-TICKED, as the Moshtix checkout is (checked live 14 Nov). The parties and their names come from the Worker,
-     never from the page. answers() hands back { venueplay:bool, venue:bool, host:bool } for the boxes drawn; the Worker
-     keeps each as its own row (wording version THREE_VERSION) and the venue's box as the venue's own tick. A box the
-     sender this player already answered shows its CURRENT answer (the Worker's current:false is unticked); a sender it
-     never answered (a new venue, a new host) is a fresh box, pre-ticked (Dean 16 Nov 2026). */
-  var THREE_VERSION = "vpc-4-22nov";
+     UNTICKED until the player ticks a box (ACMA: a pre-ticked box is generally not express consent under the Spam Act;
+     open question 26, pre-ticking waits for Dean's lawyer). Pre-ticking is ONE server setting, never the page: a box
+     starts ticked only when the Worker sends consent.ticked === true (its CONSENT_PRETICK 'on'), with its own wording
+     version. The parties and their names come from the Worker, never from the page. answers() hands back
+     { venueplay:bool, venue:bool, host:bool } for the boxes drawn; the Worker keeps each as its own row and the venue's
+     box as the venue's own tick. A box for a sender this player already answered shows its CURRENT answer (current:true
+     ticked, current:false unticked); a sender it never answered (a new venue, a new host) is a fresh box, unticked
+     unless consent.ticked (Dean 16 Nov 2026). */
+  var THREE_VERSION = "vpc-5-22nov";          // unticked (this build)
+  var THREE_PRETICK_VERSION = "vpc-4-22nov";  // the same words, a new sender pre-ticked: only when the Worker says ticked
   var THREE_HEAD = "Yes! Send me news and offers by SMS and email from:";
   var THREE_NOTE = "Each one uses your details under its own privacy policy. Unsubscribe any time.";
   var _three = null;   // [{ party, el }] while the block is on the page
@@ -117,7 +121,7 @@
       var l = tick("xC_" + party, nm);
       l.setAttribute("style", "margin-top:8px;align-items:center");
       var inp = l.querySelector("input");
-      inp.checked = pt.current !== false; inp.setAttribute("data-party", party);   // a sender already answered: its current answer; a new sender: pre-ticked
+      inp.checked = pt.current === true || (pt.current !== false && consent.ticked === true); inp.setAttribute("data-party", party);   // a sender already answered: its current answer; a new sender: unticked unless the Worker's one setting says ticked
       row.appendChild(l);
       _three.push({ party: party, el: inp });
     }
@@ -157,7 +161,7 @@
   function age18Done() {}
 
   root.VPConsent = { render: render, optedIn: optedIn, tickOn: tickOn, offered: offered, optinText: optinText, answers: answers, renderThree: renderThree,
-                     THREE_VERSION: THREE_VERSION, THREE_HEAD: THREE_HEAD, THREE_NOTE: THREE_NOTE,
+                     THREE_VERSION: THREE_VERSION, THREE_PRETICK_VERSION: THREE_PRETICK_VERSION, THREE_HEAD: THREE_HEAD, THREE_NOTE: THREE_NOTE,
                      VERSION: VERSION, PREVIOUS: PREVIOUS, OPTIN_HEAD: OPTIN_HEAD, OPTIN_TAIL: OPTIN_TAIL, NO_NAME: NO_NAME,
                      ageOk: ageOk, age18Done: age18Done, AGE_NEEDED: "" };
 })(typeof window !== "undefined" ? window : this);
