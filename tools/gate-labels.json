@@ -648,6 +648,8 @@
   "winner-pin-in-chrome.test.py",
   "winner-pin.test.js",
   "wizard-r10-in-chrome.test.py",
-  "wizard-v2-in-chrome.test.py"
+  "wizard-v2-in-chrome.test.py",
+  "signup-player-limits-in-chrome.test.py",
+  "trivia-theme-map.test.py"
  ]
 }
