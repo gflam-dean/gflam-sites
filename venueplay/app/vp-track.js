@@ -39,7 +39,7 @@
     "field_first_name", "field_contact", "field_venue", "contact_kind", "venue_search", "venue_search_none", "venue_picked",
     "venue_not_found", "addvenue_shown", "addvenue_typed", "form_abandon", "highlight_result",
     "enquiry_sent", "first_game"];
-  var CODE_PATH = /^\/(?:offer-[a-z]+|nsw|home|quick|gflam|coaster)\/([A-Za-z0-9]{5,7})\/?$/;
+  var CODE_PATH = /^\/(?:offer-[a-z]+(?:-countdown)?|nsw|home|quick|gflam|coaster)\/([A-Za-z0-9]{5,7})\/?$/;
   var COOKIE = "vp_lc", SID_KEY = "vpjSid", REF_KEY = "vpjRef", HIT_KEY = "vpjHit", HUMAN_KEY = "vpjHuman", LOOK_KEY = "vpjLook";
   var queue = [], timer = null, mem = {}, lastField = null, fieldSince = 0, formDone = false, watched = {};
 

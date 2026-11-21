@@ -48,6 +48,7 @@
 /offer-nov  /nsw  200
 /offer-dec  /nsw  200
 /offer-jan  /nsw  200
+/offer-dec-countdown  /nsw  200   # the December countdown emails (Dean, 22 Nov 2026); its last day is DEC_COUNTDOWN_ENDS in /app/vp-offer.js
 /offer-feb  /nsw  200
 /offer-mar  /nsw  200
 /offer      /     302
@@ -57,6 +58,7 @@
 /offer-nov/:code  /nsw  200
 /offer-dec/:code  /nsw  200
 /offer-jan/:code  /nsw  200
+/offer-dec-countdown/:code  /nsw  200
 /offer-feb/:code  /nsw  200
 /offer-mar/:code  /nsw  200
 /nsw/:code        /nsw  200

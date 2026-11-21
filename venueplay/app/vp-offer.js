@@ -20,13 +20,27 @@
    only the standard rate (nsw.html, tools/offer-ended-in-chrome.test.py). The gate's "no founding
    page has outlived its own deadline" stays red for a row whose month has ended and is NOT marked. */
 (function (root) {
+  /* THE DECEMBER COUNTDOWN'S LAST DAY, IN ONE PLACE (Dean, 22 Nov 2026: "let's just do a new offer page,
+     offer-dec-countdown"; "finish on December 10 and use that as the December offer"). /offer-dec-countdown is
+     for the countdown emails to the venues that got the November offer. Change this ONE line (YYYY-MM-DD)
+     and its date, its day and the moment the page says the offer ended all follow. Its code is
+     OFFER-DEC-2026, which the Worker itself ends on 31 December; the page stops quoting $2.50 after this day. */
+  var DEC_COUNTDOWN_ENDS = '2026-12-10';
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function dayWords(iso) {
+    var m = /^(20\d\d)-(\d\d)-(\d\d)$/.exec(iso);
+    return { day: Number(m[3]) + ' ' + MONTH_NAMES[Number(m[2]) - 1], year: m[1] };
+  }
+  var CD = dayWords(DEC_COUNTDOWN_ENDS);
   var OFFERS = {
     oct: { code: 'OFFER-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October',  ended: true },
     nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' },
     dec: { code: 'OFFER-DEC-2026',  date: '31 December 2026', day: '31 December', month: 'December' },
     jan: { code: 'OFFER-JAN-2027',  date: '31 January 2027',  day: '31 January',  month: 'January'  },
     feb: { code: 'OFFER-FEB-2027',  date: '28 February 2027', day: '28 February', month: 'February' },
-    mar: { code: 'OFFER-MAR-2027',  date: '31 March 2027',    day: '31 March',    month: 'March'    }
+    mar: { code: 'OFFER-MAR-2027',  date: '31 March 2027',    day: '31 March',    month: 'March'    },
+    /* /offer-dec-countdown: a row of its own, ending on DEC_COUNTDOWN_ENDS (endsOn), not at the end of its code's month. */
+    'dec-countdown': { code: 'OFFER-DEC-2026', date: CD.day + ' ' + CD.year, day: CD.day, month: 'December', endsOn: DEC_COUNTDOWN_ENDS }
   };
   /* THE ROW THE WORDS IN nsw.html ARE WRITTEN FOR (the campaign being sent now). Every
      /offer-<mon> address is that one file, so the dates typed into its HTML are what a reader
@@ -40,6 +54,11 @@
      November. OFFER-DEC-2026 stays a code in FOUNDING_CODES and simply ends on 31 December with no page
      of its own. The Worker is untouched: each code still ends with its own month. */
   var SERVES = { dec: 'jan' };
+  /* /offer-nov NOW SERVES THE DECEMBER COUNTDOWN (Dean, 22 Nov 2026: no separate page, the countdown emails go to the
+     November address, and ONLY that address: /gflam and /coaster keep showing today's own month). It shows the 'dec-countdown' row: OFFER-DEC-2026 and the day in DEC_COUNTDOWN_ENDS at the top,
+     and says the offer ended the morning after that day, Brisbane. OFFER-NOV-2026 stays as a row and as a code: it is history, and the
+     Worker ends it on 30 November by itself. /offer-dec-countdown is kept as an alias of the same row. */
+  var ADDRESS_SERVES = { nov: 'dec-countdown' };
 
   /* THE ROW FOR TODAY (Dean, 4 Nov 2026). The row whose code belongs to this calendar month in
      Brisbane (UTC+10 all year, no daylight saving): the code the billing Worker honours today
@@ -78,10 +97,12 @@
       if (today && SERVES[today]) today = SERVES[today];
       return { key: today || 'oct', row: OFFERS[today || 'oct'] };
     }
-    var m = /^\/offer-([a-z]{3})\b/i.exec(pathname || '');
+    var p = pathname || '';
+    var m = /^\/offer-dec-countdown(?![a-z0-9-])/i.exec(p) ? [0, 'dec-countdown'] : /^\/offer-([a-z]{3})\b/i.exec(p);
     var key = (m && OFFERS[m[1].toLowerCase()]) ? m[1].toLowerCase() : 'oct';
     if (SERVES[key]) key = SERVES[key];
+    if (ADDRESS_SERVES[key]) key = ADDRESS_SERVES[key];
     return { key: key, row: OFFERS[key] };
   }
-  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, SERVES: SERVES, isGflam: isGflam, isCoaster: isCoaster };
+  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, DEC_COUNTDOWN_ENDS: DEC_COUNTDOWN_ENDS, SERVES: SERVES, isGflam: isGflam, isCoaster: isCoaster };
 })(typeof window !== 'undefined' ? window : this);

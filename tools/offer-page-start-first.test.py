@@ -355,5 +355,49 @@ ok('note 24: no answer spells out what differs in South Australia and the Northe
 ok('no AI look: no green status dot and no pulsing animation on the page',
    not re.search(r'@keyframes|animation:[^;]*infinite|#35d07f|#22c55e|#2ecc71|#16a34a|rgba\(53,\s*208,\s*127', CSS_ALL, re.I) and 'live-dot' not in NSW)
 
+print('10. ONE DATE PER OFFER PAGE (22 Nov 2026): /offer-nov, /offer-dec, /offer-jan and /offer-dec-countdown each say one date everywhere')
+# vp-offer.js is RUN under jsc for each address; the page's own put() then fills every vpc-date / vpc-day span.
+OJS = rd('venueplay/app/vp-offer.js')
+OPATHS = ['/offer-nov', '/offer-dec', '/offer-jan', '/offer-dec-countdown']
+t = tempfile.NamedTemporaryFile('w', suffix='.js', delete=False)
+t.write('var window = this;\n' + OJS + '\nvar out = {};\n' + ''.join(
+    "out[%s] = VPOffer.forPath(%s); " % (json.dumps(x), json.dumps(x)) for x in OPATHS) +
+    "\nout.ends = VPOffer.DEC_COUNTDOWN_ENDS; print(JSON.stringify(out));\n")
+t.close()
+r = subprocess.run([JSC, t.name], capture_output=True, text=True, cwd=ROOT, timeout=60)
+os.unlink(t.name)
+try:
+    PICK = json.loads(r.stdout.strip().splitlines()[-1])
+except Exception:
+    PICK = {}
+SPANS = re.findall(r'<span class="vpc-(date|day|month)"[^>]*>', re.sub(r'<script.*?</script>|<!--.*?-->', '', NSW, flags=re.S))
+FAQ_NOLOCK = re.search(r'<summary>What does locked for life actually mean\?.*?</details>', NSW, re.S).group(0)
+for x in OPATHS:
+    row = (PICK.get(x) or {}).get('row') or {}
+    shown = {row.get('date'), row.get('day')}
+    day = (row.get('day') or '').split(' ')
+    ok('%s: the row gives one day and its date is that day plus the year' % x,
+       len(day) == 2 and (row.get('date') or '').startswith(row.get('day') or '#') and re.match(r'^\d{1,2} [A-Z][a-z]+ 20\d\d$', row.get('date') or ''), row)
+ok('/offer-nov (the countdown emails) says 10 December and posts OFFER-DEC-2026, /offer-jan says 31 January, and /offer-dec, already in inboxes, serves the January row (31 January)',
+   (PICK['/offer-nov']['row']['day'], PICK['/offer-nov']['row']['code'], PICK['/offer-jan']['row']['day'], PICK['/offer-dec']['row']['day']) == ('10 December', 'OFFER-DEC-2026', '31 January', '31 January'),
+   [PICK.get(k, {}).get('row', {}).get('day') for k in OPATHS])
+ok('/offer-dec-countdown has a row of its own that says 10 December 2026 (the one constant DEC_COUNTDOWN_ENDS), code OFFER-DEC-2026, and /offer-nov serves that same row',
+   PICK['/offer-dec-countdown']['key'] == 'dec-countdown' and PICK['/offer-dec-countdown']['row']['date'] == '10 December 2026'
+   and PICK['/offer-dec-countdown']['row']['day'] == '10 December' and PICK['/offer-dec-countdown']['row']['code'] == 'OFFER-DEC-2026'
+   and PICK['ends'] == '2026-12-10' and PICK['/offer-dec']['row']['code'] == 'OFFER-JAN-2027' and PICK['/offer-nov']['row'] == PICK['/offer-dec-countdown']['row'], PICK.get('/offer-dec-countdown'))
+ok('the countdown date is typed once in vp-offer.js (one DEC_COUNTDOWN_ENDS line) and no other file types a 10 December offer date',
+   len(re.findall(r"var DEC_COUNTDOWN_ENDS = '2026-12-10';", OJS)) == 1 and '10 December' not in OJS.split('var OFFERS')[1] and '10 December' not in NSW.split('<body')[1].replace('vpc-', ''))
+ok('every date in nsw.html\'s body is a vpc- span the row fills (the hero line, the pricing line, the "locked for life" answer), never a typed date outside one',
+   not re.search(r'\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|November|December)', re.sub(r'<span class="vpc-(?:date|day)"[^>]*>[^<]*</span>', '', re.sub(r'<script.*?</script>|<!--.*?-->|<style.*?</style>', '', BODY, flags=re.S), flags=re.S)))
+ok('the hero, the pricing line and the "locked for life" answer each carry a date span, so one row fills all three',
+   len(SPANS) >= 4 and 'vpc-date' in FAQ_NOLOCK and 'vpc-day' in offer.replace(sub, '') + NSW[NSW.index('class="hero-offer"'):NSW.index('class="hero-offer"') + 160], SPANS)
+ok('/offer-dec-countdown is served from /nsw as a rewrite, with its tracked-link form, and the tracker reads a code after it',
+   re.search(r'^/offer-dec-countdown\s+/nsw\s+200\b', red, re.M) is not None and re.search(r'^/offer-dec-countdown/:code\s+/nsw\s+200\s*$', red, re.M) is not None
+   and '(?:-countdown)?' in rd('venueplay/app/vp-track.js'))
+ok('the page has no countdown component of its own ("days left" is not on any offer page), and the page stays noindex',
+   not re.search(r'days? left|countdown\(', BODY, re.I) and '<meta name="robots" content="noindex,nofollow">' in NSW)
+ok('a row with its own last day (endsOn) ends the morning after it, Brisbane, in nsw.html', "o.endsOn" in NSW and 'Number(e[3]) + 1) - 10 * 3600 * 1000' in NSW)
+
+
 print('\n%d of %d checks passed' % (passed, passed + failed))
 sys.exit(1 if failed else 0)

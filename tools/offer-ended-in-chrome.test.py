@@ -216,7 +216,7 @@ try:
             stripe_before = len(stripe)
         S.close_tab(tid)
 
-    print('\n/offer-nov, THE WORKER SAYS THE NOVEMBER CODE IS OPEN')
+    print('\n/offer-nov, THE WORKER SAYS THE DECEMBER CODE IS OPEN (22 Nov 2026: /offer-nov serves the 10 December countdown row)')
     # 10 Nov 2026: WRITTEN_FOR is now 'dec', so INSIDE_MS is a day in December. This section is about the
     # November page while November is still open, so it pins its own clock inside November (25 Nov, Brisbane).
     NOV_INSIDE_MS = int((datetime.datetime(2026, 11, 25, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10)).timestamp() * 1000)
@@ -225,19 +225,31 @@ try:
     S.close_tab(tid)
     tid, sid = load(S, '/offer-nov', 'open', 390, 844, True, clock_ms=NOV_INSIDE_MS)
     v = see(S, sid)
-    ok('/offer-nov asked about OFFER-NOV-2026 and shows no ended banner',
-       any('OFFER-NOV-2026' in a for a in v.get('asked', [])) and v.get('ended') is None and 'This offer ended' not in v.get('all', ''), v.get('asked'))
-    ok('/offer-nov reads exactly as when the Worker never answers (the November offer, unchanged)',
+    ok('/offer-nov asked about OFFER-DEC-2026 and shows no ended banner',
+       any('OFFER-DEC-2026' in a for a in v.get('asked', [])) and v.get('ended') is None and 'This offer ended' not in v.get('all', ''), v.get('asked'))
+    ok('/offer-nov reads exactly as when the Worker never answers (the 10 December offer)',
        v.get('all') and v.get('all') == base.get('all') and v.get('rows') == base.get('rows'), '')
-    ok('/offer-nov still offers $2.50 to 30 November: the badge, $75 for 30 players, the card and the plan buttons',
-       (v.get('eyebrow') or '').lower().rstrip('.').endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
+    ok('/offer-nov still offers $2.50 to 10 December: the badge, $75 for 30 players, the card and the plan buttons',
+       (v.get('eyebrow') or '').lower().rstrip('.').endswith('10 december') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
        and v.get('rows') == ['Per player, per month=$2.50']
        and v.get('plans') == ['$2.50 / player', '$2.30 / player'] and v.get('submit') == 'Hold my spot, add card'
        and 'Keep $2.50 by adding your card before your free month ends' in v.get('all', '') and "won't come back" not in v.get('all', '').replace('\u2019', "'")
        and 'where your state allows' in v.get('all', ''), (v.get('eyebrow'), v.get('heroPrice'), v.get('rows'), v.get('plans')))
     shot(S, sid, 'offer-ended-1nov-offer-nov-phone-top')
     ck = signup(S, sid)
-    ok('a November signup still sends OFFER-NOV-2026', bool(ck) and ck['sent'].get('founding_code') == 'OFFER-NOV-2026', ck and ck['sent'].get('founding_code'))
+    ok('a /offer-nov signup now sends OFFER-DEC-2026', bool(ck) and ck['sent'].get('founding_code') == 'OFFER-DEC-2026', ck and ck['sent'].get('founding_code'))
+    S.close_tab(tid)
+
+    print('\n/offer-dec-countdown (22 Nov 2026), 5 DECEMBER, THE WORKER SAYS THE DECEMBER CODE IS OPEN')
+    CD_MS = int((datetime.datetime(2026, 12, 5, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10)).timestamp() * 1000)
+    tid, sid = load(S, '/offer-dec-countdown', 'open', 375, 667, True, clock_ms=CD_MS)
+    v = see(S, sid)
+    ok('/offer-dec-countdown shows $2.50 and 10 December everywhere, and no other offer date',
+       (v.get('eyebrow') or '').lower().rstrip('.').endswith('10 december') and v.get('rows') == ['Per player, per month=$2.50']
+       and v.get('all', '').count('10 December 2026') >= 2 and not re.search(r'31 (?:January|December)|30 November', v.get('all', '')), (v.get('eyebrow'), v.get('rows')))
+    shot(S, sid, 'offer-dec-countdown-phone-top')
+    ck = signup(S, sid)
+    ok('a countdown signup sends OFFER-DEC-2026', bool(ck) and ck['sent'].get('founding_code') == 'OFFER-DEC-2026', ck and ck['sent'].get('founding_code'))
     S.close_tab(tid)
 
     print('\n%s INSIDE ITS MONTH, THE WORKER CANNOT BE REACHED: AN OPEN ROW IS LEFT AS IT IS' % WPATH)
@@ -293,18 +305,24 @@ try:
     # ends on 31 December with no page of its own. Month edges are tested on both sides (31 Dec -> 1 Jan, 31 Jan -> 1 Feb).
     ok('venueplay/_redirects serves /offer-dec and /offer-jan from /nsw', bool(re.search(r'^/offer-dec\s+/nsw\s+200\s*$', REDIRECTS, re.M)) and bool(re.search(r'^/offer-jan\s+/nsw\s+200\s*$', REDIRECTS, re.M)))
     for path, when, ms, want_ended in (('/offer-nov', '9 Nov', bris(2026, 11, 9), False), ('/offer-nov', '11 Nov, after the rollover', bris(2026, 11, 11), False),
-                                       ('/offer-nov', '1 Dec', bris(2026, 12, 1), True),
+                                       ('/offer-nov', '1 Dec', bris(2026, 12, 1), False), ('/offer-nov', '10 Dec 23:30', bris(2026, 12, 10, 23), False),
+                                       ('/offer-nov', '11 Dec 00:30', bris(2026, 12, 11, 0), True),
                                        ('/offer-dec', '11 Nov', bris(2026, 11, 11), False), ('/offer-dec', '5 Dec', bris(2026, 12, 5), False),
                                        ('/offer-dec', '31 Dec 23:30', bris(2026, 12, 31, 23), False), ('/offer-dec', '1 Jan 2027 00:30', bris(2027, 1, 1, 0), False),
                                        ('/offer-dec', '31 Jan 23:30', bris(2027, 1, 31, 23), False), ('/offer-dec', '1 Feb 00:30', bris(2027, 2, 1, 0), True),
                                        ('/offer-jan', '31 Dec 23:30', bris(2026, 12, 31, 23), False), ('/offer-jan', '1 Jan 2027 00:30', bris(2027, 1, 1, 0), False),
-                                       ('/offer-jan', '31 Jan 23:30', bris(2027, 1, 31, 23), False), ('/offer-jan', '1 Feb 00:30', bris(2027, 2, 1, 0), True)):
+                                       ('/offer-jan', '31 Jan 23:30', bris(2027, 1, 31, 23), False), ('/offer-jan', '1 Feb 00:30', bris(2027, 2, 1, 0), True),
+                                       # 22 Nov 2026: /offer-dec-countdown, the countdown emails. Its own last day (DEC_COUNTDOWN_ENDS, 10 December), not its code's month end.
+                                       ('/offer-dec-countdown', '5 Dec', bris(2026, 12, 5), False),
+                                       ('/offer-dec-countdown', '10 Dec 23:30', bris(2026, 12, 10, 23), False),
+                                       ('/offer-dec-countdown', '11 Dec 00:30', bris(2026, 12, 11, 0), True)):
         tid, sid = load(S, path, 'open', 375, 812, True, clock_ms=ms, ends=want_ended)
         v = see(S, sid)
         t = v.get('all', '')
         is_ended = 'This offer ended' in t
         is_live = bool(LIVE.search(t))
         jan_page = path in ('/offer-dec', '/offer-jan')
+        cd_page = path in ('/offer-dec-countdown', '/offer-nov')
         # a live dec/jan page: asks about OFFER-JAN-2027 (never OFFER-DEC-2026) and says 31 January; an ended one says it ended on 31 January
         right_page = True
         if jan_page and not want_ended:
@@ -312,6 +330,12 @@ try:
                           and (v.get('eyebrow') or '').lower().rstrip('.').endswith('31 january') and 'December' not in t)
         elif jan_page:
             right_page = v.get('banner', '').startswith('This offer ended on 31 January.')
+        if cd_page:
+            # ONE date on the page: 10 December in the line, the FAQ, "locked for life" and the ended banner; no other offer date anywhere
+            others = re.findall(r'31 (?:January|December)|30 November', t)
+            right_page = (not others and (v.get('banner', '').startswith('This offer ended on 10 December.') if want_ended else
+                          (any('OFFER-DEC-2026' in a for a in v.get('asked', [])) and (v.get('eyebrow') or '').lower().rstrip('.').endswith('10 december')
+                           and t.count('10 December 2026') >= 2)))
         ok('%s on %s: %s, and the live and ended words are never visible together%s' % (path, when, 'ended' if want_ended else 'live', ' (the January page and code)' if jan_page else ''),
            is_ended == want_ended and is_live != want_ended and not (is_ended and is_live) and (v.get('eyebrow') is None) == want_ended and right_page,
            (is_ended, is_live, v.get('eyebrow'), v.get('asked'), v.get('banner'), re.findall(r'.{25}(?:This offer ended|\$2\.50).{25}', t)[:3]))
@@ -321,7 +345,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 62
+EXPECTED = 69
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -2100,6 +2100,9 @@ footer .powered .powered-by-text{font-family:'Manrope',system-ui,sans-serif}
      the Worker had a bad minute. Only a row that is NOT ended asks the Worker; open:false still ends it. */
   function endedNow(o) {
     if (o.ended === true) return true;
+    /* A row with its own last day (endsOn, YYYY-MM-DD: /offer-dec-countdown) ends at 00:00 Brisbane the day after it. */
+    var e = /^(20\d\d)-(\d\d)-(\d\d)$/.exec(String(o.endsOn || ''));
+    if (e) return Date.now() >= Date.UTC(Number(e[1]), Number(e[2]) - 1, Number(e[3]) + 1) - 10 * 3600 * 1000;
     var m = /-([A-Z]{3})-(20\d\d)$/.exec(String(o.code || '').toUpperCase());
     var MON = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
     if (!m || !(m[1] in MON)) return false;
