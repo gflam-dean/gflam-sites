@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '19 Nov 2026, 18:37 · 155207f5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 10:52 · 725b2ccd';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3205,20 +3205,28 @@ async function coasterRows(env) {
   return rows;
 }
 /* One search over the picks: venueplay venues first at the same closeness, then the rest by name.
-   Every match says whether it is ON venueplay; nothing else is ever dressed up as if it were. */
+   Every match says whether it is ON venueplay; nothing else is ever dressed up as if it were.
+   SUBURB (owner, 21 Nov 2026: "Coomera" showed three sports clubs and one hotel, while Harbourvue Tavern,
+   suburb Coomera, was missing): a name match first (0 to 2), then a match on the SUBURB (3 to 5, same
+   closeness rule), so a pub is found by where it is. Within the same closeness: venueplay venues, then pubs,
+   hotels, taverns, inns and arms, then RSLs, bowls, leagues and other clubs, then the rest, then by name. */
+const COASTER_KIND_PUB = /(?:^|[^a-z])(hotels?|pubs?|taverns?|inns?|arms)(?![a-z])/i;
+const COASTER_KIND_CLUB = /(?:^|[^a-z])(rsl|clubs?|bowls|leagues)(?![a-z])/i;
+function coasterKindRank(name) { const n = String(name || ''); return COASTER_KIND_PUB.test(n) ? 0 : COASTER_KIND_CLUB.test(n) ? 1 : 2; }
 function coasterSearch(rows, typed) {
   const q = venueSearchQuery(typed);
   if (q.flat.length < FIND_MIN_LETTERS) return { matches: [], why: 'Type at least three letters of the name.' };
   const hits = [], seen = new Set();
   for (const r of rows || []) {
-    const sc = venueSearchScore(q, r.name);
+    let sc = venueSearchScore(q, r.name);
+    if (sc < 0 && r.suburb) { const ss = venueSearchScore(q, r.suburb); if (ss >= 0) sc = 3 + ss; }
     if (sc < 0) continue;
     const twin = coasterNameKey(r.name) + '|' + (r.postcode || r.suburb || '').toLowerCase() + '|' + (r.state || '');
     if (seen.has(twin)) continue;           // the same pub on venueplay and on our list: once, as on venueplay
     seen.add(twin);
-    hits.push({ sc: sc, r: r });
+    hits.push({ sc: sc, kind: coasterKindRank(r.name), r: r });
   }
-  hits.sort((a, b) => (a.sc - b.sc) || ((b.r.on ? 1 : 0) - (a.r.on ? 1 : 0)) || String(a.r.name).localeCompare(String(b.r.name)) ||
+  hits.sort((a, b) => (a.sc - b.sc) || ((b.r.on ? 1 : 0) - (a.r.on ? 1 : 0)) || (a.kind - b.kind) || String(a.r.name).localeCompare(String(b.r.name)) ||
     String(a.r.suburb || a.r.postcode).localeCompare(String(b.r.suburb || b.r.postcode)));
   const out = { matches: hits.slice(0, COASTER_FIND_LIMIT).map((h) => {
     const m = { place: h.r.place, name: h.r.name, suburb: h.r.suburb, postcode: h.r.listed ? '' : h.r.postcode, state: h.r.state, exact: h.sc === 0, on: !!h.r.on };
@@ -3231,17 +3239,22 @@ function coasterSearch(rows, typed) {
 
 /* Our licensed venues list (migration 171), read for THIS search only: the typed text's longest word
    narrows the read, Dean's target words keep only pubs, taverns, hotels, RSLs and clubs. A missing or
-   empty list is just no rows: the search still has venueplay and coaster venues. */
+   empty list is just no rows: the search still has venueplay and coaster venues.
+   Two bounded reads, each at most COASTER_LISTED_READ rows: by NAME (as before), and by SUBURB (21 Nov),
+   the suburb read already narrowed to names with a target word in them, so a big suburb's cafes and
+   restaurants never use up the rows. A row in both is kept once. */
+const COASTER_LISTED_NAME_OR = 'or=(' + ['hotel', 'pub', 'tavern', 'rsl', 'club', 'bowls', 'leagues', 'inn', 'arms']
+  .map((w) => 'name.ilike.*' + w + '*').join(',') + ')';
 async function coasterListed(env, typed) {
   const words = venueSearchQuery(typed).words.filter((w) => /^[a-z0-9]+$/.test(w));
   const longest = words.slice().sort((a, b) => b.length - a.length)[0] || '';
   if (longest.length < FIND_MIN_LETTERS) return [];
-  let rows = [];
-  try {
-    rows = (await sbGet(env, 'vp_licensed_venues', 'name=ilike.' + enc('*' + longest + '*') +
-      '&select=id,name,suburb,postcode,au_state&order=name.asc,id.asc&limit=' + COASTER_LISTED_READ)) || [];
-  } catch (e) { rows = []; }
-  return rows.filter((l) => l && l.id && coasterListedName(l.name))
+  const sel = '&select=id,name,suburb,postcode,au_state&order=name.asc,id.asc&limit=' + COASTER_LISTED_READ;
+  const like = enc('*' + longest + '*');
+  const read = async (q) => { try { return (await sbGet(env, 'vp_licensed_venues', q + sel)) || []; } catch (e) { return []; } };
+  const both = await Promise.all([read('name=ilike.' + like), read('suburb=ilike.' + like + '&' + COASTER_LISTED_NAME_OR)]);
+  const seen = new Set();
+  return both[0].concat(both[1]).filter((l) => l && l.id && !seen.has(l.id) && seen.add(l.id) && coasterListedName(l.name))
     .map((l) => ({ place: 'l:' + l.id, name: l.name || '', suburb: l.suburb || '', postcode: l.postcode || '', state: l.au_state || '', on: false, listed: true }));
 }
 

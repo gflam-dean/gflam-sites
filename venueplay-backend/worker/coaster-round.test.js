@@ -71,6 +71,9 @@ function parseQ(q) {
 function arrStr(x) { return "{" + (x || []).join(",") + "}"; }
 function matches(r, f) {
   return f.every(function (x) {
+    if (x.c === "or") {   /* PostgREST or=(col.op.val,...): any one of them */
+      return x.v.replace(/^\(|\)$/g, "").split(",").some(function (t) { var i = t.indexOf("."); return matches(r, [{ c: t.slice(0, i), v: t.slice(i + 1) }]); });
+    }
     var v = r[x.c];
     if (x.v === "is.null") return v === null || v === undefined;
     if (x.v === "not.is.null") return !(v === null || v === undefined);
@@ -953,6 +956,42 @@ step(function () {
     return get(W.ask, "?place=" + encodeURIComponent("v:" + V_PERTH));
   }).then(function (r) {
     pass("a picked venueplay venue says it is one (the details go to it)", r.body.venue && r.body.venue.owner === true, r.body);
+  });
+});
+
+step(function () {
+  print("\nTHE SEARCH BY SUBURB, PUBS BEFORE CLUBS (owner 21 Nov 2026: 'Coomera' missed Harbourvue Tavern)");
+  fresh(); NOW = FRI_830PM;
+  DB.vp_licensed_venues = DB.vp_licensed_venues.concat([
+    { id: 140, name: "Coomera Sports Club", suburb: "Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 141, name: "Coomera Soccer Club", suburb: "Upper Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 142, name: "Coomera Lodge Hotel", suburb: "Oxenford", postcode: "4210", au_state: "QLD" },
+    { id: 143, name: "Harbourvue Tavern", suburb: "Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 144, name: "Westfield Coomera Cafe", suburb: "Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 145, name: "Dreamworld Kitchen", suburb: "Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 146, name: "Hope Island Bowls Club", suburb: "Hope Island", postcode: "4212", au_state: "QLD" }
+  ]);
+  calls = [];
+  return get(W.venues, "?q=coomera").then(function (r) {
+    var p = r.body.matches.map(function (m) { return m.place; });
+    pass("a pub whose SUBURB matches is found though its name does not ('coomera' finds Harbourvue Tavern, suburb Coomera)", p.indexOf("l:143") >= 0, r.body.matches);
+    pass("...after every name match", p.indexOf("l:143") === p.length - 1 && ["l:140", "l:141", "l:142"].every(function (x) { return p.indexOf(x) >= 0 && p.indexOf(x) < p.indexOf("l:143"); }), p);
+    pass("a hotel ranks above the clubs at the same closeness (Coomera Lodge Hotel first)", p[0] === "l:142", p);
+    pass("a cafe or kitchen in the suburb never shows", p.indexOf("l:144") < 0 && p.indexOf("l:145") < 0, p);
+    pass("the suburb read is ONE extra bounded read: suburb ilike the typed word, only names with a target word, ordered, at most 60 rows",
+      calls.filter(function (c) { return /^GET vp_licensed_venues\?suburb=ilike\.\*coomera\*&or=\(name\.ilike\.\*hotel\*,[^&]*\)&select=id,name,suburb,postcode,au_state&order=name\.asc,id\.asc&limit=60$/.test(c); }).length === 1 &&
+      calls.filter(function (c) { return /^GET vp_licensed_venues\?/.test(c); }).length === 2, calls);
+    pass("a name match is never marked as typed in full by its suburb ('exact' only for the whole NAME)", !r.body.matches.some(function (m) { return m.exact; }), r.body.matches);
+    return get(W.venues, "?q=upper coomera");
+  }).then(function (r) {
+    pass("both words of a two-word suburb match ('upper coomera' finds the club in Upper Coomera only)", r.body.matches.length === 1 && r.body.matches[0].place === "l:141", r.body.matches);
+    pass("a coaster venue is found by its suburb too", W.search([{ place: "c:x", name: "Paddys", suburb: "Coomera" }], "coomera").matches.length === 1);
+    var t = W.search([{ place: "l:1", name: "Zed Soccer Club", suburb: "A" }, { place: "l:2", name: "Zed RSL", suburb: "A" }, { place: "l:3", name: "Zed Tavern", suburb: "A" }, { place: "l:4", name: "Zed Lounge", suburb: "A" }], "zed").matches.map(function (m) { return m.place; });
+    pass("a tavern ranks above a soccer club and an RSL for the same query, and both above a name with neither ('zed')", t.join() === "l:3,l:2,l:1,l:4", t);
+    var o = W.search([{ place: "l:3", name: "Zed Tavern", suburb: "A" }, { place: "v:9", name: "Zed Soccer Club", on: true }], "zed").matches.map(function (m) { return m.place; });
+    pass("...but a venueplay venue still comes first at the same closeness", o.join() === "v:9,l:3", o);
+    pass("a name match beats a pub found by suburb", W.search([{ place: "l:5", name: "Ace Tavern", suburb: "Zed" }, { place: "l:6", name: "Zed Club", suburb: "B" }], "zed").matches.map(function (m) { return m.place; }).join() === "l:6,l:5");
+    pass("still three letters of the name first", /three letters/.test(W.search([{ place: "l:5", name: "Ace Tavern", suburb: "Zed" }], "ze").why || ""));
   });
 });
 
