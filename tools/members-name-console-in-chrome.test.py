@@ -4,10 +4,20 @@
 The real-night run of 16 Nov found the Pay step of the members draw console saying "Wilson,Mia won $200." (the name as the members list
 stores it) while the TV said MIA WILSON. tools/test-members-console.js runs the shipped renderDone() on its own; this plays it on the real
 page: the real members console and the real TV on the browser rig, a members list with one member stored "Wilson,Mia", a draw, the winner
-card, "They're here, pay", and the Pay step. At a phone (390x844, 375x667) it checks:
+card, "They're here, pay", and the Pay step.
 
-  1. the winner card on the console says Mia Wilson (it did already)
-  2. the Pay step (the outcome box after the claim) says "Mia Wilson won $200." and never "Wilson,Mia"
+SINCE FRIDAY 20 NOV (live, Jobs row 445, d15ca119f) the Worker reads a one-box "Wilson,Mia" as surname, first name, and names the
+winner in the venue's own format: "Mia W" by default (abbrev_last), "Mia Wilson" when the venue picked the full name
+(worker/one-trip-draws.test.js: "Lee,Daniel" is Daniel L, D Lee, Daniel Lee). The TV is sent that same name. So this suite checks
+the console agrees with the venue's setting, and keeps one scene where the stored "Wilson,Mia" still reaches the console: a pick
+drawn before that fix and picked back up within its 30 minutes (the Worker hands back the stored winner_name as it was written).
+That is the only path the console's own niceName() still guards, and prove-checks breaks it. The suite said "Mia Wilson" for a
+default venue until the Sunday 22 Nov gate (21 Nov), which was the pre-Friday Worker leaving "Wilson,Mia" whole.
+
+At a phone (390x844, 375x667), for each scene (default setting / full-name setting / a stored pick picked back up) it checks:
+
+  1. the winner card on the console says the expected name (Mia W / Mia Wilson / Mia Wilson)
+  2. the Pay step (the outcome box after the claim) says "<that name> won $200." and never "Wilson,Mia"
   3. nothing on the console's whole page prints "Wilson,Mia" or "Wilson, Mia" at that point
   VP_SHOTS=<dir> keeps the console at each step.
 
@@ -42,8 +52,18 @@ ACCEPT = ('(function(){var b=[].slice.call(document.querySelectorAll("button")).
 BODY = 'document.body.innerText.replace(/\\s+/g," ")'
 
 
-def run(w, h, tag):
-    print('\nconsole %dx%d' % (w, h))
+SCENES = {
+    # scene: (what the console should say, what the scene is)
+    'default': ('Mia W', "the venue's default name format (first name + last initial), as the TV is sent it"),
+    'full': ('Mia Wilson', 'a venue that picked the full name'),
+    'stored': ('Mia Wilson', 'a pick stored as "Wilson,Mia" before the Friday fix, picked back up'),
+}
+
+
+def run(w, h, tag, scene):
+    want, what = SCENES[scene]
+    tag = '%s-%s' % (tag, scene)
+    print('\nconsole %dx%d, %s' % (w, h, what))
     R = rig.Rig(host_pages=('/app/members/host.html',))
     R.srv.handle_error = lambda request, client_address: None
     W = R.W
@@ -64,6 +84,15 @@ def run(w, h, tag):
         did = (made.get('draw') or {}).get('id')
         imp = W.ask('POST', '/host/members/import', {'draw_id': did, 'members': [{'number': 107, 'name': 'Wilson,Mia'}]}, {})['body']
         ok('CONTROL: one member stored the way the members list stores it, "Wilson,Mia"', bool(did) and imp.get('added') == 1, (made, imp))
+        if scene == 'full':
+            W.seed('vp_venue_settings', [{'venue_id': W.info['venue'], 'name_display': 'full'}], replace=True)
+        if scene == 'stored':
+            mem = [m for m in table('vp_members') if str(m.get('member_number')) == '107']
+            W.seed('vp_member_draw_results', [{'id': '00000000-0000-4000-8000-00000000a107', 'draw_id': did, 'outcome': 'drawn',
+                                               'member_id': mem[0]['id'] if mem else None, 'member_number': 107, 'winner_name': 'Wilson,Mia',
+                                               'amount_cents': 20000,
+                                               'drawn_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() - 120))}])
+            ok('CONTROL: a pick from before the fix waits, stored as "Wilson,Mia"', bool(mem), table('vp_member_draw_results'))
         for t in ('vp_member_draws', 'vp_member_rosters', 'vp_members'): R.db[t] = table(t)
         t_tv, tv = R.open('/tv?venue=' + W.info['slug'], width=1280, height=720)
         t_h, host = R.open('/app/members/host.html', width=w, height=h)
@@ -76,12 +105,12 @@ def run(w, h, tag):
             R.ask(host, ACCEPT); time.sleep(1.2)
         ok('the winner card is up', R.until(host, 'document.getElementById("winnerCard").classList.contains("show")', 40) is True, R.ask(host, BODY))
         wc = R.ask(host, 'document.getElementById("wcName").textContent')
-        ok('1. the winner card says Mia Wilson', wc == 'Mia Wilson', wc)
+        ok('1. the winner card says %s' % want, wc == want, wc)
         shot(host, '1-winner')
         R.ask(host, 'document.getElementById("claimBtn").click(); true'); dialogs(host)
         ok('the Pay step is up', R.until(host, '/won \\$/.test(document.getElementById("doneHead").textContent)', 30) is True, R.ask(host, 'document.getElementById("doneHead").textContent'))
         head = R.ask(host, 'document.getElementById("doneHead").textContent')
-        ok('2. the Pay step says "Mia Wilson won $200."', head == 'Mia Wilson won $200.', head)
+        ok('2. the Pay step says "%s won $200."' % want, head == want + ' won $200.', head)
         body = R.ask(host, BODY) or ''
         ok('3. nowhere on the console page does "Wilson,Mia" or "Wilson, Mia" show', not re.search(r'Wilson,\s*Mia', body), body[:300])
         shot(host, '2-pay-step')
@@ -93,7 +122,8 @@ def run(w, h, tag):
 if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('members-name-console-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
-    run(390, 844, 'con390')
-    run(375, 667, 'con375')
+    for sc in ('default', 'full', 'stored'):
+        run(390, 844, 'con390', sc)
+        run(375, 667, 'con375', sc)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)

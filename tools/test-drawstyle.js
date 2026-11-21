@@ -332,6 +332,23 @@ print('\n== 6d. 11 Nov (INBOX 207): the look keeps to its own names, so a TV pag
   show('the stage sets its own alignment and box sizing (a TV page\'s text-align and * rule cannot change it)', /\.vpds-stage\{[^"]*text-align:left/.test(code) && /"\.vpds \*,\.vpds \*:before,\.vpds \*:after\{box-sizing:border-box/.test(code));
 })();
 
+print('\n== 7b. the draw keeps its own size (Sunday 22 Nov gate, after Jobs 516) ==');
+(function () {
+  var strip = (/"\.vpds-strip\{[^"]*"/.exec(MOD) || [''])[0];
+  show('the ticket roll fades out at its sides (clear for the first 2%), so it never stops dead at the 5% safe line (a frame on a TV that does not crop)',
+       /mask-image:linear-gradient\(90deg,transparent 2%,#000 14%,#000 86%,transparent 98%\)/.test(strip), strip);
+  show('...with the -webkit- spelling too, which the older TV engines (Chromium 68) read', /-webkit-mask-image:linear-gradient\(90deg,transparent 2%/.test(strip), strip);
+  var DC = readFile('venueplay/app/vp-drawcount.js'), bandTop = +((/\.vpdc-band\{[^"]*top:(\d+)px/.exec(DC) || [])[1]);
+  var guard = /if \(o\.noClock\) \{ var room = (\d+) - 10 - \(bottom \+ pFs \+ 71\);/.exec(MOD);
+  show('the flip board keeps its prize and claim lines above the countdown band, at the band\'s real top (vp-drawcount.js ' + bandTop + 'px)',
+       !!guard && +guard[1] === bandTop, guard ? guard[1] : 'no guard');
+  // the arithmetic, for the members board with the name flap (its bottom at 752 measured in Chrome, 21 Nov) and without (513)
+  function lay(bottom, pFs, noClock) { var pGap = 16, cGap = 12; if (noClock) { var room = bandTop - 10 - (bottom + pFs + 71); if (room < pGap + cGap) pGap = cGap = Math.max(4, Math.floor(room / 2)); } return [bottom + pGap, bottom + pGap + pFs + cGap + 71]; }
+  var withName = lay(752, 76, true), plain = lay(513, 76, true), off = lay(752, 76, false);
+  show('members board with the name flap and the band: the claim line ends at least 10px above the band, the prize under the board', withName[1] <= bandTop - 10 && withName[0] > 752, withName);
+  show('a board with room to spare keeps its 16 and 12px gaps; without the band nothing moves', plain[0] === 529 && off[0] === 768, [plain, off]);
+})();
+
 print('\n== 7. older TVs and the house words ==');
 show('the draw looks file is ES5 (no arrow, const, let, template string)', !/=>|\bconst |\blet |`/.test(MOD.replace(/\/\*[\s\S]*?\*\//g, '')));
 show('no em dash anywhere in the draw looks, the screens or the consoles', !/—/.test(MOD) && !/—/.test(RS.split('vpds-layer')[1] || '') );
