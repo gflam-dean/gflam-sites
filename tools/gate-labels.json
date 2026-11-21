@@ -650,6 +650,10 @@
   "wizard-r10-in-chrome.test.py",
   "wizard-v2-in-chrome.test.py",
   "signup-player-limits-in-chrome.test.py",
-  "trivia-theme-map.test.py"
+  "trivia-theme-map.test.py",
+  "known-phone-in-chrome.test.py",
+  "members-name-console-in-chrome.test.py",
+  "trivia-reopen-tv-in-chrome.test.py",
+  "tv-flip-name-in-chrome.test.py"
  ]
 }
