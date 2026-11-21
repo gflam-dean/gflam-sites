@@ -201,9 +201,9 @@ var RealDate = Date;
 function FixedDate(x) { if (!(this instanceof FixedDate)) return new RealDate(NOW).toString(); return arguments.length ? new RealDate(x) : new RealDate(NOW); }
 FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; FixedDate.parse = RealDate.parse; FixedDate.prototype = RealDate.prototype;
 
-function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
+function srcOf(block) { return SEARCH + "\n" + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + lift("praffleNormPhone") + lift("memberMobile") + lift("memberIdByMobile") + (uu ? uu[0] : "") + "\n" + block +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, mobile: coasterMobile, draw: coasterDraw, bank: coasterBank, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: coasterPoints, mobile: coasterMobile, draw: coasterDraw, bank: coasterBank, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
   "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", "setTimeout", "clearTimeout", "AbortController", "crypto", SRC)(
@@ -545,7 +545,7 @@ step(function () {
     NOW = NOW + 1300 + 22000;   // a right answer 22 s in: inside the 3 s allowance for the moment and the network
     return post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
   }).then(function (r) {
-    pass("a right answer just after the ring (inside the allowance) still scores the base 100", r.body.correct === true && r.body.points === 100, r.body);
+    pass("a right answer just after the ring (inside the allowance) still scores the base 40", r.body.correct === true && r.body.points === 40, r.body);
     NOW = NOW + 1300 + 23500;
     return post(W.answer, { play: R.play, token: R.token, i: 2, a: rightOf(q[2]) });
   }).then(function (r) {
@@ -555,7 +555,7 @@ step(function () {
 });
 
 step(function () {
-  print("\nANSWERING: TIMED AND SCORED HERE, BY THE TRIVIA NIGHT'S OWN RULE");
+  print("\nANSWERING: TIMED AND SCORED HERE, BY THE COASTER'S OWN WIDE-RANGE RULE");
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
   return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: q }).then(function (r) {
@@ -563,14 +563,14 @@ step(function () {
     NOW = start0 + 2000;   // two seconds in: 18 of 20 seconds left
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
   }).then(function (r) {
-    var want = W.points(true, 100, 20, true, 1, start0 + 20000, start0 + 2000);
-    pass("a right answer two seconds in scores 145, exactly what triviaAnswerPoints pays (base 100 + speed)", r.status === 200 && r.body.correct === true && r.body.points === 145 && want === 145, r.body);
+    var want = W.points(true, 2000, 0);
+    pass("a right answer two seconds in scores 136 (40 + 96 for speed), exactly what coasterPoints pays", r.status === 200 && r.body.correct === true && r.body.points === 136 && want === 136, r.body);
     pass("the right answer's letter comes back for the reveal", r.body.right === rightOf(q[0]));
     pass("the answer is limited per network", calls.some(function (c) { return /^rl:coaster:answer:iphash:250:600$/.test(c); }));
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
   }).then(function (r) {
-    pass("the same question again (a double tap or a replay) is refused and scored once", r.status === 409 && DB.vp_coaster_plays[0].points === 145, [r, DB.vp_coaster_plays[0].points]);
-    pass("...and says that question's right answer and the total, for a phone whose first try lost its signal", r.body.i === 0 && r.body.right === rightOf(q[0]) && r.body.total === 145, r.body);
+    pass("the same question again (a double tap or a replay) is refused and scored once", r.status === 409 && DB.vp_coaster_plays[0].points === 136, [r, DB.vp_coaster_plays[0].points]);
+    pass("...and says that question's right answer and the total, for a phone whose first try lost its signal", r.body.i === 0 && r.body.right === rightOf(q[0]) && r.body.total === 136, r.body);
     return post(W.answer, { play: R.play, token: R.token, i: 2, a: 0 });
   }).then(function (r) {
     pass("a question not yet reached is refused WITHOUT its right answer (nothing to read ahead)", r.status === 409 && !("right" in r.body) && !("total" in r.body), r.body);
@@ -587,7 +587,7 @@ step(function () {
       st === "200,409" && DB.vp_coaster_plays[0].answers.length === 2, [st, DB.vp_coaster_plays[0].answers]);
     /* Put the round back to one answer, so the timings below read as written. */
     var row = DB.vp_coaster_plays[0];
-    row.answers = row.answers.slice(0, 1); row.points = 145; row.correct = 1; row.ms_total = 2000; row.asked_at = new RealDate(start0 + 2000).toISOString();
+    row.answers = row.answers.slice(0, 1); row.points = 136; row.correct = 1; row.ms_total = 2000; row.asked_at = new RealDate(start0 + 2000).toISOString();
     NOW = start0 + 2000;
     return post(W.answer, { play: R.play, token: "not-the-secret", i: 1, a: 0 });
   }).then(function (r) {
@@ -599,7 +599,7 @@ step(function () {
     NOW = NOW + 1300 + 10000;
     return post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
   }).then(function (r) {
-    pass("the next question's clock starts after the 1.3 second reveal: 10 seconds of thinking is 125", r.body.points === 125, r.body);
+    pass("the next question's clock starts after the 1.3 second reveal: 10 seconds of thinking earns no speed bonus, just 40 + 20 for the streak of one: 60", r.body.points === 60, r.body);
     NOW = NOW + 1300 + 5000;
     return post(W.answer, { play: R.play, token: R.token, i: 2, a: (rightOf(q[2]) + 1) % 4 });
   }).then(function (r) {
@@ -608,12 +608,12 @@ step(function () {
     return post(W.answer, { play: R.play, token: R.token, i: 3, a: rightOf(q[3]) });
   }).then(function (r) {
     pass("a right answer a minute late (the ring gave it 20 seconds) scores as time's up: nothing", r.body.points === 0 && r.body.correct === false, r.body);
-    pass("the running total comes back", r.body.total === 145 + 125 + 0 + 0, r.body.total);
+    pass("the running total comes back", r.body.total === 136 + 60 + 0 + 0, r.body.total);
     NOW = NOW + 1300 + 4000;
     return post(W.answer, { play: R.play, token: R.token, i: 4, a: rightOf(q[4]) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[0];
-    pass("the fifth answer finishes the round: 3 of 5, 410 points", r.body.done === true && r.body.score.correct === 3 && r.body.score.points === 410 && !!row.finished_at, r.body);
+    pass("the fifth answer finishes the round: 3 of 5, 308 points (136 + 60 + 0 + 0 + 112)", r.body.done === true && r.body.score.correct === 3 && r.body.score.points === 308 && !!row.finished_at, r.body);
     pass("the total time is each question's own, at most its 20 seconds (2 + 10 + 5 + 20 + 4 = 41 s; INBOX 311, never 2062)", row.ms_total === 41000 && r.body.score.secs === 41, row.ms_total);
     pass("the round's place on tonight's board comes back with it: 1st", r.body.board && r.body.board.rank === 1 && r.body.board.period === "tonight", r.body.board);
     return post(W.answer, { play: R.play, token: R.token, i: 4, a: 0 });
@@ -649,8 +649,8 @@ step(function () {
   print("\nTHE BOARD: TONIGHT AND THIS WEEK, FIRST NAMES ONLY, TIES TO THE FASTER");
   fresh(); NOW = FRI_830PM;
   var all = [true, true, true, true, true], A, B, C;
-  return playRound("Ava", "v:" + V_MINI, 0, all, 20000).then(function (r) { A = r;   // slow: every answer on 20 s, 500
-    return playRound("Ben", "v:" + V_MINI, 0, all, 20000); }).then(function (r) { B = r;   // the same 500, but...
+  return playRound("Ava", "v:" + V_MINI, 0, all, 20000).then(function (r) { A = r;   // slow: every answer on 20 s, 400
+    return playRound("Ben", "v:" + V_MINI, 0, all, 20000); }).then(function (r) { B = r;   // the same 400, but...
     return playRound("Cal", "v:" + V_MINI, 0, [true, true, true, true, false], 1000); }).then(function (r) { C = r;
     return playRound("Dee", "c:" + C_TUGUN, 0, all, 1000);
   }).then(function () {
@@ -660,7 +660,7 @@ step(function () {
   }).then(function (r) {
     var rows = r.body.rows;
     pass("tonight's board lists this venue's rounds only (not the coaster venue's)", r.status === 200 && rows.length === 3 && rows.every(function (x) { return x.name !== "Dee"; }), rows);
-    pass("points first: Cal's fast 4 of 5 (592) is above two slow perfect rounds (500)", rows[0].name === "Cal" && rows[0].points > rows[1].points, rows);
+    pass("points first: Cal's fast 4 of 5 (712) is above two slow perfect rounds (400)", rows[0].name === "Cal" && rows[0].points > rows[1].points, rows);
     pass("equal points go to the faster total time: Ben (50 s) above Ava (100 s)", rows[1].name === "Ben" && rows[2].name === "Ava" && rows[1].points === rows[2].points, rows);
     pass("each row is a place, a first name, points and how many right: nothing else",
       Object.keys(rows[0]).sort().join(",") === "correct,name,place,points,you", Object.keys(rows[0]));
@@ -1026,8 +1026,42 @@ step(function () {
 });
 
 step(function () {
+  print("\nWIDE RANGE: SPEED AND STREAK (Dean 21 Nov: scores should have more range)");
+  var P = W.points;
+  pass("a wrong answer or time's up scores 0, whatever the speed or streak", P(false, 0, 4) === 0 && P(false, 500, 0) === 0);
+  pass("an instant right answer is 160; a slow one (10 s or more) is 40", P(true, 0, 0) === 160 && P(true, 10000, 0) === 40 && P(true, 20000, 0) === 40);
+  pass("speed falls in a straight line: 5 s in is 100", P(true, 5000, 0) === 100);
+  pass("each right answer already in a row adds 20, up to 80", P(true, 10000, 1) === 60 && P(true, 10000, 4) === 120 && P(true, 10000, 9) === 120);
+  var perfect = 0, slow = 0, i;
+  for (i = 0; i < 5; i++) { perfect += P(true, 0, i); slow += P(true, 10000, i); }
+  pass("a perfect instant round is 1000, a perfect slow round is 400, an all wrong round is 0: a real range", perfect === 1000 && slow === 400);
+  pass("a faster round beats a slower one with the same right answers", P(true, 3000, 0) > P(true, 6000, 0));
+  pass("the phone's own timing number cannot be sent: /coaster/answer reads only i and a", !/b\.(ms|took|time|points|pts|streak)/.test(BLOCK));
+  fresh(); NOW = FRI_830PM;
+  var q = five(0), R;
+  return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: q }).then(function (r) {
+    R = r.body; q = R.qids;
+    NOW += 0;
+    return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
+  }).then(function (r) {
+    pass("answer 1 instant: 160", r.body.points === 160, r.body);
+    NOW += 1300;
+    return post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
+  }).then(function (r) {
+    pass("answer 2 instant, one in a row: 180", r.body.points === 180, r.body);
+    NOW += 1300;
+    return post(W.answer, { play: R.play, token: R.token, i: 2, a: (rightOf(q[2]) + 1) % 4 });
+  }).then(function (r) {
+    NOW += 1300;
+    return post(W.answer, { play: R.play, token: R.token, i: 3, a: rightOf(q[3]) });
+  }).then(function (r) {
+    pass("a wrong answer breaks the streak: the next right one instant is back to 160", r.body.points === 160, r.body);
+  });
+});
+
+step(function () {
   print("\nONE COPY OF EACH RULE, AND THE ROUTES ARE WIRED");
-  pass("the coaster scores with triviaAnswerPoints and never restates it", /triviaAnswerPoints\(correct, COASTER_BASE, COASTER_SECS, true, 1,/.test(BLOCK) && BLOCK.indexOf("0.5") < 0);
+  pass("the coaster scores with its own coasterPoints, decided here from the Worker's clock", /coasterPoints\(correct, now - shownAt, streakBefore\)/.test(BLOCK) && BLOCK.indexOf("triviaAnswerPoints") < 0 && /answers: done\.concat\(\[late \? -1 : a\]\)/.test(BLOCK));
   pass("the coaster search matches with the TV app's venueSearchScore", /venueSearchScore\(q, r\.name\)/.test(BLOCK) && BLOCK.indexOf("startsWith") < 0);
   pass("names go through the TV's cleanName", /cleanName\(/.test(BLOCK));
   var router = GAME.slice(GAME.indexOf("if (method === 'GET' && path === '/health')"), GAME.indexOf("return json({ error: 'not found' }, 404);"));

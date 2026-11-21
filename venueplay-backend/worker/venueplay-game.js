@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Nov 2026, 15:52 · eb9c8c21';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Nov 2026, 05:19 · cd1009cd';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3554,8 +3554,8 @@ let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migrat
  *
  * WHO SCORES: this Worker, never the phone. /coaster/start keeps the round (vp_coaster_plays) and
  * hands the phone a secret; each /coaster/answer is timed HERE from when the question went up and
- * paid by triviaAnswerPoints, the trivia night's own rule (base 100, up to +50 for speed over a
- * 20 second window; there is no countdown on the coaster, a slow answer still scores 100). Each
+ * paid by coasterPoints (22 Nov, Dean: "more of a range"): 40 for a right answer, up to +120 for
+ * speed over the first 10 seconds, +20 per right answer already in a row (up to +80): 0 to 1000 a round. Each
  * answer is a compare-and-set on the answers so far, so a replayed or doubled tap scores once.
  *
  * WHAT IS KEPT ABOUT A PERSON: the first word of the name they typed, through cleanName (14
@@ -3573,11 +3573,25 @@ let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migrat
 const COASTER_DRAW_FLOOR = 100;      // a keep-away rule that would leave fewer questions than this to draw from is skipped
 const COASTER_SEEN_MAX = 400;        // the phone's own seen list, as the page keeps it (SEEN_CAP): a hint, never more
 const COASTER_HISTORY_ROWS = 1000;   // this board's rounds this week read for the keep-away
-const COASTER_BASE = 100;            // points for a right answer, as a trivia night's default
-const COASTER_SECS = 20;             // the speed bonus window, as a trivia night's default question
+const COASTER_BASE = 40;             // points for any right answer (Dean 21 Nov: scores should have more range)
+const COASTER_SPEED_MAX = 120;       // up to this many more for speed: all of it at once, none at COASTER_SPEED_MS or later
+const COASTER_SPEED_MS = 10000;
+const COASTER_STREAK_STEP = 20;      // the 2nd right answer in a row adds 20, the 3rd 40, the 4th 60, the 5th 80
+const COASTER_SECS = 20;             // the ring: an answer later than this (plus COASTER_LATE_MS) is time's up
 const COASTER_LATE_MS = 3000;        // the Time's up moment and the network, after a question's 20 seconds
 const COASTER_REVEAL_MS = 1300;      // the page shows right or wrong this long before the next question
 const COASTER_ROUND = 5;
+/* The coaster's points, decided HERE from this Worker's own clock: 40 for a right answer, up to 120 more for speed (linear over
+   the first 10 seconds), and a streak bonus of 20 x (right answers in a row before this one), up to 80. A question is worth
+   40 to 160 plus its streak bonus; a five question round runs from 0 (all wrong) to 1000 (all right and instant), and an
+   all-right slow round still scores 400. Pure: the same inputs always pay the same. */
+function coasterPoints(correct, tookMs, streakBefore) {
+  if (!correct) return 0;
+  const t = Math.max(0, Math.min(COASTER_SPEED_MS, Number(tookMs) || 0));
+  const speed = Math.round(COASTER_SPEED_MAX * (1 - t / COASTER_SPEED_MS));
+  const streak = Math.min(COASTER_ROUND - 1, Math.max(0, Math.floor(Number(streakBefore) || 0))) * COASTER_STREAK_STEP;
+  return COASTER_BASE + speed + streak;
+}
 const COASTER_SITECHECK_PER_IP_DAY = 6;   // websites fetched for added venues, per network per day
 const COASTER_LEAD_DAYS = 30;       // an added venue that could not be confirmed keeps its trivia-only board this long, then it is deleted (Dean 14 Nov)
 const COASTER_KEEP_DAYS = 35;        // rounds are deleted after this; "This week" needs 7
@@ -4225,12 +4239,17 @@ async function handleCoasterAnswer(request, env, json) {
        (plus COASTER_LATE_MS for the moment and the network) scores as time's up, never as a slow right answer. */
     const late = now - shownAt > COASTER_SECS * 1000 + COASTER_LATE_MS;
     const correct = !late && a === right;
-    const pts = triviaAnswerPoints(correct, COASTER_BASE, COASTER_SECS, true, 1, shownAt + COASTER_SECS * 1000, now);
+    let streakBefore = 0;   // right answers in a row just before this one, from the questions' own right answers
+    for (let j = done.length - 1; j >= 0; j--) {
+      const qj = bank.byId.get(row.qids[j]);
+      if (qj && done[j] === qj[3]) streakBefore++; else break;
+    }
+    const pts = coasterPoints(correct, now - shownAt, streakBefore);
     /* A question's time is at most its own 20 seconds (INBOX 311: "Done in 2062 seconds"), as the page's ring. */
     const took = Math.max(0, Math.min(COASTER_SECS * 1000, now - shownAt));
     const last = i === COASTER_ROUND - 1;
     const patch = {
-      answers: done.concat([a]), points: (row.points || 0) + pts, correct: (row.correct || 0) + (correct ? 1 : 0),
+      answers: done.concat([late ? -1 : a]), points: (row.points || 0) + pts, correct: (row.correct || 0) + (correct ? 1 : 0),
       ms_total: (row.ms_total || 0) + took, asked_at: new Date(now).toISOString(),
     };
     if (last) patch.finished_at = patch.asked_at;

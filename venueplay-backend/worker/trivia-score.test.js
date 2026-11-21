@@ -30,8 +30,7 @@ for (var i = 0; i < CANDIDATES.length; i++) {
 if (src === null) { print("FAIL could not find venueplay-game.js"); throw new Error("no source"); }
 
 /* The real scoring rule, taken from the Worker verbatim. Since 5 Nov 2026 it is ONE function,
-   triviaAnswerPoints, called by the reveal and by the coaster round (/live-here-now), so both pay
-   by the same rule; this lifts that function and runs it. */
+   triviaAnswerPoints, called by the trivia reveal (the coaster has its own wider rule, coasterPoints); this lifts that function and runs it. */
 var m = /\nfunction triviaAnswerPoints\([\s\S]*?\n\}\n/.exec(src);
 ok("the scoring function is still in the Worker", !!m);
 if (!m) throw new Error("scoring function not found");
