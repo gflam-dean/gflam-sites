@@ -35,6 +35,8 @@ sha256Hex = async function (s) {
   }
   return out;
 };
+var LOGGED = [];
+(function () { var c = (typeof console === 'object' && console) || (globalThis.console = {}); var was = c.log; c.log = function () { LOGGED.push([].slice.call(arguments).join(' ')); }; void was; })();
 var OTHER = '0b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b';
 var rigFetch = fetch, MISSING = false;
 fetch = async function (url, opts) {
@@ -306,6 +308,18 @@ function pid() { PID++; return 'phone-' + ('00000000' + PID).slice(-8); }
   ENV.CONSENT_PRETICK = 'yes';
   jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
   show('CONSENT_PRETICK anything but exactly "on" (here "yes"): still unticked, vpc-5-22nov', jk.body.consent.ticked === false && jk.body.consent.version === 'vpc-5-22nov', JSON.stringify(jk.body.consent));
+  var loose = [];
+  for (var lv of ['ON', ' on', 'on ', 'on\n', 'On']) {
+    ENV.CONSENT_PRETICK = lv;
+    jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+    if (!(jk.body.consent.ticked === false && jk.body.consent.version === 'vpc-5-22nov')) loose.push(JSON.stringify(lv));
+  }
+  show('CONSENT_PRETICK must be EXACTLY "on": "ON", " on", "on ", "on\\n" and "On" all stay unticked, vpc-5-22nov', loose.length === 0, loose.join());
+  var logs0 = LOGGED.length;
+  delete ENV.CONSENT_PRETICK; ENV.CONSENT_BLOCK = 'off';
+  jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
+  show('CONSENT_BLOCK "off" (a near miss) leaves the boxes on and says so in the Worker log', jk.body.consent.mode === 'three' && LOGGED.slice(logs0).some(function (l) { return l.indexOf('CONSENT_BLOCK: unknown value') >= 0; }), LOGGED.slice(logs0));
+  delete ENV.CONSENT_BLOCK;
   ENV.CONSENT_PRETICK = 'on';
   jk = await call(handleJoinKnown, { code: s1.join_code, keys: [] });
   show('the ONE setting CONSENT_PRETICK "on" (only after the lawyer): ticked true, the pre-ticked version vpc-4-22nov', jk.body.consent.ticked === true && jk.body.consent.version === 'vpc-4-22nov', JSON.stringify(jk.body.consent));

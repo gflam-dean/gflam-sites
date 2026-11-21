@@ -311,7 +311,31 @@ def phone(game, path, w, h):
     finally:
         B.close_tab(tid)
 
-    # T0: THE DEFAULT NIGHT with the boxes ON (21 Nov 2026): a new phone at a venue asking only first name + mobile
+    # T: everything asked, plus the three boxes (a visiting host); a 667 px phone is not asked to fit all of that
+    if h < 700: return
+    c = code('THR'); tid, sid = open_page(path + sep + 'room=' + c, w, h)
+    try:
+        until(sid, READY + ' && !!document.getElementById("xConsent3")'); time.sleep(0.6)
+        L = look(sid); shot(sid, '%s-%s-5-three-boxes' % (game, size))
+        ok('T %s %s: three boxes, UNTICKED to start: venueplay, the venue, the host' % (game, size), L.get('labs') == [['venueplay', False], ['The Royal Hotel', False], ['Quiz Masters Co', False]], L.get('labs'))
+        ok('T %s %s: the heading and the line under, word for word' % (game, size), 'Yes! Send me news and offers by SMS and email from:' in L.get('text', '') and 'Each one uses your details under its own privacy policy. Unsubscribe any time.' in L.get('text', ''), L.get('text'))
+        ok('T %s %s: a venue asking everything plus the three boxes is still one screen, no scroll' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+        fill(sid, {'nameIn': 'Quiz Kids' if team else 'Bo', 'xFirst': 'Bo', 'xMobile': '0412 000 111'})
+        ask(sid, 'document.getElementById("xC_venueplay").click(); document.getElementById("xC_venue").click(); document.getElementById("joinBtn").click(); true')
+        got = joins(c)
+        ok('T %s %s: each answer its own: venueplay and the venue ticked go as true, the host box left unticked goes as false' % (game, size), bool(got) and got[0].get('consent') == {'venueplay': True, 'venue': True, 'host': False}, got)
+    finally:
+        B.close_tab(tid)
+
+
+def t0(game, path, w, h):
+    """THE DEFAULT NIGHT with the boxes ON (21 Nov 2026): a new phone at a venue asking only first name + mobile, the owner
+    (two boxes) and a visiting host (three), at every size including the short phones (320x568, and 375x553: an iPhone SE
+    in Safari with its toolbars; review 1 MUST 2)."""
+    sep = '&' if '?' in path else '?'
+    team = game == 'trivia'
+    size = '%dx%d' % (w, h)
+    print('\n%s default night, boxes on, at %s' % (game, size))
     for pre, want in (('TWN', [['venueplay', False], ['The Royal Hotel', False]]),
                       ('TNH', [['venueplay', False], ['The Royal Hotel', False], ['Quiz Masters Co', False]])):
         c = code(pre); tid, sid = open_page(path + sep + 'room=' + c, w, h)
@@ -330,21 +354,6 @@ def phone(game, path, w, h):
         finally:
             B.close_tab(tid)
 
-    # T: everything asked, plus the three boxes (a visiting host); a 667 px phone is not asked to fit all of that
-    if h < 700: return
-    c = code('THR'); tid, sid = open_page(path + sep + 'room=' + c, w, h)
-    try:
-        until(sid, READY + ' && !!document.getElementById("xConsent3")'); time.sleep(0.6)
-        L = look(sid); shot(sid, '%s-%s-5-three-boxes' % (game, size))
-        ok('T %s %s: three boxes, UNTICKED to start: venueplay, the venue, the host' % (game, size), L.get('labs') == [['venueplay', False], ['The Royal Hotel', False], ['Quiz Masters Co', False]], L.get('labs'))
-        ok('T %s %s: the heading and the line under, word for word' % (game, size), 'Yes! Send me news and offers by SMS and email from:' in L.get('text', '') and 'Each one uses your details under its own privacy policy. Unsubscribe any time.' in L.get('text', ''), L.get('text'))
-        ok('T %s %s: a venue asking everything plus the three boxes is still one screen, no scroll' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
-        fill(sid, {'nameIn': 'Quiz Kids' if team else 'Bo', 'xFirst': 'Bo', 'xMobile': '0412 000 111'})
-        ask(sid, 'document.getElementById("xC_venueplay").click(); document.getElementById("xC_venue").click(); document.getElementById("joinBtn").click(); true')
-        got = joins(c)
-        ok('T %s %s: each answer its own: venueplay and the venue ticked go as true, the host box left unticked goes as false' % (game, size), bool(got) and got[0].get('consent') == {'venueplay': True, 'venue': True, 'host': False}, got)
-    finally:
-        B.close_tab(tid)
 
 
 def returning(game, path, w, h):
@@ -461,6 +470,9 @@ if __name__ == '__main__':
         for w, h in ((375, 667), (375, 812), (390, 844)):
             for g, p in PAGES:
                 phone(g, p, w, h)
+        for w, h in ((320, 568), (375, 553), (375, 667), (375, 812), (390, 844)):
+            for g, p in PAGES:
+                t0(g, p, w, h)
         for w, h in ((375, 667), (390, 844)):
             for g, p in PAGES:
                 returning(g, p, w, h)

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Nov 2026, 10:01 · bca220c6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 12:46 · c1f3496b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2566,8 +2566,15 @@ const KNOWN_KEYS_MAX = 8;
 const CONSENT_THREE_VERSION = 'vpc-5-22nov';
 const CONSENT_PRETICK_VERSION = 'vpc-4-22nov';
 const CONSENT_PARTIES = ['venueplay', 'venue', 'host'];
-function consentMode(env) { return String((env && env.CONSENT_BLOCK) || '').trim().toLowerCase() === 'single' ? 'single' : 'three'; }
-function consentPretick(env) { return String((env && env.CONSENT_PRETICK) || '').trim().toLowerCase() === 'on'; }
+function consentMode(env) {
+  const v = String((env && env.CONSENT_BLOCK) || '').trim().toLowerCase();
+  /* only 'single' switches the boxes off; a value that is neither 'single' nor 'three' (a near miss like 'off') is said
+     out loud in the Worker log, so a kill switch typed wrong is seen, not silently ignored (review 1 SHOULD, 21 Nov 2026) */
+  if (v && v !== 'single' && v !== 'three') console.log('CONSENT_BLOCK: unknown value ' + JSON.stringify(v).slice(0, 40) + ' ignored; only "single" switches the three boxes off');
+  return v === 'single' ? 'single' : 'three';
+}
+/* EXACTLY 'on', nothing else: not 'ON', not ' on', not 'on\n' (review 1 MUST 1): pre-ticking is the Spam Act risk */
+function consentPretick(env) { return !!env && env.CONSENT_PRETICK === 'on'; }
 function consentWordsVersion(env) { return consentPretick(env) ? CONSENT_PRETICK_VERSION : CONSENT_THREE_VERSION; }
 /* The keys a phone says it holds: 64 hex characters each, eight at most, no repeats. */
 function knownKeysFrom(raw) {
