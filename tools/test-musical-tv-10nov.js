@@ -1,8 +1,8 @@
 /* MUSICAL BINGO TV: THE 10 NOV 2026 SIGN-OFF FAULTS (venueplay/app/musical/screen.html).
 
    1. the red "No sound" message is a bar on the bottom edge, never top centre (it sat on the title)
-   2. the played strip never cuts a title: no ellipsis, no hyphen, wider chip, steps down in size; a trailing bracket is
-      dropped in the strip only
+   2. the played strip never cuts a title: no ellipsis, no hyphen, one line at a readable size (21 Nov 2026), oldest tile out
+      first; a trailing bracket is dropped in the strip only
    3. no spaced mono capitals on the wall (eyebrows are sentence case in the body font); the claim line says what the
       player has ("Someone has a line"), never "bingo"
    4. the lobby footer lines are at least 22px at 1920
@@ -33,11 +33,21 @@ show('the long one keeps its main title whole', st("I'd Do Anything for Love (Bu
 show('a title with no bracket is untouched', st('Thunderstruck') === 'Thunderstruck');
 show('a title that is only a bracket is kept as it is', st('(Sittin on) The Dock of the Bay') === '(Sittin on) The Dock of the Bay' && st('(Untitled)') === '(Untitled)');
 var ptok = (CSS.match(/#tvRun \.ptok\{[^}]*\}/) || [''])[0];
-show('the chip never ellipses or hyphenates', /text-overflow:clip/.test(ptok) && !/ellipsis/.test(ptok) && /hyphens:none/.test(ptok) && /white-space:normal/.test(ptok));
-show('the chip is wider than the old 15.36cqw', /flex:0 0 16\.4cqw/.test(ptok));
+show('the chip never ellipses or hyphenates, and never wraps (jobs 518/524, 21 Nov 2026: one line)', /text-overflow:clip/.test(ptok) && !/ellipsis/.test(ptok) && /hyphens:none/.test(ptok) && /white-space:nowrap/.test(ptok), ptok.slice(0, 200));
+var pfs = parseFloat((ptok.match(/font-size:([\d.]+)cqw/) || [0, 0])[1]);
+show('the chip title reads from the back: at least 2.2cqw, trivia\'s smallest answer (was 1.56cqw)', pfs >= 2.2, pfs);
+show('a chip is as wide as its title (flex:0 0 auto), never a fixed narrow width', /flex:0 0 auto;width:auto/.test(ptok), ptok.slice(0, 80));
 var fit = lift(SCREEN, 'fitStrip', 'screen.html');
-show('fitStrip steps the size down for a long word (width) as well as for height', /scrollWidth>t\.clientWidth/.test(fit) && /scrollHeight>t\.clientHeight/.test(fit) && /lines\(\)>2\.3/.test(fit));
-show('five chips and the strip gaps fit the strip (87.5cqw)', 5 * (16.4 + 0.94) <= 87.5, 5 * (16.4 + 0.94));
+show('fitStrip drops the OLDEST tile first while the row is wider than the strip, and keeps the newest', /for\(i=0;i<ts\.length-1 && b\.scrollWidth>b\.clientWidth\+1;i\+\+\) ts\[i\]\.style\.display="none";/.test(fit));
+show('only the newest steps down, to 80% at most, then fades (no "...")', /min=fs\*0\.8/.test(fit) && /classList\.add\("cut"\)/.test(fit) && /\.ptok\.cut \.ptt\{-webkit-mask-image:linear-gradient/.test(CSS) && !/ellipsis/.test(fit));
+show('the strip is re-fitted when the playing wall comes into view, on resize and when fonts land', /function refitStrip\(\)\{[\s\S]*?observe\(run, \{ attributes:true, attributeFilter:\["class"\] \}\)[\s\S]*?addEventListener\("resize", go\)[\s\S]*?document\.fonts\.ready\.then\(go\)/.test(SCREEN));
+var sn = (CSS.match(/\.msongno\{[^}]*\}/) || [''])[0], ma = (CSS.match(/\.mart\{[^}]*\}/) || [''])[0];
+var artBottom = parseFloat((ma.match(/top:([\d.]+)cqw/) || [0, 0])[1]) + parseFloat((ma.match(/height:([\d.]+)cqw/) || [0, 0])[1]);
+var snTop = parseFloat((sn.match(/top:([\d.]+)cqw/) || [0, 0])[1]);
+show('"N songs played" sits at least 1cqw clear of the art (it was 0.25cqw, jammed under it)', snTop - artBottom >= 1, [artBottom, snTop]);
+var ms = (CSS.match(/\.mstrip\{[^}]*\}/) || [''])[0];
+var stripBottom = parseFloat((ms.match(/top:([\d.]+)cqw/) || [0, 0])[1]) + parseFloat((ms.match(/height:([\d.]+)cqw/) || [0, 0])[1]);
+show('and the strip ends inside the 16:9 wall (56.25cqw tall)', stripBottom > 0 && stripBottom <= 56.25 - 2, stripBottom);
 show('one song count only: "N songs played" left, and no dashed slot at all (Dean, 11 Nov 2026; no "Song N" twice)', /nx\.classList\.toggle\("hidden", true\); nx\.textContent="";/.test(SCREEN) && /" song"\+\(all\.length===1\?"":"s"\)\+" played"/.test(SCREEN) && !/textContent\s*=\s*"Song /.test(SCREEN));
 
 print('\n== 3. no spaced mono capitals; the claim line ==');
