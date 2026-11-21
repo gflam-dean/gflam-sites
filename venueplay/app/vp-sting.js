@@ -192,6 +192,7 @@
     return draw ? { big:"GOOD LUCK!", small:F } : { l1:"LET\u2019S PLAY", l2:F };
   }
   /* ---------------- THE PHONE: portrait, small, light ---------------- */
+  /* THE PHONE'S WORDS ARE CLASS vps-pt, NOT vpp-t (21 Nov 2026, Dean on the coaster page: the venueplay logo took over the screen with LET'S PLAY TRIVIA still in front of it). vp-podium.css, which the coaster page loads, styles .vpp-t with an animation that FILLS FORWARD at full opacity, and an animation beats the show's own inline opacity, so the words never faded out and the logo landed on top of them. The show's classes now share nothing with the podium's. */
   function buildPhone(){
     root=document.createElement("div"); root.id="vpSting";
     root.style.cssText="position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden;background:rgba(5,5,6,0)";
@@ -202,13 +203,13 @@
        narrower than 460, so for it X0 is 0 and nothing changes. */
     var IW=innerWidth, W=Math.min(IW,460), X0=(IW-W)/2, H=innerHeight;
     root.innerHTML=
-      '<div class="vpp-t" id="vppL1" style="top:'+(H*0.40).toFixed(0)+'px;font-size:'+(W*0.10).toFixed(1)+'px;letter-spacing:.06em;color:#FF1F8E;text-shadow:0 0 14px rgba(255,31,142,.55)"></div>'+
-      '<div class="vpp-t" id="vppL2" style="top:'+(H*0.465).toFixed(0)+'px;font-size:'+(W*0.24).toFixed(1)+'px;letter-spacing:.015em;color:#fff"><span id="vppL2s"></span></div>'+
+      '<div class="vps-pt" id="vppL1" style="top:'+(H*0.40).toFixed(0)+'px;font-size:'+(W*0.10).toFixed(1)+'px;letter-spacing:.06em;color:#FF1F8E;text-shadow:0 0 14px rgba(255,31,142,.55)"></div>'+
+      '<div class="vps-pt" id="vppL2" style="top:'+(H*0.465).toFixed(0)+'px;font-size:'+(W*0.24).toFixed(1)+'px;letter-spacing:.015em;color:#fff"><span id="vppL2s"></span></div>'+
       '<svg id="vppSvg" viewBox="0 0 '+IW+' '+H+'" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">'+
         '<g id="vppWg" opacity="0"><path fill="#fff" d="'+REST+'"/><path fill="#fff" d="'+ANEON+'"/></g>'+
         '<g id="vppTg"><path id="vppBand" fill="#FF1F8E" fill-rule="evenodd"/><path id="vppCore" fill="#FFD6EA" fill-rule="evenodd"/></g></svg>';
     var st=document.createElement("style"); st.id="vpStingCss";
-    st.textContent=".vpp-t{position:absolute;left:"+X0.toFixed(1)+"px;width:"+W+"px;display:flex;justify-content:center;font-family:Anton,Impact,sans-serif;font-weight:400;white-space:nowrap;line-height:1;opacity:0}.vpp-t i{font-style:normal;color:#FF1F8E}";
+    st.textContent=".vps-pt{position:absolute;left:"+X0.toFixed(1)+"px;width:"+W+"px;display:flex;justify-content:center;font-family:Anton,Impact,sans-serif;font-weight:400;white-space:nowrap;line-height:1;opacity:0}.vps-pt i{font-style:normal;color:#FF1F8E}";
     document.head.appendChild(st); document.body.appendChild(root);
     ["vppL1","vppL2","vppL2s","vppSvg","vppWg","vppTg","vppBand","vppCore"].forEach(function(i){ el[i]=document.getElementById(i); });
     L1S=1;
@@ -268,18 +269,18 @@
     var fade=L ? 1-seg(t,PHAND,PLAND) : 1-eio(seg(t,1.95,2.30));
     if(REDUCED){   // a simple fade: the words and the finished logo, no movement
       var a=eout(seg(t,0,0.3))*fade;
-      el.vppL1.style.opacity=el.vppL2.style.opacity=clamp(a*(1-seg(t,0.9,1.1)));
+      el.vppL1.style.opacity=el.vppL2.style.opacity=clamp(a*(1-seg(t,0.8,0.95)));
       el.vppL1.style.transform="scale("+L1S+")"; el.vppL2.style.transform="scale("+L2S+")";
-      el.vppWg.setAttribute("opacity",(clamp(seg(t,0.9,1.1))*fade).toFixed(3));
+      el.vppWg.setAttribute("opacity",(clamp(seg(t,1.02,1.2))*fade).toFixed(3));
       el.vppTg.setAttribute("transform","translate("+f(FX)+" "+f(FY)+") scale("+kw.toFixed(6)+")");
-      el.vppBand.setAttribute("d",off(RO)); el.vppBand.setAttribute("opacity",(clamp(seg(t,0.9,1.1))*fade).toFixed(3)); el.vppCore.setAttribute("d","");
+      el.vppBand.setAttribute("d",off(RO)); el.vppBand.setAttribute("opacity",(clamp(seg(t,1.02,1.2))*fade).toFixed(3)); el.vppCore.setAttribute("d","");
       return;
     }
-    var out=eio(seg(t,0.95,1.08));
+    var out=eio(seg(t,0.85,0.97));   /* THE TV'S ORDER (Dean 21 Nov 2026: the logo overtakes the LET'S PLAY words; he wants it as on the TV): the words are fully gone, then the wordmark comes in at the same centre, never both at once. The TV does the same: words out by 1.18 s, wordmark in from 1.20 s. */
     function slam(e,a,s0,sc){ e.style.opacity=clamp(a*3)*(1-out); e.style.transform="scale("+(sc*lerp(s0,1,back(a))*(1-0.06*out))+")"; }
     if(WORDS.big){ slam(el.vppL1,seg(t,0.22,0.40),1.5,L1S); slam(el.vppL2,seg(t,0.36,0.50),1.3,L2S); }
     else { slam(el.vppL1,seg(t,0.20,0.34),1.4,1); slam(el.vppL2,seg(t,0.30,0.46),1.6,L2S); }
-    var wf=eout(seg(t,1.00,1.18)); el.vppWg.setAttribute("opacity",(wf*fade).toFixed(3));
+    var wf=eout(seg(t,1.02,1.20)); el.vppWg.setAttribute("opacity",(wf*fade).toFixed(3));
     var lit=strike(t,0.05), p0=PH.th/(HT*kw), g=eio(seg(t,1.05,1.40)), p=lerp(p0,1,g);
     var x=lerp(PH.tx,FX,g), y=lerp(PH.ty,FY,g*g); if(L){ x=FX; y=FY; p=1; }
     var k=kw*p, fill=eio(seg(t,1.45,1.65));
