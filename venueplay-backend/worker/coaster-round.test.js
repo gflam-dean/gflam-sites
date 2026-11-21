@@ -129,6 +129,8 @@ function sbInsert(env, table, obj, ret) {
     if (DB.missing && table.indexOf("vp_coaster_") === 0) throw httpErr(502, "A database error occurred (x)");
     if (DB.noLeadCols && table === "vp_coaster_venues" && "lead_status" in obj) throw httpErr(502, "A database error occurred (x)");
     if (DB.no198 && table === "vp_coaster_contacts") throw httpErr(502, "A database error occurred (x)");
+    if (table === "vp_help_tickets" && DB.noTickets) throw httpErr(502, "A database error occurred (x)");
+    if (table === "vp_help_tickets" && obj.email_message_id && (DB[table] || []).some(function (r) { return r.email_message_id === obj.email_message_id; })) throw httpErr(409, "dup");
     if (table === "vp_coaster_contacts" && (DB[table] || []).some(function (r) { return r.board === obj.board && r.mobile === obj.mobile; })) throw httpErr(409, "dup");
     var t = DB[table] = DB[table] || [];
     var row = JSON.parse(JSON.stringify(obj));
@@ -1172,6 +1174,72 @@ step(function () {
     pass("ten questions in five categories: every draw takes one from each (30 draws)", spread);
     pass("with too few categories it still makes five different questions", d2.length === 5 && d2.map(function (q) { return q[0]; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).length === 5, d2.map(function (q) { return q[0]; }));
     pass("the draw's randomness is the Worker's crypto, never Math.random", /crypto\.getRandomValues\(u\)/.test(BLOCK) && !/Math\.random/.test(BLOCK));
+  });
+});
+
+/* JOBS 532 (Dean 21 Nov 2026): an alert when a listed pub actually plays; typed names never; one a venue a day. */
+step(function () {
+  print("\nPLAY ALERTS: A LISTED PUB PLAYS (Jobs 532)");
+  fresh(); NOW = FRI_830PM;
+  var PV = "99999999-9999-4999-8999-999999999991", CV = "99999999-9999-4999-8999-999999999992";
+  DB.vp_licensed_venues.push(
+    { id: 201, name: "Brand New Tavern", suburb: "Coomera", postcode: "4209", au_state: "QLD" },
+    { id: 202, name: "Prospect Arms", suburb: "Tugun", postcode: "4224", au_state: "QLD" },
+    { id: 203, name: "Customer Hotel", suburb: "Burleigh", postcode: "4220", au_state: "QLD" },
+    { id: 204, name: "Dean Added Pub", suburb: "Nerang", postcode: "4211", au_state: "QLD" },
+    { id: 205, name: "Other Pub", suburb: "Nerang", postcode: "4211", au_state: "QLD" });
+  DB.vp_venues.push({ id: PV, name: "The Prospect Arms", postcode: "4224", au_state: "QLD", status: "active" },
+    { id: CV, name: "Customer Hotel", postcode: "4220", au_state: "QLD", status: "active" });
+  DB.vp_prospects = [{ venue_id: PV }];
+  DB.vp_coaster_venues.push({ id: "99999999-9999-4999-8999-999999999993", kind: "coaster", name: "Dean Added Pub", name_key: "dean added pub", postcode: "4211", au_state: "QLD", venue_id: null });
+  DB.vp_help_tickets = [];
+  function tix() { return DB.vp_help_tickets; }
+  return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:201", qids: five(0) }).then(function (r) {
+    var t = tix()[0];
+    pass("a listed pub that is not on venueplay and not a prospect: ONE urgent sales ticket (a new lead)", r.status === 200 && tix().length === 1 && t.priority === "urgent" && t.category === "sales" && t.brand === "venueplay", tix());
+    pass("...naming the pub, suburb, players tonight and the venue-time clock", /Brand New Tavern, Coomera/.test(t.subject) && /NEW LEAD/.test(t.subject) && /Players tonight: 1/.test(t.message) && /at 20:30/.test(t.message), t);
+    pass("...no venue on it, and no contact detail (name, mobile, email) anywhere in it", t.venue_id === null && !/Jo\b|0412|\+614|@/.test(t.subject + t.message), t);
+    return post(W.start, { mobile: "0412 345 679", name: "Mia", place: "l:201", qids: five(5) });
+  }).then(function (r) {
+    pass("a second round at the same pub the same night: still one ticket (one a venue a day)", r.status === 200 && tix().length === 1, tix());
+    NOW = FRI_830PM + 86400000;
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:201", qids: five(0) });
+  }).then(function (r) {
+    pass("the next night is a new alert", r.status === 200 && tix().length === 2 && tix()[1].email_message_id !== tix()[0].email_message_id, tix().map(function (x) { return x.email_message_id; }));
+    NOW = FRI_830PM;
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:202", qids: five(0) });
+  }).then(function (r) {
+    var t = tix()[2];
+    pass("a listed pub that is already a prospect: a NORMAL ticket, on that prospect", r.status === 200 && tix().length === 3 && t.priority === "normal" && t.venue_id === PV && !/NEW LEAD/.test(t.subject), tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:204", qids: five(0) });
+  }).then(function (r) {
+    var t = tix()[3];
+    pass("a pub Dean added as a coaster venue is already known: normal, not a new lead", r.status === 200 && tix().length === 4 && t.priority === "normal" && !/NEW LEAD/.test(t.subject), tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:205", qids: five(0) });
+  }).then(function (r) {
+    pass("a different pub in the same postcode is judged by its own name: a new lead", r.status === 200 && tix().length === 5 && tix()[4].priority === "urgent", tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:203", qids: five(0) });
+  }).then(function (r) {
+    pass("a listed pub that is already a venueplay customer: no alert", r.status === 200 && tix().length === 5, tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: five(0) });
+  }).then(function (r) {
+    pass("a venueplay venue ('v:'): no alert", r.status === 200 && tix().length === 5, tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "c:" + C_TUGUN, qids: five(0) });
+  }).then(function (r) {
+    pass("a coaster venue ('c:'): no alert", r.status === 200 && tix().length === 5, tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "c:" + L_OLD, qids: five(0) });
+  }).then(function (r) {
+    pass("a typed-in name ('c:' lead, e.g. Joe Garage): no board and no alert, ever", r.status === 404 && tix().length === 5, tix());
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:105", qids: five(0) });
+  }).then(function (r) {
+    pass("a listed id that is not a pub name (Royal Cafe): no round, no alert", r.status === 404 && tix().length === 5, tix());
+    DB.noTickets = true; NOW = FRI_830PM + 2 * 86400000;
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:201", qids: five(0) });
+  }).then(function (r) {
+    pass("if the ticket cannot be written the round still starts", r.status === 200 && !!r.body.play && tix().length === 5, r.body);
+    pass("it never texts or emails: no outbox, no mail call, no other table written than the help desk", !calls.some(function (c) { return /^(INSERT|PATCH) (vp_outbox|vp_venues|vp_prospects|vp_licensed_venues)/.test(c); }) &&
+      !/resend|sendEmail|sms/i.test(GAME.slice(GAME.indexOf("async function coasterPlayAlert("), GAME.indexOf("/* A board: the top first names"))), calls.slice(-4));
+    pass("the alert is raised for a listed pub only, after the round is made, and never on a mate's code board change", /if \(where\.listed\) await coasterPlayAlert\(/.test(GAME));
   });
 });
 

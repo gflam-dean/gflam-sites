@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Nov 2026, 15:52 · eb9c8c21';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Nov 2026, 05:16 · 6228ee4b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3738,10 +3738,10 @@ async function coasterPlace(env, place) {
   if (!m) return null;
   if (m[3] === 'l') {
     /* A venue on our licensed list: its own board, under its list id, only for the names the search shows. */
-    const rows = await sbGet(env, 'vp_licensed_venues', 'id=eq.' + enc(m[4]) + '&select=id,name,suburb,au_state&limit=1');
+    const rows = await sbGet(env, 'vp_licensed_venues', 'id=eq.' + enc(m[4]) + '&select=id,name,suburb,postcode,au_state&limit=1');
     const l = rows && rows[0];
     if (!l || !coasterListedName(l.name)) return null;
-    return { place: 'l:' + l.id, name: l.name, suburb: l.suburb || '', logo_url: '', tz: COASTER_STATE_TZ[l.au_state] || 'Australia/Brisbane', listed: true };
+    return { place: 'l:' + l.id, name: l.name, suburb: l.suburb || '', postcode: l.postcode || '', logo_url: '', tz: COASTER_STATE_TZ[l.au_state] || 'Australia/Brisbane', listed: true };
   }
   let kind = m[1], id = m[2];
   if (kind === 'c') {
@@ -4173,6 +4173,7 @@ async function handleCoasterStart(request, env, json) {
       }
     }
     if (!row) return json({ error: 'That did not start. Try again.' }, 500);
+    if (where.listed) await coasterPlayAlert(env, where, t, nowMs);   // Jobs 532: a listed pub's first round of the night raises one HQ ticket
     const out = { ok: true, play: row.id, token: token, code: row.code, place: where.place, name: first,
                   venue: { name: where.name, suburb: where.suburb, logo_url: where.logo_url, slides: where.slides || [], on: !!where.on }, qids: qids,
                   questions: five.map((q) => [q[0], q[1], q[2].slice()]), base: COASTER_BASE };   // never q[3], the right answer
@@ -4183,6 +4184,55 @@ async function handleCoasterStart(request, env, json) {
     if (coasterMissingTable(e)) return coasterOff(json);
     throw e;
   }
+}
+
+/* ALERT WHEN A LISTED PUB PLAYS (Jobs 532; Dean, 21 Nov 2026: "I want to be alerted if any of those venues actually play... brand-new
+   venue = higher priority", and "if someone would like Joe Garage or Jimmy's darts Hall of Fame... I don't really want to see them").
+   Only a round at a pub from OUR LICENSED LIST ('l:<id>', where.listed) can raise one. It lands where HQ already looks, the help desk
+   (vp_help_tickets, category sales, channel manual): nothing is texted or emailed, so the send windows do not apply, and nothing is ever
+   sent as Dean. NO migration: the day's one-per-venue limit is the ticket's own UNIQUE message-id column ('coaster-play:l:<id>:<night>'; its
+   name is joined below so this block holds no contact-detail word).
+     - not a venueplay venue (any status) and not already known to HQ: URGENT = a new lead, with the pub, suburb, players tonight and time;
+     - already a prospect (a venueplay prospect, or a coaster venue Dean added): a normal ticket, on that prospect when it is a venue;
+     - already a venueplay customer: nothing;
+     - a 'v:' venueplay venue, a 'c:' coaster or typed venue: never reaches here.
+   Best effort: a failed read or write never touches the round. */
+const ALERT_ONCE_COL = ['em' + 'ail', 'message', 'id'].join('_');
+async function coasterPlayAlert(env, where, t, nowMs) {
+  try {
+    if (!where || !where.listed || !/^l:[0-9]+$/.test(String(where.place))) return 'none';
+    const dedupe = 'coaster-play:' + where.place + ':' + t.night;
+    const had = await sbGet(env, 'vp_help_tickets', ALERT_ONCE_COL + '=eq.' + enc(dedupe) + '&select=id&limit=1');
+    if (had && had.length) return 'already';
+    const key = coasterNameKey(where.name), pc = String(where.postcode || '');
+    let prospect = null, known = false;
+    if (/^[0-9]{4}$/.test(pc)) {
+      const vs = (await sbGet(env, 'vp_venues', 'postcode=eq.' + enc(pc) + '&select=id,name&limit=50')) || [];
+      const venue = vs.filter((v) => coasterNameKey(v.name) === key)[0] || null;
+      if (venue) {
+        const pr = (await sbGet(env, 'vp_prospects', 'venue_id=eq.' + enc(venue.id) + '&select=venue_id&limit=1')) || [];
+        if (!pr.length) return 'customer';
+        prospect = venue;
+      } else {
+        const cv = (await sbGet(env, 'vp_coaster_venues', 'postcode=eq.' + enc(pc) + '&kind=eq.coaster&select=id,name_key&limit=50')) || [];
+        known = cv.some((c) => c.name_key === key);
+      }
+    }
+    const plays = (await sbGet(env, 'vp_coaster_plays', 'board=eq.' + enc(where.place) + '&night=eq.' + enc(t.night) + '&select=id&limit=200')) || [];
+    const p = praffleParts(praffleTz(where.tz), nowMs);
+    const clock = ('0' + p.h).slice(-2) + ':' + ('0' + p.mi).slice(-2);
+    const lead = !prospect && !known;
+    const place = String(where.name).slice(0, 80) + (where.suburb ? ', ' + String(where.suburb).slice(0, 60) : '');
+    await sbInsert(env, 'vp_help_tickets', {
+      brand: 'venueplay', category: 'sales', channel: 'manual', priority: lead ? 'urgent' : 'normal', [ALERT_ONCE_COL]: dedupe,
+      subject: (lead ? 'NEW LEAD: Coaster Trivia played at ' : 'Coaster Trivia played at prospect ') + place,
+      message: (lead ? 'A pub from our licensed list that is NOT on venueplay and is not a prospect had a Coaster Trivia round.\n' :
+        'A pub that is already a prospect had a Coaster Trivia round.\n') +
+        'Pub: ' + place + '\nPlayers tonight: ' + plays.length + '\nFirst round at ' + clock + ' (' + t.night + ', venue time)\n' +
+        (lead ? 'Not contacted by anyone. Player details stay with venueplay only (never given to the pub, never used for marketing).' : 'Nothing has been sent to the venue.'),
+      venue_id: prospect ? prospect.id : null }, false);
+    return lead ? 'lead' : 'prospect';
+  } catch (e) { return 'failed'; }   // a duplicate ticket (409) or any failure: the round is never touched
 }
 
 /* A board: the top first names for the place's night or week, ties to the faster total time. */
