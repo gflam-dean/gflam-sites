@@ -972,6 +972,22 @@ def main():
             tsm.js('VPSting.frame(2.1)')
             time.sleep(0.2)
             tsm.shot('lhn-showstart2-%d.png' % sw)
+            # THE LOGO NEVER LANDS ON THE WORDS, AS ON THE TV (Dean 21 Nov 2026: "it overtakes the 'Let's play trivia'"; the TV shows the words,
+            # then the logo at the same centre, never both). The boxes of the play triangle, LET'S PLAY, TRIVIA and the wordmark as painted,
+            # counting only what is visible (opacity over 0.02) at each moment, must not touch one another and must sit inside the screen.
+            BOXES = ('(function(){function r(id,op){var e=document.getElementById(id);if(!e)return null;var b=e.getBoundingClientRect(),m=op===1?e:document.getElementById(op||id);'
+                     'var o=op===1?parseFloat(e.getAttribute("opacity")||"1"):parseFloat(getComputedStyle(m).opacity);return [b.left,b.top,b.right,b.bottom,o];}'
+                     'return JSON.stringify({w:innerWidth,h:innerHeight,tri:r("vppBand",1),l1:r("vppL1s","vppL1")||r("vppL1"),l2:r("vppL2s","vppL2"),logo:r("vppWg",1)});})()')
+            for ft in (0.5, 0.9, 1.0, 1.1, 1.2, 1.5):
+                tsm.js('VPSting.frame(%s)' % ft)
+                bx = waits.as_json(tsm.js(BOXES), {}, 'BOXES')
+                vis = dict((k, v) for k, v in bx.items() if isinstance(v, list) and v[4] > 0.02)
+                names = [k for k in ('tri', 'l1', 'l2', 'logo') if k in vis]
+                touching = [a + '/' + c for i, a in enumerate(names) for c in names[i + 1:] if (a, c) != ('tri', 'logo')  # the triangle drops INTO the logo's a, by design, as on the TV
+                            if not (vis[a][2] <= vis[c][0] or vis[c][2] <= vis[a][0] or vis[a][3] <= vis[c][1] or vis[c][3] <= vis[a][1])]
+                inside = all(vis[k][0] >= 0 and vis[k][2] <= bx['w'] and vis[k][1] >= 0 and vis[k][3] <= bx['h'] for k in names)
+                check('%d px, start show at %.2f s: what is on screen (triangle, LET\u2019S PLAY, TRIVIA, venueplay logo) never overlaps and is all inside the screen' % (sw, ft),
+                      names and not touching and inside, (names, touching, bx))
             tsm.js('VPSting.frame(9)')
             s = wait_question(tsm)
             # answer the five by tapping, then catch the end show
