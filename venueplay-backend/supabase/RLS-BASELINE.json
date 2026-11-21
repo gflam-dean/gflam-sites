@@ -954,11 +954,11 @@
    "using": "(venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
   },
-  "vp_members.vp_members_owner_manager_select": {
+  "vp_members.vp_members_host_select": {
    "cmd": "SELECT",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
-   "using": "(roster_id IN ( SELECT r.id\n   FROM vp_member_rosters r\n  WHERE (r.venue_id IN ( SELECT vp_owner_manager_venue_ids() AS vp_owner_manager_venue_ids))))",
+   "using": "(roster_id IN ( SELECT vp_member_rosters.id\n   FROM vp_member_rosters\n  WHERE (vp_member_rosters.venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
    "with_check": ""
   },
   "vp_music_games.vp_music_games_admin_select": {
@@ -1958,10 +1958,6 @@
   "vp_members_draw(p_draw_id uuid, p_auth_user_id uuid, p_rand bigint[], p_hold_default integer, p_hold_lo integer, p_hold_hi integer)": {
    "anon": false,
    "authenticated": false
-  },
-  "vp_owner_manager_venue_ids()": {
-   "anon": false,
-   "authenticated": true
   },
   "vp_park_flagged(min_venues integer)": {
    "anon": false,

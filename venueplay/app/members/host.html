@@ -1195,33 +1195,28 @@
      member_number is not guaranteed unique across a venue's rosters, and ties can
      repeat or skip a row across a page boundary. The id breaks them. */
   function loadAllMembers(ids){
-    /* THE CONSOLE READS NAMES, NEVER CONTACTS (migration 226, INBOX 707/710; HQ since 208, Dean's open question 10).
-       A members list can hold email, mobile, postcode and birth month (migrations 200 and 213). After 226 the table
-       answers the venue's OWNER and MANAGERS only; a host or marketing login gets nobody from it. So the console
-       reads v_vp_members_list FIRST: number, names and status for the caller's own venues (every venue for HQ), never
-       a contact column, whoever is signed in. The table is asked only when the view's FIRST page is empty or the view
-       is missing (a database before 208), and then with NAMED COLUMNS, never "*". A venue with nobody on its list gets
-       nobody from either. */
-    var NAMES = "id,roster_id,member_number,first_name,last_name,status,updated_at";
-    var PAGE = 1000, out = [], from = 0, rel = "v_vp_members_list", viewErr = null;
+    /* HQ VIEW AS READS NAMES, NEVER CONTACTS (Dean's open question 10, migration 208). The table answers a
+       venue's OWN staff only. An HQ admin's login gets nobody from it, so when the table's FIRST page is empty
+       the same list is read from v_vp_members_list: number, names and status, never an email or a mobile.
+       A venue with nobody on its list gets nobody from either. A database without the view (before 208)
+       answers the view with an error, which here means "nobody", exactly what the table said. */
+    var PAGE = 1000, out = [], from = 0, rel = "vp_members", cols = "id,roster_id,member_number,first_name,last_name,status,updated_at";
     function nextPage(){
-      return client.from(rel).select(NAMES).in("roster_id", ids)
+      /* NAMED COLUMNS, NEVER "*" (Jobs row 445, migration 200): a member's email and mobile are the venue's, for its account
+         and its download only, and this console sits beside the TV. It reads what the draw needs and nothing else. */
+      return client.from(rel).select(cols).in("roster_id", ids)
         .order("member_number",{ascending:true}).order("id",{ascending:true})
         .range(from, from + PAGE - 1)
         .then(function(r){
-          if(rel === "v_vp_members_list" && from === 0 && r && r.error){
-            /* No view at all (a database before 208) is a plain fallback. Any OTHER view error is kept: after 226 a
-               host reads nobody from the table, so an empty table answer after it is "could not load", never an
-               empty list (review 1 S3). */
-            if(!/^(PGRST205|42P01)$/.test(String(r.error.code || ""))) viewErr = r;
-            rel = "vp_members"; return nextPage();
-          }
+          if(rel === "v_vp_members_list" && from === 0 && r && r.error) return out;
           /* A FAILED page is not an empty one. Read as empty, it ends the loop and hands back a
              short list with no error, which is the exact truncation this loop exists to stop. */
           if(!r || r.error || !Array.isArray(r.data)) throw loadFail("your members list", r);
           var rows = r.data;
-          if(!rows.length && from === 0 && rel === "v_vp_members_list"){ rel = "vp_members"; return nextPage(); }
-          if(!rows.length && from === 0 && viewErr) throw loadFail("your members list", viewErr);
+          if(!rows.length && from === 0 && rel === "vp_members"){
+            rel = "v_vp_members_list"; cols = "id,roster_id,member_number,first_name,last_name,status,updated_at";
+            return nextPage();
+          }
           if(!rows.length) return out;            // empty page: that is the end
           out = out.concat(rows);
           from += rows.length;

@@ -297,15 +297,8 @@ check('the error code is still there to look up', /23514/.test(LOGS[0]) && /chec
 
 section('8. NEVER ON A SCREEN, NEVER IN HQ');
 var HOST = readFile('venueplay/app/members/host.html');
-/* Since migration 226 (INBOX 707/710) the console reads v_vp_members_list FIRST and the table only as a fallback, both
-   through ONE named list, var NAMES, so the old literal client.from("vp_members").select("...") is gone. Read NAMES
-   inside loadAllMembers, and require every .select in that function to be .select(NAMES): no "*", no other list. */
-var hostLoad = (/function loadAllMembers\(ids\)\{[\s\S]*?\n  \}/.exec(HOST) || [''])[0];
-var hostSel = (/var NAMES = "([^"]*)";/.exec(hostLoad) || [])[1] || '';
-var hostSelects = hostLoad.match(/\.select\([^)]*\)/g) || [];
-check('the members console (beside the TV) names its columns: no "*", no email, mobile, postcode or consent',
-      hostSel && hostSel !== '*' && !/\*|email|mobile|postcode|marketing|birth/.test(hostSel)
-      && hostSelects.length > 0 && hostSelects.every(function (x) { return x === '.select(NAMES)'; }), [hostSel, hostSelects]);
+var hostSel = (/client\.from\("vp_members"\)\.select\("([^"]*)"\)/.exec(HOST) || /rel = "vp_members", cols = "([^"]*)";/.exec(HOST) || [])[1] || '';
+check('the members console (beside the TV) names its columns: no "*", no email, mobile, postcode or consent', hostSel && hostSel !== '*' && !/email|mobile|postcode|marketing/.test(hostSel), hostSel);
 var hq = ['venueplay/app/hq.html', 'venueplay/app/vp-coaster-hq.js', 'venueplay/app/vp-helpdesk-hq.js', 'venueplay/app/vp-logins-hq.js', 'venueplay/app/vp-prospects-hq.js',
   'venueplay/app/vp-reports-hq.js', 'venueplay/app/vp-subscribers-hq.js', 'venueplay/tv.html', 'venueplay/play.html', 'venueplay/app/members/screen.html'];
 var named = [];

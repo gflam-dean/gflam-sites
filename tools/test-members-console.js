@@ -92,9 +92,6 @@ var DB = {
 for (var n = 1; n <= 1400; n++) DB.vp_members.push({ id: 'm' + n, member_number: 1000 + n, status: 'valid', roster_id: 'r1', first_name: 'A', last_name: 'B' });
 var client = {
   from: function (table) {
-    /* The console reads the names view v_vp_members_list first (migration 226): the same rows as the table, names only
-       (these fixtures carry no contact column), failing the same way. */
-    if (table === 'v_vp_members_list') table = 'vp_members';
     var lo = 0, hi = 1e9;
     var q = {
       select: function () { return q; }, eq: function () { return q; }, in: function () { return q; },
