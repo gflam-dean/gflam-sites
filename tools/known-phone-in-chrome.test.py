@@ -14,8 +14,9 @@ that half for real), at 375x812 and 390x844, and checks per phone:
      no detail we hold is anywhere on the screen
   A  a field the venue added since: only that box
   M  Not me: the key goes from the phone, the full form is back
-  T  the three boxes (switched on, a visiting host): pre-ticked, the venueplay / venue / host names, the exact words;
-     a venue asking EVERYTHING plus the three boxes still fits one screen; an unticked box goes to the Worker as false
+  T  the three boxes (ON from 21 Nov 2026, a visiting host): UNTICKED to start (ACMA), the venueplay / venue / host names,
+     the exact words; a venue asking EVERYTHING plus the three boxes still fits one screen; a box the player ticks goes
+     as true and a box left unticked goes to the Worker as false
 Frames go to ~/venue-enrich/reports/sun22-known-phone/ (one PNG per screen and size).
 
     python3 tools/known-phone-in-chrome.test.py
@@ -73,7 +74,11 @@ def ok(name, cond, saw=''):
 KEY = 'ab' * 32
 NOTHING = {'first_name': True, 'last_name': False, 'postcode': False, 'email': False, 'mobile': True, 'mobile_required': False, 'marketing_optin': False}
 EVERYTHING = {'first_name': True, 'last_name': True, 'postcode': True, 'email': True, 'mobile': True, 'mobile_required': False, 'marketing_optin': True}
-THREE = {'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
+THREE = {'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}, {'party': 'host', 'name': 'Quiz Masters Co'}]}
+# THE DEFAULT NIGHT FROM 21 NOV 2026 (boxes ON): a venue that asks only first name + mobile, venueplay + the venue (TWN..; never an O, the code box refuses it),
+# and the same with a visiting host (TNH..). Every size, the 667 px phones too: this is what most players now see.
+THREE_NOTHING = {'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': [{'party': 'venueplay', 'name': 'venueplay'}, {'party': 'venue', 'name': 'The Royal Hotel'}]}
+THREE_HOST = {'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': THREE['parties']}
 # The room code says what the fake Worker answers. NEW..: a new phone; KNW..: known, nothing missing; ADD..: known, the
 # venue added email; THR..: everything plus the three boxes.
 NOTICE = {'version': 'vpn-1-19nov', 'before': 'By playing you agree to ', 'link': "venueplay's terms and privacy policy", 'after': '. If you give a first name and mobile, venueplay keeps them so you are not asked again.', 'box': ' Tick the offers box and this venue can send you offers.', 'href': '/privacy'}
@@ -86,9 +91,9 @@ except Exception: PRIV = ''
 MASK = '04\u2022\u2022 \u2022\u2022\u2022 246'
 MASK2 = '04\u2022\u2022 \u2022\u2022\u2022 999'
 RET = {
-  'RSM': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, []),
-  'RMR': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, ['postcode']),
-  'RNT': ({'mode': 'three', 'version': 'vpc-4-22nov', 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel', 'current': False}]}, []),
+  'RSM': ({'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, []),
+  'RMR': ({'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel'}]}, ['postcode']),
+  'RNT': ({'mode': 'three', 'version': 'vpc-5-22nov', 'ticked': False, 'parties': [{'party': 'venueplay', 'name': 'venueplay', 'current': True}, {'party': 'venue', 'name': 'The Royal Hotel', 'current': False}]}, []),
 }
 def answer_for(code):
     if code.startswith('RMR'): return dict(NOTHING, postcode=True)
@@ -117,7 +122,7 @@ class Site(http.server.BaseHTTPRequestHandler):
             known = None
             if KEY in keys and (code.startswith('KNW') or code.startswith('ADD')):
                 known = {'hello': 'Alan', 'need': ['email'] if code.startswith('ADD') else [], 'ix': keys.index(KEY)}
-            consent = THREE if code.startswith('THR') else {'mode': 'single'}
+            consent = THREE if code.startswith('THR') else (THREE_NOTHING if code.startswith('TWN') else (THREE_HOST if code.startswith('TNH') else {'mode': 'single'}))
             if KEY in keys and code[:3] in RET:
                 consent, need = RET[code[:3]]
                 known = {'hello': 'Grace', 'need': need, 'ix': keys.index(KEY),
@@ -308,19 +313,38 @@ def phone(game, path, w, h):
     finally:
         B.close_tab(tid)
 
+    # T0: THE DEFAULT NIGHT with the boxes ON (21 Nov 2026): a new phone at a venue asking only first name + mobile
+    for pre, want in (('TWN', [['venueplay', False], ['The Royal Hotel', False]]),
+                      ('TNH', [['venueplay', False], ['The Royal Hotel', False], ['Quiz Masters Co', False]])):
+        c = code(pre); tid, sid = open_page(path + sep + 'room=' + c, w, h)
+        try:
+            until(sid, READY + ' && !!document.getElementById("xConsent3")'); time.sleep(0.6)
+            L = look(sid); shot(sid, '%s-%s-5-%s-default-boxes' % (game, size, pre.lower()))
+            tag = 'a visiting host' if pre == 'TNH' else 'the owner'
+            ok('T0 %s %s %s: the default night shows the boxes, every one UNTICKED' % (game, size, tag), L.get('labs') == want, L.get('labs'))
+            ok('T0 %s %s %s: no one offers tick beside them' % (game, size, tag), 'xOptin' not in L.get('ids', []), L.get('ids'))
+            ok('T0 %s %s %s: one screen, no scroll, Join on screen' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
+            fill(sid, {'nameIn': 'Quiz Kids' if team else 'Di', 'xFirst': 'Di', 'xMobile': '0412 000 222'})
+            ask(sid, 'document.getElementById("joinBtn").click(); true')
+            got = joins(c)
+            nobody = dict((x['party'], False) for x in (THREE_HOST if pre == 'TNH' else THREE_NOTHING)['parties'])
+            ok('T0 %s %s %s: Join with no box touched sends every sender as false, and no venue opt-in' % (game, size, tag), bool(got) and got[0].get('consent') == nobody and got[0].get('marketing_optin') is not True, got)
+        finally:
+            B.close_tab(tid)
+
     # T: everything asked, plus the three boxes (a visiting host); a 667 px phone is not asked to fit all of that
     if h < 700: return
     c = code('THR'); tid, sid = open_page(path + sep + 'room=' + c, w, h)
     try:
         until(sid, READY + ' && !!document.getElementById("xConsent3")'); time.sleep(0.6)
         L = look(sid); shot(sid, '%s-%s-5-three-boxes' % (game, size))
-        ok('T %s %s: three boxes, pre-ticked: venueplay, the venue, the host' % (game, size), L.get('labs') == [['venueplay', True], ['The Royal Hotel', True], ['Quiz Masters Co', True]], L.get('labs'))
+        ok('T %s %s: three boxes, UNTICKED to start: venueplay, the venue, the host' % (game, size), L.get('labs') == [['venueplay', False], ['The Royal Hotel', False], ['Quiz Masters Co', False]], L.get('labs'))
         ok('T %s %s: the heading and the line under, word for word' % (game, size), 'Yes! Send me news and offers by SMS and email from:' in L.get('text', '') and 'Each one uses your details under its own privacy policy. Unsubscribe any time.' in L.get('text', ''), L.get('text'))
         ok('T %s %s: a venue asking everything plus the three boxes is still one screen, no scroll' % (game, size), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
         fill(sid, {'nameIn': 'Quiz Kids' if team else 'Bo', 'xFirst': 'Bo', 'xMobile': '0412 000 111'})
-        ask(sid, 'document.getElementById("xC_host").click(); document.getElementById("joinBtn").click(); true')
+        ask(sid, 'document.getElementById("xC_venueplay").click(); document.getElementById("xC_venue").click(); document.getElementById("joinBtn").click(); true')
         got = joins(c)
-        ok('T %s %s: each answer its own, the unticked host box goes as false' % (game, size), bool(got) and got[0].get('consent') == {'venueplay': True, 'venue': True, 'host': False}, got)
+        ok('T %s %s: each answer its own: venueplay and the venue ticked go as true, the host box left unticked goes as false' % (game, size), bool(got) and got[0].get('consent') == {'venueplay': True, 'venue': True, 'host': False}, got)
     finally:
         B.close_tab(tid)
 
@@ -331,8 +355,8 @@ def returning(game, path, w, h):
     team = game == 'trivia'
     size = '%dx%d' % (w, h)
     print('\n%s returning player at %s' % (game, size))
-    for pre, tag, want_box, ticks in (('RSM', '1-new-venue-same-fields', [], [['venueplay', True], ['The Royal Hotel', True]]),
-                                      ('RMR', '2-new-venue-one-more-field', ['xPost'], [['venueplay', True], ['The Royal Hotel', True]]),
+    for pre, tag, want_box, ticks in (('RSM', '1-new-venue-same-fields', [], [['venueplay', True], ['The Royal Hotel', False]]),
+                                      ('RMR', '2-new-venue-one-more-field', ['xPost'], [['venueplay', True], ['The Royal Hotel', False]]),
                                       ('RNT', '3-same-venue-second-night', [], [['venueplay', True], ['The Royal Hotel', False]])):
         c = code(pre); tid, sid = open_page(path + sep + 'room=' + c, w, h, keys=[KEY])
         try:
@@ -352,7 +376,7 @@ def returning(game, path, w, h):
             else:
                 ok('R %s %s %s: the same venue already has it: the same line, no mobile row' % (game, size, tag), 'Mobile for' not in t and ('Playing as Grace, ' + MASK) in t and 'Not my number' not in t, t)
             ok('R %s %s %s: boxes asked: %s' % (game, size, tag, want_box or 'none'), [i for i in L.get('ids', []) if i.startswith('x') and not i.startswith('xC_')] == want_box, L.get('ids'))
-            ok('R %s %s %s: each sender\'s current answer, a new sender pre-ticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
+            ok('R %s %s %s: each sender\'s current answer, a new sender unticked' % (game, size, tag), L.get('labs') == ticks, L.get('labs'))
             ok('R %s %s %s: no first-game notice again' % (game, size, tag), NOTICE['after'].strip('. ') not in t, t)
             ok('R %s %s %s: one screen, no scroll' % (game, size, tag), fits(L), dict((k, L.get(k)) for k in ('btnBottom', 'scroll', 'vh')))
             if pre == 'RSM':
@@ -362,9 +386,9 @@ def returning(game, path, w, h):
                         f = os.path.join(PRIV, '%s-%s-5-playing-as.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
                 if team: fill(sid, {'nameIn': 'Quiz Kids'})
-                ask(sid, 'document.getElementById("joinBtn").click(); true')
+                ask(sid, 'document.getElementById("xC_venue").click(); document.getElementById("joinBtn").click(); true')   # a new venue's box starts unticked (21 Nov 2026): the player ticks it
                 got = joins(c)
-                ok('R %s %s: venue box ticked: the join asks for the number on the line to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
+                ok('R %s %s: venue box ticked by the player: the join asks for the number on the line to be used, and sends no number' % (game, size), bool(got) and got[0].get('use_fields') == ['mobile'] and not got[0].get('mobile') and (got[0].get('consent') or {}).get('venue') is True, got)
             if pre == 'RMR':
                 ask(sid, 'document.getElementById("vpKnownNotNum").click(); true'); time.sleep(0.4)
                 L2 = look(sid)
@@ -383,7 +407,7 @@ def returning(game, path, w, h):
                         r = B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)
                         f = os.path.join(PRIV, '%s-%s-4-not-me.png' % (game, size)); open(f, 'wb').write(base64.b64decode(r['data'])); print('  shot ' + f)
                     except Exception as e: print('  (no screenshot: %s)' % e)
-                ok('R %s %s: Not me clears it: the normal empty form, every box fresh and ticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Playing as' not in L.get('text', '') and all(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
+                ok('R %s %s: Not me clears it: the normal empty form, every box fresh and unticked' % (game, size), L.get('keys') == '[]' and 'xMobile' in L.get('ids', []) and 'Playing as' not in L.get('text', '') and bool(L.get('labs')) and not any(x[1] for x in L.get('labs', [])) and ask(sid, '(document.getElementById("nameIn")||{}).value===""'), L)
         finally:
             B.close_tab(tid)
 

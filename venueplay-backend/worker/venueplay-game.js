@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '20 Nov 2026, 08:17 · f0ee2b70';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 10:01 · bca220c6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2532,12 +2532,13 @@ function gatedCapture(cfg, b) {
  *   - THE DETAILS BELONG TO THE ACCOUNT OWNER of the venue (the Game Organiser). A host running a game on someone
  *     else's account gets none of them: the row is the venue's, and no host route reads it.
  *   - CONSENT LIKE MOSHTIX (UPDATE 4 and 7): "Yes! Send me news and offers by SMS and email from:" venueplay / the
- *     venue / the host (only when a host with a brand card, not the account owner, runs the game). PRE-TICKED. Each box
+ *     venue / the host (only when a host with a brand card, not the account owner, runs the game). ON (21 Nov 2026),
+ *     each box UNTICKED until the player ticks it (CONSENT_PRETICK, below, is the one setting for pre-ticking, off
+ *     until Dean's lawyer has said yes: the Spam Act wants express consent). Each box
  *     is its own vp_player_consents row (who, when, source, wording version); each sender reads only its own. The
  *     venue's box is ALSO the venue's own marketing_optin on vp_players, through gatedCapture as always, so the
- *     venue's existing export reads exactly what it read before. SWITCHED BY env.CONSENT_BLOCK = 'three' (off until
- *     Dean's lawyer has said yes to pre-ticked boxes: the Spam Act wants express consent). Off, the phones keep the
- *     one unticked "Send me offers from {venue}" exactly as today.
+ *     venue's existing export reads exactly what it read before. env.CONSENT_BLOCK = 'single' switches back to the
+ *     one unticked "Send me offers from {venue}" without a release.
  *   - Service messages (a win, a change to a game) never need a box (UPDATE 5): nothing here gates them.
  * Fails OPEN to today's behaviour: before migration 202 every read answers "not known" and nothing is written.
  * ===================================================================== */
@@ -2553,9 +2554,21 @@ const JOIN_NOTICE = { version: 'vpn-1-19nov', before: 'By playing you agree to '
 JOIN_NOTICE.text = JOIN_NOTICE.before + JOIN_NOTICE.link + JOIN_NOTICE.after;   // the line as every player reads it (box added only beside the tick)
 const KNOWN_FIELDS = ['first_name', 'last_name', 'email', 'mobile', 'postcode'];
 const KNOWN_KEYS_MAX = 8;
-const CONSENT_THREE_VERSION = 'vpc-4-22nov';
+/* THE THREE BOXES ARE ON, EACH UNTICKED (Dean 21 Nov 2026: "switch them on"; ACMA: a pre-ticked box is generally not
+   express consent under the Spam Act 2003, and open question 26 keeps pre-ticking off until Dean's lawyer agrees).
+   ONE SETTING decides how a box for a sender this phone never answered starts: CONSENT_PRETICK. It is false unless the
+   Worker's encrypted variable CONSENT_PRETICK is exactly 'on' (only after the lawyer has said yes in writing). Each start
+   state has its own wording version, so every vp_player_consents row says what the person saw:
+     vpc-5-22nov  the three boxes, the words below, a new sender's box UNTICKED (this build)
+     vpc-4-22nov  the same words, a new sender's box PRE-TICKED (only with CONSENT_PRETICK 'on')
+   A box for a sender the phone already answered always shows that sender's own latest answer, whatever the setting.
+   env.CONSENT_BLOCK 'single' is the way back to the one unticked venue box without a release (nothing else turns it off). */
+const CONSENT_THREE_VERSION = 'vpc-5-22nov';
+const CONSENT_PRETICK_VERSION = 'vpc-4-22nov';
 const CONSENT_PARTIES = ['venueplay', 'venue', 'host'];
-function consentMode(env) { return String((env && env.CONSENT_BLOCK) || '').trim().toLowerCase() === 'three' ? 'three' : 'single'; }
+function consentMode(env) { return String((env && env.CONSENT_BLOCK) || '').trim().toLowerCase() === 'single' ? 'single' : 'three'; }
+function consentPretick(env) { return String((env && env.CONSENT_PRETICK) || '').trim().toLowerCase() === 'on'; }
+function consentWordsVersion(env) { return consentPretick(env) ? CONSENT_PRETICK_VERSION : CONSENT_THREE_VERSION; }
 /* The keys a phone says it holds: 64 hex characters each, eight at most, no repeats. */
 function knownKeysFrom(raw) {
   if (!Array.isArray(raw)) return [];
@@ -2658,7 +2671,7 @@ async function sessionHostParty(env, session) {
 /* The boxes a phone shows in 'three' mode: venueplay, the venue, and the host when there is one. EVERY box shows (Dean
    16 Nov 2026, through main): a sender this phone already answered shows its CURRENT answer (current: true/false, the
    latest row for THAT sender: venueplay; THIS venue; THIS host login); a sender it never answered (a new venue, a new
-   host) is a fresh box, pre-ticked. The venue box of venue A is never venue B's answer. */
+   host) is a fresh box, unticked (pre-ticked only with CONSENT_PRETICK 'on'). The venue box of venue A is never venue B's answer. */
 async function consentParties(env, session, venueName, knownId, venueId) {
   const host = session ? await sessionHostParty(env, session) : null;
   const parties = [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: venueName || 'this venue' }];
@@ -2741,7 +2754,8 @@ async function knownAtJoin(env, venueId, cfg, cap, keys, noticeSeen, use, venueY
 
 /* ------------------------------ POST /join/known ------------------------------
  * body { code, keys:[...] } -> { known: { hello, need:[field names], ix } | null,
- *                               consent: { mode:'single' } | { mode:'three', version, parties:[{party,name}] },
+ *                               consent: { mode:'single' } | { mode:'three', version, ticked, parties:[{party,name}] },
+ *                               (ticked: how a box for a sender never answered starts; false unless CONSENT_PRETICK is 'on')
  *                               organiser }
  * Asked by the phone beside /join/info (which is cached per code and so can say nothing about one phone). hello is the
  * first name and nothing else; need names the fields still to ask; ix says which of the phone's keys matched, so "Not
@@ -2781,7 +2795,7 @@ async function handleJoinKnown(request, env, json) {
   let consent = { mode: 'single' };
   if (consentMode(env) === 'three') {
     const cp = await consentParties(env, session, venueName, k && k.row.id, venueId);
-    consent = { mode: 'three', version: CONSENT_THREE_VERSION, parties: cp.parties.map((p) => (typeof p.current === 'boolean' ? { party: p.party, name: p.name, current: p.current } : { party: p.party, name: p.name })) };
+    consent = { mode: 'three', version: consentWordsVersion(env), ticked: consentPretick(env), parties: cp.parties.map((p) => (typeof p.current === 'boolean' ? { party: p.party, name: p.name, current: p.current } : { party: p.party, name: p.name })) };
   }
   return json({ known: known, consent: consent, organiser: venueName, notice: notice });
 }
@@ -3025,10 +3039,10 @@ async function handleCapture(request, env, json) {
      as the venue's own tick, and the known row for this venue, exactly as /join does for trivia and musical bingo. */
   const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
   const capIn = joinCapture(cfg, b);
-  if (consentAns && capIn.marketing_optin) capIn.consent_version = CONSENT_THREE_VERSION;
+  if (consentAns && capIn.marketing_optin) capIn.consent_version = consentWordsVersion(env);
   const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
   const knownRes = await knownAtJoin(env, venueId, cfg, capIn, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
-  optinAfterFill(cfg, capIn, venueYes, consentAns ? CONSENT_THREE_VERSION : '');
+  optinAfterFill(cfg, capIn, venueYes, consentAns ? consentWordsVersion(env) : '');
   const row = Object.assign({ venue_id: venueId, source: 'bingo' }, capIn);
   /* the known row that made this list row: a number change moves only these (migration 215, F1 18 Nov 2026) */
   if (knownRes.knownId) row.known_id = knownRes.knownId;
@@ -3074,7 +3088,7 @@ async function handleCapture(request, env, json) {
       let vName = '';
       try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
       const cp = await consentParties(env, sess, vName, knownRes.knownId, venueId);
-      await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: 'bingo',
+      await writeConsents(env, { parties: cp.parties, answers: consentAns, version: consentWordsVersion(env), source: 'bingo',
         venueId: venueId, knownId: knownRes.knownId, playerId: player && player.id, sessionId: sess && sess.id });
     }
     return json(knownRes.key ? { ok: true, stored: true, known_key: knownRes.key } : { ok: true, stored: true });
@@ -5327,12 +5341,12 @@ async function handleJoin(request, env, json) {
      venue has enabled, so it looked right, but a crafted POST wrote an email, a mobile, a
      postcode and a marketing_optin with a consent timestamp for a venue that collects none of it.
      Same rules as /capture now, out of one function, so the two cannot drift apart again. */
-  /* THE THREE BOXES (INBOX 416 UPDATE 4, env.CONSENT_BLOCK 'three'): the venue's own box is the venue's marketing tick,
+  /* THE THREE BOXES (INBOX 416 UPDATE 4, on unless env.CONSENT_BLOCK is 'single'): the venue's own box is the venue's marketing tick,
      kept on the player row through gatedCapture exactly as the single tick always was. */
   const consentAns = (consentMode(env) === 'three' && b.consent && typeof b.consent === 'object') ? b.consent : null;
   /* FIRST NAME + MOBILE AT EVERY VENUE (INBOX 416 UPDATE 2): joinCapture, never for the demo (DEMO_COLLECT). */
   const cap = isDemoSession(session) ? demoCapture(b) : joinCapture(cfgRow, b);
-  if (consentAns && cap.marketing_optin) cap.consent_version = CONSENT_THREE_VERSION;
+  if (consentAns && cap.marketing_optin) cap.consent_version = consentWordsVersion(env);
 
   // Soft dedup (LIVE only with env.RL): a rapid re-join from the same network +
   // device hint reuses that device's existing player row instead of minting a new
@@ -5427,7 +5441,7 @@ async function handleJoin(request, env, json) {
   if (!isDemoSession(session)) {
     const venueYes = consentAns ? consentAns.venue === true : b.marketing_optin === true;
     knownRes = await knownAtJoin(env, session.venue_id, cfgRow, cap, knownKeysFrom(b.known_keys), b.notice_version, b.use_fields, venueYes);
-    optinAfterFill(cfgRow, cap, venueYes, consentAns ? CONSENT_THREE_VERSION : String(b.consent_version || '').slice(0, 20));
+    optinAfterFill(cfgRow, cap, venueYes, consentAns ? consentWordsVersion(env) : String(b.consent_version || '').slice(0, 20));
   }
 
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
@@ -5515,7 +5529,7 @@ async function handleJoin(request, env, json) {
     try { const vn = await sbGet(env, 'vp_venues', 'id=eq.' + enc(session.venue_id) + '&select=name&limit=1'); vName = (vn && vn[0] && vn[0].name) || ''; } catch (e) { vName = ''; }
     const cp = await consentParties(env, session, vName, knownRes.knownId, session.venue_id);
     const src = { trivia: 'trivia', musical_bingo: 'musical' }[String(session.lobby_format || '')] || String(b.fmt || '').slice(0, 20) || 'game';
-    await writeConsents(env, { parties: cp.parties, answers: consentAns, version: CONSENT_THREE_VERSION, source: src,
+    await writeConsents(env, { parties: cp.parties, answers: consentAns, version: consentWordsVersion(env), source: src,
       venueId: session.venue_id, knownId: knownRes.knownId, playerId: newPlayer && newPlayer.id, sessionId: session.id });
   }
   return json(knownRes.key ? { token, snapshot, known_key: knownRes.key } : { token, snapshot });

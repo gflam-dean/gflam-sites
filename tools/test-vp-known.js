@@ -5,7 +5,7 @@
        no one tick again; trivia keeps the team name and leaves the first name to the Worker
      - "Not me": the key goes, the full form comes back (every box, every consent box)
      - never a value we hold on the screen: the phone is never given one, and nothing here prints one
-     - the three boxes (Moshtix style): pre-ticked, the Worker's names, the exact words, each answer its own; the venue's
+     - the three boxes (Moshtix style, ON 21 Nov 2026): UNTICKED unless the Worker says ticked (its one setting), the Worker's names, the exact words, each answer its own; the venue's
        box is the venue's tick
      - the join line's words; no em dashes; a slow or failed ask is the full form
      - the first-name box for trivia, the required-mobile flag
@@ -84,7 +84,7 @@ function shownText() { var t = ''; BODY.walk(function (e) { if (e._text) t += e.
 function ids(box) { var out = []; box.walk(function (e) { if (e.tagName === 'INPUT' && e.id) out.push(e.id); }); return out; }
 function labels(box) { var out = []; box.walk(function (e) { if (e.tagName === 'LABEL') out.push(e); }); return out; }
 var ALL = { first_name: true, last_name: false, postcode: false, email: true, mobile: true, mobile_required: false, marketing_optin: true };
-var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: 'The Royal' }, { party: 'host', name: 'Quiz Masters Co' }] };
+var THREE = { mode: 'three', version: 'vpc-5-22nov', ticked: false, parties: [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: 'The Royal' }, { party: 'host', name: 'Quiz Masters Co' }] };
 
 (async function () {
   print('1. THE KEY');
@@ -148,15 +148,15 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   print('4. "NOT ME"');
   LSD = {}; VPKnown.keep({ known_key: k('b') }); VPKnown.keep({ known_key: k('a') });
   P = page();
-  var CUR = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay', current: true }, { party: 'venue', name: 'The Royal', current: false }, { party: 'host', name: 'Quiz Masters Co' }] };
+  var CUR = { mode: 'three', version: 'vpc-5-22nov', ticked: false, parties: [{ party: 'venueplay', name: 'venueplay', current: true }, { party: 'venue', name: 'The Royal', current: false }, { party: 'host', name: 'Quiz Masters Co' }] };
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: { hello: 'Alan', need: [], ix: 0 }, consent: CUR, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, headWords: 'Join the game', venueName: 'The Royal' });
   var cur = labels(P.box).map(function (l) { return (l.querySelector('input') || {}).checked; });
-  show('known: every box shows THAT sender\'s current answer; a new sender (the host) is a fresh, ticked box', cur.join() === 'true,false,true', cur);
+  show('known: every box shows THAT sender\'s current answer; a new sender (the host) is a fresh, UNTICKED box', cur.join() === 'true,false,false', cur);
   document.getElementById('vpKnownNotMe').click();
   show('the key at that place is forgotten, the other kept', VPKnown.keys().join() === k('b'), VPKnown.keys());
   show('the name box is back, empty; the heading is the page\'s own', P.nameIn.style.display === '' && P.nameIn.value === '' && P.head.textContent === 'Join the game', [P.nameIn.style.display, P.nameIn.value, P.head.textContent]);
   show('the full form: email and mobile', ids(P.box).indexOf('xEmail') >= 0 && ids(P.box).indexOf('xMobile') >= 0, ids(P.box));
-  show('every consent box fresh and ticked (the normal empty form)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return (l.querySelector('input') || {}).checked === true; }));
+  show('every consent box fresh and UNTICKED (the normal empty form; a current yes is not carried to someone else)', labels(P.box).length === 3 && labels(P.box).every(function (l) { return (l.querySelector('input') || {}).checked === false; }));
   show('no hello left', !document.getElementById('vpKnownHi'));
 
   print('5. THE THREE BOXES (MOSHTIX STYLE)');
@@ -164,20 +164,29 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: THREE, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, head: P.head, venueName: 'The Royal' });
   var L = labels(P.box);
   show('three boxes: venueplay, the venue, the host, by the Worker\'s names', L.map(function (l) { return l.textContent.trim(); }).join('|') === 'venueplay|The Royal|Quiz Masters Co', L.map(function (l) { return l.textContent; }));
-  show('all PRE-TICKED', L.every(function (l) { return (l.querySelector('input') || {}).checked === true; }));
+  show('all UNTICKED to start (ACMA: a pre-ticked box is not express consent)', L.length === 3 && L.every(function (l) { return (l.querySelector('input') || {}).checked === false; }));
+  show('...and answers() before any tap is every sender no', JSON.stringify(VPConsent.answers()) === JSON.stringify({ venueplay: false, venue: false, host: false }), VPConsent.answers());
+  show('...so the venue is not opted in until its box is ticked', VPConsent.optedIn({ mobile: '0412345678' }) === false);
   show('no one tick beside them', !document.getElementById('xOptin'));
   var all = ''; P.box.walk(function (e) { if (e._text) all += e._text + '\n'; });
   show('the heading words exact', all.indexOf('Yes! Send me news and offers by SMS and email from:') >= 0, all);
   show('the line under exact', all.indexOf('Each one uses your details under its own privacy policy. Unsubscribe any time.') >= 0);
   show('no em dash anywhere in the words', (VPConsent.THREE_HEAD + VPConsent.THREE_NOTE).indexOf('—') < 0);
-  document.getElementById('xC_host').click();
+  document.getElementById('xC_venueplay').click(); document.getElementById('xC_venue').click();
   var A = VPConsent.answers();
-  show('each answer its own: the host unticked, the others still yes', A.venueplay === true && A.venue === true && A.host === false, A);
+  show('each answer its own: venueplay and the venue ticked, the host left unticked', A.venueplay === true && A.venue === true && A.host === false, A);
   cap = VPKnown.capture({ first_name: 'Sam', mobile: '0412345678' });
-  show('the answers go on the join body as consent', cap.consent && cap.consent.host === false && cap.consent.venue === true, cap);
+  show('the answers go on the join body as consent', cap.consent && cap.consent.host === false && cap.consent.venue === true && cap.consent.venueplay === true, cap);
   show('the venue box is the venue\'s tick (with a contact method)', VPConsent.optedIn({ mobile: '0412345678' }) === true && VPConsent.optedIn({}) === false);
   document.getElementById('xC_venue').click();
   show('the venue box unticked: not opted in', VPConsent.optedIn({ mobile: '0412345678' }) === false);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', version: 'vpc-4-22nov', ticked: true, parties: [{ party: 'venueplay', name: 'venueplay', current: false }, { party: 'venue', name: 'The Royal' }, { party: 'host', name: 'Quiz Masters Co' }] }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, venueName: 'The Royal' });
+  var tk = labels(P.box).map(function (l) { return (l.querySelector('input') || {}).checked; });
+  show('ONLY the Worker\'s one setting (consent.ticked true) starts a NEW sender\'s box ticked; a sender\'s own no stays unticked', tk.join() === 'false,true,true', tk);
+  P = page();
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', version: 'vpc-5-22nov', ticked: 'yes', parties: [{ party: 'venueplay', name: 'venueplay', current: false }, { party: 'venue', name: 'The Royal' }] }, organiser: 'The Royal' }, kind: 'person', nameIn: P.nameIn, venueName: 'The Royal' });
+  show('ticked must be exactly true ("yes" is not), and a sender\'s own no stays unticked', labels(P.box).length === 2 && labels(P.box).every(function (l) { return (l.querySelector('input') || {}).checked === false; }));
   P = page();
   VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', parties: [{ party: 'evil', name: 'X' }, { party: 'venue', name: '' }] } }, kind: 'person', nameIn: P.nameIn });
   show('a party the page does not know is never drawn; a venue with no name is "this venue"', labels(P.box).length === 1 && labels(P.box)[0].textContent.trim() === 'this venue', labels(P.box).map(function (l) { return l.textContent; }));
@@ -276,7 +285,7 @@ var THREE = { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venuepl
   np = document.getElementById('vpJoinNotice');
   show('a venue with the offers tick off: no sentence about a box that is not there', np && np.textContent === NOTE_BASE && !document.getElementById('xOptin'), np && np.textContent);
   P = page();
-  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', version: 'vpc-4-22nov', parties: [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: 'The Royal' }] }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
+  VPKnown.paint({ box: P.box, collect: ALL, info: { known: null, consent: { mode: 'three', version: 'vpc-5-22nov', ticked: false, parties: [{ party: 'venueplay', name: 'venueplay' }, { party: 'venue', name: 'The Royal' }] }, notice: NOTE }, kind: 'person', nameIn: P.nameIn });
   np = document.getElementById('vpJoinNotice');
   show('the three boxes (their own note): no one-box sentence', np && np.textContent === NOTE_BASE && !document.getElementById('xOptin'), np && np.textContent);
   P = page();
