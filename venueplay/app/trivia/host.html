@@ -1497,11 +1497,10 @@
       bcast(rv);
       renderConsole();
       if(!isLast){ setTimeout(function(){ if(G.status==="reveal" && G.current && (G.current.qi||G.current.qseq)===qnow){
-        /* No players: never an empty board, and never "Thanks for playing" between questions (Dean, 15 Nov 2026):
-           between:true puts the join screen up with "Next question coming up". The real end sends it without.
-           Unchanged by the round rule: an empty room still gets the join screen after every answer. */
-        if(!G.board.length && playerCount()===0){ bcast({ t:"nobody", between:true }); }
-        else if(rEnd && G.board.length){ roundShow(rn, "reveal"); }
+        /* No players: nothing is sent between questions (Jobs 523, real night 20 Nov 2026). Not an empty board, not
+           "Thanks for playing" (Dean, 15 Nov 2026), and not the join screen either: that put SCAN TO PLAY on the wall mid
+           game. The answer stays up until Next question, as it does with teams in; the real end still sends "nobody". */
+        if(rEnd && G.board.length){ roundShow(rn, "reveal"); }
       } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }

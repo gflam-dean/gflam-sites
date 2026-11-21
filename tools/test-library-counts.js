@@ -63,6 +63,7 @@ function world() {
   songs.push({ id: 'no-clip', title: 'N', artist: 'A' });                                                          // no clip
   songs.push({ id: 'plain-http', title: 'H', artist: 'A', previewUrl: 'http://example.com/h.m4a' });               // not https
   songs.push({ id: 'empty-clip', title: 'E', artist: 'A', previewUrl: '' });
+  songs.push({ id: 'hidden-song', title: 'Rude Title', artist: 'A', previewUrl: 'https://audio-ssl.itunes.apple.com/p/h.m4a', hidden: true });   // hidden (vp-songsafe.js): no console plays it
   LIB = { version: 2, songs: songs, playlists: [{ id: 'p1', name: 'P', songIds: ['song-1'] }] };
 }
 
@@ -79,6 +80,32 @@ function world() {
   check('the sets counted are library sets with no owner venue', ASKED.some(function (a) { return /^GET .*vp_question_sets\?visibility=eq\.library&owner_venue_id=is\.null/.test(a); }), ASKED.slice(0, 3));
   check('the songs are read from the library file every musical bingo console plays from', ASKED.some(function (a) { return a === 'GET https://www.venueplay.com.au/data/musical-library.json'; }), ASKED);
   check('a song listed twice counts once, a song with no clip or a non-https clip does not count', r.body.songs === 40, r.body.songs);
+  check('a HIDDEN song (rude title, 16 Nov 2026) is not counted: no console can play it (Jobs 526)', r.body.songs === 40, r.body.songs);
+
+  /* JOBS 526 (real night 20 Nov 2026): the homepage said 6,740 songs and the musical console's "All songs" said 6,738.
+     ONE NUMBER: this count, run over the REAL /data/musical-library.json, against the musical console's REAL
+     loadLibrary() (lifted out of venueplay/app/musical/host.html, with the real /app/vp-songsafe.js) over the same
+     file. "All songs" on the console is LIB.songs.length (fillPlaylists). */
+  print('the Worker: the homepage count is the console\'s "All songs" count, on the real library');
+  var REAL = JSON.parse(readFile('venueplay/data/musical-library.json'));
+  world(); LIB = REAL;
+  r = await vpbLibraryCountsRoute(ENV, J);
+  var MH = readFile('venueplay/app/musical/host.html');
+  var mi = MH.indexOf('function loadLibrary(){'), md = 0, mk = MH.indexOf('{', mi);
+  do { if (MH[mk] === '{') md++; else if (MH[mk] === '}') md--; mk++; } while (md > 0 && mk < MH.length);
+  var consoleWin = {};
+  (new Function('window', readFile('venueplay/app/vp-songsafe.js')))(consoleWin);
+  var CL = (new Function('window', 'VPSongSafe', 'fetch',
+    'var LIB={ songs:[], byId:{}, byTitle:{}, playlists:[], plById:{} }, libLoaded=false, LIB_URL="x";' +
+    'function normTitle(t){ return (t==null?"":String(t)).trim().toLowerCase(); } function taKey(a,b){ return normTitle(a)+"|"+normTitle(b); }' +
+    MH.slice(mi, mk) + '; return { load: loadLibrary, lib: function(){ return LIB; } };'))(consoleWin, consoleWin.VPSongSafe, function () {
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(REAL); } }); });
+  check('the console\'s own loadLibrary() was found and lifted', mi > 0 && typeof CL.load === 'function');
+  await CL.load();
+  var consoleAll = CL.lib().songs.length;
+  check('the homepage\'s song count is the musical console\'s "All songs" count, on the real library (Jobs 526: 6,740 vs 6,738)',
+        typeof r.body.songs === 'number' && r.body.songs === consoleAll, { homepage: r.body.songs, console: consoleAll });
+  check('and the real library has hidden songs, so this check can tell the two rules apart', REAL.songs.some(function (x) { return x && x.hidden === true; }));
   var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   check('the dispatcher answers GET /library-counts with no login',
         src.indexOf("if (request.method === 'GET' && path === '/library-counts') return await vpbLibraryCountsRoute(env, json);") !== -1);

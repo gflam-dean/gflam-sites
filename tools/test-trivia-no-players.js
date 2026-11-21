@@ -8,8 +8,9 @@
      - nobody joined, server answered with an empty board: the plain "Nobody has joined" line, a
        "nobody" message for the TV, no error bar, no podium;
      - phones present but the fetch failed: the real "could not be loaded" error, and no "nobody";
-     - the between-question auto follow-up with nobody joined: the same calm message, not an
-       empty board; with players, mid-round, nothing follows the answer (Dean, 7 Nov 2026: "The
+     - the between-question auto follow-up with nobody joined: NOTHING is sent, the answer stays up
+       (not an empty board, not Thanks for playing, and not the join screen: Jobs 523, real night 20 Nov
+       2026, when SCAN TO PLAY filled the wall between Q1 and Q2); with players, mid-round, nothing follows the answer (Dean, 7 Nov 2026: "The
        leaderboard should show every round only"); at the end of a round that is not the last (a
        phone night has a round every 10 questions) the podium, then "Leaderboard after round N".
 
@@ -115,8 +116,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   C.G.status = 'question'; C.reveal(); await flush();
   show('reveal went to the TV first, and tells the TV not to roll to a board by itself', C.types() === 'reveal' && C.sent[0].board === false, C.types() + ' ' + JSON.stringify(C.sent[0]));
   C.timers.slice().forEach(function (f) { f(); });
-  show('with nobody joined the 5 second follow-up is the calm state, not an empty board', C.types() === 'reveal,nobody', C.types());
-  show('and it says between:true, so the TV keeps the game going, never "Thanks for playing" (Dean, 15 Nov 2026)', C.sent[1] && C.sent[1].between === true, JSON.stringify(C.sent[1]));
+  show('with nobody joined the 5 second follow-up sends NOTHING: the answer stays up, never the join screen, an empty board or Thanks for playing (Jobs 523)', C.types() === 'reveal', C.types());
 
   print('the scores only at the end of a round (Dean, 7 Nov 2026)');
   C = makeConsole({ players: 3, qseq: 3, fetchBoard: [{ name: 'A', points: 100 }] });
@@ -149,7 +149,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   C = makeConsole({ players: 0, qseq: 10, qtotal: 20, fetchBoard: [] });
   C.G.status = 'question'; C.reveal(); await flush();
   C.timers.slice().forEach(function (f) { f(); });
-  show('the end of round 1 with nobody joined: the calm join screen, never an empty podium', C.types() === 'reveal,nobody' && C.sent[1].between === true, C.types());
+  show('the end of round 1 with nobody joined: nothing follows the answer, never an empty podium or the join screen (Jobs 523)', C.types() === 'reveal', C.types());
   C = makeConsole({ players: 0, qseq: 10, fetchBoard: [] });
   C.G.status = 'question'; C.reveal(); await flush();
   show('after the last question nothing is scheduled: the host reveals by hand', C.timers.length === 0, C.timers.length + ' timers');
@@ -161,17 +161,16 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   var BLOCK = bi < 0 || bj < 0 ? '' : SCREEN.slice(bi, bj).replace(/\/\*[\s\S]*?\*\//g, '');   // the TV's own handler, comments left out
   show('the TV has a handler for it', BLOCK.length > 50);
   show('the TV paints "Thanks for playing" for it', /renderBoardPaged\("Thanks for playing", \[\]\)/.test(BLOCK), BLOCK.slice(0, 120));
-  /* BETWEEN QUESTIONS (Dean, 15 Nov 2026): the TV's own handlers, run on a fake wall. */
-  var fnB = (function(){ var i=SCREEN.indexOf('function betweenJoin('); if(i<0) return ''; var dd=0,k=SCREEN.indexOf('{',i); do{ if(SCREEN[k]==='{')dd++; else if(SCREEN[k]==='}')dd--; k++; }while(dd>0); return SCREEN.slice(i,k); })();
-  show('the TV has betweenJoin()', fnB.length > 50);
-  var wi = SCREEN.indexOf('else if(m.t==="nobody" && m.between===true)');
-  show('the TV sends a between:true "nobody" to betweenJoin, before the Thanks for playing branch', wi > 0 && wi < bi && /betweenJoin\(\)/.test(SCREEN.slice(wi, wi + 120)));
+  /* BETWEEN QUESTIONS (Dean, 15 Nov 2026; Jobs 523, 20 Nov 2026): the TV's own handlers, run on a fake wall. */
+  var fnB = '';
   var li = SCREEN.indexOf('else if(m.t==="leaderboard"){'), lj = SCREEN.indexOf('else if(m.t==="nobody"', li);
   var LB = SCREEN.slice(li, lj);
   /* THE ROLL AFTER A REVEAL, run for real: the TV's renderReveal() and its leaderboard branch, on a fake wall whose
      timers are fired by hand. The reveal can carry an empty board that the console fills a moment later. */
   var li = SCREEN.indexOf('else if(m.t==="leaderboard"){'), lj = SCREEN.indexOf('else if(m.t==="nobody"', li);
   var LBSRC = 'function onLb(m){ if(false){} ' + SCREEN.slice(li, lj) + ' }';
+  /* and the two "nobody" branches after it, for the between-questions message an older console may still send */
+  var NBSRC = 'function onNb(m){ if(false){} ' + SCREEN.slice(lj, SCREEN.indexOf('else if(m.t==="podium")', lj)) + ' }';
   function wall() {
     var els = {}, painted = [], shown = [], timers = [];
     function mk(id) { var c = {}; return { id:id, textContent:'', innerHTML:'', className:'', style:{}, children:[], parentNode:null, nextSibling:null,
@@ -185,7 +184,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
       setTimeout:function(f){ timers.push(f); return timers.length; }, clearTimeout:function(){}, clearInterval:function(){} };
     var src = 'function staleAfterEnd(){ return false; }   /* the finished-quiz guard: tools/test-tv-follows-finished-game.js */\nvar curQ={ options:["a","b","c","d"], label:"Question 1", text:"Q?" }, boardRollTimer=null, rollRows=null, celebrateTimer=null;\n' +
       fnB + '\n' + (function(){ var i=SCREEN.indexOf('function renderReveal('), dd=0, k=SCREEN.indexOf('{',i); do{ if(SCREEN[k]==='{')dd++; else if(SCREEN[k]==='}')dd--; k++; }while(dd>0); return SCREEN.slice(i,k); })() +
-      '\n' + LBSRC + '\n; return { rev: renderReveal, lb: onLb, roll: function(){ var f=__t.pop(); if(f) f(); } };';
+      '\n' + LBSRC + '\n' + NBSRC + '\n; return { rev: renderReveal, lb: onLb, nb: onNb, roll: function(){ var f=__t.pop(); if(f) f(); }, $: $ };';
     var names = Object.keys(env).concat(['__t', 'renderLobby']);
     var vals = names.map(function (k) { return k === '__t' ? timers : k === 'renderLobby' ? function(){} : env[k]; });
     var api = new Function(names.join(','), src).apply(null, vals);
@@ -205,20 +204,18 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   show('an empty leaderboard message (not the final scores) paints nothing', w3.painted.length === 0 && w3.shown.indexOf('tvBoard') < 0, JSON.stringify([w3.painted, w3.shown]));
   var w4 = wall(); w4.rev(Object.assign({ leaderboard: [{ name:'A', points:100 }, { name:'B', points:0 }] }, REV)); w4.roll();
   show('CONTROL: a reveal that carries its board still rolls to it', JSON.stringify(w4.painted) === '[["Leaderboard",2]]', JSON.stringify(w4.painted));
-  /* run the TV's real betweenJoin() on a fake wall */
-  var R = (function (SRC) {
-    var els = {}; function $(id){ if(els[id]) return els[id]; var c = {}; return (els[id] = { id:id, textContent:'', classList:{ add:function(x){ c[x]=1; }, remove:function(x){ delete c[x]; }, contains:function(x){ return !!c[x]; } } }); }
-    var shown = '', state = { phase:'reveal' }, boardRollTimer = 7, celebrateTimer = null;
-    function show(w){ shown = w; } function renderLobby(){ $('lobbySub').textContent = 'Grab your phone and join, the quiz is about to start'; }
-    function clearTimeout(){} function clearInterval(){}
-    eval(SRC + ';betweenJoin();');
-    return { shown: shown, phase: state.phase, sub: $('lobbySub').textContent, roll: boardRollTimer, title: $('tvBoardTitle').textContent, between: $('tvLobby').classList.contains('between') };
-  })(fnB);
-  show('betweenJoin puts up the join screen (the lobby layer, its QR and code)', R.shown === 'tvLobby', R.shown);
-  show('with "Next question coming up", never "Thanks for playing"', /^Next question coming up\./.test(R.sub) && !/thanks/i.test(R.sub + R.title), R.sub);
-  show('and stops the roll to the board, so no empty Leaderboard follows', R.roll === null);
-  show('and marks the join screen "between", so that line is shown (the ready join screen hides its sub line)', R.between === true);
-  show('the phase is not "lobby", so a late host_here or session message does not repaint "the quiz is about to start"', R.phase !== 'lobby', R.phase);
+  /* JOBS 523 (real night 20 Nov 2026, The Mini Bar, 0 phones): between Q1's answer and Q2 the wall showed the join screen,
+     SCAN TO PLAY. A "nobody" with between:true (an older console still open on a tablet sends it) changes NOTHING on the
+     wall: the answer stays up, no join screen, no board, no Thanks for playing, and the quiz is still on. */
+  var w5 = wall(); w5.rev(Object.assign({ leaderboard: [] }, REV)); w5.shown.length = 0;
+  w5.nb({ t:'nobody', between:true }); w5.roll();
+  show('between questions with nobody joined, the wall stays on the answer: no join screen, no board (Jobs 523)',
+       w5.shown.length === 0 && w5.painted.length === 0, JSON.stringify([w5.shown, w5.painted]));
+  show('and the quiz is still on (the phase is still the reveal, not the lobby, not done)', w5.state.phase === 'reveal' && w5.state.done !== true, JSON.stringify(w5.state));
+  var w6 = wall(); w6.rev(Object.assign({ leaderboard: [] }, REV)); w6.shown.length = 0;
+  w6.nb({ t:'nobody' });
+  show('CONTROL: the real end (no between flag) still says Thanks for playing', JSON.stringify(w6.painted) === '[["Thanks for playing",0]]' && w6.shown.indexOf('tvBoard') >= 0 && w6.state.done === true, JSON.stringify([w6.shown, w6.painted]));
+  show('the TV has no between-questions join screen any more (betweenJoin gone)', SCREEN.indexOf('function betweenJoin(') < 0);
 
   show('and it never paints an error word on the wall for it', !/could not|error|failed|connection/i.test(BLOCK), BLOCK);
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });

@@ -1012,7 +1012,7 @@
   "counted_by": "lines"
  },
  "tools/test-library-counts.js": {
-  "checks": 43,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
@@ -1572,7 +1572,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 48,
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -2409,6 +2409,10 @@
  },
  "tools/trivia-round-podium-in-chrome.test.py": {
   "checks": 165,
+  "counted_by": "lines"
+ },
+ "tools/trivia-theme-map.test.py": {
+  "checks": 31,
   "counted_by": "lines"
  },
  "tools/signup-player-limits-in-chrome.test.py": {

@@ -9,8 +9,9 @@ quiz with no phones, and checks what the host reads and what the wall paints:
 
   - First question, with nobody joined, plays the LET'S PLAY TRIVIA show on the wall (Start round does not), and
     the question follows the whole show (Dean, 16 Nov 2026)
-  - the between-question auto leaderboard, with nobody joined: the TV shows the join screen with "Next
-    question coming up" (Dean, 15 Nov 2026), never "Thanks for playing" and never an empty Leaderboard
+  - the between-question auto leaderboard, with nobody joined: the TV stays on the answer (Jobs 523, real night
+    20 Nov 2026: SCAN TO PLAY filled the wall mid game), never the join screen, never "Thanks for playing"
+    (Dean, 15 Nov 2026) and never an empty Leaderboard
   - Reveal leaderboard with nobody joined: the console says, plainly, "Nobody has joined this game yet, so
     there are no scores to show. Players join with the code on the TV.", the red error bar stays down, and
     the TV shows the same calm end state with no error word on it
@@ -110,17 +111,14 @@ def play():
         # 1. THE BETWEEN-QUESTION AUTO LEADERBOARD, with nobody joined
         print('the between-question leaderboard, nobody joined')
         # Dean, 15 Nov 2026 (The Mini Bar): "the screen says thanks for playing between questions", and a LEADERBOARD
-        # title with nothing under it. Between questions the game is not over: the join screen, "Next question coming up".
-        ok('after the 5 second wait the TV shows the join screen with "Next question coming up"',
-           r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var l=d&&d.getElementById("tvLobby"), s=d&&d.getElementById("lobbySub"); return !!l && !l.classList.contains("hidden") && !!s && /Next question coming up/.test(s.textContent);})()', 25) is True,
-           r.ask(tv, TV))
-        time.sleep(1.5)   # past both 5.2 s timers (the console's and the TV's own roll to the board): nothing replaces it
+        # title with nothing under it. Jobs 523 (real night 20 Nov 2026): and not the join screen either, SCAN TO PLAY
+        # mid game. Between questions the wall stays on the game: the answer stays up until Next question.
+        time.sleep(7)   # past both 5.2 s timers (the console's follow-up and the TV's own roll to the board)
         w = r.json(tv, TV)
-        ok('  still the join screen a beat later: never "Thanks for playing", never an empty Leaderboard',
-           w.get('layer') == 'tvLobby' and 'thanks for playing' not in (w.get('text') or '').lower(), w)
-        ok('  the board layer is not up with an empty title', w.get('layer') != 'tvBoard', w)
-        fit = r.json(tv, '(function(){var d=document.getElementById("gameFrame").contentDocument, q=d.getElementById("qrBig"), c=d.getElementById("lobbyCode"); var de=d.documentElement; return JSON.stringify({qr: !!q && q.getBoundingClientRect().width>100, code: c?c.textContent:"", scroll: de.scrollHeight>de.clientHeight+1 || de.scrollWidth>de.clientWidth+1});})()')
-        ok('  its QR and the 6-letter code are up, and it fits one screen with no scroll', fit.get('qr') is True and len(fit.get('code') or '') == 6 and fit.get('scroll') is False, fit)
+        ok('after the 5 second wait the TV is still on the answer, not the join screen (Jobs 523)', w.get('layer') == 'tvReveal', w)
+        ok('  never "Thanks for playing", never an empty Leaderboard',
+           'thanks for playing' not in (w.get('text') or '').lower() and w.get('layer') != 'tvBoard', w)
+        ok('  no "SCAN TO PLAY" join screen and no "Next question coming up" on the wall', w.get('layer') != 'tvLobby' and 'next question coming up' not in (w.get('text') or '').lower(), w)
         ok('  no error words on the wall', not any(x in (w.get('text') or '').lower() for x in ('could not', 'error', 'failed', 'check your connection')), w.get('text'))
         if SHOTS: r.shot(tv, os.path.join(SHOTS, 'no-players-auto-board-1920.jpg'))
 

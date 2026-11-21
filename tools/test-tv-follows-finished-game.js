@@ -153,13 +153,13 @@ print('\n== 4. a ROUND podium is mid quiz (rehearsal puts a podium at the end of
 
 print('\n== 5. states that are still the quiz stay live ==');
 (function () {
-  // 0 phones, between questions: the join screen with "Next question coming up" (betweenJoin)
+  // 0 phones, between questions: an older console's "nobody" with between:true changes nothing, the answer stays up (Jobs 523)
   var state = { phase: 'reveal' };
-  var bj = new Function('state', 'boardRollTimer', 'celebrateTimer', 'clearTimeout', 'clearInterval', 'show', 'renderLobby', '$',
-    'var boardRollTimer=null, celebrateTimer=null;' + block(TS, 'function betweenJoin(){'));
-  var el = { textContent: '', classList: { add: function () {} } };
-  bj(state, null, null, function () {}, function () {}, function () {}, function () {}, function () { return el; });
-  ok('0 phones between questions (betweenJoin): the quiz is still live', triviaScreen(state, { qseq: 1 }).busy() === true && !state.done, state);
+  var nb = new Function('state', 'm', 'show', 'renderBoardPaged', '$',
+    'if(false){} ' + TS.slice(TS.indexOf('else if(m.t==="nobody" && m.between===true)'), TS.indexOf('else if(m.t==="podium")')));
+  var el = { textContent: '', innerHTML: '', classList: { add: function () {}, remove: function () {} } };
+  nb(state, { t: 'nobody', between: true }, function () {}, function () {}, function () { return el; });
+  ok('0 phones between questions (nobody, between:true): the quiz is still live', triviaScreen(state, { qseq: 1 }).busy() === true && !state.done && state.phase === 'reveal', state);
   // the finale: the last answer still up ("wait") is live; the board stage is over
   function paint(stage) {
     var st = { phase: 'reveal' };
