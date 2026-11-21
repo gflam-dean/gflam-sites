@@ -8,9 +8,9 @@ Worker in jsc with a fake database, the shipped console, the venue's own /tv) wi
 1920x1080) and plays a 12-question night twice, the way a person sees it:
 
   A. host only, NO phones (the first thing every new venue does; Dean, 15 Nov 2026), console at 375x667:
-     - after an ordinary answer and at the end of round 1 the TV shows the join screen with "Next question coming up"
-       (the line ON SCREEN: on Tuesday's release the ready join screen hid it),
-       never a podium, an empty LEADERBOARD title or "Thanks for playing"
+     - after an ordinary answer and at the end of round 1 the TV stays on the answer (Jobs 523, real night 20 Nov
+       2026: the join screen, SCAN TO PLAY, filled the wall mid game), never the join screen, a podium, an empty
+       LEADERBOARD title or "Thanks for playing"
      - the end of the night is the calm "Thanks for playing", no podium
   B. TWO phones, console at 390x844:
      - after an ordinary answer (question 3) the answer stays up: no leaderboard 8 s later
@@ -231,7 +231,7 @@ def night(with_phones, host_w, host_h, tag):
                 if with_phones:
                     ok('Q3 (mid-round), 8 s after the answer: the answer is still up, no leaderboard (Dean, 7 Nov 2026)', w.get('layer') == 'tvReveal', w)
                 else:
-                    ok('Q3, nobody joined: the join screen, "Next question coming up", never "Thanks for playing"', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', '') and w.get('subShown') is True
+                    ok('Q3, nobody joined: the answer is still up, never the join screen or "Thanks for playing" (Jobs 523)', w.get('layer') == 'tvReveal'
                        and 'thanks for playing' not in w.get('text', '').lower(), w)
                 tvs_fit(tvs, 'Q3')
                 frames(tvs, host, '%s-03-q3-after-8s' % tag)
@@ -259,10 +259,10 @@ def night(with_phones, host_w, host_h, tag):
                 else:
                     time.sleep(7)
                     w = tv(tvs[0][1])
-                    ok('Q10, the end of round 1, nobody joined: the join screen, never an empty podium or board', w.get('layer') == 'tvLobby' and 'Next question coming up' in w.get('sub', '') and w.get('subShown') is True, w)
+                    ok('Q10, the end of round 1, nobody joined: the answer stays up, never the join screen, an empty podium or board (Jobs 523)', w.get('layer') == 'tvReveal', w)
                     time.sleep(10)
                     w = tv(tvs[0][1])
-                    ok('  and still the join screen 10 s later (no board follows)', w.get('layer') == 'tvLobby', w)
+                    ok('  and still the answer 10 s later (no board follows)', w.get('layer') == 'tvReveal', w)
                     tvs_fit(tvs, 'round 1, nobody')
                     frames(tvs, host, '%s-04-round1-nobody' % tag)
                     console_fits(host, 'round 1, nobody')

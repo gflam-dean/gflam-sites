@@ -65,9 +65,6 @@
   .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
-  /* Between questions with nobody joined (Dean, 15 Nov 2026) the line says the game goes on: shown even on the ready join
-     screen, whose sub line is otherwise hidden (vp-tvgame.js .layer.join.ready .jsub). Bigger and brighter than the setup line. */
-  #tvLobby.between .jsub{display:block!important;color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:max(16px,2.2cqw);letter-spacing:0}
   .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
   .hostline b{color:var(--pink)}
 
@@ -619,7 +616,6 @@
     try{ var _or=document.querySelector("#tvLobby .jor"); if(_or) _or.style.display = (joinCode || VENUE_SLUG) ? "" : "none"; }catch(e){}
   }
   function renderLobby(){
-    $("tvLobby").classList.remove("between");
     $("lobbyCode").textContent = shownCode();
     /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
        linked to a venue never needs pairing, and once a join code exists the host is plainly
@@ -796,18 +792,11 @@
 
   /* BETWEEN QUESTIONS WITH NOBODY ON THE BOARD (Dean, 15 Nov 2026, The Mini Bar: "the screen says thanks for playing
      between questions", and a LEADERBOARD title with nothing under it). The game is not over, so the wall never says
-     Thanks for playing here and never puts up an empty board: with nobody joined (the console's "nobody", between:true)
-     it shows the join screen, its QR and code, with "Next question coming up"; with teams in but no rows yet the answer
-     just stays up. Thanks for playing is only the real end (a "nobody" message without between:true). */
-  function betweenJoin(){
-    state.phase="leaderboard";
-    if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
-    if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; }
-    show("tvLobby");
-    renderLobby();
-    $("lobbySub").textContent="Next question coming up. Scan to join in";
-    $("tvLobby").classList.add("between");   // the ready join screen hides its sub line (vp-tvgame.js); between questions it is the point
-  }
+     Thanks for playing here and never puts up an empty board. NOR THE JOIN SCREEN (Jobs 523, real night 20 Nov 2026: with
+     0 phones the wall showed SCAN TO PLAY from 6 s after Q1's answer until Next question, so the room saw a join screen
+     mid game). Between questions the wall stays on the game: the answer stays up until the next question, as it does
+     with teams in. A "nobody" with between:true (an older console still open on a tablet) is taken and nothing changes;
+     Thanks for playing is only the real end (a "nobody" message without between:true). */
   function renderRows(container, rows, limit){
     container.innerHTML="";
     var n=Math.min(limit, rows.length), ranks=sharedRanks(rows);
@@ -1324,7 +1313,7 @@
       show("tvBoard");
       renderBoardPaged(m.title||"Leaderboard", m.rows||[]);
     }
-    else if(m.t==="nobody" && m.between===true){ betweenJoin(); }   // between questions: the game goes on (15 Nov 2026)
+    else if(m.t==="nobody" && m.between===true){ return; }   // between questions the wall stays on the game, never the join screen (Jobs 523)
     else if(m.t==="nobody"){
       /* NOBODY JOINED (6 Nov 2026): a calm end state, never an error and never an empty board. The join corner
          (shown on every board) carries the QR and code for next time. */

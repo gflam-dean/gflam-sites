@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '20 Nov 2026, 08:16 · 9f27daa1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 10:30 · 6ac6dcf5';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -18575,7 +18575,13 @@ async function vpbTrustedLogosRoute(env, json) {
      songs       the songs a host console can actually play: every distinct song id in
                  /data/musical-library.json (the file every musical bingo console loads its library
                  from: the songs are not database rows, the database only records which were played)
-                 that has an https preview clip. Not a list, unreadable, or none: null.
+                 that has an https preview clip and is not hidden. Not a list, unreadable, or none: null.
+                 HIDDEN SONGS ARE NOT SONGS A PUB CAN PLAY (Jobs 526, real night 20 Nov 2026: the homepage
+                 said 6,740 songs and the musical console's "All songs" said 6,738). The two were the two
+                 songs marked "hidden": true for a rude title (16 Nov 2026, /app/vp-songsafe.js): the
+                 console never loads a hidden song (musical/host.html loadLibrary), this count took them.
+                 Both now count the same songs from the same file; tools/test-library-counts.js runs this
+                 count and the console's own rule over the real library and is red when they differ.
    Either half failing answers null for that half only. The page (/app/vp-counts.js) shows words, never
    a number, for a null. Ten minutes of public cache, like /trusted-logos, and the answer is also kept
    in this data centre's edge cache for those ten minutes, so the 3 MB library is read at most once
@@ -18609,6 +18615,7 @@ async function vpbCountLibrarySongs(env) {
   let n = 0;
   lib.songs.forEach(function (s) {
     if (!s || !s.id || seen[s.id]) return;
+    if (s.hidden === true) return;   // never on a console, a card, the TV or a search: not a song we offer
     if (!/^https:\/\//.test(String(s.previewUrl || ''))) return;
     seen[s.id] = true; n++;
   });
