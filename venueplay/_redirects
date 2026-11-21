@@ -24,8 +24,9 @@
 #
 # venueplay/data/ keeps only the files the site actually fetches at runtime:
 # musical-library.json, trivia-count.json, music-count.json and (2 Nov 2026)
-# live-here-now.json, the coaster page's 900 questions, public on purpose: a
-# quiz played in the phone has to hand the phone its questions.
+# live-here-now.json, the coaster page's 120 NO-BOARD questions, public on purpose: a
+# round played on the phone with no board has to hand the phone its questions. Since
+# 21 Nov 2026 the board questions and their answers are only in the game Worker.
 #
 # If you add anything private in future: put it in venueplay-backend/, not here,
 # and do not rely on a rule in this file to hide it.

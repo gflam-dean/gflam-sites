@@ -22,14 +22,14 @@ real _redirects), in headless Chrome as a phone, and plays it by tapping and typ
     a second tap changes nothing
   - the end: "Nice one, Sam", "3 of 5", "435 points, N seconds", "1st tonight at The Mini Bar", the
     board (Tonight and This week) with your row marked, "Challenge your mates"
-  - a mate on the challenge link (?c=CODE) gets the same five questions, skips the venue, lands on
-    the same board
+  - a mate on the challenge link (?c=CODE) gets five questions of their own, skips the venue, lands on
+    the same board (every player their own five: Dean 21 Nov 2026)
   - the board down (503 off): the page plays the v1 way, "Correct!" with no points, "3 of 5",
     "Done in N seconds", no board, no challenge
   - "From a venue? Click here" goes to /coaster (today's offer), and "Game on the TV? Join it"
     follows ?v=<slug> as before
-  - the hour's five: the same on two phones in an hour, different the next; Play again and a rescan
-    never repeat; storage blocked (private mode) still plays
+  - every phone its own five, board or no board (Dean 21 Nov 2026), and a board round's right answers are in
+    no file the phone loads; Play again and a rescan never repeat; storage blocked (private mode) still plays
   - at 320, 375, 390, 430 and 1440 wide: no sideways scroll, nothing off the screen or cut off in its
     box, buttons a thumb can hit, and no visible text under 15px, on every screen
 
@@ -81,8 +81,13 @@ def check(name, ok, saw=None):
 PAGE = os.path.join(ROOT, 'venueplay', 'live-here-now.html')
 DATA = os.path.join(ROOT, 'venueplay', 'data', 'live-here-now.json')
 HTML = io.open(PAGE, encoding='utf-8').read()
-BANK = json.load(io.open(DATA, encoding='utf-8'))
-BY_ID = dict((q[0], q) for q in BANK['q'])
+BANK = json.load(io.open(DATA, encoding='utf-8'))      # the page's own file: the no-board few, with their answers
+ALL, _d0, _e0, _p0 = bankbuild.build()                 # every coaster question with its answer: what the game Worker holds
+OFFLINE = bankbuild.offline_ids(ALL)
+BY_ID = dict((q[0], q) for q in ALL)                   # the referee's answer key (the page never has these for a board round)
+POOL = [q for q in ALL if q[0] not in OFFLINE]
+POOL_IDS = set(q[0] for q in POOL)
+POOL_SEEN_ONLY = [set()]   # the five-widths screens: the stand-in Worker keeps every board question but the longest away
 GREEN = 'rgb(47, 208, 138)'
 COLOURS = ['rgb(255, 90, 78)', 'rgb(77, 141, 255)', 'rgb(255, 165, 61)', 'rgb(165, 123, 255)']
 HOUR = 491234          # a fixed hour (Sep 2026), never this machine's clock
@@ -95,7 +100,8 @@ BODALLA = 'l:107'
 # ---------------------------------------------------------------------------------------------
 # THE STAND-IN GAME WORKER: the five /coaster routes in their real shapes.
 # ---------------------------------------------------------------------------------------------
-FAKE = {'off': False, 'rounds': {}, 'codes': {}, 'log': [], 'n': 0}
+import random
+FAKE = {'off': False, 'rounds': {}, 'codes': {}, 'log': [], 'n': 0, 'rng': random.Random(21)}
 PLACES = [
     {'place': MINI, 'name': 'The Mini Bar', 'suburb': '', 'postcode': '2485', 'state': 'NSW', 'on': True},
     {'place': TUGUN, 'name': 'Tugun Tavern', 'suburb': 'Tugun', 'postcode': '4224', 'state': 'QLD', 'on': False},
@@ -192,9 +198,15 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
                 g = FAKE['codes'].get(b['code'])
                 if not g:
                     return self.send(404, {'error': 'That challenge has finished.', 'gone': True})
-                place, qids = g['place'], g['qids']
+                place = g['place']
             else:
-                place, qids = b.get('place'), b.get('qids')
+                place = b.get('place')
+            # the Worker's draw, as coaster-round.test.js runs the real one: five at random, never one this board has
+            # had or this phone says it has seen, never one of the page's public few
+            had = set(x for r0 in FAKE['rounds'].values() if r0['place'] == place for x in r0['qids']) | set(b.get('seen') or []) | POOL_SEEN_ONLY[0]
+            left = [q for q in POOL if q[0] not in had]
+            five = FAKE['rng'].sample(left, 5) if len(left) >= 5 else left + FAKE['rng'].sample([q for q in POOL if q not in left], 5 - len(left))
+            qids = [q[0] for q in five]
             FAKE['n'] += 1
             rid = '00000000-0000-4000-8000-%012d' % FAKE['n']
             code = 'CODE%02d' % FAKE['n']
@@ -203,7 +215,8 @@ class FakeWorker(http.server.BaseHTTPRequestHandler):
             FAKE['rounds'][rid] = r
             FAKE['codes'][code] = {'place': place, 'qids': qids}
             out = {'ok': True, 'play': rid, 'token': r['token'], 'code': code, 'place': place, 'name': r['name'],
-                   'venue': {'name': NAMES.get(place, ''), 'suburb': '', 'logo_url': '', 'on': place.startswith('v:')}, 'qids': qids, 'base': 100}
+                   'venue': {'name': NAMES.get(place, ''), 'suburb': '', 'logo_url': '', 'on': place.startswith('v:')}, 'qids': qids,
+                   'questions': [[BY_ID[x][0], BY_ID[x][1], BY_ID[x][2]] for x in qids], 'base': 100}
             if place in OPTIN:
                 out['optin'] = OPTIN[place]
             return self.send(200, out)
@@ -574,12 +587,17 @@ PODIUM = {}
 def main():
     print('THE QUESTION FILE')
     out, _dropped, _eligible, _per = bankbuild.build()
-    check('the file is exactly what tools/live-here-now-bank.py builds from the bank (nobody edited it by hand)',
-          out == BANK['q'] and BANK['count'] == len(out), (len(out), BANK.get('count')))
+    check('the file is exactly the no-board few tools/live-here-now-bank.py builds from the bank (nobody edited it by hand)',
+          [q[:4] for q in out if q[0] in OFFLINE] == BANK['q'] and BANK['count'] == len(OFFLINE) == len(BANK['q']), (len(out), BANK.get('count')))
+    wsrc = io.open(bankbuild.WORKER, encoding='utf-8').read()
+    check('the game Worker\'s COASTER_QUESTIONS block is exactly what the builder writes (every question, its answer, the public few marked)',
+          bankbuild.BLOCK_BEGIN + wsrc.split(bankbuild.BLOCK_BEGIN, 1)[1].split(bankbuild.BLOCK_END, 1)[0] + bankbuild.BLOCK_END == bankbuild.worker_block(out, OFFLINE))
+    check('no question a board round can draw is in the page\'s file (Dean 21 Nov 2026: the answers are not readable by a phone)',
+          not any(q[0] in set(x[0] for x in BANK['q']) or q[1] in io.open(DATA, encoding='utf-8').read() for q in POOL) and len(POOL) >= 600, len(POOL))
     bank = json.load(io.open(bankbuild.BANK, encoding='utf-8'))['questions']
     src = dict((bankbuild.short_id(q['id']), q) for q in bank if q.get('id'))
     bad = []
-    for q in BANK['q']:
+    for q in ALL:
         b = src.get(q[0])
         if not b or (b.get('source') or '').lower() != 'venueplay original' or b.get('difficulty') != 'easy' \
                 or b['question'].strip() != q[1] or sorted(str(o).strip() for o in b['options']) != sorted(q[2]) \
@@ -587,11 +605,16 @@ def main():
             bad.append(q[0])
     check('every question is an easy VenuePlay Original from the trivia bank, word for word, with the bank\'s own right answer',
           not bad and len(BANK['q']) > 0, bad[:5])
-    check('a big enough bank: at least 600 questions (120 scans before a phone could need a repeat)', len(BANK['q']) >= 600, len(BANK['q']))
+    check('a big enough bank: at least 600 board questions in the Worker (120 rounds before a board could need a repeat), 100 or more no-board ones in the file',
+          len(POOL) >= 600 and len(BANK['q']) >= 100, (len(POOL), len(BANK['q'])))
     check('every question has four different answers, one marked right, and an id of its own',
-          all(len(q[2]) == 4 and len(set(q[2])) == 4 and 0 <= q[3] < 4 for q in BANK['q']) and len(BY_ID) == len(BANK['q']))
-    check('small enough for pub wifi: the page under 75 KB (about 20 KB compressed) and the questions under 200 KB',
-          os.path.getsize(PAGE) < 75000 and os.path.getsize(DATA) < 200000, (os.path.getsize(PAGE), os.path.getsize(DATA)))
+          all(len(q[2]) == 4 and len(set(q[2])) == 4 and 0 <= q[3] < 4 for q in ALL) and len(BY_ID) == len(ALL))
+    # 21 Nov 2026 (every player their own five): the page grew by the Worker-reveal code (about 0.4 KB compressed) and the
+    # question file fell from 132 KB to 18 KB (the board questions live in the Worker now), so a scan loads ~110 KB LESS.
+    # The page cap moves 75 -> 80 KB; the two together are now held under 100 KB (they were 207 KB).
+    check('small enough for pub wifi: the page under 80 KB, the questions under 40 KB, the two together under 100 KB',
+          os.path.getsize(PAGE) < 80000 and os.path.getsize(DATA) < 40000 and os.path.getsize(PAGE) + os.path.getsize(DATA) < 100000,
+          (os.path.getsize(PAGE), os.path.getsize(DATA)))
 
     print('\nTHE PAGE FILE')
     check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
@@ -707,8 +730,11 @@ def main():
               len(sent) == 1 and sent[0].get('mobile') == '+61412345678' and sent[0].get('email') == 'sam@example.com' and sent[0].get('marketing_optin') is True and sent[0].get('consent_version') == 'vpc-3-14nov' and
               sent[0].get('token', '').startswith('tok'), sent)
         start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
-        check('picking it starts a round on its board, sending only the first name, the mobile, the place and five question ids',
-              len(start) == 1 and sorted(start[0].keys()) == ['mobile', 'name', 'place', 'qids'] and start[0]['mobile'] == '+61412345678' and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
+        check('picking it starts a round on its board, sending only the first name, the mobile, the place, the phone\'s seen list and five ids (for an older Worker)',
+              len(start) == 1 and sorted(start[0].keys()) == ['mobile', 'name', 'place', 'qids', 'seen'] and start[0]['mobile'] == '+61412345678' and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
+        check('before the first tap no answer is marked, and the round\'s question is in no file the phone loaded (its answer only comes after the tap)',
+              s.get('id') in POOL_IDS and not t.js('!!document.querySelector("#answers .ans.right")') and
+              t.js('(function(){var x=new XMLHttpRequest();x.open("GET","/data/live-here-now.json",false);x.send();return x.responseText.indexOf(%s)<0;})()' % json.dumps(s.get('id'))), s.get('id'))
         check('the game screen has no top bar and no venue-name pill: just the ring row, the question and our logo at the bottom (this venue has no logo switched on)',
               s.get('foot') == 'ours' and not s.get('tag') and t.js('document.querySelector("header")') is None, (s.get('foot'), s.get('tag')))
         btns = s.get('btns', [])
@@ -792,7 +818,7 @@ def main():
         check('then straight to the questions, no venue asked (the link carries it), on The Mini Bar\'s board',
               s.get('id') and s.get('view') == 'vPlay', (s.get('view'), s.get('hdr')))
         idsm, s, _ = play_round(tm, [True, True, False, False, False])
-        check('the same five questions the challenger had', idsm == ids1, (idsm, ids1))
+        check('five questions of her own, none of the challenger\'s (Dean 21 Nov 2026)', len(set(idsm)) == 5 and not set(idsm) & set(ids1 + ids2 + ids3), (idsm, ids1))
         check('and the same board: Mia is on it with Sam', any('Mia (you)' in x['text'] for x in s.get('rows', [])) and any('Sam' in x['text'] for x in s.get('rows', [])), s.get('rows'))
         tm.close()
 
@@ -1076,14 +1102,14 @@ def main():
         check('sound starts ON with a visible "Sound on" switch (top right, 44 px tall; INBOX 405 update 7, replacing 396.k)', snd and snd[0] == 'Sound on' and snd[1] >= 44 and snd[2] == '0', snd)
         tr.close()
 
-        print('\nTHE HOUR CHANGES THE SET')
+        print('\nNO BOARD: EVERY PHONE ITS OWN FIVE TOO')
         def first_five(clock):
             clear_storage(b, base)
             tt = Tab(b, base, api, clock=clock)
             tt.go('/live-here-now')
             name_step(tt, 'Jo')
             wait(tt, lambda s: s.get('view') == 'vWhere')
-            FAKE['off'] = True     # Play now shows only while the search is down; the five are the hour's either way
+            FAKE['off'] = True     # Play now shows only while the search is down; the five come from the page's own few
             tt.type_into('whereIn', 'mini')
             wait(tt, lambda s: 'having a rest' in s.get('hint', ''))
             tt.tap_id('skipWhere')
@@ -1094,8 +1120,8 @@ def main():
         a = first_five(T0)
         a2 = first_five(T0 + 30 * 60000)
         nxt = first_five(T0 + 3600000)
-        check('two phones scanning in the same hour get the same five', len(a) == 5 and a == a2 and a == ids1, (a, a2, ids1))
-        check('the next hour, a fresh phone gets a different five', len(nxt) == 5 and len(set(nxt) & set(a)) <= 1, (a, nxt))
+        check('two phones scanning in the same hour, board down, get different fives, from the page\'s few', len(a) == 5 and len(a2) == 5 and a != a2 and set(a + a2) <= OFFLINE, (a, a2))
+        check('...and so does a phone the next hour', len(nxt) == 5 and nxt != a and set(nxt) <= OFFLINE, (a, nxt))
 
         print('\nSTORAGE BLOCKED (private mode)')
         tb = Tab(b, base, api, block_storage=True)
@@ -1123,8 +1149,9 @@ def main():
             tv.close()
 
         print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1440 WIDE')
-        LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
-        others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
+        LONG = max(POOL, key=lambda q: max(len(o) for o in q[2]))    # a board round: the stand-in Worker draws the one unseen first
+        others = [q[0] for q in POOL if q[0] != LONG[0]][-400:]
+        POOL_SEEN_ONLY[0] = set(q[0] for q in POOL if q[0] != LONG[0])
         def seed_board():
             """The same small stand-in board for every width: Sam 725, Max 725, Mia 580 (INBOX 404: the player's own row must be on it)."""
             FAKE['rounds'].clear()

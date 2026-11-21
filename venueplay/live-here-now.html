@@ -385,40 +385,32 @@ var VPCoaster = (function () {
   'use strict';
   var PER_SCAN = 5;
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  /* this hour's order: a shuffle seeded by the hour, the same on every phone */
-  function seeded(seed) {             // mulberry32
-    var a = seed >>> 0;
-    return function () {
-      a = (a + 0x6D2B79F5) >>> 0;
-      var t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function hashStr(s) {               // FNV-1a
-    var h = 2166136261 >>> 0;
-    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-    return h;
-  }
-  function hourOrder(n, hour) {
-    var rnd = seeded(hashStr('live-here-now:' + hour)), idx = [];
-    for (var i = 0; i < n; i++) idx.push(i);
-    for (var j = n - 1; j > 0; j--) { var k = Math.floor(rnd() * (j + 1)); var t = idx[j]; idx[j] = idx[k]; idx[k] = t; }
-    return idx;
-  }
-  /* The first five of the hour's order this phone has not seen. */
-  function pickFive(bank, hour, seen) {
-    var order = hourOrder(bank.length, hour), out = [], i;
+  /* No board: five at random from the page's few, none seen (every phone its own, Dean 21 Nov 2026). Board: fromWorker. */
+  function pickFive(bank, rnd, seen) {
+    var order = [], out = [], i;
+    for (i = 0; i < bank.length; i++) order.push(i);
+    for (var j = order.length - 1; j > 0; j--) { var k = Math.floor(rnd() * (j + 1)); var t = order[j]; order[j] = order[k]; order[k] = t; }
     for (i = 0; i < order.length && out.length < PER_SCAN; i++) {
       if (seen.indexOf(bank[order[i]][0]) < 0) out.push(bank[order[i]]);
     }
-    // Every question in the bank seen (only possible with a tiny bank): start the hour's order again.
     for (i = 0; out.length < PER_SCAN && i < order.length; i++) {
       if (out.indexOf(bank[order[i]]) < 0) out.push(bank[order[i]]);
     }
     return out;
   }
-  /* A challenge link's five, from the bank; null if any has gone */
+  /* The Worker's five: [id, question, options], NO answer (that comes from /coaster/answer after the tap) */
+  function fromWorker(qs) {
+    if (Object.prototype.toString.call(qs) !== '[object Array]' || qs.length !== PER_SCAN) return null;
+    var out = [], ids = {};
+    for (var i = 0; i < qs.length; i++) {
+      var q = qs[i];
+      if (!q || typeof q[0] !== 'string' || ids[q[0]] || typeof q[1] !== 'string' || !q[1] || Object.prototype.toString.call(q[2]) !== '[object Array]' || q[2].length !== 4) return null;
+      ids[q[0]] = 1;
+      out.push([q[0], q[1], q[2].map(function (x) { return String(x); }), null]);
+    }
+    return out;
+  }
+  /* An older Worker echoes ids from the page's file: those five; null if any has gone */
   function byIds(bank, ids) {
     var at = {}, out = [];
     for (var i = 0; i < bank.length; i++) at[bank[i][0]] = bank[i];
@@ -563,7 +555,7 @@ var VPCoaster = (function () {
         (r.you ? ' (you)' : '') + '</span><span class="pt">' + esc(r.points) + '</span></li>';
     }).join('');
   }
-  return { PER_SCAN: PER_SCAN, esc: esc, hourOrder: hourOrder, pickFive: pickFive, byIds: byIds, firstName: firstName, letters: letters,
+  return { PER_SCAN: PER_SCAN, esc: esc, pickFive: pickFive, fromWorker: fromWorker, byIds: byIds, firstName: firstName, letters: letters,
            ordinal: ordinal, placeLabel: placeLabel, playableFirst: playableFirst, verdict: verdict, sharedPlaces: sharedPlaces, myPlace: myPlace, headline: headline, pointsLine: pointsLine, placeLine: placeLine,
            shareUrl: shareUrl, shareText: shareText, topTenPlace: topTenPlace, SHARE_TITLE: SHARE_TITLE, readCode: readCode, boardHtml: boardHtml, statusWords: statusWords, addCheck: addCheck, auMobile: auMobile, mobileError: mobileError, detailsNote: detailsNote, STATES: STATES,
            QUESTION_SECS: QUESTION_SECS, smsHref: smsHref, podiumTitle: podiumTitle, tookMs: tookMs, roundSecs: roundSecs, secsLeft: secsLeft, doneLine: doneLine };
@@ -580,6 +572,7 @@ var VPCoaster = (function () {
   var PAUSE_MS = 1300;         // how long right or wrong stays up before the next question (the Worker's COASTER_REVEAL_MS)
   var LOCK_MS = 450;           // Locked in, then the reveal, inside the 1.3 seconds
   var WAIT_MS = 5000;          // the longest the next question waits for the board's answer
+  var REVEAL_MIN_MS = 600;     // a late reveal still shows this long
   var PLACE_HOURS = 12;        // a scan within this long of the last one offers the same venue first
   var LETTERS = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
@@ -629,7 +622,6 @@ var VPCoaster = (function () {
   }
   function remember(k, v) { try { var s = store(); if (s) s.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function recall(k) { try { var s = store(); return s ? JSON.parse(s.getItem(k) || 'null') : null; } catch (e) { return null; } }
-  function hourNow() { return Math.floor(Date.now() / 3600000); }
 
   /* the game Worker; a failure falls back to playing without a board */
   function call(method, path, body, cb) {
@@ -893,12 +885,13 @@ var VPCoaster = (function () {
   }
   var startShow = false;
   function startRound() {
-    var local = L.pickFive(BANK, hourNow(), readSeen());
+    var local = L.pickFive(BANK, Math.random, readSeen());
     if (!S.code && !S.place) return go('local', local);
-    var body = S.code ? { name: S.name, mobile: S.mobile, code: S.code } : { name: S.name, mobile: S.mobile, place: S.place, qids: local.map(function (q) { return q[0]; }) };
+    /* the Worker draws the five, away from seen; qids only for an older Worker */
+    var body = S.code ? { name: S.name, mobile: S.mobile, code: S.code, seen: readSeen().slice(-SEEN_CAP) } : { name: S.name, mobile: S.mobile, place: S.place, seen: readSeen().slice(-SEEN_CAP), qids: local.map(function (q) { return q[0]; }) };
     call('POST', '/coaster/start', body, function (st, d) {
       if (st === 200 && d.play) {
-        var five = L.byIds(BANK, d.qids);
+        var five = L.fromWorker(d.questions) || L.byIds(BANK, d.qids);
         if (five) {
           S.play = d.play; S.token = d.token; S.myCode = d.code; S.place = d.place; S.venue = d.venue || null; S.optin = d.optin || null;
           try { if (window.VPPhoneAd) window.VPPhoneAd.set((d.venue && d.venue.slides) || [], (d.venue && d.venue.name) || ''); } catch (e) {}
@@ -990,10 +983,12 @@ var VPCoaster = (function () {
     el.innerHTML = '<span class="vt">' + L.esc(v.text) + '</span>' + (v.pts ? '<span class="vp">' + L.esc(v.pts) + '</span>' : '');
   }
   function answer(i) {
-    var item = round[at], good = i === item[3], btns = $('answers').children;
+    var item = round[at], btns = $('answers').children;
     if (results.length > at) return;     // one answer a question, however fast the thumb
     clearInterval(ticker);
     tooks.push(L.tookMs(shownAt, Date.now()));
+    /* a board round's answer is not on the phone: the Worker's reply has it */
+    var secret = item[3] == null, good = !secret && i === item[3];
     results.push(good);
     if (good) right++;
     /* LOCKED IN, then the reveal (INBOX 309.3) */
@@ -1006,29 +1001,56 @@ var VPCoaster = (function () {
         if (k === item[3]) tag(btns[k], 'Right answer');
         else if (k === i) tag(btns[k], 'Yours');
       }
-      paintVerdict(i < 0 ? null : good, pts, LETTERS[item[3]]);
+      if (item[3] == null) { var el = $('verdict'); el.className = 'vrow wrong'; el.parentNode.className = 'pcard'; el.innerHTML = '<span class="vt">No signal. That one was not marked.</span>'; }
+      else paintVerdict(i < 0 ? null : good, pts, LETTERS[item[3]]);
       pips();
     }
-    if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);
     var tappedAt = Date.now(), n = at, waiting = S.mode === 'board', moved = false;
+    if (!secret) { if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS); }
     function next() {
       if (moved) return; moved = true;
       at++;
       if (at < round.length) show(); else finish();
     }
+    /* the board went away: finish on the phone, or end here if the phone has no answers */
+    function lost() {
+      S.mode = 'local';
+      if (!secret) return next();
+      if (moved) return;
+      reveal(); moved = true;
+      setTimeout(finish, PAUSE_MS);
+    }
     if (waiting) {
-      call('POST', '/coaster/answer', { play: S.play, token: S.token, i: n, a: i }, function (st, d) {
-        if (st === 200 && d.ok) {
-          total = d.total;
-          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points, LETTERS[item[3]]); }
-          $('ptotal').innerHTML = '<b>' + L.esc(total) + '</b> points';
-          if (d.done) ended = d;
-        } else {
-          S.mode = 'local';      // the board went away mid-round: finish without it
-        }
-        setTimeout(next, Math.max(0, PAUSE_MS - (Date.now() - tappedAt)));
-      });
-      setTimeout(function () { if (!moved && Date.now() - tappedAt >= WAIT_MS) { S.mode = 'local'; next(); } }, WAIT_MS);
+      var tries = 0;
+      var send = function () {
+        tries++;
+        call('POST', '/coaster/answer', { play: S.play, token: S.token, i: n, a: i }, function (st, d) {
+          if (moved) return;
+          /* a resend whose first try landed: 409 with the answer and total */
+          var resent = st === 409 && tries > 1 && d && d.i === n && typeof d.right === 'number';
+          if (st === 0 && tries < 2) return setTimeout(send, 800);
+          if ((st === 200 && d.ok) || resent) {
+            total = d.total;
+            if (secret) {
+              item[3] = d.right;
+              good = resent ? i === d.right : !!d.correct;
+              results[n] = good;
+              if (good) right++;
+            }
+            if (d.correct) pts = d.points;
+            if (secret) setTimeout(reveal, Math.max(0, (i < 0 ? 0 : LOCK_MS) - (Date.now() - tappedAt)));
+            else if (d.correct && shown) paintVerdict(true, d.points, LETTERS[item[3]]);
+            $('ptotal').innerHTML = '<b>' + L.esc(total) + '</b> points';
+            if (d.done) ended = d;
+            if (resent && n === PER_SCAN - 1) S.mode = 'local';
+            setTimeout(next, Math.max(REVEAL_MIN_MS, PAUSE_MS - (Date.now() - tappedAt)));
+          } else {
+            lost();
+          }
+        });
+      };
+      send();
+      setTimeout(function () { if (!moved && Date.now() - tappedAt >= WAIT_MS) lost(); }, WAIT_MS);
     } else {
       setTimeout(next, PAUSE_MS);
     }

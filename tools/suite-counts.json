@@ -2080,11 +2080,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-page.test.js": {
-  "checks": 157,
+  "checks": 164,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 245,
+  "checks": 267,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

@@ -18272,12 +18272,16 @@ MUTATIONS = [
      '    if (results.length > at) return;     // one answer a question, however fast the thumb\n'
      '    clearInterval(ticker);\n'
      '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
+     '    /* a board round\'s answer is not on the phone: the Worker\'s reply has it */\n'
+     '    var secret = item[3] == null, good = !secret && i === item[3];\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
      '    /* LOCKED IN, then the reveal (INBOX 309.3) */\n'
      '    for (var k = 0; k < btns.length; k++) { btns[k].disabled = true; ',
      '    clearInterval(ticker);\n'
      '    tooks.push(L.tookMs(shownAt, Date.now()));\n'
+     '    /* a board round\'s answer is not on the phone: the Worker\'s reply has it */\n'
+     '    var secret = item[3] == null, good = !secret && i === item[3];\n'
      '    results.push(good);\n'
      '    if (good) right++;\n'
      '    /* LOCKED IN, then the reveal (INBOX 309.3) */\n'
@@ -18337,7 +18341,7 @@ MUTATIONS = [
      'a rescan asks "Where are you playing?" from scratch, though the phone knows'),
     ('live-here-now-in-chrome.test.py',
      'venueplay/live-here-now.html',
-     '          if (d.correct) { pts = d.points; if (shown) paintVerdict(true, d.points, LETTERS[item[3]]); }\n',
+     '            if (d.correct) pts = d.points;\n',
      '',
      'the Worker\'s points never show: "Correct!" with no "+145"'),
     # INBOX 229/232 (12 Nov 2026): "Add it" sends the whole form; the sign-up is never pre-ticked; "not on venueplay yet" is never the green.
@@ -18430,8 +18434,8 @@ MUTATIONS = [
      '    if (C) { C.sound("podium"); if (!C.muted()) C.buzz([60, 40, 60]); }',
      'the podium has no confetti'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
-     "    if (i < 0) reveal(); else setTimeout(reveal, LOCK_MS);",
-     "    reveal();",
+     "            if (secret) setTimeout(reveal, Math.max(0, (i < 0 ? 0 : LOCK_MS) - (Date.now() - tappedAt)));",
+     "            if (secret) reveal();",
      'a tap goes straight to right or wrong, with no Locked in first'),
     # INBOX 312 on the real trivia phone: the shared Time's up moment, only when its own clock ran out.
     ('coaster-page.test.js', 'venueplay/app/trivia/play.html',
@@ -18565,9 +18569,17 @@ MUTATIONS = [
      '      out.push(bank[order[i]]);',
      'the phone forgets what it has shown, so Play again repeats the same five'),
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
-     "rnd = seeded(hashStr('live-here-now:' + hour))",
-     "rnd = seeded(hashStr('live-here-now:'))",
-     'the set never changes with the hour'),
+     '    for (var j = order.length - 1; j > 0; j--) { var k = Math.floor(rnd() * (j + 1)); var t = order[j]; order[j] = order[k]; order[k] = t; }\n',
+     '',
+     'with no board every phone plays the same five again (Dean 21 Nov 2026: each player different questions)'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "      out.push([q[0], q[1], q[2].map(function (x) { return String(x); }), null]);",
+     "      out.push([q[0], q[1], q[2].map(function (x) { return String(x); }), q[3] == null ? null : q[3]]);",
+     'a right answer the Worker sends is kept on the phone before the tap'),
+    ('coaster-page.test.js', 'venueplay/live-here-now.html',
+     "        var five = L.fromWorker(d.questions) || L.byIds(BANK, d.qids);",
+     "        var five = L.byIds(BANK, d.qids);",
+     'the page ignores the Worker\'s own five and plays only ids it can find in its public file'),
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
      '  var PER_SCAN = 5;',
      '  var PER_SCAN = 4;',
@@ -18628,8 +18640,8 @@ MUTATIONS = [
      "    var m = /[?&]c=([A-Za-z0-9]+)/.exec(search || '');",
      'any length of code is read from the link and sent to the Worker'),
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
-     "{ name: S.name, mobile: S.mobile, place: S.place, qids: local.map(function (q) { return q[0]; }) };",
-     "{ name: S.name, mobile: S.mobile, place: S.place, qids: local.map(function (q) { return q[0]; }), ua: navigator.userAgent };",
+     "{ name: S.name, mobile: S.mobile, place: S.place, seen: readSeen().slice(-SEEN_CAP), qids: local.map(function (q) { return q[0]; }) };",
+     "{ name: S.name, mobile: S.mobile, place: S.place, seen: readSeen().slice(-SEEN_CAP), qids: local.map(function (q) { return q[0]; }), ua: navigator.userAgent };",
      'the round sends something about the phone beyond the first name, the place and the questions'),
     ('coaster-page.test.js', 'venueplay/live-here-now.html',
      "      go('local', local);\n    });",
@@ -18784,13 +18796,46 @@ MUTATIONS = [
      '  const rude = false;',
      'a rude pub name is no longer flagged and hidden: it gets a board and shows'),
     ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
-     '      board = g.board; qids = g.qids; fromCode = code;',
+     '      board = g.board; fromCode = code;',
      '      fromCode = code;',
-     'a mate on the challenge link plays different questions on a different board'),
+     'a mate on the challenge link plays on a different board'),
+    # EVERY ROUND ITS OWN FIVE (Dean 21 Nov 2026): the Worker draws, keeps away from what was asked, never sends an answer early.
     ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
-     '    if (distinct.length !== COASTER_ROUND || !qids.every((x) => bank.has(x))) return json(',
-     '    if (distinct.length !== COASTER_ROUND) return json(',
-     'a phone can start a round on made-up questions'),
+     '    const qids = five.map((q) => q[0]);\n',
+     '    const qids = Array.isArray(b.qids) && b.qids.length === COASTER_ROUND ? b.qids.map(String) : five.map((q) => q[0]);\n',
+     'the round plays the five ids the phone sent again, so every phone in an hour shares one set'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'questions: five.map((q) => [q[0], q[1], q[2].slice()])',
+     'questions: five.map((q) => [q[0], q[1], q[2].slice(), q[3]])',
+     'the start hands the phone every right answer before it answers'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '      if (done.length > i && qi) { out409.i = i;',
+     '      if (qi) { out409.i = i;',
+     'an early answer to a question not reached yet gives away its right answer'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '[asked.tonight, asked.mine, seen, asked.week]',
+     '[asked.mine, seen, asked.week]',
+     'two players at the same pub tonight can be handed the same questions'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '[asked.tonight, asked.mine, seen, asked.week]',
+     '[asked.tonight, seen, asked.week]',
+     'the same first name gets questions it already had at this pub this week'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '[asked.tonight, asked.mine, seen, asked.week]',
+     '[asked.tonight, asked.mine, asked.week]',
+     'the phone\'s own seen list is ignored, so a phone gets questions it has had'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '    if (next.length >= COASTER_DRAW_FLOOR) left = next;',
+     '    if (next.length >= COASTER_ROUND) left = next;',
+     'a phone\'s seen list can narrow its round to five questions it already knows'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '    if (cats.has(order[k][4])) continue;\n',
+     '',
+     'a round can be two or more questions from the same category'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '      if (r.night === t.night) tonight.add(id);',
+     '      if (r.night !== t.night) tonight.add(id);',
+     'tonight\'s keep-away reads the wrong nights, so players tonight can share questions'),
     ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (!v || !v[0] || v[0].status !== 'active') return null;",
      "  if (!v || !v[0]) return null;",

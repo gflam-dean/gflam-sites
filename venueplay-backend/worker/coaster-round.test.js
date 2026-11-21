@@ -9,13 +9,16 @@
      - points like real venueplay trivia: right answers score, plus a speed bonus, the same rule
        as the trivia game ("Correct! +130"); ties go to the faster total time
      - a board PER VENUE, "Tonight" and "This week", resetting by itself
-     - "Challenge your mates": a link that puts friends on the same five questions and board
+     - "Challenge your mates": a link that puts friends on the same board (each with their own five since
+       Dean 21 Nov 2026: "I would like each player to get different questions on Coaster Trivia")
+     - every round draws its own five in the Worker; the phone never gets a right answer before it answers
 
-   This lifts the real coaster block out of the shipped venueplay-game.js (from COASTER_BANK_URL to
+   This lifts the real coaster block out of the shipped venueplay-game.js (from COASTER_DRAW_FLOOR to
    the next section), with the real helpers it calls (the TV app's venue search, triviaAnswerPoints,
    cleanName, the venue calendar), and RUNS every route against a fake database that honours
    filters, order, offset and limit and the tables' unique keys, a fake rate limiter, a fixed clock
-   and the page's real question file (venueplay/data/live-here-now.json).
+   and the Worker's own questions (the generated COASTER_QUESTIONS block, which the lift carries), checked
+   against the page's public file (venueplay/data/live-here-now.json, the no-board few).
 
    Run: jsc venueplay-backend/worker/coaster-round.test.js
 */
@@ -33,7 +36,12 @@ function find(rel) {
 }
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var BANKFILE = find("venueplay/data/live-here-now.json");
-var BANK = JSON.parse(BANKFILE).q;
+var PUBLIC = JSON.parse(BANKFILE).q;
+/* The Worker's own questions, read from the shipped file's generated block: [id, question, options, right, category, public]. */
+var BANK = (function () {
+  var b0 = GAME.indexOf("const COASTER_QUESTIONS = ["), b1 = GAME.indexOf("\n];\n", b0);
+  return b0 > 0 && b1 > b0 ? JSON.parse(GAME.slice(b0 + "const COASTER_QUESTIONS = ".length, b1 + 2).replace(/,\n\]$/, "\n]")) : [];
+})();
 
 /* ---- the real code, lifted ---- */
 function lift(n) {
@@ -43,7 +51,7 @@ function lift(n) {
   for (; k < GAME.length; k++) { var ch = GAME[k]; if (ch === "{") d++; else if (ch === "}") { d--; if (!d) { k++; break; } } }
   return GAME.slice(i, k) + "\n";
 }
-var a0 = GAME.indexOf("const COASTER_BANK_URL");
+var a0 = GAME.indexOf("const COASTER_DRAW_FLOOR");
 var a1 = GAME.indexOf("/* The TV's &tvk=", a0);
 pass("the coaster block is in the shipped Worker", a0 > 0 && a1 > a0);
 var BLOCK = GAME.slice(a0, a1);
@@ -165,10 +173,13 @@ var tokN = 0, codeN = 0;
 function randomTokenHex() { tokN++; return ("secret" + tokN + "xxxxxxxxxxxxxxxxxxxxxxxxxx").slice(0, 32); }
 function genCode() { codeN++; return ("CODE" + "ACDEFGHJKMNPQRSTUVWXYZ2345679".charAt(codeN % 29) + "ACDEFGHJKMNPQRSTUVWXYZ2345679".charAt(Math.floor(codeN / 29) % 29)).slice(0, 6); }
 function sha256Hex(s) { var h = 0; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; var x = h.toString(16); while (x.length < 64) x = x + x; return Promise.resolve(x.slice(0, 64)); }
+/* The Worker's crypto.getRandomValues, as a seeded generator, so a run is the same every time. */
+var rngState = 12345;
+var fakeCrypto = { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) { rngState = (rngState + 0x6D2B79F5) >>> 0; var t = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; a[i] = (t ^ (t >>> 14)) >>> 0; } return a; } };
 function readJsonOf(req) { return Promise.resolve(req.body || {}); }
 function fakeFetch(u) {
   fetched.push(u);
-  if (u === "https://venueplay.com.au/data/live-here-now.json") return Promise.resolve({ ok: true, json: function () { return Promise.resolve(JSON.parse(BANKFILE)); } });
+  if (u === "https://venueplay.com.au/data/live-here-now.json") return Promise.resolve({ ok: true, json: function () { return Promise.resolve(JSON.parse(BANKFILE)); } });   // a Worker from before 21 Nov asked for this
   /* a venue's own website: it says the venue's name; another site says something else; one is down */
   if (u === "https://realpub.com.au") return Promise.resolve({ ok: true, text: function () { return Promise.resolve("<title>The Wandering Dingo Tavern, Fitzroy</title>"); } });
   /* redirects: to the venue's own page (fine), to the machine itself, to plain http, an endless chain */
@@ -192,12 +203,12 @@ FixedDate.now = function () { return NOW; }; FixedDate.UTC = RealDate.UTC; Fixed
 
 function srcOf(block) { return SEARCH + "\n" + lift("triviaAnswerPoints") + lift("cleanName") + lift("praffleParts") + lift("phoneSlides") + lift("praffleTz") +
   lift("assertUuid") + lift("venueCollectCfg") + lift("gatedCapture") + lift("praffleNormPhone") + lift("memberMobile") + lift("memberIdByMobile") + (uu ? uu[0] : "") + "\n" + block +
-  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, mobile: coasterMobile, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
+  "\n;return { search: coasterSearch, venues: handleCoasterVenues, lead: handleCoasterLead, start: handleCoasterStart, answer: handleCoasterAnswer, board: handleCoasterBoardRoute, optin: handleCoasterOptin, ask: handleCoasterAsk, guard: coasterLeadGuard, site: coasterWebsite, search2: coasterSearch, safe: coasterSafeUrl, hop: coasterNextHop, siteNames: coasterWebsiteNames, same: coasterSameVenue, open: coasterLeadBoardOpen, sweep: sweepCoasterPlays, night: coasterNight, first: coasterFirstName, key: coasterNameKey, points: triviaAnswerPoints, mobile: coasterMobile, draw: coasterDraw, bank: coasterBank, reset: function () { _coasterRows = null; _coasterBank = null; } };"; }
 var SRC = srcOf(BLOCK);
 var W = new Function("sbGet", "sbGetAll", "sbInsert", "sbPatchReturning", "sbDelete", "abuseIpHash", "rateLimit", "enc", "URL", "fetch", "Date",
-  "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", "setTimeout", "clearTimeout", "AbortController", SRC)(
+  "randomTokenHex", "genCode", "sha256Hex", "readJson", "httpError", "setTimeout", "clearTimeout", "AbortController", "crypto", SRC)(
   sbGet, sbGetAll, sbInsertAny, sbPatchReturning, sbDelete, abuseIpHash, rateLimit, enc, MiniURL, fakeFetch, FixedDate,
-  randomTokenHex, genCode, sha256Hex, readJsonOf, httpErr, function () { return 0; }, function () {}, function () { this.signal = {}; this.abort = function () {}; });
+  randomTokenHex, genCode, sha256Hex, readJsonOf, httpErr, function () { return 0; }, function () {}, function () { this.signal = {}; this.abort = function () {}; }, fakeCrypto);
 
 var V_MINI = "11111111-1111-4111-8111-111111111111", V_PERTH = "22222222-2222-4222-8222-222222222222", V_GONE = "33333333-3333-4333-8333-333333333333";
 var C_TUGUN = "44444444-4444-4444-8444-444444444444", C_SWITCHED = "55555555-5555-4555-8555-555555555555", L_OLD = "66666666-6666-4666-8666-666666666666";
@@ -429,7 +440,12 @@ step(function () {
     pass("the secret is kept only as its hash", row.token_hash !== P1.token && row.token_hash.length === 64 && JSON.stringify(row).indexOf(P1.token) < 0);
     pass("tonight is the venue's own night (8:30pm Friday in NSW is Friday 6 Nov), this week is Monday 2 Nov", row.night === "2026-11-06" && row.week === "2026-11-02", [row.night, row.week]);
     pass("the round is limited per network", calls.some(function (c) { return /^rl:coaster:start:iphash:40:600$/.test(c); }), calls);
-    pass("the questions are checked against the page's own file", fetched[0] === "https://venueplay.com.au/data/live-here-now.json", fetched);
+    pass("the Worker draws the five itself: the five ids the phone sent are not used", JSON.stringify(P1.qids) !== JSON.stringify(five(0)) && JSON.stringify(row.qids) === JSON.stringify(P1.qids), [P1.qids, five(0)]);
+    pass("no question file is fetched: the questions are the Worker's own", fetched.length === 0, fetched);
+    pass("the phone gets each question and its four options, in the round's order, and never a right answer",
+      Array.isArray(P1.questions) && P1.questions.length === 5 && P1.questions.every(function (q, i) { var b = BANK.filter(function (x) { return x[0] === q[0]; })[0]; return q.length === 3 && q[0] === P1.qids[i] && b && q[1] === b[1] && JSON.stringify(q[2]) === JSON.stringify(b[2]); }), P1.questions);
+    pass("...and nothing anywhere in the start answer is a right-answer field (no 'right', no 'answer', no 4th element)",
+      !/"(right|answer|answers|correct_index|a)"\s*:/.test(JSON.stringify(P1)) && P1.questions.every(function (q) { return q[3] === undefined; }), P1);
     return post(W.start, { mobile: "0412 345 678", name: "", place: "v:" + V_MINI, qids: five(0) });
   }).then(function (r) {
     pass("no first name: refused", r.status === 400 && /first name/.test(r.body.error), r);
@@ -438,14 +454,14 @@ step(function () {
     pass("a rude name goes on the board as 'Player', as on the TV", r.status === 200 && DB.vp_coaster_plays[1].first_name === "Player", DB.vp_coaster_plays[1] && DB.vp_coaster_plays[1].first_name);
     return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: ["nope", "x", "y", "z", "w"] });
   }).then(function (r) {
-    pass("questions that are not on the coaster are refused", r.status === 400, r);
+    pass("made-up question ids from a phone change nothing: the round is the Worker's five from its own questions", r.status === 200 && r.body.qids.every(function (x) { return BANK.some(function (b) { return b[0] === x && !b[5]; }); }), r.body.qids);
     var dup = five(0); dup[4] = dup[0];
     return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: dup });
   }).then(function (r) {
-    pass("the same question twice is refused", r.status === 400, r);
-    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI, qids: five(0).slice(0, 4) });
+    pass("a phone sending one id twice still gets five different questions", r.status === 200 && r.body.qids.filter(function (x, i, a) { return a.indexOf(x) === i; }).length === 5, r.body.qids);
+    return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_MINI });
   }).then(function (r) {
-    pass("four questions is refused", r.status === 400, r);
+    pass("a phone sending no ids at all (the page since 21 Nov 2026) gets its five", r.status === 200 && r.body.qids.length === 5 && r.body.questions.length === 5, r.body);
     return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "v:" + V_GONE, qids: five(0) });
   }).then(function (r) {
     pass("a cancelled venue has no board", r.status === 404, r);
@@ -476,8 +492,10 @@ step(function () {
     return post(W.start, { mobile: "0412 345 678", name: "Mia", code: P1.code, place: "c:" + C_TUGUN, qids: five(10) });
   }).then(function (r) {
     var row = DB.vp_coaster_plays[DB.vp_coaster_plays.length - 1];
-    pass("a mate on the challenge link gets the SAME five questions and the SAME board, whatever the phone sent",
-      r.status === 200 && r.body.place === "v:" + V_MINI && JSON.stringify(r.body.qids) === JSON.stringify(five(0)) && row.from_code === P1.code, r.body);
+    pass("a mate on the challenge link lands on the SAME board, whatever place the phone sent",
+      r.status === 200 && r.body.place === "v:" + V_MINI && row.from_code === P1.code, r.body);
+    pass("...with five questions of their OWN, none of the challenger's (Dean 21 Nov 2026: answers cannot be passed on)",
+      r.body.qids.length === 5 && r.body.qids.every(function (x) { return P1.qids.indexOf(x) < 0; }), [r.body.qids, P1.qids]);
     pass("and a challenge code of their own to pass on", r.body.code !== P1.code);
     return post(W.start, { mobile: "0412 345 678", name: "Mia", code: "ZZZZZZ" });
   }).then(function (r) {
@@ -517,7 +535,7 @@ step(function () {
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
   return post(W.start, { mobile: "0412 345 678", name: "Kim", place: "v:" + V_MINI, qids: q }).then(function (r) {
-    R = r.body; start0 = NOW;
+    R = r.body; start0 = NOW; q = R.qids;
     NOW = start0 + 20900;   // the ring hit 0 at 20 s, the phone showed Time's up, then sent it
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: -1 });
   }).then(function (r) {
@@ -541,7 +559,7 @@ step(function () {
   fresh(); NOW = FRI_830PM;
   var q = five(0), R, start0;
   return post(W.start, { mobile: "0412 345 678", name: "Sam", place: "v:" + V_MINI, qids: q }).then(function (r) {
-    R = r.body; start0 = NOW;
+    R = r.body; start0 = NOW; q = R.qids;
     NOW = start0 + 2000;   // two seconds in: 18 of 20 seconds left
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
   }).then(function (r) {
@@ -552,6 +570,12 @@ step(function () {
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
   }).then(function (r) {
     pass("the same question again (a double tap or a replay) is refused and scored once", r.status === 409 && DB.vp_coaster_plays[0].points === 145, [r, DB.vp_coaster_plays[0].points]);
+    pass("...and says that question's right answer and the total, for a phone whose first try lost its signal", r.body.i === 0 && r.body.right === rightOf(q[0]) && r.body.total === 145, r.body);
+    return post(W.answer, { play: R.play, token: R.token, i: 2, a: 0 });
+  }).then(function (r) {
+    pass("a question not yet reached is refused WITHOUT its right answer (nothing to read ahead)", r.status === 409 && !("right" in r.body) && !("total" in r.body), r.body);
+    return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
+  }).then(function (r) {
     /* Two taps landing at the same moment (both read the round before either writes): one scores. */
     NOW += 100;
     var x1 = post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
@@ -608,9 +632,9 @@ step(function () {
 });
 
 function playRound(name, place, qidsStart, rights, gapMs) {
-  var R, q = five(qidsStart || 0);
-  return post(W.start, { mobile: "0412 345 678", name: name, place: place, qids: q }).then(function (r) {
-    R = r.body; var i = 0;
+  var R, q;
+  return post(W.start, { mobile: "0412 345 678", name: name, place: place, qids: five(qidsStart || 0) }).then(function (r) {
+    R = r.body; q = R.qids; var i = 0;
     function next() {
       if (i >= 5) return Promise.resolve(R);
       NOW += (i ? 1300 : 0) + gapMs;
@@ -1018,7 +1042,8 @@ step(function () {
   });
   var o0 = BLOCK.indexOf("async function coasterOptinAsk("), o1 = BLOCK.indexOf("/* GET /coaster/board?", o0);
   pass("the venue's sign-up is one piece of the block (coasterOptinAsk, handleCoasterOptin)", o0 > 0 && o1 > o0 && BLOCK.slice(o0, o1).indexOf("async function handleCoasterOptin(") > 0);
-  var outside = (BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").replace(/phoneSlides/g, "");
+  var outside = (BLOCK.slice(0, o0) + BLOCK.slice(o1)).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").replace(/phoneSlides/g, "")
+    .replace(/const COASTER_QUESTIONS = \[[\s\S]*?\n\];/, "");   // the quiz questions' own words (one asks about a mobile phone) are not a person's detail
   pass("outside the venue's own sign-up, the only contact detail in the coaster block is the round's mobile check (coasterMobileError), never an email or a surname",
     !/email|phone|surname|last_name/i.test(outside) && outside.replace("const mobileErr = coasterMobileError(b.mobile);", "").replace("if (mobileErr) return json({ error: mobileErr, field: 'mobile' }, 400);", "").search(/mobile/i) < 0, outside.match(/.{0,60}mobile.{0,60}/i));   // phoneSlides is the join lookup's own slide filter, the venue's ad, no person's detail
   pass("the sign-up goes through the phones' own gate (gatedCapture) and the venue's own settings (venueCollectCfg), never a copy",
@@ -1077,6 +1102,76 @@ step(function () {
     return post(W.start, { mobile: "0412 345 678", name: "Jo", place: "l:120", qids: five(0) });
   }).then(function (r) {
     pass("...while the kept country pub's board opens", r.status === 200 && r.body.place === "l:120", [r.status, r.body]);
+  });
+});
+
+step(function () {
+  print("\nEVERY PLAYER THEIR OWN FIVE (Dean 21 Nov 2026: \"I would like each player to get different questions on Coaster Trivia\")");
+  var pub = PUBLIC.map(function (q) { return q[0]; });
+  pass("the Worker holds the whole coaster bank (900), the page's public file only the no-board few (120)", BANK.length === 900 && PUBLIC.length === 120, [BANK.length, PUBLIC.length]);
+  pass("the public few are exactly the Worker's rows marked public, word for word with their answers",
+    BANK.filter(function (q) { return q[5] === 1; }).map(function (q) { return JSON.stringify(q.slice(0, 4)); }).join("|") === PUBLIC.map(function (q) { return JSON.stringify(q); }).join("|"));
+  pass("the page's file holds no question a board round can draw (every other one is only in the Worker)", BANK.filter(function (q) { return !q[5]; }).every(function (q) { return pub.indexOf(q[0]) < 0 && BANKFILE.indexOf(q[1]) < 0; }));
+  fresh(); NOW = FRI_830PM;
+  /* A busy week: 700 of the board's questions already asked on Tuesday, so "anyone this week" would leave too few and
+     is skipped; only "anyone tonight" keeps tonight's twenty players apart. */
+  var tue = BANK.filter(function (q) { return !q[5]; }).slice(0, 700).map(function (q) { return q[0]; });
+  DB.vp_coaster_plays.push({ id: nextId(), board: "v:" + V_MINI, first_name: "Old", qids: tue, code: "OOOOOO", token_hash: "x", answers: [], points: 0, correct: 0, ms_total: 0, night: "2026-11-03", week: "2026-11-02", started_at: "2026-11-03T09:00:00.000Z", asked_at: "2026-11-03T09:00:00.000Z" });
+  var names = ["Ava", "Ben", "Cal", "Dee", "Eli", "Fox", "Gus", "Hal", "Ivy", "Jen", "Kai", "Lou", "Max", "Ned", "Oli", "Pip", "Quin", "Ray", "Sue", "Tom"], got = [];
+  var seq = Promise.resolve();
+  names.forEach(function (nm) {
+    seq = seq.then(function () { return post(W.start, { mobile: "0412 345 678", name: nm, place: "v:" + V_MINI, qids: five(0) }); }).then(function (r) { got.push(r.body); });
+  });
+  return seq.then(function () {
+    var all = [];
+    got.forEach(function (g) { all = all.concat(g.qids); });
+    pass("twenty players at the same venue tonight, all sending the same five ids: twenty different sets", got.every(function (g, i) { return got.every(function (h, j) { return i === j || g.qids.join() !== h.qids.join(); }); }), got.map(function (g) { return g.qids.join(); }));
+    pass("...and no question twice across all twenty rounds (tonight at this board is kept away from, even in a busy week)", all.length === 100 && all.filter(function (x, i) { return all.indexOf(x) === i; }).length === 100, all.length);
+    pass("no question twice inside any round", got.every(function (g) { return g.qids.filter(function (x, i, a) { return a.indexOf(x) === i; }).length === 5; }));
+    pass("a board round never draws one of the page's public few", all.every(function (x) { return pub.indexOf(x) < 0; }));
+    var cat = {}; BANK.forEach(function (q) { cat[q[0]] = q[4]; });
+    pass("five different categories in every round", got.every(function (g) { return g.qids.map(function (x) { return cat[x]; }).filter(function (c, i, a) { return a.indexOf(c) === i; }).length === 5; }));
+    pass("the draw reads this board's rounds for this week, once, newest first", calls.filter(function (c) { return /^GET vp_coaster_plays\?board=eq\.v%3A11111111-1111-4111-8111-111111111111&week=eq\.2026-11-02&select=qids,first_name,night&order=started_at\.desc&limit=1000$/.test(c); }).length === 20, calls.filter(function (c) { return /vp_coaster_plays\?board/.test(c); }).slice(0, 2));
+    /* Last week's Ava at the same board: same first name, this week -> kept away; another board's rounds are not. */
+    fresh(); NOW = FRI_830PM;
+    var mine = BANK.filter(function (q) { return !q[5]; }).slice(0, 600).map(function (q) { return q[0]; });
+    /* and others this week with 150 more, so "anyone this week" would leave too few and is skipped: only the name rule keeps Ava's away */
+    var others = BANK.filter(function (q) { return !q[5]; }).slice(600, 750).map(function (q) { return q[0]; });
+    DB.vp_coaster_plays.push({ id: nextId(), board: "v:" + V_MINI, first_name: "Bob", qids: others, code: "BBBBBB", token_hash: "x", answers: [], points: 0, correct: 0, ms_total: 0, night: "2026-11-04", week: "2026-11-02", started_at: "2026-11-04T09:00:00.000Z", asked_at: "2026-11-04T09:00:00.000Z" });
+    DB.vp_coaster_plays.push({ id: nextId(), board: "v:" + V_MINI, first_name: "Ava", qids: mine, code: "AAAAAA", token_hash: "x", answers: [], points: 0, correct: 0, ms_total: 0, night: "2026-11-03", week: "2026-11-02", started_at: "2026-11-03T09:00:00.000Z", asked_at: "2026-11-03T09:00:00.000Z" });
+    return post(W.start, { mobile: "0412 345 678", name: "Ava", place: "v:" + V_MINI });
+  }).then(function (r) {
+    var mine = DB.vp_coaster_plays[1].qids;
+    pass("the same first name at the same board this week gets none it had on Tuesday", r.status === 200 && r.body.qids.every(function (x) { return mine.indexOf(x) < 0; }), r.body.qids);
+    var seen = BANK.filter(function (q) { return !q[5]; }).slice(300, 700).map(function (q) { return q[0]; });   // 400, the most a phone sends
+    return post(W.start, { mobile: "0412 345 678", name: "Zed", place: "c:" + C_TUGUN, seen: seen }).then(function (r2) {
+      pass("the phone's own seen list is kept away from", r2.status === 200 && r2.body.qids.every(function (x) { return seen.indexOf(x) < 0; }), r2.body.qids);
+      /* A phone that "has seen" all but five it knows the answers to cannot make the round those five. */
+      var pool = BANK.filter(function (q) { return !q[5]; }).map(function (q) { return q[0]; });
+      var known = pool.slice(0, 5), claim = pool.slice(5);
+      var tries = [], seq2 = Promise.resolve();
+      for (var t = 0; t < 8; t++) seq2 = seq2.then(function () { return post(W.start, { mobile: "0412 345 678", name: "Cheat", place: "l:107", seen: claim }); }).then(function (x) { tries.push(x.body.qids); });
+      return seq2.then(function () {
+        pass("a seen list that would leave fewer than 100 to draw from is not used, so a phone cannot pick its five", tries.every(function (qs) { return qs.filter(function (x) { return known.indexOf(x) >= 0; }).length < 5; }) && tries.some(function (qs) { return qs.some(function (x) { return claim.indexOf(x) >= 0; }); }), tries);
+      });
+    });
+  }).then(function () {
+    /* The draw itself: keep-away only while 100 or more are left. */
+    var pool = []; for (var i = 0; i < 200; i++) pool.push(["q" + i, "Q?", ["a", "b", "c", "d"], 0, "c" + i, 0]);
+    var big = new Set(); for (var j = 0; j < 60; j++) big.add("q" + j);
+    var bigger = new Set(); for (var k = 60; k < 120; k++) bigger.add("q" + k);
+    var n = 0, rnd = function (m) { n = (n * 7 + 3) % 1000; return n % m; };
+    var d = W.draw(pool, [big, bigger], rnd);
+    var hits = 0, firstKept = true;
+    for (var r2 = 0; r2 < 40; r2++) { var dd = W.draw(pool, [big, bigger], rnd); if (dd.some(function (q) { return big.has(q[0]); })) firstKept = false; if (dd.some(function (q) { return bigger.has(q[0]); })) hits++; }
+    pass("of 200, the first keep-away is used (140 left) and the second skipped (it would leave 80): over 40 draws none from the first, some from the second", d.length === 5 && firstKept && hits > 0, [firstKept, hits]);
+    var few = [["a1", "Q?", ["a", "b", "c", "d"], 0, "x", 0], ["a2", "Q?", ["a", "b", "c", "d"], 0, "x", 0], ["a3", "Q?", ["a", "b", "c", "d"], 0, "x", 0], ["a4", "Q?", ["a", "b", "c", "d"], 0, "y", 0], ["a5", "Q?", ["a", "b", "c", "d"], 0, "y", 0], ["a6", "Q?", ["a", "b", "c", "d"], 0, "x", 0]];
+    var d2 = W.draw(few, [], rnd);
+    var five5 = []; for (var c5 = 0; c5 < 10; c5++) five5.push(["k" + c5, "Q?", ["a", "b", "c", "d"], 0, "cat" + (c5 % 5), 0]);
+    var spread = true; for (var r5 = 0; r5 < 30; r5++) { var d5 = W.draw(five5, [], rnd); if (d5.map(function (q) { return q[4]; }).filter(function (c, i, a) { return a.indexOf(c) === i; }).length !== 5) spread = false; }
+    pass("ten questions in five categories: every draw takes one from each (30 draws)", spread);
+    pass("with too few categories it still makes five different questions", d2.length === 5 && d2.map(function (q) { return q[0]; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).length === 5, d2.map(function (q) { return q[0]; }));
+    pass("the draw's randomness is the Worker's crypto, never Math.random", /crypto\.getRandomValues\(u\)/.test(BLOCK) && !/Math\.random/.test(BLOCK));
   });
 });
 

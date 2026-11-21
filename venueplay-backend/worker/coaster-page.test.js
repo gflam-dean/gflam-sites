@@ -3,8 +3,8 @@
    venueplay/live-here-now.html keeps everything that decides WHAT the page says in one block with no
    screen, no network and no clock read inside it (var VPCoaster ... END LOGIC). This lifts that block
    out of the shipped page and runs it:
-     - the hour's five: the same on every phone in an hour, different the next hour, never one this
-       phone has seen, and a challenge link's five taken from the bank in its order
+     - a round with no board: five at random from the page's few, its own on every phone (Dean 21 Nov 2026), never
+       one this phone has seen; a board round's five come from the Worker WITHOUT their right answers (fromWorker)
      - the first name the phone shows is the first word only, as the Worker keeps it
      - "Correct! +130", "Nice one, Sam", "4 of 5", "520 points", "2nd tonight at The Mini Bar"
      - the challenge link is venueplay.com.au (never a .dev address) and its words follow the house rules
@@ -35,19 +35,31 @@ var LOGIC = PAGE.slice(a, b);
 pass("the logic block reads no screen, network or clock", !/document\.|XMLHttpRequest|fetch\(|localStorage|Date\.now|new Date/.test(LOGIC));
 var L = new Function(LOGIC + "\nreturn VPCoaster;")();
 
-print("\nTHE HOUR'S FIVE");
-var H = 491234;
-var p1 = L.pickFive(BANK, H, []), p2 = L.pickFive(BANK, H, []);
+print("\nEVERY PHONE ITS OWN FIVE (Dean 21 Nov 2026)");
+function gen(seed) { var a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+var p1 = L.pickFive(BANK, gen(1), []), p2 = L.pickFive(BANK, gen(2), []);
 var ids = function (x) { return x.map(function (q) { return q[0]; }).join(","); };
 pass("five questions, all different", p1.length === 5 && ids(p1).split(",").filter(function (x, i, arr) { return arr.indexOf(x) === i; }).length === 5);
-pass("two phones in the same hour get the same five (a fair 'beat the table')", ids(p1) === ids(p2));
-pass("the next hour is a different five", ids(L.pickFive(BANK, H + 1, [])) !== ids(p1));
+pass("two phones at the same moment get different fives (no shared hour's set any more)", ids(p1) !== ids(p2), [ids(p1), ids(p2)]);
+pass("the no-board round is drawn by the page's Math.random, not a clock", /L\.pickFive\(BANK, Math\.random, readSeen\(\)\)/.test(PAGE) && !/hourNow|hourOrder/.test(PAGE));
 var seen = p1.map(function (q) { return q[0]; });
-var p3 = L.pickFive(BANK, H, seen);
+var p3 = L.pickFive(BANK, gen(3), seen);
 pass("Play again: five more, none of them seen", p3.length === 5 && p3.every(function (q) { return seen.indexOf(q[0]) < 0; }));
+var allBut5 = BANK.slice(5).map(function (q) { return q[0]; });
+pass("a phone that has seen all but five gets exactly those five", ids(L.pickFive(BANK, gen(5), allBut5).slice().sort()) === ids(BANK.slice(0, 5).slice().sort()), ids(L.pickFive(BANK, gen(5), allBut5)));
 var tiny = BANK.slice(0, 6);
 var allSeen = tiny.map(function (q) { return q[0]; });
-pass("a phone that has seen the whole bank still gets five", L.pickFive(tiny, H, allSeen).length === 5);
+pass("a phone that has seen the whole bank still gets five", L.pickFive(tiny, gen(4), allSeen).length === 5);
+print("\nA BOARD ROUND: THE WORKER'S FIVE, NO ANSWERS ON THE PHONE");
+var wq = [["a1", "Q1?", ["w", "x", "y", "z"]], ["a2", "Q2?", ["w", "x", "y", "z"]], ["a3", "Q3?", ["w", "x", "y", "z"]], ["a4", "Q4?", ["w", "x", "y", "z"]], ["a5", "Q5?", ["w", "x", "y", "z"]]];
+var fw = L.fromWorker(wq);
+pass("the Worker's five become the round, in its order, each with NO right answer (null until /coaster/answer says)", !!fw && ids(fw) === "a1,a2,a3,a4,a5" && fw.every(function (q) { return q[3] === null; }), fw);
+pass("...a right answer sent by mistake is never kept on the phone", L.fromWorker(wq.map(function (q) { return q.concat([2]); })).every(function (q) { return q[3] === null; }));
+pass("four questions, a repeat, or three options are not a round", L.fromWorker(wq.slice(0, 4)) === null && L.fromWorker(wq.slice(0, 4).concat([wq[0]])) === null && L.fromWorker(wq.slice(0, 4).concat([["a9", "Q?", ["w", "x", "y"]]])) === null);
+var ans0 = PAGE.slice(PAGE.indexOf("  function answer(i) {"), PAGE.indexOf("  /* 4. THE END */"));
+pass("a board round's answer is marked from the Worker's reply (its right answer and its verdict), never before the tap",
+  /item\[3\] = d\.right;/.test(ans0) && /good = resent \? i === d\.right : !!d\.correct;/.test(ans0) && /if \(!secret\) \{ if \(i < 0\) reveal\(\); else setTimeout\(reveal, LOCK_MS\); \}/.test(ans0));
+pass("the page's own file holds only the no-board few (120), so no board round's answer can be read from it", BANK.length === 120);
 var five = BANK.slice(10, 15).map(function (q) { return q[0]; });
 var got = L.byIds(BANK, five);
 pass("a challenge link's five come from the bank in its order", got && ids(got) === five.join(","), got && ids(got));
@@ -126,13 +138,15 @@ var rnd = /const COASTER_ROUND = (\d+);/.exec(GAME);
 pass("five a round on both sides", !!rnd && +rnd[1] === L.PER_SCAN && L.PER_SCAN === 5);
 pass("the page talks to game.venueplay.com.au (never a .dev address)", /var API = window\.VP_GAME_API \|\| 'https:\/\/game\.venueplay\.com\.au';/.test(PAGE));
 var beginFn = PAGE.slice(PAGE.indexOf("  function begin() {"), PAGE.indexOf("  /* the clock: counts up, never down */"));
-pass("a round sends only the first name, the mobile (the Worker checks it), the place and the five ids (or a challenge code)",
-  /var body = S\.code \? \{ name: S\.name, mobile: S\.mobile, code: S\.code \} : \{ name: S\.name, mobile: S\.mobile, place: S\.place, qids: local\.map\(function \(q\) \{ return q\[0\]; \}\) \};/.test(beginFn));
+pass("a round sends only the first name, the mobile (the Worker checks it), the place (or a challenge code), the phone's seen list and, for a Worker from before 21 Nov, five ids",
+  /var body = S\.code \? \{ name: S\.name, mobile: S\.mobile, code: S\.code, seen: readSeen\(\)\.slice\(-SEEN_CAP\) \} : \{ name: S\.name, mobile: S\.mobile, place: S\.place, seen: readSeen\(\)\.slice\(-SEEN_CAP\), qids: local\.map\(function \(q\) \{ return q\[0\]; \}\) \};/.test(beginFn));
+pass("the round plays the Worker's five when it sends them, else (an older Worker) the ids it echoes from the page's file", /var five = L\.fromWorker\(d\.questions\) \|\| L\.byIds\(BANK, d\.qids\);/.test(beginFn));
 pass("with no venue picked (Just play), nothing is sent and the round plays on the phone", /if \(!S\.code && !S\.place\) return go\('local', local\);/.test(beginFn));
 pass("a refused or failed start plays the round on the phone, never a dead page", /go\('local', local\);\n    \}\);/.test(beginFn));
 var ans = PAGE.slice(PAGE.indexOf("  function answer(i) {"), PAGE.indexOf("  /* 4. THE END */"));
 pass("each answer goes to /coaster/answer with only the round, its secret, the question and the letter", /call\('POST', '\/coaster\/answer', \{ play: S\.play, token: S\.token, i: n, a: i \}/.test(ans));
-pass("a board that stops answering mid-round finishes the round on the phone", /S\.mode = 'local';      \/\/ the board went away mid-round/.test(ans));
+pass("a board that stops answering mid-round: a lost signal is sent once more, then the round finishes on the phone (ends there when the phone has no answers)",
+  /if \(st === 0 && tries < 2\) return setTimeout\(send, 800\);/.test(ans) && /function lost\(\) \{\n      S\.mode = 'local';\n      if \(!secret\) return next\(\);/.test(ans) && /setTimeout\(finish, PAUSE_MS\);/.test(ans));
 
 print("\nTHE TIME (INBOX 310/311: 'Done in 2062 seconds' on a 60-second round)");
 var secsW = /const COASTER_SECS = (\d+);/.exec(GAME);
