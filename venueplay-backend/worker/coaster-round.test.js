@@ -990,6 +990,12 @@ step(function () {
     pass("a tavern ranks above a soccer club and an RSL for the same query, and both above a name with neither ('zed')", t.join() === "l:3,l:2,l:1,l:4", t);
     var o = W.search([{ place: "l:3", name: "Zed Tavern", suburb: "A" }, { place: "v:9", name: "Zed Soccer Club", on: true }], "zed").matches.map(function (m) { return m.place; });
     pass("...but a venueplay venue still comes first at the same closeness", o.join() === "v:9,l:3", o);
+    var LUN = "aebca9e2-0000-4000-8000-000000000001";
+    var d = W.search([{ place: "v:" + LUN, name: "Lunatic Hotel", suburb: "", postcode: "2469", state: "NSW", on: true },
+      { place: "l:9", name: "Lunatic Hotel", suburb: "Drake", postcode: "2469", state: "NSW", on: false, listed: true },
+      { place: "l:10", name: "Sir Francis Drake Inn", suburb: "Bowral", postcode: "2576", state: "NSW", on: false, listed: true }], "drake").matches;
+    pass("a venueplay venue found by its listed twin's suburb answers as the venueplay venue ('drake' gives v:Lunatic Hotel, on, never l:9)",
+      d.some(function (m) { return m.place === "v:" + LUN && m.on === true; }) && !d.some(function (m) { return m.place === "l:9"; }) && d.length === 2, d);
     pass("a name match beats a pub found by suburb", W.search([{ place: "l:5", name: "Ace Tavern", suburb: "Zed" }, { place: "l:6", name: "Zed Club", suburb: "B" }], "zed").matches.map(function (m) { return m.place; }).join() === "l:6,l:5");
     pass("still three letters of the name first", /three letters/.test(W.search([{ place: "l:5", name: "Ace Tavern", suburb: "Zed" }], "ze").why || ""));
   });

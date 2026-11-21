@@ -2084,7 +2084,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 244,
+  "checks": 245,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

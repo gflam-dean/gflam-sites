@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '21 Nov 2026, 10:52 · 725b2ccd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '21 Nov 2026, 11:00 · c17e9f1b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3216,15 +3216,19 @@ function coasterKindRank(name) { const n = String(name || ''); return COASTER_KI
 function coasterSearch(rows, typed) {
   const q = venueSearchQuery(typed);
   if (q.flat.length < FIND_MIN_LETTERS) return { matches: [], why: 'Type at least three letters of the name.' };
-  const hits = [], seen = new Set();
+  const hits = [], seen = new Set(), first = new Map();
+  const twinOf = (r) => coasterNameKey(r.name) + '|' + (r.postcode || r.suburb || '').toLowerCase() + '|' + (r.state || '');
+  /* Each twin's FIRST row (rows come venueplay first): a listed copy found by its suburb (venueplay rows have none)
+     answers as the venueplay venue, its real board, never as 'l:' marked not on venueplay (review 1, 21 Nov). */
+  for (const r of rows || []) { const k = twinOf(r); if (!first.has(k)) first.set(k, r); }
   for (const r of rows || []) {
     let sc = venueSearchScore(q, r.name);
     if (sc < 0 && r.suburb) { const ss = venueSearchScore(q, r.suburb); if (ss >= 0) sc = 3 + ss; }
     if (sc < 0) continue;
-    const twin = coasterNameKey(r.name) + '|' + (r.postcode || r.suburb || '').toLowerCase() + '|' + (r.state || '');
+    const twin = twinOf(r);
     if (seen.has(twin)) continue;           // the same pub on venueplay and on our list: once, as on venueplay
     seen.add(twin);
-    hits.push({ sc: sc, kind: coasterKindRank(r.name), r: r });
+    hits.push({ sc: sc, kind: coasterKindRank(r.name), r: first.get(twin) || r });
   }
   hits.sort((a, b) => (a.sc - b.sc) || ((b.r.on ? 1 : 0) - (a.r.on ? 1 : 0)) || (a.kind - b.kind) || String(a.r.name).localeCompare(String(b.r.name)) ||
     String(a.r.suburb || a.r.postcode).localeCompare(String(b.r.suburb || b.r.postcode)));

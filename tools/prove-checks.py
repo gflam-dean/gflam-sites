@@ -18847,6 +18847,10 @@ MUTATIONS = [
      "if (ss >= 0) sc = 3 + ss;",
      "if (ss >= 0) sc = ss;",
      'a pub found only by its suburb ranks among the name matches'),
+    ('coaster-round.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "    hits.push({ sc: sc, kind: coasterKindRank(r.name), r: first.get(twin) || r });",
+     "    hits.push({ sc: sc, kind: coasterKindRank(r.name), r: r });",
+     'a venueplay venue found by its suburb shows as its licensed-list copy, not on venueplay (Lunatic Hotel, Drake)'),
     # The one scoring rule (trivia-score.test.js): the reveal calls it, and nothing restates it.
     ('trivia-score.test.js', 'venueplay-backend/worker/venueplay-game.js',
      '    const pts = triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, a.answered_at ? Date.parse(a.answered_at) : 0);',
