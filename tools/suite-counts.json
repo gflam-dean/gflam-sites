@@ -908,7 +908,7 @@
   "counted_by": "lines"
  },
  "tools/test-feedback-consent.js": {
-  "checks": 48,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/test-feedback-form.js": {

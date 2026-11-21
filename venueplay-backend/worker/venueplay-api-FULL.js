@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '21 Nov 2026, 15:53 · 64a22f54';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '22 Nov 2026, 05:21 · 9a5f747f';   // tools/stamp-workers.py, do not edit by hand
 /* OUTBOX GUARD BEGIN (INBOX 357B / 326, 13 Nov 2026). One block, four copies: this file is the source; the same text sits
    between these two markers in venueplay-api-FULL.js, venueplay-game.js and venueplay-sms-hook.js (a Worker is one pasted
    file, so it cannot import). tools/test-outbox-guard.js fails if any copy differs. Edit HERE, then copy the block across.
@@ -690,6 +690,8 @@ export default {
     try { await vpfAlertSweep(env, Date.now()); } catch (e8) { /* the next tick looks again */ }
     /* Day 21 of a free month, games picked and not played (Dean, 10 Nov 2026, INBOX 129): one HQ alert a day, sends nothing to a venue. */
     try { await vpaProspectDay21Sweep(env, Date.now()); } catch (e9) { /* the next tick looks again */ }
+    /* A new coaster lead's phone buzz (Jobs 532): the game Worker's urgent 'coaster-play:' tickets, once each. */
+    try { await vpaCoasterPlayPushSweep(env, Date.now()); } catch (e10) { /* the next tick looks again */ }
   },
 };
 
@@ -26224,6 +26226,28 @@ async function vpfFeedbackMore(request, env, json) {
 
 /* THE SOFT ALERT: three or more "Not for me" at a venue on one night opens ONE internal ticket and
    pushes HQ's phones, once per venue per night. Reads the last day and a half of "Not for me" only. */
+/* PHONE BUZZ FOR A NEW COASTER LEAD (Jobs 532, Dean 21 Nov 2026: "I want to be alerted if any of those venues actually play").
+   The game Worker writes the HQ ticket (a listed pub, not a venueplay venue, not a prospect: URGENT, email-id 'coaster-play:l:<id>:<night>')
+   but cannot push. This sweep, on the same trigger as the others, sends the help desk's NORMAL phone push for each such urgent
+   ticket of the last 36 hours, ONCE: the audit row is written first and is the "once" (as the feedback alert does). A normal
+   (prospect) coaster ticket is never pushed. Sends nothing to any venue or player. */
+async function vpaCoasterPlayPushSweep(env, nowMs) {
+  const since = new Date((nowMs || Date.now()) - 36 * 3600 * 1000).toISOString();
+  const rows = await vpaSelect(env, 'vp_help_tickets', 'email_message_id=like.' + encodeURIComponent('coaster-play:*') + '&priority=eq.urgent&created_at=gte.' +
+    encodeURIComponent(since) + '&select=*&order=created_at.asc&limit=50');
+  let pushed = 0;
+  for (const t of (rows || [])) {
+    const target = String(t.email_message_id || '');
+    if (!/^coaster-play:l:[0-9]+:/.test(target)) continue;
+    const done = await vpaSelect(env, 'vp_admin_audit', 'action=eq.coaster_play_push&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1');
+    if (done && done.length) continue;
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'automatic (coaster play alert)', action: 'coaster_play_push', target: target,
+      detail: { ticket_no: t.ticket_no || null } }, false);
+    try { await helpPushNew(env, t); pushed++; } catch (e) { /* the ticket is in HQ either way */ }
+  }
+  return { pushed: pushed };
+}
+
 async function vpfAlertSweep(env, nowMs) {
   const since = new Date((nowMs || Date.now()) - 36 * 3600 * 1000).toISOString();
   const bad = await vpaSelectAll(env, 'vp_game_feedback',
