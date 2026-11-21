@@ -48,7 +48,9 @@
 /offer-nov  /nsw  200
 /offer-dec  /nsw  200
 /offer-jan  /nsw  200
-/offer-dec-countdown  /nsw  200   # the December countdown emails (Dean, 22 Nov 2026); its last day is DEC_COUNTDOWN_ENDS in /app/vp-offer.js
+# /offer-dec-countdown: the December countdown emails (Dean, 22 Nov 2026); its last day is DEC_COUNTDOWN_ENDS in /app/vp-offer.js.
+# NO comment after a rule on the same line: Cloudflare Pages drops the whole rule (live /quick/:code was a 404 for that, 22 Nov 2026).
+/offer-dec-countdown  /nsw  200
 /offer-feb  /nsw  200
 /offer-mar  /nsw  200
 /offer      /     302
@@ -65,7 +67,8 @@
 /gflam/:code      /nsw  200
 /coaster/:code    /nsw  200
 /home/:code       /     200
-/quick/:code      /quick  200   # a tracked link to Play a quick game (INBOX 412 + 413, merged 15 Nov 2026)
+# /quick/:code: a tracked link to Play a quick game (INBOX 412 + 413, merged 15 Nov 2026)
+/quick/:code      /quick  200
 
 # THE GFLAM GROUP SITE'S BANNER (Dean, 4 Nov 2026). gflam.com.au links venueplay.com.au/gflam. It is
 # the same offer page, showing whichever month's offer is live today (VPOffer.forPath), so the
