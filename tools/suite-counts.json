@@ -908,7 +908,7 @@
   "counted_by": "lines"
  },
  "tools/test-feedback-consent.js": {
-  "checks": 48,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/test-feedback-form.js": {
@@ -2116,7 +2116,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/coaster-round.test.js": {
-  "checks": 267,
+  "checks": 283,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

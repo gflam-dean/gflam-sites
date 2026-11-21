@@ -166,6 +166,25 @@ async function send(body) { dev++; body.device = body.device || ('dev' + dev); r
     check('the "2 Not for me tonight" alert and the "Not for me" reply buzz a bad-feedback phone; the "Good" reply does not',
           announced.length === 3 && marks[0][1] === true && marks[1][1] === true && marks[2][1] === false, marks);
     check('the mark is never stored on a ticket', tbl('vp_help_tickets').every(function (t) { return !('bad_feedback' in t); }));
+
+    print('\nJOBS 532: A NEW COASTER LEAD BUZZES HQ\'S PHONES, ONCE; A PROSPECT\'S PLAY DOES NOT');
+    var pushed = [], realPush2 = helpPushNew;
+    helpPushNew = async function (env, t) { pushed.push(t.email_message_id); return { sent: 1 }; };
+    DB.vp_admin_audit = []; DB.vp_help_tickets = [];
+    var nowIso = new Date().toISOString();
+    tbl('vp_help_tickets').push(
+      { id: 'c1', ticket_no: 5001, priority: 'urgent', category: 'sales', email_message_id: 'coaster-play:l:201:2026-11-21', created_at: nowIso },
+      { id: 'c2', ticket_no: 5002, priority: 'normal', category: 'sales', email_message_id: 'coaster-play:l:202:2026-11-21', created_at: nowIso },
+      { id: 'c3', ticket_no: 5003, priority: 'urgent', category: 'sales', email_message_id: null, created_at: nowIso },
+      { id: 'c4', ticket_no: 5004, priority: 'urgent', category: 'sales', email_message_id: 'coaster-play:l:203:2026-11-01', created_at: '2026-11-01T00:00:00Z' });
+    var cp1 = await vpaCoasterPlayPushSweep(ENV, Date.now());
+    check('a new coaster lead (urgent coaster-play ticket) is pushed to the phones', pushed.length === 1 && pushed[0] === 'coaster-play:l:201:2026-11-21', pushed);
+    check('...a normal (prospect) coaster ticket, a plain urgent ticket and an old one are not', cp1.pushed === 1, cp1);
+    var cp2 = await vpaCoasterPlayPushSweep(ENV, Date.now());
+    check('the next tick pushes it no second time (once each)', pushed.length === 1 && cp2.pushed === 0, pushed);
+    check('the audit row marks it, and nothing else is written or sent', tbl('vp_admin_audit').length === 1 && tbl('vp_admin_audit')[0].target === 'coaster-play:l:201:2026-11-21' && tbl('vp_help_tickets').length === 4);
+    helpPushNew = realPush2;
+    check('the sweep rides the Worker\'s scheduled trigger', /try \{ await vpaCoasterPlayPushSweep\(env, Date\.now\(\)\); \}/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')));
     vpaRequireAdmin = async function () { return { id: 'hq-1', actorId: 'u-hq', label: 'Dean' }; };
     var EP = 'https://fcm.googleapis.com/fcm/send/abc123';
     var r1 = await helpAdminPushSubscribe(REQ({ endpoint: EP, filter: 'bad_feedback' }), ENV, J);
