@@ -143,6 +143,28 @@ body.light input:-webkit-autofill,body.light input:-webkit-autofill:focus{-webki
 #vJoin.vp-long .vpc3-head{font-size:14px!important;margin-top:8px!important}
 #vJoin.vp-long .vpc3 .optin{font-size:15px!important;margin-top:6px!important}
 #vJoin.vp-long .vpc3 .optin input{width:22px!important;height:22px!important}
+/* THE THREE OFFERS BOXES ON (Dean 21 Nov 2026, unticked): the join step with the boxes fits one phone screen, owner night
+   (two boxes) and visiting-host night (three), on a 375x667 and a 375x812 phone. Only while the boxes are drawn
+   (#xConsent3, vp-consent.js). The space comes from gaps, the trivia heading's line break and the box rows' extra margin:
+   every box row stays a 44px tap, the words and their order stay, Join stays on screen. */
+#vJoin:has(#xConsent3) .pbig br{display:none}                                  /* "JOIN THE TRIVIA" on one line */
+#vJoin:has(#xConsent3) .vpc3-head{margin-top:10px!important;line-height:1.3!important}
+#vJoin:has(#xConsent3) .vpc3-row{gap:0 16px!important}
+#vJoin:has(#xConsent3) .vpc3 .optin{margin-top:0!important;min-height:44px;align-items:center}
+#vJoin:has(#xConsent3) .vpc3 .optin input{width:22px!important;height:22px!important;margin:0!important}
+/* a visiting host's night: the three boxes side by side in one row, a name wrapping onto a second line inside its own
+   44px tap ("The Royal / Hotel"), so the third box does not take a row of its own */
+#vJoin:has(#xC_host) .vpc3-row{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px!important}
+#vJoin:has(#xC_host) .vpc3 .optin{gap:7px;font-size:14px!important;line-height:1.2}
+#vJoin:has(#xC_host) .vpc3 .optin span{min-width:0;overflow-wrap:anywhere}
+#vJoin:has(#xConsent3) .vpc3-note{margin-top:0!important;line-height:1.3!important}
+#vJoin:has(#xConsent3) .vp-joinnote{margin-top:4px!important;line-height:1.3!important}
+@media (max-height:860px){
+  body #vJoin:has(#xConsent3) .pbig{font-size:30px;margin-bottom:2px}
+  body #vJoin:has(#xConsent3) .vp-h{font-size:34px;margin-bottom:2px}
+  body #vJoin:has(#xConsent3) .field,body #vJoin:has(#xConsent3) .vp-field{margin-top:7px}
+  body #vJoin:has(#xConsent3) .vp-grow{min-height:4px}
+}
 /* A SHORT PHONE (M2 phone check, INBOX 727 and 740, 19 Nov 2026; Dean's rule: one screen, no scrolling): with the offers tick
    on, the join screen ran past a 375x667 and a 320x568 screen (Join itself below the fold at 320). Under 700px tall, and more
    under 660px (a 320x568 or 360x640 phone, or Safari's toolbars on a 375x667), it closes up so Join, the notice and our logo

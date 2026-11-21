@@ -42,11 +42,9 @@ ran = bad = 0
 # that is no longer red fails too (stale: take it off). Never add a row here to make a new fault pass.
 EXPECTED_RED_UNTIL = '2026-11-29'   # the next release (date given with main's INBOX 753 brief); ON and after it, the list is void
 EXPECTED_RED = {
-    # the four tall-phone three-box rows (vp-long; not M2): next release
-    'T bingo 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 61,
-    'T trivia 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 36,
-    'T bingo 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 29,
-    'T trivia 390x844: a venue asking everything plus the three boxes is still one screen, no scroll': 7,
+    # the tall-phone three-box rows (vp-long; not M2): next release. 21 Nov 2026, the boxes ON: the compact box layout
+    # (vp-phone.css) made three of the four green (taken off) and this one 61 -> 16 px
+    'T bingo 375x812: a venue asking everything plus the three boxes is still one screen, no scroll': 16,
 }
 _SOFT = {'over': None}; _RED_SEEN = set(); _GREEN_SEEN = set()
 def _expired(): return time.strftime('%Y-%m-%d') >= EXPECTED_RED_UNTIL   # void ON 29 Nov: the next release's own gate run must not pass with these rows red

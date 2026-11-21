@@ -22653,6 +22653,10 @@ MUTATIONS = [
     ('known-phone-in-chrome.test.py', 'venueplay/app/vp-known.js',
      '        forget(known.ix);\n', '',
      "Not me leaves this venue's key on the phone"),
+    # THE BOXES ON (21 Nov 2026): the join step with the boxes fits one screen (T0 rows, 375x667 and 375x812)
+    ('known-phone-in-chrome.test.py', 'venueplay/app/vp-phone.css',
+     '#vJoin:has(#xC_host) .vpc3-row{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px!important}\n', '',
+     "a visiting host's box takes a row of its own and the join screen runs past a 375x667 phone"),
     ('known-phone-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '    if(typeof VPKnown==="object") VPKnown.addTo(body);   // the keys this phone holds (INBOX 416)\n', '',
      'the trivia phone joins without its key, so a regular is a stranger every game'),
