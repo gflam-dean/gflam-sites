@@ -1016,4 +1016,4 @@ so the twelve-month "already asked" memory and past results are untouched; quest
 moved. Library sets only, found by title exactly once (refuses otherwise); refuses while a trivia round on the Music set is
 running. DATA-ONLY: no table, column, policy or grant, so check-migrations-live.py says "(data change only)" and the code does
 not depend on it. DEAN PASTES IT AFTER SUNDAY IS LIVE, WHEN NO TRIVIA RUNS (daytime). Safe to run twice (the second run moves
-nothing). Rollback: in the file. NOT RUN (not on TEST, not on LIVE).
+nothing). The file has NO rollback block (undo = move the same question ids back by hand). NOT RUN (not on TEST, not on LIVE).
