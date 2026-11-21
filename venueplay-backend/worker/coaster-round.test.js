@@ -1178,8 +1178,12 @@ step(function () {
     var mine = DB.vp_coaster_plays[1].qids;
     pass("the same first name at the same board this week gets none it had on Tuesday", r.status === 200 && r.body.qids.every(function (x) { return mine.indexOf(x) < 0; }), r.body.qids);
     var seen = BANK.filter(function (q) { return !q[5]; }).slice(300, 700).map(function (q) { return q[0]; });   // 400, the most a phone sends
-    return post(W.start, { mobile: "0412 345 678", name: "Zed", place: "c:" + C_TUGUN, seen: seen }).then(function (r2) {
-      pass("the phone's own seen list is kept away from", r2.status === 200 && r2.body.qids.every(function (x) { return seen.indexOf(x) < 0; }), r2.body.qids);
+    /* Six rounds, not one (22 Nov review): one seeded draw can miss 400 of the bank by luck, so this check went blind
+       with the seen list ignored once another section moved the generator along. Six draws cannot all miss by luck. */
+    var zeds = [], seqZ = Promise.resolve();
+    for (var z = 0; z < 6; z++) seqZ = seqZ.then(function () { return post(W.start, { mobile: "0412 345 678", name: "Zed", place: "c:" + C_TUGUN, seen: seen }); }).then(function (x) { zeds.push(x); });
+    return seqZ.then(function () {
+      pass("the phone's own seen list is kept away from (six rounds, none of them a seen question)", zeds.length === 6 && zeds.every(function (r2) { return r2.status === 200 && r2.body.qids.length === 5 && r2.body.qids.every(function (x) { return seen.indexOf(x) < 0; }); }), zeds.map(function (r2) { return r2.body.qids; }));
       /* A phone that "has seen" all but five it knows the answers to cannot make the round those five. */
       var pool = BANK.filter(function (q) { return !q[5]; }).map(function (q) { return q[0]; });
       var known = pool.slice(0, 5), claim = pool.slice(5);
