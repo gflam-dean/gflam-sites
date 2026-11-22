@@ -6553,7 +6553,7 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null' +
       '&and=' + encodeURIComponent('(free_month_ends_at.gte."' + now + '",free_month_ends_at.lt."' + ceil + '")') + '&select=*&order=venue_id.asc');
   } catch (e) { return Object.assign(out, { why: 'prospects not readable' }); }
-  let unsub, onbStops;
+  let unsub;
   for (const p of rows || []) {
     const end = vpaProspectMonthEndMs(p);
     if (!(nowMs <= end)) continue;
@@ -6573,9 +6573,8 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.held++; continue; }                  // cannot read the list: not this hour
     if (unsub[email.toLowerCase()]) { out.skipped += 1; continue; }
-    if (onbStops === undefined) { try { onbStops = await vpaOnbStopSets(env); } catch (e) { onbStops = null; } }   // 23 Nov 2026: the onboarding stop list too
-    if (onbStops === null) { out.held++; continue; }
-    if (vpaOnbSetHas(onbStops, { venueId: v.id, email: email, mobile: p.phone })) { out.skipped += 1; continue; }
+    /* 23 Nov 2026 (review): this note is an ACCOUNT email (they cancelled; it says what happens to their account), so the onboarding
+       stop list does not gate it and an unreadable stop list never holds it. */
     /* ONCE, EVER: look, then claim; a failed look or claim sends nothing. */
     const lock = 'trial-end-note:' + v.id;
     const done = await vpaMrGet(env, 'vp_admin_audit', 'action=eq.' + VPA_TRIAL_END_NOTE_ACTION + '&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
@@ -6592,7 +6591,7 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',
         headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: [email], from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
-          headers: await vpaOnbHeaders(env, v.id) }) });   // automatic, honours the list above: the mail app's own Unsubscribe button too (INBOX 414/771)
+          headers: await vpUnsubHeaders(env, email, 'trial-end-note') }) });   // automatic, honours the list above: the mail app's own Unsubscribe button too (INBOX 414/771)
     } catch (_) { res = null; }
     const ok = !!(res && res.ok);
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,
@@ -7024,12 +7023,15 @@ async function vpaRenderProspectReminder(env, o) {
  * ======================================================================== */
 const VPA_PAUSE_HELD_ACTION = 'prospect_pause_held';
 function vpaReminderSmsText(o) {
-  const optOut = o.stopUrl ? 'Opt out: ' + vpaOnbSmsForm(o.stopUrl) : 'Reply STOP to opt out.';   // 23 Nov 2026: "venueplay" cannot take a reply, so the link
+  /* 23 Nov 2026: "venueplay" cannot take a reply, so a text NEVER says Reply STOP. No link (no secret): the last-day account notice goes
+     without an opt-out line; the day-3 and one-week reminders return null, so nothing is sent. */
+  if (!o.stopUrl && o.kind !== 'final') return null;
+  const optOut = o.stopUrl ? 'Opt out: ' + vpaOnbSmsForm(o.stopUrl) : '';
   const first = String(o.firstName || '').replace(/[^A-Za-z' -]/g, ' ').trim().split(/\s+/)[0] || '';
   const hi = first ? 'Hi ' + first.slice(0, 20) + ', ' : 'Hi, ';
   const venue = vpsReadyVenueWords(o.venueName);
   const how = 'Sign in at venueplay.com.au/app (we text you a code) and add your card in Account.';
-  if (o.kind === 'final') return hi + 'today is the last day of your first month of venueplay at ' + venue + '. ' + how + ' With no card your games pause tonight. ' + optOut;
+  if (o.kind === 'final') return hi + 'today is the last day of your first month of venueplay at ' + venue + '. ' + how + ' With no card your games pause tonight.' + (optOut ? ' ' + optOut : '');
   if (o.kind === 'last') return hi + 'your first month of venueplay at ' + venue + ' ends ' + o.endsWhen + '. ' + how + ' With no card your games pause then. ' + optOut;
   return hi + 'how is venueplay going at ' + venue + '? Your first month ends ' + o.endsWhen + '. To keep your games on after that: ' + how + ' ' + optOut;
 }
@@ -7074,7 +7076,9 @@ async function vpaProspectReminderText(env, p, v, kind, endsWhen, ready) {
   if (!rd.ok) return rd;
   const to = rd.to;
   let r;
-  try { r = await vpaSendSms(env, to, vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen, stopUrl: await vpaOnbStopUrl(env, v.id) }), 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
+  const smsWords = vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen, stopUrl: await vpaOnbStopUrl(env, v.id) });
+  if (!smsWords) return { ok: false, why: 'no opt-out link could be made, so no text' };   // a text never says Reply STOP (23 Nov 2026)
+  try { r = await vpaSendSms(env, to, smsWords, 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
   catch (e) { r = { ok: false }; }
   if (r && r.blocked) await vpaSmsRecordOptOut(env, to, v.id);
   return r && r.ok ? { ok: true } : { ok: false, why: r && r.blocked ? 'opted out of texts' : 'text not sent' };
@@ -7133,7 +7137,6 @@ async function vpaProspectReminderSweep(env, nowMs) {
   /* A free month cancelled part way switches off at its end date (INBOX 191.1). First, and on its own read, so a
      missing migration 127 below cannot hold it. */
   out.switched_off = await vpaProspectTrialSwitchOff(env, nowMs).catch(() => []);
-  let onbStops;   // vp_onboarding_stops, read the first time a reminder is due (same undefined / null meaning)
   let unsub;   // vp_unsubscribes, read the first time a reminder is due (undefined: not read yet; null: could not be read)
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }
@@ -7219,9 +7222,14 @@ async function vpaProspectReminderSweep(env, nowMs) {
        same day, same send window. A text that does not go stays due (nothing marked sent), like an email. */
     /* THE ONBOARDING STOP LIST (23 Nov 2026): a venue (or its email or mobile) that asked for no more reminders gets neither the email
        nor the text; a list that cannot be read holds this hour (it stays due, so it goes on a later sweep). */
-    if (onbStops === undefined) { try { onbStops = await vpaOnbStopSets(env); } catch (e) { onbStops = null; } }
-    if (onbStops === null) { out.unsub_unread = true; continue; }
-    if (vpaOnbSetHas(onbStops, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone })) { out.onboarding_stopped = (out.onboarding_stopped || 0) + 1; continue; }
+    /* The day-3 and one-week reminders are reminders: a stopped venue (the onboarding list, or its own click on one of our unsubscribe
+       links, never a cold-email row) gets none. The LAST-DAY notice ("your games pause tonight") is an account notice and ALWAYS goes:
+       a venue that never counted as warned would have its pause held for HQ. */
+    if (kind !== 'final') {
+      const gate = await vpaOnbRefusal(env, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone });
+      if (gate === 'unread') { out.unsub_unread = true; continue; }
+      if (gate === 'stopped') { out.onboarding_stopped = (out.onboarding_stopped || 0) + 1; continue; }
+    }
     const email = vpqRealEmail(p.email);
     if (!email) {
       const ready = await vpaProspectTextReady(env, p, v);   // can a text go at all? Asked before any claim
@@ -7237,9 +7245,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
        and the page says "we will not contact you again", but nothing here read vp_unsubscribes, so the next
        reminder still went. Read once a sweep; a list that cannot be read holds every reminder this hour
        (it stays due, so it goes on a later sweep), never sends blind. */
-    if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
-    if (unsub === null) { out.unsub_unread = true; continue; }
-    if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
+    /* (23 Nov 2026: the whole of vp_unsubscribes is no longer read here; the gate above reads the onboarding list and a person's own click.) */
     const voice = await vpaProspectVoice(env, v.id);
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name, senderFirst: voice.name,
       endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
@@ -7981,7 +7987,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
       + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
       + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(stopUrl)
-        + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works. You can also reply STOP.');
+        + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works.');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpaOnbHeaders(env, pick.venue_id), null, { from: voice.from }); } catch (_) { sentN = false; }
@@ -19956,17 +19962,18 @@ async function vpaAutopilotOnboardingStops(request, env, json) {
 /* The List-Unsubscribe pair for an ONBOARDING reminder: the one-click POST lands on the onboarding list, not the cold one. */
 async function vpaOnbHeaders(env, venueId) {
   const url = await vpaOnbStopUrl(env, venueId);
-  const h = { 'List-Unsubscribe': '<' + url + '>, <' + VP_UNSUB_MAILTO + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+  /* The link only (23 Nov 2026, review): a mailto to hello@ lands on the help desk, which does not feed the stop list. */
+  const h = { 'List-Unsubscribe': '<' + url + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
   return url ? h : {};
 }
 function vpaOnbPage(title, bodyHtml, status, extra) {
-  return vpUnsubPage(title, bodyHtml, status, extra);
+  return vpUnsubPage(title, bodyHtml, status, extra, 'This only stops these reminders. Your account, and account and billing emails, carry on as normal.');
 }
 async function vpaHandleOnboardingStop(request, env, path) {
   const tok = String(path.slice('/stop/'.length)).trim().toLowerCase();
   const isPost = request.method === 'POST';
   const plain = (text, status) => new Response(text, { status: status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
-  const BY_HAND = 'Reply to the reminder with the word STOP, or call us on ' + VP_SUPPORT_PHONE + ', and we will take you off by hand.';
+  const BY_HAND = 'Call us on ' + VP_SUPPORT_PHONE + ' or email hello@venueplay.com.au, and we will take you off by hand.';
   if (!env.VP_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
     return isPost ? plain('not configured', 503) : vpaOnbPage('Something went wrong', '<p>This is having a moment. ' + BY_HAND + '</p>', 503);
   }
@@ -20020,7 +20027,7 @@ async function vpaAutopilotOnboardingStop(request, env, json) {
   return json({ ok: true, venue_id: venueId || null });
 }
 
-function vpUnsubPage(title, bodyHtml, status, extra) {
+function vpUnsubPage(title, bodyHtml, status, extra, footNote) {
   const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="robots" content="noindex,nofollow">'
@@ -20041,7 +20048,7 @@ function vpUnsubPage(title, bodyHtml, status, extra) {
     + '<div id="msg"><h1>' + vpaEsc(title) + '</h1>' + bodyHtml + '</div>'
     + (extra || '')
     + '<p class="foot">venueplay, ABN ' + VP_ABN + '. Gold Coast, Queensland.<br>'
-    + 'This only stops marketing email. It does not affect a venueplay account, if you have one.</p>'
+    + (footNote || 'This only stops marketing email. It does not affect a venueplay account, if you have one.') + '</p>'
     + '</main></body></html>';
   return new Response(html, { status: status || 200,
     headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',

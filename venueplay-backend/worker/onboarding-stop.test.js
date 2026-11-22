@@ -148,6 +148,7 @@ step(function () {
     ok('the page has ONE "Stop these reminders" button that posts', /<button type="submit">Stop these reminders<\/button>/.test(r.body) && r.body.indexOf('method="POST"') >= 0);
     ok('the page is lowercase venueplay, with no em dash', />venueplay<\/div>/.test(r.body) && r.body.indexOf('VenuePlay') < 0 && r.body.indexOf('—') < 0);
     ok('the page says the account carries on', /account, and anything about billing, carries on/.test(r.body));
+    ok('the footer is its OWN words (stops these reminders only; account and billing emails carry on), not the cold page\'s "marketing email" line', /This only stops these reminders\. Your account, and account and billing emails, carry on as normal\./.test(r.body) && !/marketing email/.test(r.body), r.body.slice(-300));
     ok('the page is not cached or indexed', r.headers['cache-control'] === 'no-store' && r.headers['x-robots-tag'] === 'noindex');
     ok('the GET wrote nothing and read nothing (link scanners)', calls.length === 0 && STOPS.length === 0, calls.length + ' calls');
   });
@@ -209,6 +210,9 @@ step(function () {
   reset(); STOPS_STATUS = 500;
   return worker.fetch(req('POST', '/stop/' + TOKEN, 'via=page'), env()).then(function (r) {
     ok('a failed write is a 502, not "done"', r.status === 502, String(r.status));
+    return worker.fetch(req('GET', '/stop/' + 'z'), env());
+  }).then(function (r) {
+    ok('the by-hand words never tell a text recipient to reply: call or email hello@', /Call us on 07 5228 3667 or email hello@venueplay\.com\.au/.test(r.body) && !/Reply to the reminder/.test(r.body), r.body.slice(0, 300));
   });
 });
 
@@ -247,6 +251,9 @@ step(function () {
     ok('the venue whose MOBILE is on the list is left out', ids.indexOf('cccccccc-2222-4333-8444-555555555555') < 0);
     ok('everybody else is still on it', ids.indexOf(VID2) >= 0 && ids.indexOf('aaaaaaaa-2222-4333-8444-555555555555') >= 0 && ids.length === 2, ids.join());
     var p2 = (b.prospects || []).filter(function (p) { return p.venue_id === VID2; })[0] || {};
+    var urls = (b.prospects || []).map(function (p) { return p.stop_url; });
+    ok('every row has a stop_url and no two venues share one (a shared link would stop the wrong venue)', urls.length === 2 && urls.every(function (u) { return /\/stop\/[0-9a-f]{48}$/.test(u); }) && urls[0] !== urls[1], urls);
+    ok('the stop_url of a venue is the one for ITS OWN venue id', (b.prospects || []).every(function (p) { return p.stop_url.indexOf('/stop/' + p.venue_id.replace(/-/g, '')) >= 0; }), urls);
     return vpaOnbStopUrl(env(), VID2).then(function (u) { ok('each row carries its own stop_url', p2.stop_url === u && /\/stop\/[0-9a-f]{48}$/.test(u), p2.stop_url); });
   }).then(function () {
     STOPS_STATUS = 404;     // migration 228 not run
@@ -337,6 +344,7 @@ step(function () {
   return vpaOnbHeaders(env(), VID).then(function (h) {
     ok('List-Unsubscribe for a reminder is the /stop/ link (the mail app button lands on the onboarding list)', h['List-Unsubscribe'].indexOf('<' + API + '/stop/' + TOKEN + '>') === 0 && h['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', JSON.stringify(h));
     ok('and it is NOT the cold-list /unsubscribe address', h['List-Unsubscribe'].indexOf('/unsubscribe?') < 0);
+    ok('it is the link ONLY: no mailto to hello@ (a reply there reaches the help desk, not the stop list)', h['List-Unsubscribe'] === '<' + API + '/stop/' + TOKEN + '>' && h['List-Unsubscribe'].indexOf('mailto') < 0, h['List-Unsubscribe']);
     ok('{stop} in the words is filled with the full link for an email', vpaOnbFill('x {stop} y', API + '/stop/T', false) === 'x ' + API + '/stop/T y');
     ok('{stop} in a text is filled without https', vpaOnbFill('x {stop} y', API + '/stop/T', true) === 'x api.venueplay.com.au/stop/T y');
     var t = vpaReminderSmsText({ kind: 'last', firstName: 'Pat', venueName: 'The Test Tavern', endsWhen: 'on Friday', stopUrl: API + '/stop/T' });

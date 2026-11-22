@@ -133,8 +133,8 @@ function welcome(o) {
   var nz = await vpaSendSigninLink(ENV, 'u1', 'v1', { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your venueplay account.\n\nCheers,\nKayla', subject: 'Your venueplay is ready when you are' });
   var nm = sent[0] || {}, nh = nm.headers || {};
   check('it goes, with List-Unsubscribe pointing at the ONBOARDING stop link (23 Nov 2026) and the one-click Post header',
-    nz.ok && sent.length === 1 && /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>, <mailto:/.test(nh['List-Unsubscribe'] || '') && nh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', [nz, nh]);
-  check('its footer has a Stop these reminders link (the onboarding stop link, not the cold unsubscribe page), in the html and the text', /href="https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}"[^>]*>Stop these reminders<\/a>/.test(nm.html || '') && /api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}/.test(nm.text || '') && !/\/unsubscribe\?e=/.test((nm.html || '') + (nm.text || '')), (nm.html || '').slice(-1500));
+    nz.ok && sent.length === 1 && /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>$/.test(nh['List-Unsubscribe'] || '') && nh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', [nz, nh]);
+  check('its footer has a Stop these reminders link (the onboarding stop link, not the cold unsubscribe page), in the html and the text', /href="https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}"[^>]*>Stop these reminders<\/a>/.test(nm.html || '') && /api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}/.test(nm.text || '') && !/\/unsubscribe\?e=/.test((nm.html || '') + (nm.text || '')) && !/reply STOP/i.test((nm.html || '') + (nm.text || '')), (nm.html || '').slice(-1500));
   check('its text part exists and no .dev host is anywhere in it', (nm.text || '').length > 100 && !DEV_HOST.test(allOf(nm)));
   sent = []; patches = []; MINTED = 0; UNSUB = { 'sam@lakesidetavern.example': true };
   var nu = await vpaSendSigninLink(ENV, 'u1', 'v1', { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your venueplay account.', subject: 'Your venueplay is ready when you are' });

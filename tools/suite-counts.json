@@ -1300,7 +1300,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 119,
+  "checks": 127,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1336,7 +1336,7 @@
   "counted_by": "lines"
  },
  "tools/test-quick-signup-warnings.js": {
-  "checks": 69,
+  "checks": 73,
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
@@ -1552,7 +1552,7 @@
   "counted_by": "lines"
  },
  "tools/test-trial-end-note.js": {
-  "checks": 46,
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 64,
+  "checks": 69,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

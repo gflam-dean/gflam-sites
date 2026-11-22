@@ -219,8 +219,8 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   /* INBOX 414 / 771 (19 Nov 2026): the cancelled-month note is an automatic prospect mail that already honours the
      unsubscribe list and carries a footer Unsubscribe link, so it gets the mail app's own one-click button too, like
      the welcome, the nudge and the card reminders. */
-  var hh = m.headers || {}, luRe = /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>, <mailto:hello@venueplay\.com\.au\?subject=unsubscribe>$/;
-  check('List-Unsubscribe: the one-click onboarding /stop/ address on api.venueplay.com.au (23 Nov 2026), then the mailto', luRe.test(hh['List-Unsubscribe'] || ''), hh);
+  var hh = m.headers || {}, luRe = new RegExp('^<https://api\\.venueplay\\.com\\.au/unsubscribe\\?e=' + encodeURIComponent(String(A.row().email).toLowerCase()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '&t=[0-9a-f]{32}&c=trial-end-note>, <mailto:hello@venueplay\\.com\\.au\\?subject=unsubscribe>$');
+  check('List-Unsubscribe: the one-click address on api.venueplay.com.au for this address with c=trial-end-note, then the mailto', luRe.test(hh['List-Unsubscribe'] || ''), hh);
   check('List-Unsubscribe-Post: List-Unsubscribe=One-Click, and no other extra header rides along', hh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click' && Object.keys(hh).sort().join(',') === 'List-Unsubscribe,List-Unsubscribe-Post', hh);
 
   section('2. The same with no first sign-in recorded (the month set by hand): still one email, still switched off');
@@ -290,6 +290,21 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   K.row().no_contact = true;
   await withClock(SYD_FRI_9AM, function () { return vpaTrialEndNoteSweep(ENV, SYD_FRI_9AM); });
   check('Do not contact: nothing', NOTE().length === 0);
+  /* 23 Nov 2026 (independent review): the note is an ACCOUNT email (they cancelled; it says what happens to their account), so the
+     onboarding stop list does not gate it, and an unreadable stop list never holds it. */
+  var OS = await bodalla();
+  ENV.TRIAL_END_NOTE = 'on'; sent.length = 0;
+  DB.vp_onboarding_stops = [{ venue_id: OS.v.id, email: String(OS.row().email).toLowerCase(), mobile: null }];
+  await withClock(SYD_FRI_9AM, function () { return vpaTrialEndNoteSweep(ENV, SYD_FRI_9AM); });
+  check('on the onboarding stop list: the trial-end note STILL goes (an account email, not a reminder)', NOTE().length === 1, NOTE().length);
+  check('...with the cold List-Unsubscribe it always had (header and footer agree)', /\/unsubscribe\?e=/.test((NOTE()[0].headers || {})['List-Unsubscribe'] || '') && /\/unsubscribe\?e=/.test(String(NOTE()[0].html)), (NOTE()[0] || {}).headers);
+  var OD = await bodalla();
+  ENV.TRIAL_END_NOTE = 'on'; sent.length = 0; DB.vp_onboarding_stops = [];
+  var realFetch = globalThis.fetch;
+  globalThis.fetch = function (u, o) { if (/\/rest\/v1\/vp_onboarding_stops/.test(String(u))) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } }); return realFetch(u, o); };
+  await withClock(SYD_FRI_9AM, function () { return vpaTrialEndNoteSweep(ENV, SYD_FRI_9AM); });
+  globalThis.fetch = realFetch;
+  check('the onboarding stop list cannot be read: the trial-end note is NOT held', NOTE().length === 1, NOTE().length);
   var N = await bodalla();
   ENV.TRIAL_END_NOTE = 'on'; sent.length = 0;
   N.v.status = 'suspended'; N.v.suspended_reason = 'cancelled';

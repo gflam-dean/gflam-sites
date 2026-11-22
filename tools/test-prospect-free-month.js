@@ -196,7 +196,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('three reminders, one on each planned day: 5 Nov, 25 Nov, 2 Dec, the last day itself (none on 12, 19, 26, 30 Nov or 1 Dec; Dean, 5 Nov 2026 ~7pm)', days === '2026-11-05 2026-11-25 2026-12-02', days);
   check('every one went inside the send window: Monday to Friday, 9 to 12 or 2 to 5, Brisbane (a Queensland venue)', got.every(function (g) { var d = new Date(g.at + 36e6), h = d.getUTCHours(); return d.getUTCDay() >= 1 && d.getUTCDay() <= 5 && ((h >= 9 && h < 12) || (h >= 14 && h < 17)); }), got.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
   check('each to their email, from and replying to hello@ (never Dean), signed by the venueplay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'venueplay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, the venueplay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
-  check('each reminder carries the one-click List-Unsubscribe (the onboarding /stop/ link, 23 Nov 2026, not the cold list; then the mailto) and List-Unsubscribe-Post (INBOX 414)', got.length === 3 && got.every(function (g) { var h = g.msg.headers || {}; return /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>, <mailto:hello@venueplay\.com\.au\?subject=unsubscribe>$/.test(h['List-Unsubscribe'] || '') && h['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click'; }), got.map(function (g) { return g.msg.headers; }));
+  check('each reminder carries the one-click List-Unsubscribe (the onboarding /stop/ link, 23 Nov 2026, not the cold list; the link ONLY, no mailto to the help desk) and List-Unsubscribe-Post (INBOX 414)', got.length === 3 && got.every(function (g) { var h = g.msg.headers || {}; return /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>$/.test(h['List-Unsubscribe'] || '') && h['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click'; }), got.map(function (g) { return g.msg.headers; }));
   var early = got[0].msg, mid23 = got[1] && got[1].msg, last = got[2] && got[2].msg;
   check('day 3: friendly, the end date, the card not charged until then, Add my card and Cancel', /Your first month at Walk The Month Hotel runs until Wed 2 December\. Whenever suits, you can add your card, and it won't be charged until your first month ends\./.test(early.text) &&
     /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=/.test(early.text) && !/workers\.dev/.test(early.html + early.text), early.text.slice(0, 900));
@@ -296,7 +296,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var U9 = await prospect({});
   var us = bne(2026, 11, 2, 10, 0);
   U9.row().first_signin_at = new Date(us).toISOString(); U9.row().free_month_ends_at = new Date(vpaFreeMonthEnd(us)).toISOString();
-  tbl('vp_unsubscribes').push({ email: String(U9.row().email).toUpperCase() });
+  tbl('vp_unsubscribes').push({ email: String(U9.row().email).toUpperCase(), source: 'link' });   // a person's OWN click on one of our links (23 Nov 2026: cold rows no longer count)
   await walk(us, bne(2026, 11, 30, 16, 0));
   check('they clicked unsubscribe: no day 3, no day 23 (whatever case the address is in)', REM().length === 0 && (U9.row().reminders_sent || []).length === 0, [REM().length, U9.row().reminders_sent]);
   check('...but the free month still runs and the pause still comes at its time (the account is not touched)', !U9.row().paused_at && U9.v.status === 'active');
@@ -308,6 +308,40 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('the unsubscribe list cannot be read: nothing goes, and nothing is marked sent', REM().length === 0 && (U9.row().reminders_sent || []).length === 0, REM().length);
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 30, 11, 0));
   check('the list readable again and they never unsubscribed: the due reminder goes on the next sweep', REM().length === 1, REM().length);
+
+  /* 23 Nov 2026 (Dean + independent review): the ONBOARDING stop list. Day 3 and the one-week reminder are reminders and stop; the
+     last-day "games pause tonight" notice is an account notice and ALWAYS goes; a cold-email row never blocks. */
+  section('5c. The onboarding stop list: reminders stop, the last-day notice always goes, cold rows never block');
+  async function monthVenue() {
+    world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+    var Z = await prospect({}); var zs = bne(2026, 11, 2, 10, 0);
+    Z.row().first_signin_at = new Date(zs).toISOString(); Z.row().free_month_ends_at = new Date(vpaFreeMonthEnd(zs)).toISOString();
+    return Z;
+  }
+  var Z1 = await monthVenue();
+  tbl('vp_onboarding_stops').push({ venue_id: Z1.v.id, email: null, mobile: null });
+  await walk(bne(2026, 11, 2, 10, 0), bne(2026, 11, 30, 16, 0));
+  check('stopped by venue id: no day-3 and no one-week reminder, nothing marked sent', REM().length === 0 && (Z1.row().reminders_sent || []).length === 0, [REM().length, Z1.row().reminders_sent]);
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 10, 0));
+  check('...but the LAST-DAY notice still goes (an account notice), so the venue counts as warned', REM().length === 1 && /Last day/.test(REM()[0].subject) && (Z1.row().reminders_sent || []).indexOf(30) >= 0 && vpaProspectWarned(Z1.row()), [REM().map(function (m) { return m.subject; }), Z1.row().reminders_sent]);
+  var Z2 = await monthVenue();
+  tbl('vp_onboarding_stops').push({ venue_id: null, email: String(Z2.row().email).toLowerCase(), mobile: null });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('stopped by their email: the day-3 reminder does not go', REM().length === 0 && (Z2.row().reminders_sent || []).length === 0, REM().length);
+  var Z3 = await monthVenue();
+  var stopsDown = globalThis.fetch;
+  globalThis.fetch = function (u, o) { if (/\/rest\/v1\/vp_onboarding_stops/.test(String(u))) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } }); return stopsDown(u, o); };
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('the stop list cannot be read: the day-3 reminder is held, nothing sent, nothing marked (fail closed)', REM().length === 0 && (Z3.row().reminders_sent || []).length === 0, REM().length);
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 10, 0));
+  check('...and the last-day notice still goes with the stop list down (it is not gated)', REM().length === 1 && /Last day/.test(REM()[0].subject), REM().length);
+  globalThis.fetch = stopsDown;
+  var Z4 = await monthVenue();
+  tbl('vp_unsubscribes').push({ email: String(Z4.row().email), source: 'instantly' }, { email: String(Z4.row().email), source: 'reply-stop' }, { email: String(Z4.row().email), source: 'manual' });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('cold-email rows (instantly, reply-stop, manual) do NOT block the reminder of a venue that asked for an account', REM().length === 1, REM().length);
+  check('...and its List-Unsubscribe is the onboarding /stop/ link ONLY (no mailto to the help desk)', /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>$/.test((REM()[0].headers || {})['List-Unsubscribe'] || ''), REM()[0].headers);
+  check('the SMS words never say Reply STOP: no link means no day-3 or one-week text at all, and the last-day text has no opt-out line', vpaReminderSmsText({ kind: 'early', firstName: 'Sam', venueName: 'X Hotel', endsWhen: 'on Friday' }) === null && vpaReminderSmsText({ kind: 'last', firstName: 'Sam', venueName: 'X Hotel', endsWhen: 'on Friday' }) === null && !/Reply STOP|Opt out/.test(vpaReminderSmsText({ kind: 'final', firstName: 'Sam', venueName: 'X Hotel' })), vpaReminderSmsText({ kind: 'final', firstName: 'Sam', venueName: 'X Hotel' }));
 
   section('6. Cancel, it\'s not for us');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';

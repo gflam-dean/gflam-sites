@@ -254,6 +254,24 @@ async function main() {
   check('each text is audited as a card reminder sent by text', DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_reminder_sent' && a.detail.via === 'text'; }).length === 3);
   check('warned, so the pause is on time (Thu 3 Dec), and no HQ ticket', A.v.status === 'suspended' && A.v.suspended_reason === 'free_month_ended' && !!A.p().paused_at && heldTickets(A.v).length === 0, [A.v.status, A.p().paused_at]);
 
+  /* 23 Nov 2026 (independent review): a stopped quick venue gets no day-3 or one-week TEXT, but the last-day text goes, so it counts as warned
+     and its pause is on time, not held for HQ. */
+  world(); listed();
+  var QS = await quickSignedIn({});
+  DB.vp_onboarding_stops = [{ venue_id: QS.v.id, email: null, mobile: null }];
+  MMS = [];
+  var qat = await walk(FIRST, bne(2026, 12, 4, 17, 0));
+  check('stopped (onboarding list): no day-3 and no one-week text; only the LAST-DAY text goes (an account notice)', MMS.length === 1 && /today is the last day/.test(MMS[0].message) && (QS.p().reminders_sent || []).indexOf(30) >= 0, [MMS.map(function (m) { return m.message; }), QS.p().reminders_sent]);
+  check('...so the venue counts as warned: paused on time, no HQ ticket', QS.v.status === 'suspended' && heldTickets(QS.v).length === 0, [QS.v.status, heldTickets(QS.v).length]);
+  check('...and no text says Reply STOP', MMS.every(function (m) { return !/Reply STOP/i.test(m.message); }));
+  world(); listed();
+  var QD = await quickSignedIn({});
+  var qReal = globalThis.fetch; MMS = [];
+  globalThis.fetch = function (u, o) { if (/\/rest\/v1\/vp_onboarding_stops/.test(String(u))) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } }); return qReal(u, o); };
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 30));
+  globalThis.fetch = qReal;
+  check('the stop list cannot be read: the day-3 text is held, nothing sent, nothing marked (fail closed)', MMS.length === 0 && (QD.p().reminders_sent || []).length === 0, [MMS.length, QD.p().reminders_sent]);
+
   section('3. The sweep reads every page: a quick venue behind 1000 other prospect rows');
   world(); listed();
   var P = await quickSignedIn({});
