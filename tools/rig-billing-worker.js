@@ -130,7 +130,7 @@ globalThis.fetch=function(url,opts){
   return Promise.resolve(resp(200,[]));
 };
 var URLSearchParams=function(){this.p=[];}; URLSearchParams.prototype.set=function(k,v){this.p.push([k,v]);}; URLSearchParams.prototype.get=function(k){var r=this.p.filter(function(x){return x[0]===k})[0];return r?r[1]:null;}; URLSearchParams.prototype.toString=function(){return this.p.map(function(x){return encodeURIComponent(x[0])+'='+encodeURIComponent(x[1])}).join('&');};
-var ENV={RESEND_API_KEY:'k',SITE_URL:'https://www.venueplay.com.au',SUPABASE_URL:'https://db',SUPABASE_SERVICE_KEY:'s',STRIPE_SECRET_KEY:'x',STRIPE_PRICE_MONTHLY:'price_F_M',STRIPE_PRICE_ANNUAL:'price_F_A',STRIPE_PRICE_STANDARD_MONTHLY:'price_S_M',STRIPE_PRICE_STANDARD_ANNUAL:'price_S_A',FOUNDING_CODES:'QLD-OCT-2026,NSW-OCT-2026'};
+var ENV={VP_UNSUB_SECRET:'rig-unsub-secret',RESEND_API_KEY:'k',SITE_URL:'https://www.venueplay.com.au',SUPABASE_URL:'https://db',SUPABASE_SERVICE_KEY:'s',STRIPE_SECRET_KEY:'x',STRIPE_PRICE_MONTHLY:'price_F_M',STRIPE_PRICE_ANNUAL:'price_F_A',STRIPE_PRICE_STANDARD_MONTHLY:'price_S_M',STRIPE_PRICE_STANDARD_ANNUAL:'price_S_A',FOUNDING_CODES:'QLD-OCT-2026,NSW-OCT-2026'};
 function J(o,s){return {status:s||200,body:o};}
 function REQ(body){return {text:function(){return Promise.resolve(JSON.stringify(body))},headers:{get:function(){return ''}}};}
 

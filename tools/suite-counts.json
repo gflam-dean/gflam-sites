@@ -2167,6 +2167,10 @@
   "checks": 5,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/onboarding-stop.test.js": {
+  "checks": 64,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/one-game.test.js": {
   "checks": 32,
   "counted_by": "total"

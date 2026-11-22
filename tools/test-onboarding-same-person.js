@@ -199,7 +199,7 @@ async function endNote(P) {
   section('2. The day-3 nudge (words from the Mac script, signed with whatever it typed)');
   var hn = await nudge(H, DAY3 + 'Dean', 'Your venueplay sign-in link again');
   check('Harry: sent From "Harry at venueplay <...>", the old "Dean" sign-off is replaced by Harry', hn.r.ok && hn.m.from === fromOf('Harry') && signedBy(hn.m, 'Harry'), [hn.r, hn.m.from]);
-  check('Harry: no Dean anywhere, no dash, the one-click header is still on', clean(hn.m) && /prospect-nudge/.test((hn.m.headers || {})['List-Unsubscribe'] || ''), hn.m.headers);
+  check('Harry: no Dean anywhere, no dash, the one-click header is still on', clean(hn.m) && /\/stop\/[0-9a-f]{48}>/.test((hn.m.headers || {})['List-Unsubscribe'] || ''), hn.m.headers);
   var kn = await nudge(K, DAY3 + '{sender}', 'Your venueplay sign-in link again');
   check('Kayla: the Mac script\'s {sender} line becomes Kayla; From "Kayla at venueplay"', kn.r.ok && kn.m.from === fromOf('Kayla') && signedBy(kn.m, 'Kayla') && !/\{sender\}/.test(allOf(kn.m)), [kn.m.from, visible(kn.m.html).slice(-400)]);
   var nn = await nudge(N, DAY3 + 'Dean', 'Your venueplay sign-in link again');
@@ -224,7 +224,7 @@ async function endNote(P) {
 
   section('5. The card reminders');
   var hr = await reminder(H), kr = await reminder(K), nr = await reminder(N);
-  check('Harry: the day-3 reminder is From Harry, signed Harry, with its one-click header', hr && hr.from === fromOf('Harry') && signedBy(hr, 'Harry') && clean(hr) && /prospect-reminder/.test((hr.headers || {})['List-Unsubscribe'] || ''), hr && hr.from);
+  check('Harry: the day-3 reminder is From Harry, signed Harry, with its one-click header', hr && hr.from === fromOf('Harry') && signedBy(hr, 'Harry') && clean(hr) && /\/stop\/[0-9a-f]{48}>/.test((hr.headers || {})['List-Unsubscribe'] || ''), hr && hr.from);
   check('Kayla: From Kayla, signed Kayla', kr && kr.from === fromOf('Kayla') && signedBy(kr, 'Kayla') && clean(kr), kr && kr.from);
   check('no name: plain, signed the team', nr && nr.from === PLAIN && signedBy(nr, '') && clean(nr), nr && nr.from);
   var hr2 = await reminder(H, bne(2026, 11, 25, 9, 30));

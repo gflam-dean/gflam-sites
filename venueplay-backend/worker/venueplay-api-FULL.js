@@ -342,6 +342,14 @@ export default {
       if (path === '/unsubscribe' && (request.method === 'GET' || request.method === 'POST')) {
         return await vpHandleUnsubscribe(request, env, url);
       }
+      /* THE ONBOARDING STOP LINK (Dean, 23 Nov 2026): "Don't want these reminders?" in every onboarding reminder, email and text.
+         Public; the per-venue token in the path is the only proof. GET shows one button, POST records. Its own list, never vp_unsubscribes. */
+      if (path.indexOf('/stop/') === 0 && (request.method === 'GET' || request.method === 'POST')) {
+        return await vpaHandleOnboardingStop(request, env, path);
+      }
+      // The Mac records a reply that says STOP to an onboarding reminder on the SAME list (X-Autopilot-Key).
+      if (request.method === 'POST' && path === '/autopilot/onboarding-stop') return await vpaAutopilotOnboardingStop(request, env, json);
+      if (request.method === 'GET'  && path === '/autopilot/onboarding-stops') return await vpaAutopilotOnboardingStops(request, env, json);
 
       /* IS THIS FOUNDING WINDOW STILL OPEN?
          Public, and it answers with a yes or a no and nothing else.
@@ -5565,7 +5573,15 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   if (no) return no;
   const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error }, d.status);
-  const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
+  /* THE ONBOARDING STOP LIST (23 Nov 2026): somebody who stopped the reminders is not on this list at all, and a list we cannot
+     read means no list (the Mac then drafts nothing). Each row carries its own stop_url for the "Don't want these reminders?" line. */
+  let stops;
+  try { stops = await vpaOnbStopSets(env); } catch (_) { return json({ error: 'The onboarding stop list could not be read (migration 228?), so no reminder list was made.' }, 503); }
+  const quietRows = (d.prospects || []).filter(vpaQuietProspect).filter((p) => !vpaOnbSetHas(stops, { venueId: p.venue_id, email: p.email, mobile: p.mobile || p.phone }));
+  const stopUrls = {};
+  for (const p of quietRows) stopUrls[p.venue_id] = await vpaOnbStopUrl(env, p.venue_id);
+  const quiet = quietRows.map((p) => ({
+    stop_url: stopUrls[p.venue_id] || '',
     venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!(p.phone || p.mobile),
     no_contact: vpaQuietNoContact(p),   // INBOX 726: true / false, else null = wait for Dean's tap
     /* For the text (3 Nov 2026). Read fresh on every run, so a mobile HQ adds with Edit details (4 Nov 2026) is here
@@ -5671,8 +5687,8 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
      'yes_reply' only labels it, so the audit and HQ can tell the welcome text from a later nudge. */
   const purpose = b.purpose === 'yes_reply' ? 'yes_reply' : 'nudge';
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
-  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !(/Reply STOP to opt out/i.test(text) || text.indexOf('{optout}') >= 0) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
-    return json({ error: 'The text must name venueplay, carry {link} and an opt-out ("Reply STOP to opt out" or {optout}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
+  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !vpaOnbSmsHasOptOut(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
+    return json({ error: 'The text must name venueplay, carry {link} and an opt-out link ({stop}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
   }
   if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
   const actor = VPA_AUTOPILOT_ACTOR;
@@ -5688,6 +5704,12 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const to = vpaNormaliseMobileAU(p.mobile || p.phone || '');
   if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
   if (await vpaSmsOptedOut(env, to)) return await refuse('They opted out of texts, so no text was sent.');
+  /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026): the venue, its login email or this mobile on it, or a list we cannot read, sends nothing. */
+  const onb = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: to });
+  if (onb === 'unread') return json({ error: 'The reminder stop list could not be read, so no text was sent. It stays queued.' }, 503);
+  if (onb === 'stopped') return await refuse('They asked for no more reminders, so no text was sent and none will be.');
+  const stopUrl = await vpaOnbStopUrl(env, venueId);
+  if (!stopUrl) return json({ error: 'The reminder opt-out link could not be made (VP_UNSUB_SECRET is not set), so no text was sent.' }, 503);
   let authUserId = null;
   try {
     const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
@@ -5707,7 +5729,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const smsTag = vpaLinkTag('text', vpaLinkStep(b.step, purpose === 'yes_reply' ? 'signup' : 'expiry'));   // which message (16 Nov 2026)
-  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaTagUrl(vpaShortSigninUrl(site, token), smsTag) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
+  const body = vpaFillDays(vpaOnbSmsWords(text, stopUrl), vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaTagUrl(vpaShortSigninUrl(site, token), smsTag) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
   let r;
   try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
@@ -5765,6 +5787,10 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (/\bDean\b/i.test(vpaNudgeSignoff(text, 'X'))) return json({ error: 'The email must not name Dean; it is signed by the person they met.' }, 400);
   const winN = await vpaProspectLinkWindow(env, venueId);
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
+  /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026). Their login email and mobile are checked inside vpaSendSigninLink too. */
+  const onbN = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: p.mobile || p.phone });
+  if (onbN === 'unread') return json({ error: 'The reminder stop list could not be read, so nothing was sent. Try again later.' }, 503);
+  if (onbN === 'stopped') return await refuse('They asked for no more reminders, so nothing was sent and nothing will be.');
   /* NOT hq: an automatic follow-up never restarts the 90 days, and after them it sends nothing (reason 'ended'
      below): Dean decides from HQ. The HQ per-day link cap still applies (opts.hqCap). */
   const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: subjectRaw || 'Your venueplay is ready when you are',
@@ -5775,8 +5801,8 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (r.reason === 'ended') return json({ error: 'Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so nothing was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', refused: true, ended: true }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
-  if (r.reason === 'unsubscribed') return json({ error: r.to + ' has unsubscribed, so nothing was sent.', refused: true }, 409);
-  if (r.reason === 'unsub_unread') return json({ error: 'The unsubscribe list could not be read, so nothing was sent. Try again later.' }, 503);
+  if (r.reason === 'unsubscribed') return json({ error: r.to + ' asked for no more reminders, so nothing was sent.', refused: true }, 409);
+  if (r.reason === 'unsub_unread') return json({ error: 'The reminder stop list could not be read, so nothing was sent. Try again later.' }, 503);
   return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
 /* ===========================================================================
@@ -6527,7 +6553,7 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=not.is.null&paused_at=is.null' +
       '&and=' + encodeURIComponent('(free_month_ends_at.gte."' + now + '",free_month_ends_at.lt."' + ceil + '")') + '&select=*&order=venue_id.asc');
   } catch (e) { return Object.assign(out, { why: 'prospects not readable' }); }
-  let unsub;
+  let unsub, onbStops;
   for (const p of rows || []) {
     const end = vpaProspectMonthEndMs(p);
     if (!(nowMs <= end)) continue;
@@ -6547,6 +6573,9 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.held++; continue; }                  // cannot read the list: not this hour
     if (unsub[email.toLowerCase()]) { out.skipped += 1; continue; }
+    if (onbStops === undefined) { try { onbStops = await vpaOnbStopSets(env); } catch (e) { onbStops = null; } }   // 23 Nov 2026: the onboarding stop list too
+    if (onbStops === null) { out.held++; continue; }
+    if (vpaOnbSetHas(onbStops, { venueId: v.id, email: email, mobile: p.phone })) { out.skipped += 1; continue; }
     /* ONCE, EVER: look, then claim; a failed look or claim sends nothing. */
     const lock = 'trial-end-note:' + v.id;
     const done = await vpaMrGet(env, 'vp_admin_audit', 'action=eq.' + VPA_TRIAL_END_NOTE_ACTION + '&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
@@ -6563,7 +6592,7 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
       res = await fetch('https://api.resend.com/emails', { method: 'POST',
         headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: [email], from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
-          headers: await vpUnsubHeaders(env, email, 'trial-end-note') }) });   // automatic, honours the list above: the mail app's own Unsubscribe button too (INBOX 414/771)
+          headers: await vpaOnbHeaders(env, v.id) }) });   // automatic, honours the list above: the mail app's own Unsubscribe button too (INBOX 414/771)
     } catch (_) { res = null; }
     const ok = !!(res && res.ok);
     await vpaAudit(env, { actorId: null, label: 'automatic (free month ends, after a cancel)' }, ok ? 'trial_end_note_sent' : 'trial_end_note_failed', 'venue:' + v.id,
@@ -6973,7 +7002,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{cancel_url}}/g, o.cancelUrl)
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
-    .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
+    .replace(/\{\{unsubscribe_url\}\}/g, o.stopUrl || (site + '/unsubscribe?e=' + encodeURIComponent(o.email)))   // 23 Nov 2026: the onboarding stop link when we have it
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     .replace(/{{signoff}}/g, vpaProspectSignoff(o.senderFirst || ''));   // a card reminder: signed by the name they met (Dean, 17 Nov 2026), else the team
   const subject = o.kind === 'final' ? 'Last day of your first month at ' + (o.venueName || 'your venue')
@@ -6995,13 +7024,14 @@ async function vpaRenderProspectReminder(env, o) {
  * ======================================================================== */
 const VPA_PAUSE_HELD_ACTION = 'prospect_pause_held';
 function vpaReminderSmsText(o) {
+  const optOut = o.stopUrl ? 'Opt out: ' + vpaOnbSmsForm(o.stopUrl) : 'Reply STOP to opt out.';   // 23 Nov 2026: "venueplay" cannot take a reply, so the link
   const first = String(o.firstName || '').replace(/[^A-Za-z' -]/g, ' ').trim().split(/\s+/)[0] || '';
   const hi = first ? 'Hi ' + first.slice(0, 20) + ', ' : 'Hi, ';
   const venue = vpsReadyVenueWords(o.venueName);
   const how = 'Sign in at venueplay.com.au/app (we text you a code) and add your card in Account.';
-  if (o.kind === 'final') return hi + 'today is the last day of your first month of venueplay at ' + venue + '. ' + how + ' With no card your games pause tonight. Reply STOP to opt out.';
-  if (o.kind === 'last') return hi + 'your first month of venueplay at ' + venue + ' ends ' + o.endsWhen + '. ' + how + ' With no card your games pause then. Reply STOP to opt out.';
-  return hi + 'how is venueplay going at ' + venue + '? Your first month ends ' + o.endsWhen + '. To keep your games on after that: ' + how + ' Reply STOP to opt out.';
+  if (o.kind === 'final') return hi + 'today is the last day of your first month of venueplay at ' + venue + '. ' + how + ' With no card your games pause tonight. ' + optOut;
+  if (o.kind === 'last') return hi + 'your first month of venueplay at ' + venue + ' ends ' + o.endsWhen + '. ' + how + ' With no card your games pause then. ' + optOut;
+  return hi + 'how is venueplay going at ' + venue + '? Your first month ends ' + o.endsWhen + '. To keep your games on after that: ' + how + ' ' + optOut;
 }
 /* The mobile to text, in +61 form: the account's (proven by the sign-up code), else the prospect row's phone, through
    vpaProspectMobile (the one rule for "which number is their mobile"). */
@@ -7044,7 +7074,7 @@ async function vpaProspectReminderText(env, p, v, kind, endsWhen, ready) {
   if (!rd.ok) return rd;
   const to = rd.to;
   let r;
-  try { r = await vpaSendSms(env, to, vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen }), 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
+  try { r = await vpaSendSms(env, to, vpaReminderSmsText({ kind: kind, firstName: p.contact_name, venueName: v.name, endsWhen: endsWhen, stopUrl: await vpaOnbStopUrl(env, v.id) }), 'rem-' + kind + '-' + String(v.id).slice(0, 8)); }
   catch (e) { r = { ok: false }; }
   if (r && r.blocked) await vpaSmsRecordOptOut(env, to, v.id);
   return r && r.ok ? { ok: true } : { ok: false, why: r && r.blocked ? 'opted out of texts' : 'text not sent' };
@@ -7103,6 +7133,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
   /* A free month cancelled part way switches off at its end date (INBOX 191.1). First, and on its own read, so a
      missing migration 127 below cannot hold it. */
   out.switched_off = await vpaProspectTrialSwitchOff(env, nowMs).catch(() => []);
+  let onbStops;   // vp_onboarding_stops, read the first time a reminder is due (same undefined / null meaning)
   let unsub;   // vp_unsubscribes, read the first time a reminder is due (undefined: not read yet; null: could not be read)
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }
@@ -7186,6 +7217,11 @@ async function vpaProspectReminderSweep(env, nowMs) {
     };
     /* NO REAL EMAIL (a quick game sign-up, 18 Nov 2026): the same reminder as a TEXT to the mobile that passed the code,
        same day, same send window. A text that does not go stays due (nothing marked sent), like an email. */
+    /* THE ONBOARDING STOP LIST (23 Nov 2026): a venue (or its email or mobile) that asked for no more reminders gets neither the email
+       nor the text; a list that cannot be read holds this hour (it stays due, so it goes on a later sweep). */
+    if (onbStops === undefined) { try { onbStops = await vpaOnbStopSets(env); } catch (e) { onbStops = null; } }
+    if (onbStops === null) { out.unsub_unread = true; continue; }
+    if (vpaOnbSetHas(onbStops, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone })) { out.onboarding_stopped = (out.onboarding_stopped || 0) + 1; continue; }
     const email = vpqRealEmail(p.email);
     if (!email) {
       const ready = await vpaProspectTextReady(env, p, v);   // can a text go at all? Asked before any claim
@@ -7208,7 +7244,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name, senderFirst: voice.name,
       endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
-      cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id),
+      cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id), stopUrl: await vpaOnbStopUrl(env, v.id),
       /* Their own free month in numbers, for the last reminder only (Dean, 5 Nov 2026 round 7). Never stops the email. */
       stats: kind !== 'early' ? await vpaVenueStats(env, v.id, v.timezone || 'Australia/Brisbane').catch(() => null) : null });
     if (!msg) continue;
@@ -7217,7 +7253,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     try { res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: voice.from, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html),
-        headers: await vpUnsubHeaders(env, email, 'prospect-reminder') }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
+        headers: (await vpaOnbHeaders(env, v.id)) }) });   // an automatic reminder: the mail app's own Unsubscribe button (INBOX 414)
     } catch (_) { res = null; }
     if (!res || !res.ok) { await unclaim(); continue; }
     await markSent('email');
@@ -7839,9 +7875,11 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
      address on the unsubscribe list (or a list we cannot read) gets nothing: checked BEFORE any link is made or
      retired, so a refused nudge leaves their working link exactly as it was. */
   if (opts.nudge) {
-    let stopped = null;
-    try { stopped = await vpUnsubBlocks(env, email); } catch (_) { stopped = null; }
-    if (stopped !== false) return { ok: false, reason: stopped ? 'unsubscribed' : 'unsub_unread', to: email };
+    /* 23 Nov 2026: the onboarding stop list (and a person's own click on an earlier unsubscribe link), NOT the cold-outreach
+       list: somebody who asked us for an account is not blocked from its reminders by an old cold-email STOP. */
+    const gate = await vpaOnbRefusal(env, { venueId: pick.venue_id, email: email, mobile: user.phone });
+    if (gate !== 'ok') return { ok: false, reason: gate === 'stopped' ? 'unsubscribed' : 'unsub_unread', to: email };
+    if (!(await vpaOnbStopUrl(env, pick.venue_id))) return { ok: false, reason: 'unsub_unread', to: email };
   }
   /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
      prospect inside its 90 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
@@ -7938,14 +7976,15 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
      own hello and sign-off), then the same button. {days} and {expires} in his words are filled from THIS
      link, after it was minted (Dean, 4 Nov 2026: never a number that is not the real expiry). */
   if (opts.nudge) {
-    const words = vpaNudgeSignoff(vpaFillDays(opts.nudge, daysLeft, expiresAt), voice.name);
+    const stopUrl = await vpaOnbStopUrl(env, pick.venue_id);
+    const words = vpaNudgeSignoff(vpaFillDays(vpaOnbFill(opts.nudge, stopUrl, false), daysLeft, expiresAt), voice.name);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
       + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
-      + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(String(email).trim().toLowerCase()))
-        + '" style="color:#8a8a95;text-decoration:underline">Unsubscribe</a> from reminders like this one.');
+      + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(stopUrl)
+        + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works. You can also reply STOP.');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
-    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpUnsubHeaders(env, email, 'prospect-nudge'), null, { from: voice.from }); } catch (_) { sentN = false; }
+    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpaOnbHeaders(env, pick.venue_id), null, { from: voice.from }); } catch (_) { sentN = false; }
     if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
@@ -19769,6 +19808,216 @@ async function vpUnsubFooterHtml(env, email, campaign) {
 async function vpUnsubBlocks(env, email) {
   const set = await vpaUnsubscribedSet(env);
   return !!set[String(email || '').trim().toLowerCase()];
+}
+
+/* ===========================================================================================
+   THE ONBOARDING STOP LIST (Dean, 23 Nov 2026; migration 228, table vp_onboarding_stops)
+
+   The onboarding reminders (day-3 "you have not signed in", the free-month-ending ones, by email and by text) each carry
+   "Don't want these reminders? <link>". The link is  https://api.venueplay.com.au/stop/<token>  (the api host: Pages cannot
+   answer a POST, and the page posts back to itself). THE TOKEN is stateless: the venue id as 32 hex plus the first 16 hex of
+   HMAC-SHA256('vp-onb-stop:' + VP_UNSUB_SECRET, venue id), so it cannot be guessed and nothing has to be stored.
+   THE GET DOES NOT WRITE (mail scanners fetch every link): it shows one button, "Stop these reminders", which POSTs.
+   THE POST records the venue's login email AND mobile on vp_onboarding_stops and says "Done, we won't send you any more
+   reminders. Your account still works." It writes ONLY that table: never vp_unsubscribes (the cold / marketing list), never
+   Instantly, and it does not touch account, billing or sign-in emails.
+   READERS: the quiet list, the nudge and nudge-sms sends, the card reminder sweep and the trial-end note all refuse a venue
+   (or an email or mobile) on it. A list that cannot be read, or a table that is not there, REFUSES the send (fail closed).
+   =========================================================================================== */
+async function vpaOnbMac(env, venueId) {
+  const key = await crypto.subtle.importKey('raw',
+    new TextEncoder().encode('vp-onb-stop:' + String(env.VP_UNSUB_SECRET || '')),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(String(venueId || '').trim().toLowerCase()));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+async function vpaOnbToken(env, venueId) {
+  const id = String(venueId || '').trim().toLowerCase();
+  if (!/^[0-9a-f-]{36}$/.test(id) || !env.VP_UNSUB_SECRET) return '';
+  return id.replace(/-/g, '') + (await vpaOnbMac(env, id));
+}
+/* The full link for an email; shortForSms() drops https:// for a text. '' when the secret is not set (the callers then refuse). */
+async function vpaOnbStopUrl(env, venueId) {
+  const t = await vpaOnbToken(env, venueId);
+  return t ? vpUnsubApi(env) + '/stop/' + t : '';
+}
+function vpaOnbSmsForm(url) { return String(url || '').replace(/^https?:\/\//, ''); }
+/* Words in a reminder: "{stop}" is filled with the venue's link. */
+function vpaOnbFill(text, url, forSms) {
+  return String(text).split('{stop}').join(forSms ? vpaOnbSmsForm(url) : url);
+}
+/* THE OPT-OUT LINK IN A TEXT. A business-name sender ("venueplay") cannot take a reply, so "Reply STOP" never worked: every
+   reminder text carries our own link instead. {stop} is filled; a queued text that still says "Reply STOP to opt out" is
+   rewritten to "Opt out: <link>" so nothing already approved is lost. */
+function vpaOnbSmsHasOptOut(text) { return /\{stop\}/.test(text) || /Reply STOP to opt out/i.test(text) || /\{optout\}/.test(text); }
+function vpaOnbSmsWords(text, url) {
+  return String(text).replace(/Reply STOP to opt out\.?/i, 'Opt out: {stop}').split('{stop}').join(vpaOnbSmsForm(url));
+}
+/* true / false, or THROWS when the list cannot be read (a caller must then not send). */
+async function vpaOnbStopped(env, who) {
+  who = who || {};
+  const parts = [];
+  const venueId = String(who.venueId || '').trim().toLowerCase();
+  if (/^[0-9a-f-]{36}$/.test(venueId)) parts.push('venue_id.eq.' + venueId);
+  const email = String(who.email || '').trim().toLowerCase();
+  if (email && email.length <= 254 && !/["\\]/.test(email)) parts.push('email.eq."' + email + '"');
+  const mob = who.mobile ? vpaNormaliseMobileAU(who.mobile) : null;
+  if (mob && /^\+\d{8,15}$/.test(mob)) parts.push('mobile.eq."' + mob + '"');
+  if (!parts.length) return false;
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_stops?or=' + encodeURIComponent('(' + parts.join(',') + ')') + '&select=id&limit=1',
+    { method: 'GET', headers: vpaHeaders(env) });
+  if (!res.ok) throw new Error('the onboarding stop list could not be read (' + res.status + ')');   // a 404 = migration 228 not run: fail closed too
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error('the onboarding stop list did not come back as a list');
+  return rows.length > 0;
+}
+async function vpaOnbStoppedSafe(env, who) {
+  try { return (await vpaOnbStopped(env, who)) ? 'stopped' : 'ok'; } catch (_) { return 'unread'; }
+}
+/* The whole list as sets, for the quiet list (one read, paged; THROWS when unreadable). */
+async function vpaOnbStopSets(env) {
+  const rows = await vpaSelectAll(env, 'vp_onboarding_stops', 'select=venue_id,email,mobile&order=id.asc');
+  if (!Array.isArray(rows)) throw new Error('the onboarding stop list did not come back as a list');
+  const v = Object.create(null), e = Object.create(null), m = Object.create(null);
+  rows.forEach((r) => {
+    if (r.venue_id) v[String(r.venue_id).toLowerCase()] = true;
+    if (r.email) e[String(r.email).trim().toLowerCase()] = true;
+    if (r.mobile) m[String(r.mobile).trim()] = true;
+  });
+  return { v: v, e: e, m: m };
+}
+function vpaOnbSetHas(sets, who) {
+  const mob = who.mobile ? vpaNormaliseMobileAU(who.mobile) : null;
+  return !!(sets.v[String(who.venueId || '').toLowerCase()] || (who.email && sets.e[String(who.email).trim().toLowerCase()]) || (mob && sets.m[mob]));
+}
+/* Record a stop. row: { venue_id, email, mobile, source }. A repeat is fine (the unique venue_id makes it a no-op). */
+async function vpaOnbRecord(env, row) {
+  const body = { venue_id: row.venue_id || null, email: row.email ? String(row.email).trim().toLowerCase() : null,
+                 mobile: row.mobile ? vpaNormaliseMobileAU(row.mobile) : null, source: String(row.source || 'link').slice(0, 40) };
+  const q = body.venue_id ? '?on_conflict=venue_id' : '';
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_stops' + q, { method: 'POST',
+    headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=ignore-duplicates,return=minimal' }), body: JSON.stringify(body) });
+  return res.ok || res.status === 409;
+}
+/* A venue's login email and mobile, for the record: the prospect's login, plus the account's mobile. Best effort: a part that
+   cannot be found is left null (the venue id is still recorded, and that alone stops every reminder to the venue). */
+async function vpaOnbWho(env, venueId) {
+  const out = { email: null, mobile: null };
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id,email,phone&limit=1');
+    const r = pr && pr[0];
+    if (r) {
+      out.email = r.email || null;
+      out.mobile = vpaIsAuMobileE164(vpaNormaliseMobileAU(r.phone || '')) ? r.phone : null;
+      if (r.auth_user_id) {
+        const u = await vpaAuthGetUser(env, r.auth_user_id);
+        if (u && u.email) out.email = u.email;
+        if (u && u.phone && !out.mobile) out.mobile = u.phone;
+      }
+    }
+    const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id&limit=1');
+    const fid = vs && vs[0] && vs[0].founding_id;
+    if (fid && !out.mobile) {
+      const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=mobile&limit=1');
+      if (fr && fr[0] && fr[0].mobile) out.mobile = fr[0].mobile;
+    }
+  } catch (_) {}
+  return out;
+}
+/* A person's OWN click on an unsubscribe link in one of our emails (vp_unsubscribes source 'link...' or 'one-click...'): an
+   earlier nudge's footer wrote there, so the nudge still honours it. Cold-outreach rows (instantly, reply-stop, manual, phone)
+   do NOT block an onboarding reminder to a venue that asked us for an account. THROWS when unreadable. */
+async function vpaOnbOwnClickUnsub(env, email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e || /["\\,()*]/.test(e)) return false;
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_unsubscribes?email=ilike.' + encodeURIComponent(e)
+    + '&or=' + encodeURIComponent('(source.like.link*,source.like.one-click*)') + '&select=id&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+  if (!res.ok) throw new Error('the unsubscribe list could not be read (' + res.status + ')');
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;
+}
+/* 'stopped' | 'unread' | 'ok' for one onboarding reminder to this venue / email / mobile, both lists. */
+async function vpaOnbRefusal(env, who) {
+  try {
+    if (await vpaOnbStopped(env, who)) return 'stopped';
+    if (who.email && await vpaOnbOwnClickUnsub(env, who.email)) return 'stopped';
+    return 'ok';
+  } catch (_) { return 'unread'; }
+}
+/* GET /autopilot/onboarding-stops  X-Autopilot-Key: the whole list, for the Mac's send-time check of its thread reminders. */
+async function vpaAutopilotOnboardingStops(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_onboarding_stops', 'select=venue_id,email,mobile,source,created_at&order=id.asc'); }
+  catch (_) { return json({ error: 'The onboarding stop list could not be read (migration 228?).' }, 503); }
+  return json({ ok: true, stops: rows.map((r) => ({ venue_id: r.venue_id || null, email: r.email || null, mobile: r.mobile || null })) });
+}
+/* The List-Unsubscribe pair for an ONBOARDING reminder: the one-click POST lands on the onboarding list, not the cold one. */
+async function vpaOnbHeaders(env, venueId) {
+  const url = await vpaOnbStopUrl(env, venueId);
+  const h = { 'List-Unsubscribe': '<' + url + '>, <' + VP_UNSUB_MAILTO + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+  return url ? h : {};
+}
+function vpaOnbPage(title, bodyHtml, status, extra) {
+  return vpUnsubPage(title, bodyHtml, status, extra);
+}
+async function vpaHandleOnboardingStop(request, env, path) {
+  const tok = String(path.slice('/stop/'.length)).trim().toLowerCase();
+  const isPost = request.method === 'POST';
+  const plain = (text, status) => new Response(text, { status: status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+  const BY_HAND = 'Reply to the reminder with the word STOP, or call us on ' + VP_SUPPORT_PHONE + ', and we will take you off by hand.';
+  if (!env.VP_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
+    return isPost ? plain('not configured', 503) : vpaOnbPage('Something went wrong', '<p>This is having a moment. ' + BY_HAND + '</p>', 503);
+  }
+  const m = /^([0-9a-f]{32})([0-9a-f]{16})$/.exec(tok);
+  let venueId = '';
+  if (m) {
+    const h = m[1];
+    venueId = h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+    if (!vpUnsubSafeEqual(m[2], await vpaOnbMac(env, venueId))) venueId = '';
+  }
+  if (!venueId) {
+    return isPost ? plain('that link is not valid', 403)
+      : vpaOnbPage('That link looks wrong', '<p>It may have been cut short when it was copied. Use the link in the reminder itself. ' + BY_HAND + '</p>', 403);
+  }
+  if (isPost) {
+    let body = '';
+    try { body = await request.text(); } catch (_) {}
+    const via = /List-Unsubscribe=One-Click/i.test(body) ? 'one-click' : 'link';
+    const who = await vpaOnbWho(env, venueId);
+    const ok = await vpaOnbRecord(env, { venue_id: venueId, email: who.email, mobile: who.mobile, source: via }).catch(() => false);
+    if (ok) await vpaAudit(env, { actorId: null, label: 'onboarding stop link' }, 'onboarding_stop', 'venue:' + venueId, { via: via });
+    return ok ? plain('done', 200) : plain('could not save, try again', 502);
+  }
+  const action = '/stop/' + tok;
+  const form = '<form id="f" method="POST" action="' + vpaEsc(action) + '"><input type="hidden" name="via" value="page">'
+    + '<button type="submit">Stop these reminders</button></form>'
+    + '<script>(function(){var f=document.getElementById("f");f.addEventListener("submit",function(ev){ev.preventDefault();var m=document.getElementById("msg");'
+    + 'fetch(' + JSON.stringify(action) + ',{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:"via=page"})'
+    + '.then(function(r){if(!r.ok)throw 0;m.innerHTML=' + JSON.stringify('<h1>Done</h1><p>Done, we won&#39;t send you any more reminders. Your account still works.</p>') + ';f.style.display="none";})'
+    + '.catch(function(){m.innerHTML=' + JSON.stringify('<h1>That did not go through</h1><p>Please try again in a minute. ' + BY_HAND + '</p>') + ';});});})();</script>';
+  return vpaOnbPage('Stop these reminders?', '<p>One tap and we will not send you any more reminders about getting started. Your account, and anything about billing, carries on as normal.</p>', 200, form);
+}
+/* POST /autopilot/onboarding-stop  X-Autopilot-Key  { venue_id?, email, mobile?, source }  (the Mac: a reply that says STOP to an
+   onboarding reminder). Same table as the link. Never vp_unsubscribes, never Instantly. */
+async function vpaAutopilotOnboardingStop(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim().toLowerCase();
+  const email = String(b.email || '').trim().toLowerCase();
+  if (venueId && !/^[0-9a-f-]{36}$/.test(venueId)) return json({ error: 'That venue id is not valid.' }, 400);
+  if (!venueId && !VP_UNSUB_EMAIL_RE.test(email)) return json({ error: 'A venue id or an email address is needed.' }, 400);
+  let who = { email: email || null, mobile: b.mobile || null };
+  if (venueId) { const w = await vpaOnbWho(env, venueId); who = { email: w.email || email || null, mobile: w.mobile || b.mobile || null }; }
+  const src = b.source === 'sms-reply' ? 'sms-reply' : 'email-reply';
+  const ok = await vpaOnbRecord(env, { venue_id: venueId || null, email: who.email, mobile: who.mobile, source: src }).catch(() => false);
+  if (!ok) return json({ error: 'The onboarding stop list could not be written (migration 228?).' }, 503);
+  await vpaAudit(env, VPA_AUTOPILOT_ACTOR, 'onboarding_stop', venueId ? 'venue:' + venueId : 'email', { via: src });
+  return json({ ok: true, venue_id: venueId || null });
 }
 
 function vpUnsubPage(title, bodyHtml, status, extra) {
