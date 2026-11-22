@@ -350,6 +350,7 @@ export default {
       // The Mac records a reply that says STOP to an onboarding reminder on the SAME list (X-Autopilot-Key).
       if (request.method === 'POST' && path === '/autopilot/onboarding-stop') return await vpaAutopilotOnboardingStop(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/onboarding-stops') return await vpaAutopilotOnboardingStops(request, env, json);
+      if (request.method === 'GET'  && path === '/autopilot/prospects/all') return await vpaAutopilotAllProspects(request, env, json);
 
       /* IS THIS FOUNDING WINDOW STILL OPEN?
          Public, and it answers with a yes or a no and nothing else.
@@ -19952,9 +19953,10 @@ async function vpaOnbColdBlocks(env, email, since) {
     return !t || sinceMs == null || t >= sinceMs;
   });
 }
-/* When this venue asked for its account: the later of its set-up and HQ's last resend, as epoch ms (null when unknown). */
+/* When this venue FIRST asked for its account: its set-up (created_at), epoch ms, null when unknown (and unknown BLOCKS). An HQ resend
+   (link_from) never moves it, so a resend cannot un-block an earlier STOP. */
 function vpaOnbAskedAt(p) {
-  const t = Math.max(Date.parse((p && p.created_at) || '') || 0, Date.parse((p && p.link_from) || '') || 0);
+  const t = Date.parse((p && p.created_at) || '') || 0;
   return t || null;
 }
 /* 'stopped' | 'unread' | 'ok' for one onboarding reminder to this venue / email / mobile: the onboarding list always, the cold list by date. */
@@ -19964,6 +19966,20 @@ async function vpaOnbRefusal(env, who) {
     if (who.email && await vpaOnbColdBlocks(env, who.email, who.since)) return 'stopped';
     return 'ok';
   } catch (_) { return 'unread'; }
+}
+/* GET /autopilot/prospects/all  X-Autopilot-Key: EVERY prospect account with an email that is not already on the onboarding list, signed in or not
+   (card reminders go to signed-in venues too), so the Mac can record a cold-list STOP for any of them (23 Nov 2026). Read only. */
+async function vpaAutopilotAllProspects(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  let stops;
+  try { stops = await vpaOnbStopSets(env); } catch (_) { return json({ error: 'The onboarding stop list could not be read (migration 228?).' }, 503); }
+  const rows = (d.prospects || []).filter((p) => p.venue_id && p.email && !vpaOnbSetHas(stops, { venueId: p.venue_id, email: p.email, mobile: p.mobile || p.phone }))
+    .map((p) => ({ venue_id: p.venue_id, name: p.name, email: p.email, mobile: p.mobile || (vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null),
+                   created_at: p.created_at || null, link_from: p.link_from || null }));
+  return json({ ok: true, prospects: rows });
 }
 /* GET /autopilot/onboarding-stops  X-Autopilot-Key: the whole list, for the Mac's send-time check of its thread reminders. */
 async function vpaAutopilotOnboardingStops(request, env, json) {

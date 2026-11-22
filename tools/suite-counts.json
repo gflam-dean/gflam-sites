@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 73,
+  "checks": 82,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

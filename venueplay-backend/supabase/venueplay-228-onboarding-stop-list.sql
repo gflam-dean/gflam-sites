@@ -30,6 +30,9 @@ create table if not exists public.vp_onboarding_stops (
 );
 
 create unique index if not exists vp_onboarding_stops_venue_uniq on public.vp_onboarding_stops (venue_id);
+-- A 228 pasted earlier (before stop_at existed) is brought up to date by this, so a re-run is always safe.
+alter table public.vp_onboarding_stops add column if not exists stop_at timestamptz;
+
 create index if not exists vp_onboarding_stops_email_idx on public.vp_onboarding_stops (lower(email));
 create index if not exists vp_onboarding_stops_mobile_idx on public.vp_onboarding_stops (mobile);
 

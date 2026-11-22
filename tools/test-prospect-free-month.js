@@ -350,7 +350,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('a cold STOP with NO date blocks it (cannot tell)', REM().length === 0, REM().length);
   var Y3 = await monthVenue(); Y3.row().link_from = new Date(Date.now() + 7200000).toISOString(); tbl('vp_unsubscribes').push({ email: String(Y3.row().email), source: 'instantly', created_at: AFTER });
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
-  check('HQ\'s resend (link_from) moves the clock: a cold STOP before that resend is ignored', REM().length === 1, REM().length);
+  check('HQ\'s resend (link_from) does NOT move the clock: the cold STOP after the FIRST set-up still blocks', REM().length === 0, REM().length);
   var Y4 = await monthVenue(); tbl('vp_unsubscribes').push({ email: String(Y4.row().email), source: 'link', created_at: BEFORE });
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
   check('a person\'s OWN click on one of our unsubscribe links blocks whatever its date', REM().length === 0, REM().length);

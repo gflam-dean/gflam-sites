@@ -366,6 +366,46 @@ step(function () {
   });
 });
 
+// 10. AN UNKNOWN SIGN-UP DATE BLOCKS (fail closed); a known one is compared. Called directly, since the routes always know it.
+step(function () {
+  reset();
+  UNSUB = [{ email: 'old@example.test', source: 'instantly', created_at: '2026-10-01T00:00:00Z' }];
+  return vpaOnbColdBlocks(env(), 'old@example.test', Date.parse('2026-11-01T00:00:00Z')).then(function (a) {
+    ok('a cold STOP from October, a venue set up in November: ignored', a === false, String(a));
+    return vpaOnbColdBlocks(env(), 'old@example.test', null);
+  }).then(function (b) {
+    ok('the SAME STOP with the sign-up date UNKNOWN: it BLOCKS (cannot tell, fail closed)', b === true, String(b));
+    ok('no sign-up date on a row is unknown too: vpaOnbAskedAt({}) is null', vpaOnbAskedAt({}) === null && vpaOnbAskedAt({ created_at: 'not a date' }) === null);
+    ok('a resend never moves the date: the FIRST set-up only', vpaOnbAskedAt({ created_at: '2026-11-01T00:00:00Z', link_from: '2026-11-20T00:00:00Z' }) === Date.parse('2026-11-01T00:00:00Z'));
+  });
+});
+
+// 11. The migration is safe to re-run on a table that already exists (an earlier 228 without stop_at).
+step(function () {
+  var sql = readFile(findFile('venueplay-backend/supabase/venueplay-228-onboarding-stop-list.sql'));
+  var stmts = sql.replace(/--[^\n]*/g, '').split(';').map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+  ok('every create is "if not exists" and every alter that adds a column is "add column if not exists"', stmts.every(function (x) { return !/^create (table|index|unique index)/i.test(x) || /if not exists/i.test(x); }) && stmts.every(function (x) { return !/add column/i.test(x) || /add column if not exists/i.test(x); }), stmts.join(' ;; ').slice(0, 300));
+  ok('stop_at is added by an alter ... add column if not exists (so an older 228 gets it on a re-run)', stmts.some(function (x) { return /^alter table public\.vp_onboarding_stops add column if not exists stop_at timestamptz$/i.test(x); }));
+  ok('re-running changes nothing else: policies and comments are not created twice', stmts.every(function (x) { return !/^create policy/i.test(x); }));
+  return Promise.resolve();
+});
+
+// 12. The Mac lists EVERY prospect (signed in too) that is not already stopped.
+step(function () {
+  reset();
+  vpaProspectsData = function () { return Promise.resolve({ prospects: [
+    { venue_id: VID, name: 'Signed In', email: 'a@example.test', status: 'free_month', last_sign_in_at: '2026-11-02T00:00:00Z', created_at: '2026-11-01T00:00:00Z' },
+    { venue_id: VID2, name: 'Never', email: 'b@example.test', status: 'not_signed_in', created_at: '2026-11-01T00:00:00Z', link_from: '2026-11-10T00:00:00Z' },
+    { venue_id: 'cccccccc-2222-4333-8444-555555555555', name: 'Stopped', email: 'c@example.test', status: 'free_month', created_at: '2026-11-01T00:00:00Z' },
+    { venue_id: 'dddddddd-2222-4333-8444-555555555555', name: 'No email', email: '', status: 'free_month' } ] }); };
+  STOPS = [{ venue_id: 'cccccccc-2222-4333-8444-555555555555', email: null, mobile: null }];
+  return auto('GET', '/autopilot/prospects/all').then(function (r) {
+    var ids = (parse(r).prospects || []).map(function (p) { return p.venue_id; });
+    ok('every prospect with an email that is not already stopped, signed in or not, with created_at and link_from', r.status === 200 && ids.length === 2 && ids.indexOf(VID) >= 0 && ids.indexOf(VID2) >= 0, r.body.slice(0, 200));
+    return worker.fetch(req('GET', '/autopilot/prospects/all', '', {}), env());
+  }).then(function (r) { ok('no key: refused', r.status === 401, String(r.status)); });
+});
+
 var chain = Promise.resolve();
 steps.forEach(function (s) { chain = chain.then(s).catch(function (e) { ok('step threw', false, String(e && e.stack || e)); }); });
 chain.then(function () { print((fail ? 'FAILED: ' : '') + pass + ' of ' + (pass + fail) + ' checks passed'); });
