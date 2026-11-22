@@ -1091,7 +1091,7 @@
               <input id="ct-postcode" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" maxlength="4">
             </div>
             <div class="field">
-              <label for="ct-phone">Phone</label>
+              <label for="ct-phone">Mobile</label>
               <input id="ct-phone" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel">
             </div>
             <div class="field full">
@@ -1553,6 +1553,10 @@
     if (postcode && !/^\d{4}$/.test(postcode)) { ctErr.textContent = 'A postcode is 4 numbers. Leave it blank if you are not sure.'; ctErr.classList.add('show'); return; }
     // Optional, because a phone number is a bigger ask than an email and we would rather have the
     // enquiry. But a half-typed one is worse than none: it looks like we have a way to ring back.
+    // EVERY enquiry needs their mobile (Dean, 23 Nov 2026: "we need the mobile number 110%"): our email can land in spam,
+    // and a text is the only backup. Only an Australian mobile (04...) can get a text.
+    var mob = phone.replace(/[^0-9+]/g, '').replace(/^\+?61/, '0');
+    if (!/^04\d{8}$/.test(mob)) { ctErr.textContent = phone ? 'Please enter a mobile number starting with 04, so we can text you back.' : 'Please enter your mobile, so we can text you back.'; ctErr.classList.add('show'); return; }
     if (phone && phone.replace(/[^0-9]/g, '').length < 8) { ctErr.textContent = 'That phone number looks too short. Leave it blank if you would rather we emailed.'; ctErr.classList.add('show'); return; }
     if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }
 

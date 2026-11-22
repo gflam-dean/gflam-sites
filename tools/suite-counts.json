@@ -432,7 +432,7 @@
   "counted_by": "lines"
  },
  "tools/offer-free-play-in-chrome.test.py": {
-  "checks": 35,
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
@@ -500,7 +500,7 @@
   "counted_by": "lines"
  },
  "tools/prefs-shapes.test.py": {
-  "checks": 35,
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/prospects-day21-in-chrome.test.py": {
@@ -1440,7 +1440,7 @@
   "counted_by": "lines"
  },
  "tools/test-screen-shows.js": {
-  "checks": 35,
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {

@@ -1172,7 +1172,7 @@
               <input id="ct-postcode" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" maxlength="4">
             </div>
             <div class="field">
-              <label for="ct-phone" id="ct-phone-label">Phone</label>
+              <label for="ct-phone" id="ct-phone-label">Mobile</label>
               <input id="ct-phone" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel">
             </div>
             <div class="field full">
@@ -1601,7 +1601,7 @@
   /* The phone box says what it is for: a free account needs a mobile for the text sign-in (Dean, 23 Nov 2026). */
   function ctPhoneLabel(){
     var l = document.getElementById('ct-phone-label');
-    if (l) l.textContent = ctTopic ? 'Mobile (we text your sign-in)' : 'Phone';
+    if (l) l.textContent = ctTopic ? 'Mobile (we text your sign-in)' : 'Mobile';
   }
   function ctFreeAccount(){
     ctTopic = CT_TOPIC; ctPhoneLabel();
@@ -1649,10 +1649,10 @@
     // two venues with the same name apart, and a wrong one is worse than none.
     if (!venue) { ctErr.textContent = 'Please enter your venue name.'; ctErr.classList.add('show'); return; }
     if (postcode && !/^\d{4}$/.test(postcode)) { ctErr.textContent = 'A postcode is 4 numbers. Leave it blank if you are not sure.'; ctErr.classList.add('show'); return; }
-    // A free account needs their mobile (Dean, 23 Nov 2026): the sign-in comes by text, and it is the backup when an email
-    // goes to spam. Only an Australian mobile (04...) can get a text; "Talk to us" keeps the phone optional.
+    // EVERY enquiry needs their mobile (Dean, 23 Nov 2026: "we need the mobile number 110%"): the sign-in comes by text,
+    // and it is the only backup when our email goes to spam. Only an Australian mobile (04...) can get a text.
     var mob = phone.replace(/[^0-9+]/g, '').replace(/^\+?61/, '0');
-    if (ctTopic && !/^04\d{8}$/.test(mob)) { ctErr.textContent = phone ? 'Please enter a mobile number starting with 04, so we can text you your sign-in.' : 'Please enter your mobile, so we can text you your sign-in.'; ctErr.classList.add('show'); return; }
+    if (!/^04\d{8}$/.test(mob)) { var why = ctTopic ? 'so we can text you your sign-in.' : 'so we can text you back.'; ctErr.textContent = phone ? 'Please enter a mobile number starting with 04, ' + why : 'Please enter your mobile, ' + why; ctErr.classList.add('show'); return; }
     // Optional, but a half-typed number is worse than none: it looks like a way to ring back.
     if (phone && phone.replace(/[^0-9]/g, '').length < 8) { ctErr.textContent = 'That phone number looks too short. Leave it blank if you would rather we emailed.'; ctErr.classList.add('show'); return; }
     if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }

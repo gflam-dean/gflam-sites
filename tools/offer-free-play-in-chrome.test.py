@@ -50,6 +50,7 @@ FORM = ('(function(){var t=document.getElementById("ct-topic"),m=document.getEle
         'picks:pk?[].map.call(pk.options,function(o){return o.text;}):[],msg:m?m.value:""};})()')
 FILL = ('(function(){function v(i,x){document.getElementById(i).value=x;}v("ct-name","Kim Offer");v("ct-email","kim@kirrabeachhotel.com.au");'
         'v("ct-venue","Kirra Beach Hotel");v("ct-postcode","4225");document.getElementById("ct-submit").click();return true;})()')
+FILLM = FILL.replace('v("ct-postcode","4225");', 'v("ct-postcode","4225");v("ct-phone","0412 555 030");')
 DONE = ('(function(){var s=document.getElementById("ct-success");return s&&s.classList.contains("show")'
         '?document.getElementById("ct-thanks").textContent.trim():"";})()')
 
@@ -123,9 +124,13 @@ try:
     time.sleep(0.4)
     f = S.json(sid, FORM, {})
     ok('Talk to us shows no topic and leaves the message empty', not f.get('topicShown') and f.get('msg') == '', f)
-    ok('and the phone box stays plain "Phone", optional', S.js(sid, 'document.getElementById("ct-phone-label").textContent') == 'Phone')
+    ok('and the phone box says Mobile', S.js(sid, 'document.getElementById("ct-phone-label").textContent') == 'Mobile')
     S.js(sid, 'document.getElementById("ct-message").value="How does trivia work on a Tuesday?"; true')
     S.js(sid, FILL)
+    time.sleep(0.4)
+    ok('Talk to us with no mobile is not sent either (Dean, 23 Nov 2026: mobile 110%)',
+       (S.js(sid, 'document.getElementById("ct-err").textContent') or '') == 'Please enter your mobile, so we can text you back.' and len(contact_bodies(S)) == n0)
+    S.js(sid, FILLM)
     th = S.until(sid, DONE, 15)
     ok('and its thank-you is the usual one', th == 'Thanks, we\'ve got it and we\'ll be in touch soon.', th)
     bodies = contact_bodies(S)[n0:]
@@ -144,7 +149,7 @@ try:
     f = S.json(sid, FORM, {})
     ok('picking "Talk to us" takes our words out of the message box', f.get('topic') == 'Talk to us' and f.get('msg') == '', f)
     S.js(sid, 'document.getElementById("ct-message").value="Can we try it at our Friday raffle?"; true')
-    S.js(sid, FILL)
+    S.js(sid, FILLM)
     th = S.until(sid, DONE, 15)
     bodies = contact_bodies(S)[n0:]
     ok('and it sends the message as typed, with no free-account topic and the usual thank-you',
@@ -166,7 +171,7 @@ ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it 
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 35   # round 3 (7 Nov 2026) added the "Talk to us" checks; 23 Nov: the free-account mobile (9 more)
+EXPECTED = 36   # round 3 (7 Nov 2026) added the "Talk to us" checks; 23 Nov: the free-account mobile (9 more)
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
