@@ -19900,7 +19900,8 @@ function vpaOnbSetHas(sets, who) {
 /* Record a stop. row: { venue_id, email, mobile, source }. A repeat is fine (the unique venue_id makes it a no-op). */
 async function vpaOnbRecord(env, row) {
   const body = { venue_id: row.venue_id || null, email: row.email ? String(row.email).trim().toLowerCase() : null,
-                 mobile: row.mobile ? vpaNormaliseMobileAU(row.mobile) : null, source: String(row.source || 'link').slice(0, 40) };
+                 mobile: row.mobile ? vpaNormaliseMobileAU(row.mobile) : null, source: String(row.source || 'link').slice(0, 40),
+                 stop_at: row.stop_at && isFinite(Date.parse(row.stop_at)) ? new Date(row.stop_at).toISOString() : null };
   const q = body.venue_id ? '?on_conflict=venue_id' : '';
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_stops' + q, { method: 'POST',
     headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=ignore-duplicates,return=minimal' }), body: JSON.stringify(body) });
@@ -20034,8 +20035,10 @@ async function vpaAutopilotOnboardingStop(request, env, json) {
   if (!venueId && !VP_UNSUB_EMAIL_RE.test(email)) return json({ error: 'A venue id or an email address is needed.' }, 400);
   let who = { email: email || null, mobile: b.mobile || null };
   if (venueId) { const w = await vpaOnbWho(env, venueId); who = { email: w.email || email || null, mobile: w.mobile || b.mobile || null }; }
-  const src = b.source === 'sms-reply' ? 'sms-reply' : 'email-reply';
-  const ok = await vpaOnbRecord(env, { venue_id: venueId || null, email: who.email, mobile: who.mobile, source: src }).catch(() => false);
+  /* 'mac-cold-stop' (23 Nov 2026): the Mac's nudge run saw a cold-list STOP dated at or after the venue asked for its account, so the
+     Worker's own reminders (card reminders, nudge) must stop too. Writes OUR onboarding list only; never vp_unsubscribes or Instantly. */
+  const src = ['sms-reply', 'mac-cold-stop'].indexOf(b.source) >= 0 ? b.source : 'email-reply';
+  const ok = await vpaOnbRecord(env, { venue_id: venueId || null, email: who.email, mobile: who.mobile, source: src, stop_at: b.stop_at }).catch(() => false);
   if (!ok) return json({ error: 'The onboarding stop list could not be written (migration 228?).' }, 503);
   await vpaAudit(env, VPA_AUTOPILOT_ACTOR, 'onboarding_stop', venueId ? 'venue:' + venueId : 'email', { via: src });
   return json({ ok: true, venue_id: venueId || null });

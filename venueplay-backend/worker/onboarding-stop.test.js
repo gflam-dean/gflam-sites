@@ -228,10 +228,16 @@ step(function () {
   }).then(function (r) {
     ok('a reply STOP by email alone is recorded with no venue id', r.status === 200 && STOPS.length === 2 && !STOPS[1].venue_id && STOPS[1].email === 'who@example.test' && STOPS[1].source === 'sms-reply', JSON.stringify(STOPS[1]));
     ok('neither went to vp_unsubscribes', UNSUB.length === 0 && !calls.some(function (c) { return /vp_unsubscribes/.test(c.url); }));
+    return auto('POST', '/autopilot/onboarding-stop', { venue_id: VID2, email: 'cold@example.test', source: 'mac-cold-stop', stop_at: '2026-11-21T01:00:00Z' });
+  }).then(function (r) {
+    ok('the Mac records a cold STOP it saw (mac-cold-stop) with its date, on OUR list only', r.status === 200 && STOPS.length === 3 && STOPS[2].source === 'mac-cold-stop' && STOPS[2].stop_at === '2026-11-21T01:00:00.000Z' && UNSUB.length === 0 && !calls.some(function (c) { return /vp_unsubscribes|instantly/i.test(c.url) && c.method !== 'GET'; }), JSON.stringify(STOPS[2]));
+    return auto('POST', '/autopilot/onboarding-stop', { venue_id: VID2, source: 'mac-cold-stop' });
+  }).then(function (r) {
+    ok('...and a repeat is harmless (idempotent: still one row for that venue)', r.status === 200 && STOPS.filter(function (x) { return x.venue_id === VID2; }).length === 1, JSON.stringify(STOPS));
     return auto('GET', '/autopilot/onboarding-stops');
   }).then(function (r) {
     var b = parse(r);
-    ok('the Mac can read the whole list', r.status === 200 && b.stops && b.stops.length === 2, r.body);
+    ok('the Mac can read the whole list', r.status === 200 && b.stops && b.stops.length === 3, r.body);
   });
 });
 

@@ -24,7 +24,8 @@ create table if not exists public.vp_onboarding_stops (
   venue_id    uuid,
   email       text,
   mobile      text,
-  source      text,                        -- 'link', 'one-click', 'email-reply', 'sms-reply'
+  source      text,                        -- 'link', 'one-click', 'email-reply', 'sms-reply', 'mac-cold-stop'
+  stop_at     timestamptz,                 -- for 'mac-cold-stop': the date of the cold-list STOP that put the venue here
   created_at  timestamptz not null default now()
 );
 
