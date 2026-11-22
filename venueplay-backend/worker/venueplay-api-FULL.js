@@ -5705,7 +5705,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
   if (await vpaSmsOptedOut(env, to)) return await refuse('They opted out of texts, so no text was sent.');
   /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026): the venue, its login email or this mobile on it, or a list we cannot read, sends nothing. */
-  const onb = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: to });
+  const onb = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: to, since: vpaOnbAskedAt(p) });
   if (onb === 'unread') return json({ error: 'The reminder stop list could not be read, so no text was sent. It stays queued.' }, 503);
   if (onb === 'stopped') return await refuse('They asked for no more reminders, so no text was sent and none will be.');
   const stopUrl = await vpaOnbStopUrl(env, venueId);
@@ -5788,7 +5788,7 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   const winN = await vpaProspectLinkWindow(env, venueId);
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
   /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026). Their login email and mobile are checked inside vpaSendSigninLink too. */
-  const onbN = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: p.mobile || p.phone });
+  const onbN = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: p.mobile || p.phone, since: vpaOnbAskedAt(p) });
   if (onbN === 'unread') return json({ error: 'The reminder stop list could not be read, so nothing was sent. Try again later.' }, 503);
   if (onbN === 'stopped') return await refuse('They asked for no more reminders, so nothing was sent and nothing will be.');
   /* NOT hq: an automatic follow-up never restarts the 90 days, and after them it sends nothing (reason 'ended'
@@ -6570,11 +6570,11 @@ async function vpaTrialEndNoteSweep(env, nowMs) {
     if (vpaProspectSignedUp(v, f)) { out.skipped += 1; continue; }   // a card since: nothing to say
     const email = String(p.email || (f && f.contact_email) || '').trim();
     if (!email) { out.skipped += 1; continue; }
+    /* 23 Nov 2026 (review): this note is an ACCOUNT email (they cancelled; it says what happens to their account), so the onboarding
+       stop list does not gate it and an unreadable stop list never holds it. */
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.held++; continue; }                  // cannot read the list: not this hour
     if (unsub[email.toLowerCase()]) { out.skipped += 1; continue; }
-    /* 23 Nov 2026 (review): this note is an ACCOUNT email (they cancelled; it says what happens to their account), so the onboarding
-       stop list does not gate it and an unreadable stop list never holds it. */
     /* ONCE, EVER: look, then claim; a failed look or claim sends nothing. */
     const lock = 'trial-end-note:' + v.id;
     const done = await vpaMrGet(env, 'vp_admin_audit', 'action=eq.' + VPA_TRIAL_END_NOTE_ACTION + '&target=eq.' + encodeURIComponent(lock) + '&select=id&limit=1');
@@ -7226,7 +7226,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
        links, never a cold-email row) gets none. The LAST-DAY notice ("your games pause tonight") is an account notice and ALWAYS goes:
        a venue that never counted as warned would have its pause held for HQ. */
     if (kind !== 'final') {
-      const gate = await vpaOnbRefusal(env, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone });
+      const gate = await vpaOnbRefusal(env, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone, since: vpaOnbAskedAt(p) });
       if (gate === 'unread') { out.unsub_unread = true; continue; }
       if (gate === 'stopped') { out.onboarding_stopped = (out.onboarding_stopped || 0) + 1; continue; }
     }
@@ -7883,7 +7883,8 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (opts.nudge) {
     /* 23 Nov 2026: the onboarding stop list (and a person's own click on an earlier unsubscribe link), NOT the cold-outreach
        list: somebody who asked us for an account is not blocked from its reminders by an old cold-email STOP. */
-    const gate = await vpaOnbRefusal(env, { venueId: pick.venue_id, email: email, mobile: user.phone });
+    const prow = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id) + '&select=created_at,link_from&limit=1');
+    const gate = await vpaOnbRefusal(env, { venueId: pick.venue_id, email: email, mobile: user.phone, since: vpaOnbAskedAt(prow && prow[0]) });
     if (gate !== 'ok') return { ok: false, reason: gate === 'stopped' ? 'unsubscribed' : 'unsub_unread', to: email };
     if (!(await vpaOnbStopUrl(env, pick.venue_id))) return { ok: false, reason: 'unsub_unread', to: email };
   }
@@ -19930,23 +19931,36 @@ async function vpaOnbWho(env, venueId) {
   } catch (_) {}
   return out;
 }
-/* A person's OWN click on an unsubscribe link in one of our emails (vp_unsubscribes source 'link...' or 'one-click...'): an
-   earlier nudge's footer wrote there, so the nudge still honours it. Cold-outreach rows (instantly, reply-stop, manual, phone)
-   do NOT block an onboarding reminder to a venue that asked us for an account. THROWS when unreadable. */
-async function vpaOnbOwnClickUnsub(env, email) {
+/* THE COLD LIST, BY DATE (Dean + Fable, 23 Nov 2026). vp_unsubscribes holds cold-outreach STOPs (instantly, reply-stop, manual, phone) and
+   people's own clicks on our links. A row DATED BEFORE the venue asked us for an account (since: its set-up, or HQ's last resend) is
+   ignored: they said no to a cold email, then came to us. A row dated AT OR AFTER it blocks; a row with no usable date blocks; so does an
+   unknown `since`. A person's own click on one of OUR links (source link* / one-click*) always blocks, whatever its date. THROWS when
+   unreadable. since: epoch ms or null. */
+async function vpaOnbColdBlocks(env, email, since) {
   const e = String(email || '').trim().toLowerCase();
   if (!e || /["\\,()*]/.test(e)) return false;
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_unsubscribes?email=ilike.' + encodeURIComponent(e)
-    + '&or=' + encodeURIComponent('(source.like.link*,source.like.one-click*)') + '&select=id&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+    + '&select=source,created_at,last_unsubscribed_at&limit=50', { method: 'GET', headers: vpaHeaders(env) });
   if (!res.ok) throw new Error('the unsubscribe list could not be read (' + res.status + ')');
   const rows = await res.json();
-  return Array.isArray(rows) && rows.length > 0;
+  if (!Array.isArray(rows)) throw new Error('the unsubscribe list did not come back as a list');
+  const sinceMs = (since == null || !isFinite(since)) ? null : Number(since);
+  return rows.some((r) => {
+    if (/^(link|one-click)/.test(String((r && r.source) || ''))) return true;
+    const t = Math.max(Date.parse((r && r.created_at) || '') || 0, Date.parse((r && r.last_unsubscribed_at) || '') || 0);
+    return !t || sinceMs == null || t >= sinceMs;
+  });
 }
-/* 'stopped' | 'unread' | 'ok' for one onboarding reminder to this venue / email / mobile, both lists. */
+/* When this venue asked for its account: the later of its set-up and HQ's last resend, as epoch ms (null when unknown). */
+function vpaOnbAskedAt(p) {
+  const t = Math.max(Date.parse((p && p.created_at) || '') || 0, Date.parse((p && p.link_from) || '') || 0);
+  return t || null;
+}
+/* 'stopped' | 'unread' | 'ok' for one onboarding reminder to this venue / email / mobile: the onboarding list always, the cold list by date. */
 async function vpaOnbRefusal(env, who) {
   try {
     if (await vpaOnbStopped(env, who)) return 'stopped';
-    if (who.email && await vpaOnbOwnClickUnsub(env, who.email)) return 'stopped';
+    if (who.email && await vpaOnbColdBlocks(env, who.email, who.since)) return 'stopped';
     return 'ok';
   } catch (_) { return 'unread'; }
 }

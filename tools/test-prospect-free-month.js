@@ -337,10 +337,23 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('...and the last-day notice still goes with the stop list down (it is not gated)', REM().length === 1 && /Last day/.test(REM()[0].subject), REM().length);
   globalThis.fetch = stopsDown;
   var Z4 = await monthVenue();
-  tbl('vp_unsubscribes').push({ email: String(Z4.row().email), source: 'instantly' }, { email: String(Z4.row().email), source: 'reply-stop' }, { email: String(Z4.row().email), source: 'manual' });
+  var BEFORE = '2020-01-01T00:00:00.000Z', AFTER = new Date(Date.now() + 3600000).toISOString();   // a prospect() row is set up "now"
+  tbl('vp_unsubscribes').push({ email: String(Z4.row().email), source: 'instantly', created_at: BEFORE }, { email: String(Z4.row().email), source: 'reply-stop', created_at: BEFORE }, { email: String(Z4.row().email), source: 'manual', created_at: BEFORE });
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
-  check('cold-email rows (instantly, reply-stop, manual) do NOT block the reminder of a venue that asked for an account', REM().length === 1, REM().length);
+  check('cold-email rows (instantly, reply-stop, manual) dated BEFORE the venue asked for its account are ignored: the reminder goes', REM().length === 1, REM().length);
   check('...and its List-Unsubscribe is the onboarding /stop/ link ONLY (no mailto to the help desk)', /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>$/.test((REM()[0].headers || {})['List-Unsubscribe'] || ''), REM()[0].headers);
+  var Y1 = await monthVenue(); tbl('vp_unsubscribes').push({ email: String(Y1.row().email), source: 'instantly', created_at: AFTER });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('a cold STOP dated AFTER the venue asked for its account blocks the day-3 reminder', REM().length === 0 && (Y1.row().reminders_sent || []).length === 0, REM().length);
+  var Y2 = await monthVenue(); tbl('vp_unsubscribes').push({ email: String(Y2.row().email), source: 'reply-stop' });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('a cold STOP with NO date blocks it (cannot tell)', REM().length === 0, REM().length);
+  var Y3 = await monthVenue(); Y3.row().link_from = new Date(Date.now() + 7200000).toISOString(); tbl('vp_unsubscribes').push({ email: String(Y3.row().email), source: 'instantly', created_at: AFTER });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('HQ\'s resend (link_from) moves the clock: a cold STOP before that resend is ignored', REM().length === 1, REM().length);
+  var Y4 = await monthVenue(); tbl('vp_unsubscribes').push({ email: String(Y4.row().email), source: 'link', created_at: BEFORE });
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('a person\'s OWN click on one of our unsubscribe links blocks whatever its date', REM().length === 0, REM().length);
   check('the SMS words never say Reply STOP: no link means no day-3 or one-week text at all, and the last-day text has no opt-out line', vpaReminderSmsText({ kind: 'early', firstName: 'Sam', venueName: 'X Hotel', endsWhen: 'on Friday' }) === null && vpaReminderSmsText({ kind: 'last', firstName: 'Sam', venueName: 'X Hotel', endsWhen: 'on Friday' }) === null && !/Reply STOP|Opt out/.test(vpaReminderSmsText({ kind: 'final', firstName: 'Sam', venueName: 'X Hotel' })), vpaReminderSmsText({ kind: 'final', firstName: 'Sam', venueName: 'X Hotel' }));
 
   section('6. Cancel, it\'s not for us');

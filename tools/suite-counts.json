@@ -1300,7 +1300,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 127,
+  "checks": 131,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 69,
+  "checks": 71,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

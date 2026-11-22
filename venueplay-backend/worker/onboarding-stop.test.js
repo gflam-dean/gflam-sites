@@ -89,8 +89,8 @@ globalThis.fetch = function (url, init) {
     if (method === 'GET') {
       var em = (f.email || '').replace(/^ilike\./, '').toLowerCase();
       if (f.email) {
-        var hit = UNSUB.filter(function (r) { return r.email.toLowerCase() === em && /^(link|one-click)/.test(r.source || ''); });
-        return respond(200, hit.map(function (r) { return { id: 1 }; }));
+        var hit = UNSUB.filter(function (r) { return r.email.toLowerCase() === em; });
+        return respond(200, hit.map(function (r) { return { source: r.source, created_at: r.created_at || null, last_unsubscribed_at: r.last_unsubscribed_at || null }; }));
       }
       return respond(200, UNSUB.map(function (r) { return { email: r.email }; }));
     }
@@ -267,13 +267,13 @@ step(function () {
 
 // 8. The nudge text (SMS): the opt-out LINK is required, filled, and a stopped venue is refused at send time.
 function stubSendPath() {
-  vpaProspectsData = function () { return Promise.resolve({ prospects: [{ venue_id: VID, name: 'The Test Tavern', email: 'login@example.test', mobile: '0412345678', status: 'not_signed_in', sign_in_known: true, last_sign_in_at: null }] }); };
+  vpaProspectsData = function () { return Promise.resolve({ prospects: [{ venue_id: VID, name: 'The Test Tavern', email: 'login@example.test', mobile: '0412345678', created_at: '2026-11-01T00:00:00Z', link_from: null, status: 'not_signed_in', sign_in_known: true, last_sign_in_at: null }] }); };
   vpaProspectLinkWindow = function () { return Promise.resolve(null); };
   vpaProspectTappedLink = function () { return Promise.resolve(false); };
   vpaProspectOneLink = function () { return Promise.resolve({ token: 'ABCDEFGHJKMN', short: true, expiresAt: Date.now() + 40 * 86400000 }); };
   vpaMintSigninLinkFor = vpaProspectOneLink;
   vpaSelect = (function (orig) { return function (e, t, q) {
-    if (t === 'vp_prospects') return Promise.resolve([{ auth_user_id: 'au-1' }]);
+    if (t === 'vp_prospects') return Promise.resolve([{ auth_user_id: 'au-1', created_at: '2026-11-01T00:00:00Z', link_from: null }]);
     if (t === 'vp_signin_links') return Promise.resolve([]);
     if (t === 'vp_venue_staff') return Promise.resolve([{ venue_id: VID, role: 'owner' }]);
     return orig(e, t, q); }; })(typeof vpaSelect === 'function' ? vpaSelect : function () { return Promise.resolve([]); });
@@ -308,10 +308,10 @@ step(function () {
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: SMS_BASE + 'Opt out: {stop}' });
   }).then(function (r) {
     ok('the stop list cannot be read: nothing sent (503, stays queued)', r.status === 503 && SMS.length === 0, String(r.status));
-    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'instantly' }];
+    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'instantly', created_at: '2026-10-01T00:00:00Z' }];
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: SMS_BASE + 'Opt out: {stop}' });
   }).then(function (r) {
-    ok('a COLD-email unsubscribe row does not block the reminder text to a venue that asked for an account', r.status === 200 && SMS.length === 1, r.status + ' ' + r.body.slice(0, 100));
+    ok('a COLD-email STOP dated BEFORE the venue asked for its account does not block the reminder text', r.status === 200 && SMS.length === 1, r.status + ' ' + r.body.slice(0, 100));
   });
 });
 
@@ -330,14 +330,22 @@ step(function () {
     return gate();
   }).then(function (r) {
     ok('migration 228 not run: refused (unsub_unread), nothing sent', r.ok === false && r.reason === 'unsub_unread' && SENT.length === 0, JSON.stringify(r));
-    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'instantly' }, { email: 'login@example.test', source: 'reply-stop' }];
+    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'instantly', created_at: '2026-10-01T00:00:00Z' }, { email: 'login@example.test', source: 'reply-stop', created_at: '2026-10-02T00:00:00Z' }];
     return gate();
   }).then(function (r) {
-    ok('cold-email unsubscribe rows (instantly, reply-stop) do NOT block the onboarding nudge', r.reason !== 'unsubscribed' && r.reason !== 'unsub_unread', JSON.stringify(r).slice(0, 160));
-    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'link' }];
+    ok('cold-email STOPs (instantly, reply-stop) dated BEFORE set-up do NOT block the onboarding nudge', r.reason !== 'unsubscribed' && r.reason !== 'unsub_unread', JSON.stringify(r).slice(0, 160));
+    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'instantly', created_at: '2026-12-01T00:00:00Z' }];
     return gate();
   }).then(function (r) {
-    ok('their own click on an earlier unsubscribe link still stops it', r.ok === false && r.reason === 'unsubscribed', JSON.stringify(r).slice(0, 160));
+    ok('a cold STOP dated AFTER set-up blocks it (reason unsubscribed), nothing sent', r.ok === false && r.reason === 'unsubscribed' && SENT.length === 0, JSON.stringify(r).slice(0, 160));
+    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'reply-stop' }];
+    return gate();
+  }).then(function (r) {
+    ok('a cold STOP with NO date blocks it (cannot tell)', r.ok === false && r.reason === 'unsubscribed', JSON.stringify(r).slice(0, 160));
+    reset(); stubSendPath(); UNSUB = [{ email: 'login@example.test', source: 'link', created_at: '2026-01-01T00:00:00Z' }];
+    return gate();
+  }).then(function (r) {
+    ok('their own click on one of our unsubscribe links stops it, whatever its date', r.ok === false && r.reason === 'unsubscribed', JSON.stringify(r).slice(0, 160));
   });
 });
 step(function () {
