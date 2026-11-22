@@ -87,12 +87,25 @@ try:
         ok('%s: the fallback shows the topic "Set up a free account" on the form, and it can be changed to "Talk to us"' % where,
            f.get('topicShown') and f.get('topic') == TOPIC and f.get('picks') == [TOPIC, 'Talk to us'], f)
         ok('%s: and the message is started in friendly words' % where, f.get('msg') == ASK, f.get('msg'))
+        ok('%s: the phone box says it is the mobile for the text sign-in (Dean, 23 Nov 2026)' % where,
+           S.js(sid, 'document.getElementById("ct-phone-label").textContent') == 'Mobile (we text your sign-in)')
         S.js(sid, FILL)
+        time.sleep(0.4)
+        err = S.js(sid, 'document.getElementById("ct-err").textContent') or ''
+        ok('%s: with no mobile, a free account is NOT sent and the form asks for one' % where,
+           err == 'Please enter your mobile, so we can text you your sign-in.' and len(contact_bodies(S)) == n0, (err, len(contact_bodies(S)) - n0))
+        S.js(sid, 'document.getElementById("ct-phone").value="07 5536 1234"; document.getElementById("ct-submit").click(); true')
+        time.sleep(0.4)
+        err = S.js(sid, 'document.getElementById("ct-err").textContent') or ''
+        ok('%s: a landline is not enough (it cannot get a text)' % where,
+           err == 'Please enter a mobile number starting with 04, so we can text you your sign-in.' and len(contact_bodies(S)) == n0, (err, len(contact_bodies(S)) - n0))
+        S.js(sid, 'document.getElementById("ct-phone").value="0412 555 020"; document.getElementById("ct-submit").click(); true')
         th = S.until(sid, DONE, 15)
         ok('%s: sent, the thank-you says the account comes within one business day, word for word' % where, th == THANKS, th)
         bodies = contact_bodies(S)[n0:]
         ok('%s: it went to the existing POST /contact, once, with the topic leading the message' % where,
            len(bodies) == 1 and (bodies[0].get('message') or '').startswith(TOPIC) and bodies[0].get('venue') == 'Kirra Beach Hotel', bodies)
+        ok('%s: and it carries their mobile' % where, len(bodies) == 1 and bodies[0].get('phone') == '0412 555 020', bodies)
         S.close_tab(tid)
 
     print('\nTHE WORKER MADE IT AN ORDINARY SALES TICKET')
@@ -110,6 +123,7 @@ try:
     time.sleep(0.4)
     f = S.json(sid, FORM, {})
     ok('Talk to us shows no topic and leaves the message empty', not f.get('topicShown') and f.get('msg') == '', f)
+    ok('and the phone box stays plain "Phone", optional', S.js(sid, 'document.getElementById("ct-phone-label").textContent') == 'Phone')
     S.js(sid, 'document.getElementById("ct-message").value="How does trivia work on a Tuesday?"; true')
     S.js(sid, FILL)
     th = S.until(sid, DONE, 15)
@@ -152,7 +166,7 @@ ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it 
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 26   # round 3 (7 Nov 2026) added the "Talk to us" checks
+EXPECTED = 35   # round 3 (7 Nov 2026) added the "Talk to us" checks; 23 Nov: the free-account mobile (9 more)
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
