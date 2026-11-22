@@ -500,7 +500,7 @@
   "counted_by": "lines"
  },
  "tools/prefs-shapes.test.py": {
-  "checks": 36,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/prospects-day21-in-chrome.test.py": {
@@ -1440,7 +1440,7 @@
   "counted_by": "lines"
  },
  "tools/test-screen-shows.js": {
-  "checks": 36,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
