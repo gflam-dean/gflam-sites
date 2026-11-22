@@ -52,8 +52,10 @@ globalThis.AbortController = function () { this.signal = {}; this.abort = functi
 var VID = '11111111-2222-4333-8444-555555555555';
 var VID2 = '99999999-2222-4333-8444-555555555555';
 var STOPS = [], UNSUB = [], SENT = [], SMS = [], calls = [], AUDIT = [];
-var HB = 'fresh';      // the Mac's sync heartbeat: fresh | stale | missing | down
-var HB_WRITES = [];
+var HB = 'fresh';      // the sync heartbeat table: fresh | stale | missing | down | throw (the fetch itself errors)
+var HB_WRITES = [], HB_ROW = null;
+function nonAlert() { return SENT.filter(function (m) { return !/Reminders on hold/.test(m.subject || ''); }); }
+function setHB(mode) { HB = mode; HB_ROW = mode === 'missing' ? null : { id: 1, last_sync_at: new Date(Date.now() - (mode === 'stale' ? 27 * 3600000 : 60000)).toISOString(), stale_alert_at: null }; }
 var STOPS_STATUS = 200;     // 404 = migration 228 not run, 500 = down
 var PROSPECT = { venue_id: VID, auth_user_id: 'au-1', email: 'login@example.test', phone: '0412 345 678' };
 function qs(url) { var out = {}, i = url.indexOf('?'); if (i < 0) return out; url.slice(i + 1).split('&').forEach(function (p) { var kv = p.split('='); out[decodeURIComponent(kv[0])] = decodeURIComponent(kv.slice(1).join('=')); }); return out; }
@@ -69,9 +71,19 @@ globalThis.fetch = function (url, init) {
   if (url.indexOf('https://api.mobilemessage.com.au') === 0) { SMS.push(JSON.parse(init.body).messages[0]); return respond(200, { results: [{ status: 'success', message_id: 's1' }] }); }
   var f = qs(url);
   if (/\/rest\/v1\/vp_onboarding_sync/.test(url)) {
-    if (method === 'POST') { HB_WRITES.push(JSON.parse(init.body)); return respond(201, null); }
+    if (HB === 'throw') throw new Error('network down');
     if (HB === 'down') return respond(503, { message: 'x' });
-    return respond(200, HB === 'missing' ? [] : [{ last_sync_at: new Date(Date.now() - (HB === 'stale' ? 27 * 3600000 : 60000)).toISOString() }]);
+    if (method === 'POST') {
+      var hb = JSON.parse(init.body); HB_WRITES.push(hb);
+      if (/ignore-duplicates/.test((init.headers || {}).Prefer || '')) { if (HB_ROW) return respond(201, []); HB_ROW = hb; return respond(201, [hb]); }
+      HB_ROW = hb; return respond(201, null);
+    }
+    if (method === 'PATCH') {
+      var patch = JSON.parse(init.body);
+      if (HB_ROW && !HB_ROW.stale_alert_at) { HB_ROW.stale_alert_at = patch.stale_alert_at; return respond(200, [HB_ROW]); }
+      return respond(200, []);
+    }
+    return respond(200, HB_ROW ? [HB_ROW] : []);
   }
   if (/\/rest\/v1\/vp_onboarding_stops/.test(url)) {
     if (STOPS_STATUS !== 200) return respond(STOPS_STATUS, { message: 'x' });
@@ -129,7 +141,7 @@ function req(method, path, body, headers) {
 }
 function auto(method, path, body) { return worker.fetch(req(method, path, body == null ? '' : JSON.stringify(body), { 'X-Autopilot-Key': KEY }), env()); }
 function parse(r) { try { return JSON.parse(r.body); } catch (e) { return {}; } }
-function reset() { HB = 'fresh'; HB_WRITES = []; STOPS = []; UNSUB = []; SENT = []; SMS = []; calls = []; AUDIT = []; STOPS_STATUS = 200; }
+function reset() { setHB('fresh'); HB_WRITES = []; STOPS = []; UNSUB = []; SENT = []; SMS = []; calls = []; AUDIT = []; STOPS_STATUS = 200; }
 function step(fn) { steps.push(fn); }
 
 // 0. The token and the link: unguessable, per venue, on the api host.
@@ -425,26 +437,59 @@ step(function () {
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
   }).then(function (r) {
     ok('FRESH heartbeat: the reminder text goes', r.status === 200 && SMS.length === 1, r.status + ' ' + r.body.slice(0, 100));
-    reset(); stubSendPath(); HB = 'stale';
+    reset(); stubSendPath(); setHB('stale');
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
   }).then(function (r) {
     ok('STALE heartbeat (27 hours): the text is HELD (503, held, sync_stale), nothing sent, nothing refused-and-dropped', r.status === 503 && parse(r).held === true && SMS.length === 0 && !AUDIT.some(function (a) { return /refused/.test(a.action); }), r.status + ' ' + r.body.slice(0, 120));
-    reset(); stubSendPath(); HB = 'missing';
+    reset(); stubSendPath(); setHB('missing');
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
   }).then(function (r) {
     ok('MISSING heartbeat (never synced): HELD', r.status === 503 && parse(r).held === true && SMS.length === 0, r.status);
-    reset(); stubSendPath(); HB = 'down';
+    reset(); stubSendPath(); setHB('down');
     return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
   }).then(function (r) {
     ok('heartbeat table unreadable: HELD', r.status === 503 && SMS.length === 0, r.status);
-    reset(); stubSendPath(); HB = 'stale';
+    reset(); stubSendPath(); setHB('stale');
     return vpaSendSigninLink(env(), 'au-1', VID, { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your account.\n\nCheers', subject: 'Your venueplay sign-in link' }).catch(function (e) { return { ok: false, reason: 'threw' }; });
   }).then(function (r) {
-    ok('the nudge email path with a STALE heartbeat: nothing sent (held)', r.ok === false && SENT.length === 0 && r.stale === true, JSON.stringify(r));
-    reset(); stubSendPath(); HB = 'stale';
+    ok('the nudge email path with a STALE heartbeat: nothing sent (held)', r.ok === false && nonAlert().length === 0 && r.stale === true, JSON.stringify(r));
+    reset(); stubSendPath(); setHB('stale');
     return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, text: 'Hi Sam, just checking you got your venueplay account today.' });
   }).then(function (r) {
-    ok('the nudge ROUTE with a stale heartbeat answers 503 held', r.status === 503 && parse(r).held === true && SENT.length === 0, r.status + ' ' + r.body.slice(0, 120));
+    reset(); stubSendPath(); setHB('throw');
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('the heartbeat FETCH ERRORS (the request itself throws): the reminder text is still HELD, nothing sent', r.status === 503 && parse(r).held === true && SMS.length === 0, r.status + ' ' + r.body.slice(0, 120));
+    reset(); stubSendPath(); setHB('stale');
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    var alerts = SENT.filter(function (m) { return /Reminders on hold/.test(m.subject || ''); });
+    ok('STALE: Dean is told (the same staff alert path: venueplay \u00b7 FYI, to the cancel-alert addresses)', alerts.length === 2 && alerts.every(function (m) { return /^venueplay \u00b7 FYI: /.test(m.subject); }) && alerts[0].to.indexOf('dean@venueplay.com.au') >= 0 || alerts.some(function (m) { return m.to.indexOf('dean@venueplay.com.au') >= 0; }), SENT.map(function (m) { return m.subject; }));
+    ok('...in plain words: the Mac has not synced since <time>, nothing is lost, they send once it syncs; no em dash', alerts.length > 0 && /the Mac has not synced since 20\d\d-\d\d-\d\d \d\d:\d\d Brisbane time\. Nothing is lost; they send once it syncs\./.test(alerts[0].html) && alerts[0].html.indexOf('\u2014') < 0, alerts[0] && alerts[0].html.slice(0, 300));
+    ok('the marker is set (stale_alert_at)', !!(HB_ROW && HB_ROW.stale_alert_at), JSON.stringify(HB_ROW));
+    SENT = [];
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('a second reminder in the same outage does NOT tell him again (one alert per outage)', SENT.filter(function (m) { return /Reminders on hold/.test(m.subject || ''); }).length === 0, SENT.map(function (m) { return m.subject; }));
+    return auto('POST', '/autopilot/onboarding-sync-heartbeat', {});
+  }).then(function () {
+    ok('the next fresh heartbeat clears the marker', HB_ROW && HB_ROW.stale_alert_at === null, JSON.stringify(HB_ROW));
+    HB_ROW.last_sync_at = new Date(Date.now() - 30 * 3600000).toISOString(); SENT = [];
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function () {
+    ok('a LATER outage tells him again, once', SENT.filter(function (m) { return /Reminders on hold/.test(m.subject || ''); }).length === 2, SENT.map(function (m) { return m.subject; }));
+    reset(); stubSendPath(); setHB('missing');
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function () {
+    ok('a Mac that has NEVER synced: held and Dean is told once too ("since ever")', SENT.filter(function (m) { return /Reminders on hold/.test(m.subject || ''); }).length === 2 && !!(HB_ROW && HB_ROW.stale_alert_at), SENT.map(function (m) { return m.subject; }));
+    reset(); stubSendPath(); setHB('fresh');
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function () {
+    ok('a FRESH heartbeat sends no alert', SENT.filter(function (m) { return /Reminders on hold/.test(m.subject || ''); }).length === 0);
+    reset(); stubSendPath(); setHB('stale');
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, text: 'Hi Sam, just checking you got your venueplay account today.' });
+  }).then(function (r) {
+    ok('the nudge ROUTE with a stale heartbeat answers 503 held', r.status === 503 && parse(r).held === true && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 120));
   });
 });
 

@@ -19978,19 +19978,52 @@ async function vpaOnbRefusal(env, who) {
    they go on a later sweep once it is fresh). The last-day notice and the trial-end note are NOT gated. */
 const VPA_SYNC_MAX_AGE_MS = 26 * 3600000;
 async function vpaOnbSyncFresh(env, nowMs) {
+  let row = null, readable = false;
   try {
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?id=eq.1&select=last_sync_at&limit=1', { method: 'GET', headers: vpaHeaders(env) });
-    if (!res.ok) return false;
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?id=eq.1&select=last_sync_at,stale_alert_at&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+    if (!res.ok) return false;                       // unreadable (migration not run, database down): HOLD
     const rows = await res.json();
-    const t = Array.isArray(rows) && rows[0] ? Date.parse(rows[0].last_sync_at || '') : NaN;
-    return isFinite(t) && ((nowMs || Date.now()) - t) < VPA_SYNC_MAX_AGE_MS && t <= (nowMs || Date.now()) + 300000;
-  } catch (_) { return false; }
+    if (!Array.isArray(rows)) return false;
+    readable = true; row = rows[0] || null;
+  } catch (_) { return false; }                      // the fetch itself failed: HOLD
+  const now = nowMs || Date.now();
+  const t = row ? Date.parse(row.last_sync_at || '') : NaN;
+  if (isFinite(t) && (now - t) < VPA_SYNC_MAX_AGE_MS && t <= now + 300000) return true;
+  if (readable) await vpaOnbSyncAlert(env, row, isFinite(t) ? t : null).catch(() => {});
+  return false;
+}
+/* TELL DEAN ONCE PER OUTAGE (23 Nov 2026): the same alert path the cancel and new-venue alerts use (vpaStaffSubject / vpaStaffCard to
+   VPA_CANCEL_ALERTS, best effort). The marker is stale_alert_at on the heartbeat row, CLAIMED before the email so two sweeps cannot both
+   send; the next fresh heartbeat clears it, so a later outage tells him again. */
+async function vpaOnbSyncAlert(env, row, lastMs) {
+  if (row && row.stale_alert_at) return;
+  const nowIso = new Date().toISOString();
+  let claimed = false;
+  if (row) {
+    const r = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?id=eq.1&stale_alert_at=is.null', { method: 'PATCH',
+      headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'return=representation' }), body: JSON.stringify({ stale_alert_at: nowIso }) });
+    const rows = r.ok ? await r.json().catch(() => null) : null;
+    claimed = Array.isArray(rows) && rows.length > 0;
+  } else {
+    const r = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?on_conflict=id', { method: 'POST',
+      headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=ignore-duplicates,return=representation' }),
+      body: JSON.stringify({ id: 1, last_sync_at: '1970-01-01T00:00:00.000Z', stale_alert_at: nowIso }) });
+    const rows = r.ok ? await r.json().catch(() => null) : null;
+    claimed = Array.isArray(rows) && rows.length > 0;
+  }
+  if (!claimed) return;
+  const since = lastMs ? new Date(lastMs + 10 * 3600000).toISOString().slice(0, 16).replace('T', ' ') + ' Brisbane time' : 'ever';
+  const body = '<p>Reminders on hold: the Mac has not synced since ' + vpaEsc(since) + '. Nothing is lost; they send once it syncs.</p>'
+    + '<p style="color:#6a6a74;font-size:14px">This is the Mac job that checks the cold-email lists and the venues\' Instantly threads for a STOP. Until it reports in, the day-3 and one-week card reminders, the sign-in nudge and its text wait. The last-day notice and the trial-end note still go.</p>';
+  for (const who of VPA_CANCEL_ALERTS) {
+    await vpaSendEmail(env, who, vpaStaffSubject('fyi', 'Reminders on hold: the Mac has not synced'), vpaStaffCard(body, 'Reminders on hold', 'fyi')).catch(() => false);
+  }
 }
 async function vpaAutopilotSyncHeartbeat(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
   if (no) return no;
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?on_conflict=id', { method: 'POST',
-    headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify({ id: 1, last_sync_at: new Date().toISOString() }) });
+    headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify({ id: 1, last_sync_at: new Date().toISOString(), stale_alert_at: null }) });   // a fresh heartbeat clears the outage marker
   if (!res.ok) return json({ error: 'The sync heartbeat could not be written (migration 228?).' }, 503);
   return json({ ok: true });
 }

@@ -44,6 +44,8 @@ create table if not exists public.vp_onboarding_sync (
   id           int primary key default 1 check (id = 1),
   last_sync_at timestamptz not null default now()
 );
+-- stop_alert_at: the marker that Dean was told about THIS outage (one alert per outage); the next fresh heartbeat clears it.
+alter table public.vp_onboarding_sync add column if not exists stale_alert_at timestamptz;
 alter table public.vp_onboarding_sync enable row level security;
 
 comment on table public.vp_onboarding_stops is
