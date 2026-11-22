@@ -45,6 +45,10 @@ fetch = function (url, opts) {
 };
 var UNSUB = {}, UNSUB_BROKEN = false, MINTED = 0;
 vpaUnsubscribedSet = function () { if (UNSUB_BROKEN) return Promise.reject(new Error('read failed')); return Promise.resolve(UNSUB); };
+/* 23 Nov 2026: the nudge is an ONBOARDING reminder, so it reads the onboarding stop list (vp_onboarding_stops), not the cold list. UNSUB / UNSUB_BROKEN stand for it here. */
+vpaOnbStopped = function (env, who) { if (UNSUB_BROKEN) return Promise.reject(new Error('read failed')); return Promise.resolve(!!UNSUB[String(who.email || '').toLowerCase()]); };
+vpaOnbOwnClickUnsub = function () { return Promise.resolve(false); };
+vpaOnbStopUrl = function () { return Promise.resolve('https://api.venueplay.com.au/stop/' + '0123456789abcdef'.repeat(3)); };   // this suite's venue id is not a uuid; the real token is tested in worker/onboarding-stop.test.js
 vpaInsert = function () { return Promise.resolve({}); };
 vpaAudit = function () { return Promise.resolve(); };
 vpaAuthGetUser = function (env, id) { return Promise.resolve({ id: id, email: 'Sam@LakesideTavern.example', user_metadata: { full_name: 'Sam Lee' } }); };
@@ -128,17 +132,17 @@ function welcome(o) {
   sent = []; patches = []; MINTED = 0; UNSUB = {}; UNSUB_BROKEN = false;
   var nz = await vpaSendSigninLink(ENV, 'u1', 'v1', { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your venueplay account.\n\nCheers,\nKayla', subject: 'Your venueplay is ready when you are' });
   var nm = sent[0] || {}, nh = nm.headers || {};
-  check('it goes, with List-Unsubscribe c=prospect-nudge and the one-click Post header',
-    nz.ok && sent.length === 1 && /^<https:\/\/api\.venueplay\.com\.au\/unsubscribe\?e=sam%40lakesidetavern\.example&t=[0-9a-f]{32}&c=prospect-nudge>, <mailto:/.test(nh['List-Unsubscribe'] || '') && nh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', [nz, nh]);
-  check('its footer has an Unsubscribe link on venueplay.com.au, in the html and the text', /href="https:\/\/venueplay\.com\.au\/unsubscribe\?e=sam%40lakesidetavern\.example"[^>]*>Unsubscribe<\/a> from reminders like this one/.test(nm.html || '') && /unsubscribe\?e=sam%40lakesidetavern\.example/.test(nm.text || ''), (nm.html || '').slice(-1500));
+  check('it goes, with List-Unsubscribe pointing at the ONBOARDING stop link (23 Nov 2026) and the one-click Post header',
+    nz.ok && sent.length === 1 && /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>, <mailto:/.test(nh['List-Unsubscribe'] || '') && nh['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', [nz, nh]);
+  check('its footer has a Stop these reminders link (the onboarding stop link, not the cold unsubscribe page), in the html and the text', /href="https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}"[^>]*>Stop these reminders<\/a>/.test(nm.html || '') && /api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}/.test(nm.text || '') && !/\/unsubscribe\?e=/.test((nm.html || '') + (nm.text || '')), (nm.html || '').slice(-1500));
   check('its text part exists and no .dev host is anywhere in it', (nm.text || '').length > 100 && !DEV_HOST.test(allOf(nm)));
   sent = []; patches = []; MINTED = 0; UNSUB = { 'sam@lakesidetavern.example': true };
   var nu = await vpaSendSigninLink(ENV, 'u1', 'v1', { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your venueplay account.', subject: 'Your venueplay is ready when you are' });
-  check('an unsubscribed address: no email, reason "unsubscribed"', !nu.ok && nu.reason === 'unsubscribed' && sent.length === 0, nu);
+  check('an address on the onboarding stop list: no email, reason "unsubscribed"', !nu.ok && nu.reason === 'unsubscribed' && sent.length === 0, nu);
   check('and no link was made or retired, so the link they have still works', MINTED === 0 && patches.length === 0, { minted: MINTED, patches: patches });
   sent = []; patches = []; MINTED = 0; UNSUB = {}; UNSUB_BROKEN = true;
   var nb = await vpaSendSigninLink(ENV, 'u1', 'v1', { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your venueplay account.', subject: 'Your venueplay is ready when you are' });
-  check('an unsubscribe list that cannot be read: no email ("unsub_unread"), nothing minted', !nb.ok && nb.reason === 'unsub_unread' && sent.length === 0 && MINTED === 0, nb);
+  check('a stop list that cannot be read: no email ("unsub_unread"), nothing minted', !nb.ok && nb.reason === 'unsub_unread' && sent.length === 0 && MINTED === 0, nb);
   UNSUB_BROKEN = false;
 
   section('7. Transactional mail stays without the header');

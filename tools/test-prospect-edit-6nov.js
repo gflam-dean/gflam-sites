@@ -237,8 +237,8 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var ns = await call('/autopilot/prospect/nudge-sms', { venue_id: small.id, text: 'venueplay: Hi Jo, your venueplay is ready: {link} Reply STOP to opt out' }, AP);
   check('...and the text follow-up, once Dean says yes, goes to that mobile with no other step',
     ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(SMS[0].body.messages[0].body), [ns.body, SMS]);   // before migration 175: the long link
-  check('...through MOBILE MESSAGE, the sign-in codes\' provider: its own login, sender "venueplay", and "Reply STOP" made its opt-out link ({optout})',
-    SMS[0] && SMS[0].auth === 'Basic ' + btoa('mm-user:mm-pass') && SMS[0].body.messages[0].from === 'venueplay' && /\{optout\}$/.test(SMS[0].body.messages[0].body) && !/Reply STOP/.test(SMS[0].body.messages[0].body), SMS[0]);
+  check('...through MOBILE MESSAGE, the sign-in codes\' provider: its own login, sender "venueplay", and "Reply STOP" became our own opt-out link (23 Nov 2026: a name sender cannot take a reply)',
+    SMS[0] && SMS[0].auth === 'Basic ' + btoa('mm-user:mm-pass') && SMS[0].body.messages[0].from === 'venueplay' && /Opt out: api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}$/.test(SMS[0].body.messages[0].body) && !/Reply STOP/.test(SMS[0].body.messages[0].body), SMS[0]);
   delete ENV.PROSPECT_SMS_ON;
 
   /* A mobile kept on the account but with a landline to ring: the call list rings the landline, the text goes to the mobile. */
