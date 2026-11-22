@@ -298,6 +298,11 @@ var SYD_FRI_9AM = Date.parse('2026-12-03T22:00:00Z');   // Fri 4 Dec 9:00am in S
   await withClock(SYD_FRI_9AM, function () { return vpaTrialEndNoteSweep(ENV, SYD_FRI_9AM); });
   check('on the onboarding stop list: the trial-end note STILL goes (an account email, not a reminder)', NOTE().length === 1, NOTE().length);
   check('...with the cold List-Unsubscribe it always had (header and footer agree)', /\/unsubscribe\?e=/.test((NOTE()[0].headers || {})['List-Unsubscribe'] || '') && /\/unsubscribe\?e=/.test(String(NOTE()[0].html)), (NOTE()[0] || {}).headers);
+  var HBV = await bodalla();
+  ENV.TRIAL_END_NOTE = 'on'; sent.length = 0; DB.vp_onboarding_stops = []; HB_MODE = 'stale';
+  await withClock(SYD_FRI_9AM, function () { return vpaTrialEndNoteSweep(ENV, SYD_FRI_9AM); });
+  HB_MODE = 'fresh';
+  check('the sync heartbeat is stale: the trial-end note STILL goes (an account email, never gated)', NOTE().length === 1, NOTE().length);
   var OD = await bodalla();
   ENV.TRIAL_END_NOTE = 'on'; sent.length = 0; DB.vp_onboarding_stops = [];
   var realFetch = globalThis.fetch;

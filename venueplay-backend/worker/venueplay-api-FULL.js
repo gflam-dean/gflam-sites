@@ -351,6 +351,7 @@ export default {
       if (request.method === 'POST' && path === '/autopilot/onboarding-stop') return await vpaAutopilotOnboardingStop(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/onboarding-stops') return await vpaAutopilotOnboardingStops(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/prospects/all') return await vpaAutopilotAllProspects(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/onboarding-sync-heartbeat') return await vpaAutopilotSyncHeartbeat(request, env, json);
 
       /* IS THIS FOUNDING WINDOW STILL OPEN?
          Public, and it answers with a yes or a no and nothing else.
@@ -5707,6 +5708,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (await vpaSmsOptedOut(env, to)) return await refuse('They opted out of texts, so no text was sent.');
   /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026): the venue, its login email or this mobile on it, or a list we cannot read, sends nothing. */
   const onb = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: to, since: vpaOnbAskedAt(p) });
+  if (onb === 'stale') return json({ error: 'The Mac has not checked the stop lists for over 26 hours, so no text was sent. It stays queued and goes once it has.', held: true, sync_stale: true }, 503);
   if (onb === 'unread') return json({ error: 'The reminder stop list could not be read, so no text was sent. It stays queued.' }, 503);
   if (onb === 'stopped') return await refuse('They asked for no more reminders, so no text was sent and none will be.');
   const stopUrl = await vpaOnbStopUrl(env, venueId);
@@ -5790,6 +5792,7 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
   /* THE ONBOARDING STOP LIST, at send time (23 Nov 2026). Their login email and mobile are checked inside vpaSendSigninLink too. */
   const onbN = await vpaOnbRefusal(env, { venueId: venueId, email: p.email, mobile: p.mobile || p.phone, since: vpaOnbAskedAt(p) });
+  if (onbN === 'stale') return json({ error: 'The Mac has not checked the stop lists for over 26 hours, so nothing was sent. It stays queued and goes once it has.', held: true, sync_stale: true }, 503);
   if (onbN === 'unread') return json({ error: 'The reminder stop list could not be read, so nothing was sent. Try again later.' }, 503);
   if (onbN === 'stopped') return await refuse('They asked for no more reminders, so nothing was sent and nothing will be.');
   /* NOT hq: an automatic follow-up never restarts the 90 days, and after them it sends nothing (reason 'ended'
@@ -7228,6 +7231,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
        a venue that never counted as warned would have its pause held for HQ. */
     if (kind !== 'final') {
       const gate = await vpaOnbRefusal(env, { venueId: v.id, email: vpqRealEmail(p.email) || '', mobile: p.phone, since: vpaOnbAskedAt(p) });
+      if (gate === 'stale') { out.sync_stale = true; continue; }   // held, not dropped: still due, goes once the Mac's sync is fresh
       if (gate === 'unread') { out.unsub_unread = true; continue; }
       if (gate === 'stopped') { out.onboarding_stopped = (out.onboarding_stopped || 0) + 1; continue; }
     }
@@ -7886,7 +7890,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
        list: somebody who asked us for an account is not blocked from its reminders by an old cold-email STOP. */
     const prow = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id) + '&select=created_at,link_from&limit=1');
     const gate = await vpaOnbRefusal(env, { venueId: pick.venue_id, email: email, mobile: user.phone, since: vpaOnbAskedAt(prow && prow[0]) });
-    if (gate !== 'ok') return { ok: false, reason: gate === 'stopped' ? 'unsubscribed' : 'unsub_unread', to: email };
+    if (gate !== 'ok') return { ok: false, reason: gate === 'stopped' ? 'unsubscribed' : 'unsub_unread', to: email, stale: gate === 'stale' };
     if (!(await vpaOnbStopUrl(env, pick.venue_id))) return { ok: false, reason: 'unsub_unread', to: email };
   }
   /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
@@ -19961,11 +19965,34 @@ function vpaOnbAskedAt(p) {
 }
 /* 'stopped' | 'unread' | 'ok' for one onboarding reminder to this venue / email / mobile: the onboarding list always, the cold list by date. */
 async function vpaOnbRefusal(env, who) {
+  if (!(await vpaOnbSyncFresh(env))) return 'stale';   // the Mac's cold-list sync has not reported for 26 hours: HOLD (it goes on a later sweep)
   try {
     if (await vpaOnbStopped(env, who)) return 'stopped';
     if (who.email && await vpaOnbColdBlocks(env, who.email, who.since)) return 'stopped';
     return 'ok';
   } catch (_) { return 'unread'; }
+}
+/* THE SYNC HEARTBEAT (23 Nov 2026). The Mac records cold-list STOPs on the onboarding list; if it stops running (Mac off, job broken) the Worker
+   would go on sending on a list that is going stale. So every Mac sync run posts here, and the Worker's reminders (card reminders day 3 and one
+   week, nudge, nudge text) send only while the last heartbeat is under 26 hours old. Stale, missing or unreadable: they HOLD (nothing is dropped;
+   they go on a later sweep once it is fresh). The last-day notice and the trial-end note are NOT gated. */
+const VPA_SYNC_MAX_AGE_MS = 26 * 3600000;
+async function vpaOnbSyncFresh(env, nowMs) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?id=eq.1&select=last_sync_at&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+    if (!res.ok) return false;
+    const rows = await res.json();
+    const t = Array.isArray(rows) && rows[0] ? Date.parse(rows[0].last_sync_at || '') : NaN;
+    return isFinite(t) && ((nowMs || Date.now()) - t) < VPA_SYNC_MAX_AGE_MS && t <= (nowMs || Date.now()) + 300000;
+  } catch (_) { return false; }
+}
+async function vpaAutopilotSyncHeartbeat(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_onboarding_sync?on_conflict=id', { method: 'POST',
+    headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify({ id: 1, last_sync_at: new Date().toISOString() }) });
+  if (!res.ok) return json({ error: 'The sync heartbeat could not be written (migration 228?).' }, 503);
+  return json({ ok: true });
 }
 /* GET /autopilot/prospects/all  X-Autopilot-Key: EVERY prospect account with an email that is not already on the onboarding list, signed in or not
    (card reminders go to signed-in venues too), so the Mac can record a cold-list STOP for any of them (23 Nov 2026). Read only. */

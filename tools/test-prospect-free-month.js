@@ -342,6 +342,23 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
   check('cold-email rows (instantly, reply-stop, manual) dated BEFORE the venue asked for its account are ignored: the reminder goes', REM().length === 1, REM().length);
   check('...and its List-Unsubscribe is the onboarding /stop/ link ONLY (no mailto to the help desk)', /^<https:\/\/api\.venueplay\.com\.au\/stop\/[0-9a-f]{48}>$/.test((REM()[0].headers || {})['List-Unsubscribe'] || ''), REM()[0].headers);
+  /* THE SYNC HEARTBEAT (23 Nov 2026): the Mac's cold-list sync must have reported in the last 26 hours, or the day-3 / one-week reminders HOLD. */
+  var H1 = await monthVenue(); HB_MODE = 'stale';
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('STALE heartbeat (27 hours): the day-3 reminder is HELD, nothing sent, nothing marked sent (it stays due)', REM().length === 0 && (H1.row().reminders_sent || []).length === 0, [REM().length, H1.row().reminders_sent]);
+  HB_MODE = 'fresh';
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 11, 0));
+  check('...and goes on a later sweep once the heartbeat is fresh again (held, not dropped)', REM().length === 1, REM().length);
+  var H2 = await monthVenue(); HB_MODE = 'missing';
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
+  check('MISSING heartbeat (the Mac never synced): held', REM().length === 0 && (H2.row().reminders_sent || []).length === 0, REM().length);
+  HB_MODE = 'down';
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 11, 0));
+  check('heartbeat table unreadable: held', REM().length === 0, REM().length);
+  HB_MODE = 'stale';
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 10, 0));
+  check('...but the LAST-DAY notice is NOT gated: it goes with the heartbeat stale (an account notice)', REM().length === 1 && /Last day/.test(REM()[0].subject), REM().map(function (m) { return m.subject; }));
+  HB_MODE = 'fresh';
   var Y1 = await monthVenue(); tbl('vp_unsubscribes').push({ email: String(Y1.row().email), source: 'instantly', created_at: AFTER });
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 10, 0));
   check('a cold STOP dated AFTER the venue asked for its account blocks the day-3 reminder', REM().length === 0 && (Y1.row().reminders_sent || []).length === 0, REM().length);

@@ -52,6 +52,8 @@ globalThis.AbortController = function () { this.signal = {}; this.abort = functi
 var VID = '11111111-2222-4333-8444-555555555555';
 var VID2 = '99999999-2222-4333-8444-555555555555';
 var STOPS = [], UNSUB = [], SENT = [], SMS = [], calls = [], AUDIT = [];
+var HB = 'fresh';      // the Mac's sync heartbeat: fresh | stale | missing | down
+var HB_WRITES = [];
 var STOPS_STATUS = 200;     // 404 = migration 228 not run, 500 = down
 var PROSPECT = { venue_id: VID, auth_user_id: 'au-1', email: 'login@example.test', phone: '0412 345 678' };
 function qs(url) { var out = {}, i = url.indexOf('?'); if (i < 0) return out; url.slice(i + 1).split('&').forEach(function (p) { var kv = p.split('='); out[decodeURIComponent(kv[0])] = decodeURIComponent(kv.slice(1).join('=')); }); return out; }
@@ -66,6 +68,11 @@ globalThis.fetch = function (url, init) {
   if (url.indexOf('https://api.resend.com/emails') === 0) { SENT.push(JSON.parse(init.body)); return respond(200, { id: 'm' + SENT.length }); }
   if (url.indexOf('https://api.mobilemessage.com.au') === 0) { SMS.push(JSON.parse(init.body).messages[0]); return respond(200, { results: [{ status: 'success', message_id: 's1' }] }); }
   var f = qs(url);
+  if (/\/rest\/v1\/vp_onboarding_sync/.test(url)) {
+    if (method === 'POST') { HB_WRITES.push(JSON.parse(init.body)); return respond(201, null); }
+    if (HB === 'down') return respond(503, { message: 'x' });
+    return respond(200, HB === 'missing' ? [] : [{ last_sync_at: new Date(Date.now() - (HB === 'stale' ? 27 * 3600000 : 60000)).toISOString() }]);
+  }
   if (/\/rest\/v1\/vp_onboarding_stops/.test(url)) {
     if (STOPS_STATUS !== 200) return respond(STOPS_STATUS, { message: 'x' });
     if (method === 'GET') {
@@ -122,7 +129,7 @@ function req(method, path, body, headers) {
 }
 function auto(method, path, body) { return worker.fetch(req(method, path, body == null ? '' : JSON.stringify(body), { 'X-Autopilot-Key': KEY }), env()); }
 function parse(r) { try { return JSON.parse(r.body); } catch (e) { return {}; } }
-function reset() { STOPS = []; UNSUB = []; SENT = []; SMS = []; calls = []; AUDIT = []; STOPS_STATUS = 200; }
+function reset() { HB = 'fresh'; HB_WRITES = []; STOPS = []; UNSUB = []; SENT = []; SMS = []; calls = []; AUDIT = []; STOPS_STATUS = 200; }
 function step(fn) { steps.push(fn); }
 
 // 0. The token and the link: unguessable, per venue, on the api host.
@@ -404,6 +411,41 @@ step(function () {
     ok('every prospect with an email that is not already stopped, signed in or not, with created_at and link_from', r.status === 200 && ids.length === 2 && ids.indexOf(VID) >= 0 && ids.indexOf(VID2) >= 0, r.body.slice(0, 200));
     return worker.fetch(req('GET', '/autopilot/prospects/all', '', {}), env());
   }).then(function (r) { ok('no key: refused', r.status === 401, String(r.status)); });
+});
+
+// 13. THE SYNC HEARTBEAT: the Mac posts it; the Worker's reminders hold (not drop) when it is stale, missing or unreadable; fresh sends.
+step(function () {
+  reset(); stubSendPath();
+  var T = SMS_BASE + 'Opt out: {stop}';
+  return auto('POST', '/autopilot/onboarding-sync-heartbeat', {}).then(function (r) {
+    ok('the Mac\'s heartbeat is recorded (key needed, idempotent upsert on id 1)', r.status === 200 && HB_WRITES.length === 1 && HB_WRITES[0].id === 1 && /^20/.test(HB_WRITES[0].last_sync_at), JSON.stringify(HB_WRITES));
+    return worker.fetch(req('POST', '/autopilot/onboarding-sync-heartbeat', '{}', {}), env());
+  }).then(function (r) {
+    ok('...and refused without the key', r.status === 401 && HB_WRITES.length === 1, String(r.status));
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('FRESH heartbeat: the reminder text goes', r.status === 200 && SMS.length === 1, r.status + ' ' + r.body.slice(0, 100));
+    reset(); stubSendPath(); HB = 'stale';
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('STALE heartbeat (27 hours): the text is HELD (503, held, sync_stale), nothing sent, nothing refused-and-dropped', r.status === 503 && parse(r).held === true && SMS.length === 0 && !AUDIT.some(function (a) { return /refused/.test(a.action); }), r.status + ' ' + r.body.slice(0, 120));
+    reset(); stubSendPath(); HB = 'missing';
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('MISSING heartbeat (never synced): HELD', r.status === 503 && parse(r).held === true && SMS.length === 0, r.status);
+    reset(); stubSendPath(); HB = 'down';
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, text: T });
+  }).then(function (r) {
+    ok('heartbeat table unreadable: HELD', r.status === 503 && SMS.length === 0, r.status);
+    reset(); stubSendPath(); HB = 'stale';
+    return vpaSendSigninLink(env(), 'au-1', VID, { hqCap: true, nudge: 'Hi Sam,\n\nJust checking you got your account.\n\nCheers', subject: 'Your venueplay sign-in link' }).catch(function (e) { return { ok: false, reason: 'threw' }; });
+  }).then(function (r) {
+    ok('the nudge email path with a STALE heartbeat: nothing sent (held)', r.ok === false && SENT.length === 0 && r.stale === true, JSON.stringify(r));
+    reset(); stubSendPath(); HB = 'stale';
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, text: 'Hi Sam, just checking you got your venueplay account today.' });
+  }).then(function (r) {
+    ok('the nudge ROUTE with a stale heartbeat answers 503 held', r.status === 503 && parse(r).held === true && SENT.length === 0, r.status + ' ' + r.body.slice(0, 120));
+  });
 });
 
 var chain = Promise.resolve();

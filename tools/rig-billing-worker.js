@@ -100,6 +100,8 @@ globalThis.fetch=function(url,opts){
   var t=m[1], q=parseQ(m[2]); var key=t+':'+method;
   if(FAIL[key]>0){FAIL[key]--;return Promise.resolve(resp(503,'upstream blip'));}
   if(t.indexOf('rpc/')===0) return Promise.resolve(resp(200,0));
+  /* THE ONBOARDING SYNC HEARTBEAT (23 Nov 2026): fresh unless a suite sets HB_MODE = 'stale' | 'missing' | 'down'. */
+  if(t==='vp_onboarding_sync'&&method==='GET'){var hbm=(typeof HB_MODE!=='undefined')?HB_MODE:'fresh'; if(hbm==='down') return Promise.resolve(resp(503,'down')); return Promise.resolve(resp(200,hbm==='missing'?[]:[{id:1,last_sync_at:new Date(Date.now()-(hbm==='stale'?27*3600000:60000)).toISOString()}]));}
   if(method==='GET'){var rows=tbl(t).filter(function(r){return match(r,q)});
     /* ORDER, the way PostgREST does it (added 19 Oct 2026 for the help desk, whose whole point is an order HQ
        sets): order=col.asc,col2.desc. Stable, nulls last. Without it an ordering test can neither pass nor fail. */

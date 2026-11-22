@@ -38,5 +38,13 @@ create index if not exists vp_onboarding_stops_mobile_idx on public.vp_onboardin
 
 alter table public.vp_onboarding_stops enable row level security;
 
+-- THE SYNC HEARTBEAT (23 Nov 2026): the Mac posts here every sync run, even with nothing to change. The Worker's reminders (card reminders, nudge,
+-- nudge text) send only while it is under 26 hours old, and otherwise hold (not drop) until the Mac has checked its cold lists again.
+create table if not exists public.vp_onboarding_sync (
+  id           int primary key default 1 check (id = 1),
+  last_sync_at timestamptz not null default now()
+);
+alter table public.vp_onboarding_sync enable row level security;
+
 comment on table public.vp_onboarding_stops is
   'Onboarding reminder opt-outs (day-3 and free-month-ending, email and text). Separate from vp_unsubscribes (cold/marketing). Service role only.';

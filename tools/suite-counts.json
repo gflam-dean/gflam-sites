@@ -1300,7 +1300,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 131,
+  "checks": 136,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1552,7 +1552,7 @@
   "counted_by": "lines"
  },
  "tools/test-trial-end-note.js": {
-  "checks": 49,
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 82,
+  "checks": 90,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

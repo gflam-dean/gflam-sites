@@ -47,7 +47,8 @@ var UNSUB = {}, UNSUB_BROKEN = false, MINTED = 0;
 vpaUnsubscribedSet = function () { if (UNSUB_BROKEN) return Promise.reject(new Error('read failed')); return Promise.resolve(UNSUB); };
 /* 23 Nov 2026: the nudge is an ONBOARDING reminder, so it reads the onboarding stop list (vp_onboarding_stops), not the cold list. UNSUB / UNSUB_BROKEN stand for it here. */
 vpaOnbStopped = function (env, who) { if (UNSUB_BROKEN) return Promise.reject(new Error('read failed')); return Promise.resolve(!!UNSUB[String(who.email || '').toLowerCase()]); };
-vpaOnbOwnClickUnsub = function () { return Promise.resolve(false); };
+vpaOnbColdBlocks = function () { return Promise.resolve(false); };
+vpaOnbSyncFresh = function () { return Promise.resolve(true); };   // the heartbeat itself is tested in worker/onboarding-stop.test.js and test-prospect-free-month.js
 vpaOnbStopUrl = function () { return Promise.resolve('https://api.venueplay.com.au/stop/' + '0123456789abcdef'.repeat(3)); };   // this suite's venue id is not a uuid; the real token is tested in worker/onboarding-stop.test.js
 vpaInsert = function () { return Promise.resolve({}); };
 vpaAudit = function () { return Promise.resolve(); };
