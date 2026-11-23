@@ -56,6 +56,7 @@ var HB = 'fresh';      // the sync heartbeat table: fresh | stale | missing | do
 var HB_WRITES = [], HB_ROW = null;
 function nonAlert() { return SENT.filter(function (m) { return !/Reminders on hold/.test(m.subject || ''); }); }
 function setHB(mode) { HB = mode; HB_ROW = mode === 'missing' ? null : { id: 1, last_sync_at: new Date(Date.now() - (mode === 'stale' ? 27 * 3600000 : 60000)).toISOString(), stale_alert_at: null }; }
+var AUTH_PHONE = true;      // the login has a mobile (the text-code sign-in) or is email only
 var STOPS_STATUS = 200;     // 404 = migration 228 not run, 500 = down
 var PROSPECT = { venue_id: VID, auth_user_id: 'au-1', email: 'login@example.test', phone: '0412 345 678' };
 function qs(url) { var out = {}, i = url.indexOf('?'); if (i < 0) return out; url.slice(i + 1).split('&').forEach(function (p) { var kv = p.split('='); out[decodeURIComponent(kv[0])] = decodeURIComponent(kv.slice(1).join('=')); }); return out; }
@@ -116,7 +117,7 @@ globalThis.fetch = function (url, init) {
     if (method === 'POST') { UNSUB.push(JSON.parse(init.body)); return respond(201, null); }
   }
   if (/\/rest\/v1\/vp_prospects\?/.test(url) && method === 'GET') return respond(200, f.venue_id === 'eq.' + VID ? [PROSPECT] : []);
-  if (/\/auth\/v1\/admin\/users\/au-1/.test(url)) return respond(200, { id: 'au-1', email: 'Login@Example.test', phone: '61412345678' });
+  if (/\/auth\/v1\/admin\/users\/au-1/.test(url)) return respond(200, { id: 'au-1', email: 'Login@Example.test', phone: AUTH_PHONE ? '61412345678' : '' });
   if (/\/rest\/v1\/vp_venues\?/.test(url) && method === 'GET') return respond(200, [{ id: VID, founding_id: 'f-1', name: 'The Test Tavern' }]);
   if (/\/rest\/v1\/venueplay_founding\?/.test(url) && method === 'GET') return respond(200, [{ mobile: '0412345678' }]);
   if (/\/rest\/v1\/vp_admin_audit/.test(url) && method === 'POST') { AUDIT.push(JSON.parse(init.body)); return respond(201, [{}]); }
@@ -490,6 +491,81 @@ step(function () {
     return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, text: 'Hi Sam, just checking you got your venueplay account today.' });
   }).then(function (r) {
     ok('the nudge ROUTE with a stale heartbeat answers 503 held', r.status === 503 && parse(r).held === true && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 120));
+  });
+});
+
+
+// 10. THE JOURNEY OF 23 NOV 2026 on the Worker: steps day3 / day27 / final (expiry retired), no Worker-added link-days sentence,
+//     the quiet row's real account-state fields, and a past-its-life 'final' refused as a clean 409 ended.
+step(function () {
+  reset(); stubSendPath();
+  var NUDGE = 'Hey Pat,\n\nJust a heads up, your venueplay trial for The Test Tavern expires in 3 days.\n\nDon\'t want these reminders? {stop} or reply STOP.\n\nCheers,\nthe venueplay team';
+  var FINAL = 'Hey Pat,\n\nOne last note from us: your venueplay account for The Test Tavern is still set up and waiting.\n\nDon\'t want these reminders? {stop} or reply STOP.\n\nCheers,\nthe venueplay team';
+  var allDays = function (m) { return /available for \d+ days?|link is available|expires in \d+ days?|\{days\}|\{expires\}|\b90\b/i.test((m.html || '') + ' ' + (m.text || '')); };
+  return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'day27', subject: 'Your venueplay trial expires in 3 days', text: NUDGE }).then(function (r) {
+    var m = nonAlert()[0] || {};
+    ok('a day27 email goes (200)', r.status === 200 && nonAlert().length === 1, r.status + ' ' + r.body.slice(0, 160));
+    ok('the Worker adds NO link-days sentence to it ("This link is available for N days, until ...", "expires in N days", 90): its only "expires" is the 3 days the Mac wrote',
+       !/available for \d+ days?|link is available|\{days\}|\b90\b/i.test(m.html || '') && /expires in 3 days/.test(m.html || '') && !/expires in (?!3 days)\d+/.test(m.html || ''), (m.html || '').slice(-400));
+    ok('...the button line is still there, and the link carries the day-27 tag /e7', /The button opens your own account and nothing else\./.test(m.html || '') && /\/s\/[A-Z0-9]{12}\/e7/.test(m.html || ''), (m.html || '').slice(-500));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'final', subject: 'Your venueplay account is still waiting', text: FINAL });
+  }).then(function (r) {
+    var m = nonAlert()[0] || {};
+    ok('a final email goes (200), tagged /ef, with no Worker link-days sentence at all', r.status === 200 && !allDays(m) && /\/s\/[A-Z0-9]{12}\/ef/.test(m.html || ''), r.status + ' ' + (m.html || '').slice(-400));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'day3', subject: 'Your venueplay sign-in link again', text: 'Hey Pat,\n\nWe noticed you haven\'t logged in yet. Here\'s your sign-in link again.\n\nDon\'t want these reminders? {stop} or reply STOP.\n\nCheers,\nthe venueplay team' });
+  }).then(function (r) {
+    var m = nonAlert()[0] || {};
+    ok('a day3 email goes with no link-days sentence from the Worker and the /e3 tag', r.status === 200 && !allDays(m) && /\/s\/[A-Z0-9]{12}\/e3/.test(m.html || ''), r.status + ' ' + (m.html || '').slice(-300));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'expiry', subject: 'x', text: NUDGE });
+  }).then(function (r) {
+    ok('the retired step "expiry" on the nudge route: 400 retired_step, nothing sent', r.status === 400 && parse(r).retired_step === true && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 160));
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, step: 'expiry', text: SMS_BASE + 'Opt out: {stop}' });
+  }).then(function (r) {
+    ok('...and on the nudge text route: 400, no text', r.status === 400 && parse(r).retired_step === true && SMS.length === 0, r.status + ' ' + r.body.slice(0, 160));
+    return auto('POST', '/autopilot/prospect/signin-link', { venue_id: VID, step: 'expiry' });
+  }).then(function (r) {
+    ok('...and on the sign-in link route: 400, no link made', r.status === 400 && parse(r).retired_step === true && !parse(r).url, r.status + ' ' + r.body.slice(0, 160));
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'final', text: FINAL.replace('Hey Pat,', 'Hey Pat, your link ends {expires}.') });
+  }).then(function (r) {
+    ok('a final email with {expires} in the words is refused (400): the Worker never fills a link-days sentence into it', r.status === 400 && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 160));
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, step: 'day27', text: SMS_BASE + 'Opt out: {stop}' });
+  }).then(function (r) {
+    ok('a day27 text with {days} in the words is refused (400), nothing sent', r.status === 400 && SMS.length === 0, r.status + ' ' + r.body.slice(0, 160));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, step: 'day27', text: 'venueplay: Hi Pat, just a heads up, your venueplay trial for The Test Tavern expires in 3 days. Here\'s your sign-in link, no password needed: {link} Questions? 07 5228 3667. Opt out: {stop}' });
+  }).then(function (r) {
+    var m = (SMS[0] || {}).message || '';
+    ok('the day27 text goes, its link is tagged /t7, and it says "expires in 3 days" and nothing else about days', r.status === 200 && /\/t7(\s|$)/.test(m) && /expires in 3 days/.test(m) && !/\d+ days/.test(m.replace('expires in 3 days', '')), r.status + ' ' + m);
+    // a link whose real life is over: a clean 409 with ended: true, on the email, the text and the thread link, and NOTHING is sent
+    reset(); stubSendPath();
+    vpaProspectLinkWindow = function () { return Promise.resolve({ from: Date.now() - 95 * 86400000, end: Date.now() - 5 * 86400000, ended: true, row: { created_at: '2026-08-01T00:00:00Z' } }); };
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'final', subject: 'x', text: FINAL });
+  }).then(function (r) {
+    ok('a final email to a venue past its real link life: 409, refused, ended: true (a clean skip for the Mac), nothing sent', r.status === 409 && parse(r).ended === true && parse(r).refused === true && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 200));
+    return auto('POST', '/autopilot/prospect/nudge-sms', { venue_id: VID, step: 'day27', text: 'venueplay: Hi Pat, your venueplay trial expires in 3 days. {link} Opt out: {stop}' });
+  }).then(function (r) {
+    ok('...the same for the text: 409, ended: true, nothing sent', r.status === 409 && parse(r).ended === true && SMS.length === 0, r.status + ' ' + r.body.slice(0, 200));
+    AUTH_PHONE = false;
+    return auto('POST', '/autopilot/prospect/signin-link', { venue_id: VID, step: 'final' });
+  }).then(function (r) {
+    AUTH_PHONE = true;
+    ok('...and for the thread link the Mac asks for (an email login): 409, ended: true', r.status === 409 && parse(r).ended === true && parse(r).refused === true, r.status + ' ' + r.body.slice(0, 200));
+    // the quiet row's REAL account-state fields
+    stubSendPath();
+    var base = quietProspect(VID2, 'b@example.test', '0411 222 333');
+    vpaProspectsData = function () { return Promise.resolve({ prospects: [Object.assign({}, base, { cancelled_at: null, paused_at: null, created_at: '2026-11-01T00:00:00Z' }),
+      Object.assign(quietProspect('aaaaaaaa-2222-4333-8444-555555555555', 'c@example.test', null), { status: 'cancelled', cancelled_at: '2026-11-05T00:00:00Z' }),
+      Object.assign(quietProspect('cccccccc-2222-4333-8444-555555555555', 'd@example.test', null), { status: 'paused', paused_at: '2026-11-05T00:00:00Z' }),
+      Object.assign(quietProspect('bbbbbbbb-2222-4333-8444-555555555555', 'e@example.test', null), { status: 'card_added' })] }); };
+    return auto('GET', '/autopilot/prospects/quiet');
+  }).then(function (r) {
+    var b = parse(r), rows = b.prospects || [];
+    ok('the quiet list leaves out a cancelled, a paused and a card-added venue altogether (so "still active" is true of every row on it)', rows.length === 1 && rows[0].venue_id === VID2, JSON.stringify(rows.map(function (p) { return p.venue_id; })));
+    ok('each quiet row says its REAL state fields: status "not_signed_in", cancelled_at null, paused_at null', rows[0] && rows[0].status === 'not_signed_in' && rows[0].cancelled_at === null && rows[0].paused_at === null && ('cancelled_at' in rows[0]) && ('paused_at' in rows[0]), JSON.stringify(rows[0]).slice(0, 300));
+    ok('the HQ resend draft (Dean approves it) carries no "expires in {days} days" sentence either, in either wording', !/expir|\{days\}|\b90\b/i.test(vpaResendDraftText('bounced', 'Pat') + vpaResendDraftText('never_opened', 'Pat')) && /sign-in link again/.test(vpaResendDraftText('never_opened', 'Pat')), vpaResendDraftText('never_opened', 'Pat'));
   });
 });
 

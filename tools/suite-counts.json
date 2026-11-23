@@ -1492,7 +1492,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 117,
+  "checks": 121,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {
@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 99,
+  "checks": 116,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

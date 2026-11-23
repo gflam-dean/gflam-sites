@@ -291,33 +291,46 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var tCode = CODE_IN(t1.body.signin.url);
   DB.venueplay_founding.forEach(function (f) { if (f.id === tpr.founding_id) f.mobile = '0400 555 777'; });   // their own mobile, for the text
   check('the link in the setup\'s reply (their thread) ends /rs: thread, sign-up', TAG_IN(t1.body.signin.url) === 'rs', t1.body.signin.url);
-  var tx = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'expiry', text: 'venueplay: Hi Sam, your sign-in link expires in {days} days: {link} Reply STOP to opt out' }, AP);
+  var tx = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'day27', text: 'venueplay: Hi Sam, your venueplay trial expires in 3 days: {link} Reply STOP to opt out' }, AP);
   var th = await call('/autopilot/prospect/signin-link', { venue_id: tv, step: 'day3' }, AP);
-  check('the expiry text\'s link ends /tx; the thread link the Mac asks for on day 3 ends /r3', tx.status === 200 && TAG_IN(SMS[SMS.length - 1].message) === 'tx' && TAG_IN(th.body.url) === 'r3',
+  check('the day-27 text\'s link ends /t7; the thread link the Mac asks for on day 3 ends /r3', tx.status === 200 && TAG_IN(SMS[SMS.length - 1].message) === 't7' && TAG_IN(th.body.url) === 'r3',
     [tx.status, SMS.map(function (m) { return m.message; }), th.body]);
-  var openScan = await call('/short/open', { code: tCode, via: 'tx' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (compatible; Microsoft Office/16.0; SafeLinks)' }));
+  var smsBefore = SMS.length, mailBefore = sent.length;
+  var rx1 = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'expiry', text: 'venueplay: Hi Sam, your venueplay trial expires in 3 days: {link} Reply STOP to opt out' }, AP);
+  var rx2 = await call('/autopilot/prospect/nudge', { venue_id: tv, step: 'expiry', text: 'Hey Sam,\n\nThis is a long enough nudge for the route to look at it.\n\nCheers,\nthe team' }, AP);
+  var rx3 = await call('/autopilot/prospect/signin-link', { venue_id: tv, step: 'expiry' }, AP);
+  check('the retired step "expiry" is refused (400, retired_step) by the nudge, the nudge text and the sign-in link routes, and nothing is sent or made', rx1.status === 400 && rx2.status === 400 && rx3.status === 400 && rx1.body.retired_step === true && rx2.body.retired_step === true && rx3.body.retired_step === true && SMS.length === smsBefore && sent.length === mailBefore, [rx1.status, rx2.status, rx3.status]);
+  var d27ph = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'day27', text: 'venueplay: Hi Sam, your venueplay trial expires in {days} days: {link} Reply STOP to opt out' }, AP);
+  var fnph = await call('/autopilot/prospect/nudge', { venue_id: tv, step: 'final', text: 'Hey Sam,\n\nYour link ends {expires} so here it is.\n\nCheers,\nthe team' }, AP);
+  check('a day27 text or a final email that carries {days} / {expires} is refused: the Worker adds no link-days sentence to them', d27ph.status === 400 && fnph.status === 400 && SMS.length === smsBefore && sent.length === mailBefore, [d27ph.status, fnph.status]);
+  var t3r = await call('/autopilot/prospect/nudge-sms', { venue_id: tv, step: 'day3', text: 'venueplay: Hi Sam, here is your sign-in link again: {link} Reply STOP to opt out' }, AP);
+  check('the day-3 text\'s link ends /t3 (it was untagged before)', t3r.status === 200 && TAG_IN(SMS[SMS.length - 1].message) === 't3', [t3r.status, SMS[SMS.length - 1]]);
+  var openScan = await call('/short/open', { code: tCode, via: 't7' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (compatible; Microsoft Office/16.0; SafeLinks)' }));
   var evs = function (ev) { return DB.vp_journey_events.filter(function (e) { return e.venue_id === tv && (!ev || e.event === ev); }); };
-  check('a mail scanner opening /s/<letters>/tx is kept as a scanner, never as a person', evs('scanner_hit').length === 1 && evs('scanner_hit')[0].scanner === true && evs('signin_link_opened').length === 0, DB.vp_journey_events);
-  var openTx = await call('/short/open', { code: tCode, via: 'tx' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)' }));
+  check('a mail scanner opening /s/<letters>/t7 is kept as a scanner, never as a person', evs('scanner_hit').length === 1 && evs('scanner_hit')[0].scanner === true && evs('signin_link_opened').length === 0, DB.vp_journey_events);
+  var openTx = await call('/short/open', { code: tCode, via: 't7' }, Object.assign(NET7(), { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)' }));
   var ev1 = evs('signin_link_opened');
-  check('a person opening it: "signin_link_opened" with channel text and step expiry, the venue, a 24-letter session id, and the open goes where it always did',
-    openTx.status === 200 && /^\/app\//.test(openTx.body.go) && ev1.length === 1 && ev1[0].props.channel === 'text' && ev1[0].props.step === 'expiry' && /^[a-f0-9]{24}$/.test(ev1[0].sid) && ev1[0].scanner === false, [openTx.body, ev1]);
+  check('a person opening it: "signin_link_opened" with channel text and step day27, the venue, a 24-letter session id, and the open goes where it always did',
+    openTx.status === 200 && /^\/app\//.test(openTx.body.go) && ev1.length === 1 && ev1[0].props.channel === 'text' && ev1[0].props.step === 'day27' && /^[a-f0-9]{24}$/.test(ev1[0].sid) && ev1[0].scanner === false, [openTx.body, ev1]);
   check('...no personal data in the event: no code, no mobile, no email, no name, no address', !/@|04\d{8}|614\d{8}|Tagged Link|198\.18/.test(JSON.stringify(ev1[0])) && JSON.stringify(ev1[0]).indexOf(tCode) === -1, ev1[0]);
-  check('...and HQ\'s history keeps the tag on the open', DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_used' && a.target === 'venue:' + tv && a.detail && a.detail.tag === 'tx'; }));
+  check('...and HQ\'s history keeps the tag on the open', DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_used' && a.target === 'venue:' + tv && a.detail && a.detail.tag === 't7'; }));
   var nBad = DB.vp_journey_events.length;
   var openBad = await call('/short/open', { code: tCode, via: 'zz' }, NET7());
   var openJunk = await call('/short/open', { code: tCode, via: '<b>x</b>' }, NET7());
   check('a tag not in the table, or junk: the link opens exactly as before and nothing is kept', /^\/app\//.test(openBad.body.go) && /^\/app\//.test(openJunk.body.go) && DB.vp_journey_events.length === nBad, DB.vp_journey_events.slice(nBad));
   await vpaProspectStartMonth(ENV, tpr, Date.now());
   var ev2 = evs('signin_link_signed_in');
-  check('their first sign-in after it: "signin_link_signed_in", text / expiry, the same session', ev2.length === 1 && ev2[0].props.channel === 'text' && ev2[0].props.step === 'expiry' && ev2[0].sid === ev1[0].sid, ev2);
+  check('their first sign-in after it: "signin_link_signed_in", text / day27, the same session', ev2.length === 1 && ev2[0].props.channel === 'text' && ev2[0].props.step === 'day27' && ev2[0].sid === ev1[0].sid, ev2);
   await vpaProspectStartMonth(ENV, tpr, Date.now());
   check('...once (a second sign-in starts nothing and keeps nothing)', evs('signin_link_signed_in').length === 1);
   var jv = await call('/admin/journey-venue', { venue_id: tv }, HQ);
   var said = ((jv.body && jv.body.journey) || []).map(function (i) { return i.what; });
-  check('HQ > Journey for the venue says it in words: "Opened the sign-in link from the text sent before their link expired", then "Signed in from the text sent before their link expired"',
-    said.indexOf('Opened the sign-in link from the text sent before their link expired') >= 0 && said.indexOf('Signed in from the text sent before their link expired') > said.indexOf('Opened the sign-in link from the text sent before their link expired'), [jv.status, said]);
-  check('every tag reads in words', [['es', 'account_email', 'signup'], ['e3', 'account_email', 'day3'], ['ex', 'account_email', 'expiry'], ['rs', 'thread', 'signup'], ['r3', 'thread', 'day3'], ['rx', 'thread', 'expiry'], ['ts', 'text', 'signup'], ['tx', 'text', 'expiry']].every(function (t) { return vpaLinkTag(t[1], t[2]) === t[0] && !/undefined|a message/.test(vpjSayLink({ event: 'signin_link_opened', props: { channel: t[1], step: t[2] } })); }) && vpaLinkTag('text', 'day3') === '');
+  check('HQ > Journey for the venue says it in words: "Opened the sign-in link from the text sent three days before their trial ends", then "Signed in from the text sent three days before their trial ends"',
+    said.indexOf('Opened the sign-in link from the text sent three days before their trial ends') >= 0 && said.indexOf('Signed in from the text sent three days before their trial ends') > said.indexOf('Opened the sign-in link from the text sent three days before their trial ends'), [jv.status, said]);
+  check('every tag reads in words (the new day-3 / day-27 / final ones, and the old ones so a link already sent still reads)', [['es', 'account_email', 'signup'], ['e3', 'account_email', 'day3'], ['ex', 'account_email', 'expiry'], ['rs', 'thread', 'signup'], ['r3', 'thread', 'day3'], ['rx', 'thread', 'expiry'], ['ts', 'text', 'signup'], ['tx', 'text', 'expiry'],
+    ['e7', 'account_email', 'day27'], ['ef', 'account_email', 'final'], ['rf', 'thread', 'final'], ['t3', 'text', 'day3'], ['t7', 'text', 'day27']].every(function (t) { return vpaLinkTag(t[1], t[2]) === t[0] && !/undefined|a message/.test(vpjSayLink({ event: 'signin_link_opened', props: { channel: t[1], step: t[2] } })); })
+    && vpaLinkTag('text', 'final') === '');
+  check('the steps a reminder can be are signup, day3, day27 and final: "expiry" is no longer one (it falls back to what the caller names)', vpaLinkStep('expiry', 'day3') === 'day3' && vpaLinkStep('signup', 'x') === 'signup' && vpaLinkStep('day3', 'x') === 'day3' && vpaLinkStep('day27', 'x') === 'day27' && vpaLinkStep('final', 'x') === 'final' && vpaRetiredStep('expiry') === true && vpaRetiredStep('day27') === false);
   check('only a /s/<12 letters> address takes a tag; a long link or the text-code sign-in stays as it was', vpaTagUrl('venueplay.com.au/s/ABCDEFGHJKMN', 'tx') === 'venueplay.com.au/s/ABCDEFGHJKMN/tx' &&
     vpaTagUrl('https://venueplay.com.au/app/go#t=abc', 'tx') === 'https://venueplay.com.au/app/go#t=abc' && vpaTagUrl('https://venueplay.com.au/app/?signin=sms#m=0400555666', 'es') === 'https://venueplay.com.au/app/?signin=sms#m=0400555666'
     && vpaTagUrl('venueplay.com.au/s/ABCDEFGHJKMN', 'zz') === 'venueplay.com.au/s/ABCDEFGHJKMN');

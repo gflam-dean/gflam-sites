@@ -5596,6 +5596,10 @@ async function vpaAutopilotQuietProspects(request, env, json) {
     link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
     link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
     called: !!p.called, call_requested: !!p.call_requested,
+    /* THE REAL ACCOUNT-STATE FIELDS (23 Nov 2026), for the Mac's one-time 'final' message: status (always 'not_signed_in' on this list),
+       cancelled_at and paused_at (always null here: cancelled and paused prospects are not quiet, and a card or invoice takes a venue off
+       the list altogether). The Mac sends 'final' only when it can SEE all three say still-active. */
+    status: p.status || null, cancelled_at: p.cancelled_at || null, paused_at: p.paused_at || null,
     /* THE OFFER'S SIGN-IN DATE (Dean, 7 Nov 2026), so the Mac's follow-up can say "Your free month starts the first time you
        sign in. Sign in by 30 November to keep $2.50 a player." offer_open is false once that day has passed (then the
        follow-up names no offer). Null fields: no dated offer. */
@@ -5688,15 +5692,17 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
      quiet prospect only, their own mobile, opt-out honoured, a fresh link that leaves the email's working); purpose
      'yes_reply' only labels it, so the audit and HQ can tell the welcome text from a later nudge. */
   const purpose = b.purpose === 'yes_reply' ? 'yes_reply' : 'nudge';
+  if (vpaRetiredStep(b.step)) return json({ error: VPA_RETIRED_STEP_WORDS, retired_step: true }, 400);
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
+  if (vpaStepWithoutDays(b.step) && /\{(days|expires)\}/.test(text)) return json({ error: 'The ' + b.step + ' text must not carry {days} or {expires}: the Worker adds no link-days sentence.' }, 400);
   if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !vpaOnbSmsHasOptOut(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
     return json({ error: 'The text must name venueplay, carry {link} and an opt-out link ({stop}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
   }
   if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
   const actor = VPA_AUTOPILOT_ACTOR;
-  const refuse = async (why, status) => {
+  const refuse = async (why, status, extra) => {
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: why });
-    return json({ error: why, refused: true }, status || 409);
+    return json(Object.assign({ error: why, refused: true }, extra || {}), status || 409);
   };
   const d = await vpaProspectsData(env);
   if (d.error) return json({ error: d.error }, d.status);
@@ -5725,13 +5731,13 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   /* The text's link ends when the email's does: the prospect's 90 days from setup (Dean, 4 Nov 2026; 90 since 10 Nov), and
      {days} in the text is filled from the link that was minted, like the email. */
   const win = await vpaProspectLinkWindow(env, venueId);
-  if (win && win.ended) return await refuse('Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.');
+  if (win && win.ended) return await refuse('Their ' + VPA_PROSPECT_LINK_DAYS + ' days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Press Start a fresh ' + VPA_PROSPECT_LINK_DAYS + ' days in HQ to give them a new link.', 409, { ended: true });
   if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
   let token, minted;
   try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { win: win })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const smsTag = vpaLinkTag('text', vpaLinkStep(b.step, purpose === 'yes_reply' ? 'signup' : 'expiry'));   // which message (16 Nov 2026)
+  const smsTag = vpaLinkTag('text', vpaLinkStep(b.step, purpose === 'yes_reply' ? 'signup' : 'day3'));   // which message (16 Nov 2026)
   const body = vpaFillDays(vpaOnbSmsWords(text, stopUrl), vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaTagUrl(vpaShortSigninUrl(site, token), smsTag) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
   let r;
   try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
@@ -5762,6 +5768,8 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
   const text = String(b.text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim();
+  if (vpaRetiredStep(b.step)) return json({ error: VPA_RETIRED_STEP_WORDS, retired_step: true }, 400);
+  if (vpaStepWithoutDays(b.step) && /\{(days|expires)\}/.test(text)) return json({ error: 'The ' + b.step + ' email must not carry {days} or {expires}: the Worker adds no link-days sentence.' }, 400);
   if (text.length < 20 || text.length > VPA_NUDGE_TEXT_MAX) return json({ error: 'The email needs some words (20 to ' + VPA_NUDGE_TEXT_MAX + ' characters).' }, 400);
   const actor = VPA_AUTOPILOT_ACTOR;
   const refuse = async (why, status) => {
@@ -5831,6 +5839,7 @@ async function vpaAutopilotThreadSigninLink(request, env, json) {
   const b = _b.body || {};
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  if (vpaRetiredStep(b.step)) return json({ error: VPA_RETIRED_STEP_WORDS.replace('nothing was sent', 'no link was made'), retired_step: true }, 400);
   const actor = VPA_AUTOPILOT_ACTOR;
   const refuse = async (why, extra) => {
     await vpaAudit(env, actor, 'prospect_thread_link_refused', 'venue:' + venueId, { reason: why });
@@ -5939,8 +5948,8 @@ const VPA_RESEND_DRAFT_ACTIONS = 'prospect_nudge_sent,signin_link_sent,prospect_
 function vpaResendDraftText(reason, first) {
   const hey = 'Hey ' + (first || 'there') + ',\n\n';
   return reason === 'bounced'
-    ? hey + 'Our first email to you did not get through, so here is your sign-in link again. This link expires in {days} days.\n\nCheers,\nDean'
-    : hey + "We noticed you haven't logged in yet. Here's your sign-in link again. This link expires in {days} days.\n\nCheers,\nDean";
+    ? hey + 'Our first email to you did not get through, so here is your sign-in link again.\n\nCheers,\nDean'
+    : hey + "We noticed you haven't logged in yet. Here's your sign-in link again.\n\nCheers,\nDean";
 }
 async function vpaProspectEmailsAttach(env, p, nowMs) {
   const d = p.delivery || {};
@@ -7523,13 +7532,22 @@ function vpaShortSigninUrl(site, code) { return String(site).replace(/^https?:\/
    "signin_link_signed_in" with the same two (vpaLinkSignedIn). HQ > Journey says "Opened the sign-in link from the text
    sent before their link expired". A link without a tag, or with one not in this table, opens exactly as before. */
 const VPA_LINK_TAGS = { es: ['account_email', 'signup'], e3: ['account_email', 'day3'], ex: ['account_email', 'expiry'],
-  rs: ['thread', 'signup'], r3: ['thread', 'day3'], rx: ['thread', 'expiry'], ts: ['text', 'signup'], tx: ['text', 'expiry'] };
+  rs: ['thread', 'signup'], r3: ['thread', 'day3'], rx: ['thread', 'expiry'], ts: ['text', 'signup'], tx: ['text', 'expiry'],
+  /* THE JOURNEY OF 23 NOV 2026: day3, day27 ("your trial expires in 3 days") and one 'final' message. 'expiry' (the old day 87)
+     is RETIRED as a step: nothing new is tagged with it, and ex / rx / tx stay here only so a link already sent still reads in words. */
+  e7: ['account_email', 'day27'], ef: ['account_email', 'final'], rf: ['thread', 'final'], t3: ['text', 'day3'], t7: ['text', 'day27'] };
 function vpaLinkTag(channel, step) {
   for (const k in VPA_LINK_TAGS) if (VPA_LINK_TAGS[k][0] === channel && VPA_LINK_TAGS[k][1] === step) return k;
   return '';
 }
 /* The step a caller names (the Mac's nudge says which), or the fallback; only the three steps. */
-function vpaLinkStep(raw, fallback) { const v = String(raw || ''); return ['signup', 'day3', 'expiry'].indexOf(v) >= 0 ? v : fallback; }
+function vpaLinkStep(raw, fallback) { const v = String(raw || ''); return VPA_LINK_STEPS.indexOf(v) >= 0 ? v : fallback; }
+/* The steps a reminder can be (23 Nov 2026). 'expiry' is gone: a request that names it is refused (vpaRetiredStep). */
+const VPA_LINK_STEPS = ['signup', 'day3', 'day27', 'final'];
+function vpaRetiredStep(raw) { return String(raw || '') === 'expiry'; }
+const VPA_RETIRED_STEP_WORDS = 'The step "expiry" has been retired (the reminders are day3, day27 and final), so nothing was sent.';
+/* day27 and final carry no {days} / {expires}: the Worker never adds a link-days sentence to them (Dean, 23 Nov 2026: the 90 days are never told). */
+function vpaStepWithoutDays(raw) { const v = String(raw || ''); return v === 'day27' || v === 'final'; }
 /* A short link with its message tag: only a /s/<12 letters> address takes one; any other link comes back as it was. */
 function vpaTagUrl(url, tag) {
   const u = String(url || '');
@@ -7991,7 +8009,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     const stopUrl = await vpaOnbStopUrl(env, pick.venue_id);
     const words = vpaNudgeSignoff(vpaFillDays(vpaOnbFill(opts.nudge, stopUrl, false), daysLeft, expiresAt), voice.name);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
-      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else.</p>'   // 23 Nov 2026: no "available for N days" line (the link life is never told)
       + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(stopUrl)
         + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works.');
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
@@ -27025,7 +27043,7 @@ async function vpjAdminCampaigns(request, env, json) {
 function vpjSayLink(e) {
   const p = e.props || {};
   const from = { account_email: 'the account email', thread: 'our reply in their own email thread', text: 'the text' }[p.channel] || 'a message';
-  const when = { signup: 'when their account was made', day3: 'on day 3', expiry: 'before their link expired' }[p.step] || '';
+  const when = { signup: 'when their account was made', day3: 'on day 3', expiry: 'before their link expired', day27: 'three days before their trial ends', final: 'as one last message' }[p.step] || '';
   return (e.event === 'signin_link_signed_in' ? 'Signed in from ' : 'Opened the sign-in link from ') + from + (when ? ' sent ' + when : '');
 }
 function vpjSayEvent(e, links) {
