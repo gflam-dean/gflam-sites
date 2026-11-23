@@ -1316,7 +1316,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
-  "checks": 131,
+  "checks": 132,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {
@@ -2168,7 +2168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/onboarding-stop.test.js": {
-  "checks": 116,
+  "checks": 120,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/one-game.test.js": {

@@ -507,6 +507,7 @@ step(function () {
     ok('a day27 email goes (200)', r.status === 200 && nonAlert().length === 1, r.status + ' ' + r.body.slice(0, 160));
     ok('the Worker adds NO link-days sentence to it ("This link is available for N days, until ...", "expires in N days", 90): its only "expires" is the 3 days the Mac wrote',
        !/available for \d+ days?|link is available|\{days\}|\b90\b/i.test(m.html || '') && /expires in 3 days/.test(m.html || '') && !/expires in (?!3 days)\d+/.test(m.html || ''), (m.html || '').slice(-400));
+    ok('ONE opt-out only: the words already carry the venue\'s own stop link, so the Worker adds no second "Stop these reminders" footer line', !/Stop these reminders/.test(m.html || '') && (m.html || '').indexOf('/stop/' + TOKEN) >= 0, (m.html || '').slice(-600));
     ok('...the button line is still there, and the link carries the day-27 tag /e7', /The button opens your own account and nothing else\./.test(m.html || '') && /\/s\/[A-Z0-9]{12}\/e7/.test(m.html || ''), (m.html || '').slice(-500));
     reset(); stubSendPath();
     return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'final', subject: 'Your venueplay account is still waiting', text: FINAL });
@@ -518,6 +519,18 @@ step(function () {
   }).then(function (r) {
     var m = nonAlert()[0] || {};
     ok('a day3 email goes with no link-days sentence from the Worker and the /e3 tag', r.status === 200 && !allDays(m) && /\/s\/[A-Z0-9]{12}\/e3/.test(m.html || ''), r.status + ' ' + (m.html || '').slice(-300));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'expiry', subject: 'x', text: NUDGE });
+  }).then(function (r) {
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'day3', subject: 'x', text: 'Hey Pat,\n\nYour link expires in {days} days, here it is.\n\nCheers,\nthe team' });
+  }).then(function (r) {
+    ok('...the day3 email with {days}: 400', r.status === 400 && nonAlert().length === 0, r.status + ' ' + r.body.slice(0, 160));
+    reset(); stubSendPath();
+    return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'day27', subject: 'x', text: 'Hey Pat,\n\nYour trial expires in 3 days, here is your link.\n\nCheers,\nthe team' });
+  }).then(function (r) {
+    var m = nonAlert()[0] || {};
+    ok('words WITHOUT their own stop link still get the Worker\'s footer line (the one opt-out is always there)', r.status === 200 && /Stop these reminders/.test(m.html || ''), r.status + ' ' + (m.html || '').slice(-300));
     reset(); stubSendPath();
     return auto('POST', '/autopilot/prospect/nudge', { venue_id: VID, step: 'expiry', subject: 'x', text: NUDGE });
   }).then(function (r) {
@@ -564,6 +577,7 @@ step(function () {
   }).then(function (r) {
     var b = parse(r), rows = b.prospects || [];
     ok('the quiet list leaves out a cancelled, a paused and a card-added venue altogether (so "still active" is true of every row on it)', rows.length === 1 && rows[0].venue_id === VID2, JSON.stringify(rows.map(function (p) { return p.venue_id; })));
+    ok('the quiet list says journey "23nov" (the Mac drafts and sends nothing unless it reads it)', b.journey === '23nov', JSON.stringify(Object.keys(b)));
     ok('each quiet row says its REAL state fields: status "not_signed_in", cancelled_at null, paused_at null', rows[0] && rows[0].status === 'not_signed_in' && rows[0].cancelled_at === null && rows[0].paused_at === null && ('cancelled_at' in rows[0]) && ('paused_at' in rows[0]), JSON.stringify(rows[0]).slice(0, 300));
     ok('the HQ resend draft (Dean approves it) carries no "expires in {days} days" sentence either, in either wording', !/expir|\{days\}|\b90\b/i.test(vpaResendDraftText('bounced', 'Pat') + vpaResendDraftText('never_opened', 'Pat')) && /sign-in link again/.test(vpaResendDraftText('never_opened', 'Pat')), vpaResendDraftText('never_opened', 'Pat'));
   });

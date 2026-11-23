@@ -314,8 +314,8 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
     wbLinks.length === 0 && Math.abs(Date.parse(tx.body.expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from &&
     (sent[0] && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}/.test(sent[0].html || '')), [wbLinks, wbRow.created_at]);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
-  check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and for how long, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
-    smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12} We've emailed it too, check junk\\. Available for " + tx.body.days_left + " days\\. \\{optout\\}$").test(smsBody.body) &&
+  check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and (23 Nov 2026) NOT how long the link lasts, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
+    smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link( for Weekend Bowls)?: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12} We've emailed it too, check junk\\. \\{optout\\}$").test(smsBody.body) && !/Available for|90/.test(smsBody.body) &&
     !/[—–]/.test(smsBody.body) && smsBody.body.replace('{optout}', 'Reply STOP to opt out').length <= 160, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);

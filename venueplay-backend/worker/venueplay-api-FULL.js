@@ -5547,6 +5547,9 @@ async function vpaCoasterSwitch(env, actor, coasterId, venueId) {
  * No Instantly campaign is read or touched. Recorded in vp_admin_audit (prospect_nudge_sent / _refused).
  * ======================================================================== */
 const VPA_NUDGE_TEXT_MAX = 4000;
+/* The quiet list says which journey this Worker speaks (review 23 Nov 2026): the Mac drafts and sends NOTHING unless it reads this. Only a Worker with the
+   day3 / day27 / final steps, no link-days sentence and the {days} refusal says it. */
+const VPA_JOURNEY_FLAG = '23nov';
 function vpaQuietProspect(p) {
   return !!(p && p.status === 'not_signed_in' && p.sign_in_known !== false && !p.last_sign_in_at && p.email);
 }
@@ -5611,7 +5614,7 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   const deliveryOf = {};
   (d.prospects || []).forEach((p) => { deliveryOf[p.venue_id] = p.delivery || null; });
   quiet.forEach((q) => { q.delivery = deliveryOf[q.venue_id] || null; });
-  return json({ ok: true, prospects: quiet, link_days: VPA_PROSPECT_LINK_DAYS });
+  return json({ ok: true, prospects: quiet, link_days: VPA_PROSPECT_LINK_DAYS, journey: VPA_JOURNEY_FLAG });
 }
 /* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
    their one-tap sign-in link, at a different time from the email". Dean approves it in the same review email, as
@@ -7546,8 +7549,8 @@ function vpaLinkStep(raw, fallback) { const v = String(raw || ''); return VPA_LI
 const VPA_LINK_STEPS = ['signup', 'day3', 'day27', 'final'];
 function vpaRetiredStep(raw) { return String(raw || '') === 'expiry'; }
 const VPA_RETIRED_STEP_WORDS = 'The step "expiry" has been retired (the reminders are day3, day27 and final), so nothing was sent.';
-/* day27 and final carry no {days} / {expires}: the Worker never adds a link-days sentence to them (Dean, 23 Nov 2026: the 90 days are never told). */
-function vpaStepWithoutDays(raw) { const v = String(raw || ''); return v === 'day27' || v === 'final'; }
+/* day3, day27 and final carry no {days} / {expires}: the Worker never adds a link-days sentence to them (Dean, 23 Nov 2026: the 90 days are never told). */
+function vpaStepWithoutDays(raw) { const v = String(raw || ''); return v === 'day3' || v === 'day27' || v === 'final'; }
 /* A short link with its message tag: only a /s/<12 letters> address takes one; any other link comes back as it was. */
 function vpaTagUrl(url, tag) {
   const u = String(url || '');
@@ -8010,8 +8013,8 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     const words = vpaNudgeSignoff(vpaFillDays(vpaOnbFill(opts.nudge, stopUrl, false), daysLeft, expiresAt), voice.name);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
       + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else.</p>'   // 23 Nov 2026: no "available for N days" line (the link life is never told)
-      + vpaReplyEmailFoot('Not for you? <a href="' + vpaEsc(stopUrl)
-        + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works.');
+      + vpaReplyEmailFoot(String(words).indexOf(stopUrl) >= 0 ? '' : 'Not for you? <a href="' + vpaEsc(stopUrl)
+        + '" style="color:#8a8a95;text-decoration:underline">Stop these reminders</a>. Your account still works.');   // one opt-out only: the words already carry it
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO, await vpaOnbHeaders(env, pick.venue_id), null, { from: voice.from }); } catch (_) { sentN = false; }
@@ -8240,8 +8243,12 @@ function vpaSmsAllowedAt(ms) {
 /* DEAN'S WORDING RULE (6 Nov 2026): never explain when the free month starts; say "This link is available for 90
    days." (urgency; 30 until Dean, 7 Nov 2026, 60 until 10 Nov), with the date. The number is the link's own, from the row that was made
    (90 for a fresh one, fewer once their 90 days from setup are partly used), so it is never untrue. */
+/* NEVER A 90-DAY LINE (Dean, 23 Nov 2026): a link that lasts longer than the short fallback lives (14 and 30 days, before migrations 151 and 185) says
+   nothing about how long it lasts, because "available for 87 days" is the 90 told. Returns '' for those. */
+const VPA_LINK_LIFE_SAYABLE_DAYS = 31;
 function vpaLinkAvailableWords(expiresMs, nowMs) {
   const n = Math.max(1, vpaDaysLeft(expiresMs, nowMs == null ? Date.now() : nowMs));
+  if (n > VPA_LINK_LIFE_SAYABLE_DAYS) return '';
   return 'This link is available for ' + n + (n === 1 ? ' day' : ' days') + ', until ' + vpaBneDateWords(expiresMs) + '.';
 }
 /* ONE SMS PART (Dean, 6 Nov 2026: "the sign-in text is too long"). No "venueplay:" prefix (the sender already shows
@@ -8257,7 +8264,7 @@ function vpaSigninTextBody(first, venueName, url, expiresMs, noEmail) {
   const n = Math.max(1, vpaDaysLeft(expiresMs, Date.now()));
   /* Dean, 6 Nov 2026: one short line that the login went by email too, and may be in junk. The text only ever goes
      with the email (HQ's Resend sends both; a queued text follows the email that already went). */
-  const tail = ': ' + url + (noEmail ? '' : ' We\'ve emailed it too, check junk.') + ' Available for ' + n + (n === 1 ? ' day' : ' days') + '. Reply STOP to opt out';
+  const tail = ': ' + url + (noEmail ? '' : ' We\'ve emailed it too, check junk.') + (n > VPA_LINK_LIFE_SAYABLE_DAYS ? '' : ' Available for ' + n + (n === 1 ? ' day' : ' days') + '.') + ' Reply STOP to opt out';
   const make = (who, where) => 'Hi ' + (who || 'there') + ', here\'s your venueplay sign-in link' + (where ? ' for ' + where : '') + tail;
   let t = make(f, v);
   if (t.length > VPA_SMS_ONE_PART) t = make(f, '');
