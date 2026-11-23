@@ -319,6 +319,16 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
     !/[—–]/.test(smsBody.body) && smsBody.body.replace('{optout}', 'Reply STOP to opt out').length <= 160, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);
+  // A LONG VENUE NAME (23 Nov 2026): with no "Available for N days" the text fits one part on a short name, so the drop-the-venue fallback never ran.
+  SMS.length = 0; sent.length = 0;
+  await setUp({ name: 'Weekend Bowls and Recreation Club Incorporated', send_welcome: false });
+  var lv = venueOf('Weekend Bowls and Recreation Club Incorporated');
+  await upd({ venue_id: lv.id, mobile: '0455 666 888' });
+  var ltx = await call('/admin/signin-link', { venue_id: lv.id, text: true }, AS(ADMIN));
+  var lBody = (SMS[0] && SMS[0].body.messages[0] && SMS[0].body.messages[0].body) || '';
+  check('a venue name so long that the text would be two SMS parts: the text drops " for <venue>", still names venueplay and carries the link and opt-out, and fits one part',
+    ltx.status === 200 && SMS.length === 1 && !/Recreation|Bowls/.test(lBody) && /^Hi Sam, here's your venueplay sign-in link: venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12} /.test(lBody) && /\{optout\}$/.test(lBody) && lBody.replace('{optout}', 'Reply STOP to opt out').length <= 160, [ltx.status, lBody]);
+  SMS.length = 0; sent.length = 0;
 
   CLOCK = bne(6, 21, 0);   // a Saturday, 9pm Brisbane: Sunday is out too, so the next allowed time is Monday 9am
   SMS.length = 0; sent.length = 0;

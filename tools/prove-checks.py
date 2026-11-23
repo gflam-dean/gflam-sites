@@ -13025,8 +13025,8 @@ MUTATIONS = [
      "    return plain('unsubscribed', 200);",
      'a failed database write is reported to the person as done'),
     ('winback-unsubscribe.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  if (!env.VP_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {',
-     '  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {',
+     '  // An unset secret must never mean "any token will do".\n  if (!env.VP_UNSUB_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {',
+     '  // An unset secret must never mean "any token will do".\n  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {',
      'an unset secret is treated as a key, so links are checked against an empty secret anybody can compute'),
     # ---- 23 Nov 2026: the ONBOARDING stop list (Dean): "Stop these reminders" on every onboarding reminder, its own list, never the cold one.
     ('onboarding-stop.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
@@ -13258,8 +13258,8 @@ MUTATIONS = [
      "    new TextEncoder().encode('pp-unsub:' + String(env.VP_UNSUB_SECRET || '')),",
      'the token scheme drifts from the one the suite pins, so the link in every email is refused'),
     ('winback-unsubscribe.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  return res.ok || res.status === 409;',
-     '  return res.ok;',
+     "source: source, note: 'venueplay-api /unsubscribe' }),\n  });\n  return res.ok || res.status === 409;",
+     "source: source, note: 'venueplay-api /unsubscribe' }),\n  });\n  return res.ok;",
      'a second click on the same link is told it failed, so the person tries again and again'),
     ('winback-unsubscribe.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if (optedOut) {\n    await vpaAudit(env, actor, 'venue_invited_back'",
@@ -14950,8 +14950,8 @@ MUTATIONS = [
     # The gate line for Dean's review buttons (D93), proven once through the gate.
     ('only the Mac\'s key registers, lists and marks',
      'venueplay-backend/worker/venueplay-api-FULL.js',
-     "  if (isPost) {\n    let body = '';",
-     "  if (true) {\n    let body = '';",
+     "  if (isPost) {\n    /* ONE TAP (16 Nov 2026): the page posts one=1 by itself",
+     "  if (true) {\n    /* ONE TAP (16 Nov 2026): the page posts one=1 by itself",
      'a mail scanner fetching a review link records Dean\'s decision'),
     # The gate line for the prospect autopilot (D88), proven once through the gate.
     ('off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing',
