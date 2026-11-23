@@ -618,6 +618,8 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var ep = row('Ended Arms') || {};
   check('HQ Start a fresh 90 days after the 90 days: it goes, lasts a fresh 90 days from NOW, and the prospect is re-dated (link_from)', hq.status === 200 && hq.body.restarted === true && hq.body.redated === true && hq.body.days_left === 90 &&
     Math.abs(Date.parse(hl.expires_at) - T8 - 90 * DAY) < 60000 && Math.abs(Date.parse(ep.link_from) - T8) < 60000 && emailsTo(theirAddr) === them0 + 1, [hq.body, hl.expires_at, ep.link_from]);
+  check('HQ\'s own resend email (pressed by hand, not a reminder) still says how long the link is available and until when, in words (Dean, 6 Nov 2026); only the reminders stopped saying it',
+    /This link is available for \d+ days?, until (Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+\./.test((sent[sent.length - 1] || {}).html || ''), ((sent[sent.length - 1] || {}).html || '').slice(-300));
   var q8 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === ev.id; })[0] || {};
   check('...so the quiet list counts journey 1 from the resend: day 0, 90 days left, while days_since_setup still says 91', q8.nudge_day === 0 && q8.link_days_left === 90 && q8.days_since_setup === 91 && Math.abs(Date.parse(q8.link_from) - T8) < 60000, q8);
   var en2 = await call('/autopilot/prospect/nudge', { venue_id: ev.id, text: DAY3 }, AP);

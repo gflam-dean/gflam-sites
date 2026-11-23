@@ -1316,7 +1316,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
-  "checks": 130,
+  "checks": 131,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {
